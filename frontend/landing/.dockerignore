@@ -1,0 +1,13 @@
+# Docker
+node_modules
+.nuxt
+.output
+.env*.local
+
+# Bun
+bun.lockb
+
+# OS
+.DS_Store
+Thumbs.db
+*.log

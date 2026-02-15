@@ -1,0 +1,2 @@
+Untuk favicon.svg, gunakan logo vector original.
+PNG favicons sudah disediakan untuk kompatibilitas browser.

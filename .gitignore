@@ -1,0 +1,19 @@
+# User-specified ignores
+docker.ps1
+docker.sh
+draft_product.md
+GEMINI.md
+README.docker.md
+AGENTS.md
+noted.md
+nul
+.claude/
+.agent/
+assets/
+logs/
+
+# Nuxt / Node specific
+frontend/landing/node_modules/
+frontend/landing/.nuxt/
+frontend/landing/dist/
+frontend/landing/.output/
