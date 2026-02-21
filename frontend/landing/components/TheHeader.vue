@@ -1,34 +1,152 @@
+<script setup lang="ts">
+import { LINKS, CONTACT, COMPANY } from '~/utils/constants'
+import { getNavItems } from '~/utils/navigation'
+import { useCoreI18n } from '~/composables/useCoreI18n'
+import { useMagnetic } from '~/composables/useMagnetic'
+import { useWindowScroll } from '@vueuse/core'
+
+const route = useRoute();
+const { locale, t } = useCoreI18n()
+const { y } = useWindowScroll()
+
+const isMobileMenuOpen = ref(false);
+
+// Smart Scroll & Dynamic Style Logic
+const isHeaderVisible = ref(true)
+const lastScrollY = ref(0)
+const isAtTop = ref(true)
+
+watch(y, (newY) => {
+    isAtTop.value = newY <= 50
+    
+    // Always show at very top to avoid flickering or hidden nav on load
+    if (newY <= 0) {
+        isHeaderVisible.value = true
+        lastScrollY.value = 0
+        return
+    }
+
+    // Determine direction
+    const direction = newY > lastScrollY.value ? 'down' : 'up';
+    
+    // Threshold to hide: scroll down > 100px
+    if (direction === 'down' && newY > 100) {
+        isHeaderVisible.value = false;
+    } else if (direction === 'up') {
+        isHeaderVisible.value = true;
+    }
+    
+    lastScrollY.value = newY;
+})
+
+const headerClass = computed(() => {
+    // Base classes - ensure header is always visible
+    // Compact height (h-14) on mobile, standard (h-16) on desktop
+    let classes = "fixed top-0 left-0 right-0 z-50 w-full h-14 lg:h-16 transition-transform duration-300"
+
+    // Smart Scroll: Hide header on scroll down, unless menu is open
+    if (!isHeaderVisible.value && !isMobileMenuOpen.value) {
+        classes += " -translate-y-full"
+    } else {
+        classes += " translate-y-0"
+    }
+
+    // Dynamic styling based on scroll position
+    if (isAtTop.value && !isMobileMenuOpen.value) {
+        // Transparent at top (immersive)
+        classes += " bg-transparent border-b border-transparent"
+    } else {
+        // Glassmorphism when scrolled or menu open
+        classes += " bg-core-950/95 backdrop-blur-xl border-b border-white/10"
+    }
+
+    return classes
+})
+
+const navItems = computed(() => getNavItems(locale.value));
+
+const isActive = (path: string) => {
+    if (path === "/") {
+        return route.path === "/";
+    }
+    return route.path === path || route.path.startsWith(`${path}/`);
+};
+
+const setBodyLock = (locked: boolean) => {
+    if (!process.client) {
+        return;
+    }
+    document.body.style.overflow = locked ? "hidden" : "";
+};
+
+const toggleMobileMenu = () => {
+    isMobileMenuOpen.value = !isMobileMenuOpen.value;
+};
+
+const closeMobileMenu = () => {
+    isMobileMenuOpen.value = false;
+};
+
+const handleEscape = (event: KeyboardEvent) => {
+    if (event.key === "Escape" && isMobileMenuOpen.value) {
+        closeMobileMenu();
+    }
+};
+
+watch(
+    () => route.fullPath,
+    () => {
+        closeMobileMenu();
+    },
+);
+
+watch(isMobileMenuOpen, (value: boolean) => {
+    setBodyLock(value);
+});
+
+onMounted(() => {
+    window.addEventListener("keydown", handleEscape);
+});
+
+onUnmounted(() => {
+    window.removeEventListener("keydown", handleEscape);
+    setBodyLock(false);
+});
+
+// Magnetic Button implementation
+const contactBtnRef = ref(null)
+const { style: magneticStyle } = useMagnetic(contactBtnRef, 0.3)
+</script>
+
 <template>
-    <header
-        class="sticky top-0 z-50 border-b border-white/10 bg-core-950/80 backdrop-blur-xl"
-    >
-        <div class="ca-container">
-            <div class="flex h-16 items-center justify-between gap-3">
+    <header :class="headerClass">
+        <div class="ca-container h-full">
+            <div class="flex h-full items-center justify-between gap-3">
                 <NuxtLink
                     to="/"
-                    class="group inline-flex items-center gap-3"
+                    class="group inline-flex items-center gap-2 lg:gap-3"
                     :aria-label="t('nav.home')"
                 >
                     <span
-                        class="inline-flex h-10 w-10 items-center justify-center"
+                        class="inline-flex h-9 w-9 items-center justify-center lg:h-10 lg:w-10"
                     >
                         <NuxtImg
                             src="/logo.svg"
                             alt="CoreAsia logo"
-                            width="32"
-                            height="32"
+                            width="36"
+                            height="36"
                             loading="eager"
                             decoding="async"
-                            class="h-9 w-9 object-contain"
+                            class="h-8 w-8 object-contain lg:h-9 lg:w-9"
                         />
                     </span>
                     <span class="flex flex-col leading-none">
                         <span
-                            class="font-display text-lg font-bold tracking-tight text-white"
+                            class="font-display text-base font-bold tracking-tight text-white lg:text-lg"
                             >{{ COMPANY.shortName }}</span
                         >
                         <span
-                            class="text-[11px] font-semibold uppercase tracking-[0.12em] text-content-muted"
+                            class="text-[10px] font-semibold uppercase tracking-[0.12em] text-content-muted block lg:text-[11px]"
                             >{{ COMPANY.tagline }}</span
                         >
                     </span>
@@ -103,7 +221,7 @@
             <div
                 v-if="isMobileMenuOpen"
                 id="mobile-nav"
-                class="border-t border-white/10 bg-core-950/95 lg:hidden"
+                class="border-t border-white/10 bg-core-950/95 lg:hidden max-h-[calc(100vh-4rem)] overflow-y-auto"
             >
                 <div class="ca-container space-y-5 py-5">
                     <nav class="space-y-1" aria-label="Mobile Navigation">
@@ -158,70 +276,3 @@
         </Transition>
     </header>
 </template>
-
-<script setup lang="ts">
-import { LINKS, CONTACT, COMPANY } from '~/utils/constants'
-import { getNavItems } from '~/utils/navigation'
-import { useCoreI18n } from '~/composables/useCoreI18n'
-import { useMagnetic } from '~/composables/useMagnetic'
-
-const route = useRoute();
-
-// Get navigation items based on current locale
-const { locale, t } = useCoreI18n()
-const navItems = computed(() => getNavItems(locale.value));
-
-const isMobileMenuOpen = ref(false);
-
-const isActive = (path: string) => {
-    if (path === "/") {
-        return route.path === "/";
-    }
-    return route.path === path || route.path.startsWith(`${path}/`);
-};
-
-const setBodyLock = (locked: boolean) => {
-    if (!process.client) {
-        return;
-    }
-    document.body.style.overflow = locked ? "hidden" : "";
-};
-
-const toggleMobileMenu = () => {
-    isMobileMenuOpen.value = !isMobileMenuOpen.value;
-};
-
-const closeMobileMenu = () => {
-    isMobileMenuOpen.value = false;
-};
-
-const handleEscape = (event: KeyboardEvent) => {
-    if (event.key === "Escape" && isMobileMenuOpen.value) {
-        closeMobileMenu();
-    }
-};
-
-watch(
-    () => route.fullPath,
-    () => {
-        closeMobileMenu();
-    },
-);
-
-watch(isMobileMenuOpen, (value: boolean) => {
-    setBodyLock(value);
-});
-
-onMounted(() => {
-    window.addEventListener("keydown", handleEscape);
-});
-
-onUnmounted(() => {
-    window.removeEventListener("keydown", handleEscape);
-    setBodyLock(false);
-});
-
-// Magnetic Button implementation
-const contactBtnRef = ref(null)
-const { style: magneticStyle } = useMagnetic(contactBtnRef, 0.3)
-</script>

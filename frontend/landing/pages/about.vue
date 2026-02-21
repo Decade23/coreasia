@@ -17,8 +17,8 @@ const leaderImage = useReveal('slideRight', 150)
 const ctaSection = useReveal('scaleUp')
 
 useCoreSeo({
-    title: 'Tentang Kami - Strategic Technology Partner',
-    description: `Mengenal lebih dekat ${COMPANY.name} - mitra transformasi digital untuk lembaga pendidikan dan sertifikasi profesional di Indonesia.`,
+    title: t('about.title') as string,
+    description: t('about.description') as string,
     path: '/about',
 })
 
@@ -43,55 +43,14 @@ useSchemaOrg([
     }),
 ])
 
-// Timeline data
-const journey = [
-    {
-        year: '2020',
-        title: 'Training Center Foundation',
-        description: 'Dimulai sebagai pusat pelatihan teknologi dengan fokus pada sertifikasi digital.',
-        icon: 'lucide:graduation-cap',
-    },
-    {
-        year: '2022',
-        title: 'Technology Integration',
-        description: 'Pengembangan sistem manajemen pembelajaran pertama untuk internal use.',
-        icon: 'lucide:cpu',
-    },
-    {
-        year: '2024',
-        title: 'SaaS Platform Launch',
-        description: 'Meluncurkan platform SaaS LMS untuk lembaga sertifikasi di seluruh Indonesia.',
-        icon: 'lucide:rocket',
-    },
-    {
-        year: '2026',
-        title: 'Infrastructure Provider',
-        description: 'Evolusi menjadi mitra infrastruktur teknologi lengkap untuk ekosistem pendidikan.',
-        icon: 'lucide:building-2',
-    },
-]
-
-// Values data
-const values = [
-    {
-        title: 'High Performance',
-        description: 'Solusi yang dioptimalkan untuk kecepatan dan skalabilitas maksimal.',
-        icon: 'lucide:zap',
-        color: 'from-amber-400 to-amber-600',
-    },
-    {
-        title: 'Data Integrity',
-        description: 'Keamanan dan integritas data menjadi prioritas utama dalam setiap solusi.',
-        icon: 'lucide:shield-check',
-        color: 'from-slate-400 to-slate-600',
-    },
-    {
-        title: 'Future Proof',
-        description: 'Teknologi yang dirancang untuk berkembang bersama bisnis klien.',
-        icon: 'lucide:bar-chart-3',
-        color: 'from-emerald-400 to-emerald-600',
-    },
-]
+// Data from i18n content
+const journey = computed(() => t('about.journey.events') as any[])
+const values = computed(() => {
+    const raw = t('about.whyUs.values') as any[]
+    const colorMap = ['from-amber-400 to-amber-600', 'from-slate-400 to-slate-600', 'from-emerald-400 to-emerald-600']
+    return raw.map((v: any, i: number) => ({ ...v, color: colorMap[i] || colorMap[0] }))
+})
+const leadership = computed(() => t('about.leadership') as Record<string, any>)
 </script>
 
 <template>
@@ -124,23 +83,21 @@ const values = [
                             name="lucide:sparkles"
                             class="h-3.5 w-3.5 text-amber-300"
                         />
-                        Visi Kami
+                        {{ t('about.kicker') }}
                     </span>
 
                     <h1
                         ref="heroTitle"
                         class="mt-5 text-balance font-display text-4xl font-bold leading-[1.08] text-white sm:text-5xl lg:text-[3.8rem]"
                     >
-                        Membangun Infrastruktur
-                        <span class="ca-gradient-text">Digital Masa Depan</span>
+                        <span v-html="t('about.hero.title')" />
                     </h1>
 
                     <p
                         ref="heroCopy"
                         class="ca-copy mt-5 max-w-3xl text-balance"
                     >
-                        {{ COMPANY.name }} adalah tulang punggung teknologi untuk ekosistem
-                        pendidikan dan sertifikasi profesional di Indonesia.
+                        {{ t('about.hero.subtitle') }}
                     </p>
 
                     <div
@@ -151,7 +108,7 @@ const values = [
                             to="/contact"
                             class="ca-btn-primary"
                         >
-                            Hubungi Kami
+                            {{ t('about.hero.ctaPrimary') }}
                             <Icon
                                 name="lucide:arrow-right"
                                 class="h-4 w-4"
@@ -167,7 +124,7 @@ const values = [
                                 name="lucide:message-circle"
                                 class="h-4 w-4"
                             />
-                            WhatsApp
+                            {{ t('about.hero.ctaSecondary') }}
                         </a>
                     </div>
                 </div>
@@ -178,9 +135,9 @@ const values = [
         <section class="ca-section">
             <div class="ca-container">
                 <div ref="whyUsHeader" class="mb-8 text-center">
-                    <span class="ca-kicker">Mengapa CoreAsia</span>
+                    <span class="ca-kicker">{{ t('about.whyUs.title') }}</span>
                     <h2 class="ca-title mt-4">
-                        Solusi Teknologi yang Dirancang untuk Pertumbuhan
+                        {{ t('about.whyUs.subtitle') }}
                     </h2>
                 </div>
 
@@ -227,9 +184,9 @@ const values = [
         <section class="ca-section">
             <div class="ca-container">
                 <div ref="timelineHeader" class="mb-8 text-center">
-                    <span class="ca-kicker">Perjalanan Kami</span>
+                    <span class="ca-kicker">{{ t('about.journey.title') }}</span>
                     <h2 class="ca-title mt-4">
-                        Evolusi dari Training Center hingga Infrastructure Provider
+                        {{ t('about.journey.subtitle') }}
                     </h2>
                 </div>
 
@@ -294,20 +251,22 @@ const values = [
             <div class="ca-container">
                 <div class="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
                     <div ref="leaderText">
-                        <span class="ca-kicker">Leadership</span>
+                        <span class="ca-kicker">{{ t('about.leadership.title') }}</span>
                         <h2 class="ca-title mt-4">
-                            Visi yang Dipimpin oleh Teknologi
+                            {{ t('about.leadership.subtitle') }}
                         </h2>
                         <p class="ca-copy mt-4">
-                            Dedi - Founder & Principal Tech Lead. Seorang teknolog enthusiast dengan
-                            visi untuk mengintegrasikan pendidikan dengan solusi SaaS
-                            yang cutting-edge.
+                            {{ t('about.leadership.name') }}. {{ t('about.leadership.description') }}
                         </p>
 
                         <div class="mt-6 flex flex-wrap gap-2">
-                            <span class="ca-chip">10+ Years Experience</span>
-                            <span class="ca-chip">SaaS Architecture</span>
-                            <span class="ca-chip">Education Technology</span>
+                            <span
+                                v-for="chip in (t('about.leadership.chips') as string[])"
+                                :key="chip"
+                                class="ca-chip"
+                            >
+                                {{ chip }}
+                            </span>
                         </div>
                     </div>
 
@@ -344,13 +303,12 @@ const values = [
                     <h2
                         class="text-balance font-display text-3xl font-bold text-white sm:text-4xl"
                     >
-                        Siap mentransformasi bisnis Anda?
+                        {{ t('about.readyCTA.title') }}
                     </h2>
                     <p
                         class="mx-auto mt-3 max-w-2xl text-sm text-slate-300 sm:text-base"
                     >
-                        Diskusikan kebutuhan teknologi pendidikan Anda dengan tim ahli kami.
-                        Kami siap membantu dari konsep hingga implementasi.
+                        {{ t('about.readyCTA.subtitle') }}
                     </p>
                     <div
                         class="mt-6 flex flex-col justify-center gap-3 sm:flex-row"
@@ -359,7 +317,7 @@ const values = [
                             to="/contact"
                             class="ca-btn-primary"
                         >
-                            Hubungi Kami
+                            {{ t('about.readyCTA.ctaPrimary') }}
                             <Icon
                                 name="lucide:arrow-right"
                                 class="h-4 w-4"
@@ -375,7 +333,7 @@ const values = [
                                 name="lucide:message-circle"
                                 class="h-4 w-4"
                             />
-                            WhatsApp
+                            {{ t('about.readyCTA.ctaSecondary') }}
                         </a>
                     </div>
                 </div>

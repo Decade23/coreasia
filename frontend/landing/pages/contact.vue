@@ -1,3 +1,202 @@
+<script setup lang="ts">
+import { LINKS, CONTACT, buildWhatsAppUrl, buildMailtoUrl } from '~/utils/constants'
+import { useCoreI18n } from '~/composables/useCoreI18n'
+
+const { useReveal } = useScrollReveal()
+const { t } = useCoreI18n()
+
+const heroKicker = useReveal('fadeUp', 0)
+const heroTitle = useReveal('fadeUp', 100)
+const heroCopy = useReveal('fadeUp', 200)
+const contactSidebar = useReveal('slideLeft')
+const contactForm = useReveal('slideRight', 100)
+
+interface ContactForm {
+    name: string;
+    email: string;
+    phone: string;
+    subject: string;
+    message: string;
+    consent: boolean;
+}
+
+const subjectOptions = computed(() => {
+    const subjects = t('contact.form.subjects') as Record<string, string>
+    return Object.entries(subjects).map(([value, label]) => ({
+        value,
+        label: label as string,
+    }))
+})
+
+
+const form = reactive<ContactForm>({
+    name: "",
+    email: "",
+    phone: "",
+    subject: "",
+    message: "",
+    consent: false,
+});
+
+const formState = reactive({
+    isSubmitting: false,
+    isSuccess: false,
+    errorMessage: "",
+});
+
+// Computed property for phone input handling
+const phoneModel = computed({
+    get: () => form.phone,
+    set: (val) => {
+        if (!val) {
+            form.phone = "";
+            return;
+        }
+
+        // 1. Sanitize: Allow only digits and leading +
+        let raw = val.replace(/[^0-9+]/g, "");
+        
+        // Prevent multiple +
+        if ((raw.match(/\+/g) || []).length > 1) {
+             raw = raw.replace(/\+/g, (match, offset) => offset === 0 ? "+" : "");
+        }
+
+        // 2. Normalize prefixes to +62 (only if it looks like ID number)
+        if (raw.startsWith("08")) {
+            raw = "+62" + raw.slice(1);
+        } else if (raw.startsWith("628")) {
+            raw = "+" + raw;
+        } else if (raw.startsWith("8")) {
+            raw = "+62" + raw;
+        }
+
+        // Ensure leading + if not empty
+         if (!raw.startsWith("+") && raw.length > 0) {
+             raw = "+" + raw;
+        }
+
+        // 3. Formatting (Spacing)
+        let formatted = raw;
+        if (raw.startsWith("+62")) {
+            const rest = raw.slice(3);
+            let chunks = [];
+            if (rest.length > 0) chunks.push(rest.slice(0, 3));
+            if (rest.length > 3) chunks.push(rest.slice(3, 7));
+            if (rest.length > 7) chunks.push(rest.slice(7, 13)); 
+            formatted = "+62 " + chunks.join(" ");
+        }
+
+        // 4. Update state
+        form.phone = formatted.trim();
+    }
+});
+
+const resetForm = () => {
+    form.name = "";
+    form.email = "";
+    form.phone = "";
+    form.subject = "";
+    form.message = "";
+    form.consent = false;
+};
+
+const buildMessage = () => {
+    const subjectLabel =
+        subjectOptions.value.find((option) => option.value === form.subject)?.label ||
+        form.subject;
+
+    // Clean phone number (remove spaces) for sending
+    const cleanPhone = form.phone ? form.phone.replace(/\s+/g, "") : "-";
+
+    const lines = [
+        `Halo CoreAsia, saya ingin konsultasi terkait: ${subjectLabel}.`,
+        "",
+        `Nama: ${form.name}`,
+        `Email: ${form.email}`,
+        `WhatsApp: ${cleanPhone}`,
+        "",
+        "Kebutuhan:",
+        form.message,
+    ];
+
+    return {
+        subjectLabel,
+        body: lines.join("\n"),
+    };
+};
+
+const handleSubmit = async () => {
+    formState.isSubmitting = true;
+    formState.isSuccess = false;
+    formState.errorMessage = "";
+
+    if (!form.consent) {
+        formState.errorMessage = t('contact.form.validation.consentRequired') as string;
+        formState.isSubmitting = false;
+        return;
+    }
+
+    try {
+        const { subjectLabel, body } = buildMessage();
+
+        if (process.client) {
+            const waUrl = buildWhatsAppUrl(body);
+            const mailtoUrl = buildMailtoUrl(`[Inquiry] ${subjectLabel}`, body);
+
+            const popup = window.open(waUrl, "_blank", "noopener,noreferrer");
+            if (!popup) {
+                window.location.href = mailtoUrl;
+            }
+        }
+
+        formState.isSuccess = true;
+        
+        if (process.client) {
+            try {
+                const confetti = (await import('canvas-confetti')).default;
+                
+                confetti({
+                    particleCount: 150,
+                    spread: 70,
+                    origin: { y: 0.6 },
+                    zIndex: 9999
+                });
+            } catch (e) {
+                console.error("Failed to load confetti:", e);
+            }
+        }
+        
+        resetForm();
+
+        setTimeout(() => {
+            formState.isSuccess = false;
+        }, 5000);
+    } catch (error) {
+        formState.errorMessage = t('contact.form.error') as string;
+    } finally {
+        formState.isSubmitting = false;
+    }
+};
+
+useCoreSeo({
+    title: t('contact.title') as string,
+    description: t('contact.description') as string,
+    path: "/contact",
+    image: "/social/linkedin-share.webp",
+    twitterImage: "/social/twitter-card.webp",
+});
+
+useSchemaOrg([
+    defineWebPage({
+        "@type": "ContactPage",
+        name: "Hubungi CoreAsia",
+        description:
+            "Halaman kontak CoreAsia untuk konsultasi SaaS LMS, venture partnership, dan solusi enterprise.",
+        url: "https://coreasia.id/contact",
+    }),
+]);
+</script>
+
 <template>
     <div>
         <section class="relative overflow-hidden">
@@ -13,17 +212,14 @@
             <div
                 class="ca-container relative ca-section pb-10 sm:pb-12 lg:pb-16"
             >
-                 <span ref="heroKicker" class="ca-kicker">Kontak Kami</span>
+                 <span ref="heroKicker" class="ca-kicker">{{ t('contact.kicker') }}</span>
                 <h1
                     ref="heroTitle"
                     class="mt-5 text-balance font-display text-4xl font-bold leading-[1.08] text-white sm:text-5xl lg:text-[3.4rem]"
-                >
-                    Konsultasi strategi produk
-                    <span class="ca-gradient-text">tanpa ribet</span>
-                </h1>
+                    v-html="t('contact.hero.title')"
+                />
                 <p ref="heroCopy" class="ca-copy mt-5 max-w-3xl">
-                    Ceritakan kebutuhan bisnis Anda. Tim kami bantu memetakan
-                    opsi paling realistis untuk launch, scale, dan monetisasi.
+                    {{ t('contact.hero.subtitle') }}
                 </p>
             </div>
         </section>
@@ -41,11 +237,10 @@
                             <h2
                                 class="mt-2 text-xl font-display font-bold text-white"
                             >
-                                Pilih channel favorit Anda
+                                {{ t('contact.channels.title') }}
                             </h2>
                             <p class="mt-2 text-sm text-slate-300">
-                                Untuk respon tercepat, gunakan WhatsApp pada jam
-                                kerja.
+                                {{ t('contact.channels.subtitle') }}
                             </p>
 
                             <div class="mt-5 space-y-3">
@@ -67,7 +262,7 @@
                                         <span>
                                             <span
                                                 class="block text-sm font-semibold text-white"
-                                                >WhatsApp</span
+                                                >{{ t('contact.channels.whatsapp') }}</span
                                             >
                                             <span
                                                 class="block text-xs text-slate-400"
@@ -97,7 +292,7 @@
                                         <span>
                                             <span
                                                 class="block text-sm font-semibold text-white"
-                                                >Email</span
+                                                >{{ t('contact.channels.email') }}</span
                                             >
                                             <span
                                                 class="block text-xs text-slate-400"
@@ -117,33 +312,23 @@
                             <h3
                                 class="text-sm font-semibold uppercase tracking-[0.14em] text-slate-500"
                             >
-                                What to prepare
+                                {{ t('contact.whatToPrepare.title') }}
                             </h3>
                             <ul class="mt-4 space-y-2 text-sm text-slate-300">
-                                <li class="flex items-start gap-2">
+                                <li
+                                    v-for="item in (t('contact.whatToPrepare.items') as string[])"
+                                    :key="item"
+                                    class="flex items-start gap-2"
+                                >
                                     <Icon
                                         name="lucide:check"
                                         class="mt-0.5 h-4 w-4 text-emerald-300"
                                     />
-                                    Tujuan bisnis 6-12 bulan ke depan
-                                </li>
-                                <li class="flex items-start gap-2">
-                                    <Icon
-                                        name="lucide:check"
-                                        class="mt-0.5 h-4 w-4 text-emerald-300"
-                                    />
-                                    Segment user dan volume target
-                                </li>
-                                <li class="flex items-start gap-2">
-                                    <Icon
-                                        name="lucide:check"
-                                        class="mt-0.5 h-4 w-4 text-emerald-300"
-                                    />
-                                    Constraint budget dan timeline
+                                    {{ item }}
                                 </li>
                             </ul>
                             <p class="mt-4 text-xs text-slate-500">
-                                Jam operasional: {{ CONTACT.businessHours }}.
+                                {{ t('contact.channels.businessHours') }}
                             </p>
                         </article>
                     </aside>
@@ -153,140 +338,77 @@
                             <h2
                                 class="text-2xl font-display font-bold text-white"
                             >
-                                Kirim Brief Singkat
+                                {{ t('contact.form.title') }}
                             </h2>
                             <p class="mt-2 text-sm text-slate-300">
-                                Form ini akan mengarahkan pesan Anda ke
-                                WhatsApp/email agar tim dapat menindaklanjuti
-                                lebih cepat.
+                                {{ t('contact.form.subtitle') }}
                             </p>
                         </div>
 
                         <form class="space-y-5" @submit.prevent="handleSubmit">
                             <div class="grid gap-4 sm:grid-cols-2">
-                                <div>
-                                    <label
-                                        for="name"
-                                        class="mb-2 block text-sm font-medium text-slate-200"
-                                        >Nama lengkap
-                                        <span class="text-rose-300"
-                                            >*</span
-                                        ></label
-                                    >
-                                    <input
-                                        id="name"
-                                        v-model.trim="form.name"
-                                        type="text"
-                                        required
-                                        :disabled="formState.isSubmitting"
-                                        class="w-full rounded-xl border border-white/12 bg-white/[0.03] px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-amber-300/40 focus:outline-none"
-                                        placeholder="Nama Anda"
-                                    />
-                                </div>
-                                <div>
-                                    <label
-                                        for="email"
-                                        class="mb-2 block text-sm font-medium text-slate-200"
-                                        >Email
-                                        <span class="text-rose-300"
-                                            >*</span
-                                        ></label
-                                    >
-                                    <input
-                                        id="email"
-                                        v-model.trim="form.email"
-                                        type="email"
-                                        required
-                                        :disabled="formState.isSubmitting"
-                                        class="w-full rounded-xl border border-white/12 bg-white/[0.03] px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-amber-300/40 focus:outline-none"
-                                        placeholder="nama@email.com"
-                                    />
-                                </div>
-                            </div>
-
-                            <div class="grid gap-4 sm:grid-cols-2">
-                                <div>
-                                    <label
-                                        for="phone"
-                                        class="mb-2 block text-sm font-medium text-slate-200"
-                                        >No. WhatsApp</label
-                                    >
-                                    <input
-                                        id="phone"
-                                        v-model.trim="form.phone"
-                                        type="tel"
-                                        :disabled="formState.isSubmitting"
-                                        class="w-full rounded-xl border border-white/12 bg-white/[0.03] px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-amber-300/40 focus:outline-none"
-                                        placeholder="+62 xxx xxxx xxxx"
-                                    />
-                                </div>
-
-                                <div>
-                                    <label
-                                        for="subject"
-                                        class="mb-2 block text-sm font-medium text-slate-200"
-                                        >Subjek
-                                        <span class="text-rose-300"
-                                            >*</span
-                                        ></label
-                                    >
-                                    <select
-                                        id="subject"
-                                        v-model="form.subject"
-                                        required
-                                        :disabled="formState.isSubmitting"
-                                        class="w-full rounded-xl border border-white/12 bg-white/[0.03] px-4 py-3 text-sm text-white focus:border-amber-300/40 focus:outline-none"
-                                    >
-                                        <option
-                                            value=""
-                                            disabled
-                                            class="bg-[#070d18] text-slate-400"
-                                        >
-                                            Pilih subjek
-                                        </option>
-                                        <option
-                                            v-for="option in subjectOptions"
-                                            :key="option.value"
-                                            :value="option.value"
-                                            class="bg-[#070d18] text-slate-100"
-                                        >
-                                            {{ option.label }}
-                                        </option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div>
-                                <label
-                                    for="message"
-                                    class="mb-2 block text-sm font-medium text-slate-200"
-                                    >Pesan
-                                    <span class="text-rose-300">*</span></label
-                                >
-                                <textarea
-                                    id="message"
-                                    v-model.trim="form.message"
-                                    rows="5"
+                                <BaseInput
+                                    id="name"
+                                    v-model.trim="form.name"
+                                    :label="t('contact.form.fields.name') as string"
                                     required
                                     :disabled="formState.isSubmitting"
-                                    class="w-full resize-none rounded-xl border border-white/12 bg-white/[0.03] px-4 py-3 text-sm text-white placeholder:text-slate-500 focus:border-amber-300/40 focus:outline-none"
-                                    placeholder="Ceritakan kebutuhan utama Anda"
+                                    placeholder="Nama Anda"
+                                />
+                                <BaseInput
+                                    id="email"
+                                    v-model.trim="form.email"
+                                    type="email"
+                                    :label="t('contact.form.fields.email') as string"
+                                    required
+                                    :disabled="formState.isSubmitting"
+                                    placeholder="nama@email.com"
                                 />
                             </div>
 
+                            <div class="grid gap-4 sm:grid-cols-2">
+                                <BaseInput
+                                    id="phone"
+                                    v-model="phoneModel"
+                                    type="tel"
+                                    :label="t('contact.form.fields.phone') as string"
+                                    :disabled="formState.isSubmitting"
+                                    placeholder="+62 xxx xxxx xxxx"
+                                />
+
+                                <SearchSelect
+                                    id="subject"
+                                    v-model="form.subject"
+                                    :options="subjectOptions"
+                                    :label="t('contact.form.fields.subject') as string"
+                                    required
+                                    :disabled="formState.isSubmitting"
+                                    placeholder="Pilih subjek"
+                                />
+                            </div>
+
+                            <BaseTextarea
+                                id="message"
+                                v-model.trim="form.message"
+                                :label="t('contact.form.fields.message') as string"
+                                required
+                                :rows="5"
+                                :disabled="formState.isSubmitting"
+                                placeholder="Ceritakan kebutuhan utama Anda"
+                            />
+
                             <label
-                                class="flex items-start gap-3 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-3 text-sm text-slate-300"
+                                class="flex items-start gap-3 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-3 text-sm text-slate-300 transition-colors hover:bg-white/[0.05]"
                             >
                                 <input
                                     v-model="form.consent"
                                     type="checkbox"
                                     required
                                     :disabled="formState.isSubmitting"
-                                    class="mt-0.5 h-4 w-4 rounded border-white/20 bg-transparent text-amber-300 focus:ring-amber-300"
+                                    class="mt-0.5 h-4 w-4 rounded border-white/20 bg-transparent text-amber-300 focus:ring-amber-300 focus:ring-offset-0"
                                 />
                                 <span>
-                                    Saya menyetujui data ini digunakan untuk
-                                    tindak lanjut konsultasi.
+                                    {{ t('contact.form.fields.consent') }}
                                 </span>
                             </label>
 
@@ -307,8 +429,8 @@
                                 />
                                 {{
                                     formState.isSubmitting
-                                        ? "Memproses..."
-                                        : "Kirim Brief"
+                                        ? t('contact.form.submitting')
+                                        : t('contact.form.submit')
                                 }}
                             </button>
 
@@ -318,9 +440,7 @@
                                 role="status"
                                 aria-live="polite"
                             >
-                                Brief berhasil diproses. Jika WhatsApp tidak
-                                terbuka, cek draft email yang disiapkan
-                                otomatis.
+                                {{ t('contact.form.success') }}
                             </p>
 
                             <p
@@ -335,432 +455,5 @@
                 </div>
             </div>
         </section>
-
-        <section class="ca-section pt-0">
-            <div class="ca-container">
-                <article ref="brandSection" class="ca-card p-5 sm:p-6 lg:p-7">
-                    <div class="max-w-3xl">
-                         <span class="ca-kicker">Brand Assets</span>
-                        <h2
-                            class="mt-4 text-balance font-display text-3xl font-bold leading-tight text-white sm:text-4xl"
-                        >
-                            Asset kit terintegrasi untuk kebutuhan
-                            <span class="ca-gradient-text"
-                                >brand, favicon, dan social share</span
-                            >
-                        </h2>
-                        <p class="mt-3 text-sm leading-relaxed text-slate-300">
-                             Seluruh aset resmi tersedia dalam format
-                            siap pakai untuk website, PWA, dan channel
-                            distribusi konten.
-                        </p>
-                    </div>
-
-                    <div class="mt-7 grid gap-5 xl:grid-cols-2">
-                        <section class="ca-card-soft p-4 sm:p-5">
-                            <h3
-                                class="text-sm font-semibold uppercase tracking-[0.14em] text-slate-300"
-                            >
-                                Social Preview Assets
-                            </h3>
-                            <div class="mt-4 grid gap-3 sm:grid-cols-2">
-                                <article
-                                    v-for="asset in socialAssets"
-                                    :key="asset.path"
-                                    class="rounded-xl border border-white/10 bg-white/[0.02] p-3"
-                                >
-                                    <NuxtImg
-                                        :src="asset.path"
-                                        :alt="asset.alt"
-                                        width="1200"
-                                        height="630"
-                                        loading="lazy"
-                                        decoding="async"
-                                        class="aspect-[16/9] w-full rounded-lg border border-white/10 object-cover"
-                                    />
-                                    <div
-                                        class="mt-3 flex items-start justify-between gap-3"
-                                    >
-                                        <p class="text-xs text-slate-300">
-                                            {{ asset.label }}
-                                        </p>
-                                        <a
-                                            :href="asset.path"
-                                            :download="
-                                                fileNameFromPath(asset.path)
-                                            "
-                                            class="inline-flex shrink-0 items-center gap-1 rounded-md border border-white/15 px-2 py-1 text-[11px] font-semibold text-slate-200 transition hover:border-amber-300/40 hover:text-amber-200"
-                                        >
-                                            <Icon
-                                                name="lucide:download"
-                                                class="h-3.5 w-3.5"
-                                            />
-                                            Download
-                                        </a>
-                                    </div>
-                                </article>
-                            </div>
-                        </section>
-
-                        <section class="ca-card-soft p-4 sm:p-5">
-                            <h3
-                                class="text-sm font-semibold uppercase tracking-[0.14em] text-slate-300"
-                            >
-                                Logo Variants
-                            </h3>
-                            <div class="mt-4 grid gap-3 sm:grid-cols-2">
-                                <article
-                                    v-for="asset in logoAssets"
-                                    :key="asset.path"
-                                    class="rounded-xl border border-white/10 bg-white/[0.02] p-3"
-                                >
-                                    <div
-                                        class="grid aspect-square place-items-center rounded-lg border border-white/10 bg-[#02040b] p-3"
-                                    >
-                                        <NuxtImg
-                                            :src="asset.preview || asset.path"
-                                            :alt="asset.alt"
-                                            width="256"
-                                            height="256"
-                                            loading="lazy"
-                                            decoding="async"
-                                            class="max-h-24 w-auto object-contain"
-                                        />
-                                    </div>
-                                    <div
-                                        class="mt-3 flex items-start justify-between gap-3"
-                                    >
-                                        <p class="text-xs text-slate-300">
-                                            {{ asset.label }}
-                                        </p>
-                                        <a
-                                            :href="asset.path"
-                                            :download="
-                                                fileNameFromPath(asset.path)
-                                            "
-                                            class="inline-flex shrink-0 items-center gap-1 rounded-md border border-white/15 px-2 py-1 text-[11px] font-semibold text-slate-200 transition hover:border-amber-300/40 hover:text-amber-200"
-                                        >
-                                            <Icon
-                                                name="lucide:download"
-                                                class="h-3.5 w-3.5"
-                                            />
-                                            Download
-                                        </a>
-                                    </div>
-                                </article>
-                            </div>
-                        </section>
-                    </div>
-
-                    <div class="mt-5 grid gap-5 xl:grid-cols-2">
-                        <section class="ca-card-soft p-4 sm:p-5">
-                            <h3
-                                class="text-sm font-semibold uppercase tracking-[0.14em] text-slate-300"
-                            >
-                                Favicon Pack
-                            </h3>
-                            <ul class="mt-4 grid gap-2 sm:grid-cols-2">
-                                <li
-                                    v-for="asset in faviconAssets"
-                                    :key="asset.path"
-                                >
-                                    <a
-                                        :href="asset.path"
-                                        :download="fileNameFromPath(asset.path)"
-                                        class="flex items-center justify-between rounded-lg border border-white/10 bg-white/[0.02] px-3 py-2 text-xs text-slate-200 transition hover:border-white/20 hover:bg-white/[0.05]"
-                                    >
-                                        <span class="truncate">{{
-                                            asset.label
-                                        }}</span>
-                                        <Icon
-                                            name="lucide:arrow-down-to-line"
-                                            class="h-3.5 w-3.5 shrink-0 text-amber-300"
-                                        />
-                                    </a>
-                                </li>
-                            </ul>
-                        </section>
-
-                        <section class="ca-card-soft p-4 sm:p-5">
-                            <h3
-                                class="text-sm font-semibold uppercase tracking-[0.14em] text-slate-300"
-                            >
-                                App Icons & Tiles
-                            </h3>
-                            <ul class="mt-4 grid gap-2 sm:grid-cols-2">
-                                <li
-                                    v-for="asset in appIconAssets"
-                                    :key="asset.path"
-                                >
-                                    <a
-                                        :href="asset.path"
-                                        :download="fileNameFromPath(asset.path)"
-                                        class="flex items-center justify-between rounded-lg border border-white/10 bg-white/[0.02] px-3 py-2 text-xs text-slate-200 transition hover:border-white/20 hover:bg-white/[0.05]"
-                                    >
-                                        <span class="truncate">{{
-                                            asset.label
-                                        }}</span>
-                                        <Icon
-                                            name="lucide:arrow-down-to-line"
-                                            class="h-3.5 w-3.5 shrink-0 text-amber-300"
-                                        />
-                                    </a>
-                                </li>
-                            </ul>
-                        </section>
-                    </div>
-                </article>
-            </div>
-        </section>
     </div>
 </template>
-
-<script setup lang="ts">
-import { LINKS, CONTACT, buildWhatsAppUrl, buildMailtoUrl } from '~/utils/constants'
-import { useCoreI18n } from '~/composables/useCoreI18n'
-
-const { useReveal } = useScrollReveal()
-const { t } = useCoreI18n()
-
-const heroKicker = useReveal('fadeUp', 0)
-const heroTitle = useReveal('fadeUp', 100)
-const heroCopy = useReveal('fadeUp', 200)
-const contactSidebar = useReveal('slideLeft')
-const contactForm = useReveal('slideRight', 100)
-const brandSection = useReveal('fadeUp')
-
-interface ContactForm {
-    name: string;
-    email: string;
-    phone: string;
-    subject: string;
-    message: string;
-    consent: boolean;
-}
-
-const subjectOptions = [
-    { value: "demo", label: "Request Demo SaaS LMS" },
-    { value: "pricing", label: "Informasi Pricing" },
-    { value: "venture", label: "Venture Partnership" },
-    { value: "enterprise", label: "Custom Enterprise Solution" },
-    { value: "support", label: "Technical Support" },
-];
-
-const socialAssets = [
-    {
-        label: "Open Graph PNG (1200x630)",
-        path: "/social/og-image.png",
-        alt: "CoreAsia open graph image",
-    },
-    {
-        label: "Open Graph WebP (1200x630)",
-        path: "/social/og-image.webp",
-        alt: "CoreAsia open graph image webp",
-    },
-    {
-        label: "Twitter Card (1200x600)",
-        path: "/social/twitter-card.webp",
-        alt: "CoreAsia twitter card image",
-    },
-    {
-        label: "LinkedIn Share (1200x627)",
-        path: "/social/linkedin-share.webp",
-        alt: "CoreAsia linkedin share image",
-    },
-    {
-        label: "Square Preview (500x500)",
-        path: "/social/square-preview.webp",
-        alt: "CoreAsia square preview image",
-    },
-];
-
-const logoAssets = [
-    {
-        label: "Logo WebP Primary",
-        path: "/logos/logo.webp",
-        alt: "CoreAsia logo webp",
-    },
-    {
-        label: "Logo PNG Primary",
-        path: "/logos/logo.png",
-        alt: "CoreAsia logo png",
-    },
-    {
-        label: "Logo 64 WebP",
-        path: "/logos/logo-64.webp",
-        alt: "CoreAsia logo 64",
-    },
-    {
-        label: "Logo 128 WebP",
-        path: "/logos/logo-128.webp",
-        alt: "CoreAsia logo 128",
-    },
-    {
-        label: "Logo 256 WebP",
-        path: "/logos/logo-256.webp",
-        alt: "CoreAsia logo 256",
-    },
-    {
-        label: "Logo 512 WebP",
-        path: "/logos/logo-512.webp",
-        alt: "CoreAsia logo 512",
-    },
-    {
-        label: "Logo Dark Background",
-        path: "/logos/logo-dark-bg.webp",
-        alt: "CoreAsia logo dark background",
-        preview: "/logos/logo-dark-bg.webp",
-    },
-    {
-        label: "Logo White Background",
-        path: "/logos/logo-white-bg.webp",
-        alt: "CoreAsia logo white background",
-        preview: "/logos/logo-white-bg.webp",
-    },
-    {
-        label: "Logo Vector SVG",
-        path: "/logo.svg",
-        alt: "CoreAsia logo vector",
-        preview: "/logo.svg",
-    },
-];
-
-const faviconAssets = [
-    { label: "Root favicon.ico", path: "/favicon.ico" },
-    { label: "Favicon ICO 16x16", path: "/favicons/favicon.ico" },
-    { label: "Favicon PNG 16x16", path: "/favicons/favicon-16.png" },
-    { label: "Favicon PNG 32x32", path: "/favicons/favicon-32.png" },
-    { label: "Favicon PNG 48x48", path: "/favicons/favicon-48.png" },
-    { label: "Favicon PNG 64x64", path: "/favicons/favicon-64.png" },
-    { label: "Favicon PNG 96x96", path: "/favicons/favicon-96.png" },
-    { label: "Favicon PNG 128x128", path: "/favicons/favicon-128.png" },
-];
-
-const appIconAssets = [
-    { label: "Android Chrome 48x48", path: "/icons/android-chrome-48.png" },
-    { label: "Android Chrome 72x72", path: "/icons/android-chrome-72.png" },
-    { label: "Android Chrome 96x96", path: "/icons/android-chrome-96.png" },
-    { label: "Android Chrome 144x144", path: "/icons/android-chrome-144.png" },
-    { label: "Android Chrome 192x192", path: "/icons/android-chrome-192.png" },
-    { label: "Android Chrome 512x512", path: "/icons/android-chrome-512.png" },
-    { label: "Apple Touch 60x60", path: "/icons/apple-touch-icon-60.png" },
-    { label: "Apple Touch 76x76", path: "/icons/apple-touch-icon-76.png" },
-    { label: "Apple Touch 120x120", path: "/icons/apple-touch-icon-120.png" },
-    { label: "Apple Touch 152x152", path: "/icons/apple-touch-icon-152.png" },
-    { label: "Apple Touch 167x167", path: "/icons/apple-touch-icon-167.png" },
-    { label: "Apple Touch 180x180", path: "/icons/apple-touch-icon-180.png" },
-    { label: "Apple Touch Default", path: "/icons/apple-touch-icon.png" },
-    { label: "Maskable 512x512", path: "/icons/maskable-icon-512.png" },
-    { label: "Windows Tile 70x70", path: "/icons/mstile-70.png" },
-    { label: "Windows Tile 150x150", path: "/icons/mstile-150.png" },
-    { label: "Windows Tile 310x310", path: "/icons/mstile-310.png" },
-];
-
-const fileNameFromPath = (path: string): string => {
-    const parts = path.split("/");
-    return parts[parts.length - 1] || path;
-};
-
-const form = reactive<ContactForm>({
-    name: "",
-    email: "",
-    phone: "",
-    subject: "",
-    message: "",
-    consent: false,
-});
-
-const formState = reactive({
-    isSubmitting: false,
-    isSuccess: false,
-    errorMessage: "",
-});
-
-const resetForm = () => {
-    form.name = "";
-    form.email = "";
-    form.phone = "";
-    form.subject = "";
-    form.message = "";
-    form.consent = false;
-};
-
-const buildMessage = () => {
-    const subjectLabel =
-        subjectOptions.find((option) => option.value === form.subject)?.label ||
-        form.subject;
-    const lines = [
-        `Halo CoreAsia, saya ingin konsultasi terkait: ${subjectLabel}.`,
-        "",
-        `Nama: ${form.name}`,
-        `Email: ${form.email}`,
-        `WhatsApp: ${form.phone || "-"}`,
-        "",
-        "Kebutuhan:",
-        form.message,
-    ];
-
-    return {
-        subjectLabel,
-        body: lines.join("\n"),
-    };
-};
-
-const handleSubmit = async () => {
-    formState.isSubmitting = true;
-    formState.isSuccess = false;
-    formState.errorMessage = "";
-
-    if (!form.consent) {
-        formState.errorMessage =
-            "Persetujuan penggunaan data diperlukan sebelum mengirim brief.";
-        formState.isSubmitting = false;
-        return;
-    }
-
-    try {
-        const { subjectLabel, body } = buildMessage();
-
-        if (process.client) {
-            const waUrl = buildWhatsAppUrl(body);
-            const mailtoUrl = buildMailtoUrl(`[Inquiry] ${subjectLabel}`, body);
-
-            const popup = window.open(waUrl, "_blank", "noopener,noreferrer");
-            if (!popup) {
-                window.location.href = mailtoUrl;
-            }
-        }
-
-        formState.isSuccess = true;
-        resetForm();
-
-        setTimeout(() => {
-            formState.isSuccess = false;
-        }, 5000);
-    } catch (error) {
-        formState.errorMessage =
-            "Terjadi kendala saat memproses brief. Silakan hubungi WhatsApp langsung.";
-    } finally {
-        formState.isSubmitting = false;
-    }
-};
-
-useCoreSeo({
-    title: "Hubungi Kami",
-    description:
-        "Hubungi tim CoreAsia untuk konsultasi strategis terkait SaaS LMS, venture partnership, dan solusi enterprise.",
-    path: "/contact",
-    image: "/social/linkedin-share.webp",
-    twitterImage: "/social/twitter-card.webp",
-});
-
-useSchemaOrg([
-    defineWebPage({
-        "@type": "ContactPage",
-        name: "Hubungi CoreAsia",
-        description:
-            "Halaman kontak CoreAsia untuk konsultasi SaaS LMS, venture partnership, dan solusi enterprise.",
-        url: "https://coreasia.id/contact",
-    }),
-]);
-</script>

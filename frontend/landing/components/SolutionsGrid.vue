@@ -36,6 +36,15 @@ const mousePositions = ref([
 
 const cardsRef = ref<HTMLElement[]>([])
 
+const setCardRef = (el: Element | ComponentPublicInstance | null, index: number) => {
+    if (el) {
+        // Handle NuxtLink which might be a component or element
+        const element = (el as ComponentPublicInstance).$el || el as HTMLElement
+        cardsRef.value[index] = element
+        revealRef('fadeUp', index * 120)(element)
+    }
+}
+
 const handleMouseMove = (index: number, e: MouseEvent) => {
     const card = cardsRef.value?.[index]
     if (!card) return
@@ -70,19 +79,11 @@ const handleMouseLeave = (index: number) => {
                 <NuxtLink
                     v-for="(solution, index) in solutions"
                     :key="solution.title"
-                    :ref="(el) => {
-                        if (el && cardsRef && cardsRef.value) {
-                            cardsRef.value[index] = el as HTMLElement
-                            revealRef('fadeUp', index * 120)(el)
-                        }
-                    }"
+                    :ref="(el) => setCardRef(el, index)"
                     :to="solution.to"
                     class="ca-card-soft group relative overflow-hidden p-5 transition hover:border-white/20"
                     @mousemove="handleMouseMove(index, $event)"
                     @mouseleave="handleMouseLeave(index)"
-                    v-motion
-                    :initial="{ opacity: 0, y: 50 }"
-                    :visible-once="{ opacity: 1, y: 0, transition: { duration: 600, delay: index * 100 } }"
                 >
                     <!-- Spotlight Effect Layer -->
                     <div
@@ -109,7 +110,7 @@ const handleMouseLeave = (index: number) => {
                             v-if="index === 2" 
                             class="ml-2 inline-flex items-center rounded-full bg-fuchsia-400/10 px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-wider text-fuchsia-400 ring-1 ring-inset ring-fuchsia-400/20"
                         >
-                            Future-Ready
+                            {{ t('common.futureReady') }}
                         </span>
                     </h3>
 
@@ -134,7 +135,7 @@ const handleMouseLeave = (index: number) => {
                     <span
                         class="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-amber-300 transition md:opacity-0 md:group-hover:opacity-100"
                     >
-                        Pelajari lebih lanjut
+                        {{ t('common.learnMore') }}
                         <Icon name="lucide:arrow-right" class="h-4 w-4" />
                     </span>
                 </NuxtLink>

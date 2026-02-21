@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 
 const props = defineProps<{
     text: string
@@ -17,8 +17,8 @@ const typeText = () => {
     
     typingInterval.value = setInterval(() => {
         if (i < props.text.length) {
-            displayedText.value += props.text.charAt(i)
             i++
+            displayedText.value = props.text.slice(0, i)
         } else {
             if (typingInterval.value) clearInterval(typingInterval.value)
         }
@@ -27,6 +27,10 @@ const typeText = () => {
 
 onMounted(() => {
     typeText()
+})
+
+onUnmounted(() => {
+    if (typingInterval.value) clearInterval(typingInterval.value)
 })
 
 watch(() => props.text, () => {

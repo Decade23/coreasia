@@ -76,17 +76,6 @@ export const useCoreI18n = () => {
     return result
   }
 
-  // Initialize locale
-  if (typeof window !== 'undefined') {
-    // Watch for URL changes to update locale
-    window.addEventListener('popstate', () => {
-      const newLocale = getLocaleFromPath()
-      if (newLocale !== locale.value) {
-        locale.value = newLocale
-      }
-    })
-  }
-
   return {
     locale: currentLocale,
     localeInfo: currentLocaleInfo,
@@ -95,4 +84,15 @@ export const useCoreI18n = () => {
     setLocale,
     t,
   }
+}
+
+// Initialize locale listener (singleton)
+if (typeof window !== 'undefined') {
+  // Watch for URL changes to update locale
+  window.addEventListener('popstate', () => {
+    const newLocale = getLocaleFromPath()
+    if (newLocale !== locale.value) {
+      locale.value = newLocale
+    }
+  })
 }

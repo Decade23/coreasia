@@ -15,7 +15,12 @@ export default defineNuxtConfig({
         "@nuxt/fonts",
         "@nuxt/icon",
         "@nuxt/image",
-        "@vueuse/motion/nuxt",
+    ],
+    components: [
+        {
+            path: '~/components',
+            pathPrefix: false,
+        },
     ],
     site: {
         url: "https://coreasia.id",
@@ -188,4 +193,13 @@ export default defineNuxtConfig({
     image: {
         dir: "public",
     },
+    routeRules: {
+        // Landing page is static-first, revalidated every hour (SWR) or fully prerendered
+        '/': { prerender: true },
+        '/about': { prerender: true },
+        '/contact': { prerender: true },
+        '/solutions/**': { prerender: true },
+        // API routes shouldn't be cached
+        '/api/**': { cors: true },
+    }
 });

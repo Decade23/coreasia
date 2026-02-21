@@ -44,7 +44,7 @@ const { t } = useCoreI18n()
                     </p>
                     <div class="flex flex-wrap items-center gap-2">
                         <span 
-                            v-for="chip in t('components.footer.chips') as unknown as string[]" 
+                            v-for="chip in (Array.isArray(t('components.footer.chips')) ? t('components.footer.chips') : [])" 
                             :key="chip"
                             class="ca-chip"
                         >

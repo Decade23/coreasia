@@ -11,6 +11,7 @@ interface NeuralNetworkOptions {
     particleCount?: number
     connectionDistance?: number
     particleSpeed?: number
+    maxConnectionsPerParticle?: number
     colors?: {
         particle?: number | string
         line?: number | string
@@ -20,7 +21,6 @@ interface NeuralNetworkOptions {
 // Helper to convert color string to number for Three.js
 const colorToNumber = (color: number | string): number => {
     if (typeof color === 'number') return color
-    // Convert hex string to number
     if (typeof color === 'string') {
         const hex = color.replace('#', '')
         return parseInt(hex, 16)
@@ -45,10 +45,14 @@ export class NeuralNetworkScene {
 
     constructor(container: HTMLElement, options: NeuralNetworkOptions = {}) {
         this.container = container
+
+        const isMobile = window.innerWidth < 768
+
         this.options = {
-            particleCount: options.particleCount ?? 150,
+            particleCount: options.particleCount ?? (isMobile ? 60 : 150),
             connectionDistance: options.connectionDistance ?? 150,
             particleSpeed: options.particleSpeed ?? 0.3,
+            maxConnectionsPerParticle: options.maxConnectionsPerParticle ?? 6,
             colors: {
                 particle: options.colors?.particle ?? themeColors.brand.DEFAULT,
                 line: options.colors?.line ?? themeColors.brand.secondary
@@ -56,10 +60,10 @@ export class NeuralNetworkScene {
         }
 
         this.scene = new THREE.Scene()
-        this.camera = new THREE.PerspectiveCamera(75, 1, 1, 1000) // Aspect ratio updated in resize
+        this.camera = new THREE.PerspectiveCamera(75, 1, 1, 1000)
         this.renderer = new THREE.WebGLRenderer({
             alpha: true,
-            antialias: true,
+            antialias: !isMobile, // Disable antialias on mobile for performance
             powerPreference: 'high-performance'
         })
 
@@ -69,7 +73,7 @@ export class NeuralNetworkScene {
     private init() {
         this.camera.position.z = 400
 
-        // Renderer Setup
+        // Renderer Setup — cap pixel ratio at 2
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
         this.updateSize()
         this.container.appendChild(this.renderer.domElement)
@@ -82,11 +86,11 @@ export class NeuralNetworkScene {
     }
 
     private createParticles() {
-        const { particleCount, particleSpeed, colors } = this.options
+        const { particleCount, particleSpeed, maxConnectionsPerParticle, colors } = this.options
 
         const geometry = new THREE.BufferGeometry()
         const positions = new Float32Array(particleCount * 3)
-        const velocities = []
+        const velocities: ParticleVelocity[] = []
 
         for (let i = 0; i < particleCount; i++) {
             positions[i * 3] = (Math.random() - 0.5) * 800
@@ -116,11 +120,10 @@ export class NeuralNetworkScene {
         this.particleSystem = new THREE.Points(this.particles, material)
         this.scene.add(this.particleSystem)
 
-        // Lines
+        // Lines — sized for realistic max connections, not n²
         const lineGeometry = new THREE.BufferGeometry()
-        // Max connections logic preserved
-        const maxConnections = particleCount * particleCount // simplified upper bound
-        const linePositions = new Float32Array(maxConnections * 3)
+        const maxLines = particleCount * maxConnectionsPerParticle
+        const linePositions = new Float32Array(maxLines * 6) // 2 vertices × 3 coords per line
         lineGeometry.setAttribute('position', new THREE.BufferAttribute(linePositions, 3))
 
         const lineMaterial = new THREE.LineBasicMaterial({
@@ -142,9 +145,9 @@ export class NeuralNetworkScene {
     }
 
     public updateMouse(x: number, y: number) {
-        const rect = this.container.getBoundingClientRect()
-        this.targetMouse.x = x - rect.left
-        this.targetMouse.y = y - rect.top
+        // x, y are already relative to container (calculated in ThreeHeroScene.vue)
+        this.targetMouse.x = x
+        this.targetMouse.y = y
     }
 
     public resetMouse() {
@@ -181,13 +184,12 @@ export class NeuralNetworkScene {
         }
     }
 
-
-
-    // ... (inside class)
     private updatePhysics() {
         if (!this.particles || !this.linesMesh) return
 
-        const positions = this.particles.attributes.position.array as Float32Array
+        const posAttr = this.particles.attributes.position
+        if (!posAttr) return
+        const positions = posAttr.array as Float32Array
         const velocities = this.particles.userData.velocities as ParticleVelocity[]
         const count = this.options.particleCount
 
@@ -197,7 +199,6 @@ export class NeuralNetworkScene {
 
             const i3 = i * 3
 
-            // TypeScript strict check: Float32Array access might be undefined
             const px = positions[i3]!
             const py = positions[i3 + 1]!
             const pz = positions[i3 + 2]!
@@ -222,7 +223,7 @@ export class NeuralNetworkScene {
             }
         }
 
-        this.particles.attributes.position.needsUpdate = true
+        posAttr.needsUpdate = true
         this.updateConnections(positions)
     }
 
@@ -230,19 +231,28 @@ export class NeuralNetworkScene {
         if (!this.linesMesh) return
 
         const lineGeometry = this.linesMesh.geometry
-        const linePositions = lineGeometry.attributes.position.array as Float32Array
+        const linePosAttr = lineGeometry.attributes.position
+        if (!linePosAttr) return
+        const linePositions = linePosAttr.array as Float32Array
 
         let vertexIndex = 0
         let numConnected = 0
         const distSqThreshold = this.options.connectionDistance ** 2
         const count = this.options.particleCount
+        const maxLines = count * this.options.maxConnectionsPerParticle
+        const connectionCounts = new Uint8Array(count)
 
         for (let i = 0; i < count; i++) {
+            if (connectionCounts[i]! >= this.options.maxConnectionsPerParticle) continue
+
             const x1 = positions[i * 3]!
             const y1 = positions[i * 3 + 1]!
             const z1 = positions[i * 3 + 2]!
 
             for (let j = i + 1; j < count; j++) {
+                if (connectionCounts[j]! >= this.options.maxConnectionsPerParticle) continue
+                if (numConnected >= maxLines) break
+
                 const x2 = positions[j * 3]!
                 const y2 = positions[j * 3 + 1]!
                 const z2 = positions[j * 3 + 2]!
@@ -262,12 +272,14 @@ export class NeuralNetworkScene {
                     linePositions[vertexIndex++] = z2
 
                     numConnected++
+                    connectionCounts[i]!++
+                    connectionCounts[j]!++
                 }
             }
         }
 
         lineGeometry.setDrawRange(0, numConnected * 2)
-        lineGeometry.attributes.position.needsUpdate = true
+        linePosAttr.needsUpdate = true
     }
 
     public dispose() {

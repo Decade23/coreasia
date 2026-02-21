@@ -5,18 +5,11 @@ import { useCoreI18n } from '~/composables/useCoreI18n'
 const { locale, t } = useCoreI18n()
 const { useReveal } = useScrollReveal()
 
-const heroKicker = useReveal('fadeUp', 0)
-const heroTitle = useReveal('fadeUp', 100)
-const heroCopy = useReveal('fadeUp', 200)
-const heroActions = useReveal('fadeUp', 300)
-const heroChips = useReveal('fadeUp', 400)
-const heroScene = useReveal('fadeIn', 200)
 const ctaSection = useReveal('scaleUp')
 
 useCoreSeo({
-    title: 'Infrastruktur Teknologi Pendidikan & Sertifikasi',
-    description:
-        'Mitra strategis untuk Lembaga Sertifikasi Profesi (LSP) dan Training Center. Platform SaaS LMS, venture partnership, dan solusi enterprise.',
+    title: t('home.title') as string,
+    description: t('home.description') as string,
     path: '/',
 })
 
@@ -45,17 +38,19 @@ useSchemaOrg([
 
                 <ClientOnly>
                     <ThreeHeroScene />
+                    <template #fallback>
+                        <div class="absolute inset-0 z-0">
+                            <div class="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
+                            <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[500px] w-[800px] bg-amber-500/10 blur-[100px] rounded-full mix-blend-screen"></div>
+                            <div class="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-core-900/50 via-core-950 to-core-950" />
+                        </div>
+                    </template>
                 </ClientOnly>
             </div>
 
             <div class="ca-container relative ca-section lg:py-28">
                 <div class="mx-auto max-w-4xl text-center">
-                    <span
-                        v-motion
-                        :initial="{ opacity: 0, y: -20 }"
-                        :enter="{ opacity: 1, y: 0, transition: { duration: 600, delay: 0 } }"
-                        class="ca-kicker"
-                    >
+                    <span class="ca-kicker animate-fade-in-up min-h-[32px]">
                         <Icon
                             name="lucide:sparkles"
                             class="h-3.5 w-3.5 text-amber-300"
@@ -64,80 +59,40 @@ useSchemaOrg([
                     </span>
 
                     <h1
-                        v-motion
-                        :initial="{ opacity: 0, y: 30, scale: 0.95 }"
-                        :enter="{ opacity: 1, y: 0, scale: 1, transition: { duration: 800, delay: 100, type: 'spring', stiffness: 100 } }"
-                        class="mt-5 text-balance font-display text-4xl font-bold leading-[1.08] text-white sm:text-5xl lg:text-[3.6rem]"
+                        class="mt-5 text-balance font-display text-4xl font-bold leading-[1.08] text-white sm:text-5xl lg:text-[3.6rem] animate-fade-in-up delay-100"
                         v-html="t('home.hero.title')"
                     />
 
                     <p
-                        v-motion
-                        :initial="{ opacity: 0, y: 20 }"
-                        :enter="{ opacity: 1, y: 0, transition: { duration: 700, delay: 200 } }"
-                        class="ca-copy mx-auto mt-5 max-w-2xl"
+                        class="ca-copy mx-auto mt-5 max-w-2xl animate-fade-in-up delay-200"
                         v-html="t('home.hero.subtitle')"
                     />
 
-                    <div
-                        v-motion
-                        :initial="{ opacity: 0, y: 20 }"
-                        :enter="{ opacity: 1, y: 0, transition: { duration: 600, delay: 300 } }"
-                        class="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row"
-                    >
-                        <NuxtLink
-                            to="/contact"
-                            class="ca-btn-primary"
-                            v-motion
-                            :initial="{ opacity: 0, x: -20 }"
-                            :enter="{ opacity: 1, x: 0, transition: { duration: 500, delay: 350 } }"
-                        >
+                    <div class="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row animate-fade-in-up delay-300">
+                        <NuxtLink to="/contact" class="ca-btn-primary">
                             {{ t('home.hero.ctaPrimary') }}
-                            <Icon
-                                name="lucide:arrow-right"
-                                class="h-4 w-4"
-                            />
+                            <Icon name="lucide:arrow-right" class="h-4 w-4" />
                         </NuxtLink>
                         <a
                             :href="LINKS.whatsapp"
                             target="_blank"
                             rel="noopener noreferrer"
                             class="ca-btn-secondary"
-                            v-motion
-                            :initial="{ opacity: 0, x: 20 }"
-                            :enter="{ opacity: 1, x: 0, transition: { duration: 500, delay: 350 } }"
                         >
-                            <Icon
-                                name="lucide:message-circle"
-                                class="h-4 w-4"
-                            />
+                            <Icon name="lucide:message-circle" class="h-4 w-4" />
                             {{ t('home.hero.ctaSecondary') }}
                         </a>
                     </div>
 
-                    <!-- Power Statement -->
-                    <p
-                        v-motion
-                        :initial="{ opacity: 0, scale: 0.8 }"
-                        :enter="{ opacity: 1, scale: 1, transition: { duration: 500, delay: 400 } }"
-                        class="mt-4 text-xs font-medium text-slate-500"
-                    >
+                    <p class="mt-4 text-xs font-medium text-slate-500 animate-fade-in delay-400">
                         <Icon name="lucide:shield-check" class="inline-block h-3 w-3 mr-1 text-emerald-500" />
                         {{ t('home.hero.powerStatement') }}
                     </p>
 
-                    <div
-                        v-motion
-                        :initial="{ opacity: 0 }"
-                        :enter="{ opacity: 1, transition: { duration: 600, delay: 500 } }"
-                        class="mt-8 flex flex-wrap items-center justify-center gap-2"
-                    >
+                    <div class="mt-8 flex flex-wrap items-center justify-center gap-2 animate-fade-in delay-500">
                         <span
-                            v-for="(chip, index) in t('home.hero.chips')"
+                            v-for="chip in t('home.hero.chips')"
                             :key="chip"
-                            v-motion
-                            :initial="{ opacity: 0, scale: 0 }"
-                            :enter="{ opacity: 1, scale: 1, transition: { duration: 400, delay: 600 + (index * 100) } }"
                             class="ca-chip"
                         >
                             {{ chip }}
@@ -147,38 +102,24 @@ useSchemaOrg([
             </div>
         </section>
 
-
-
-        <TrustedBy />
-        <SolutionsGrid />
+        <LazySolutionsGrid />
 
         <section class="ca-section pt-0">
             <div class="ca-container">
                 <div
-                    v-motion
-                    :initial="{ opacity: 0, scale: 0.95, y: 50 }"
-                    :visible-once="{ opacity: 1, scale: 1, y: 0, transition: { duration: 800 } }"
+                    ref="ctaSection"
                     class="ca-card p-6 text-center sm:p-10"
                 >
-                    <h2
-                        class="text-balance font-display text-3xl font-bold text-white sm:text-4xl"
-                    >
+                    <h2 class="text-balance font-display text-3xl font-bold text-white sm:text-4xl">
                         {{ t('home.readyCTA.title') }}
                     </h2>
-                    <p
-                        class="mx-auto mt-3 max-w-2xl text-sm text-slate-300 sm:text-base"
-                    >
+                    <p class="mx-auto mt-3 max-w-2xl text-sm text-slate-300 sm:text-base">
                         {{ t('home.readyCTA.subtitle') }}
                     </p>
-                    <div
-                        class="mt-6 flex flex-col justify-center gap-3 sm:flex-row"
-                    >
+                    <div class="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
                         <NuxtLink
                             to="/contact"
                             class="ca-btn-primary"
-                            v-motion
-                            :initial="{ opacity: 0, y: 10 }"
-                            :visible-once="{ opacity: 1, y: 0, transition: { duration: 500 } }"
                         >
                             {{ t('home.readyCTA.ctaPrimary') }}
                         </NuxtLink>
@@ -187,9 +128,6 @@ useSchemaOrg([
                             target="_blank"
                             rel="noopener noreferrer"
                             class="ca-btn-secondary"
-                            v-motion
-                            :initial="{ opacity: 0, y: 10 }"
-                            :visible-once="{ opacity: 1, y: 0, transition: { duration: 500, delay: 100 } }"
                         >
                             {{ t('home.readyCTA.ctaSecondary') }}
                         </a>
@@ -197,5 +135,7 @@ useSchemaOrg([
                 </div>
             </div>
         </section>
+
+        <!-- <LazyTrustedBy /> -->
     </div>
 </template>
