@@ -1,4 +1,14 @@
-# Nuxt Minimal Starter
+# CoreAsia LMS Platform
+
+## 🔑 Mock Login Credentials (Development)
+Saat ini sistem autentikasi masih menggunakan *mock data*. Gunakan kredensial berikut untuk masuk ke aplikasi saat *development*:
+
+| Role | Email | Password |
+| :--- | :--- | :--- |
+| **Admin LSP** | `admin@lsp.com` | `1234` |
+| **Asesi / Peserta** | `asesi@mail.com` | `1234` |
+
+---
 
 Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
 
