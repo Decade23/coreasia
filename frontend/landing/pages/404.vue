@@ -1,42 +1,43 @@
 <template>
     <FallbackState
-        status-label="Error 404"
-        title="Oops! Halaman Tidak Ditemukan (404)"
-        description="Sepertinya Anda tersesat. Halaman yang Anda cari mungkin telah dipindahkan atau tidak ada."
+        :status-label="t('errors.notFound.statusLabel')"
+        :title="t('errors.notFound.pageTitle')"
+        :description="t('errors.notFound.pageDescription')"
         icon="lucide:map-x"
-        visual-title="Jalur digital tidak ditemukan"
-        visual-description="Peta rute halaman menunjukkan koneksi terputus. Kembali ke beranda untuk melanjutkan navigasi."
+        :visual-title="t('errors.notFound.visualTitle')"
+        :visual-description="t('errors.notFound.visualDescription')"
         :highlights="highlights"
-        progress-label="Path Recovery"
+        :progress-label="t('errors.notFound.progressLabel')"
         :progress="32"
         tone="warning"
     >
         <template #actions>
             <NuxtLink to="/" class="ca-btn-primary">
-                Kembali ke Beranda
+                {{ t('errors.notFound.backToHome') }}
             </NuxtLink>
         </template>
     </FallbackState>
 </template>
 
 <script setup lang="ts">
+const { t } = useCoreI18n()
+
 const highlights = [
     {
         icon: "lucide:map-pinned",
-        label: "Node Status",
-        value: "Route endpoint tidak aktif",
+        label: t('errors.notFound.highlights.0.label'),
+        value: t('errors.notFound.highlights.0.value'),
     },
     {
         icon: "lucide:wifi-off",
-        label: "Connection",
-        value: "Link halaman terputus",
+        label: t('errors.notFound.highlights.1.label'),
+        value: t('errors.notFound.highlights.1.value'),
     },
 ];
 
 useCoreSeo({
-    title: "Halaman Tidak Ditemukan (404)",
-    description:
-        "Halaman tidak ditemukan. Kembali ke beranda CoreAsia untuk melanjutkan navigasi.",
+    title: t('errors.notFound.title') as string,
+    description: t('errors.notFound.description') as string,
     path: "/404",
     noindex: true,
 });

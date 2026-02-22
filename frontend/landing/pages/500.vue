@@ -1,38 +1,40 @@
 <template>
     <FallbackState
-        status-label="Error 500"
-        title="Terjadi Kesalahan Sistem (500)"
-        description="Maaf, ada masalah di sisi server kami. Tim teknis kami sedang memperbaikinya. Silakan coba beberapa saat lagi."
+        :status-label="t('errors.serverError.statusLabel')"
+        :title="t('errors.serverError.pageTitle')"
+        :description="t('errors.serverError.pageDescription')"
         icon="lucide:server-crash"
-        visual-title="Perbaikan sistem sedang berjalan"
-        visual-description="Cluster server kami sedang distabilkan. Proses recovery dipantau otomatis agar layanan kembali normal."
+        :visual-title="t('errors.serverError.visualTitle')"
+        :visual-description="t('errors.serverError.visualDescription')"
         :highlights="highlights"
-        progress-label="Recovery Progress"
+        :progress-label="t('errors.serverError.progressLabel')"
         :progress="68"
         tone="danger"
     >
         <template #actions>
             <button type="button" class="ca-btn-primary" @click="reloadPage">
-                Muat Ulang Halaman
+                {{ t('errors.serverError.reload') }}
             </button>
             <NuxtLink to="/contact" class="ca-btn-secondary">
-                Hubungi Support
+                {{ t('errors.serverError.contactSupport') }}
             </NuxtLink>
         </template>
     </FallbackState>
 </template>
 
 <script setup lang="ts">
+const { t } = useCoreI18n()
+
 const highlights = [
     {
         icon: "lucide:wrench",
-        label: "Maintenance",
-        value: "Service patch sedang diterapkan",
+        label: t('errors.serverError.highlights.0.label'),
+        value: t('errors.serverError.highlights.0.value'),
     },
     {
-        icon: "lucide:gauge",
-        label: "Health Check",
-        value: "Validasi performa server aktif",
+        icon: "lucide:activity",
+        label: t('errors.serverError.highlights.1.label'),
+        value: t('errors.serverError.highlights.1.value'),
     },
 ];
 
@@ -43,9 +45,8 @@ const reloadPage = () => {
 };
 
 useCoreSeo({
-    title: "Terjadi Kesalahan Sistem (500)",
-    description:
-        "Terjadi gangguan sistem sementara. Tim CoreAsia sedang melakukan perbaikan server.",
+    title: t('errors.serverError.title') as string,
+    description: t('errors.serverError.description') as string,
     path: "/500",
     noindex: true,
 });

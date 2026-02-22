@@ -1,0 +1,14 @@
+{
+    "common": {
+        "welcome": "Welcome to CoreAsia LMS",
+        "login": "Login",
+        "register": "Register",
+        "logout": "Logout"
+    },
+    "roles": {
+        "admin": "LSP Admin",
+        "assessor": "Assessor",
+        "assessee": "Assessee",
+        "quality_manager": "Quality Manager"
+    }
+}

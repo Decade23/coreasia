@@ -10,12 +10,18 @@ export default defineNuxtConfig({
         port: 3000
     },
     modules: [
-        "@nuxtjs/tailwindcss",
         "@nuxtjs/seo",
         "@nuxt/fonts",
         "@nuxt/icon",
         "@nuxt/image",
     ],
+    css: ["~/assets/css/main.css"],
+    vite: {
+        plugins: [
+            // @ts-expect-error - Tailwind CSS v4 Vite plugin
+            (await import("@tailwindcss/vite")).default(),
+        ],
+    },
     components: [
         {
             path: '~/components',
@@ -187,9 +193,7 @@ export default defineNuxtConfig({
     schemaOrg: {
         identity: "Organization",
     },
-    tailwindcss: {
-        cssPath: "~/assets/css/main.css",
-    },
+
     image: {
         dir: "public",
     },

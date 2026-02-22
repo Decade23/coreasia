@@ -1,0 +1,14 @@
+{
+    "common": {
+        "welcome": "Selamat Datang di CoreAsia LMS",
+        "login": "Masuk",
+        "register": "Daftar",
+        "logout": "Keluar"
+    },
+    "roles": {
+        "admin": "Admin LSP",
+        "assessor": "Asesor",
+        "assessee": "Asesi",
+        "quality_manager": "Manajer Mutu"
+    }
+}

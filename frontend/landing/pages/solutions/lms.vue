@@ -11,28 +11,14 @@ useCoreSeo({
     path: '/solutions/lms'
 })
 
-const features = [
-    {
-        title: 'Ujian Online Terawasi',
-        desc: 'Sistem proctoring AI mendeteksi kecurangan, tab switching, dan multi-face detection.',
-        icon: 'lucide:shield-alert'
-    },
-    {
-        title: 'Sertifikat Blockchain',
-        desc: 'Terbitkan sertifikat digital yang dapat diverifikasi secara instan dan anti-palsu.',
-        icon: 'lucide:award'
-    },
-    {
-        title: 'Manajemen Kelas Hybrid',
-        desc: 'Kelola sesi offline dan online dalam satu dashboard terintegrasi.',
-        icon: 'lucide:users'
-    },
-    {
-        title: 'Analytics & Reporting',
-        desc: 'Laporan perkembangan peserta secara real-time untuk evaluasi efektivitas training.',
-        icon: 'lucide:bar-chart-3'
-    }
-]
+const features = computed(() => {
+    const raw = t('solutions.lms.detailedFeatures') as any[]
+    return raw.map(f => ({
+        title: f.title,
+        desc: f.description,
+        icon: f.icon
+    }))
+})
 </script>
 
 <template>

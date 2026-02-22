@@ -105,23 +105,19 @@ const buildMessage = () => {
         subjectOptions.value.find((option) => option.value === form.subject)?.label ||
         form.subject;
 
-    // Clean phone number (remove spaces) for sending
     const cleanPhone = form.phone ? form.phone.replace(/\s+/g, "") : "-";
 
-    const lines = [
-        `Halo CoreAsia, saya ingin konsultasi terkait: ${subjectLabel}.`,
-        "",
-        `Nama: ${form.name}`,
-        `Email: ${form.email}`,
-        `WhatsApp: ${cleanPhone}`,
-        "",
-        "Kebutuhan:",
-        form.message,
-    ];
+    const template = t('contact.form.messages.whatsappTemplate') as string;
+    const body = template
+        .replace('{subject}', subjectLabel)
+        .replace('{name}', form.name)
+        .replace('{email}', form.email)
+        .replace('{phone}', cleanPhone)
+        .replace('{message}', form.message);
 
     return {
         subjectLabel,
-        body: lines.join("\n"),
+        body,
     };
 };
 
@@ -189,10 +185,9 @@ useCoreSeo({
 useSchemaOrg([
     defineWebPage({
         "@type": "ContactPage",
-        name: "Hubungi CoreAsia",
-        description:
-            "Halaman kontak CoreAsia untuk konsultasi SaaS LMS, venture partnership, dan solusi enterprise.",
-        url: "https://coreasia.id/contact",
+        name: t('contact.schema.name') as string,
+        description: t('contact.schema.description') as string,
+        url: `${COMPANY.url}/contact`,
     }),
 ]);
 </script>
@@ -232,7 +227,7 @@ useSchemaOrg([
                             <p
                                 class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500"
                             >
-                                Respon cepat
+                                {{ t('contact.channels.quickResponse') }}
                             </p>
                             <h2
                                 class="mt-2 text-xl font-display font-bold text-white"
@@ -353,7 +348,7 @@ useSchemaOrg([
                                     :label="t('contact.form.fields.name') as string"
                                     required
                                     :disabled="formState.isSubmitting"
-                                    placeholder="Nama Anda"
+                                    :placeholder="t('contact.form.placeholders.name') as string"
                                 />
                                 <BaseInput
                                     id="email"
@@ -362,7 +357,7 @@ useSchemaOrg([
                                     :label="t('contact.form.fields.email') as string"
                                     required
                                     :disabled="formState.isSubmitting"
-                                    placeholder="nama@email.com"
+                                    :placeholder="t('contact.form.placeholders.email') as string"
                                 />
                             </div>
 
@@ -373,7 +368,7 @@ useSchemaOrg([
                                     type="tel"
                                     :label="t('contact.form.fields.phone') as string"
                                     :disabled="formState.isSubmitting"
-                                    placeholder="+62 xxx xxxx xxxx"
+                                    :placeholder="t('contact.form.placeholders.phone') as string"
                                 />
 
                                 <SearchSelect
@@ -383,7 +378,7 @@ useSchemaOrg([
                                     :label="t('contact.form.fields.subject') as string"
                                     required
                                     :disabled="formState.isSubmitting"
-                                    placeholder="Pilih subjek"
+                                    :placeholder="t('contact.form.placeholders.subject') as string"
                                 />
                             </div>
 
@@ -394,7 +389,7 @@ useSchemaOrg([
                                 required
                                 :rows="5"
                                 :disabled="formState.isSubmitting"
-                                placeholder="Ceritakan kebutuhan utama Anda"
+                                :placeholder="t('contact.form.placeholders.message') as string"
                             />
 
                             <label

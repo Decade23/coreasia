@@ -1,11 +1,11 @@
-# SertifikasiPro — Platform Sertifikasi & Kompetensi Online
+# Core Asia — Platform Sertifikasi & Kompetensi Online
 ### Product Plan v1.0 — CoreAsia Teknologi
 
 ---
 
 ## 1. Ringkasan Produk
 
-**SertifikasiPro** adalah platform SaaS multi-tenant yang membantu Lembaga Sertifikasi Profesi (LSP), Pusat Pelatihan, dan Korporat mendigitalisasi seluruh siklus sertifikasi — mulai dari pendaftaran peserta, pelaksanaan ujian online, hingga penerbitan sertifikat digital yang terverifikasi.
+**Core Asia** adalah platform SaaS multi-tenant yang membantu Lembaga Sertifikasi Profesi (LSP), Pusat Pelatihan, dan Korporat mendigitalisasi seluruh siklus sertifikasi — mulai dari pendaftaran peserta, pelaksanaan ujian online, hingga penerbitan sertifikat digital yang terverifikasi.
 
 ### Masalah yang Diselesaikan
 
@@ -326,7 +326,7 @@ certificate_templates
 ## 9. Roadmap
 
 ### Phase 1 — Foundation (MVP) — *8-10 minggu*
-> 1 tenant pilot (AfraTraining / SertifikasiPro)
+> 1 tenant pilot (AfraTraining / Core Asia)
 
 - [ ] Setup monorepo (backend + frontend)
 - [ ] Auth (register, login, JWT, role-based)

@@ -24,7 +24,7 @@
         v-model="searchQuery"
         type="text"
         :placeholder="selectedLabel || placeholder"
-        class="w-full bg-transparent p-0 text-sm leading-normal text-white outline-none ring-0 placeholder:transition-colors focus:outline-none focus:ring-0"
+        class="w-full bg-transparent p-0 text-sm leading-normal text-white outline-hidden ring-0 placeholder:transition-colors focus:outline-hidden focus:ring-0"
         :class="[
             modelValue && !searchQuery 
                 ? 'placeholder:text-white' 
@@ -61,7 +61,7 @@
     >
       <ul
         v-if="isOpen && filteredOptions.length > 0"
-        class="absolute z-50 mt-2 max-h-60 w-full overflow-auto rounded-xl border border-white/10 bg-[#0F172A] py-1 shadow-2xl ring-1 ring-black/5 focus:outline-none sm:text-sm"
+        class="absolute z-50 mt-2 max-h-60 w-full overflow-auto rounded-xl border border-white/10 bg-[#0F172A] py-1 shadow-2xl ring-1 ring-black/5 focus:outline-hidden sm:text-sm"
         role="listbox"
       >
         <li

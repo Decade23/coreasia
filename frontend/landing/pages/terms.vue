@@ -1,14 +1,26 @@
 <script setup lang="ts">
 import { CONTACT, COMPANY } from '~/utils/constants'
 
+const { t } = useCoreI18n()
+
 const { useReveal } = useScrollReveal()
 const heroSection = useReveal('fadeUp')
 const contentCard = useReveal('fadeUp', 100)
 
 useCoreSeo({
-    title: 'Syarat dan Ketentuan',
-    description: `Syarat dan ketentuan penggunaan layanan ${COMPANY.name}. Harap baca dengan seksama sebelum menggunakan layanan kami.`,
+    title: t('legal.terms.title') as string,
+    description: t('legal.terms.description') as string,
     path: '/terms',
+})
+
+const sections = computed(() => {
+    const raw = t('legal.terms.sections') as Record<string, any>
+    return Object.values(raw).map(section => ({
+        ...section,
+        content: section.content
+            ?.replace(/{company}/g, COMPANY.name)
+            ?.replace(/{email}/g, CONTACT.email)
+    }))
 })
 </script>
 
@@ -26,10 +38,10 @@ useCoreSeo({
                 <h1
                     class="mt-5 font-display text-4xl font-bold text-white sm:text-5xl"
                 >
-                    Syarat dan Ketentuan
+                    {{ t('legal.terms.title') }}
                 </h1>
                 <p class="ca-copy mt-4">
-                    Terakhir diperbarui: Februari 2026
+                    {{ t('legal.terms.lastUpdated') }}
                 </p>
             </div>
         </section>
@@ -40,93 +52,15 @@ useCoreSeo({
                     ref="contentCard"
                     class="ca-card prose prose-invert max-w-none p-6 sm:p-8 lg:p-10"
                 >
-                    <h2>1. Ketentuan Umum</h2>
-                    <p>
-                        Dengan mengakses dan menggunakan website
-                        {{ COMPANY.name }}, Anda menyetujui untuk terikat
-                        dengan syarat dan ketentuan ini.
-                    </p>
-
-                    <h2>2. Deskripsi Layanan</h2>
-                    <p>
-                        {{ COMPANY.name }} menyediakan layanan teknologi
-                        meliputi:
-                    </p>
-                    <ul>
-                        <li>
-                            Platform SaaS LMS untuk lembaga sertifikasi dan
-                            training center
-                        </li>
-                        <li>
-                            Program venture partnership dengan model bagi hasil
-                        </li>
-                        <li>
-                            Solusi enterprise kustom untuk kebutuhan korporasi
-                        </li>
-                    </ul>
-
-                    <h2>3. Penggunaan Website</h2>
-                    <p>Anda setuju untuk:</p>
-                    <ul>
-                        <li>
-                            Menggunakan website hanya untuk tujuan yang sah
-                        </li>
-                        <li>
-                            Tidak melakukan tindakan yang dapat merusak atau
-                            mengganggu fungsi website
-                        </li>
-                        <li>
-                            Memberikan informasi yang akurat pada formulir
-                            kontak
-                        </li>
-                    </ul>
-
-                    <h2>4. Hak Kekayaan Intelektual</h2>
-                    <p>
-                        Seluruh konten di website ini termasuk teks, grafis,
-                        logo, dan kode sumber merupakan milik
-                        {{ COMPANY.name }} dan dilindungi oleh hukum hak cipta
-                        Indonesia.
-                    </p>
-
-                    <h2>5. Batasan Tanggung Jawab</h2>
-                    <p>
-                        {{ COMPANY.name }} berupaya menjaga keakuratan
-                        informasi di website ini. Namun, kami tidak menjamin
-                        bahwa semua informasi selalu terkini atau bebas
-                        kesalahan.
-                    </p>
-
-                    <h2>6. Perjanjian Layanan</h2>
-                    <p>
-                        Detail perjanjian layanan spesifik (SaaS, venture,
-                        enterprise) akan diatur dalam kontrak terpisah antara
-                        {{ COMPANY.name }} dan klien.
-                    </p>
-
-                    <h2>7. Hukum yang Berlaku</h2>
-                    <p>
-                        Syarat dan ketentuan ini diatur dan ditafsirkan
-                        berdasarkan hukum Republik Indonesia.
-                    </p>
-
-                    <h2>8. Perubahan Ketentuan</h2>
-                    <p>
-                        {{ COMPANY.name }} berhak mengubah syarat dan ketentuan
-                        ini sewaktu-waktu. Perubahan berlaku efektif setelah
-                        dipublikasikan di halaman ini.
-                    </p>
-
-                    <h2>9. Hubungi Kami</h2>
-                    <p>
-                        Untuk pertanyaan terkait syarat dan ketentuan, hubungi
-                        kami di
-                        <a
-                            :href="`mailto:${CONTACT.email}`"
-                            class="text-amber-300 hover:text-amber-200"
-                            >{{ CONTACT.email }}</a
-                        >.
-                    </p>
+                    <div v-for="(section, index) in sections" :key="index">
+                        <h2 v-if="section.title">{{ section.title }}</h2>
+                        <p v-if="section.content">{{ section.content }}</p>
+                        <ul v-if="section.items">
+                            <li v-for="item in section.items" :key="item">
+                                {{ item }}
+                            </li>
+                        </ul>
+                    </div>
                 </article>
             </div>
         </section>

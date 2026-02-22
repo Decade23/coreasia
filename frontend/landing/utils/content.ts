@@ -66,6 +66,10 @@ export const CONTENT = {
         ctaPrimary: 'Hubungi Kami',
         ctaSecondary: 'WhatsApp',
       },
+      schema: {
+        name: 'Tentang CoreAsia',
+        description: 'Company profile dan visi CoreAsia Teknologi.',
+      },
       whyUs: {
         title: 'Mengapa CoreAsia',
         subtitle: 'Solusi Teknologi yang Dirancang untuk Pertumbuhan',
@@ -147,6 +151,28 @@ export const CONTENT = {
           ctaSecondary: 'WhatsApp Sales',
           chips: ['APL-01 & APL-02 digital', 'CBT + Essay grading', 'QR certificate validation'],
         },
+        detailedFeatures: [
+          {
+            title: 'Ujian Online Terawasi',
+            description: 'Sistem proctoring AI mendeteksi kecurangan, tab switching, dan multi-face detection.',
+            icon: 'lucide:shield-alert',
+          },
+          {
+            title: 'Sertifikat Blockchain',
+            description: 'Terbitkan sertifikat digital yang dapat diverifikasi secara instan dan anti-palsu.',
+            icon: 'lucide:award',
+          },
+          {
+            title: 'Manajemen Kelas Hybrid',
+            description: 'Kelola sesi offline dan online dalam satu dashboard terintegrasi.',
+            icon: 'lucide:users',
+          },
+          {
+            title: 'Analytics & Reporting',
+            description: 'Laporan perkembangan peserta secara real-time untuk evaluasi efektivitas training.',
+            icon: 'lucide:bar-chart-3',
+          },
+        ],
         features: [
           'Sertifikat Digital Anti-Palsu',
           'White-Label (Brand Anda)',
@@ -259,6 +285,7 @@ export const CONTENT = {
         ctaSecondary: 'Chat via WhatsApp',
       },
       channels: {
+        quickResponse: 'Respon cepat',
         title: 'Pilih channel favorit Anda',
         subtitle: 'Untuk respon tercepat, gunakan WhatsApp pada jam kerja.',
         whatsapp: 'WhatsApp',
@@ -282,6 +309,16 @@ export const CONTENT = {
           venture: 'Venture Partnership',
           enterprise: 'Custom Enterprise Solution',
           support: 'Technical Support',
+        },
+        placeholders: {
+          name: 'Nama Anda',
+          email: 'nama@email.com',
+          phone: '+62 xxx xxxx xxxx',
+          subject: 'Pilih subjek',
+          message: 'Ceritakan kebutuhan utama Anda',
+        },
+        messages: {
+          whatsappTemplate: 'Halo CoreAsia, saya ingin konsultasi terkait: {subject}.\n\nNama: {name}\nEmail: {email}\nWhatsApp: {phone}\n\nKebutuhan:\n{message}',
         },
         submit: 'Kirim Brief',
         submitting: 'Memproses...',
@@ -313,6 +350,10 @@ export const CONTENT = {
           'Constraint budget dan timeline',
         ],
       },
+      schema: {
+        name: 'Hubungi CoreAsia',
+        description: 'Halaman kontak CoreAsia untuk konsultasi SaaS LMS, venture partnership, dan solusi enterprise.',
+      },
     },
     // Legal pages
     legal: {
@@ -321,14 +362,50 @@ export const CONTENT = {
         description: 'Kebijakan privasi CoreAsia menjelaskan bagaimana kami mengumpulkan, menggunakan, dan melindungi informasi pribadi Anda.',
         lastUpdated: 'Terakhir diperbarui: Februari 2026',
         sections: {
-          informationCollected: 'Informasi yang Kami Kumpulkan',
-          informationUsage: 'Penggunaan Informasi',
-          dataProtection: 'Perlindungan Data',
-          dataSharing: 'Pembagian Informasi',
-          cookies: 'Cookie dan Teknologi Pelacakan',
-          userRights: 'Hak Anda',
-          policyChanges: 'Perubahan Kebijakan',
-          contact: 'Contact Us',
+          informationCollected: {
+            title: '1. Informasi yang Kami Kumpulkan',
+            content: '{company} mengumpulkan informasi yang Anda berikan secara sukarela melalui formulir kontak di website kami, termasuk:',
+            items: ['Nama lengkap', 'Alamat email', 'Nomor WhatsApp (opsional)', 'Informasi kebutuhan bisnis yang disampaikan'],
+          },
+          informationUsage: {
+            title: '2. Penggunaan Informasi',
+            content: 'Informasi yang dikumpulkan digunakan untuk:',
+            items: [
+              'Merespons pertanyaan dan permintaan konsultasi Anda',
+              'Memberikan informasi tentang layanan kami yang relevan',
+              'Meningkatkan kualitas layanan dan pengalaman pengguna',
+            ],
+          },
+          dataProtection: {
+            title: '3. Perlindungan Data',
+            content: 'Kami menerapkan langkah-langkah keamanan yang wajar untuk melindungi informasi pribadi Anda dari akses yang tidak sah, perubahan, pengungkapan, atau penghancuran.',
+          },
+          dataSharing: {
+            title: '4. Pembagian Informasi',
+            content: 'Kami tidak menjual, memperdagangkan, atau menyewakan informasi pribadi Anda kepada pihak ketiga. Informasi hanya dibagikan jika diperlukan untuk memenuhi permintaan layanan Anda.',
+          },
+          cookies: {
+            title: '5. Cookie dan Teknologi Pelacakan',
+            content: 'Website ini menggunakan cookie teknis yang diperlukan untuk fungsi dasar situs. Kami tidak menggunakan cookie pelacakan pihak ketiga tanpa persetujuan Anda.',
+          },
+          userRights: {
+            title: '6. Hak Anda',
+            content: 'Anda berhak untuk:',
+            items: [
+              'Meminta akses ke data pribadi Anda',
+              'Meminta koreksi data yang tidak akurat',
+              'Meminta penghapusan data pribadi Anda',
+              'Menarik persetujuan penggunaan data',
+            ],
+          },
+          policyChanges: {
+            title: '7. Perubahan Kebijakan',
+            content: 'Kami dapat memperbarui kebijakan privasi ini dari waktu ke waktu. Perubahan akan diinformasikan melalui halaman ini.',
+          },
+          contact: {
+            title: '8. Hubungi Kami',
+            content: 'Untuk pertanyaan terkait kebijakan privasi, hubungi kami di {email}.',
+          },
         },
       },
       terms: {
@@ -336,15 +413,52 @@ export const CONTENT = {
         description: `Syarat dan ketentuan penggunaan layanan CoreAsia. Harap baca dengan seksama sebelum menggunakan layanan kami.`,
         lastUpdated: 'Terakhir diperbarui: Februari 2026',
         sections: {
-          generalTerms: 'Ketentuan Umum',
-          serviceDescription: 'Deskripsi Layanan',
-          websiteUsage: 'Penggunaan Website',
-          intellectualProperty: 'Hak Kekayaan Intelektual',
-          liabilityLimitation: 'Batasan Tanggung Jawab',
-          serviceAgreement: 'Perjanjian Layanan',
-          applicableLaw: 'Hukum yang Berlaku',
-          termsChanges: 'Perubahan Ketentuan',
-          contact: 'Contact Us',
+          generalTerms: {
+            title: '1. Ketentuan Umum',
+            content: 'Dengan mengakses dan menggunakan website {company}, Anda menyetujui untuk terikat dengan syarat dan ketentuan ini.',
+          },
+          serviceDescription: {
+            title: '2. Deskripsi Layanan',
+            content: '{company} menyediakan layanan teknologi meliputi:',
+            items: [
+              'Platform SaaS LMS untuk lembaga sertifikasi dan training center',
+              'Program venture partnership dengan model bagi hasil',
+              'Solusi enterprise kustom untuk kebutuhan korporasi',
+            ],
+          },
+          websiteUsage: {
+            title: '3. Penggunaan Website',
+            content: 'Anda setuju untuk:',
+            items: [
+              'Menggunakan website hanya untuk tujuan yang sah',
+              'Tidak melakukan tindakan yang dapat merusak atau mengganggu fungsi website',
+              'Memberikan informasi yang akurat pada formulir kontak',
+            ],
+          },
+          intellectualProperty: {
+            title: '4. Hak Kekayaan Intelektual',
+            content: 'Seluruh konten di website ini termasuk teks, grafis, logo, dan kode sumber merupakan milik {company} dan dilindungi oleh hukum hak cipta Indonesia.',
+          },
+          liabilityLimitation: {
+            title: '5. Batasan Tanggung Jawab',
+            content: '{company} berupaya menjaga keakuratan informasi di website ini. Namun, kami tidak menjamin bahwa semua informasi selalu terkini atau bebas kesalahan.',
+          },
+          serviceAgreement: {
+            title: '6. Perjanjian Layanan',
+            content: 'Detail perjanjian layanan spesifik (SaaS, venture, enterprise) akan diatur dalam kontrak terpisah antara {company} dan klien.',
+          },
+          applicableLaw: {
+            title: '7. Hukum yang Berlaku',
+            content: 'Syarat dan ketentuan ini diatur dan ditafsirkan berdasarkan hukum Republik Indonesia.',
+          },
+          termsChanges: {
+            title: '8. Perubahan Ketentuan',
+            content: '{company} berhak mengubah syarat dan ketentuan ini sewaktu-waktu. Perubahan berlaku efektif setelah dipublikasikan di halaman ini.',
+          },
+          contact: {
+            title: '9. Hubungi Kami',
+            content: 'Untuk pertanyaan terkait syarat dan ketentuan, hubungi kami di {email}.',
+          },
         },
       },
     },

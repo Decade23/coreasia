@@ -24,8 +24,8 @@ useCoreSeo({
 
 useSchemaOrg([
     defineWebPage({
-        name: 'Tentang CoreAsia',
-        description: 'Company profile dan visi CoreAsia Teknologi.',
+        name: t('about.schema.name') as string,
+        description: t('about.schema.description') as string,
     }),
     defineOrganization({
         name: COMPANY.name,

@@ -17,7 +17,7 @@
                 :disabled="disabled"
                 :type="type"
                 :placeholder="placeholder"
-                class="w-full rounded-xl border bg-white/[0.03] px-4 py-3 text-sm text-white placeholder:text-slate-500 transition-colors focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                class="w-full rounded-xl border bg-white/[0.03] px-4 py-3 text-sm text-white placeholder:text-slate-500 transition-colors focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
                 :class="[
                     error
                         ? 'border-rose-300/50 focus:border-rose-400'
