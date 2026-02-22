@@ -1,34 +1,31 @@
 <script setup lang="ts">
 import DashboardLayout from '~/components/templates/DashboardLayout.vue'
 import CaButton from '~/components/atoms/CaButton.vue'
-import { UserAdapter, type UserDTO } from '~/adapters/UserAdapter'
+import { AuthAdapter } from '~/adapters/AuthAdapter'
 
 const { t } = useI18n()
 
-// Mock API Data
-const rawUser: UserDTO = {
-  id: '1',
-  full_name: 'Super Administrator',
-  email_address: 'admin@coreasia.id',
-  user_role: 'admin',
-  is_active_status: true
-}
+const { user: rawUser, pending } = await useAuth()
 
 // Transform using Adapter
-const user = computed(() => UserAdapter.toDomain(rawUser))
+const user = computed(() => rawUser.value ? AuthAdapter.toDomain(rawUser.value) : { fullName: 'Loading...', role: 'admin' })
 </script>
 
 <template>
   <DashboardLayout>
     <template #header>
       <div class="flex items-center justify-between w-full">
-        <h1 class="text-xl font-bold">{{ t('common.welcome') }}</h1>
-        <div class="flex items-center gap-4">
-          <div class="flex flex-col items-end">
-            <span class="text-sm font-bold text-white">{{ user.name }}</span>
+        <div>
+          <h1 class="text-xl md:text-3xl font-bold truncate mr-4 bg-clip-text text-transparent bg-gradient-to-r from-white to-content-muted">{{ t('common.welcome') }}</h1>
+          <p class="text-sm text-content-subtle hidden md:block mt-1">Kelola sistem sertifikasi dengan mudah dan efisien.</p>
+        </div>
+        
+        <div class="flex items-center gap-3 md:gap-6 shrink-0">
+          <div class="hidden md:flex flex-col items-end">
+            <span class="text-base font-bold text-white">{{ user.fullName }}</span>
             <span class="text-[10px] text-brand uppercase font-black tracking-widest">{{ t(`roles.${user.role}`) }}</span>
           </div>
-          <div class="w-10 h-10 rounded-full bg-core-800 border border-brand/30 flex items-center justify-center text-brand font-bold">
+          <div class="w-12 h-12 rounded-full bg-gradient-to-br from-core-800 to-core-900 border border-white/10 flex items-center justify-center text-brand font-bold shadow-xl shadow-black/20 ring-4 ring-black/20">
             SA
           </div>
         </div>
@@ -36,14 +33,22 @@ const user = computed(() => UserAdapter.toDomain(rawUser))
     </template>
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <div v-for="i in 3" :key="i" class="p-8 rounded-3xl bg-core-900 border border-core-800 hover:border-brand/30 transition-all group relative overflow-hidden">
-        <div class="absolute top-0 right-0 p-3 opacity-10 group-hover:opacity-20 transition-opacity">
-          <div class="w-20 h-20 bg-brand rounded-full -mr-10 -mt-10" />
+      <div v-for="i in 3" :key="i" class="p-8 rounded-[2rem] glass-card group relative overflow-hidden">
+        <!-- Glow Effect -->
+        <div class="absolute top-0 right-0 p-8 opacity-20 group-hover:opacity-40 transition-opacity duration-500">
+          <div class="w-32 h-32 bg-brand/50 rounded-full blur-[60px] -mr-16 -mt-16" />
         </div>
         
-        <h3 class="font-bold text-lg mb-2 text-white">Stat Card {{ i }}</h3>
-        <p class="text-content-muted text-sm mb-6 leading-relaxed">Sample data transformed by Adapter pattern to ensure UI consistency.</p>
-        <CaButton variant="primary" size="sm">Detail Data</CaButton>
+        <div class="relative z-10">
+          <div class="w-12 h-12 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-center mb-6 group-hover:bg-brand/10 transition-colors duration-300">
+             <span class="text-xl">📊</span>
+          </div>
+
+          <h3 class="font-bold text-xl mb-3 text-white group-hover:text-brand transition-colors">Statistik Utama {{ i }}</h3>
+          <p class="text-content-muted text-sm mb-8 leading-relaxed">Pantau perkembangan data sertifikasi secara real-time dengan visualisasi modern.</p>
+          
+          <CaButton variant="outline" size="sm" class="w-full md:w-auto border-white/10 hover:border-brand/50 text-content-muted hover:text-white">Lihat Detail</CaButton>
+        </div>
       </div>
     </div>
   </DashboardLayout>

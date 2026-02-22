@@ -1,0 +1,9 @@
+node_modules
+.nuxt
+.output
+.git
+.env
+npm-debug.log
+yarn-error.log
+bun.lockb
+.DS_Store

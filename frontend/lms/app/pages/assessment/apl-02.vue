@@ -2,14 +2,15 @@
 import DashboardLayout from '~/components/templates/DashboardLayout.vue'
 import AssessmentUnitCard from '~/components/organisms/AssessmentUnitCard.vue'
 import CaButton from '~/components/atoms/CaButton.vue'
-import { MOCK_UNITS } from '~/types/assessment'
-import { Save, CheckCircle2 } from 'lucide-vue-next'
 
-const units = ref(MOCK_UNITS)
+import { Save, CheckCircle2, Send } from 'lucide-vue-next'
+
+const { units } = await useAssessment()
 const allClaims = ref<Record<string, any>>({})
 const isSaving = ref(false)
 
 const totalKuk = computed(() => {
+  if (!units.value) return 0
   return units.value.reduce((acc, unit) => {
     return acc + unit.elements.reduce((elAcc, el) => elAcc + el.criteria.length, 0)
   }, 0)
@@ -45,29 +46,32 @@ const submitAssessment = () => {
   <DashboardLayout>
     <template #header>
       <div class="flex items-center justify-between w-full">
-        <div>
-          <h1 class="text-xl font-bold text-white">Asesmen Mandiri (APL-02)</h1>
-          <p class="text-[10px] text-brand font-black uppercase tracking-widest mt-1">Skema: Junior Web Developer</p>
+        <div class="min-w-0 mr-4">
+          <h1 class="text-lg md:text-xl font-bold text-white truncate">Asesmen Mandiri (APL-02)</h1>
+          <p class="text-[10px] text-brand font-black uppercase tracking-widest mt-1 truncate">Skema: Junior Web Developer</p>
         </div>
 
-        <div class="flex items-center gap-4">
-          <CaButton variant="outline" @click="saveAssessment" :disabled="isSaving">
+        <div class="flex items-center gap-2 md:gap-4 shrink-0">
+          <CaButton variant="outline" @click="saveAssessment" :disabled="isSaving" size="sm" class="md:px-4">
             <Save class="w-4 h-4" />
-            {{ isSaving ? 'Menyimpan...' : 'Simpan Draft' }}
+            <span class="hidden md:inline">{{ isSaving ? 'Menyimpan...' : 'Simpan Draft' }}</span>
           </CaButton>
           <CaButton 
             variant="secondary" 
             @click="submitAssessment" 
-            class="bg-emerald-500! hover:bg-emerald-400!"
+            size="sm"
+            class="bg-emerald-500! hover:bg-emerald-400! md:px-4"
           >
-            Kirim Asesmen
-            <CheckCircle2 class="w-4 h-4" />
+            <span class="hidden md:inline">Kirim Asesmen</span>
+            <span class="md:hidden">Kirim</span>
+            <Send class="w-4 h-4 md:hidden" />
+            <CheckCircle2 class="hidden md:inline w-4 h-4" />
           </CaButton>
         </div>
       </div>
     </template>
 
-    <div class="max-w-4xl mx-auto space-y-8 py-6">
+    <div class="max-w-4xl mx-auto space-y-6 md:space-y-8 py-4 md:py-6">
       <!-- Summary Card -->
       <div class="p-6 rounded-3xl bg-brand/5 border border-brand/20 flex flex-col sm:flex-row items-center justify-between gap-6">
         <div class="space-y-1 text-center sm:text-left">
@@ -77,7 +81,7 @@ const submitAssessment = () => {
         
         <div class="flex items-center gap-6">
           <div class="text-center">
-            <span class="block text-2xl font-black text-brand">{{ completedKuk }}/{{ totalKuk }}</span>
+            <span class="block text-2xl font-black text-brand">{{ completedKuk || 0 }}/{{ totalKuk || 0 }}</span>
             <span class="text-[10px] text-content-subtle font-black uppercase tracking-widest">Kriteria</span>
           </div>
           <div class="w-32 h-2 bg-core-800 rounded-full overflow-hidden">

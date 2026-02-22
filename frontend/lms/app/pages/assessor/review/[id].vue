@@ -3,14 +3,14 @@ import DashboardLayout from '~/components/templates/DashboardLayout.vue'
 import ReviewSection from '~/components/organisms/ReviewSection.vue'
 import CaButton from '~/components/atoms/CaButton.vue'
 import { MOCK_APPLICANTS } from '~/types/assessor'
-import { MOCK_UNITS } from '~/types/assessment'
+
 import { ArrowLeft, User, FileText, CheckCircle2 } from 'lucide-vue-next'
 
 const route = useRoute()
 const applicantId = route.params.id as string
 const applicant = computed(() => MOCK_APPLICANTS.find(a => a.id === applicantId))
 
-const units = ref(MOCK_UNITS)
+const { units } = await useAssessment()
 const decisions = ref<Record<string, any>>({})
 const isSubmitting = ref(false)
 

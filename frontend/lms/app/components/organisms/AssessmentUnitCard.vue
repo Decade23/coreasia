@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import type { CompetencyUnit } from '../../types/assessment'
-import CompetencyToggle from '../molecules/CompetencyToggle.vue'
 import { FileText, ChevronDown, ChevronUp } from 'lucide-vue-next'
 
 const props = defineProps<{
@@ -19,47 +18,41 @@ const onStatusChange = (kukId: string, status: 'K' | 'BK') => {
 </script>
 
 <template>
-  <div class="rounded-3xl bg-core-800 border border-core-700 overflow-hidden shadow-xl transition-all">
+  <div class="glass-card rounded-[2rem] overflow-hidden transition-all duration-500">
     <button 
       @click="isOpen = !isOpen"
-      class="w-full flex items-center justify-between p-6 bg-core-900/50 hover:bg-core-900 transition-colors text-left"
+      class="w-full flex flex-col sm:flex-row sm:items-center justify-between p-6 md:p-8 hover:bg-white/5 transition-colors text-left gap-6 group"
     >
-      <div class="flex items-center gap-4">
-        <div class="w-12 h-12 rounded-2xl bg-brand/10 flex items-center justify-center text-brand">
-          <FileText class="w-6 h-6" />
+      <div class="flex items-center gap-6">
+        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-brand/20 to-brand/5 border border-brand/20 flex items-center justify-center text-brand shrink-0 shadow-lg shadow-brand/10 group-hover:scale-110 transition-transform duration-300">
+          <FileText class="w-7 h-7" />
         </div>
         <div>
-          <span class="text-[10px] font-black text-brand uppercase tracking-widest">{{ unit.code }}</span>
-          <h3 class="text-lg font-bold text-white">{{ unit.title }}</h3>
+          <span class="text-[10px] font-black text-brand uppercase tracking-widest block mb-1 opacity-80 group-hover:opacity-100 transition-opacity">{{ unit.code }}</span>
+          <h3 class="text-xl font-bold text-white leading-tight group-hover:text-brand-300 transition-colors">{{ unit.title }}</h3>
         </div>
       </div>
-      <component :is="isOpen ? ChevronUp : ChevronDown" class="w-5 h-5 text-content-muted" />
+      <div class="self-end sm:self-auto w-10 h-10 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-brand/20 transition-colors">
+        <component :is="isOpen ? ChevronUp : ChevronDown" class="w-5 h-5 text-content-muted group-hover:text-white transition-colors" />
+      </div>
     </button>
 
-    <div v-if="isOpen" class="p-6 space-y-8 animate-fade-in">
-      <div v-for="element in unit.elements" :key="element.id" class="space-y-4">
-        <div class="flex items-center gap-3">
-          <div class="h-px flex-1 bg-core-700"></div>
-          <span class="text-[10px] font-black text-content-subtle uppercase tracking-widest">Elemen: {{ element.title }}</span>
-          <div class="h-px flex-1 bg-core-700"></div>
+    <div v-if="isOpen" class="p-6 md:p-8 space-y-10 animate-fade-in border-t border-white/5 bg-black/20">
+      <div v-for="element in unit.elements" :key="element.id" class="space-y-6">
+        <div class="flex items-center gap-4">
+          <div class="h-px flex-1 bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
+          <span class="text-[10px] font-black text-content-subtle uppercase tracking-widest text-center px-4 py-1 rounded-full bg-white/5 border border-white/5">Elemen: {{ element.title }}</span>
+          <div class="h-px flex-1 bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
         </div>
 
-        <div class="space-y-3">
-          <div 
-            v-for="kuk in element.criteria" 
+        <div class="space-y-4">
+          <AssessmentCriteriaItem
+            v-for="kuk in element.criteria"
             :key="kuk.id"
-            class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-core-900/30 border border-core-700/50"
-          >
-            <div class="flex gap-4">
-              <span class="text-xs font-black text-brand uppercase">{{ kuk.id }}</span>
-              <p class="text-sm text-content-muted leading-relaxed">{{ kuk.text }}</p>
-            </div>
-            
-            <CompetencyToggle 
-              :model-value="claims[kuk.id]?.status"
-              @update:model-value="status => onStatusChange(kuk.id, status)"
-            />
-          </div>
+            :kuk="kuk"
+            :claim-status="claims[kuk.id]?.status"
+            @update:status="(status: 'K' | 'BK') => onStatusChange(kuk.id, status)"
+          />
         </div>
       </div>
     </div>

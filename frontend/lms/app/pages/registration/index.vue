@@ -7,6 +7,7 @@ import RegistrationUploadTab from '~/components/organisms/RegistrationUploadTab.
 import CaButton from '~/components/atoms/CaButton.vue'
 import { ChevronRight, ChevronLeft, CheckCircle } from 'lucide-vue-next'
 import type { PersonalData, CompetencyData } from '~/types/registration'
+import { RegistrationAdapter } from '~/adapters/RegistrationAdapter'
 
 definePageMeta({
   layout: false
@@ -15,6 +16,7 @@ definePageMeta({
 const steps = ['Data Pribadi', 'Kompetensi', 'Unggah Berkas', 'Selesai']
 const currentStep = ref(0)
 const isFinished = ref(false)
+const isLoadingSubmit = ref(false)
 
 const personalData = ref<PersonalData>({
   fullName: '',
@@ -45,9 +47,23 @@ const prevStep = () => {
   }
 }
 
-const finishRegistration = () => {
-  isFinished.value = true
-  currentStep.value = 3
+const finishRegistration = async () => {
+  isLoadingSubmit.value = true
+  try {
+    // Transform Domain UI object into Backend DTO object payload
+    const payload = RegistrationAdapter.toDTO(personalData.value, competencyData.value)
+    
+    // Simulate API Call sending the DTO
+    console.log('[Registration] Sending Payload to API:', payload)
+    await new Promise(resolve => setTimeout(resolve, 800))
+    
+    isFinished.value = true
+    currentStep.value = 3
+  } catch (error) {
+    console.error('Submit Registration Failed', error)
+  } finally {
+    isLoadingSubmit.value = false
+  }
 }
 </script>
 
@@ -55,18 +71,19 @@ const finishRegistration = () => {
   <DashboardLayout>
     <template #header>
       <div class="flex items-center justify-between w-full">
-        <h1 class="text-xl font-bold text-white">Pendaftaran Mandiri (APL-01)</h1>
-        <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-brand/10 border border-brand/20">
+        <h1 class="text-lg md:text-xl font-bold text-white truncate mr-2">Pendaftaran Mandiri (APL-01)</h1>
+        <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-brand/10 border border-brand/20 shrink-0">
           <div class="w-2 h-2 rounded-full bg-brand animate-pulse" />
-          <span class="text-[10px] font-black text-brand uppercase tracking-widest">Sesi Aktif</span>
+          <span class="text-[10px] font-black text-brand uppercase tracking-widest hidden md:inline">Sesi Aktif</span>
+          <span class="text-[10px] font-black text-brand uppercase tracking-widest md:hidden">Aktif</span>
         </div>
       </div>
     </template>
 
-    <div class="max-w-4xl mx-auto py-8">
+    <div class="max-w-4xl mx-auto py-4 lg:py-8">
       <FormStepIndicator :steps="steps" :current-step="currentStep" />
 
-      <div class="mt-12 transition-all duration-500">
+      <div class="mt-8 md:mt-12 transition-all duration-500">
         <!-- Step 0: Personal -->
         <RegistrationPersonalTab 
           v-if="currentStep === 0" 
@@ -98,22 +115,27 @@ const finishRegistration = () => {
       </div>
 
       <!-- Navigation Buttons -->
-      <div v-if="!isFinished" class="flex justify-between mt-12 pt-8 border-t border-core-800">
+      <div v-if="!isFinished" class="flex items-center justify-between mt-8 pt-6 md:mt-12 md:pt-8 border-t border-core-800 gap-4">
         <CaButton 
           variant="outline" 
           @click="prevStep" 
           :disabled="currentStep === 0"
+          size="md"
+          class="px-4"
         >
           <ChevronLeft class="w-4 h-4" />
-          Sebelumnya
+          <span class="hidden md:inline">Sebelumnya</span>
         </CaButton>
 
         <CaButton 
           v-if="currentStep < steps.length - 2" 
           variant="primary" 
           @click="nextStep"
+          size="md"
+          class="flex-1 md:flex-none justify-center px-8"
         >
-          Lanjut ke {{ steps[currentStep + 1] }}
+          <span class="md:hidden">Lanjut</span>
+          <span class="hidden md:inline">Lanjut ke {{ steps[currentStep + 1] }}</span>
           <ChevronRight class="w-4 h-4" />
         </CaButton>
 
@@ -121,10 +143,12 @@ const finishRegistration = () => {
           v-else 
           variant="secondary" 
           @click="finishRegistration"
-          class="bg-emerald-500! hover:bg-emerald-400!"
+          :disabled="isLoadingSubmit"
+          class="bg-emerald-500! hover:bg-emerald-400! flex-1 md:flex-none justify-center px-8"
         >
-          Kirim Pendaftaran
-          <CheckCircle class="w-4 h-4" />
+          <span class="md:hidden">{{ isLoadingSubmit ? 'Sedang Kirim...' : 'Kirim' }}</span>
+          <span class="hidden md:inline">{{ isLoadingSubmit ? 'Sedang Mengirim Data...' : 'Kirim Pendaftaran' }}</span>
+          <CheckCircle v-if="!isLoadingSubmit" class="w-4 h-4" />
         </CaButton>
       </div>
     </div>
