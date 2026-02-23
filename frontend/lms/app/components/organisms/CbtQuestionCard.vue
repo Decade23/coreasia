@@ -48,11 +48,11 @@ const onOptionSelect = (optionId: string) => {
       </div>
 
       <div v-else-if="question.type === 'essay'">
-        <textarea
-          class="w-full h-40 bg-core-900/50 border border-white/10 rounded-2xl p-4 text-white hover:border-white/20 focus:border-brand/50 focus:ring-1 focus:ring-brand/50 outline-none transition-all placeholder:text-content-subtle/50 resize-y"
+        <BaseTextarea
+          id="cbt-essay"
           placeholder="Tuliskan jawaban Anda di sini..."
-          :value="modelValue as string"
-          @input="e => emit('update:modelValue', (e.target as HTMLTextAreaElement).value)"
+          :model-value="modelValue as string"
+          @update:model-value="val => emit('update:modelValue', String(val))"
         />
       </div>
     </div>
