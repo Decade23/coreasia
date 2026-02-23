@@ -36,17 +36,9 @@ const searchQuery = ref('')
     <div class="py-6 space-y-6">
       
       <!-- Toolbar -->
-      <div class="flex flex-col sm:flex-row gap-4 items-center justify-between p-4 rounded-2xl bg-core-800/50 border border-core-700">
-        <div class="relative w-full sm:w-96">
-          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search class="w-4 h-4 text-content-subtle" />
-          </div>
-          <input 
-            v-model="searchQuery"
-            type="text" 
-            placeholder="Cari nama jadwal..." 
-            class="w-full bg-core-900 border border-core-700 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/50 transition-all placeholder:text-content-subtle/50"
-          >
+      <div class="flex flex-col sm:flex-row gap-4 items-center justify-between p-4 rounded-2xl bg-[#0F1423] border border-white/5 shadow-xl glass-card">
+        <div class="w-full sm:w-96">
+          <CaInputSearch v-model="searchQuery" placeholder="Cari nama jadwal..." />
         </div>
       </div>
 

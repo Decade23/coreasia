@@ -71,31 +71,33 @@ const getStatusLabel = (status: string) => {
       </div>
 
       <!-- Toolbar -->
-      <div class="flex flex-col lg:flex-row gap-4 items-center justify-between p-4 rounded-2xl bg-core-800/50 border border-white/5 shadow-xl">
-        <div class="relative w-full lg:w-96">
-          <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search class="w-4 h-4 text-content-subtle" />
-          </div>
-          <input 
-            v-model="searchQuery"
-            type="text" 
-            placeholder="Cari nama asesi atau No. Registrasi..." 
-            class="w-full bg-core-900 border border-white/5 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/50 transition-all placeholder:text-content-subtle/50"
-          >
+      <div class="flex flex-col lg:flex-row gap-4 items-center justify-between p-4 rounded-2xl bg-[#0F1423] shadow-xl glass-card">
+        <div class="w-full lg:w-96">
+          <CaInputSearch v-model="searchQuery" placeholder="Cari nama asesi atau No. Registrasi..." />
         </div>
         
-        <div class="flex items-center gap-3 w-full lg:w-auto">
-           <select v-model="statusFilter" class="w-full sm:w-auto bg-core-900 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-brand/50 cursor-pointer">
-             <option>Semua Status</option>
-             <option>Menunggu Verifikasi</option>
-             <option>Butuh Revisi</option>
-             <option>Terverifikasi</option>
-           </select>
-           <select v-model="schemeFilter" class="w-full sm:w-auto bg-core-900 border border-white/5 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-brand/50 cursor-pointer">
-             <option>Semua Skema</option>
-             <option>Junior Web Developer</option>
-             <option>Desainer Grafis Muda</option>
-           </select>
+        <div class="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto">
+           <CaSelect
+             id="filter-status"
+             :options="[
+               { value: 'Semua Status', label: 'Semua Status' },
+               { value: 'Menunggu Verifikasi', label: 'Menunggu Verifikasi' },
+               { value: 'Butuh Revisi', label: 'Butuh Revisi' },
+               { value: 'Terverifikasi', label: 'Terverifikasi' }
+             ]"
+             v-model="statusFilter"
+             class="w-full sm:w-56"
+           />
+           <CaSelect
+             id="filter-scheme"
+             :options="[
+               { value: 'Semua Skema', label: 'Semua Skema' },
+               { value: 'Junior Web Developer', label: 'Junior Web Developer' },
+               { value: 'Desainer Grafis Muda', label: 'Desainer Grafis Muda' }
+             ]"
+             v-model="schemeFilter"
+             class="w-full sm:w-64"
+           />
         </div>
       </div>
 

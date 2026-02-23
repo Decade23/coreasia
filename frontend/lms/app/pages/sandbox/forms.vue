@@ -13,6 +13,7 @@ const selectOptions = [
 ]
 const selectValue = ref('')
 
+const asyncValue = ref('')
 const isAsyncLoading = ref(false)
 const asyncOptions = ref<{value: string, label: string}[]>([])
 const asyncSearchQuery = ref('')

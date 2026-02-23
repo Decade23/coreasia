@@ -39,22 +39,22 @@ const removeFile = (id: string) => {
     <div 
       v-for="doc in documentTypes" 
       :key="doc.id"
-      class="p-5 md:p-6 rounded-2xl border transition-all duration-300 group"
+      class="p-5 md:p-6 rounded-2xl transition-all duration-300 group"
       :class="doc.uploadedFile 
-        ? 'border-brand/30 bg-brand/5 shadow-glow-brand-soft' 
-        : 'border-white/5 bg-core-800/50 hover:border-brand/30 hover:bg-white/5'"
+        ? 'bg-cyan-500/10 shadow-glow-cyan' 
+        : 'bg-[#0F1423] shadow-xl glass-card hover:bg-[#1A2235]'"
     >
       <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div class="flex items-center gap-5">
           <div 
-            class="w-12 h-12 rounded-xl flex items-center justify-center transition-colors shrink-0 shadow-lg"
-            :class="doc.uploadedFile ? 'bg-gradient-to-br from-brand to-brand-400 text-slate-950' : 'bg-core-900 border border-white/5 text-content-muted group-hover:text-white group-hover:border-brand/30'"
+            class="w-12 h-12 rounded-xl flex items-center justify-center transition-all shrink-0 shadow-lg"
+            :class="doc.uploadedFile ? 'bg-cyan-500 text-slate-950' : 'bg-[#1A2235] text-content-muted group-hover:text-cyan-400 group-hover:shadow-glow-cyan'"
           >
             <FileCheck v-if="doc.uploadedFile" class="w-6 h-6" />
-            <File v-else class="w-6 h-6" />
+            <File v-else class="w-6 h-6 opacity-70" />
           </div>
           <div>
-            <h3 class="font-bold text-white text-sm md:text-base group-hover:text-brand transition-colors">{{ doc.label }}</h3>
+            <h3 class="font-bold text-white text-sm md:text-base group-hover:text-cyan-400 transition-colors">{{ doc.label }}</h3>
             <p class="text-[10px] md:text-xs text-content-subtle mt-0.5">{{ doc.description }}</p>
           </div>
         </div>
@@ -75,7 +75,7 @@ const removeFile = (id: string) => {
             class="absolute inset-0 opacity-0 cursor-pointer" 
             @change="e => handleFileUpload(doc.id, e)"
           />
-          <div class="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-core-900 border border-white/5 text-content font-bold text-sm group-hover/btn:bg-brand group-hover/btn:border-transparent group-hover/btn:text-slate-950 transition-all w-full sm:w-auto hover:shadow-lg hover:shadow-brand/20">
+          <div class="flex h-[52px] items-center justify-center gap-2 px-6 rounded-xl bg-cyan-500/10 text-cyan-400 font-bold text-sm group-hover/btn:bg-cyan-400 group-hover/btn:text-slate-950 transition-all w-full sm:w-auto hover:shadow-glow-cyan">
             <Upload class="w-4 h-4" />
             Pilih File
           </div>

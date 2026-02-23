@@ -44,18 +44,12 @@ const refreshQueue = () => {
 
     <div class="max-w-5xl mx-auto space-y-8 py-6">
       <!-- Search & Filter Bar -->
-      <div class="flex flex-col md:flex-row items-center gap-4">
-        <div class="relative flex-1 group">
-          <Search class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-content-subtle group-focus-within:text-brand transition-colors" />
-          <input 
-            v-model="searchQuery"
-            type="text" 
-            placeholder="Cari nama atau NIK asesi..."
-            class="w-full bg-core-900/60 backdrop-blur-md border border-white/10 rounded-2xl py-3 pl-12 pr-6 text-white focus:border-brand/50 outline-none transition-all shadow-xl hover:border-white/20"
-          />
+      <div class="flex flex-col md:flex-row gap-4 w-full">
+        <div class="flex-1">
+          <CaInputSearch v-model="searchQuery" placeholder="Cari nama atau NIK asesi..." />
         </div>
         
-        <button class="flex items-center gap-2 px-6 py-3 border border-white/10 bg-core-900/60 backdrop-blur-md rounded-2xl text-content-muted hover:border-brand/30 hover:text-white transition-all shadow-xl">
+        <button class="flex h-[52px] items-center gap-2 px-6 border border-white/5 bg-[#0F1423] shadow-xl glass-card rounded-xl text-content-muted hover:border-cyan-500/30 hover:text-white transition-all">
           <Filter class="w-4 h-4" />
           <span class="text-sm font-bold">Filter Status</span>
         </button>

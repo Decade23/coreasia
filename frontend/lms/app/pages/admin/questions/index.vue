@@ -50,36 +50,56 @@ const searchQuery = ref('')
       <div class="flex flex-col lg:hidden gap-4">
         <CaInputSearch v-model="searchQuery" placeholder="Cari konten soal..." />
         
-        <div class="flex gap-3">
-           <select v-model="schemeFilter" class="w-full bg-core-900/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-brand/50">
-             <option>Semua Skema</option>
-             <option>Junior Web Developer</option>
-             <option>Desainer Grafis Muda</option>
-           </select>
-           <select v-model="typeFilter" class="w-full bg-core-900/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-brand/50">
-             <option>Semua Tipe</option>
-             <option>Pilihan Ganda</option>
-             <option>Esai</option>
-             <option>Upload Bukti</option>
-             <option>Observasi</option>
-           </select>
+        <div class="flex flex-col sm:flex-row gap-3">
+           <CaSelect
+             id="filter-scheme-mobile"
+             :options="[
+               { value: 'Semua Skema', label: 'Semua Skema' },
+               { value: 'Junior Web Developer', label: 'Junior Web Developer' },
+               { value: 'Desainer Grafis Muda', label: 'Desainer Grafis Muda' }
+             ]"
+             v-model="schemeFilter"
+             class="w-full"
+           />
+           <CaSelect
+             id="filter-type-mobile"
+             :options="[
+               { value: 'Semua Tipe', label: 'Semua Tipe' },
+               { value: 'Pilihan Ganda', label: 'Pilihan Ganda' },
+               { value: 'Esai', label: 'Esai' },
+               { value: 'Upload Bukti', label: 'Upload Bukti' },
+               { value: 'Observasi', label: 'Observasi' }
+             ]"
+             v-model="typeFilter"
+             class="w-full"
+           />
         </div>
       </div>
 
       <!-- Desktop Filter (Only visible on large screens since search is in header) -->
       <div class="hidden lg:flex justify-end gap-3">
-        <select v-model="schemeFilter" class="bg-core-900/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-brand/50 min-w-48 appearance-none cursor-pointer">
-          <option>Semua Skema</option>
-          <option>Junior Web Developer</option>
-          <option>Desainer Grafis Muda</option>
-        </select>
-        <select v-model="typeFilter" class="bg-core-900/50 border border-white/10 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-brand/50 min-w-48 appearance-none cursor-pointer">
-          <option>Semua Tipe</option>
-          <option>Pilihan Ganda</option>
-          <option>Esai</option>
-          <option>Upload Bukti</option>
-          <option>Observasi</option>
-        </select>
+        <CaSelect
+          id="filter-scheme"
+          :options="[
+            { value: 'Semua Skema', label: 'Semua Skema' },
+            { value: 'Junior Web Developer', label: 'Junior Web Developer' },
+            { value: 'Desainer Grafis Muda', label: 'Desainer Grafis Muda' }
+          ]"
+          v-model="schemeFilter"
+          class="w-56"
+        />
+        <CaSelect
+          id="filter-type"
+          :options="[
+            { value: 'Semua Tipe', label: 'Semua Tipe' },
+            { value: 'Pilihan Ganda', label: 'Pilihan Ganda' },
+            { value: 'Esai', label: 'Esai' },
+            { value: 'Upload Bukti', label: 'Upload Bukti' },
+            { value: 'Observasi', label: 'Observasi' }
+          ]"
+          v-model="typeFilter"
+          class="w-48"
+        />
       </div>
 
       <!-- Question List -->
