@@ -16,10 +16,10 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const variants = {
-  primary: 'btn-primary',
-  secondary: 'btn-secondary',
-  outline: 'btn-outline',
-  ghost: 'btn-ghost'
+  primary: 'ca-btn-primary',
+  secondary: 'ca-btn-secondary',
+  outline: 'bg-[#1A2235]/50 text-white font-bold hover:bg-[#1A2235] hover:text-cyan-400 transition-all duration-300',
+  ghost: 'bg-transparent text-content-subtle font-bold hover:text-cyan-400 hover:bg-cyan-500/10 transition-all duration-300'
 }
 
 const sizes = {
@@ -39,7 +39,7 @@ const sizes = {
       fullWidth ? 'w-full' : ''
     ]"
   >
-    <div v-if="loading" class="h-4 w-4 animate-spin rounded-full border-2 border-slate-950/30 border-t-slate-950" />
+    <div v-if="loading" class="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
     <slot v-else />
   </button>
 </template>

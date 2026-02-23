@@ -1,23 +1,23 @@
 export const themeColors = {
     // Brand Colors
     core: {
-        950: "#050A18", // Main Background
-        900: "#0A0F1F", // Secondary Background
-        800: "#111827", // Surface/Card
+        950: "#0A0A0A", // Main Background
+        900: "#141414", // Surface/Card - slightly transparent later via bg-core-900/60
+        800: "#1F1F1F", // Inputs
     },
     // Semantic Tokens
     brand: {
-        DEFAULT: "#F59E0B", // Amber 500
-        300: "#FCD34D", // Amber 300
-        400: "#FBBF24", // Amber 400
-        500: "#F59E0B", // Amber 500
-        600: "#D97706", // Amber 600
-        secondary: "#10B981", // Emerald 500
+        DEFAULT: "#10B981", // Emerald 500 (Primary Accent)
+        300: "#6EE7B7", // Emerald 300
+        400: "#34D399", // Emerald 400
+        500: "#10B981", // Emerald 500
+        600: "#059669", // Emerald 600
+        secondary: "#F59E0B", // Amber 500 (Warning/Secondary)
     },
     surface: {
-        DEFAULT: "#050A18",
-        soft: "#0A0F1F",
-        card: "#111827",
+        DEFAULT: "#0A0A0A",
+        soft: "#141414",
+        card: "#1F1F1F",
     },
     content: {
         DEFAULT: "#F8FAFC", // Slate 50

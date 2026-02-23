@@ -2,12 +2,17 @@ services:
   lms-app:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     container_name: coreasia-lms
     ports:
       - "3002:3000"
+      - "24678:24678" # HMR port
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.nuxt
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=development
       - PORT=3000
       - HOST=0.0.0.0
     restart: unless-stopped

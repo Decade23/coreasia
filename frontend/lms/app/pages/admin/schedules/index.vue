@@ -52,22 +52,22 @@ const searchQuery = ref('')
 
       <!-- Schedule List -->
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div v-for="jadwal in schedules" :key="jadwal.id" class="p-6 rounded-3xl bg-core-800 border border-core-700 hover:border-brand/30 transition-colors group">
+        <div v-for="jadwal in schedules" :key="jadwal.id" class="ca-card group p-6">
           
-          <div class="flex pb-4 border-b border-core-700/50 justify-between items-start mb-4">
+          <div class="flex pb-4 border-b border-white/5 justify-between items-start mb-4">
              <div>
                 <span class="text-[10px] font-black text-brand uppercase tracking-widest">{{ jadwal.id }}</span>
                 <h3 class="text-lg font-bold text-white mt-1">{{ jadwal.title }}</h3>
                 <p class="text-content-muted text-sm mt-1 saturate-50">{{ jadwal.scheme }}</p>
              </div>
-             <button class="text-content-subtle hover:text-white transition-colors p-1 bg-core-900 rounded-lg border border-core-700">
+             <button class="text-content-subtle hover:text-white transition-colors p-1 bg-white/5 rounded-lg border border-white/10">
                <MoreVertical class="w-4 h-4" />
              </button>
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
             <div class="flex items-start gap-3">
-              <div class="w-8 h-8 rounded-lg bg-core-900 border border-core-700 flex items-center justify-center shrink-0">
+              <div class="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
                 <Calendar class="w-4 h-4 text-brand" />
               </div>
               <div>
@@ -77,8 +77,8 @@ const searchQuery = ref('')
             </div>
             
             <div class="flex items-start gap-3">
-              <div class="w-8 h-8 rounded-lg bg-core-900 border border-core-700 flex items-center justify-center shrink-0">
-                <MapPin class="w-4 h-4 text-emerald-500" />
+              <div class="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                <MapPin class="w-4 h-4 text-brand" />
               </div>
               <div>
                 <span class="text-[10px] font-black uppercase text-content-subtle tracking-widest block mb-0.5">Metode / Lokasi</span>
@@ -89,9 +89,9 @@ const searchQuery = ref('')
             </div>
           </div>
 
-          <div class="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl bg-core-900/50 border border-core-700/50">
+          <div class="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl bg-core-900/50 border border-white/5">
             <div class="flex items-center gap-2 w-full sm:w-auto">
-              <Users class="w-4 h-4 text-blue-400" />
+              <Users class="w-4 h-4 text-cyan-400" />
               <div class="flex-1">
                  <div class="flex justify-between w-full mb-1">
                      <span class="text-xs font-bold text-white">{{ jadwal.participants }} <span class="text-content-subtle font-medium text-[10px] uppercase">dari</span> {{ jadwal.maxParticipants }} <span class="text-content-subtle font-medium text-[10px] uppercase">Terisi</span></span>
@@ -99,7 +99,7 @@ const searchQuery = ref('')
                  <div class="w-full sm:w-32 h-1.5 bg-core-800 rounded-full overflow-hidden">
                     <div 
                       class="h-full rounded-full transition-all"
-                      :class="jadwal.participants === jadwal.maxParticipants ? 'bg-red-500' : 'bg-blue-400'"
+                      :class="jadwal.participants === jadwal.maxParticipants ? 'bg-brand-secondary' : 'bg-cyan-400'"
                       :style="{ width: `${(jadwal.participants / jadwal.maxParticipants) * 100}%` }" />
                  </div>
               </div>

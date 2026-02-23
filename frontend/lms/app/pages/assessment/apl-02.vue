@@ -53,19 +53,19 @@ const submitAssessment = () => {
 
         <div class="flex items-center gap-2 md:gap-4 shrink-0">
           <CaButton variant="outline" @click="saveAssessment" :disabled="isSaving" size="sm" class="md:px-4">
-            <Save class="w-4 h-4" />
+            <Save class="w-4 h-4 mr-1 md:mr-0" />
             <span class="hidden md:inline">{{ isSaving ? 'Menyimpan...' : 'Simpan Draft' }}</span>
           </CaButton>
           <CaButton 
-            variant="secondary" 
+            variant="primary" 
             @click="submitAssessment" 
             size="sm"
-            class="bg-emerald-500! hover:bg-emerald-400! md:px-4"
+            class="md:px-4"
           >
             <span class="hidden md:inline">Kirim Asesmen</span>
             <span class="md:hidden">Kirim</span>
-            <Send class="w-4 h-4 md:hidden" />
-            <CheckCircle2 class="hidden md:inline w-4 h-4" />
+            <Send class="w-4 h-4 md:hidden ml-1" />
+            <CheckCircle2 class="hidden md:inline w-4 h-4 ml-1" />
           </CaButton>
         </div>
       </div>
@@ -73,10 +73,10 @@ const submitAssessment = () => {
 
     <div class="max-w-4xl mx-auto space-y-6 md:space-y-8 py-4 md:py-6">
       <!-- Summary Card -->
-      <div class="p-6 rounded-3xl bg-brand/5 border border-brand/20 flex flex-col sm:flex-row items-center justify-between gap-6">
+      <div class="p-6 ca-card flex flex-col sm:flex-row items-center justify-between gap-6 border-brand/20 shadow-brand-glow">
         <div class="space-y-1 text-center sm:text-left">
           <h2 class="text-white font-bold text-lg">Progres Penilaian</h2>
-          <p class="text-content-muted text-sm">Selesaikan penilaian untuk seluruh unit kompetensi.</p>
+          <p class="text-content-subtle text-sm">Selesaikan penilaian untuk seluruh unit kompetensi.</p>
         </div>
         
         <div class="flex items-center gap-6">
@@ -104,7 +104,7 @@ const submitAssessment = () => {
       </div>
 
       <!-- Bottom Info -->
-      <div class="p-6 rounded-2xl bg-core-900/50 border border-dashed border-core-700 text-center">
+      <div class="p-6 rounded-2xl bg-core-900/50 border border-dashed border-white/10 text-center">
         <p class="text-sm text-content-subtle italic">
           Catatan: Pastikan Anda memilih "K" hanya jika Anda benar-benar menguasai kriteria tersebut dan memiliki bukti yang relevan.
         </p>

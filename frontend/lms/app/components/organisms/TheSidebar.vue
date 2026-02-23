@@ -51,13 +51,13 @@ const menuItems = computed(() => {
 
 <template>
   <aside
-    class="fixed inset-y-0 left-0 z-50 w-72 glass border-r border-white/5 transform transition-transform duration-500 cubic-bezier(0.16, 1, 0.3, 1) lg:translate-x-0 lg:static lg:h-screen lg:shadow-none shadow-2xl flex flex-col"
+    class="fixed inset-y-0 left-0 z-50 w-[280px] transform transition-transform duration-500 lg:translate-x-0 lg:static h-screen flex flex-col bg-[#0F1423]/95 lg:bg-transparent backdrop-blur-2xl lg:backdrop-blur-none"
     :class="isOpen ? 'translate-x-0' : '-translate-x-full'"
   >
     <!-- Logo Area -->
-    <div class="h-24 flex items-center justify-between px-8 border-b border-white/5">
+    <div class="h-24 flex items-center justify-between px-8">
       <div class="flex items-center gap-4 group cursor-pointer">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-brand to-brand-400 flex items-center justify-center font-black text-slate-950 text-xl shadow-lg shadow-brand/20 group-hover:scale-105 transition-transform duration-300">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#06B6D4] to-[#0891B2] flex items-center justify-center font-black text-slate-950 text-xl shadow-glow-cyan-card group-hover:scale-105 transition-transform duration-300">
           C
         </div>
         <div>
@@ -81,22 +81,22 @@ const menuItems = computed(() => {
         :key="item.to"
         :to="item.to"
         @click="emit('close')"
-        class="flex items-center gap-4 px-4 py-3.5 rounded-xl transition-all duration-300 group relative overflow-hidden"
-        active-class="bg-white/5 !text-white font-bold shadow-lg shadow-black/20"
+        class="flex items-center gap-3 px-4 py-3 rounded-xl text-content-subtle font-bold hover:text-white hover:bg-white/5 transition-all duration-300 group relative overflow-hidden my-1"
+        active-class="bg-cyan-500/10 !text-cyan-400 font-black"
       >
-        <!-- Active Indicator -->
-        <div class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 rounded-r-full bg-brand opacity-0 transition-opacity duration-300 group-[.router-link-active]:opacity-100" />
+        <!-- Active Indicator (Glowing) -->
+        <div class="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-3/5 rounded-r-md bg-[#06B6D4] opacity-0 transition-opacity duration-300 shadow-glow-cyan-strong group-[.router-link-active]:opacity-100" />
         
         <component 
           :is="item.icon" 
-          class="w-5 h-5 text-content-subtle group-hover:text-brand transition-colors duration-300 group-[.router-link-active]:text-brand" 
+          class="w-5 h-5 transition-colors duration-300 group-hover:text-white group-[.router-link-active]:text-cyan-400" 
         />
-        <span class="font-medium text-content-muted group-hover:text-content group-[.router-link-active]:text-white relative z-10">{{ item.label }}</span>
+        <span class="relative z-10 transition-colors">{{ item.label }}</span>
       </NuxtLink>
     </nav>
 
     <!-- Footer -->
-    <div class="p-6 border-t border-white/5 bg-gradient-to-t from-black/40 to-transparent">
+    <div class="p-6 bg-gradient-to-t from-[#050814]/80 to-transparent">
       <button @click="logout" class="w-full flex items-center gap-4 px-4 py-3.5 rounded-xl text-red-400 hover:bg-red-500/10 hover:text-red-300 transition-all font-medium group">
         <LogOut class="w-5 h-5 text-red-500/70 group-hover:text-red-400 transition-colors" />
         <span>Keluar</span>

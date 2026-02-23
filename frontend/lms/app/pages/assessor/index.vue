@@ -34,7 +34,7 @@ const refreshQueue = () => {
 
         <button 
           @click="refreshQueue"
-          class="p-2 rounded-xl bg-core-800 border border-core-700 text-content-muted hover:text-white transition-all"
+          class="p-2 rounded-xl bg-core-900/60 backdrop-blur-md border border-white/10 text-content-muted hover:text-brand transition-all shadow-xl"
           :class="{ 'animate-spin': isLoading }"
         >
           <RefreshCcw class="w-5 h-5" />
@@ -51,11 +51,11 @@ const refreshQueue = () => {
             v-model="searchQuery"
             type="text" 
             placeholder="Cari nama atau NIK asesi..."
-            class="w-full bg-core-900 border-2 border-core-800 rounded-2xl py-3 pl-12 pr-6 text-white focus:border-brand/50 outline-none transition-all"
+            class="w-full bg-core-900/60 backdrop-blur-md border border-white/10 rounded-2xl py-3 pl-12 pr-6 text-white focus:border-brand/50 outline-none transition-all shadow-xl hover:border-white/20"
           />
         </div>
         
-        <button class="flex items-center gap-2 px-6 py-3 bg-core-800 border-2 border-core-700 rounded-2xl text-content-muted hover:border-brand/50 hover:text-white transition-all">
+        <button class="flex items-center gap-2 px-6 py-3 border border-white/10 bg-core-900/60 backdrop-blur-md rounded-2xl text-content-muted hover:border-brand/30 hover:text-white transition-all shadow-xl">
           <Filter class="w-4 h-4" />
           <span class="text-sm font-bold">Filter Status</span>
         </button>
@@ -76,11 +76,11 @@ const refreshQueue = () => {
         </div>
 
         <div v-else class="py-20 text-center animate-fade-in">
-          <div class="w-20 h-20 bg-core-800 rounded-full flex items-center justify-center mx-auto mb-6 text-content-subtle">
+          <div class="w-20 h-20 bg-core-900/50 rounded-full flex items-center justify-center mx-auto mb-6 text-content-subtle border border-white/5">
             <Search class="w-10 h-10" />
           </div>
           <h3 class="text-lg font-bold text-white">Tidak Ada Data Ditemukan</h3>
-          <p class="text-sm text-content-muted">Coba ubah kata kunci pencarian Anda.</p>
+          <p class="text-sm text-content-muted mt-1">Coba ubah kata kunci pencarian Anda.</p>
         </div>
       </div>
     </div>

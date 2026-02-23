@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import DashboardLayout from '~/components/templates/DashboardLayout.vue'
 import CaButton from '~/components/atoms/CaButton.vue'
-import { CheckCircle, Clock, CalendarDays, ExternalLink } from 'lucide-vue-next'
+import BaseBadge from '~/components/atoms/BaseBadge.vue'
+import { CheckCircle, Clock, CalendarDays, ExternalLink, ShieldCheck } from 'lucide-vue-next'
 import { useAuth } from '~/composables/useAuth'
 
 const { user } = useAuth()
@@ -39,58 +40,68 @@ const certificates = ref([
     <template #header>
       <div class="flex items-center justify-between w-full">
         <div>
-          <h1 class="text-xl md:text-3xl font-bold truncate mr-4 bg-clip-text text-transparent bg-linear-to-r from-white to-content-muted">Portal Asesi</h1>
-          <p class="text-sm text-content-subtle hidden md:block mt-1">Selamat datang, {{ user?.name || 'Peserta' }}</p>
+          <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
+             Portal Asesi
+          </h1>
+          <p class="text-sm text-slate-400 hidden md:block mt-2">Selamat datang kembali, <strong class="text-emerald-400">{{ user?.name || 'Peserta' }}</strong></p>
         </div>
         
-        <div class="flex items-center gap-3 shrink-0">
-          <CaButton variant="primary" size="sm" @click="navigateTo('/registration')">
-            Daftar Sertifikasi Baru
+        <div class="flex items-center gap-4 shrink-0">
+          <CaButton variant="primary" class="rounded-full px-5 py-2 flex items-center gap-2 transition-all hover:scale-105" @click="navigateTo('/registration')">
+            <span class="hidden sm:inline">Daftar Sertifikasi</span>
           </CaButton>
         </div>
       </div>
     </template>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 py-4">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 py-6">
       
       <!-- Main Content Area: Status Pendaftaran -->
       <div class="lg:col-span-2 space-y-6">
-        <h2 class="text-lg font-bold text-white flex items-center gap-2">
-          <Clock class="w-5 h-5 text-brand" />
+        <h2 class="text-xl font-extrabold text-white flex items-center gap-2">
+          <Clock class="w-6 h-6 text-emerald-400" />
           Status Pendaftaran Saat Ini
         </h2>
 
-        <div v-if="applications.length === 0" class="p-8 rounded-3xl border border-dashed border-core-700 bg-core-900/30 text-center">
-          <p class="text-content-muted mb-4">Anda belum memiliki pendaftaran sertifikasi aktif.</p>
-          <CaButton variant="outline" size="sm" @click="navigateTo('/registration')">Mulai Pendaftaran</CaButton>
+        <div v-if="applications.length === 0" class="p-8 rounded-[2rem] bg-[#1A2235] text-center">
+          <p class="text-content-subtle mb-6">Anda belum memiliki pendaftaran sertifikasi aktif.</p>
+          <button class="bg-cyan-500/15 text-cyan-400 font-black tracking-widest uppercase text-xs hover:bg-cyan-500/25 px-6 py-3 rounded-xl transition-all" @click="navigateTo('/registration')">Mulai Pendaftaran</button>
         </div>
 
         <div v-else class="space-y-4">
-          <div v-for="app in applications" :key="app.id" class="p-6 rounded-3xl bg-core-800 border border-core-700 shadow-xl relative overflow-hidden group">
+          <div v-for="app in applications" :key="app.id" class="ca-card group">
             
-            <div class="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
-              <div class="w-32 h-32 bg-brand rounded-full blur-[50px] -mr-16 -mt-16" />
+            <div class="absolute top-0 right-0 p-8 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none">
+              <div class="w-48 h-48 bg-brand/10 rounded-full blur-[60px] -mr-16 -mt-16" />
             </div>
 
-            <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-              <div>
-                <span class="text-[10px] font-black text-content-subtle uppercase tracking-widest">{{ app.id }}</span>
-                <h3 class="text-xl font-bold text-white mt-1 mb-2">{{ app.schemeName }}</h3>
-                <span class="px-3 py-1 bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 rounded-full text-xs font-bold inline-flex items-center gap-1">
-                  <CheckCircle class="w-3 h-3" />
-                  Berkas Terverifikasi
-                </span>
+            <div class="relative z-10 flex flex-col md:flex-row md:items-start justify-between gap-6 p-2">
+              <div class="space-y-4">
+                <div>
+                  <span class="text-[10px] font-black text-brand uppercase tracking-widest">{{ app.id }}</span>
+                  <h3 class="text-xl md:text-2xl font-bold text-white mt-1 leading-tight">{{ app.schemeName }}</h3>
+                </div>
+                
+                <BaseBadge 
+                  text="Berkas Terverifikasi" 
+                  variant="success" 
+                  type="soft" 
+                />
               </div>
 
               <!-- Jadwal Box if available -->
-              <div v-if="app.examSchedule" class="p-4 rounded-2xl bg-core-900/50 border border-core-700 w-full md:w-auto min-w-[200px]">
-                <div class="flex items-center gap-2 mb-3">
-                  <CalendarDays class="w-4 h-4 text-brand" />
-                  <span class="text-xs font-black text-content-subtle uppercase tracking-widest">Jadwal Ujian</span>
+              <div v-if="app.examSchedule" class="p-6 rounded-2xl bg-[#1A2235] w-full md:w-auto min-w-[240px] shadow-inset-light">
+                <div class="flex items-center justify-between mb-4 pb-4">
+                  <div class="flex items-center gap-2">
+                    <CalendarDays class="w-4 h-4 text-cyan-400" />
+                    <span class="text-[10px] font-black text-content-subtle uppercase tracking-widest">Jadwal Ujian</span>
+                  </div>
                 </div>
-                <p class="font-bold text-white text-sm">{{ app.examSchedule.date }}</p>
-                <p class="text-content-muted text-xs mt-1">{{ app.examSchedule.time }} &bull; {{ app.examSchedule.location }}</p>
-                <CaButton variant="secondary" size="sm" class="w-full mt-4 justify-center" @click="navigateTo('/cbt/simulation')">
+                <p class="font-bold text-white text-base md:text-lg">{{ app.examSchedule.date }}</p>
+                <p class="text-cyan-400 text-xs font-bold mt-1.5 flex items-center gap-1.5">
+                   <Clock class="w-3 h-3" /> {{ app.examSchedule.time }} &bull; {{ app.examSchedule.location }}
+                </p>
+                <CaButton variant="secondary" fullWidth class="mt-6" @click="navigateTo('/cbt/simulation')">
                   Masuk Ujian (CBT)
                 </CaButton>
               </div>
@@ -101,24 +112,29 @@ const certificates = ref([
 
       <!-- Sidebar Area: Sertifikat & Riwayat -->
       <div class="space-y-6">
-         <h2 class="text-lg font-bold text-white flex items-center gap-2">
+         <h2 class="text-xl font-bold text-white flex items-center gap-2">
+          <ShieldCheck class="w-6 h-6 text-brand" />
           Sertifikat Saya
         </h2>
 
-        <div v-if="certificates.length === 0" class="p-6 rounded-3xl bg-core-900/50 border border-core-800 text-center">
+        <div v-if="certificates.length === 0" class="p-6 ca-card text-center">
           <p class="text-sm text-content-subtle">Belum ada sertifikat yang diraih.</p>
         </div>
 
         <div v-else class="space-y-4">
-          <div v-for="cert in certificates" :key="cert.id" class="p-5 rounded-2xl bg-linear-to-br from-core-800 to-core-900 border border-core-700 hover:border-brand/50 transition-colors group cursor-pointer">
-            <h4 class="font-bold text-sm text-white mb-2 line-clamp-2 group-hover:text-brand transition-colors">{{ cert.schemeName }}</h4>
-            <div class="flex items-center justify-between text-xs">
-              <span class="text-content-muted font-medium">No: {{ cert.id }}</span>
-              <span class="text-emerald-500 font-bold bg-emerald-500/10 px-2 py-0.5 rounded">{{ cert.status }}</span>
+          <div v-for="cert in certificates" :key="cert.id" class="bg-[#0F1423] rounded-2xl group cursor-pointer p-6 hover:-translate-y-1 hover:shadow-glow-base-strong transition-all duration-300 relative overflow-hidden">
+            
+            <!-- Deco -->
+            <div class="absolute top-0 right-0 w-24 h-24 bg-cyan-500/10 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none" />
+
+            <h4 class="font-bold text-base md:text-lg text-white mb-3 line-clamp-2 group-hover:text-cyan-400 transition-colors relative z-10">{{ cert.schemeName }}</h4>
+            <div class="flex items-center justify-between text-xs mb-6 relative z-10">
+              <span class="text-content-muted font-black tracking-widest text-[10px] uppercase">No: {{ cert.id }}</span>
+              <BaseBadge :text="cert.status" variant="success" type="soft" />
             </div>
-            <div class="mt-4 pt-4 border-t border-core-700/50 flex items-center justify-between">
-              <span class="text-[10px] text-content-subtle">Berlaku s/d: {{ cert.validUntil }}</span>
-              <button class="text-brand hover:text-white transition-colors">
+            <div class="pt-4 flex items-center justify-between relative z-10">
+              <span class="text-[10px] font-black uppercase tracking-widest text-content-subtle">Berlaku s/d: <span class="text-white">{{ cert.validUntil }}</span></span>
+              <button class="text-cyan-400 hover:text-cyan-300 bg-cyan-500/10 hover:bg-cyan-500/20 p-2 rounded-lg transition-colors">
                 <ExternalLink class="w-4 h-4" />
               </button>
             </div>

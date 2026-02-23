@@ -55,7 +55,7 @@ const submitExam = () => {
     <div class="max-w-4xl mx-auto space-y-8">
       <!-- Progress Bar -->
       <div class="space-y-2">
-        <div class="flex justify-between text-xs font-bold uppercase tracking-widest text-content-muted">
+        <div class="flex justify-between text-xs font-black uppercase tracking-widest text-content-subtle">
           <span>Progres Ujian</span>
           <span>Soal {{ currentIndex + 1 }} dari {{ exam.questions.length }}</span>
         </div>
@@ -75,13 +75,13 @@ const submitExam = () => {
       />
 
       <!-- Navigation -->
-      <div class="flex items-center justify-between pt-4 border-t border-core-800">
+      <div class="flex items-center justify-between pt-4 mt-8 border-t border-white/5">
         <CaButton 
           variant="outline" 
           @click="prevQuestion"
           :disabled="currentIndex === 0"
         >
-          <ChevronLeft class="w-4 h-4" />
+          <ChevronLeft class="w-4 h-4 mr-1" />
           Sebelumnya
         </CaButton>
 
@@ -92,17 +92,16 @@ const submitExam = () => {
             @click="nextQuestion"
           >
             Selanjutnya
-            <ChevronRight class="w-4 h-4" />
+            <ChevronRight class="w-4 h-4 ml-1" />
           </CaButton>
 
           <CaButton 
             v-else
-            variant="secondary" 
+            variant="primary" 
             @click="submitExam"
-            class="bg-emerald-500! hover:bg-emerald-400!"
           >
             Selesaikan Ujian
-            <Send class="w-4 h-4" />
+            <Send class="w-4 h-4 ml-1" />
           </CaButton>
         </div>
       </div>

@@ -1,0 +1,32 @@
+# Gunakan image resmi Bun berbasis Debian (glibc)
+FROM oven/bun:1
+
+# Set working directory
+WORKDIR /app
+
+# Salin file konfigurasi package
+COPY package.json bun.lock ./
+
+# Install dependensi
+RUN bun install --frozen-lockfile
+
+# Salin sisa kode sumber
+COPY . .
+
+# Generate .nuxt types/templates secara eksplisit
+RUN bun run postinstall
+
+# Tambahkan memory limit jika build gagal karena kehabisan RAM
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+
+# Set environment variables untuk development
+ENV NODE_ENV=development
+ENV HOST=0.0.0.0
+ENV PORT=3000
+
+# Ekspose port utama dan HMR
+EXPOSE 3000
+EXPOSE 24678
+
+# Jalankan server Nuxt mode dev
+CMD ["bun", "run", "dev"]
