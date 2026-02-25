@@ -1,16 +1,15 @@
 import { ref, computed } from 'vue'
-import type { ExamDomain, ExamQuestionDomain } from '~/adapters/ExamAdapter'
+import { ExamAdapter, type ExamDomain, type ExamQuestionDomain, type ExamDTO } from '~/adapters/ExamAdapter'
+import { coreApi } from '~/services/api/CoreApiService'
 
 /**
  * useCbtEngine
  * Core logical state machine for the Computer-Based Testing environment.
- * Handles the running timer, auto-saving answers, and exam navigation.
+ * Handles timer, auto-save, exam navigation, and API integration.
  */
 export const useCbtEngine = () => {
     const currentExam = ref<ExamDomain | null>(null)
     const currentIndex = ref<number>(0)
-
-    // Record<questionId, answerValue>
     const answers = ref<Record<string, any>>({})
 
     // Timer State
@@ -18,15 +17,26 @@ export const useCbtEngine = () => {
     const isTimeUp = ref<boolean>(false)
     let timerInterval: ReturnType<typeof setInterval> | null = null
 
+    // Loading & Error states
+    const loading = ref(false)
+    const submitting = ref(false)
+    const error = ref<string | null>(null)
+
     // Computed Properties for UI
     const currentQuestion = computed<ExamQuestionDomain | null>(() => {
         if (!currentExam.value) return null
         return currentExam.value.questions[currentIndex.value] || null
     })
 
+    const totalQuestions = computed(() => currentExam.value?.questions?.length || 0)
+
     const progressPercentage = computed(() => {
-        if (!currentExam.value?.questions?.length) return 0
-        return ((currentIndex.value + 1) / currentExam.value.questions.length) * 100
+        if (!totalQuestions.value) return 0
+        return ((currentIndex.value + 1) / totalQuestions.value) * 100
+    })
+
+    const answeredCount = computed(() => {
+        return Object.values(answers.value).filter(a => a !== null && a !== undefined && a !== '').length
     })
 
     const isFirstQuestion = computed(() => currentIndex.value === 0)
@@ -34,6 +44,24 @@ export const useCbtEngine = () => {
         if (!currentExam.value) return true
         return currentIndex.value === currentExam.value.questions.length - 1
     })
+
+    /**
+     * Fetch exam from API and initialize session
+     */
+    const fetchAndStart = async (examId: string) => {
+        loading.value = true
+        error.value = null
+        try {
+            const dto = await coreApi.get<ExamDTO>(`/exams/${examId}`)
+            const exam = ExamAdapter.toDomain(dto)
+            startExam(exam)
+        } catch (e: any) {
+            error.value = e?.data?.message || e?.message || 'Gagal memuat soal ujian'
+            console.error('[CBT Engine] Failed to fetch exam:', e)
+        } finally {
+            loading.value = false
+        }
+    }
 
     /**
      * Initialize a new exam session
@@ -45,13 +73,12 @@ export const useCbtEngine = () => {
         timeRemainingSeconds.value = exam.durationMinutes * 60
         isTimeUp.value = false
 
-        // Start the countdown
         if (timerInterval) clearInterval(timerInterval)
         timerInterval = setInterval(() => {
             if (timeRemainingSeconds.value > 0) {
                 timeRemainingSeconds.value--
 
-                // Auto-save logic triggers every 30 seconds
+                // Auto-save every 30 seconds
                 if (timeRemainingSeconds.value % 30 === 0) {
                     triggerAutoSave()
                 }
@@ -79,31 +106,54 @@ export const useCbtEngine = () => {
     }
 
     /**
-     * Backend Sync Simulation
+     * Sync answers to backend
      */
-    const triggerAutoSave = () => {
-        console.log('[CBT Auto-Save] Syncing answers to backend...', answers.value)
-        // TODO: Connect to CoreApiService.post('/api/exams/sync')
+    const triggerAutoSave = async () => {
+        if (!currentExam.value) return
+        try {
+            await coreApi.post('/exams/sync', {
+                examId: currentExam.value.id,
+                answers: answers.value,
+            })
+        } catch (e) {
+            console.warn('[CBT Auto-Save] Sync failed, will retry:', e)
+        }
     }
 
     const triggerTimeUp = () => {
         if (timerInterval) clearInterval(timerInterval)
         isTimeUp.value = true
-        console.warn('[CBT Engine] Time is up! Force submitting exam.')
         submitExam()
     }
 
-    const submitExam = () => {
+    const submitExam = async () => {
         if (timerInterval) clearInterval(timerInterval)
-        console.log('[CBT Final Submission] Payload:', {
-            examId: currentExam.value?.id,
-            answers: answers.value,
-            remainingTime: timeRemainingSeconds.value
-        })
-        // TODO: Connect to CoreApiService.post('/api/exams/submit')
+        submitting.value = true
+        error.value = null
 
-        // Simulate successful navigation back to dashboard
-        navigateTo('/assessee')
+        try {
+            await coreApi.post('/exams/submit', {
+                examId: currentExam.value?.id,
+                answers: answers.value,
+                remainingTime: timeRemainingSeconds.value,
+            })
+            navigateTo('/assessee')
+        } catch (e: any) {
+            error.value = e?.data?.message || e?.message || 'Gagal mengirim jawaban'
+            console.error('[CBT Final Submission] Failed:', e)
+        } finally {
+            submitting.value = false
+        }
+    }
+
+    /**
+     * Cleanup timer on component unmount
+     */
+    const destroy = () => {
+        if (timerInterval) {
+            clearInterval(timerInterval)
+            timerInterval = null
+        }
     }
 
     return {
@@ -113,18 +163,25 @@ export const useCbtEngine = () => {
         answers,
         timeRemainingSeconds,
         isTimeUp,
+        loading,
+        submitting,
+        error,
 
         // Computed
         currentQuestion,
+        totalQuestions,
         progressPercentage,
+        answeredCount,
         isFirstQuestion,
         isLastQuestion,
 
         // Actions
+        fetchAndStart,
         startExam,
         nextQuestion,
         prevQuestion,
         jumpToQuestion,
-        submitExam
+        submitExam,
+        destroy,
     }
 }

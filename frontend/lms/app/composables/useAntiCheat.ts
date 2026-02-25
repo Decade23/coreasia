@@ -13,9 +13,8 @@ export const useAntiCheat = () => {
 
             if (cheatAttempts.value >= maxCheatAttempts) {
                 triggerDisqualification()
-            } else {
-                alert(`PERINGATAN KECURANGAN (${cheatAttempts.value}/${maxCheatAttempts})\nAnda terdeteksi meninggalkan halaman ujian. Ujian akan dihentikan secara sepihak jika ini terus berlanjut.`)
             }
+            // Warning is now handled reactively by the UI component watching cheatAttempts
         }
     }
 
@@ -34,14 +33,9 @@ export const useAntiCheat = () => {
         }
     }
 
-    /**
-     * Triggers a fatal UI state and informs backend
-     */
     const triggerDisqualification = () => {
         isUserCheating.value = true
-        alert('DISANGGAH: Anda telah didiskualifikasi karena melanggar aturan integritas ujian (Tab Switch > 3 Jatah). Ujian telah dikunci.')
-        // TODO: Connect to Exam Backend API to force-submit with 0 score
-        navigateTo('/assessee')
+        // Navigation and force-submission handled by the consuming page
     }
 
     /**
@@ -71,6 +65,6 @@ export const useAntiCheat = () => {
         maxCheatAttempts,
         isUserCheating,
         mountAntiCheat,
-        unmountAntiCheat
+        unmountAntiCheat,
     }
 }

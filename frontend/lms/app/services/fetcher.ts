@@ -1,26 +1,20 @@
-import { $fetch } from 'ofetch'
+import { ofetch } from 'ofetch'
 
 /**
  * Base configured fetcher for all external API calls.
- * This can be intercepted to add Auth headers or tenant ID headers later.
+ * @deprecated Use CoreApiService instead
  */
-export const apiFetch = $fetch.create({
+export const apiFetch = ofetch.create({
     baseURL: import.meta.env.VITE_API_URL || '/api',
-    onRequest({ request, options }) {
-        // Inject auth token here if available
+    onRequest({ options }) {
         const token = useCookie('auth_token').value
         if (token) {
-            options.headers = {
-                ...options.headers,
-                Authorization: `Bearer ${token}`
-            }
+            options.headers.set('Authorization', `Bearer ${token}`)
         }
     },
-    onResponseError({ request, response, options }) {
-        // Handle global errors here (e.g. redirect on 401)
+    onResponseError({ response }) {
         if (response.status === 401) {
             console.warn('Unauthorized request, redirecting to login...')
-            // navigateTo('/login')
         }
-    }
+    },
 })

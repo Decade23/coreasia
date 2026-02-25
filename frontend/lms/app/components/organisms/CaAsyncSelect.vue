@@ -64,7 +64,7 @@ const toggleDropdown = () => {
 const setupObserver = () => {
   if (observer) observer.disconnect()
   observer = new IntersectionObserver((entries) => {
-    if (entries[0].isIntersecting && props.hasMore && !props.isLoadingMore && !props.isLoading) {
+    if (entries[0]?.isIntersecting && props.hasMore && !props.isLoadingMore && !props.isLoading) {
       emit('loadMore')
     }
   }, { root: null, rootMargin: '20px', threshold: 1.0 })

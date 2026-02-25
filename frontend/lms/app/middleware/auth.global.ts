@@ -8,7 +8,7 @@ import type { UserDomain } from '~/adapters/UserAdapter'
 
 export default defineNuxtRouteMiddleware((to, from) => {
     // 1. Identify public routes (No JWT required)
-    const publicRoutes = ['/login', '/register', '/forgot-password', '/sandbox']
+    const publicRoutes = ['/login', '/register', '/forgot-password', '/sandbox', '/verify']
 
     // Exclude error pages from strict routing
     if (to.path.startsWith('/_nuxt') || to.path === '/error') return
@@ -50,7 +50,14 @@ export default defineNuxtRouteMiddleware((to, from) => {
             }
         }
 
-        // Admin constraints (allow /admin, deny /assessee, /assessor logic can be defined later if needed)
+        // Quality Manager — same as admin but lands on /admin/quality
+        if (role === 'quality_manager') {
+            if (to.path.startsWith('/assessee') || to.path.startsWith('/assessor') || to.path.startsWith('/cbt')) {
+                return navigateTo('/admin/quality')
+            }
+        }
+
+        // Admin constraints
         if (role === 'admin' || role === 'super_admin') {
             if (to.path.startsWith('/assessee') || to.path.startsWith('/assessor')) {
                 return navigateTo('/admin')
@@ -68,7 +75,7 @@ function resolveDashboard(role?: UserDomain['role']): string {
         case 'super_admin':
             return '/admin'
         case 'quality_manager':
-            return '/admin/reports' // e.g. Quality Manager lands on reports
+            return '/admin/quality'
         case 'assessor':
             return '/assessor'
         case 'assessee':
