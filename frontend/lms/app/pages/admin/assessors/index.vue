@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import DashboardLayout from '~/components/templates/DashboardLayout.vue'
+import Breadcrumb from '~/components/molecules/Breadcrumb.vue'
+import PageHeader from '~/components/molecules/PageHeader.vue'
 import CaButton from '~/components/atoms/CaButton.vue'
 import CaInputSearch from '~/components/molecules/CaInputSearch.vue'
 import AssessorFormModal from '~/components/organisms/AssessorFormModal.vue'
@@ -70,24 +72,25 @@ const handleConfirmDelete = async () => {
 <template>
     <DashboardLayout>
         <template #header>
-            <div class="flex items-center justify-between w-full">
-                <div>
-                    <h1 class="text-2xl md:text-3xl font-black tracking-tight text-white">Manajemen Asesor</h1>
-                    <p class="text-sm text-content-subtle hidden md:block mt-1">Kelola daftar asesor, lisensi, dan penugasan skema.</p>
-                </div>
-                <div class="flex items-center gap-4 shrink-0">
-                    <div class="relative hidden lg:block w-64 xl:w-80 mr-2">
-                        <CaInputSearch v-model="searchQuery" placeholder="Cari asesor..." />
-                    </div>
-                    <CaButton variant="primary" class="rounded-full px-6 py-3 flex items-center gap-2 transition-all hover:scale-105" @click="handleCreate">
-                        <Plus class="w-4 h-4" />
-                        <span class="hidden sm:inline">Asesor Baru</span>
-                    </CaButton>
-                </div>
-            </div>
+            <h1 class="text-lg font-bold text-white hidden lg:block">Manajemen Asesor</h1>
         </template>
 
         <div class="py-6 space-y-8">
+            <div class="space-y-4">
+                <Breadcrumb :items="[{ label: 'Admin', to: '/admin' }, { label: 'Manajemen Asesor' }]" />
+                <PageHeader title="Manajemen Asesor" subtitle="Kelola daftar asesor, lisensi, dan penugasan skema.">
+                    <template #actions>
+                        <div class="hidden lg:block w-64 xl:w-80">
+                            <CaInputSearch v-model="searchQuery" placeholder="Cari asesor..." />
+                        </div>
+                        <CaButton variant="primary" class="flex items-center gap-2" @click="handleCreate">
+                            <Plus class="w-4 h-4" />
+                            <span class="hidden sm:inline">Asesor Baru</span>
+                        </CaButton>
+                    </template>
+                </PageHeader>
+            </div>
+
             <!-- Mobile Search -->
             <div class="lg:hidden">
                 <CaInputSearch v-model="searchQuery" placeholder="Cari nama atau email asesor..." />

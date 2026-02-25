@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import DashboardLayout from '~/components/templates/DashboardLayout.vue'
+import Breadcrumb from '~/components/molecules/Breadcrumb.vue'
+import PageHeader from '~/components/molecules/PageHeader.vue'
 import CaButton from '~/components/atoms/CaButton.vue'
 import LoadingSpinner from '~/components/atoms/LoadingSpinner.vue'
 import ErrorAlert from '~/components/atoms/ErrorAlert.vue'
@@ -14,18 +16,14 @@ onMounted(() => fetchStats())
 <template>
     <DashboardLayout>
         <template #header>
-            <div class="flex items-center gap-4 w-full">
-                <div class="w-10 h-10 rounded-xl bg-brand-secondary/10 flex items-center justify-center shrink-0">
-                    <BarChart3 class="w-5 h-5 text-brand-secondary" />
-                </div>
-                <div>
-                    <h1 class="text-2xl md:text-3xl font-black tracking-tight text-white">Dashboard Mutu</h1>
-                    <p class="text-sm text-content-subtle hidden md:block mt-1">Statistik kelulusan, review asesor, dan audit trail.</p>
-                </div>
-            </div>
+            <h1 class="text-lg font-bold text-white hidden lg:block">Dashboard Mutu</h1>
         </template>
 
         <div class="py-6 space-y-6">
+            <div class="space-y-4">
+                <Breadcrumb :items="[{ label: 'Admin', to: '/admin' }, { label: 'Manajemen Mutu', to: '/admin/quality' }, { label: 'Dashboard' }]" />
+                <PageHeader title="Dashboard Mutu" subtitle="Statistik kelulusan, review asesor, dan audit trail." />
+            </div>
             <ErrorAlert v-if="error" :message="error" @dismiss="error = null" />
 
             <div v-if="loading" class="flex justify-center py-20">

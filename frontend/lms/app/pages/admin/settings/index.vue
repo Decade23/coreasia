@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { reactive, watch } from 'vue'
 import DashboardLayout from '~/components/templates/DashboardLayout.vue'
+import Breadcrumb from '~/components/molecules/Breadcrumb.vue'
+import PageHeader from '~/components/molecules/PageHeader.vue'
 import CaButton from '~/components/atoms/CaButton.vue'
 import LoadingSpinner from '~/components/atoms/LoadingSpinner.vue'
 import ErrorAlert from '~/components/atoms/ErrorAlert.vue'
@@ -71,18 +73,14 @@ const handleSaveBranding = async () => {
 <template>
     <DashboardLayout>
         <template #header>
-            <div class="flex items-center gap-4 w-full">
-                <div class="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center shrink-0">
-                    <Settings class="w-5 h-5 text-brand" />
-                </div>
-                <div>
-                    <h1 class="text-2xl md:text-3xl font-black tracking-tight text-white">Pengaturan Tenant</h1>
-                    <p class="text-sm text-content-subtle hidden md:block mt-1">Kelola informasi LSP, branding, dan pengguna admin.</p>
-                </div>
-            </div>
+            <h1 class="text-lg font-bold text-white hidden lg:block">Pengaturan</h1>
         </template>
 
         <div class="py-6 space-y-6">
+            <div class="space-y-4">
+                <Breadcrumb :items="[{ label: 'Admin', to: '/admin' }, { label: 'Pengaturan' }]" />
+                <PageHeader title="Pengaturan Tenant" subtitle="Kelola informasi LSP, branding, dan pengguna admin." />
+            </div>
             <ErrorAlert v-if="error" :message="error" @dismiss="error = null" />
 
             <div v-if="loading" class="flex justify-center py-20">

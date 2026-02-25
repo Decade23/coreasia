@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import DashboardLayout from '~/components/templates/DashboardLayout.vue'
+import Breadcrumb from '~/components/molecules/Breadcrumb.vue'
+import PageHeader from '~/components/molecules/PageHeader.vue'
 import CaButton from '~/components/atoms/CaButton.vue'
 import CaInputSearch from '~/components/molecules/CaInputSearch.vue'
 import SchemeCard from '~/components/organisms/SchemeCard.vue'
@@ -85,30 +87,30 @@ const handleConfirmDelete = async () => {
 <template>
     <DashboardLayout>
         <template #header>
-            <div class="flex items-center justify-between w-full">
-                <div>
-                    <h1 class="text-2xl md:text-3xl font-black tracking-tight text-white">Manajemen Skema</h1>
-                    <p class="text-sm text-content-subtle hidden md:block mt-1">Kelola daftar sertifikasi dan unit kompetensi aktif.</p>
-                </div>
-
-                <div class="flex items-center gap-4 shrink-0">
-                    <div class="relative hidden lg:block w-64 xl:w-80 mr-2">
-                        <CaInputSearch v-model="searchQuery" placeholder="Cari skema..." />
-                    </div>
-
-                    <CaButton variant="primary" class="rounded-full px-6 py-3 flex items-center gap-2 transition-all hover:scale-105" @click="handleCreate">
-                        <Plus class="w-4 h-4" />
-                        <span class="hidden sm:inline">Skema Baru</span>
-                    </CaButton>
-                </div>
-            </div>
+            <h1 class="text-lg font-bold text-white hidden lg:block">Manajemen Skema</h1>
         </template>
 
         <div class="py-6 space-y-8">
+            <!-- Breadcrumb + Page Header -->
+            <div class="space-y-4">
+                <Breadcrumb :items="[{ label: 'Admin', to: '/admin' }, { label: 'Manajemen Skema' }]" />
+                <PageHeader title="Manajemen Skema" subtitle="Kelola daftar sertifikasi dan unit kompetensi aktif.">
+                    <template #actions>
+                        <div class="hidden lg:block w-64 xl:w-80">
+                            <CaInputSearch v-model="searchQuery" placeholder="Cari skema..." />
+                        </div>
+                        <CaButton variant="primary" class="flex items-center gap-2" @click="handleCreate">
+                            <Plus class="w-4 h-4" />
+                            <span class="hidden sm:inline">Skema Baru</span>
+                        </CaButton>
+                    </template>
+                </PageHeader>
+            </div>
+
             <!-- Mobile Search -->
             <div class="lg:hidden flex gap-3">
                 <CaInputSearch v-model="searchQuery" placeholder="Cari kode atau nama skema..." />
-                <button class="shrink-0 w-14 h-14 rounded-xl bg-[#1A2235] flex items-center justify-center text-cyan-400 hover:text-white hover:bg-cyan-500 transition-all">
+                <button class="shrink-0 w-14 h-14 rounded-xl bg-core-700 flex items-center justify-center text-brand hover:text-white hover:bg-brand transition-all">
                     <Filter class="w-5 h-5" />
                 </button>
             </div>
