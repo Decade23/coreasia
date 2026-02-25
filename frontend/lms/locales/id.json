@@ -1,0 +1,132 @@
+{
+    "common": {
+        "save": "Simpan",
+        "cancel": "Batal",
+        "delete": "Hapus",
+        "edit": "Edit",
+        "create": "Buat",
+        "search": "Cari",
+        "filter": "Filter",
+        "loading": "Memuat...",
+        "noData": "Tidak ada data",
+        "confirm": "Konfirmasi",
+        "back": "Kembali",
+        "next": "Selanjutnya",
+        "previous": "Sebelumnya",
+        "close": "Tutup",
+        "submit": "Kirim",
+        "download": "Unduh",
+        "upload": "Unggah",
+        "active": "Aktif",
+        "inactive": "Nonaktif",
+        "all": "Semua",
+        "status": "Status",
+        "action": "Aksi",
+        "detail": "Detail",
+        "yes": "Ya",
+        "no": "Tidak"
+    },
+    "auth": {
+        "login": "Masuk",
+        "logout": "Keluar",
+        "email": "Email",
+        "password": "Kata Sandi",
+        "forgotPassword": "Lupa Kata Sandi?",
+        "loginButton": "Masuk ke Akun",
+        "loginError": "Email atau kata sandi salah"
+    },
+    "nav": {
+        "dashboard": "Dashboard",
+        "schemes": "Manajemen Skema",
+        "questions": "Bank Soal",
+        "verifications": "Verifikasi Berkas",
+        "schedules": "Penjadwalan",
+        "assessors": "Manajemen Asesor",
+        "templates": "Template Sertifikat",
+        "quality": "Manajemen Mutu",
+        "auditTrail": "Log Aktivitas",
+        "reports": "Laporan & Export",
+        "settings": "Pengaturan Tenant",
+        "portal": "Portal Asesi",
+        "registration": "Pendaftaran Ujian",
+        "certificates": "Sertifikat Saya",
+        "accountSettings": "Pengaturan Akun"
+    },
+    "admin": {
+        "schemes": {
+            "title": "Manajemen Skema",
+            "subtitle": "Kelola daftar sertifikasi dan unit kompetensi aktif.",
+            "newScheme": "Skema Baru",
+            "searchPlaceholder": "Cari skema...",
+            "empty": "Belum ada skema",
+            "emptyDesc": "Mulai dengan menambahkan skema sertifikasi pertama Anda.",
+            "deleteConfirm": "Apakah Anda yakin ingin menghapus skema ini?",
+            "formTitle": "Tambah Skema Baru",
+            "formTitleEdit": "Edit Skema"
+        },
+        "assessors": {
+            "title": "Manajemen Asesor",
+            "subtitle": "Kelola daftar asesor, lisensi, dan penugasan skema.",
+            "newAssessor": "Asesor Baru",
+            "empty": "Belum ada asesor",
+            "emptyDesc": "Mulai dengan menambahkan asesor pertama untuk LSP Anda."
+        },
+        "quality": {
+            "title": "Dashboard Mutu",
+            "subtitle": "Statistik kelulusan, review asesor, dan audit trail.",
+            "totalAssessments": "Total Asesmen",
+            "competent": "Kompeten",
+            "passRate": "Tingkat Kelulusan",
+            "pendingReviews": "Menunggu Review"
+        },
+        "settings": {
+            "title": "Pengaturan Tenant",
+            "subtitle": "Kelola informasi LSP, branding, dan pengguna admin.",
+            "general": "Umum",
+            "branding": "Branding",
+            "users": "Pengguna"
+        }
+    },
+    "assessee": {
+        "portal": "Portal Asesi",
+        "welcome": "Selamat datang kembali",
+        "registerCert": "Daftar Sertifikasi",
+        "currentRegistration": "Status Pendaftaran Saat Ini",
+        "myCertificates": "Sertifikat Saya",
+        "noCertificates": "Belum ada sertifikat yang diraih.",
+        "noRegistration": "Anda belum memiliki pendaftaran sertifikasi aktif."
+    },
+    "certificate": {
+        "active": "Aktif",
+        "expired": "Kedaluwarsa",
+        "revoked": "Dicabut",
+        "issuedDate": "Tanggal Terbit",
+        "expiryDate": "Berlaku Hingga",
+        "holder": "Pemegang",
+        "issuer": "LSP Penerbit",
+        "assessor": "Asesor",
+        "qrTitle": "QR Verifikasi",
+        "qrDesc": "Scan QR code ini untuk memverifikasi keaslian sertifikat.",
+        "share": "Bagikan",
+        "downloadPdf": "Unduh PDF"
+    },
+    "verify": {
+        "title": "Verifikasi Sertifikat",
+        "description": "Masukkan nomor sertifikat untuk memverifikasi keaslian dan status sertifikat kompetensi.",
+        "placeholder": "Contoh: BNSP/JWD/2025/001234",
+        "button": "Verifikasi",
+        "verified": "Sertifikat Terverifikasi",
+        "invalid": "Sertifikat Tidak Valid",
+        "notFound": "Sertifikat Tidak Ditemukan",
+        "notFoundDesc": "Nomor sertifikat yang Anda masukkan tidak terdaftar dalam sistem kami.",
+        "tryAgain": "Coba Lagi",
+        "verifyOther": "Verifikasi Lainnya"
+    },
+    "validation": {
+        "required": "{field} wajib diisi",
+        "email": "Format email tidak valid",
+        "minLength": "{field} minimal {min} karakter",
+        "maxLength": "{field} maksimal {max} karakter",
+        "phone": "Format nomor telepon tidak valid"
+    }
+}
