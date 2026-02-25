@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import DashboardLayout from '~/components/templates/DashboardLayout.vue'
 import CaButton from '~/components/atoms/CaButton.vue'
-import { LayoutDashboard, Users, FileText, Settings, LogOut, X, Box, BookOpen, Layers, CheckCircle, Calendar, UserCheck, Award, BarChart3, ClipboardList } from 'lucide-vue-next'
+import { LayoutDashboard, Users, FileText, Settings, LogOut, X, Box, BookOpen, Layers, CheckCircle, Calendar, UserCheck, Award, BarChart3, ClipboardList, FileBarChart, ShieldCheck } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { useAuth } from '~/composables/useAuth'
 
@@ -32,6 +32,7 @@ const menuItems = computed(() => {
       { label: 'Template Sertifikat', icon: Award, to: '/admin/templates' },
       { label: 'Manajemen Mutu', icon: BarChart3, to: '/admin/quality' },
       { label: 'Log Aktivitas', icon: ClipboardList, to: '/admin/quality/audit-trail' },
+      { label: 'Laporan & Export', icon: FileBarChart, to: '/admin/reports' },
       { label: 'Pengaturan Tenant', icon: Settings, to: '/admin/settings' },
     ]
   }
@@ -56,7 +57,7 @@ const menuItems = computed(() => {
     return [
       { label: 'Portal Asesi', icon: LayoutDashboard, to: '/assessee' },
       { label: 'Pendaftaran Ujian', icon: Box, to: '/registration' },
-      { label: 'Sertifikat Saya', icon: FileText, to: '/assessee/certificates' },
+      { label: 'Sertifikat Saya', icon: ShieldCheck, to: '/assessee/certificates' },
       { label: 'Pengaturan Akun', icon: Settings, to: '/assessee/settings' },
     ]
   }
