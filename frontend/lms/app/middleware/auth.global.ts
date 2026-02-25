@@ -50,9 +50,13 @@ export default defineNuxtRouteMiddleware((to, from) => {
             }
         }
 
-        // Quality Manager — same as admin but lands on /admin/quality
+        // Quality Manager — can access /admin/quality, /admin/verifications, and /admin/settings
         if (role === 'quality_manager') {
             if (to.path.startsWith('/assessee') || to.path.startsWith('/assessor') || to.path.startsWith('/cbt')) {
+                return navigateTo('/admin/quality')
+            }
+            const allowedAdminPaths = ['/admin/quality', '/admin/verifications', '/admin/settings']
+            if (to.path.startsWith('/admin') && !allowedAdminPaths.some(p => to.path.startsWith(p))) {
                 return navigateTo('/admin/quality')
             }
         }

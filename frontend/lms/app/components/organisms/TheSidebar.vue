@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import DashboardLayout from '~/components/templates/DashboardLayout.vue'
 import CaButton from '~/components/atoms/CaButton.vue'
-import { LayoutDashboard, Users, FileText, Settings, LogOut, X, Box, BookOpen, Layers, CheckCircle, Calendar } from 'lucide-vue-next'
+import { LayoutDashboard, Users, FileText, Settings, LogOut, X, Box, BookOpen, Layers, CheckCircle, Calendar, UserCheck, Award, BarChart3, ClipboardList } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { useAuth } from '~/composables/useAuth'
 
@@ -28,11 +28,30 @@ const menuItems = computed(() => {
       { label: 'Bank Soal', icon: BookOpen, to: '/admin/questions' },
       { label: 'Verifikasi Berkas', icon: CheckCircle, to: '/admin/verifications' },
       { label: 'Penjadwalan', icon: Calendar, to: '/admin/schedules' },
-      { label: 'Log Aktivitas', icon: FileText, to: '/admin/audit' },
+      { label: 'Manajemen Asesor', icon: UserCheck, to: '/admin/assessors' },
+      { label: 'Template Sertifikat', icon: Award, to: '/admin/templates' },
+      { label: 'Manajemen Mutu', icon: BarChart3, to: '/admin/quality' },
+      { label: 'Log Aktivitas', icon: ClipboardList, to: '/admin/quality/audit-trail' },
       { label: 'Pengaturan Tenant', icon: Settings, to: '/admin/settings' },
     ]
   }
-  
+
+  if (role === 'quality_manager') {
+    return [
+      { label: 'Dashboard Mutu', icon: BarChart3, to: '/admin/quality' },
+      { label: 'Review Asesor', icon: UserCheck, to: '/admin/quality/reviews' },
+      { label: 'Audit Trail', icon: ClipboardList, to: '/admin/quality/audit-trail' },
+      { label: 'Verifikasi Berkas', icon: CheckCircle, to: '/admin/verifications' },
+    ]
+  }
+
+  if (role === 'assessor') {
+    return [
+      { label: 'Antrean Penilaian', icon: LayoutDashboard, to: '/assessor' },
+      { label: 'Jadwal Saya', icon: Calendar, to: '/assessor/schedules' },
+    ]
+  }
+
   if (role === 'assessee') {
     return [
       { label: 'Portal Asesi', icon: LayoutDashboard, to: '/assessee' },
