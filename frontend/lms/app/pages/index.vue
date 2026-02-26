@@ -1,14 +1,12 @@
 <script setup lang="ts">
 import DashboardLayout from '~/components/templates/DashboardLayout.vue'
 import CaButton from '~/components/atoms/CaButton.vue'
-import { AuthAdapter } from '~/adapters/AuthAdapter'
 
 const { t } = useI18n()
 
-const { user: rawUser, pending } = await useAuth()
+const { user: authUser, pending } = useAuth()
 
-// Transform using Adapter
-const user = computed(() => rawUser.value ? AuthAdapter.toDomain(rawUser.value) : { fullName: 'Loading...', role: 'admin' })
+const user = computed(() => authUser.value ?? { fullName: 'Loading...', role: 'admin' })
 </script>
 
 <template>

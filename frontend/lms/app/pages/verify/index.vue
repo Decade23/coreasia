@@ -3,6 +3,7 @@ import PublicLayout from '~/components/templates/PublicLayout.vue'
 import CaButton from '~/components/atoms/CaButton.vue'
 import LoadingSpinner from '~/components/atoms/LoadingSpinner.vue'
 import ErrorAlert from '~/components/atoms/ErrorAlert.vue'
+const QrCode = defineAsyncComponent(() => import('~/components/atoms/QrCode.vue'))
 import { Search, ShieldCheck, ShieldAlert, Calendar, User, Building2 } from 'lucide-vue-next'
 import { usePublicVerification } from '~/composables/usePublicVerification'
 
@@ -25,6 +26,12 @@ const handleReset = () => {
     searchInput.value = ''
     reset()
 }
+
+const verificationUrl = computed(() => {
+    if (!result.value) return ''
+    const base = globalThis.window === undefined ? '' : globalThis.location.origin
+    return `${base}/verify?q=${encodeURIComponent(result.value.certificateNumber)}`
+})
 </script>
 
 <template>
@@ -43,7 +50,7 @@ const handleReset = () => {
 
             <!-- Search Form -->
             <div class="max-w-xl mx-auto">
-                <form @submit.prevent="handleSearch" class="flex gap-3">
+                <form @submit.prevent="handleSearch" class="flex flex-col sm:flex-row gap-3">
                     <div class="flex-1 relative">
                         <Search class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-content-subtle pointer-events-none" />
                         <input
@@ -57,7 +64,7 @@ const handleReset = () => {
                         variant="primary"
                         type="submit"
                         :loading="loading"
-                        class="px-8 rounded-2xl"
+                        class="px-8 rounded-2xl w-full sm:w-auto justify-center"
                     >
                         Verifikasi
                     </CaButton>
@@ -137,6 +144,19 @@ const handleReset = () => {
                                         {{ result.expiryDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) }}
                                     </p>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- QR Code -->
+                    <div v-if="result.valid && verificationUrl" class="px-6 pb-6">
+                        <div class="flex items-center gap-5 p-4 rounded-xl bg-tint border border-divider">
+                            <QrCode :value="verificationUrl" :size="120" />
+                            <div class="space-y-1">
+                                <p class="text-xs font-black text-content-subtle uppercase tracking-widest">QR Verifikasi</p>
+                                <p class="text-sm text-content-muted leading-relaxed">
+                                    Pindai kode QR ini untuk memverifikasi keaslian sertifikat secara langsung.
+                                </p>
                             </div>
                         </div>
                     </div>

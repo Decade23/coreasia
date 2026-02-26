@@ -45,7 +45,7 @@ const handleViewCert = (cert: IssuedCertificateDomain) => {
                     <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight text-content flex items-center gap-3">
                         Portal Asesi
                     </h1>
-                    <p class="text-sm text-content-muted hidden md:block mt-2">Selamat datang kembali, <strong class="text-emerald-400">{{ user?.name || 'Peserta' }}</strong></p>
+                    <p class="text-sm text-content-muted hidden md:block mt-2">Selamat datang kembali, <strong class="text-emerald-400">{{ user?.fullName || 'Peserta' }}</strong></p>
                 </div>
 
                 <div class="flex items-center gap-4 shrink-0">

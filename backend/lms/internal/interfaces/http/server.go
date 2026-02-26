@@ -123,6 +123,10 @@ func (s *Server) setupRoutes() {
 	assessorHandler := handler.NewAssessorHandler(assessorUC)
 	assessorHandler.RegisterRoutes(admin)
 
+	// User management (admin only)
+	userHandler := handler.NewUserHandler(userRepo)
+	userHandler.RegisterRoutes(admin)
+
 	// Certificate templates (admin only)
 	certHandler.RegisterTemplateRoutes(admin)
 

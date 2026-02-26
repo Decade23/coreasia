@@ -87,7 +87,7 @@ const handleExport = async () => {
                             <label class="block text-sm font-bold text-content-muted mb-2">Format File</label>
                             <div class="flex gap-3">
                                 <button
-                                    v-for="fmt in ['xlsx', 'csv'] as const"
+                                    v-for="fmt in ['xlsx', 'csv', 'pdf'] as const"
                                     :key="fmt"
                                     class="flex-1 p-3 rounded-xl border text-sm font-bold uppercase tracking-widest transition-all"
                                     :class="form.format === fmt
@@ -131,10 +131,12 @@ const handleExport = async () => {
                                 <div class="p-3 rounded-xl bg-tint text-xs text-content-muted font-mono break-all">
                                     {{ exportResult.fileName }}
                                 </div>
-                                <CaButton variant="primary" class="w-full">
-                                    <Download class="w-4 h-4 mr-1.5" />
-                                    Unduh File
-                                </CaButton>
+                                <a :href="exportResult.downloadUrl" target="_blank" rel="noopener" class="block">
+                                    <CaButton variant="primary" class="w-full">
+                                        <Download class="w-4 h-4 mr-1.5" />
+                                        Unduh File
+                                    </CaButton>
+                                </a>
                                 <p class="text-[10px] text-content-subtle">
                                     Dibuat: {{ new Date(exportResult.generatedAt).toLocaleString('id-ID') }}
                                 </p>

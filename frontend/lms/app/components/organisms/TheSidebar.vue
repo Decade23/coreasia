@@ -117,6 +117,7 @@ const menuSections = computed<MenuSection[]>(() => {
 
 <template>
     <aside
+        aria-label="Sidebar"
         class="fixed inset-y-0 left-0 z-50 w-[272px] shrink-0 transform transition-transform duration-500 ease-out lg:translate-x-0 lg:relative h-screen flex flex-col"
         :class="isOpen ? 'translate-x-0' : '-translate-x-full'"
     >
@@ -139,6 +140,7 @@ const menuSections = computed<MenuSection[]>(() => {
 
                 <button
                     @click="emit('close')"
+                    aria-label="Tutup menu"
                     class="lg:hidden p-2 rounded-xl text-content-subtle hover:bg-tint hover:text-content transition-all"
                 >
                     <X class="w-5 h-5" />
@@ -146,7 +148,7 @@ const menuSections = computed<MenuSection[]>(() => {
             </div>
 
             <!-- Navigation -->
-            <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto custom-scrollbar">
+            <nav aria-label="Menu utama" class="flex-1 px-3 py-4 space-y-1 overflow-y-auto custom-scrollbar">
                 <template v-for="(section, sIdx) in menuSections" :key="sIdx">
                     <!-- Section divider + title -->
                     <div v-if="section.title" class="pt-5 pb-2 px-3 first:pt-0">

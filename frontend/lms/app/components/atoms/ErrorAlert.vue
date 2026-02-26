@@ -24,6 +24,7 @@ const dismiss = () => {
 <template>
     <div
         v-if="isVisible"
+        role="alert"
         class="flex items-start gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/20 transition-all"
     >
         <div class="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center shrink-0 mt-0.5">
@@ -33,6 +34,7 @@ const dismiss = () => {
         <button
             v-if="dismissable"
             @click="dismiss"
+            aria-label="Tutup peringatan"
             class="p-1 rounded-lg text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors shrink-0"
         >
             <X class="w-4 h-4" />

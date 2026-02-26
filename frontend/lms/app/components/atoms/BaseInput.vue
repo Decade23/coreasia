@@ -60,6 +60,8 @@ const togglePassword = () => {
         :placeholder="placeholder"
         :disabled="disabled"
         :required="required"
+        :aria-invalid="!!error"
+        :aria-describedby="error ? `${id}-error` : undefined"
         @focus="isFocused = true"
         @blur="isFocused = false"
         class="w-full bg-input rounded-xl px-4 py-3.5 h-[52px] text-content font-bold transition-all placeholder:text-content-subtle placeholder:font-medium focus:outline-none relative z-0"
@@ -88,6 +90,6 @@ const togglePassword = () => {
       </div>
     </div>
     
-    <p v-if="error" class="mt-2 text-xs font-bold text-rose-500">{{ error }}</p>
+    <p v-if="error" :id="`${id}-error`" role="alert" class="mt-2 text-xs font-bold text-rose-500">{{ error }}</p>
   </div>
 </template>

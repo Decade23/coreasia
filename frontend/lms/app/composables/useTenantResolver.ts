@@ -1,32 +1,22 @@
 import { TenantAdapter } from '~/adapters/TenantAdapter'
 import type { TenantDTO } from '~/types/tenant'
+import { coreApi } from '~/services/api/CoreApiService'
 
 export const useTenantResolver = () => {
-    // Try to use a shared state so it only runs once per server request
-    const tenant = useState('current-tenant', () => null as any)
+    const tenant = useState('current-tenant', () => null as ReturnType<typeof TenantAdapter.toDomain> | null)
     const isPending = ref(false)
-    const error = ref<any>(null)
+    const error = ref<string | null>(null)
 
     const resolveTenant = async () => {
-        // If tenant is already loaded, skip
         if (tenant.value) return tenant.value
 
         isPending.value = true
         try {
-            // Logic to resolve domain from hostname will go here
-            // For now, mock the response from the 'API'
-            const mockApiResp: TenantDTO = {
-                id: 't-1',
-                name: 'CoreAsia',
-                slug: 'coreasia',
-                domain: 'lms.coreasia.id',
-                settings: { brandColor: '#10b981' }
-            }
-
-            // Pass the DTO through the adapter before storing!
-            tenant.value = TenantAdapter.toDomain(mockApiResp)
-        } catch (e: any) {
-            error.value = e
+            const dto = await coreApi.get<TenantDTO>('/tenant/settings')
+            tenant.value = TenantAdapter.toDomain(dto)
+        } catch (e: unknown) {
+            const err = e as { data?: { message?: string }; message?: string }
+            error.value = err?.data?.message || err?.message || 'Gagal memuat data tenant'
         } finally {
             isPending.value = false
         }
@@ -36,6 +26,6 @@ export const useTenantResolver = () => {
         tenant,
         isPending,
         error,
-        resolveTenant
+        resolveTenant,
     }
 }

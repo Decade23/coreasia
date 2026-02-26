@@ -99,6 +99,14 @@ func (r *UserRepo) Update(ctx context.Context, user *entity.User) error {
 	return err
 }
 
+func (r *UserRepo) Delete(ctx context.Context, id uuid.UUID) error {
+	schema := schemaFromCtx(ctx)
+	_, err := r.db.Pool.Exec(ctx,
+		fmt.Sprintf("DELETE FROM %s.users WHERE id = $1",
+			pgx.Identifier{schema}.Sanitize()), id)
+	return err
+}
+
 func (r *UserRepo) UpdateLastLogin(ctx context.Context, id uuid.UUID) error {
 	schema := schemaFromCtx(ctx)
 	_, err := r.db.Pool.Exec(ctx,

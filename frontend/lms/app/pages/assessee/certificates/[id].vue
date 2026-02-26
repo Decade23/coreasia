@@ -3,7 +3,8 @@ import DashboardLayout from '~/components/templates/DashboardLayout.vue'
 import CaButton from '~/components/atoms/CaButton.vue'
 import LoadingSpinner from '~/components/atoms/LoadingSpinner.vue'
 import ErrorAlert from '~/components/atoms/ErrorAlert.vue'
-import { ArrowLeft, Download, Share2, ShieldCheck, Calendar, User, Building2, QrCode, Copy, Check } from 'lucide-vue-next'
+import { ArrowLeft, Download, Share2, ShieldCheck, Calendar, User, Building2, Copy, Check } from 'lucide-vue-next'
+const QrCodeImg = defineAsyncComponent(() => import('~/components/atoms/QrCode.vue'))
 import { useCertificates } from '~/composables/useCertificates'
 
 const route = useRoute()
@@ -139,8 +140,8 @@ const handleCopyLink = () => {
                                 <h3 class="text-sm font-bold text-content-subtle uppercase tracking-widest">QR Verifikasi</h3>
                             </div>
                             <div class="p-6 flex flex-col items-center">
-                                <div class="w-40 h-40 rounded-2xl bg-white flex items-center justify-center mb-4">
-                                    <QrCode class="w-24 h-24 text-content" />
+                                <div class="w-40 h-40 rounded-2xl bg-white flex items-center justify-center mb-4 p-2">
+                                    <QrCodeImg :value="cert.verificationUrl || cert.qrCodeData" :size="144" dark-color="#111827" light-color="#ffffff" />
                                 </div>
                                 <p class="text-xs text-content-subtle text-center">Scan QR code ini untuk memverifikasi keaslian sertifikat.</p>
                             </div>

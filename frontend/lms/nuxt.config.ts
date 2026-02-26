@@ -16,6 +16,12 @@ export default defineNuxtConfig({
       (await import("@tailwindcss/vite")).default(),
     ],
   },
+  runtimeConfig: {
+    public: {
+      apiBase: 'http://localhost:8080/api',
+      tenantSlug: 'demo',
+    },
+  },
   devServer: {
     port: 3001
   },

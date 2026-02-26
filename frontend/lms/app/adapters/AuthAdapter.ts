@@ -1,18 +1,17 @@
-import type { AuthUserDTO, AuthUser } from '~/types/auth'
+import type { UserResponseDTO, AuthUser } from '~/types/auth'
 
 export const AuthAdapter = {
     /**
-     * Transforms raw User API object to Domain entity
-     * - standardizes datetime fields
-     * - switches snake_case to camelCase for the UI
+     * Transforms backend UserResponseDTO to domain AuthUser.
+     * Maps snake_case API fields to camelCase for the UI.
      */
-    toDomain(dto: AuthUserDTO): AuthUser {
+    toDomain(dto: UserResponseDTO, tenantId?: string): AuthUser {
         return {
             id: dto.id,
             email: dto.email,
-            fullName: dto.name || 'Anonymous',
+            fullName: dto.full_name || 'Anonymous',
             role: dto.role,
-            tenantId: dto.tenant_id,
+            tenantId: tenantId || '',
             isActive: dto.is_active ?? true,
             lastLogin: dto.last_login_at ? new Date(dto.last_login_at) : undefined,
         }

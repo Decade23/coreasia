@@ -1,3 +1,5 @@
+import type { UserRole } from '~/types/auth'
+
 // ----------------------------------------------------------------------------
 // Domain Types (Clean UI Data)
 // ----------------------------------------------------------------------------
@@ -6,67 +8,57 @@ export interface UserDomain {
     fullName: string
     email: string
     phoneNumber: string
-    role: 'super_admin' | 'admin' | 'quality_manager' | 'assessor' | 'assessee'
+    role: UserRole
     tenantId: string
     isActive: boolean
     lastLoginAt: Date | null
 }
 
 // ----------------------------------------------------------------------------
-// DTO Types (Data Transfer Objects from API)
+// DTO Types — matches backend dto.UserResponse
 // ----------------------------------------------------------------------------
 export interface UserDTO {
     id: string
-    tenant_id: string
     email: string
-    phone: string
-    name: string
-    role: 'super_admin' | 'admin' | 'quality_manager' | 'assessor' | 'assessee'
+    full_name: string
+    phone_number: string | null
+    role: UserRole
     is_active: boolean
     last_login_at: string | null
+    created_at: string
+    updated_at: string
 }
 
 /**
  * UserAdapter
  * Implements the Anti-Corruption Layer for User/Auth domain.
- * Transforms raw snake_case database output into clean camelCase domain objects.
+ * Transforms raw snake_case backend output into clean camelCase domain objects.
  */
 export class UserAdapter {
-
-    /**
-     * Transforms a single User DTO into a Domain object
-     */
-    public static toDomain(dto: UserDTO): UserDomain {
+    public static toDomain(dto: UserDTO, tenantId?: string): UserDomain {
         return {
             id: dto.id,
-            tenantId: dto.tenant_id,
+            tenantId: tenantId || '',
             email: dto.email,
-            fullName: dto.name,
-            phoneNumber: dto.phone,
+            fullName: dto.full_name,
+            phoneNumber: dto.phone_number || '',
             role: dto.role,
             isActive: dto.is_active,
             lastLoginAt: dto.last_login_at ? new Date(dto.last_login_at) : null
         }
     }
 
-    /**
-     * Transforms an array of User DTOs into Domain objects
-     */
-    public static toDomainList(dtos: UserDTO[]): UserDomain[] {
-        return dtos.map(this.toDomain)
+    public static toDomainList(dtos: UserDTO[], tenantId?: string): UserDomain[] {
+        return dtos.map(d => this.toDomain(d, tenantId))
     }
 
-    /**
-     * (Optional) Transforms a Domain object back to a DTO for API submission
-     */
-    public static toDTO(domain: UserDomain): Partial<UserDTO> {
+    public static toCreatePayload(domain: Partial<UserDomain>): Record<string, unknown> {
         return {
-            tenant_id: domain.tenantId,
             email: domain.email,
-            phone: domain.phoneNumber,
-            name: domain.fullName,
+            full_name: domain.fullName,
+            phone_number: domain.phoneNumber || null,
             role: domain.role,
-            is_active: domain.isActive
+            is_active: domain.isActive ?? true,
         }
     }
 }

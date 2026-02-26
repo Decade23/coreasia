@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import DashboardLayout from '~/components/templates/DashboardLayout.vue'
-import AssessmentUnitCard from '~/components/organisms/AssessmentUnitCard.vue'
+const AssessmentUnitCard = defineAsyncComponent(() => import('~/components/organisms/AssessmentUnitCard.vue'))
 import CaButton from '~/components/atoms/CaButton.vue'
 
 import { Save, CheckCircle2, Send } from 'lucide-vue-next'

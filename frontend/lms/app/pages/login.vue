@@ -29,7 +29,7 @@ const handleLogin = async () => {
 </script>
 
 <template>
-    <div class="w-full max-w-md p-8 md:p-12 ca-card group transition-all duration-700 mx-4">
+    <div class="w-full max-w-md p-6 sm:p-8 md:p-12 ca-card group transition-all duration-700 mx-4">
         <!-- Glow Effect -->
         <div
             class="absolute -top-32 -right-32 w-64 h-64 bg-brand/10 rounded-full blur-[80px] group-hover:bg-brand/20 transition-colors duration-700 pointer-events-none"

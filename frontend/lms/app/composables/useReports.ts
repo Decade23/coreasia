@@ -14,7 +14,7 @@ export interface BnspExportParams {
     schemeId: string
     periodStart: string
     periodEnd: string
-    format: 'xlsx' | 'csv'
+    format: 'xlsx' | 'csv' | 'pdf'
 }
 
 export interface BnspExportResult {

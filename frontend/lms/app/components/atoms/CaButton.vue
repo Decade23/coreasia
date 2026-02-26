@@ -32,9 +32,11 @@ const sizes = {
 <template>
   <button
     :disabled="disabled || loading"
+    :aria-disabled="disabled || loading"
+    :aria-busy="loading"
     class="btn cursor-pointer"
     :class="[
-      variants[variant], 
+      variants[variant],
       sizes[size],
       fullWidth ? 'w-full' : ''
     ]"
