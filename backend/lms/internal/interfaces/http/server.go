@@ -63,6 +63,11 @@ func (s *Server) setupRoutes() {
 	settingsRepo := infraRepo.NewTenantSettingsRepo(s.db)
 	auditRepo := infraRepo.NewAuditLogRepo(s.db)
 	notifRepo := infraRepo.NewNotificationRepo(s.db)
+	examRepo := infraRepo.NewExamRepo(s.db)
+	assessmentRepo := infraRepo.NewAssessmentRepo(s.db)
+	qualityRepo := infraRepo.NewQualityRepo(s.db)
+	certRepo := infraRepo.NewCertificateRepo(s.db)
+	certTemplateRepo := infraRepo.NewCertificateTemplateRepo(s.db)
 
 	// Use Cases
 	authUC := usecase.NewAuthUseCase(userRepo, jwtProvider)
@@ -71,6 +76,11 @@ func (s *Server) setupRoutes() {
 	scheduleUC := usecase.NewScheduleUseCase(scheduleRepo)
 	assessorUC := usecase.NewAssessorUseCase(assessorRepo, userRepo)
 	verificationUC := usecase.NewVerificationUseCase(verificationRepo)
+	examUC := usecase.NewExamUseCase(examRepo, questionRepo, schemeRepo)
+	assessmentUC := usecase.NewAssessmentUseCase(assessmentRepo, schemeRepo)
+	qualityUC := usecase.NewQualityUseCase(qualityRepo, userRepo, schemeRepo)
+	certUC := usecase.NewCertificateUseCase(certRepo, certTemplateRepo, userRepo, schemeRepo)
+	reportUC := usecase.NewReportUseCase(s.db)
 
 	// Middleware
 	authMw := middleware.AuthMiddleware(jwtProvider)
@@ -82,6 +92,10 @@ func (s *Server) setupRoutes() {
 
 	// API group (tenant required)
 	api := s.app.Group("/api", tenantMw)
+
+	// Public certificate verification (no auth, but tenant required)
+	certHandler := handler.NewCertificateHandler(certUC)
+	certHandler.RegisterVerifyRoute(api)
 
 	// Auth routes (public + protected)
 	authHandler := handler.NewAuthHandler(authUC)
@@ -109,6 +123,13 @@ func (s *Server) setupRoutes() {
 	assessorHandler := handler.NewAssessorHandler(assessorUC)
 	assessorHandler.RegisterRoutes(admin)
 
+	// Certificate templates (admin only)
+	certHandler.RegisterTemplateRoutes(admin)
+
+	// Reports (admin only)
+	reportHandler := handler.NewReportHandler(reportUC)
+	reportHandler.RegisterRoutes(admin)
+
 	// Verification routes (admin + quality_manager)
 	verificationGroup := api.Group("", authMw, middleware.RequireRoles(
 		valueobject.RoleSuperAdmin,
@@ -118,6 +139,34 @@ func (s *Server) setupRoutes() {
 
 	verificationHandler := handler.NewVerificationHandler(verificationUC)
 	verificationHandler.RegisterRoutes(verificationGroup)
+
+	// Quality management (admin + quality_manager)
+	qualityHandler := handler.NewQualityHandler(qualityUC)
+	qualityHandler.RegisterRoutes(verificationGroup)
+
+	// Certificate list (admin + assessee)
+	certViewGroup := api.Group("", authMw, middleware.RequireRoles(
+		valueobject.RoleSuperAdmin,
+		valueobject.RoleAdmin,
+		valueobject.RoleAssessee,
+	))
+	certHandler.RegisterCertRoutes(certViewGroup)
+
+	// Exam routes (assessee only)
+	assesseeGroup := api.Group("", authMw, middleware.RequireRoles(
+		valueobject.RoleAssessee,
+	))
+
+	examHandler := handler.NewExamHandler(examUC)
+	examHandler.RegisterRoutes(assesseeGroup)
+
+	// Assessment routes (assessor only)
+	assessorGroup := api.Group("", authMw, middleware.RequireRoles(
+		valueobject.RoleAssessor,
+	))
+
+	assessmentHandler := handler.NewAssessmentHandler(assessmentUC)
+	assessmentHandler.RegisterRoutes(assessorGroup)
 }
 
 func (s *Server) Start() error {

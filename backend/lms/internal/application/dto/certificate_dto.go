@@ -3,29 +3,32 @@ package dto
 import "time"
 
 type CertificateResponse struct {
-	ID                string    `json:"id"`
-	CertificateNumber string    `json:"certificate_number"`
-	AssesseeID        string    `json:"assessee_id"`
-	SchemeID          string    `json:"scheme_id"`
-	TemplateID        *string   `json:"template_id"`
-	AssessorID        *string   `json:"assessor_id"`
-	Status            string    `json:"status"`
-	IssuedDate        time.Time `json:"issued_date"`
-	ExpiryDate        time.Time `json:"expiry_date"`
-	DownloadURL       *string   `json:"download_url"`
-	QRCodeData        *string   `json:"qr_code_data"`
-	CreatedAt         time.Time `json:"created_at"`
+	ID                string  `json:"id"`
+	CertificateNumber string  `json:"certificate_number"`
+	HolderName        string  `json:"holder_name"`
+	HolderPhotoURL    string  `json:"holder_photo_url"`
+	SchemeName        string  `json:"scheme_name"`
+	SchemeCode        string  `json:"scheme_code"`
+	AssessorName      string  `json:"assessor_name"`
+	LspName           string  `json:"lsp_name"`
+	Status            string  `json:"status"`
+	IssuedDate        string  `json:"issued_date"`
+	ExpiryDate        string  `json:"expiry_date"`
+	DownloadURL       *string `json:"download_url"`
+	VerificationURL   string  `json:"verification_url"`
+	QRCodeData        *string `json:"qr_code_data"`
 }
 
 type CertificateVerifyResponse struct {
-	Valid             bool      `json:"valid"`
-	CertificateNumber string    `json:"certificate_number"`
-	HolderName        string    `json:"holder_name"`
-	SchemeName        string    `json:"scheme_name"`
-	IssuedDate        time.Time `json:"issued_date"`
-	ExpiryDate        time.Time `json:"expiry_date"`
-	Status            string    `json:"status"`
-	TenantName        string    `json:"tenant_name"`
+	Valid             bool   `json:"valid"`
+	CertificateNumber string `json:"certificate_number"`
+	HolderName        string `json:"holder_name"`
+	HolderPhotoURL    string `json:"holder_photo_url"`
+	SchemeName        string `json:"scheme_name"`
+	LspName           string `json:"lsp_name"`
+	Status            string `json:"status"`
+	IssuedDate        string `json:"issued_date"`
+	ExpiryDate        string `json:"expiry_date"`
 }
 
 type CreateTemplateRequest struct {
