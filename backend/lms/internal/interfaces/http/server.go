@@ -42,47 +42,82 @@ func (s *Server) setupMiddleware() {
 	s.app.Use(middleware.RequestLogger())
 
 	s.app.Use(cors.New(cors.Config{
-		AllowOrigins: s.cfg.CORS.AllowedOrigins,
-		AllowMethods: s.cfg.CORS.AllowedMethods,
-		AllowHeaders: s.cfg.CORS.AllowedHeaders,
+		AllowOrigins:     s.cfg.CORS.AllowedOrigins,
+		AllowMethods:     s.cfg.CORS.AllowedMethods,
+		AllowHeaders:     s.cfg.CORS.AllowedHeaders,
 		AllowCredentials: true,
 	}))
 }
 
 func (s *Server) setupRoutes() {
+	// Providers
 	jwtProvider := infraAuth.NewJWTProvider(s.cfg.JWT)
 
+	// Repositories
 	userRepo := infraRepo.NewUserRepo(s.db)
-	authUC := usecase.NewAuthUseCase(userRepo, jwtProvider)
+	schemeRepo := infraRepo.NewSchemeRepo(s.db)
+	questionRepo := infraRepo.NewQuestionRepo(s.db)
+	scheduleRepo := infraRepo.NewScheduleRepo(s.db)
+	assessorRepo := infraRepo.NewAssessorRepo(s.db)
+	verificationRepo := infraRepo.NewVerificationRepo(s.db)
+	settingsRepo := infraRepo.NewTenantSettingsRepo(s.db)
+	auditRepo := infraRepo.NewAuditLogRepo(s.db)
+	notifRepo := infraRepo.NewNotificationRepo(s.db)
 
+	// Use Cases
+	authUC := usecase.NewAuthUseCase(userRepo, jwtProvider)
+	schemeUC := usecase.NewSchemeUseCase(schemeRepo)
+	questionUC := usecase.NewQuestionUseCase(questionRepo)
+	scheduleUC := usecase.NewScheduleUseCase(scheduleRepo)
+	assessorUC := usecase.NewAssessorUseCase(assessorRepo, userRepo)
+	verificationUC := usecase.NewVerificationUseCase(verificationRepo)
+
+	// Middleware
 	authMw := middleware.AuthMiddleware(jwtProvider)
 	tenantMw := middleware.TenantResolver(s.db, s.cfg.Tenant)
 
+	// Health (no tenant required)
 	healthHandler := handler.NewHealthHandler(s.db)
 	healthHandler.RegisterRoutes(s.app)
 
+	// API group (tenant required)
 	api := s.app.Group("/api", tenantMw)
 
+	// Auth routes (public + protected)
 	authHandler := handler.NewAuthHandler(authUC)
 	authHandler.RegisterRoutes(api, authMw)
 
-	_ = authMw
-	_ = api
+	// Tenant settings, audit trail, notifications
+	tenantHandler := handler.NewTenantHandler(settingsRepo, auditRepo, notifRepo)
+	tenantHandler.RegisterRoutes(api, authMw)
 
-	// Admin routes (Sprint 2+)
+	// Admin CRUD routes (admin + super_admin only)
 	admin := api.Group("", authMw, middleware.RequireRoles(
 		valueobject.RoleSuperAdmin,
 		valueobject.RoleAdmin,
 	))
-	_ = admin
 
-	// Quality Manager routes (Sprint 4)
-	quality := api.Group("/quality", authMw, middleware.RequireRoles(
+	schemeHandler := handler.NewSchemeHandler(schemeUC)
+	schemeHandler.RegisterRoutes(admin)
+
+	questionHandler := handler.NewQuestionHandler(questionUC)
+	questionHandler.RegisterRoutes(admin)
+
+	scheduleHandler := handler.NewScheduleHandler(scheduleUC)
+	scheduleHandler.RegisterRoutes(admin)
+
+	assessorHandler := handler.NewAssessorHandler(assessorUC)
+	assessorHandler.RegisterRoutes(admin)
+
+	// Verification routes (admin + quality_manager)
+	verificationGroup := api.Group("", authMw, middleware.RequireRoles(
 		valueobject.RoleSuperAdmin,
 		valueobject.RoleAdmin,
 		valueobject.RoleQualityManager,
 	))
-	_ = quality
+
+	verificationHandler := handler.NewVerificationHandler(verificationUC)
+	verificationHandler.RegisterRoutes(verificationGroup)
 }
 
 func (s *Server) Start() error {
