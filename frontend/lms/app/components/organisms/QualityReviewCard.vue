@@ -28,7 +28,7 @@ const isPending = props.review.status === 'pending_review'
 <template>
     <div class="ca-card p-0 overflow-hidden">
         <!-- Header -->
-        <div class="p-5 border-b border-white/5">
+        <div class="p-5 border-b border-divider">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
                     <div class="flex items-center gap-2 mb-1">
@@ -40,7 +40,7 @@ const isPending = props.review.status === 'pending_review'
                             {{ statusLabel }}
                         </span>
                     </div>
-                    <h3 class="text-lg font-bold text-white">{{ review.assesseeName }}</h3>
+                    <h3 class="text-lg font-bold text-content">{{ review.assesseeName }}</h3>
                 </div>
                 <span
                     class="px-3 py-1 rounded-lg text-xs font-bold border self-start"
@@ -58,20 +58,20 @@ const isPending = props.review.status === 'pending_review'
                     <User class="w-4 h-4 text-content-subtle mt-0.5 shrink-0" />
                     <div>
                         <p class="text-xs text-content-subtle">Asesor</p>
-                        <p class="text-sm font-bold text-white">{{ review.assessorName }}</p>
+                        <p class="text-sm font-bold text-content">{{ review.assessorName }}</p>
                     </div>
                 </div>
                 <div class="flex items-start gap-3">
                     <BookOpen class="w-4 h-4 text-content-subtle mt-0.5 shrink-0" />
                     <div>
                         <p class="text-xs text-content-subtle">Skema</p>
-                        <p class="text-sm font-bold text-white">{{ review.schemeName }}</p>
+                        <p class="text-sm font-bold text-content">{{ review.schemeName }}</p>
                     </div>
                 </div>
             </div>
 
             <!-- Assessor Notes -->
-            <div class="p-3 rounded-xl bg-white/5 border border-white/5">
+            <div class="p-3 rounded-xl bg-tint border border-divider">
                 <p class="text-xs font-bold text-content-subtle uppercase tracking-widest mb-1">Catatan Asesor</p>
                 <p class="text-sm text-content-muted leading-relaxed">{{ review.assessorNotes }}</p>
             </div>
@@ -98,7 +98,7 @@ const isPending = props.review.status === 'pending_review'
                         <textarea
                             v-model="managerNotes"
                             rows="3"
-                            class="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-sm text-white placeholder-content-subtle focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/30 transition-all resize-none"
+                            class="w-full rounded-xl bg-tint border border-divider-strong px-4 py-3 text-sm text-content placeholder-content-subtle focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/30 transition-all resize-none"
                             placeholder="Tambahkan catatan review..."
                         />
                     </div>
@@ -137,7 +137,7 @@ const isPending = props.review.status === 'pending_review'
         </div>
 
         <!-- Footer -->
-        <div class="px-5 py-3 border-t border-white/5 flex items-center justify-between">
+        <div class="px-5 py-3 border-t border-divider flex items-center justify-between">
             <span class="text-xs text-content-subtle">
                 Diajukan: {{ review.submittedAt.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) }}
             </span>

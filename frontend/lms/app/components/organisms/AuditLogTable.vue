@@ -49,7 +49,7 @@ const getRoleBadge = (role: string) => {
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead>
-                    <tr class="bg-core-900/80 border-b border-white/5">
+                    <tr class="bg-core-900/80 border-b border-divider">
                         <th class="p-4 text-xs font-black text-content-subtle uppercase tracking-widest pl-6">Waktu</th>
                         <th class="p-4 text-xs font-black text-content-subtle uppercase tracking-widest">Pengguna</th>
                         <th class="p-4 text-xs font-black text-content-subtle uppercase tracking-widest">Aksi</th>
@@ -57,10 +57,10 @@ const getRoleBadge = (role: string) => {
                         <th class="p-4 text-xs font-black text-content-subtle uppercase tracking-widest hidden xl:table-cell pr-6">IP Address</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-white/5">
+                <tbody class="divide-y divide-divider">
                     <tr v-for="log in logs" :key="log.id" class="hover:bg-core-800 transition-colors">
                         <td class="p-4 pl-6 whitespace-nowrap">
-                            <div class="text-sm text-white font-medium">
+                            <div class="text-sm text-content font-medium">
                                 {{ log.timestamp.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) }}
                             </div>
                             <div class="text-xs text-content-subtle">
@@ -68,7 +68,7 @@ const getRoleBadge = (role: string) => {
                             </div>
                         </td>
                         <td class="p-4">
-                            <div class="text-sm font-bold text-white">{{ log.userName }}</div>
+                            <div class="text-sm font-bold text-content">{{ log.userName }}</div>
                             <span
                                 class="mt-1 inline-block px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-widest border"
                                 :class="getRoleBadge(log.userRole)"

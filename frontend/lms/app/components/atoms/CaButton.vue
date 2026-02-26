@@ -18,7 +18,7 @@ const props = withDefaults(defineProps<Props>(), {
 const variants = {
   primary: 'ca-btn-primary',
   secondary: 'ca-btn-secondary',
-  outline: 'bg-[#1A2235]/50 text-white font-bold hover:bg-[#1A2235] hover:text-cyan-400 transition-all duration-300',
+  outline: 'bg-input/50 text-content font-bold hover:bg-input hover:text-cyan-400 transition-all duration-300',
   ghost: 'bg-transparent text-content-subtle font-bold hover:text-cyan-400 hover:bg-cyan-500/10 transition-all duration-300'
 }
 
@@ -32,14 +32,14 @@ const sizes = {
 <template>
   <button
     :disabled="disabled || loading"
-    class="btn"
+    class="btn cursor-pointer"
     :class="[
       variants[variant], 
       sizes[size],
       fullWidth ? 'w-full' : ''
     ]"
   >
-    <div v-if="loading" class="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+    <div v-if="loading" class="h-4 w-4 animate-spin rounded-full border-2 border-current/30 border-t-current" />
     <slot v-else />
   </button>
 </template>

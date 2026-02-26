@@ -35,17 +35,17 @@ const selectRadio = () => {
         class="peer sr-only"
       />
       <div 
-        class="w-5 h-5 rounded-full transition-all duration-200 flex items-center justify-center border-none peer-focus-visible:ring-2 peer-focus-visible:ring-cyan-500/50 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-[#050814]"
+        class="w-5 h-5 rounded-full transition-all duration-200 flex items-center justify-center border-none peer-focus-visible:ring-2 peer-focus-visible:ring-cyan-500/50 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-(--th-ring-offset)"
         :class="[
-          isChecked ? 'bg-cyan-500 shadow-glow-cyan' : 'bg-[#1A2235] shadow-inset-light group-hover:bg-[#1E273C]'
+          isChecked ? 'bg-cyan-500 shadow-glow-cyan' : 'bg-input shadow-inset-light group-hover:bg-input-hover'
         ]"
       >
         <div 
-          class="w-2 h-2 rounded-full bg-slate-950 transition-transform duration-200"
+          class="w-2 h-2 rounded-full bg-slate-900 transition-transform duration-200"
           :class="isChecked ? 'scale-100 opacity-100' : 'scale-0 opacity-0'"
         ></div>
       </div>
     </div>
-    <span v-if="label" class="text-sm font-bold text-slate-200 select-none">{{ label }}</span>
+    <span v-if="label" class="text-sm font-bold text-content select-none">{{ label }}</span>
   </label>
 </template>

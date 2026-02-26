@@ -37,13 +37,13 @@ const updateData = (key: keyof CompetencyData, value: string) => {
           class="flex flex-col items-start p-6 rounded-2xl border transition-all text-left group relative overflow-hidden"
           :class="modelValue.schemeId === scheme.id 
             ? 'border-brand bg-brand/10 shadow-glow-amber' 
-            : 'border-white/5 bg-white/5 hover:border-white/10 hover:bg-white/10'"
+            : 'border-divider bg-tint hover:border-divider-hover hover:bg-tint-hover'"
         >
           <!-- Active Highlight -->
           <div v-if="modelValue.schemeId === scheme.id" class="absolute inset-0 bg-gradient-to-br from-brand/10 to-transparent pointer-events-none" />
           
           <span class="text-[10px] font-black uppercase tracking-widest mb-2 transition-colors relative z-10" :class="modelValue.schemeId === scheme.id ? 'text-brand' : 'text-content-subtle'">{{ scheme.id }}</span>
-          <span class="font-bold text-lg transition-colors relative z-10" :class="modelValue.schemeId === scheme.id ? 'text-white' : 'text-content-muted group-hover:text-content'">{{ scheme.name }}</span>
+          <span class="font-bold text-lg transition-colors relative z-10" :class="modelValue.schemeId === scheme.id ? 'text-content' : 'text-content-muted group-hover:text-content'">{{ scheme.name }}</span>
         </button>
       </div>
     </div>
@@ -58,7 +58,7 @@ const updateData = (key: keyof CompetencyData, value: string) => {
           class="px-6 py-3.5 rounded-xl border transition-all font-bold text-sm flex-1 sm:flex-none justify-center relative overflow-hidden group/purpose"
           :class="modelValue.purpose === purpose.id 
             ? 'border-transparent bg-gradient-to-r from-brand to-brand-400 text-slate-950 shadow-lg shadow-brand/20' 
-            : 'border-white/5 bg-core-800/50 text-content-subtle hover:bg-white/10 hover:text-white'"
+            : 'border-divider bg-core-800/50 text-content-subtle hover:bg-tint-hover hover:text-content'"
         >
           <span class="relative z-10 block transition-transform group-hover/purpose:scale-105">{{ purpose.label }}</span>
         </button>

@@ -22,7 +22,7 @@ const handleSwitch = (code: string) => {
 <template>
     <div class="relative">
         <button
-            class="flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-content-subtle hover:text-white hover:bg-white/5 transition-all font-medium"
+            class="flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-content-subtle hover:text-content hover:bg-tint transition-all font-medium"
             @click="showDropdown = !showDropdown"
         >
             <Globe class="w-4 h-4" />
@@ -39,12 +39,12 @@ const handleSwitch = (code: string) => {
         >
             <div
                 v-if="showDropdown"
-                class="absolute right-0 top-full mt-2 w-44 rounded-xl bg-[#0F1423] border border-white/10 shadow-xl overflow-hidden z-50"
+                class="absolute right-0 top-full mt-2 w-44 rounded-xl bg-core-800 border border-divider-strong shadow-xl overflow-hidden z-50"
             >
                 <button
                     v-for="loc in availableLocales"
                     :key="loc.code"
-                    class="w-full text-left px-4 py-3 text-sm text-content-muted hover:text-white hover:bg-white/5 transition-all font-medium"
+                    class="w-full text-left px-4 py-3 text-sm text-content-muted hover:text-content hover:bg-tint transition-all font-medium"
                     @click="handleSwitch(loc.code)"
                 >
                     {{ loc.name }}

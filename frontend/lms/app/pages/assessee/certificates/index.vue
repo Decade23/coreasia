@@ -28,7 +28,7 @@ const handleViewCert = (cert: IssuedCertificateDomain) => {
                     <ShieldCheck class="w-5 h-5 text-brand" />
                 </div>
                 <div>
-                    <h1 class="text-2xl md:text-3xl font-black tracking-tight text-white">Sertifikat Saya</h1>
+                    <h1 class="text-2xl md:text-3xl font-black tracking-tight text-content">Sertifikat Saya</h1>
                     <p class="text-sm text-content-subtle hidden md:block mt-1">Daftar sertifikat kompetensi yang telah Anda peroleh.</p>
                 </div>
             </div>

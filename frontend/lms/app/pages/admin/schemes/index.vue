@@ -87,7 +87,7 @@ const handleConfirmDelete = async () => {
 <template>
     <DashboardLayout>
         <template #header>
-            <h1 class="text-lg font-bold text-white hidden lg:block">Manajemen Skema</h1>
+            <h1 class="text-lg font-bold text-content hidden lg:block">Manajemen Skema</h1>
         </template>
 
         <div class="py-6 space-y-8">

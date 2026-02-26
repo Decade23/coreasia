@@ -16,7 +16,7 @@ onMounted(() => fetchStats())
 <template>
     <DashboardLayout>
         <template #header>
-            <h1 class="text-lg font-bold text-white hidden lg:block">Dashboard Mutu</h1>
+            <h1 class="text-lg font-bold text-content hidden lg:block">Dashboard Mutu</h1>
         </template>
 
         <div class="py-6 space-y-6">
@@ -33,11 +33,11 @@ onMounted(() => fetchStats())
             <template v-else-if="stats">
                 <!-- Summary Cards -->
                 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div class="p-5 rounded-2xl bg-core-800 border border-white/5 shadow-xl">
+                    <div class="p-5 rounded-2xl bg-core-800 border border-divider shadow-xl">
                         <div class="flex items-center justify-between mb-3">
                             <ClipboardList class="w-5 h-5 text-brand" />
                         </div>
-                        <div class="text-3xl font-black text-white mb-1">{{ stats.totalAssessments }}</div>
+                        <div class="text-3xl font-black text-content mb-1">{{ stats.totalAssessments }}</div>
                         <p class="text-xs font-bold text-content-subtle uppercase tracking-widest">Total Asesmen</p>
                     </div>
                     <div class="p-5 rounded-2xl bg-emerald-500/5 border border-emerald-500/20 shadow-xl">
@@ -70,7 +70,7 @@ onMounted(() => fetchStats())
                             <FileSearch class="w-6 h-6 text-amber-400" />
                         </div>
                         <div>
-                            <h3 class="font-bold text-white group-hover:text-brand transition-colors">Review Keputusan Asesor</h3>
+                            <h3 class="font-bold text-content group-hover:text-brand transition-colors">Review Keputusan Asesor</h3>
                             <p class="text-sm text-content-subtle">{{ stats.pendingReviews }} review menunggu keputusan Anda</p>
                         </div>
                     </NuxtLink>
@@ -79,7 +79,7 @@ onMounted(() => fetchStats())
                             <ClipboardList class="w-6 h-6 text-purple-400" />
                         </div>
                         <div>
-                            <h3 class="font-bold text-white group-hover:text-brand transition-colors">Audit Trail</h3>
+                            <h3 class="font-bold text-content group-hover:text-brand transition-colors">Audit Trail</h3>
                             <p class="text-sm text-content-subtle">Log semua aktivitas sistem</p>
                         </div>
                     </NuxtLink>
@@ -87,22 +87,22 @@ onMounted(() => fetchStats())
 
                 <!-- Scheme Breakdown -->
                 <div class="ca-card p-0 overflow-hidden">
-                    <div class="p-6 border-b border-white/5">
+                    <div class="p-6 border-b border-divider">
                         <h2 class="text-sm font-bold text-content-subtle uppercase tracking-widest">Breakdown Per Skema</h2>
                     </div>
-                    <div class="divide-y divide-white/5">
+                    <div class="divide-y divide-divider">
                         <div
                             v-for="scheme in stats.schemeBreakdown"
                             :key="scheme.schemeName"
                             class="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
                         >
                             <div class="flex-1 min-w-0">
-                                <h3 class="font-bold text-white text-sm">{{ scheme.schemeName }}</h3>
+                                <h3 class="font-bold text-content text-sm">{{ scheme.schemeName }}</h3>
                                 <p class="text-xs text-content-subtle mt-0.5">{{ scheme.competent }}/{{ scheme.total }} kompeten</p>
                             </div>
                             <div class="flex items-center gap-4 shrink-0">
                                 <!-- Progress Bar -->
-                                <div class="w-32 sm:w-48 h-2 rounded-full bg-white/5 overflow-hidden">
+                                <div class="w-32 sm:w-48 h-2 rounded-full bg-tint overflow-hidden">
                                     <div
                                         class="h-full rounded-full transition-all duration-500"
                                         :class="scheme.passRate >= 80 ? 'bg-emerald-500' : scheme.passRate >= 60 ? 'bg-amber-500' : 'bg-red-500'"

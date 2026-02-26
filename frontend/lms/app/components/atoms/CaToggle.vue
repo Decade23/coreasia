@@ -24,9 +24,9 @@ const toggle = () => {
       :aria-checked="modelValue"
       :disabled="disabled"
       @click="toggle"
-      class="relative inline-flex h-6 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-300 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#050814]"
+      class="relative inline-flex h-6 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-300 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500/50 focus-visible:ring-offset-2 focus-visible:ring-offset-(--th-ring-offset)"
       :class="[
-        modelValue ? 'bg-cyan-500 shadow-glow-cyan' : 'bg-[#1A2235] shadow-inset-light',
+        modelValue ? 'bg-cyan-500 shadow-glow-cyan' : 'bg-input shadow-inset-light',
         disabled ? 'opacity-50 cursor-not-allowed grayscale' : ''
       ]"
     >
@@ -37,7 +37,7 @@ const toggle = () => {
         :class="modelValue ? 'translate-x-[22px]' : 'translate-x-0'"
       />
     </button>
-    <label v-if="label" :for="id" class="text-sm font-bold text-slate-200 cursor-pointer select-none" @click="toggle" :class="{'opacity-50': disabled}">
+    <label v-if="label" :for="id" class="text-sm font-bold text-content cursor-pointer select-none" @click="toggle" :class="{'opacity-50': disabled}">
       {{ label }}
     </label>
   </div>

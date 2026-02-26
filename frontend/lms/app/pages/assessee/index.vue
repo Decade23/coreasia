@@ -42,10 +42,10 @@ const handleViewCert = (cert: IssuedCertificateDomain) => {
         <template #header>
             <div class="flex items-center justify-between w-full">
                 <div>
-                    <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight text-white flex items-center gap-3">
+                    <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight text-content flex items-center gap-3">
                         Portal Asesi
                     </h1>
-                    <p class="text-sm text-slate-400 hidden md:block mt-2">Selamat datang kembali, <strong class="text-emerald-400">{{ user?.name || 'Peserta' }}</strong></p>
+                    <p class="text-sm text-content-muted hidden md:block mt-2">Selamat datang kembali, <strong class="text-emerald-400">{{ user?.name || 'Peserta' }}</strong></p>
                 </div>
 
                 <div class="flex items-center gap-4 shrink-0">
@@ -60,12 +60,12 @@ const handleViewCert = (cert: IssuedCertificateDomain) => {
 
             <!-- Main Content Area: Status Pendaftaran -->
             <div class="lg:col-span-2 space-y-6">
-                <h2 class="text-xl font-extrabold text-white flex items-center gap-2">
+                <h2 class="text-xl font-extrabold text-content flex items-center gap-2">
                     <Clock class="w-6 h-6 text-emerald-400" />
                     Status Pendaftaran Saat Ini
                 </h2>
 
-                <div v-if="applications.length === 0" class="p-8 rounded-[2rem] bg-[#1A2235] text-center">
+                <div v-if="applications.length === 0" class="p-8 rounded-[2rem] bg-input text-center">
                     <p class="text-content-subtle mb-6">Anda belum memiliki pendaftaran sertifikasi aktif.</p>
                     <button class="bg-cyan-500/15 text-cyan-400 font-black tracking-widest uppercase text-xs hover:bg-cyan-500/25 px-6 py-3 rounded-xl transition-all" @click="navigateTo('/registration')">Mulai Pendaftaran</button>
                 </div>
@@ -81,7 +81,7 @@ const handleViewCert = (cert: IssuedCertificateDomain) => {
                             <div class="space-y-4">
                                 <div>
                                     <span class="text-[10px] font-black text-brand uppercase tracking-widest">{{ app.id }}</span>
-                                    <h3 class="text-xl md:text-2xl font-bold text-white mt-1 leading-tight">{{ app.schemeName }}</h3>
+                                    <h3 class="text-xl md:text-2xl font-bold text-content mt-1 leading-tight">{{ app.schemeName }}</h3>
                                 </div>
 
                                 <BaseBadge
@@ -92,14 +92,14 @@ const handleViewCert = (cert: IssuedCertificateDomain) => {
                             </div>
 
                             <!-- Jadwal Box if available -->
-                            <div v-if="app.examSchedule" class="p-6 rounded-2xl bg-[#1A2235] w-full md:w-auto min-w-[240px] shadow-inset-light">
+                            <div v-if="app.examSchedule" class="p-6 rounded-2xl bg-input w-full md:w-auto min-w-[240px] shadow-inset-light">
                                 <div class="flex items-center justify-between mb-4 pb-4">
                                     <div class="flex items-center gap-2">
                                         <CalendarDays class="w-4 h-4 text-cyan-400" />
                                         <span class="text-[10px] font-black text-content-subtle uppercase tracking-widest">Jadwal Ujian</span>
                                     </div>
                                 </div>
-                                <p class="font-bold text-white text-base md:text-lg">{{ app.examSchedule.date }}</p>
+                                <p class="font-bold text-content text-base md:text-lg">{{ app.examSchedule.date }}</p>
                                 <p class="text-cyan-400 text-xs font-bold mt-1.5 flex items-center gap-1.5">
                                     <Clock class="w-3 h-3" /> {{ app.examSchedule.time }} &bull; {{ app.examSchedule.location }}
                                 </p>
@@ -114,7 +114,7 @@ const handleViewCert = (cert: IssuedCertificateDomain) => {
 
             <!-- Sidebar Area: Sertifikat -->
             <div class="space-y-6">
-                <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                <h2 class="text-xl font-bold text-content flex items-center gap-2">
                     <ShieldCheck class="w-6 h-6 text-brand" />
                     Sertifikat Saya
                 </h2>

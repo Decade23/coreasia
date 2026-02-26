@@ -89,7 +89,7 @@ onUnmounted(() => {
         <template #header>
             <div class="flex items-center justify-between w-full">
                 <div v-if="currentExam">
-                    <h1 class="text-xl font-bold text-white">{{ currentExam.title }}</h1>
+                    <h1 class="text-xl font-bold text-content">{{ currentExam.title }}</h1>
                     <p class="text-xs text-brand font-medium uppercase tracking-wider">{{ currentExam.id }}</p>
                 </div>
                 <div v-else class="h-12" />
@@ -98,7 +98,7 @@ onUnmounted(() => {
                     <!-- Answered count -->
                     <div v-if="currentExam" class="hidden sm:flex flex-col items-end">
                         <span class="text-[10px] uppercase font-black text-content-muted tracking-widest">Dijawab</span>
-                        <span class="text-sm font-bold text-white">{{ answeredCount }}/{{ totalQuestions }}</span>
+                        <span class="text-sm font-bold text-content">{{ answeredCount }}/{{ totalQuestions }}</span>
                     </div>
 
                     <!-- Timer (inline, driven by engine) -->
@@ -139,7 +139,7 @@ onUnmounted(() => {
                         <span>Soal {{ currentIndex + 1 }} dari {{ totalQuestions }}</span>
                         <button
                             @click="showNavigator = !showNavigator"
-                            class="p-1 rounded-lg hover:bg-white/5 transition-colors"
+                            class="p-1 rounded-lg hover:bg-tint transition-colors"
                             title="Navigasi Soal"
                         >
                             <LayoutGrid class="w-4 h-4" />
@@ -176,7 +176,7 @@ onUnmounted(() => {
                                     ? 'bg-brand text-slate-950'
                                     : answers[q.id] !== undefined && answers[q.id] !== null && answers[q.id] !== ''
                                         ? 'bg-brand/20 text-brand border border-brand/30'
-                                        : 'bg-white/5 text-content-subtle hover:bg-white/10',
+                                        : 'bg-tint text-content-subtle hover:bg-tint-hover',
                             ]"
                         >
                             {{ i + 1 }}
@@ -192,7 +192,7 @@ onUnmounted(() => {
             />
 
             <!-- Navigation -->
-            <div class="flex items-center justify-between pt-4 mt-8 border-t border-white/5">
+            <div class="flex items-center justify-between pt-4 mt-8 border-t border-divider">
                 <CaButton
                     variant="outline"
                     @click="prevQuestion"

@@ -134,13 +134,13 @@ const isSameDay = (d1: Date, d2: Date | null) => {
         :value="formattedDate"
         :placeholder="placeholder || 'Pilih tanggal...'"
         :disabled="disabled"
-        class="w-full bg-[#1A2235] rounded-xl px-4 py-3.5 h-[52px] cursor-pointer text-white font-bold transition-all placeholder:text-content-subtle placeholder:font-medium focus:outline-none relative z-0 pl-11"
+        class="w-full bg-input rounded-xl px-4 py-3.5 h-[52px] cursor-pointer text-content font-bold transition-all placeholder:text-content-subtle placeholder:font-medium focus:outline-none relative z-0 pl-11"
         :class="[
-          error 
-            ? 'ring-2 ring-rose-500/50 shadow-[0_0_15px_rgba(244,63,94,0.15)] bg-[#1A2235]' 
-            : 'shadow-inset-light hover:bg-[#1E273C]',
-          isOpen ? 'ring-2 ring-cyan-500/50 shadow-glow-cyan bg-[#1A2235]' : '',
-          disabled ? 'opacity-50 cursor-not-allowed grayscale hover:bg-[#1A2235]' : ''
+          error
+            ? 'ring-2 ring-rose-500/50 shadow-[0_0_15px_rgba(244,63,94,0.15)] bg-input'
+            : 'shadow-inset-light hover:bg-input-hover',
+          isOpen ? 'ring-2 ring-cyan-500/50 shadow-glow-cyan bg-input' : '',
+          disabled ? 'opacity-50 cursor-not-allowed grayscale hover:bg-input' : ''
         ]"
       />
     </div>
@@ -156,16 +156,16 @@ const isSameDay = (d1: Date, d2: Date | null) => {
       leave-from-class="transform scale-100 opacity-100"
       leave-to-class="transform scale-95 opacity-0"
     >
-      <div v-if="isOpen" class="absolute z-50 w-72 mt-2 bg-[#0F1423] shadow-glow-base-strong rounded-2xl p-4 border border-white/5">
+      <div v-if="isOpen" class="absolute z-50 w-72 mt-2 bg-core-800 shadow-glow-base-strong rounded-2xl p-4 border border-divider">
         <!-- Header -->
         <div class="flex items-center justify-between mb-4">
-          <button type="button" @click.stop="prevMonth" class="p-2 rounded-lg hover:bg-white/5 text-content-subtle hover:text-white transition-colors">
+          <button type="button" @click.stop="prevMonth" class="p-2 rounded-lg hover:bg-tint text-content-subtle hover:text-content transition-colors">
             <ChevronLeft class="w-5 h-5" />
           </button>
-          <div class="font-bold text-white">
+          <div class="font-bold text-content">
             {{ months[currentViewDate.getMonth()] }} {{ currentViewDate.getFullYear() }}
           </div>
-          <button type="button" @click.stop="nextMonth" class="p-2 rounded-lg hover:bg-white/5 text-content-subtle hover:text-white transition-colors">
+          <button type="button" @click.stop="nextMonth" class="p-2 rounded-lg hover:bg-tint text-content-subtle hover:text-content transition-colors">
             <ChevronRight class="w-5 h-5" />
           </button>
         </div>
@@ -186,14 +186,14 @@ const isSameDay = (d1: Date, d2: Date | null) => {
             @click.stop="selectDate(dayObj.date)"
             class="relative w-9 h-9 rounded-lg flex items-center justify-center text-sm font-semibold transition-all group focus:outline-none"
             :class="[
-              !dayObj.isCurrentMonth ? 'text-slate-600 hover:bg-white/5' : '',
-              dayObj.isCurrentMonth && !isSameDay(dayObj.date, selectedDate) ? 'text-slate-300 hover:bg-white/10' : '',
+              !dayObj.isCurrentMonth ? 'text-content-faint hover:bg-tint' : '',
+              dayObj.isCurrentMonth && !isSameDay(dayObj.date, selectedDate) ? 'text-content-muted hover:bg-tint-hover' : '',
               isSameDay(dayObj.date, selectedDate) ? 'bg-cyan-500 text-slate-950 font-black shadow-glow-cyan shadow-cyan-500/40 z-10' : ''
             ]"
           >
             <span>{{ dayObj.date.getDate() }}</span>
             <!-- Dot indicating 'Today' -->
-            <div v-if="isSameDay(dayObj.date, today)" class="absolute top-1 right-1 w-1.5 h-1.5 bg-cyan-400 rounded-full" :class="{'bg-[#0F1423]': isSameDay(dayObj.date, selectedDate)}"></div>
+            <div v-if="isSameDay(dayObj.date, today)" class="absolute top-1 right-1 w-1.5 h-1.5 bg-cyan-400 rounded-full" :class="{'bg-core-800': isSameDay(dayObj.date, selectedDate)}"></div>
           </button>
         </div>
       </div>

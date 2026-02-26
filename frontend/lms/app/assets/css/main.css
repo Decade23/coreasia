@@ -2,22 +2,148 @@
 @import "./animations.css";
 
 /* ══════════════════════════════════════════════════════════
-   CoreAsia LMS — Unified Design System
-   Direction: Dark Glassmorphism · Modern · Clean · Bold & Soft
+   CoreAsia LMS — Unified Design System (Themeable)
+   Supports: Dark (default) & Light mode
    Base: Deep Navy (#050814) | Primary: Cyan (#06B6D4)
    Secondary: Emerald (#10B981) | Accent: Amber (#F59E0B)
    ══════════════════════════════════════════════════════════ */
 
-/* ── Theme Tokens (Tailwind v4) ── */
-@theme {
-    /* Surface Scale — deep navy */
-    --color-core-950: #050814;
-    --color-core-900: #0A0F1D;
-    --color-core-800: #0F1423;
-    --color-core-700: #1A2235;
-    --color-core-600: #243049;
+/* ── 1. Theme Variable Definitions ── */
+:root {
+    /* Dark theme (default) */
+    --th-core-950: #050814;
+    --th-core-900: #0A0F1D;
+    --th-core-800: #0F1423;
+    --th-core-700: #1A2235;
+    --th-core-600: #243049;
 
-    /* Brand — Cyan */
+    --th-surface: #0A0F1D;
+    --th-surface-soft: #0F1423;
+    --th-surface-card: #1A2235;
+
+    --th-content: #F8FAFC;
+    --th-content-muted: #94A3B8;
+    --th-content-subtle: #64748B;
+    --th-content-faint: #475569;
+
+    --th-input-bg: #1A2235;
+    --th-input-hover: #1E273C;
+
+    --th-border: rgba(255, 255, 255, 0.06);
+    --th-border-soft: rgba(255, 255, 255, 0.03);
+    --th-border-hover: rgba(255, 255, 255, 0.1);
+
+    --th-overlay: rgba(5, 8, 20, 0.8);
+    --th-ring-offset: #050814;
+
+    --th-glass-bg: rgba(15, 20, 35, 0.6);
+    --th-glass-hover: rgba(15, 20, 35, 0.7);
+    --th-glass-border: rgba(255, 255, 255, 0.06);
+    --th-glass-border-hover: rgba(255, 255, 255, 0.1);
+    --th-header-bg: rgba(5, 8, 20, 0.7);
+    --th-sidebar-bg: rgba(15, 20, 35, 0.95);
+    --th-sidebar-bg-desktop: rgba(15, 20, 35, 0.4);
+
+    --th-shadow-card: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+    --th-shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.3);
+    --th-shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    --th-shadow-glass-sm: 0 2px 16px 0 rgba(0, 0, 0, 0.2);
+    --th-shadow-glass-lg: 0 16px 48px 0 rgba(0, 0, 0, 0.5);
+    --th-shadow-glass-glow: 0 8px 32px 0 rgba(6, 182, 212, 0.08);
+    --th-shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+
+    --th-scrollbar-track: #050814;
+    --th-scrollbar-thumb: #1A2235;
+    --th-scrollbar-thumb-end: #243049;
+    --th-scrollbar-hover: #243049;
+    --th-scrollbar-hover-end: #2d3b5e;
+
+    --th-selection-bg: rgba(6, 182, 212, 0.25);
+    --th-selection-text: #f8fafc;
+
+    --th-gradient-1: rgba(6, 182, 212, 0.04);
+    --th-gradient-2: rgba(16, 185, 129, 0.03);
+    --th-gradient-3: rgba(6, 182, 212, 0.02);
+
+    /* Overlay on core backgrounds (white glow in dark, dark tint in light) */
+    --th-soft-overlay: rgba(255, 255, 255, 0.05);
+    --th-soft-overlay-2: rgba(255, 255, 255, 0.03);
+    --th-soft-overlay-hover: rgba(255, 255, 255, 0.08);
+    --th-soft-overlay-10: rgba(255, 255, 255, 0.1);
+}
+
+:root.light {
+    /* Light theme — warm, muted tones to reduce glare */
+    --th-core-950: #F0F2F5;
+    --th-core-900: #E8EAEF;
+    --th-core-800: #DFE2E8;
+    --th-core-700: #D4D8E0;
+    --th-core-600: #BFC5CF;
+
+    --th-surface: #F7F8FA;
+    --th-surface-soft: #F0F2F5;
+    --th-surface-card: #F7F8FA;
+
+    --th-content: #1A2332;
+    --th-content-muted: #4A5568;
+    --th-content-subtle: #6B7A8D;
+    --th-content-faint: #8E9AAB;
+
+    --th-input-bg: #E8EAEF;
+    --th-input-hover: #DFE2E8;
+
+    --th-border: rgba(15, 23, 42, 0.12);
+    --th-border-soft: rgba(15, 23, 42, 0.06);
+    --th-border-hover: rgba(15, 23, 42, 0.2);
+
+    --th-overlay: rgba(15, 23, 42, 0.5);
+    --th-ring-offset: #F0F2F5;
+
+    --th-glass-bg: rgba(240, 242, 245, 0.8);
+    --th-glass-hover: rgba(240, 242, 245, 0.92);
+    --th-glass-border: rgba(15, 23, 42, 0.1);
+    --th-glass-border-hover: rgba(15, 23, 42, 0.15);
+    --th-header-bg: rgba(240, 242, 245, 0.85);
+    --th-sidebar-bg: rgba(240, 242, 245, 0.97);
+    --th-sidebar-bg-desktop: rgba(235, 237, 242, 0.65);
+
+    --th-shadow-card: 0 1px 3px rgba(0, 0, 0, 0.05), 0 4px 16px rgba(0, 0, 0, 0.03);
+    --th-shadow-soft: 0 1px 4px rgba(0, 0, 0, 0.04);
+    --th-shadow-glass: 0 1px 8px 0 rgba(0, 0, 0, 0.05);
+    --th-shadow-glass-sm: 0 1px 4px 0 rgba(0, 0, 0, 0.03);
+    --th-shadow-glass-lg: 0 4px 16px 0 rgba(0, 0, 0, 0.06);
+    --th-shadow-glass-glow: 0 2px 12px 0 rgba(6, 182, 212, 0.05);
+    --th-shadow-inset: inset 0 1px 0 rgba(0, 0, 0, 0.03);
+
+    --th-scrollbar-track: #E8EAEF;
+    --th-scrollbar-thumb: #BFC5CF;
+    --th-scrollbar-thumb-end: #8E9AAB;
+    --th-scrollbar-hover: #8E9AAB;
+    --th-scrollbar-hover-end: #6B7A8D;
+
+    --th-selection-bg: rgba(6, 182, 212, 0.18);
+    --th-selection-text: #1A2332;
+
+    --th-gradient-1: rgba(6, 182, 212, 0.02);
+    --th-gradient-2: rgba(16, 185, 129, 0.012);
+    --th-gradient-3: rgba(6, 182, 212, 0.008);
+
+    --th-soft-overlay: rgba(0, 0, 0, 0.035);
+    --th-soft-overlay-2: rgba(0, 0, 0, 0.025);
+    --th-soft-overlay-hover: rgba(0, 0, 0, 0.06);
+    --th-soft-overlay-10: rgba(0, 0, 0, 0.07);
+}
+
+/* ── 2. Tailwind Design Tokens ── */
+@theme {
+    /* Core Surface Scale — dynamic */
+    --color-core-950: var(--th-core-950);
+    --color-core-900: var(--th-core-900);
+    --color-core-800: var(--th-core-800);
+    --color-core-700: var(--th-core-700);
+    --color-core-600: var(--th-core-600);
+
+    /* Brand — static */
     --color-brand: #06B6D4;
     --color-brand-primary: #06B6D4;
     --color-brand-50: #ECFEFF;
@@ -31,22 +157,37 @@
     --color-brand-secondary: #10B981;
     --color-brand-accent: #F59E0B;
 
-    /* Surface aliases */
-    --color-surface-DEFAULT: #0A0F1D;
-    --color-surface-soft: #0F1423;
-    --color-surface-card: #1A2235;
+    /* Surface aliases — dynamic */
+    --color-surface-DEFAULT: var(--th-surface);
+    --color-surface-soft: var(--th-surface-soft);
+    --color-surface-card: var(--th-surface-card);
 
-    /* Content — text hierarchy */
-    --color-content-DEFAULT: #F8FAFC;
-    --color-content-muted: #94A3B8;
-    --color-content-subtle: #64748B;
-    --color-content-faint: #475569;
+    /* Content (text) — dynamic */
+    --color-content-DEFAULT: var(--th-content);
+    --color-content-muted: var(--th-content-muted);
+    --color-content-subtle: var(--th-content-subtle);
+    --color-content-faint: var(--th-content-faint);
 
-    /* Typography */
+    /* Input — dynamic */
+    --color-input-DEFAULT: var(--th-input-bg);
+    --color-input-hover: var(--th-input-hover);
+
+    /* Tint — theme-aware overlays (replaces bg-white/N) */
+    --color-tint: var(--th-soft-overlay);
+    --color-tint-subtle: var(--th-soft-overlay-2);
+    --color-tint-hover: var(--th-soft-overlay-hover);
+    --color-tint-strong: var(--th-soft-overlay-10);
+
+    /* Divider — theme-aware borders (replaces border-white/N) */
+    --color-divider: var(--th-border-soft);
+    --color-divider-strong: var(--th-border);
+    --color-divider-hover: var(--th-border-hover);
+
+    /* Typography — static */
     --font-sans: "Plus Jakarta Sans", sans-serif;
     --font-display: "Outfit", sans-serif;
 
-    /* Animations */
+    /* Animations — static */
     --animate-float: float 6s ease-in-out infinite;
     --animate-pulse-slow: pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 
@@ -60,7 +201,7 @@
         }
     }
 
-    /* Shadows — Glow System */
+    /* Shadows — brand glow (static, always visible) */
     --shadow-glow-cyan: 0 0 15px #06B6D433;
     --shadow-glow-cyan-strong: 0 0 10px #06B6D4CC;
     --shadow-glow-cyan-card: 0 4px 15px #06B6D44D;
@@ -68,27 +209,28 @@
     --shadow-glow-brand-soft: 0 0 15px #06B6D40D;
     --shadow-glow-emerald: 0 0 15px #10B9811A;
     --shadow-glow-amber: 0 0 20px #F59E0B1A;
-    --shadow-glow-base: 0 4px 20px #0000004D;
-    --shadow-glow-base-strong: 0 10px 30px #00000080;
-    --shadow-inset-light: inset 0 1px 0 #ffffff08;
 
-    /* Glass Shadows */
-    --shadow-glass-sm: 0 2px 16px 0 rgba(0, 0, 0, 0.2);
-    --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-    --shadow-glass-lg: 0 16px 48px 0 rgba(0, 0, 0, 0.5);
-    --shadow-glass-glow: 0 8px 32px 0 rgba(6, 182, 212, 0.08);
+    /* Shadows — dynamic */
+    --shadow-glow-base: var(--th-shadow-soft);
+    --shadow-glow-base-strong: var(--th-shadow-card);
+    --shadow-inset-light: var(--th-shadow-inset);
+
+    --shadow-glass-sm: var(--th-shadow-glass-sm);
+    --shadow-glass: var(--th-shadow-glass);
+    --shadow-glass-lg: var(--th-shadow-glass-lg);
+    --shadow-glass-glow: var(--th-shadow-glass-glow);
 }
 
-/* ── CSS Custom Properties ── */
+/* ── 3. Legacy --ca-* Aliases ── */
 :root {
-    --ca-bg: #050814;
-    --ca-bg-soft: #0A0F1D;
-    --ca-surface: #0F1423;
-    --ca-surface-soft: #1A2235;
-    --ca-border: rgba(255, 255, 255, 0.06);
-    --ca-border-soft: rgba(255, 255, 255, 0.03);
-    --ca-text: #F8FAFC;
-    --ca-muted: #94A3B8;
+    --ca-bg: var(--th-core-950);
+    --ca-bg-soft: var(--th-core-900);
+    --ca-surface: var(--th-surface-soft);
+    --ca-surface-soft: var(--th-surface-card);
+    --ca-border: var(--th-border);
+    --ca-border-soft: var(--th-border-soft);
+    --ca-text: var(--th-content);
+    --ca-muted: var(--th-content-muted);
     --ca-brand: #06B6D4;
     --ca-brand-deep: #0891B2;
     --ca-accent: #22D3EE;
@@ -96,7 +238,7 @@
     --ca-amber: #F59E0B;
 }
 
-/* ── Base Reset ── */
+/* ── 4. Base Reset ── */
 * {
     box-sizing: border-box;
 }
@@ -117,17 +259,17 @@ html {
 body {
     margin: 0;
     overflow-x: hidden;
-    color: var(--ca-text);
-    background: var(--ca-bg);
+    color: var(--th-content);
+    background: var(--th-core-950);
     background-image:
         radial-gradient(1200px 600px at 10% -10%,
-            rgba(6, 182, 212, 0.04),
+            var(--th-gradient-1),
             transparent 55%),
         radial-gradient(900px 500px at 100% 0%,
-            rgba(16, 185, 129, 0.03),
+            var(--th-gradient-2),
             transparent 60%),
         radial-gradient(600px 600px at 50% 100%,
-            rgba(6, 182, 212, 0.02),
+            var(--th-gradient-3),
             transparent 70%);
     font-family: "Plus Jakarta Sans", sans-serif;
     line-height: 1.55;
@@ -142,9 +284,14 @@ a {
     color: inherit;
 }
 
+button,
+[role="button"] {
+    cursor: pointer;
+}
+
 ::selection {
-    background: rgba(6, 182, 212, 0.25);
-    color: #f8fafc;
+    background: var(--th-selection-bg);
+    color: var(--th-selection-text);
 }
 
 :focus-visible {
@@ -153,7 +300,7 @@ a {
     border-radius: 0.4rem;
 }
 
-/* ── Gradient Utilities ── */
+/* ── 5. Gradient Utilities ── */
 @utility bg-gradient-brand {
     background-image: linear-gradient(135deg, #06B6D4 0%, #0891B2 100%);
 }
@@ -168,33 +315,33 @@ a {
 
 @utility bg-gradient-mesh {
     background-image:
-        radial-gradient(at 20% 20%, rgba(6, 182, 212, 0.08) 0px, transparent 60%),
-        radial-gradient(at 80% 40%, rgba(16, 185, 129, 0.06) 0px, transparent 50%),
-        radial-gradient(at 40% 80%, rgba(6, 182, 212, 0.04) 0px, transparent 50%);
+        radial-gradient(at 20% 20%, var(--th-gradient-1) 0px, transparent 60%),
+        radial-gradient(at 80% 40%, var(--th-gradient-2) 0px, transparent 50%),
+        radial-gradient(at 40% 80%, var(--th-gradient-3) 0px, transparent 50%);
 }
 
-/* ── Shadow Utilities ── */
+/* ── 6. Shadow Utilities ── */
 @utility shadow-glass {
-    box-shadow: var(--shadow-glass);
+    box-shadow: var(--th-shadow-glass);
 }
 
 @utility shadow-glass-sm {
-    box-shadow: var(--shadow-glass-sm);
+    box-shadow: var(--th-shadow-glass-sm);
 }
 
 @utility shadow-glass-lg {
-    box-shadow: var(--shadow-glass-lg);
+    box-shadow: var(--th-shadow-glass-lg);
 }
 
 @utility shadow-glass-glow {
-    box-shadow: var(--shadow-glass-glow);
+    box-shadow: var(--th-shadow-glass-glow);
 }
 
 @utility shadow-brand-glow {
     box-shadow: 0 0 15px rgba(6, 182, 212, 0.5);
 }
 
-/* ── Component Layer ── */
+/* ── 7. Component Layer ── */
 @layer components {
     .ca-container {
         @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
@@ -209,61 +356,67 @@ a {
     }
 
     .ca-title {
-        @apply text-balance text-3xl font-bold leading-tight text-white sm:text-4xl lg:text-5xl;
+        @apply text-balance text-3xl font-bold leading-tight sm:text-4xl lg:text-5xl;
+        color: var(--th-content);
     }
 
     .ca-copy {
-        @apply text-pretty text-base leading-relaxed text-slate-200 sm:text-lg;
+        @apply text-pretty text-base leading-relaxed sm:text-lg;
+        color: var(--th-content-muted);
     }
 
     /* ── Card System ── */
     .ca-card {
-        @apply rounded-[2rem] bg-[#0F1423] relative overflow-hidden transition-all duration-500;
-        border: 1px solid rgba(255, 255, 255, 0.04);
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+        @apply rounded-[2rem] relative overflow-hidden transition-all duration-500;
+        background: var(--th-surface-soft);
+        border: 1px solid var(--th-border);
+        box-shadow: var(--th-shadow-card);
     }
 
     .ca-card:hover {
-        border-color: rgba(255, 255, 255, 0.08);
+        border-color: var(--th-border-hover);
     }
 
     .ca-card-glass {
         @apply rounded-2xl relative overflow-hidden transition-all duration-300;
-        background: rgba(15, 20, 35, 0.6);
+        background: var(--th-glass-bg);
         backdrop-filter: blur(20px) saturate(1.2);
         -webkit-backdrop-filter: blur(20px) saturate(1.2);
-        border: 1px solid rgba(255, 255, 255, 0.06);
-        box-shadow: var(--shadow-glass);
+        border: 1px solid var(--th-glass-border);
+        box-shadow: var(--th-shadow-glass);
     }
 
     .ca-card-glass:hover {
-        background: rgba(15, 20, 35, 0.7);
-        border-color: rgba(255, 255, 255, 0.1);
-        box-shadow: var(--shadow-glass-glow);
+        background: var(--th-glass-hover);
+        border-color: var(--th-glass-border-hover);
+        box-shadow: var(--th-shadow-glass-glow);
     }
 
     .ca-card-soft {
-        @apply rounded-2xl border border-white/5 bg-white/[0.03] backdrop-blur;
+        @apply rounded-2xl backdrop-blur;
+        background: var(--th-soft-overlay-2);
+        border: 1px solid var(--th-border-soft);
     }
 
     .ca-card-interactive {
-        @apply rounded-[2rem] bg-[#0F1423] relative overflow-hidden transition-all duration-500 cursor-pointer;
-        border: 1px solid rgba(255, 255, 255, 0.04);
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+        @apply rounded-[2rem] relative overflow-hidden transition-all duration-500 cursor-pointer;
+        background: var(--th-surface-soft);
+        border: 1px solid var(--th-border);
+        box-shadow: var(--th-shadow-card);
     }
 
     .ca-card-interactive:hover {
         transform: translateY(-2px);
         border-color: rgba(6, 182, 212, 0.15);
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(6, 182, 212, 0.1);
+        box-shadow: var(--th-shadow-card), 0 0 0 1px rgba(6, 182, 212, 0.1);
     }
 
     /* ── Glass Header ── */
     .ca-glass-header {
-        background: rgba(5, 8, 20, 0.7);
+        background: var(--th-header-bg);
         backdrop-filter: blur(20px) saturate(1.3);
         -webkit-backdrop-filter: blur(20px) saturate(1.3);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+        border-bottom: 1px solid var(--th-border);
     }
 
     /* ── Gradient Text ── */
@@ -277,7 +430,7 @@ a {
 
     /* ── Button System ── */
     .ca-btn-primary {
-        @apply inline-flex items-center justify-center gap-2 rounded-xl bg-cyan-500 px-6 py-3 text-sm font-bold text-slate-950 transition-all duration-300 hover:bg-cyan-400 hover:-translate-y-0.5 active:scale-95 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:grayscale;
+        @apply inline-flex items-center justify-center gap-2 rounded-xl bg-cyan-500 px-6 py-3 text-sm font-bold text-slate-950 cursor-pointer transition-all duration-300 hover:bg-cyan-400 hover:-translate-y-0.5 active:scale-95 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:grayscale;
         box-shadow: var(--shadow-glow-cyan-card);
     }
 
@@ -286,16 +439,21 @@ a {
     }
 
     .ca-btn-secondary {
-        @apply inline-flex items-center justify-center gap-2 rounded-xl bg-[#1A2235]/80 px-6 py-3 text-sm font-bold text-white transition-all duration-300 hover:bg-[#1A2235] hover:text-cyan-400 hover:shadow-glow-cyan;
-        border: 1px solid rgba(255, 255, 255, 0.06);
+        @apply inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-bold cursor-pointer transition-all duration-300;
+        background: var(--th-glass-bg);
+        border: 1px solid var(--th-border);
+        color: var(--th-content);
     }
 
     .ca-btn-secondary:hover {
+        background: var(--th-glass-hover);
         border-color: rgba(6, 182, 212, 0.2);
+        color: #06B6D4;
+        box-shadow: var(--shadow-glow-cyan);
     }
 
     .ca-btn-emerald {
-        @apply inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-bold text-slate-950 transition-all duration-300 hover:-translate-y-0.5 active:scale-95;
+        @apply inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-bold text-slate-950 cursor-pointer transition-all duration-300 hover:-translate-y-0.5 active:scale-95;
         background: linear-gradient(135deg, #10B981 0%, #059669 100%);
         box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
     }
@@ -304,9 +462,8 @@ a {
         box-shadow: 0 4px 20px rgba(16, 185, 129, 0.5);
     }
 
-    /* Legacy compat */
     .ca-btn-primary-emerald {
-        @apply inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-bold text-slate-950 transition-all duration-300 hover:-translate-y-0.5 active:scale-95;
+        @apply inline-flex items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-bold text-slate-950 cursor-pointer transition-all duration-300 hover:-translate-y-0.5 active:scale-95;
         background: linear-gradient(135deg, #10B981 0%, #059669 100%);
         box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
     }
@@ -317,32 +474,37 @@ a {
 
     /* ── Chips & Badges ── */
     .ca-chip {
-        @apply inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-medium text-slate-300;
+        @apply inline-flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium;
+        background: var(--th-soft-overlay);
+        border: 1px solid var(--th-soft-overlay-10);
+        color: var(--th-content-muted);
     }
 
     /* ── Stat Card ── */
     .ca-stat-card {
         @apply rounded-2xl relative overflow-hidden transition-all duration-300 p-6;
-        background: rgba(15, 20, 35, 0.6);
+        background: var(--th-glass-bg);
         backdrop-filter: blur(20px) saturate(1.2);
         -webkit-backdrop-filter: blur(20px) saturate(1.2);
-        border: 1px solid rgba(255, 255, 255, 0.06);
-        box-shadow: var(--shadow-glass);
+        border: 1px solid var(--th-glass-border);
+        box-shadow: var(--th-shadow-glass);
     }
 
     .ca-stat-card .ca-stat-value {
-        @apply text-3xl font-black text-white tracking-tight;
+        @apply text-3xl font-black tracking-tight;
+        color: var(--th-content);
     }
 
     .ca-stat-card .ca-stat-label {
-        @apply text-xs font-bold uppercase tracking-widest text-content-subtle mt-1;
+        @apply text-xs font-bold uppercase tracking-widest mt-1;
+        color: var(--th-content-subtle);
     }
 
     /* ── Grid & Layout ── */
     .ca-grid-bg {
         background-image:
-            linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+            linear-gradient(var(--th-soft-overlay-2) 1px, transparent 1px),
+            linear-gradient(90deg, var(--th-soft-overlay-2) 1px, transparent 1px);
         background-size: 34px 34px;
     }
 
@@ -352,11 +514,11 @@ a {
 
     /* ── Divider ── */
     .ca-divider {
-        @apply border-t border-white/5;
+        border-top: 1px solid var(--th-border-soft);
     }
 }
 
-/* ── Scroll Reveal Animations ── */
+/* ── 8. Scroll Reveal Animations ── */
 .sr-init {
     transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
         transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
@@ -426,21 +588,49 @@ a {
     }
 }
 
-/* ── Scrollbar ── */
+/* ── 9. Scrollbar ── */
 ::-webkit-scrollbar {
     width: 10px;
 }
 
 ::-webkit-scrollbar-track {
-    background: #050814;
+    background: var(--th-scrollbar-track);
 }
 
 ::-webkit-scrollbar-thumb {
-    border: 2px solid #050814;
-    background: linear-gradient(180deg, #1A2235, #243049);
+    border: 2px solid var(--th-scrollbar-track);
+    background: linear-gradient(180deg, var(--th-scrollbar-thumb), var(--th-scrollbar-thumb-end));
     border-radius: 999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg, #243049, #2d3b5e);
+    background: linear-gradient(180deg, var(--th-scrollbar-hover), var(--th-scrollbar-hover-end));
+}
+
+/* Custom scrollbar for content areas */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: var(--th-scrollbar-thumb);
+    border-radius: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: var(--th-scrollbar-hover);
+}
+
+/* ── 10. Theme Transition ── */
+html.theme-transition,
+html.theme-transition *,
+html.theme-transition *::before,
+html.theme-transition *::after {
+    transition: background-color 0.35s ease,
+        color 0.35s ease,
+        border-color 0.35s ease,
+        box-shadow 0.35s ease,
+        fill 0.35s ease,
+        stroke 0.35s ease !important;
 }

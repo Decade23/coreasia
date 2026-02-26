@@ -31,11 +31,11 @@ const handleCopyLink = () => {
     <DashboardLayout>
         <template #header>
             <div class="flex items-center gap-4 w-full">
-                <NuxtLink to="/assessee" class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-content-subtle hover:text-white hover:bg-white/10 transition-all shrink-0">
+                <NuxtLink to="/assessee" class="w-10 h-10 rounded-xl bg-tint flex items-center justify-center text-content-subtle hover:text-content hover:bg-tint-hover transition-all shrink-0">
                     <ArrowLeft class="w-5 h-5" />
                 </NuxtLink>
                 <div class="flex-1 min-w-0">
-                    <h1 class="text-xl md:text-3xl font-black tracking-tight text-white truncate">Detail Sertifikat</h1>
+                    <h1 class="text-xl md:text-3xl font-black tracking-tight text-content truncate">Detail Sertifikat</h1>
                     <p class="text-sm text-content-subtle hidden md:block mt-1">Informasi lengkap dan verifikasi sertifikat.</p>
                 </div>
                 <div class="flex items-center gap-2 shrink-0">
@@ -77,7 +77,7 @@ const handleCopyLink = () => {
                                 <div class="flex items-start justify-between">
                                     <div>
                                         <p class="text-xs font-mono text-brand mb-1">{{ cert.certificateNumber }}</p>
-                                        <h2 class="text-2xl font-black text-white">{{ cert.schemeName }}</h2>
+                                        <h2 class="text-2xl font-black text-content">{{ cert.schemeName }}</h2>
                                     </div>
                                     <span
                                         class="px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest border"
@@ -88,43 +88,43 @@ const handleCopyLink = () => {
                                 </div>
 
                                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div class="flex items-center gap-3 p-4 rounded-xl bg-white/5">
+                                    <div class="flex items-center gap-3 p-4 rounded-xl bg-tint">
                                         <User class="w-5 h-5 text-content-subtle shrink-0" />
                                         <div>
                                             <p class="text-xs text-content-subtle">Pemegang</p>
-                                            <p class="text-sm font-bold text-white">{{ cert.holderName }}</p>
+                                            <p class="text-sm font-bold text-content">{{ cert.holderName }}</p>
                                         </div>
                                     </div>
-                                    <div class="flex items-center gap-3 p-4 rounded-xl bg-white/5">
+                                    <div class="flex items-center gap-3 p-4 rounded-xl bg-tint">
                                         <Building2 class="w-5 h-5 text-content-subtle shrink-0" />
                                         <div>
                                             <p class="text-xs text-content-subtle">LSP Penerbit</p>
-                                            <p class="text-sm font-bold text-white">{{ cert.lspName }}</p>
+                                            <p class="text-sm font-bold text-content">{{ cert.lspName }}</p>
                                         </div>
                                     </div>
-                                    <div class="flex items-center gap-3 p-4 rounded-xl bg-white/5">
+                                    <div class="flex items-center gap-3 p-4 rounded-xl bg-tint">
                                         <Calendar class="w-5 h-5 text-content-subtle shrink-0" />
                                         <div>
                                             <p class="text-xs text-content-subtle">Tanggal Terbit</p>
-                                            <p class="text-sm font-bold text-white">{{ cert.issuedDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) }}</p>
+                                            <p class="text-sm font-bold text-content">{{ cert.issuedDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) }}</p>
                                         </div>
                                     </div>
-                                    <div class="flex items-center gap-3 p-4 rounded-xl bg-white/5">
+                                    <div class="flex items-center gap-3 p-4 rounded-xl bg-tint">
                                         <Calendar class="w-5 h-5 text-content-subtle shrink-0" />
                                         <div>
                                             <p class="text-xs text-content-subtle">Berlaku Hingga</p>
-                                            <p class="text-sm font-bold" :class="cert.status === 'active' ? 'text-white' : 'text-amber-400'">
+                                            <p class="text-sm font-bold" :class="cert.status === 'active' ? 'text-content' : 'text-amber-400'">
                                                 {{ cert.expiryDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) }}
                                             </p>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div class="flex items-center gap-3 p-4 rounded-xl bg-white/5">
+                                <div class="flex items-center gap-3 p-4 rounded-xl bg-tint">
                                     <ShieldCheck class="w-5 h-5 text-content-subtle shrink-0" />
                                     <div>
                                         <p class="text-xs text-content-subtle">Asesor</p>
-                                        <p class="text-sm font-bold text-white">{{ cert.assessorName }}</p>
+                                        <p class="text-sm font-bold text-content">{{ cert.assessorName }}</p>
                                     </div>
                                 </div>
                             </div>
@@ -135,12 +135,12 @@ const handleCopyLink = () => {
                     <div class="space-y-6">
                         <!-- QR Code -->
                         <div class="ca-card p-0 overflow-hidden">
-                            <div class="p-6 border-b border-white/5">
+                            <div class="p-6 border-b border-divider">
                                 <h3 class="text-sm font-bold text-content-subtle uppercase tracking-widest">QR Verifikasi</h3>
                             </div>
                             <div class="p-6 flex flex-col items-center">
                                 <div class="w-40 h-40 rounded-2xl bg-white flex items-center justify-center mb-4">
-                                    <QrCode class="w-24 h-24 text-gray-800" />
+                                    <QrCode class="w-24 h-24 text-content" />
                                 </div>
                                 <p class="text-xs text-content-subtle text-center">Scan QR code ini untuk memverifikasi keaslian sertifikat.</p>
                             </div>
@@ -148,11 +148,11 @@ const handleCopyLink = () => {
 
                         <!-- Share -->
                         <div class="ca-card p-0 overflow-hidden">
-                            <div class="p-6 border-b border-white/5">
+                            <div class="p-6 border-b border-divider">
                                 <h3 class="text-sm font-bold text-content-subtle uppercase tracking-widest">Bagikan</h3>
                             </div>
                             <div class="p-6 space-y-3">
-                                <div class="p-3 rounded-xl bg-white/5 text-xs text-content-muted font-mono break-all">
+                                <div class="p-3 rounded-xl bg-tint text-xs text-content-muted font-mono break-all">
                                     {{ cert.verificationUrl }}
                                 </div>
                                 <CaButton variant="outline" class="w-full" @click="handleCopyLink">

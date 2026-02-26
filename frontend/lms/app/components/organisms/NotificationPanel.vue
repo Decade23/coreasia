@@ -23,7 +23,7 @@ const getTypeColor = (type: string) => {
     <div class="relative">
         <!-- Bell Button -->
         <button
-            class="relative p-2 rounded-xl text-content-subtle hover:text-white hover:bg-white/5 transition-all"
+            class="relative p-2 rounded-xl text-content-subtle hover:text-content hover:bg-tint transition-all"
             @click="togglePanel"
         >
             <Bell class="w-5 h-5" />
@@ -46,11 +46,11 @@ const getTypeColor = (type: string) => {
         >
             <div
                 v-if="showPanel"
-                class="absolute right-0 top-full mt-2 w-80 rounded-2xl bg-[#0F1423] border border-white/10 shadow-2xl overflow-hidden z-50"
+                class="absolute right-0 top-full mt-2 w-80 rounded-2xl bg-core-800 border border-divider-strong shadow-2xl overflow-hidden z-50"
             >
                 <!-- Header -->
-                <div class="flex items-center justify-between p-4 border-b border-white/5">
-                    <h3 class="text-sm font-bold text-white">Notifikasi</h3>
+                <div class="flex items-center justify-between p-4 border-b border-divider">
+                    <h3 class="text-sm font-bold text-content">Notifikasi</h3>
                     <button
                         v-if="store.unreadCount > 0"
                         class="text-xs text-brand hover:text-brand-secondary transition-colors font-bold flex items-center gap-1"
@@ -62,18 +62,18 @@ const getTypeColor = (type: string) => {
                 </div>
 
                 <!-- List -->
-                <div class="max-h-80 overflow-y-auto divide-y divide-white/5">
+                <div class="max-h-80 overflow-y-auto divide-y divide-divider">
                     <div
                         v-for="notif in store.notifications"
                         :key="notif.id"
-                        class="p-4 hover:bg-white/5 transition-colors cursor-pointer"
+                        class="p-4 hover:bg-tint transition-colors cursor-pointer"
                         :class="notif.isRead ? 'opacity-60' : ''"
                         @click="store.markAsRead(notif.id)"
                     >
                         <div class="flex items-start gap-3">
                             <span class="w-2 h-2 rounded-full mt-1.5 shrink-0" :class="getTypeColor(notif.type)" />
                             <div class="flex-1 min-w-0">
-                                <p class="text-sm font-bold text-white">{{ notif.title }}</p>
+                                <p class="text-sm font-bold text-content">{{ notif.title }}</p>
                                 <p class="text-xs text-content-muted mt-0.5 line-clamp-2">{{ notif.message }}</p>
                                 <p class="text-[10px] text-content-subtle mt-1">
                                     {{ notif.createdAt.toLocaleString('id-ID') }}

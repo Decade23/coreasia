@@ -26,16 +26,15 @@ const variantClasses = computed(() => {
       case 'danger':
         return 'bg-red-500/15 text-red-400'
       default:
-        return 'bg-white/5 text-slate-300'
+        return 'bg-tint text-content-muted'
     }
   }
-  return 'bg-white/5 text-slate-400'
+  return 'bg-tint text-content-subtle'
 })
 </script>
 
 <template>
-  <span 
-  <span 
+  <span
     class="px-3 py-1.5 flex-none w-max rounded-full text-[10px] sm:text-xs font-black uppercase tracking-widest inline-flex items-center justify-center border-none"
     :class="variantClasses"
   >

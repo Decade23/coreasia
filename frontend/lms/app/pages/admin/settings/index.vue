@@ -73,7 +73,7 @@ const handleSaveBranding = async () => {
 <template>
     <DashboardLayout>
         <template #header>
-            <h1 class="text-lg font-bold text-white hidden lg:block">Pengaturan</h1>
+            <h1 class="text-lg font-bold text-content hidden lg:block">Pengaturan</h1>
         </template>
 
         <div class="py-6 space-y-6">
@@ -89,14 +89,14 @@ const handleSaveBranding = async () => {
 
             <template v-else-if="settings">
                 <!-- Tab Navigation -->
-                <div class="flex gap-1 p-1 rounded-2xl bg-[#0F1423] border border-white/5 w-fit">
+                <div class="flex gap-1 p-1 rounded-2xl bg-core-800 border border-divider w-fit">
                     <button
                         v-for="tab in tabs"
                         :key="tab.key"
                         class="flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-bold transition-all duration-200"
                         :class="activeTab === tab.key
                             ? 'bg-brand/10 text-brand shadow-md'
-                            : 'text-content-subtle hover:text-white hover:bg-white/5'"
+                            : 'text-content-subtle hover:text-content hover:bg-tint'"
                         @click="activeTab = tab.key"
                     >
                         <component :is="tab.icon" class="w-4 h-4" />
@@ -106,8 +106,8 @@ const handleSaveBranding = async () => {
 
                 <!-- Tab: General -->
                 <div v-if="activeTab === 'general'" class="ca-card p-0 overflow-hidden">
-                    <div class="p-6 border-b border-white/5">
-                        <h2 class="text-lg font-bold text-white">Informasi Umum LSP</h2>
+                    <div class="p-6 border-b border-divider">
+                        <h2 class="text-lg font-bold text-content">Informasi Umum LSP</h2>
                         <p class="text-sm text-content-subtle mt-1">Data dasar lembaga sertifikasi profesi Anda.</p>
                     </div>
                     <div class="p-6 space-y-5">
@@ -156,7 +156,7 @@ const handleSaveBranding = async () => {
                             />
                         </div>
                     </div>
-                    <div class="p-6 border-t border-white/5 flex justify-end">
+                    <div class="p-6 border-t border-divider flex justify-end">
                         <CaButton variant="primary" :loading="saving" @click="handleSaveGeneral">
                             <component :is="savedGeneral ? Check : Save" class="w-4 h-4 mr-1.5" />
                             {{ savedGeneral ? 'Tersimpan!' : 'Simpan Perubahan' }}
@@ -166,8 +166,8 @@ const handleSaveBranding = async () => {
 
                 <!-- Tab: Branding -->
                 <div v-if="activeTab === 'branding'" class="ca-card p-0 overflow-hidden">
-                    <div class="p-6 border-b border-white/5">
-                        <h2 class="text-lg font-bold text-white">Branding & Tampilan</h2>
+                    <div class="p-6 border-b border-divider">
+                        <h2 class="text-lg font-bold text-content">Branding & Tampilan</h2>
                         <p class="text-sm text-content-subtle mt-1">Kustomisasi tampilan platform sesuai identitas LSP.</p>
                     </div>
                     <div class="p-6 space-y-5">
@@ -175,7 +175,7 @@ const handleSaveBranding = async () => {
                         <div>
                             <label class="block text-sm font-bold text-content-muted mb-2">Logo LSP</label>
                             <div class="flex items-center gap-4">
-                                <div class="w-20 h-20 rounded-2xl bg-white/5 border border-dashed border-white/20 flex items-center justify-center overflow-hidden">
+                                <div class="w-20 h-20 rounded-2xl bg-tint border border-dashed border-divider-strong flex items-center justify-center overflow-hidden">
                                     <img v-if="brandingForm.logo_url" :src="brandingForm.logo_url" alt="Logo" class="w-full h-full object-contain p-2" />
                                     <Palette v-else class="w-8 h-8 text-content-subtle" />
                                 </div>
@@ -194,7 +194,7 @@ const handleSaveBranding = async () => {
                                     <input
                                         type="color"
                                         v-model="brandingForm.primary_color"
-                                        class="w-12 h-12 rounded-xl border-2 border-white/10 bg-transparent cursor-pointer"
+                                        class="w-12 h-12 rounded-xl border-2 border-divider-strong bg-transparent cursor-pointer"
                                     />
                                     <BaseInput
                                         id="color-primary"
@@ -210,7 +210,7 @@ const handleSaveBranding = async () => {
                                     <input
                                         type="color"
                                         v-model="brandingForm.secondary_color"
-                                        class="w-12 h-12 rounded-xl border-2 border-white/10 bg-transparent cursor-pointer"
+                                        class="w-12 h-12 rounded-xl border-2 border-divider-strong bg-transparent cursor-pointer"
                                     />
                                     <BaseInput
                                         id="color-secondary"
@@ -230,7 +230,7 @@ const handleSaveBranding = async () => {
                         />
 
                         <!-- Preview -->
-                        <div class="p-4 rounded-xl bg-white/5 border border-white/5">
+                        <div class="p-4 rounded-xl bg-tint border border-divider">
                             <p class="text-xs font-bold text-content-subtle uppercase tracking-widest mb-3">Preview Warna</p>
                             <div class="flex gap-3">
                                 <div
@@ -248,7 +248,7 @@ const handleSaveBranding = async () => {
                             </div>
                         </div>
                     </div>
-                    <div class="p-6 border-t border-white/5 flex justify-end">
+                    <div class="p-6 border-t border-divider flex justify-end">
                         <CaButton variant="primary" :loading="saving" @click="handleSaveBranding">
                             <component :is="savedBranding ? Check : Save" class="w-4 h-4 mr-1.5" />
                             {{ savedBranding ? 'Tersimpan!' : 'Simpan Branding' }}
@@ -258,16 +258,16 @@ const handleSaveBranding = async () => {
 
                 <!-- Tab: Users -->
                 <div v-if="activeTab === 'users'" class="ca-card p-0 overflow-hidden">
-                    <div class="p-6 border-b border-white/5 flex items-center justify-between">
+                    <div class="p-6 border-b border-divider flex items-center justify-between">
                         <div>
-                            <h2 class="text-lg font-bold text-white">Pengguna Admin</h2>
+                            <h2 class="text-lg font-bold text-content">Pengguna Admin</h2>
                             <p class="text-sm text-content-subtle mt-1">Daftar pengguna dengan akses administrasi.</p>
                         </div>
                     </div>
                     <div class="overflow-x-auto">
                         <table class="w-full text-left border-collapse">
                             <thead>
-                                <tr class="bg-core-900/80 border-b border-white/5">
+                                <tr class="bg-core-900/80 border-b border-divider">
                                     <th class="p-4 text-xs font-black text-content-subtle uppercase tracking-widest pl-6">Nama</th>
                                     <th class="p-4 text-xs font-black text-content-subtle uppercase tracking-widest">Email</th>
                                     <th class="p-4 text-xs font-black text-content-subtle uppercase tracking-widest">Role</th>
@@ -275,14 +275,14 @@ const handleSaveBranding = async () => {
                                     <th class="p-4 text-xs font-black text-content-subtle uppercase tracking-widest pr-6">Login Terakhir</th>
                                 </tr>
                             </thead>
-                            <tbody class="divide-y divide-white/5">
+                            <tbody class="divide-y divide-divider">
                                 <tr v-for="u in settings.users" :key="u.id" class="hover:bg-core-800 transition-colors">
                                     <td class="p-4 pl-6">
                                         <div class="flex items-center gap-3">
                                             <div class="w-8 h-8 rounded-lg bg-brand/10 flex items-center justify-center text-brand font-bold text-sm shrink-0">
                                                 {{ u.name.charAt(0) }}
                                             </div>
-                                            <span class="font-bold text-white text-sm">{{ u.name }}</span>
+                                            <span class="font-bold text-content text-sm">{{ u.name }}</span>
                                         </div>
                                     </td>
                                     <td class="p-4 text-sm text-content-muted">{{ u.email }}</td>

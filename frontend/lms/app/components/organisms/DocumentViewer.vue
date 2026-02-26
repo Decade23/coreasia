@@ -30,20 +30,20 @@ const formatDate = (date: Date) => {
         <div
             v-for="doc in documents"
             :key="doc.id"
-            class="flex items-center gap-4 p-4 rounded-xl bg-white/[0.03] border border-white/5 hover:border-brand/20 transition-colors group"
+            class="flex items-center gap-4 p-4 rounded-xl bg-tint-subtle border border-divider hover:border-brand/20 transition-colors group"
         >
             <!-- File Icon -->
             <div class="w-12 h-12 rounded-xl shrink-0 flex items-center justify-center"
-                :class="isPdf(doc.type) ? 'bg-red-500/10 text-red-400' : isImage(doc.type) ? 'bg-blue-500/10 text-blue-400' : 'bg-white/5 text-content-subtle'">
+                :class="isPdf(doc.type) ? 'bg-red-500/10 text-red-400' : isImage(doc.type) ? 'bg-blue-500/10 text-blue-400' : 'bg-tint text-content-subtle'">
                 <component :is="getIcon(doc.type)" class="w-5 h-5" />
             </div>
 
             <!-- File Info -->
             <div class="flex-1 min-w-0">
-                <p class="text-sm font-bold text-white truncate group-hover:text-brand transition-colors">{{ doc.name }}</p>
+                <p class="text-sm font-bold text-content truncate group-hover:text-brand transition-colors">{{ doc.name }}</p>
                 <div class="flex items-center gap-3 mt-1 text-xs text-content-subtle">
                     <span>{{ formatFileSize(doc.fileSize) }}</span>
-                    <span class="w-1 h-1 rounded-full bg-white/20" />
+                    <span class="w-1 h-1 rounded-full bg-tint-strong" />
                     <span>{{ formatDate(doc.uploadedAt) }}</span>
                 </div>
             </div>

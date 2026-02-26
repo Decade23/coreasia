@@ -29,11 +29,11 @@ const handleExport = async () => {
     <DashboardLayout>
         <template #header>
             <div class="flex items-center gap-4 w-full">
-                <NuxtLink to="/admin/reports" class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-content-subtle hover:text-white hover:bg-white/10 transition-all shrink-0">
+                <NuxtLink to="/admin/reports" class="w-10 h-10 rounded-xl bg-tint flex items-center justify-center text-content-subtle hover:text-content hover:bg-tint-hover transition-all shrink-0">
                     <ArrowLeft class="w-5 h-5" />
                 </NuxtLink>
                 <div>
-                    <h1 class="text-xl md:text-3xl font-black tracking-tight text-white">Export Data BNSP</h1>
+                    <h1 class="text-xl md:text-3xl font-black tracking-tight text-content">Export Data BNSP</h1>
                     <p class="text-sm text-content-subtle hidden md:block mt-1">Generate file export sesuai format standar BNSP.</p>
                 </div>
             </div>
@@ -45,8 +45,8 @@ const handleExport = async () => {
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <!-- Form -->
                 <div class="lg:col-span-2 ca-card p-0 overflow-hidden">
-                    <div class="p-6 border-b border-white/5">
-                        <h2 class="text-lg font-bold text-white">Parameter Export</h2>
+                    <div class="p-6 border-b border-divider">
+                        <h2 class="text-lg font-bold text-content">Parameter Export</h2>
                         <p class="text-sm text-content-subtle mt-1">Pilih skema dan periode data yang ingin diekspor.</p>
                     </div>
                     <div class="p-6 space-y-5">
@@ -55,7 +55,7 @@ const handleExport = async () => {
                             <label class="block text-sm font-bold text-content-muted mb-2">Skema Sertifikasi</label>
                             <select
                                 v-model="form.schemeId"
-                                class="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-sm text-white focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/30 transition-all"
+                                class="w-full rounded-xl bg-tint border border-divider-strong px-4 py-3 text-sm text-content focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/30 transition-all"
                             >
                                 <option value="">Semua Skema</option>
                                 <option v-for="s in schemes" :key="s.id" :value="s.id">{{ s.name }}</option>
@@ -69,7 +69,7 @@ const handleExport = async () => {
                                 <input
                                     v-model="form.periodStart"
                                     type="date"
-                                    class="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-sm text-white focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/30 transition-all"
+                                    class="w-full rounded-xl bg-tint border border-divider-strong px-4 py-3 text-sm text-content focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/30 transition-all"
                                 />
                             </div>
                             <div>
@@ -77,7 +77,7 @@ const handleExport = async () => {
                                 <input
                                     v-model="form.periodEnd"
                                     type="date"
-                                    class="w-full rounded-xl bg-white/5 border border-white/10 px-4 py-3 text-sm text-white focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/30 transition-all"
+                                    class="w-full rounded-xl bg-tint border border-divider-strong px-4 py-3 text-sm text-content focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/30 transition-all"
                                 />
                             </div>
                         </div>
@@ -92,7 +92,7 @@ const handleExport = async () => {
                                     class="flex-1 p-3 rounded-xl border text-sm font-bold uppercase tracking-widest transition-all"
                                     :class="form.format === fmt
                                         ? 'bg-brand/10 border-brand/30 text-brand'
-                                        : 'bg-white/5 border-white/10 text-content-muted hover:border-white/20'"
+                                        : 'bg-tint border-divider-strong text-content-muted hover:border-divider-strong'"
                                     @click="form.format = fmt"
                                 >
                                     .{{ fmt }}
@@ -100,7 +100,7 @@ const handleExport = async () => {
                             </div>
                         </div>
                     </div>
-                    <div class="p-6 border-t border-white/5 flex justify-end">
+                    <div class="p-6 border-t border-divider flex justify-end">
                         <CaButton
                             variant="primary"
                             :loading="exporting"
@@ -115,7 +115,7 @@ const handleExport = async () => {
 
                 <!-- Result -->
                 <div class="ca-card p-0 overflow-hidden">
-                    <div class="p-6 border-b border-white/5">
+                    <div class="p-6 border-b border-divider">
                         <h2 class="text-sm font-bold text-content-subtle uppercase tracking-widest">Hasil Export</h2>
                     </div>
                     <div class="p-6">
@@ -125,10 +125,10 @@ const handleExport = async () => {
                                     <Check class="w-8 h-8 text-emerald-500" />
                                 </div>
                                 <div>
-                                    <h3 class="font-bold text-white">Export Berhasil!</h3>
+                                    <h3 class="font-bold text-content">Export Berhasil!</h3>
                                     <p class="text-sm text-content-muted mt-1">{{ exportResult.recordCount }} record diekspor</p>
                                 </div>
-                                <div class="p-3 rounded-xl bg-white/5 text-xs text-content-muted font-mono break-all">
+                                <div class="p-3 rounded-xl bg-tint text-xs text-content-muted font-mono break-all">
                                     {{ exportResult.fileName }}
                                 </div>
                                 <CaButton variant="primary" class="w-full">

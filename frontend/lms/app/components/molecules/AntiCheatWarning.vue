@@ -30,7 +30,7 @@ const remaining = computed(() => props.maxAttempts - props.attempts)
             >
                 <div class="absolute inset-0 bg-red-950/80 backdrop-blur-sm" />
 
-                <div class="relative w-full max-w-sm rounded-[2rem] bg-[#1A0A0A] border border-red-500/30 p-8 text-center z-10">
+                <div class="relative w-full max-w-sm rounded-[2rem] bg-core-900 border border-red-500/30 p-8 text-center z-10">
                     <div class="w-16 h-16 rounded-2xl bg-red-500/20 flex items-center justify-center mx-auto mb-5 animate-pulse">
                         <ShieldAlert class="w-8 h-8 text-red-500" />
                     </div>

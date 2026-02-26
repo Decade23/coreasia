@@ -30,14 +30,14 @@ const getFieldTypeLabel = (type: string) => {
 <template>
     <div class="space-y-6">
         <!-- Preview Canvas -->
-        <div class="relative aspect-[1.414/1] bg-white/5 rounded-2xl border border-white/10 overflow-hidden">
+        <div class="relative aspect-[1.414/1] bg-tint rounded-2xl border border-divider-strong overflow-hidden">
             <!-- Certificate Mock Background -->
             <div class="absolute inset-0 flex items-center justify-center">
                 <div class="text-center space-y-3 px-8">
                     <div class="w-16 h-16 rounded-2xl bg-brand/10 flex items-center justify-center mx-auto">
                         <FileText class="w-8 h-8 text-brand" />
                     </div>
-                    <h3 class="text-lg font-bold text-white">{{ template.name }}</h3>
+                    <h3 class="text-lg font-bold text-content">{{ template.name }}</h3>
                     <p class="text-sm text-content-subtle">{{ template.schemeName }}</p>
                 </div>
             </div>
@@ -73,19 +73,19 @@ const getFieldTypeLabel = (type: string) => {
                 <div
                     v-for="field in template.fields"
                     :key="field.key"
-                    class="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5"
+                    class="flex items-center justify-between p-3 rounded-xl bg-tint border border-divider"
                 >
                     <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center">
+                        <div class="w-8 h-8 rounded-lg bg-tint flex items-center justify-center">
                             <component :is="getFieldIcon(field.type)" class="w-4 h-4 text-content-subtle" />
                         </div>
                         <div>
-                            <p class="text-sm font-bold text-white">{{ field.label }}</p>
+                            <p class="text-sm font-bold text-content">{{ field.label }}</p>
                             <p class="text-xs text-content-subtle font-mono">{{ field.key }}</p>
                         </div>
                     </div>
                     <div class="text-right">
-                        <span class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-widest bg-white/5 text-content-muted border border-white/5">
+                        <span class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-widest bg-tint text-content-muted border border-divider">
                             {{ getFieldTypeLabel(field.type) }}
                         </span>
                         <p v-if="field.fontSize > 0" class="text-[10px] text-content-subtle mt-1">{{ field.fontSize }}px</p>

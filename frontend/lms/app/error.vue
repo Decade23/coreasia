@@ -31,9 +31,9 @@ const handleError = () => clearError({ redirect: '/' })
           {{ error.statusCode }}
         </h1>
         <div class="absolute inset-0 flex items-center justify-center">
-          <div class="ca-card p-6 md:p-8 backdrop-blur-2xl bg-core-900/40 border-white/10 shadow-2xl mb-12">
+          <div class="ca-card p-6 md:p-8 backdrop-blur-2xl bg-core-900/40 border-divider-strong shadow-2xl mb-12">
             <AlertCircle class="w-12 h-12 md:w-16 md:h-16 text-brand mx-auto mb-4" />
-            <h2 class="text-2xl md:text-3xl font-bold text-white mb-2 font-display">
+            <h2 class="text-2xl md:text-3xl font-bold text-content mb-2 font-display">
               <template v-if="error.statusCode === 404">Halaman Tidak Ditemukan</template>
               <template v-else>Terjadi Kesalahan</template>
             </h2>

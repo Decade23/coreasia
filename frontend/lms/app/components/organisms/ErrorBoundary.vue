@@ -34,7 +34,7 @@ onErrorCaptured((err: Error) => {
             <AlertTriangle class="w-8 h-8 text-rose-500" />
         </div>
 
-        <h3 class="text-lg font-bold text-white mb-2">
+        <h3 class="text-lg font-bold text-content mb-2">
             {{ title || 'Terjadi Kesalahan' }}
         </h3>
         <p class="text-sm text-content-subtle max-w-md mb-6">

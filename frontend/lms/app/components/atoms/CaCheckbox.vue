@@ -49,13 +49,13 @@ const toggleCheckbox = (event: Event) => {
         class="peer sr-only"
       />
       <div 
-        class="w-5 h-5 rounded-md transition-all duration-200 flex items-center justify-center border-none peer-focus-visible:ring-2 peer-focus-visible:ring-cyan-500/50 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-[#050814]"
+        class="w-5 h-5 rounded-md transition-all duration-200 flex items-center justify-center border-none peer-focus-visible:ring-2 peer-focus-visible:ring-cyan-500/50 peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-(--th-ring-offset)"
         :class="[
-          isChecked ? 'bg-cyan-500 shadow-glow-cyan' : 'bg-[#1A2235] shadow-inset-light group-hover:bg-[#1E273C]'
+          isChecked ? 'bg-cyan-500 shadow-glow-cyan' : 'bg-input shadow-inset-light group-hover:bg-input-hover'
         ]"
       >
         <svg 
-          class="w-3.5 h-3.5 text-slate-950 pointer-events-none transition-transform duration-200" 
+          class="w-3.5 h-3.5 text-slate-900 pointer-events-none transition-transform duration-200" 
           :class="isChecked ? 'scale-100 opacity-100' : 'scale-50 opacity-0'"
           fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3"
         >
@@ -63,6 +63,6 @@ const toggleCheckbox = (event: Event) => {
         </svg>
       </div>
     </div>
-    <span v-if="label" class="text-sm font-bold text-slate-200 select-none">{{ label }}</span>
+    <span v-if="label" class="text-sm font-bold text-content select-none">{{ label }}</span>
   </label>
 </template>

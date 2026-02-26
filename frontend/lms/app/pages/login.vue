@@ -40,12 +40,12 @@ const handleLogin = async () => {
 
         <div class="relative z-10">
             <div
-                class="w-16 h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-8 shadow-inner shadow-black/50 mx-auto md:mx-0"
+                class="w-16 h-16 rounded-2xl bg-tint border border-divider-strong flex items-center justify-center mb-8 shadow-inner shadow-black/50 mx-auto md:mx-0"
             >
                 <Play class="w-8 h-8 text-brand fill-brand/20" />
             </div>
 
-            <h1 class="text-3xl md:text-4xl font-black mb-3 tracking-tight text-white text-center md:text-left">
+            <h1 class="text-3xl md:text-4xl font-black mb-3 tracking-tight text-content text-center md:text-left">
                 Selamat Datang
             </h1>
             <p
@@ -83,7 +83,7 @@ const handleLogin = async () => {
                         <template #label-right>
                             <a
                                 href="#"
-                                class="text-[10px] font-bold text-brand hover:text-white transition-colors absolute right-0 top-0"
+                                class="text-[10px] font-bold text-brand hover:text-content transition-colors absolute right-0 top-0"
                                 >Lupa sandi?</a
                             >
                         </template>

@@ -27,7 +27,7 @@ const updateDecision = (kukId: string, status: 'K' | 'BK') => {
         </div>
         <div>
           <span class="text-[10px] font-black text-brand uppercase tracking-widest">{{ unit.code }}</span>
-          <h3 class="text-lg font-bold text-white">{{ unit.title }}</h3>
+          <h3 class="text-lg font-bold text-content">{{ unit.title }}</h3>
         </div>
       </div>
     </div>
@@ -62,7 +62,7 @@ const updateDecision = (kukId: string, status: 'K' | 'BK') => {
 
             <!-- Proof Link -->
             <div class="lg:col-span-2 flex items-center justify-center">
-              <button class="flex items-center gap-2 text-[10px] font-black uppercase text-brand hover:text-white transition-colors">
+              <button class="flex items-center gap-2 text-[10px] font-black uppercase text-brand hover:text-content transition-colors">
                 <FileText class="w-3.5 h-3.5" />
                 Bukti.pdf
                 <ExternalLink class="w-3 h-3" />

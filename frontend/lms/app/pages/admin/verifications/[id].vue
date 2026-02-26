@@ -33,11 +33,11 @@ const formatDate = (date: Date) => {
     <DashboardLayout>
         <template #header>
             <div class="flex items-center gap-4 w-full">
-                <NuxtLink to="/admin/verifications" class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-content-subtle hover:text-white hover:bg-white/10 transition-all shrink-0">
+                <NuxtLink to="/admin/verifications" class="w-10 h-10 rounded-xl bg-tint flex items-center justify-center text-content-subtle hover:text-content hover:bg-tint-hover transition-all shrink-0">
                     <ArrowLeft class="w-5 h-5" />
                 </NuxtLink>
                 <div class="flex-1 min-w-0">
-                    <h1 class="text-xl md:text-2xl font-bold text-white truncate">
+                    <h1 class="text-xl md:text-2xl font-bold text-content truncate">
                         Review Berkas {{ currentVerification?.id || '' }}
                     </h1>
                     <p v-if="currentVerification" class="text-sm text-content-subtle mt-0.5">{{ currentVerification.assesseeName }} — {{ currentVerification.schemeName }}</p>
@@ -74,37 +74,37 @@ const formatDate = (date: Date) => {
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                                 <div>
                                     <label class="text-[10px] font-black uppercase tracking-wider text-content-subtle">Nama Lengkap</label>
-                                    <p class="text-sm font-bold text-white mt-1">{{ currentVerification.personalData.fullName }}</p>
+                                    <p class="text-sm font-bold text-content mt-1">{{ currentVerification.personalData.fullName }}</p>
                                 </div>
                                 <div>
                                     <label class="text-[10px] font-black uppercase tracking-wider text-content-subtle">NIK</label>
-                                    <p class="text-sm font-mono text-white mt-1">{{ currentVerification.personalData.nik }}</p>
+                                    <p class="text-sm font-mono text-content mt-1">{{ currentVerification.personalData.nik }}</p>
                                 </div>
                                 <div>
                                     <label class="text-[10px] font-black uppercase tracking-wider text-content-subtle">Tempat Lahir</label>
-                                    <p class="text-sm text-white mt-1">{{ currentVerification.personalData.placeOfBirth }}</p>
+                                    <p class="text-sm text-content mt-1">{{ currentVerification.personalData.placeOfBirth }}</p>
                                 </div>
                                 <div>
                                     <label class="text-[10px] font-black uppercase tracking-wider text-content-subtle">Tanggal Lahir</label>
-                                    <p class="text-sm text-white mt-1">{{ currentVerification.personalData.dateOfBirth }}</p>
+                                    <p class="text-sm text-content mt-1">{{ currentVerification.personalData.dateOfBirth }}</p>
                                 </div>
                                 <div>
                                     <label class="text-[10px] font-black uppercase tracking-wider text-content-subtle flex items-center gap-1">
                                         <Mail class="w-3 h-3" /> Email
                                     </label>
-                                    <p class="text-sm text-white mt-1">{{ currentVerification.personalData.email }}</p>
+                                    <p class="text-sm text-content mt-1">{{ currentVerification.personalData.email }}</p>
                                 </div>
                                 <div>
                                     <label class="text-[10px] font-black uppercase tracking-wider text-content-subtle flex items-center gap-1">
                                         <Phone class="w-3 h-3" /> Telepon
                                     </label>
-                                    <p class="text-sm text-white mt-1">{{ currentVerification.personalData.phoneNumber }}</p>
+                                    <p class="text-sm text-content mt-1">{{ currentVerification.personalData.phoneNumber }}</p>
                                 </div>
                                 <div class="md:col-span-2">
                                     <label class="text-[10px] font-black uppercase tracking-wider text-content-subtle flex items-center gap-1">
                                         <MapPin class="w-3 h-3" /> Alamat
                                     </label>
-                                    <p class="text-sm text-white mt-1">{{ currentVerification.personalData.address }}</p>
+                                    <p class="text-sm text-content mt-1">{{ currentVerification.personalData.address }}</p>
                                 </div>
                             </div>
                         </div>
@@ -128,21 +128,21 @@ const formatDate = (date: Date) => {
                                 <div class="flex items-start gap-3">
                                     <div class="w-2 h-2 rounded-full bg-brand mt-2 shrink-0" />
                                     <div>
-                                        <p class="text-xs font-bold text-white">Disubmit</p>
+                                        <p class="text-xs font-bold text-content">Disubmit</p>
                                         <p class="text-xs text-content-subtle">{{ formatDate(currentVerification.submittedAt) }}</p>
                                     </div>
                                 </div>
                                 <div v-if="currentVerification.reviewedAt" class="flex items-start gap-3">
                                     <div class="w-2 h-2 rounded-full bg-brand-secondary mt-2 shrink-0" />
                                     <div>
-                                        <p class="text-xs font-bold text-white">Direview oleh {{ currentVerification.reviewedBy }}</p>
+                                        <p class="text-xs font-bold text-content">Direview oleh {{ currentVerification.reviewedBy }}</p>
                                         <p class="text-xs text-content-subtle">{{ formatDate(currentVerification.reviewedAt) }}</p>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Existing Review Notes -->
-                            <div v-if="currentVerification.reviewNotes" class="pt-4 border-t border-white/5">
+                            <div v-if="currentVerification.reviewNotes" class="pt-4 border-t border-divider">
                                 <h4 class="text-[10px] font-black uppercase tracking-widest text-content-subtle mb-2">Catatan Review</h4>
                                 <p class="text-sm text-content-muted leading-relaxed">{{ currentVerification.reviewNotes }}</p>
                             </div>

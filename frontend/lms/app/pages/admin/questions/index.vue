@@ -112,7 +112,7 @@ const handleConfirmDelete = async () => {
         <template #header>
             <div class="flex items-center justify-between w-full">
                 <div>
-                    <h1 class="text-2xl md:text-3xl font-black tracking-tight text-white">Bank Soal</h1>
+                    <h1 class="text-2xl md:text-3xl font-black tracking-tight text-content">Bank Soal</h1>
                     <p class="text-sm text-content-subtle hidden md:block mt-1">Kelola perbendaharaan soal ujian untuk seluruh skema.</p>
                 </div>
 
@@ -120,7 +120,7 @@ const handleConfirmDelete = async () => {
                     <div class="relative hidden lg:block w-64 xl:w-80">
                         <CaInputSearch v-model="searchQuery" placeholder="Cari konten soal..." />
                     </div>
-                    <div class="h-8 w-px bg-white/10 hidden lg:block" />
+                    <div class="h-8 w-px bg-tint-strong hidden lg:block" />
                     <CaButton variant="primary" class="rounded-full px-5 py-2 flex items-center gap-2 transition-all hover:scale-105" @click="handleCreate">
                         <Plus class="w-4 h-4" />
                         <span class="hidden sm:inline">Buat Soal</span>
@@ -196,7 +196,7 @@ const handleConfirmDelete = async () => {
                 >
                     <template #actions>
                         <button
-                            class="text-content-subtle hover:text-white px-3 py-1.5 rounded-lg hover:bg-white/10 text-xs font-semibold transition-all"
+                            class="text-content-subtle hover:text-content px-3 py-1.5 rounded-lg hover:bg-tint-hover text-xs font-semibold transition-all"
                             @click="handleEdit(q)"
                         >
                             Edit

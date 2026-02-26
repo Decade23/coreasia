@@ -5,6 +5,7 @@ import TheSidebar from '../organisms/TheSidebar.vue'
 import NotificationPanel from '../organisms/NotificationPanel.vue'
 import ToastNotification from '../molecules/ToastNotification.vue'
 import LocaleSwitcher from '../molecules/LocaleSwitcher.vue'
+import ThemeToggle from '../atoms/ThemeToggle.vue'
 
 const isSidebarOpen = ref(false)
 
@@ -18,10 +19,10 @@ const closeSidebar = () => {
 </script>
 
 <template>
-    <div class="min-h-screen flex text-slate-300 relative overflow-hidden bg-core-950">
+    <div class="h-screen flex text-content-muted relative overflow-hidden bg-core-950">
         <!-- Ambient Background Orbs -->
-        <div class="fixed top-0 right-0 w-[800px] h-[800px] bg-cyan-500/[0.03] blur-[120px] rounded-full pointer-events-none" />
-        <div class="fixed bottom-0 left-0 w-[600px] h-[600px] bg-emerald-500/[0.02] blur-[100px] rounded-full pointer-events-none" />
+        <div class="absolute top-0 right-0 w-200 h-200 bg-cyan-500/3 blur-[120px] rounded-full pointer-events-none" />
+        <div class="absolute bottom-0 left-0 w-150 h-150 bg-emerald-500/2 blur-[100px] rounded-full pointer-events-none" />
 
         <!-- Mobile Backdrop -->
         <Transition
@@ -34,7 +35,8 @@ const closeSidebar = () => {
         >
             <div
                 v-if="isSidebarOpen"
-                class="fixed inset-0 z-40 bg-core-950/80 backdrop-blur-sm lg:hidden"
+                class="fixed inset-0 z-40 backdrop-blur-sm lg:hidden"
+                :style="{ background: 'var(--th-overlay)' }"
                 @click="closeSidebar"
             />
         </Transition>
@@ -46,14 +48,14 @@ const closeSidebar = () => {
         />
 
         <!-- Main Content -->
-        <main class="flex-1 flex flex-col min-w-0 transition-all duration-500 relative z-10">
+        <main class="flex-1 flex flex-col min-w-0 min-h-0 transition-all duration-500 relative z-10">
             <!-- Glass Header -->
-            <header class="h-16 lg:h-[72px] ca-glass-header flex items-center justify-between px-4 lg:px-8 sticky top-0 z-30">
+            <header class="h-16 lg:h-[72px] ca-glass-header flex items-center justify-between px-4 lg:px-8 shrink-0 z-30">
                 <!-- Left: Mobile menu + page header slot -->
                 <div class="flex items-center gap-3 flex-1 min-w-0">
                     <button
                         @click="toggleSidebar"
-                        class="lg:hidden p-2.5 -ml-1 text-content-subtle hover:text-white hover:bg-white/5 rounded-xl transition-all"
+                        class="lg:hidden p-2.5 -ml-1 text-content-subtle hover:text-content rounded-xl transition-all"
                     >
                         <Menu class="w-5 h-5" />
                     </button>
@@ -65,6 +67,7 @@ const closeSidebar = () => {
 
                 <!-- Right: Actions -->
                 <div class="flex items-center gap-1.5 shrink-0">
+                    <ThemeToggle />
                     <LocaleSwitcher />
                     <NotificationPanel />
                 </div>
@@ -82,19 +85,3 @@ const closeSidebar = () => {
         <ToastNotification />
     </div>
 </template>
-
-<style>
-.custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
-}
-.custom-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #1A2235;
-    border-radius: 10px;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #243049;
-}
-</style>

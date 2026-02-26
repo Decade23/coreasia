@@ -36,7 +36,7 @@ const handleBack = () => {
 </script>
 
 <template>
-    <div class="min-h-screen bg-[#050814] flex items-center justify-center p-6">
+    <div class="min-h-screen bg-core-950 flex items-center justify-center p-6">
         <div class="absolute top-0 right-0 w-[600px] h-[600px] bg-red-500/5 blur-[120px] rounded-full pointer-events-none" />
 
         <div class="relative text-center max-w-md">
@@ -45,7 +45,7 @@ const handleBack = () => {
             </div>
 
             <p class="text-6xl font-black text-white/10 mb-4">{{ statusCode }}</p>
-            <h1 class="text-2xl font-bold text-white mb-3">{{ errorInfo.title }}</h1>
+            <h1 class="text-2xl font-bold text-content mb-3">{{ errorInfo.title }}</h1>
             <p class="text-sm text-content-subtle leading-relaxed mb-8">{{ errorInfo.description }}</p>
 
             <div class="flex items-center justify-center gap-3">

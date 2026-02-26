@@ -47,7 +47,7 @@ const submitAssessment = () => {
     <template #header>
       <div class="flex items-center justify-between w-full">
         <div class="min-w-0 mr-4">
-          <h1 class="text-lg md:text-xl font-bold text-white truncate">Asesmen Mandiri (APL-02)</h1>
+          <h1 class="text-lg md:text-xl font-bold text-content truncate">Asesmen Mandiri (APL-02)</h1>
           <p class="text-[10px] text-brand font-black uppercase tracking-widest mt-1 truncate">Skema: Junior Web Developer</p>
         </div>
 
@@ -75,7 +75,7 @@ const submitAssessment = () => {
       <!-- Summary Card -->
       <div class="p-6 ca-card flex flex-col sm:flex-row items-center justify-between gap-6 border-brand/20 shadow-brand-glow">
         <div class="space-y-1 text-center sm:text-left">
-          <h2 class="text-white font-bold text-lg">Progres Penilaian</h2>
+          <h2 class="text-content font-bold text-lg">Progres Penilaian</h2>
           <p class="text-content-subtle text-sm">Selesaikan penilaian untuk seluruh unit kompetensi.</p>
         </div>
         
@@ -104,7 +104,7 @@ const submitAssessment = () => {
       </div>
 
       <!-- Bottom Info -->
-      <div class="p-6 rounded-2xl bg-core-900/50 border border-dashed border-white/10 text-center">
+      <div class="p-6 rounded-2xl bg-core-900/50 border border-dashed border-divider-strong text-center">
         <p class="text-sm text-content-subtle italic">
           Catatan: Pastikan Anda memilih "K" hanya jika Anda benar-benar menguasai kriteria tersebut dan memiliki bukti yang relevan.
         </p>

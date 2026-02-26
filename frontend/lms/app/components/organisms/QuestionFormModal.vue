@@ -130,16 +130,16 @@ const handleSubmit = () => {
             leave-to-class="opacity-0"
         >
             <div v-if="open" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                <div class="absolute inset-0 bg-[#050814]/80 backdrop-blur-sm" @click="emit('close')" />
+                <div class="absolute inset-0 backdrop-blur-sm" :style="{ background: 'var(--th-overlay)' }" @click="emit('close')" />
 
                 <div class="relative w-full max-w-3xl ca-card p-0 z-10 max-h-[90vh] flex flex-col">
                     <!-- Header -->
-                    <div class="flex items-center justify-between p-6 border-b border-white/5">
-                        <h2 class="text-xl font-bold text-white">
+                    <div class="flex items-center justify-between p-6 border-b border-divider">
+                        <h2 class="text-xl font-bold text-content">
                             {{ isEditing ? 'Edit Soal' : 'Buat Soal Baru' }}
                         </h2>
                         <button
-                            class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-content-subtle hover:text-white hover:bg-white/10 transition-all"
+                            class="w-10 h-10 rounded-xl bg-tint flex items-center justify-center text-content-subtle hover:text-content hover:bg-tint-hover transition-all"
                             @click="emit('close')"
                         >
                             <X class="w-5 h-5" />
@@ -199,7 +199,7 @@ const handleSubmit = () => {
                                     class="w-8 h-8 rounded-full border-2 shrink-0 flex items-center justify-center text-xs font-black transition-all"
                                     :class="opt.isCorrect
                                         ? 'border-brand bg-brand/20 text-brand'
-                                        : 'border-white/10 text-content-subtle hover:border-brand/40'"
+                                        : 'border-divider-strong text-content-subtle hover:border-brand/40'"
                                     @click="setCorrectAnswer(idx)"
                                     :title="opt.isCorrect ? 'Jawaban benar' : 'Tandai sebagai jawaban benar'"
                                 >
@@ -209,7 +209,7 @@ const handleSubmit = () => {
                                     <input
                                         v-model="opt.text"
                                         :placeholder="`Pilihan ${opt.id}`"
-                                        class="w-full bg-[#1A2235] rounded-xl px-4 py-3 text-sm text-white font-medium transition-all placeholder:text-content-subtle focus:outline-none focus:ring-2 focus:ring-brand/50 shadow-inset-light"
+                                        class="w-full bg-input rounded-xl px-4 py-3 text-sm text-content font-medium transition-all placeholder:text-content-subtle focus:outline-none focus:ring-2 focus:ring-brand/50 shadow-inset-light"
                                     />
                                 </div>
                                 <button
@@ -259,12 +259,12 @@ const handleSubmit = () => {
                                 @update:model-value="clearFieldError('points')"
                             />
                             <div class="flex items-end pb-1">
-                                <div class="flex items-center justify-between w-full p-3.5 rounded-xl bg-white/5 border border-white/5">
-                                    <span class="text-sm font-bold text-white">Aktif</span>
+                                <div class="flex items-center justify-between w-full p-3.5 rounded-xl bg-tint border border-divider">
+                                    <span class="text-sm font-bold text-content">Aktif</span>
                                     <button
                                         type="button"
                                         class="relative w-10 h-6 rounded-full transition-colors duration-200"
-                                        :class="form.isActive ? 'bg-brand' : 'bg-white/10'"
+                                        :class="form.isActive ? 'bg-brand' : 'bg-tint-strong'"
                                         @click="form.isActive = !form.isActive"
                                     >
                                         <span
@@ -278,7 +278,7 @@ const handleSubmit = () => {
                     </div>
 
                     <!-- Footer -->
-                    <div class="flex items-center justify-end gap-3 p-6 border-t border-white/5">
+                    <div class="flex items-center justify-end gap-3 p-6 border-t border-divider">
                         <CaButton variant="outline" :disabled="saving" @click="emit('close')">
                             Batal
                         </CaButton>

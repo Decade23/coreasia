@@ -13,7 +13,7 @@ defineProps<{
 
 <template>
     <nav class="flex items-center gap-1.5 text-sm">
-        <NuxtLink to="/" class="text-content-subtle hover:text-white transition-colors">
+        <NuxtLink to="/" class="text-content-subtle hover:text-content transition-colors">
             <Home class="w-4 h-4" />
         </NuxtLink>
         <template v-for="(item, index) in items" :key="index">
@@ -21,11 +21,11 @@ defineProps<{
             <NuxtLink
                 v-if="item.to && index < items.length - 1"
                 :to="item.to"
-                class="text-content-subtle hover:text-white transition-colors font-medium"
+                class="text-content-subtle hover:text-content transition-colors font-medium"
             >
                 {{ item.label }}
             </NuxtLink>
-            <span v-else class="text-white font-bold">{{ item.label }}</span>
+            <span v-else class="text-content font-bold">{{ item.label }}</span>
         </template>
     </nav>
 </template>

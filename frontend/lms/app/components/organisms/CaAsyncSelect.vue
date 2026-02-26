@@ -98,12 +98,12 @@ onUnmounted(() => {
       :id="id"
       type="button"
       @click="toggleDropdown"
-      class="w-full relative flex items-center justify-between bg-[#1A2235] rounded-xl px-4 py-3.5 h-[52px] transition-all focus:outline-none shadow-inset-light group"
+      class="w-full relative flex items-center justify-between bg-input rounded-xl px-4 py-3.5 h-[52px] transition-all focus:outline-none shadow-inset-light group"
       :class="[
-        isOpen ? 'ring-2 ring-cyan-500/50 shadow-glow-cyan bg-[#1A2235]' : 'hover:bg-[#1E273C] focus:ring-2 focus:ring-cyan-500/50'
+        isOpen ? 'ring-2 ring-cyan-500/50 shadow-glow-cyan bg-input' : 'hover:bg-input-hover focus:ring-2 focus:ring-cyan-500/50'
       ]"
     >
-      <span class="block truncate" :class="selectedOption ? 'text-white font-bold' : 'text-content-subtle font-medium'">
+      <span class="block truncate" :class="selectedOption ? 'text-content font-bold' : 'text-content-subtle font-medium'">
         {{ selectedOption ? selectedOption.label : (placeholder || 'Pilih data...') }}
       </span>
       <span class="absolute inset-y-0 right-4 flex items-center pointer-events-none text-content-muted group-hover:text-cyan-400 transition-colors" :class="{'!text-cyan-400': isOpen}">
@@ -120,9 +120,9 @@ onUnmounted(() => {
       leave-from-class="transform scale-100 opacity-100"
       leave-to-class="transform scale-95 opacity-0"
     >
-      <div v-if="isOpen" class="absolute z-50 w-full mt-2 rounded-xl bg-[#0F1423] shadow-glow-base-strong overflow-hidden border border-white/5">
+      <div v-if="isOpen" class="absolute z-50 w-full mt-2 rounded-xl bg-core-800 shadow-glow-base-strong overflow-hidden border border-divider">
         <!-- Sticky Search Bar -->
-        <div class="sticky top-0 p-2 bg-[#0F1423] border-b border-white/5 z-10">
+        <div class="sticky top-0 p-2 bg-core-800 border-b border-divider z-10">
           <div class="relative flex items-center">
             
             <!-- Dynamic Icon (Search / Spinner) -->
@@ -136,7 +136,7 @@ onUnmounted(() => {
             <input
               type="text"
               v-model="searchQuery"
-              class="w-full h-10 bg-transparent text-xs font-bold text-white placeholder-content-subtle border-none outline-none pl-10 pr-3 focus:ring-0"
+              class="w-full h-10 bg-transparent text-xs font-bold text-content placeholder-content-subtle border-none outline-none pl-10 pr-3 focus:ring-0"
               placeholder="Cari..."
               @click.stop
             />
@@ -153,7 +153,7 @@ onUnmounted(() => {
             :class="[
               modelValue === opt.value
                 ? 'bg-cyan-500/10 text-cyan-400 font-bold'
-                : 'text-content-subtle hover:bg-white/5 hover:text-white'
+                : 'text-content-subtle hover:bg-tint hover:text-content'
             ]"
           >
             <span class="block truncate">{{ opt.label }}</span>
@@ -197,7 +197,7 @@ ul::-webkit-scrollbar-track {
   background: transparent;
 }
 ul::-webkit-scrollbar-thumb {
-  background: #1A2235;
+  background: var(--th-input);
   border-radius: 9999px;
 }
 </style>

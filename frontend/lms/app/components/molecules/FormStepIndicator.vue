@@ -11,7 +11,7 @@ const props = defineProps<{
   <div class="w-full max-w-2xl mx-auto mb-8 md:mb-12">
     <!-- Mobile Step Text -->
     <div class="md:hidden text-center mb-6 text-sm font-bold text-brand uppercase tracking-widest">
-      Langkah {{ currentStep + 1 }} dari {{ steps.length }}: <span class="text-white">{{ steps[currentStep] }}</span>
+      Langkah {{ currentStep + 1 }} dari {{ steps.length }}: <span class="text-content">{{ steps[currentStep] }}</span>
     </div>
 
     <div class="flex items-center justify-between w-full">

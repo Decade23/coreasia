@@ -121,7 +121,7 @@ const statusLabel = (status: string) => {
         <template #header>
             <div class="flex items-center justify-between w-full">
                 <div>
-                    <h1 class="text-xl md:text-3xl font-bold truncate mr-4 text-white">Penjadwalan Ujian</h1>
+                    <h1 class="text-xl md:text-3xl font-bold truncate mr-4 text-content">Penjadwalan Ujian</h1>
                     <p class="text-sm text-content-subtle hidden md:block mt-1">Atur jadwal, kuota, dan plotting asesor ujian kompetensi.</p>
                 </div>
 
@@ -136,7 +136,7 @@ const statusLabel = (status: string) => {
 
         <div class="py-6 space-y-6">
             <!-- Toolbar -->
-            <div class="flex flex-col sm:flex-row gap-4 items-center justify-between p-4 rounded-2xl bg-[#0F1423] border border-white/5 shadow-xl glass-card">
+            <div class="flex flex-col sm:flex-row gap-4 items-center justify-between p-4 rounded-2xl bg-core-800 border border-divider shadow-xl glass-card">
                 <div class="w-full sm:w-96">
                     <CaInputSearch v-model="searchQuery" placeholder="Cari nama jadwal..." />
                 </div>
@@ -167,28 +167,28 @@ const statusLabel = (status: string) => {
             <!-- Schedule Cards -->
             <div v-else class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div v-for="jadwal in schedules" :key="jadwal.id" class="ca-card group p-6">
-                    <div class="flex pb-4 border-b border-white/5 justify-between items-start mb-4">
+                    <div class="flex pb-4 border-b border-divider justify-between items-start mb-4">
                         <div>
                             <div class="flex items-center gap-2 mb-1">
                                 <span class="text-[10px] font-black text-brand uppercase tracking-widest">{{ jadwal.id }}</span>
                                 <BaseBadge :text="statusLabel(jadwal.status)" :variant="statusVariant(jadwal.status)" />
                             </div>
-                            <h3 class="text-lg font-bold text-white mt-1">{{ jadwal.title }}</h3>
+                            <h3 class="text-lg font-bold text-content mt-1">{{ jadwal.title }}</h3>
                             <p class="text-content-muted text-sm mt-1 saturate-50">{{ jadwal.schemeName }}</p>
                         </div>
                         <div class="relative">
                             <button
-                                class="text-content-subtle hover:text-white transition-colors p-1 bg-white/5 rounded-lg border border-white/10"
+                                class="text-content-subtle hover:text-content transition-colors p-1 bg-tint rounded-lg border border-divider-strong"
                                 @click="toggleMenu(jadwal.id)"
                             >
                                 <MoreVertical class="w-4 h-4" />
                             </button>
                             <div
                                 v-if="openMenuId === jadwal.id"
-                                class="absolute right-0 top-full mt-1 w-36 bg-[#0F1423] border border-white/10 rounded-xl shadow-xl z-20 py-1 overflow-hidden"
+                                class="absolute right-0 top-full mt-1 w-36 bg-core-800 border border-divider-strong rounded-xl shadow-xl z-20 py-1 overflow-hidden"
                             >
                                 <button
-                                    class="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-content-subtle hover:text-white hover:bg-white/5 transition-colors"
+                                    class="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-content-subtle hover:text-content hover:bg-tint transition-colors"
                                     @click="handleEdit(jadwal)"
                                 >
                                     <Edit3 class="w-3.5 h-3.5" /> Edit
@@ -205,32 +205,32 @@ const statusLabel = (status: string) => {
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                         <div class="flex items-start gap-3">
-                            <div class="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                            <div class="w-8 h-8 rounded-lg bg-tint border border-divider-strong flex items-center justify-center shrink-0">
                                 <Calendar class="w-4 h-4 text-brand" />
                             </div>
                             <div>
                                 <span class="text-[10px] font-black uppercase text-content-subtle tracking-widest block mb-0.5">Waktu</span>
-                                <span class="text-sm font-medium text-white">{{ formatDateRange(jadwal.startDate, jadwal.endDate) }}</span>
+                                <span class="text-sm font-medium text-content">{{ formatDateRange(jadwal.startDate, jadwal.endDate) }}</span>
                             </div>
                         </div>
                         <div class="flex items-start gap-3">
-                            <div class="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                            <div class="w-8 h-8 rounded-lg bg-tint border border-divider-strong flex items-center justify-center shrink-0">
                                 <MapPin class="w-4 h-4 text-brand" />
                             </div>
                             <div>
                                 <span class="text-[10px] font-black uppercase text-content-subtle tracking-widest block mb-0.5">Metode</span>
-                                <span class="text-sm font-medium text-white">{{ typeLabel(jadwal.type) }}</span>
+                                <span class="text-sm font-medium text-content">{{ typeLabel(jadwal.type) }}</span>
                                 <span class="text-content-muted block text-xs truncate">{{ jadwal.location }}</span>
                             </div>
                         </div>
                     </div>
 
-                    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl bg-core-900/50 border border-white/5">
+                    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl bg-core-900/50 border border-divider">
                         <div class="flex items-center gap-2 w-full sm:w-auto">
                             <Users class="w-4 h-4 text-cyan-400" />
                             <div class="flex-1">
                                 <div class="flex justify-between w-full mb-1">
-                                    <span class="text-xs font-bold text-white">
+                                    <span class="text-xs font-bold text-content">
                                         {{ jadwal.currentParticipants }}
                                         <span class="text-content-subtle font-medium text-[10px] uppercase">dari</span>
                                         {{ jadwal.maxParticipants }}

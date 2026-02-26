@@ -117,29 +117,29 @@ const menuSections = computed<MenuSection[]>(() => {
 
 <template>
     <aside
-        class="fixed inset-y-0 left-0 z-50 w-[272px] transform transition-transform duration-500 ease-out lg:translate-x-0 lg:static h-screen flex flex-col"
+        class="fixed inset-y-0 left-0 z-50 w-[272px] shrink-0 transform transition-transform duration-500 ease-out lg:translate-x-0 lg:relative h-screen flex flex-col"
         :class="isOpen ? 'translate-x-0' : '-translate-x-full'"
     >
         <!-- Glass background (mobile) + solid (desktop) -->
-        <div class="absolute inset-0 bg-core-800/95 backdrop-blur-2xl lg:bg-core-800/40 lg:backdrop-blur-none border-r border-white/[0.04]" />
+        <div class="absolute inset-0 bg-core-800/95 backdrop-blur-2xl lg:bg-core-800/40 lg:backdrop-blur-none border-r border-divider" />
 
         <!-- Content -->
         <div class="relative z-10 flex flex-col h-full">
             <!-- Logo Area -->
             <div class="h-16 lg:h-[72px] flex items-center justify-between px-6 shrink-0">
                 <NuxtLink to="/" class="flex items-center gap-3 group">
-                    <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center font-black text-slate-950 text-lg shadow-glow-cyan-card group-hover:scale-105 transition-transform duration-300">
+                    <div class="w-9 h-9 rounded-xl bg-linear-to-br from-brand-400 to-brand-600 flex items-center justify-center font-black text-slate-950 text-lg shadow-glow-cyan-card group-hover:scale-105 transition-transform duration-300">
                         C
                     </div>
                     <div>
-                        <span class="font-bold text-lg tracking-tight text-white block leading-none">CoreAsia</span>
+                        <span class="font-bold text-lg tracking-tight text-content block leading-none">CoreAsia</span>
                         <span class="text-[9px] text-content-faint font-bold uppercase tracking-[0.2em]">LMS Platform</span>
                     </div>
                 </NuxtLink>
 
                 <button
                     @click="emit('close')"
-                    class="lg:hidden p-2 rounded-xl text-content-subtle hover:bg-white/5 hover:text-white transition-all"
+                    class="lg:hidden p-2 rounded-xl text-content-subtle hover:bg-tint hover:text-content transition-all"
                 >
                     <X class="w-5 h-5" />
                 </button>
@@ -150,7 +150,7 @@ const menuSections = computed<MenuSection[]>(() => {
                 <template v-for="(section, sIdx) in menuSections" :key="sIdx">
                     <!-- Section divider + title -->
                     <div v-if="section.title" class="pt-5 pb-2 px-3 first:pt-0">
-                        <div class="border-t border-white/[0.04] mb-3" />
+                        <div class="border-t border-divider mb-3" />
                         <span class="text-[10px] font-black uppercase tracking-[0.15em] text-content-faint">{{ section.title }}</span>
                     </div>
 
@@ -160,7 +160,7 @@ const menuSections = computed<MenuSection[]>(() => {
                         :key="item.to"
                         :to="item.to"
                         @click="emit('close')"
-                        class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] text-content-subtle font-semibold hover:text-white hover:bg-white/[0.04] transition-all duration-200 group relative"
+                        class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] text-content-subtle font-semibold hover:text-content hover:bg-tint-subtle transition-all duration-200 group relative"
                         active-class="!bg-brand/10 !text-brand-400 font-bold"
                     >
                         <!-- Active indicator -->
@@ -177,7 +177,7 @@ const menuSections = computed<MenuSection[]>(() => {
 
             <!-- Footer -->
             <div class="p-4 shrink-0">
-                <div class="border-t border-white/[0.04] pt-4">
+                <div class="border-t border-divider pt-4">
                     <button
                         @click="logout"
                         class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] text-content-subtle font-semibold hover:bg-red-500/10 hover:text-red-400 transition-all group"

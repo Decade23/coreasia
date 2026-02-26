@@ -16,7 +16,7 @@ const sizes = {
 <template>
     <div class="flex items-center justify-center gap-3">
         <div
-            class="animate-spin rounded-full border-white/20 border-t-brand"
+            class="animate-spin rounded-full border-content-faint/30 border-t-brand"
             :class="sizes[size]"
         />
         <span v-if="label" class="text-sm font-medium text-content-subtle">{{ label }}</span>

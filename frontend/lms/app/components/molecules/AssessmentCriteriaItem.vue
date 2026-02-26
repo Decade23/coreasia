@@ -12,7 +12,7 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-6 p-6 rounded-2xl bg-core-900/40 border border-white/5 hover:border-brand/30 hover:bg-core-900/60 transition-all duration-300 group/item">
+  <div class="flex flex-col xl:flex-row xl:items-center justify-between gap-6 p-6 rounded-2xl bg-core-900/40 border border-divider hover:border-brand/30 hover:bg-core-900/60 transition-all duration-300 group/item">
     <div class="flex gap-5">
       <span class="text-xs font-black text-content-subtle uppercase shrink-0 mt-1 group-hover/item:text-brand transition-colors">{{ kuk.id }}</span>
       <p class="text-sm text-content-muted leading-relaxed group-hover/item:text-content transition-colors">{{ kuk.text }}</p>

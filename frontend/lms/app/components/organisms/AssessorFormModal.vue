@@ -73,16 +73,16 @@ const handleSubmit = () => {
             leave-to-class="opacity-0"
         >
             <div v-if="open" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                <div class="absolute inset-0 bg-[#050814]/80 backdrop-blur-sm" @click="emit('close')" />
+                <div class="absolute inset-0 backdrop-blur-sm" :style="{ background: 'var(--th-overlay)' }" @click="emit('close')" />
 
                 <div class="relative w-full max-w-2xl ca-card p-0 z-10 max-h-[90vh] flex flex-col">
                     <!-- Header -->
-                    <div class="flex items-center justify-between p-6 border-b border-white/5">
-                        <h2 class="text-xl font-bold text-white">
+                    <div class="flex items-center justify-between p-6 border-b border-divider">
+                        <h2 class="text-xl font-bold text-content">
                             {{ isEditing ? 'Edit Asesor' : 'Tambah Asesor Baru' }}
                         </h2>
                         <button
-                            class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-content-subtle hover:text-white hover:bg-white/10 transition-all"
+                            class="w-10 h-10 rounded-xl bg-tint flex items-center justify-center text-content-subtle hover:text-content hover:bg-tint-hover transition-all"
                             @click="emit('close')"
                         >
                             <X class="w-5 h-5" />
@@ -142,15 +142,15 @@ const handleSubmit = () => {
                         />
 
                         <!-- Status Toggle -->
-                        <div class="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/5">
+                        <div class="flex items-center justify-between p-4 rounded-xl bg-tint border border-divider">
                             <div>
-                                <p class="text-sm font-bold text-white">Status Asesor</p>
+                                <p class="text-sm font-bold text-content">Status Asesor</p>
                                 <p class="text-xs text-content-subtle mt-0.5">Asesor aktif dapat ditugaskan untuk jadwal penilaian</p>
                             </div>
                             <button
                                 type="button"
                                 class="relative w-12 h-7 rounded-full transition-colors duration-200"
-                                :class="form.isActive ? 'bg-brand' : 'bg-white/10'"
+                                :class="form.isActive ? 'bg-brand' : 'bg-tint-strong'"
                                 @click="form.isActive = !form.isActive"
                             >
                                 <span
@@ -162,7 +162,7 @@ const handleSubmit = () => {
                     </div>
 
                     <!-- Footer -->
-                    <div class="flex items-center justify-end gap-3 p-6 border-t border-white/5">
+                    <div class="flex items-center justify-end gap-3 p-6 border-t border-divider">
                         <CaButton variant="outline" :disabled="saving" @click="emit('close')">
                             Batal
                         </CaButton>

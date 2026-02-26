@@ -37,7 +37,7 @@ const uploadedFileName = computed(() => {
                     {{ question.type === 'upload' ? '↑' : question.type === 'observation' ? '◉' : '?' }}
                 </span>
                 <div class="flex-1">
-                    <h2 class="text-xl font-bold leading-relaxed text-white">{{ question.text }}</h2>
+                    <h2 class="text-xl font-bold leading-relaxed text-content">{{ question.text }}</h2>
                     <span class="text-[10px] font-bold uppercase tracking-widest text-content-muted mt-1 inline-block">
                         {{ question.points }} poin
                     </span>
@@ -54,7 +54,7 @@ const uploadedFileName = computed(() => {
                     :class="
                         modelValue === opt.id
                             ? 'border-brand bg-brand/5 shadow-glow-brand'
-                            : 'border-white/5 bg-core-900/50 hover:border-brand/30 hover:bg-white/5'
+                            : 'border-divider bg-core-900/50 hover:border-brand/30 hover:bg-tint'
                     "
                 >
                     <div
@@ -62,14 +62,14 @@ const uploadedFileName = computed(() => {
                         :class="
                             modelValue === opt.id
                                 ? 'border-brand bg-brand text-slate-950'
-                                : 'border-white/10 group-hover:border-brand/50 text-content-subtle'
+                                : 'border-divider-strong group-hover:border-brand/50 text-content-subtle'
                         "
                     >
                         {{ opt.label }}
                     </div>
                     <span
                         class="font-medium"
-                        :class="modelValue === opt.id ? 'text-white' : 'text-content group-hover:text-white transition-colors'"
+                        :class="modelValue === opt.id ? 'text-content' : 'text-content group-hover:text-content transition-colors'"
                     >
                         {{ opt.value }}
                     </span>
@@ -96,7 +96,7 @@ const uploadedFileName = computed(() => {
                         <FileCheck class="w-5 h-5 text-brand" />
                     </div>
                     <div class="flex-1 min-w-0">
-                        <p class="text-sm font-bold text-white truncate">{{ uploadedFileName }}</p>
+                        <p class="text-sm font-bold text-content truncate">{{ uploadedFileName }}</p>
                         <p class="text-[10px] text-content-subtle uppercase font-bold">File berhasil dipilih</p>
                     </div>
                     <button
@@ -110,9 +110,9 @@ const uploadedFileName = computed(() => {
                 <label v-else class="block cursor-pointer">
                     <input type="file" class="hidden" accept="image/*,.pdf,.doc,.docx" @change="onFileUpload" />
                     <div
-                        class="flex flex-col items-center justify-center gap-3 p-8 rounded-xl border-2 border-dashed border-white/10 bg-core-900/30 hover:border-brand/30 hover:bg-white/5 transition-all"
+                        class="flex flex-col items-center justify-center gap-3 p-8 rounded-xl border-2 border-dashed border-divider-strong bg-core-900/30 hover:border-brand/30 hover:bg-tint transition-all"
                     >
-                        <div class="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center">
+                        <div class="w-12 h-12 rounded-xl bg-tint flex items-center justify-center">
                             <Upload class="w-6 h-6 text-content-muted" />
                         </div>
                         <p class="text-sm font-medium text-content-subtle">Klik untuk upload file bukti</p>

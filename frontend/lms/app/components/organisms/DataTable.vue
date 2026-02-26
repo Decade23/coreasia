@@ -41,12 +41,12 @@ const handleSort = (col: DataTableColumn) => {
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse">
                 <thead>
-                    <tr class="bg-core-900/80 border-b border-white/5">
+                    <tr class="bg-core-900/80 border-b border-divider">
                         <th
                             v-for="col in columns"
                             :key="col.key"
                             class="p-4 text-xs font-black text-content-subtle uppercase tracking-widest whitespace-nowrap"
-                            :class="[col.headerClass, col.sortable ? 'cursor-pointer select-none hover:text-white transition-colors' : '']"
+                            :class="[col.headerClass, col.sortable ? 'cursor-pointer select-none hover:text-content transition-colors' : '']"
                             @click="handleSort(col)"
                         >
                             <div class="flex items-center gap-1.5">
@@ -59,7 +59,7 @@ const handleSort = (col: DataTableColumn) => {
                         </th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-white/5">
+                <tbody class="divide-y divide-divider">
                     <tr
                         v-for="(row, idx) in data"
                         :key="idx"

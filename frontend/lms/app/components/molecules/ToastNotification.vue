@@ -50,9 +50,9 @@ const getIconColor = (variant: string) => {
                     :class="getStyles(toast.variant)"
                 >
                     <component :is="getIcon(toast.variant)" class="w-5 h-5 shrink-0 mt-0.5" :class="getIconColor(toast.variant)" />
-                    <p class="flex-1 text-sm text-white font-medium">{{ toast.message }}</p>
+                    <p class="flex-1 text-sm text-content font-medium">{{ toast.message }}</p>
                     <button
-                        class="shrink-0 text-content-subtle hover:text-white transition-colors"
+                        class="shrink-0 text-content-subtle hover:text-content transition-colors"
                         @click="store.removeToast(toast.id)"
                     >
                         <X class="w-4 h-4" />

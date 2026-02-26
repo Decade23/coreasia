@@ -12,7 +12,7 @@ withDefaults(defineProps<{
 
 <template>
     <div
-        class="animate-pulse bg-white/[0.06]"
+        class="animate-pulse bg-tint"
         :class="[width, height, rounded]"
     />
 </template>

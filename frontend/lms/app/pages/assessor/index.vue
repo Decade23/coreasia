@@ -28,13 +28,13 @@ const refreshQueue = () => {
     <template #header>
       <div class="flex items-center justify-between w-full">
         <div>
-          <h1 class="text-xl font-bold text-white">Dashboard Asesor</h1>
+          <h1 class="text-xl font-bold text-content">Dashboard Asesor</h1>
           <p class="text-[10px] text-brand font-black uppercase tracking-widest mt-1">Lembaga Sertifikasi Profesi CoreAsia</p>
         </div>
 
         <button 
           @click="refreshQueue"
-          class="p-2 rounded-xl bg-core-900/60 backdrop-blur-md border border-white/10 text-content-muted hover:text-brand transition-all shadow-xl"
+          class="p-2 rounded-xl bg-core-900/60 backdrop-blur-md border border-divider-strong text-content-muted hover:text-brand transition-all shadow-xl"
           :class="{ 'animate-spin': isLoading }"
         >
           <RefreshCcw class="w-5 h-5" />
@@ -49,7 +49,7 @@ const refreshQueue = () => {
           <CaInputSearch v-model="searchQuery" placeholder="Cari nama atau NIK asesi..." />
         </div>
         
-        <button class="flex h-[52px] items-center gap-2 px-6 border border-white/5 bg-[#0F1423] shadow-xl glass-card rounded-xl text-content-muted hover:border-cyan-500/30 hover:text-white transition-all">
+        <button class="flex h-[52px] items-center gap-2 px-6 border border-divider bg-core-800 shadow-xl glass-card rounded-xl text-content-muted hover:border-cyan-500/30 hover:text-content transition-all">
           <Filter class="w-4 h-4" />
           <span class="text-sm font-bold">Filter Status</span>
         </button>
@@ -70,10 +70,10 @@ const refreshQueue = () => {
         </div>
 
         <div v-else class="py-20 text-center animate-fade-in">
-          <div class="w-20 h-20 bg-core-900/50 rounded-full flex items-center justify-center mx-auto mb-6 text-content-subtle border border-white/5">
+          <div class="w-20 h-20 bg-core-900/50 rounded-full flex items-center justify-center mx-auto mb-6 text-content-subtle border border-divider">
             <Search class="w-10 h-10" />
           </div>
-          <h3 class="text-lg font-bold text-white">Tidak Ada Data Ditemukan</h3>
+          <h3 class="text-lg font-bold text-content">Tidak Ada Data Ditemukan</h3>
           <p class="text-sm text-content-muted mt-1">Coba ubah kata kunci pencarian Anda.</p>
         </div>
       </div>

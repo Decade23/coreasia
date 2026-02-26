@@ -21,7 +21,7 @@ import { Hexagon } from 'lucide-vue-next'
         </div>
       </div>
       <div>
-        <h2 class="text-white font-bold text-lg tracking-tight leading-none">CoreAsia</h2>
+        <h2 class="text-content font-bold text-lg tracking-tight leading-none">CoreAsia</h2>
         <span class="text-[10px] text-content-subtle uppercase tracking-widest font-black">LMS Platform</span>
       </div>
     </div>

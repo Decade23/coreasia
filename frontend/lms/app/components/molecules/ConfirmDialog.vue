@@ -46,7 +46,7 @@ const variantStyles = {
                 class="fixed inset-0 z-[100] flex items-center justify-center p-4"
             >
                 <!-- Backdrop -->
-                <div class="absolute inset-0 bg-[#050814]/80 backdrop-blur-sm" @click="emit('cancel')" />
+                <div class="absolute inset-0 bg-core-950/80 backdrop-blur-sm" @click="emit('cancel')" />
 
                 <!-- Dialog -->
                 <div class="relative w-full max-w-md ca-card p-8 z-10">
@@ -58,7 +58,7 @@ const variantStyles = {
                             <AlertTriangle class="w-7 h-7" />
                         </div>
 
-                        <h3 class="text-xl font-bold text-white mb-2">{{ title }}</h3>
+                        <h3 class="text-xl font-bold text-content mb-2">{{ title }}</h3>
                         <p class="text-sm text-content-subtle leading-relaxed mb-8">{{ message }}</p>
 
                         <div class="flex items-center gap-3 w-full">

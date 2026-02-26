@@ -71,22 +71,22 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#050814] p-10 font-sans text-white">
+  <div class="min-h-screen bg-core-950 p-10 font-sans text-content">
     <div class="max-w-4xl mx-auto space-y-12">
       <header>
         <div class="flex items-center gap-2 mb-4">
-            <span class="inline-flex items-center gap-2 rounded-full bg-cyan-500/15 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-[#22D3EE]">
+            <span class="inline-flex items-center gap-2 rounded-full bg-cyan-500/15 px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-brand-400">
                 Sandboks Playground
             </span>
         </div>
-        <h1 class="text-4xl font-black text-white">Premium Form Components</h1>
+        <h1 class="text-4xl font-black text-content">Premium Form Components</h1>
         <p class="text-content-subtle mt-2 font-medium">Lingkungan uji interaktif untuk memvalidasi interaksi dan estetika *Borderless Dark Mode* fungsional.</p>
       </header>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
         <!-- Text Inputs -->
-        <div class="bg-[#0F1423] shadow-2xl rounded-[2rem] p-8 space-y-6">
-          <h2 class="text-xl font-bold border-b border-white/5 pb-4 mb-6">1. Base Inputs</h2>
+        <div class="bg-core-800 shadow-2xl rounded-[2rem] p-8 space-y-6">
+          <h2 class="text-xl font-bold text-content border-b border-divider pb-4 mb-6">1. Base Inputs</h2>
           
           <BaseInput 
             id="pg-text" 
@@ -120,8 +120,8 @@ onMounted(() => {
         </div>
 
         <!-- Selects & Pickers -->
-        <div class="bg-[#0F1423] shadow-2xl rounded-[2rem] p-8 space-y-6">
-          <h2 class="text-xl font-bold border-b border-white/5 pb-4 mb-6">2. Selects & Pickers</h2>
+        <div class="bg-core-800 shadow-2xl rounded-[2rem] p-8 space-y-6">
+          <h2 class="text-xl font-bold text-content border-b border-divider pb-4 mb-6">2. Selects & Pickers</h2>
           
           <CaSelect
             id="pg-select"
@@ -153,8 +153,8 @@ onMounted(() => {
         </div>
 
         <!-- Selection Controls -->
-        <div class="bg-[#0F1423] shadow-2xl rounded-[2rem] p-8 space-y-8 md:col-span-2">
-          <h2 class="text-xl font-bold border-b border-white/10 pb-4">3. Selection Controls</h2>
+        <div class="bg-core-800 shadow-2xl rounded-[2rem] p-8 space-y-8 md:col-span-2">
+          <h2 class="text-xl font-bold text-content border-b border-divider-strong pb-4">3. Selection Controls</h2>
           
           <div class="flex flex-wrap gap-12">
             <!-- Toggle -->

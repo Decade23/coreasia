@@ -16,16 +16,16 @@ const user = computed(() => rawUser.value ? AuthAdapter.toDomain(rawUser.value) 
     <template #header>
       <div class="flex items-center justify-between w-full">
         <div>
-          <h1 class="text-xl md:text-3xl font-bold truncate mr-4 bg-clip-text text-transparent bg-gradient-to-r from-white to-content-muted">{{ t('common.welcome') }}</h1>
+          <h1 class="text-xl md:text-3xl font-bold truncate mr-4 bg-clip-text text-transparent bg-gradient-to-r from-content to-content-muted">{{ t('common.welcome') }}</h1>
           <p class="text-sm text-content-subtle hidden md:block mt-1">Kelola sistem sertifikasi dengan mudah dan efisien.</p>
         </div>
         
         <div class="flex items-center gap-3 md:gap-6 shrink-0">
           <div class="hidden md:flex flex-col items-end">
-            <span class="text-base font-bold text-white">{{ user.fullName }}</span>
+            <span class="text-base font-bold text-content">{{ user.fullName }}</span>
             <span class="text-[10px] text-brand uppercase font-black tracking-widest">{{ t(`roles.${user.role}`) }}</span>
           </div>
-          <div class="w-12 h-12 rounded-full bg-gradient-to-br from-core-800 to-core-900 border border-white/10 flex items-center justify-center text-brand font-bold shadow-xl shadow-black/20 ring-4 ring-black/20">
+          <div class="w-12 h-12 rounded-full bg-gradient-to-br from-core-800 to-core-900 border border-divider-strong flex items-center justify-center text-brand font-bold shadow-xl shadow-black/20 ring-4 ring-black/20">
             SA
           </div>
         </div>
@@ -40,14 +40,14 @@ const user = computed(() => rawUser.value ? AuthAdapter.toDomain(rawUser.value) 
         </div>
         
         <div class="relative z-10">
-          <div class="w-12 h-12 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-center mb-6 group-hover:bg-brand/10 transition-colors duration-300">
+          <div class="w-12 h-12 rounded-2xl bg-tint border border-divider flex items-center justify-center mb-6 group-hover:bg-brand/10 transition-colors duration-300">
              <span class="text-xl">📊</span>
           </div>
 
-          <h3 class="font-bold text-xl mb-3 text-white group-hover:text-brand transition-colors">Statistik Utama {{ i }}</h3>
+          <h3 class="font-bold text-xl mb-3 text-content group-hover:text-brand transition-colors">Statistik Utama {{ i }}</h3>
           <p class="text-content-muted text-sm mb-8 leading-relaxed">Pantau perkembangan data sertifikasi secara real-time dengan visualisasi modern.</p>
           
-          <CaButton variant="outline" size="sm" class="w-full md:w-auto border-white/10 hover:border-brand/50 text-content-muted hover:text-white">Lihat Detail</CaButton>
+          <CaButton variant="outline" size="sm" class="w-full md:w-auto border-divider-strong hover:border-brand/50 text-content-muted hover:text-content">Lihat Detail</CaButton>
         </div>
       </div>
     </div>

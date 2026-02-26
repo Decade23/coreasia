@@ -1,4 +1,12 @@
 <script setup lang="ts">
+import { useTheme } from '~/composables/useTheme'
+
+const { init: initTheme } = useTheme()
+
+onMounted(() => {
+  initTheme()
+})
+
 useHead({
   title: 'CoreAsia LMS — Certification Platform',
   meta: [

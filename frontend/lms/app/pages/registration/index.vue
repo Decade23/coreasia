@@ -96,7 +96,7 @@ const finishRegistration = async () => {
     <DashboardLayout>
         <template #header>
             <div class="flex items-center justify-between w-full">
-                <h1 class="text-lg md:text-xl font-bold text-white truncate mr-2">Pendaftaran Mandiri (APL-01)</h1>
+                <h1 class="text-lg md:text-xl font-bold text-content truncate mr-2">Pendaftaran Mandiri (APL-01)</h1>
                 <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-brand/10 border border-brand/20 shrink-0">
                     <div class="w-2 h-2 rounded-full bg-brand animate-pulse" />
                     <span class="text-[10px] font-black text-brand uppercase tracking-widest hidden md:inline"
@@ -135,7 +135,7 @@ const finishRegistration = async () => {
                     >
                         <CheckCircle class="w-12 h-12 text-emerald-500" />
                     </div>
-                    <h2 class="text-3xl font-bold text-white mb-4">Pendaftaran Berhasil!</h2>
+                    <h2 class="text-3xl font-bold text-content mb-4">Pendaftaran Berhasil!</h2>
                     <p class="text-content-muted max-w-md mx-auto mb-10">
                         Data Anda telah kami terima dan akan segera diverifikasi oleh tim admin LSP. Silakan cek email
                         secara berkala.

@@ -39,7 +39,7 @@ const handleConfirmDelete = async () => {
         <template #header>
             <div class="flex items-center justify-between w-full">
                 <div>
-                    <h1 class="text-2xl md:text-3xl font-black tracking-tight text-white">Template Sertifikat</h1>
+                    <h1 class="text-2xl md:text-3xl font-black tracking-tight text-content">Template Sertifikat</h1>
                     <p class="text-sm text-content-subtle hidden md:block mt-1">Kelola template untuk penerbitan sertifikat kompetensi.</p>
                 </div>
                 <NuxtLink to="/admin/templates/new">
@@ -78,10 +78,10 @@ const handleConfirmDelete = async () => {
                 <div
                     v-for="tpl in templates"
                     :key="tpl.id"
-                    class="ca-card p-0 overflow-hidden group hover:border-white/10 transition-all duration-300"
+                    class="ca-card p-0 overflow-hidden group hover:border-divider-hover transition-all duration-300"
                 >
                     <!-- Thumbnail -->
-                    <div class="relative aspect-[16/10] bg-white/5 border-b border-white/5 flex items-center justify-center overflow-hidden">
+                    <div class="relative aspect-[16/10] bg-tint border-b border-divider flex items-center justify-center overflow-hidden">
                         <div class="text-center p-6">
                             <FileText class="w-12 h-12 text-brand/30 mx-auto mb-2" />
                             <p class="text-xs text-content-subtle">Preview Template</p>
@@ -101,17 +101,17 @@ const handleConfirmDelete = async () => {
 
                     <!-- Info -->
                     <div class="p-5">
-                        <h3 class="font-bold text-white text-base mb-1 group-hover:text-brand transition-colors">{{ tpl.name }}</h3>
+                        <h3 class="font-bold text-content text-base mb-1 group-hover:text-brand transition-colors">{{ tpl.name }}</h3>
                         <p class="text-sm text-content-muted line-clamp-2 mb-3">{{ tpl.description }}</p>
                         <div class="flex items-center gap-2">
-                            <span class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-widest bg-white/5 text-content-muted border border-white/5">
+                            <span class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-widest bg-tint text-content-muted border border-divider">
                                 {{ tpl.schemeName }}
                             </span>
                         </div>
                     </div>
 
                     <!-- Footer -->
-                    <div class="px-5 py-3 border-t border-white/5 flex items-center justify-between">
+                    <div class="px-5 py-3 border-t border-divider flex items-center justify-between">
                         <button
                             class="text-xs text-content-subtle hover:text-red-400 transition-colors font-bold flex items-center gap-1"
                             @click="handleDeleteClick(tpl)"

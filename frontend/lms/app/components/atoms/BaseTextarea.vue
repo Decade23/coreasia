@@ -44,12 +44,12 @@ const isFocused = ref(false)
         :rows="rows || 4"
         @focus="isFocused = true"
         @blur="isFocused = false"
-        class="w-full bg-[#1A2235] rounded-xl px-4 py-3.5 min-h-[140px] text-white font-bold transition-all placeholder:text-content-subtle placeholder:font-medium focus:outline-none resize-y"
+        class="w-full bg-input rounded-xl px-4 py-3.5 min-h-[140px] text-content font-bold transition-all placeholder:text-content-subtle placeholder:font-medium focus:outline-none resize-y"
         :class="[
-          error 
-            ? 'ring-2 ring-rose-500/50 shadow-[0_0_15px_rgba(244,63,94,0.15)] bg-[#1A2235]' 
-            : 'shadow-inset-light focus:ring-2 focus:ring-cyan-500/50 focus:shadow-glow-cyan focus:bg-[#1A2235] hover:bg-[#1E273C]',
-          disabled ? 'opacity-50 cursor-not-allowed grayscale hover:bg-[#1A2235]' : ''
+          error
+            ? 'ring-2 ring-rose-500/50 shadow-[0_0_15px_rgba(244,63,94,0.15)] bg-input'
+            : 'shadow-inset-light focus:ring-2 focus:ring-cyan-500/50 focus:shadow-glow-cyan focus:bg-input hover:bg-input-hover',
+          disabled ? 'opacity-50 cursor-not-allowed grayscale hover:bg-input' : ''
         ]"
       ></textarea>
     </div>
@@ -67,8 +67,8 @@ textarea::-webkit-scrollbar-track {
   background: transparent;
 }
 textarea::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: var(--th-scrollbar-thumb);
   border-radius: 9999px;
-  border: 2px solid #1A2235;
+  border: 2px solid var(--th-input-bg);
 }
 </style>

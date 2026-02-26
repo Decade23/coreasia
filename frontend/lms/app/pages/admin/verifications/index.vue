@@ -51,7 +51,7 @@ const filteredVerifications = computed(() => {
         <template #header>
             <div class="flex items-center justify-between w-full">
                 <div>
-                    <h1 class="text-xl md:text-3xl font-bold truncate mr-4 text-white">Verifikasi Berkas</h1>
+                    <h1 class="text-xl md:text-3xl font-bold truncate mr-4 text-content">Verifikasi Berkas</h1>
                     <p class="text-sm text-content-subtle hidden md:block mt-1">Review kelengkapan dokumen APL-01 dan APL-02 asesi.</p>
                 </div>
             </div>
@@ -60,8 +60,8 @@ const filteredVerifications = computed(() => {
         <div class="py-6 space-y-6">
             <!-- Summary Cards -->
             <div v-if="summary" class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div class="p-4 rounded-2xl bg-core-800 border border-white/5 shadow-xl">
-                    <div class="text-3xl font-black text-white mb-1">{{ summary.total_queue }}</div>
+                <div class="p-4 rounded-2xl bg-core-800 border border-divider shadow-xl">
+                    <div class="text-3xl font-black text-content mb-1">{{ summary.total_queue }}</div>
                     <p class="text-xs font-bold text-content-subtle uppercase tracking-widest">Total Antrean</p>
                 </div>
                 <div class="p-4 rounded-2xl bg-brand-secondary/5 border border-brand-secondary/20 shadow-xl">
@@ -79,7 +79,7 @@ const filteredVerifications = computed(() => {
             </div>
 
             <!-- Toolbar -->
-            <div class="flex flex-col lg:flex-row gap-4 items-center justify-between p-4 rounded-2xl bg-[#0F1423] shadow-xl glass-card">
+            <div class="flex flex-col lg:flex-row gap-4 items-center justify-between p-4 rounded-2xl bg-core-800 shadow-xl glass-card">
                 <div class="w-full lg:w-96">
                     <CaInputSearch v-model="searchQuery" placeholder="Cari nama asesi atau No. Registrasi..." />
                 </div>
@@ -107,7 +107,7 @@ const filteredVerifications = computed(() => {
                 <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
                         <thead>
-                            <tr class="bg-core-900/80 border-b border-white/5">
+                            <tr class="bg-core-900/80 border-b border-divider">
                                 <th class="p-4 text-xs font-black text-content-subtle uppercase tracking-widest whitespace-nowrap pl-6">No. Registrasi</th>
                                 <th class="p-4 text-xs font-black text-content-subtle uppercase tracking-widest">Asesi</th>
                                 <th class="p-4 text-xs font-black text-content-subtle uppercase tracking-widest">Skema Sertifikasi</th>
@@ -116,10 +116,10 @@ const filteredVerifications = computed(() => {
                                 <th class="p-4 text-xs font-black text-content-subtle uppercase tracking-widest pr-6 text-right">Aksi</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-white/5">
+                        <tbody class="divide-y divide-divider">
                             <tr v-for="item in filteredVerifications" :key="item.id" class="hover:bg-core-800 transition-colors group">
                                 <td class="p-4 font-mono text-xs text-brand pl-6">{{ item.id }}</td>
-                                <td class="p-4 font-bold text-white whitespace-nowrap">{{ item.assesseeName }}</td>
+                                <td class="p-4 font-bold text-content whitespace-nowrap">{{ item.assesseeName }}</td>
                                 <td class="p-4 text-sm text-content-muted">{{ item.schemeName }}</td>
                                 <td class="p-4 text-sm text-content-muted whitespace-nowrap">
                                     {{ item.submittedAt.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) }}

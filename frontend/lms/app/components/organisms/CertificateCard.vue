@@ -15,7 +15,7 @@ const emit = defineEmits<{
 </script>
 
 <template>
-    <div class="ca-card p-0 overflow-hidden group hover:border-white/10 transition-all duration-300">
+    <div class="ca-card p-0 overflow-hidden group hover:border-divider-hover transition-all duration-300">
         <!-- Status Strip -->
         <div
             class="h-1"
@@ -34,7 +34,7 @@ const emit = defineEmits<{
                         <ShieldCheck class="w-5 h-5 text-brand" />
                     </div>
                     <div>
-                        <h3 class="font-bold text-white text-sm group-hover:text-brand transition-colors">{{ certificate.schemeName }}</h3>
+                        <h3 class="font-bold text-content text-sm group-hover:text-brand transition-colors">{{ certificate.schemeName }}</h3>
                         <p class="text-[10px] font-mono text-content-subtle mt-0.5">{{ certificate.certificateNumber }}</p>
                     </div>
                 </div>
@@ -48,15 +48,15 @@ const emit = defineEmits<{
 
             <!-- Details -->
             <div class="grid grid-cols-2 gap-3">
-                <div class="p-2.5 rounded-lg bg-white/5">
+                <div class="p-2.5 rounded-lg bg-tint">
                     <p class="text-[10px] text-content-subtle uppercase tracking-widest">Diterbitkan</p>
-                    <p class="text-xs font-bold text-white mt-0.5">
+                    <p class="text-xs font-bold text-content mt-0.5">
                         {{ certificate.issuedDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) }}
                     </p>
                 </div>
-                <div class="p-2.5 rounded-lg bg-white/5">
+                <div class="p-2.5 rounded-lg bg-tint">
                     <p class="text-[10px] text-content-subtle uppercase tracking-widest">Berlaku Hingga</p>
-                    <p class="text-xs font-bold mt-0.5" :class="certificate.status === 'active' ? 'text-white' : 'text-amber-400'">
+                    <p class="text-xs font-bold mt-0.5" :class="certificate.status === 'active' ? 'text-content' : 'text-amber-400'">
                         {{ certificate.expiryDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }) }}
                     </p>
                 </div>

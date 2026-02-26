@@ -62,12 +62,12 @@ const togglePassword = () => {
         :required="required"
         @focus="isFocused = true"
         @blur="isFocused = false"
-        class="w-full bg-[#1A2235] rounded-xl px-4 py-3.5 h-[52px] text-white font-bold transition-all placeholder:text-content-subtle placeholder:font-medium focus:outline-none relative z-0"
+        class="w-full bg-input rounded-xl px-4 py-3.5 h-[52px] text-content font-bold transition-all placeholder:text-content-subtle placeholder:font-medium focus:outline-none relative z-0"
         :class="[
-          error 
-            ? 'ring-2 ring-rose-500/50 shadow-[0_0_15px_rgba(244,63,94,0.15)] bg-[#1A2235]' 
-            : 'shadow-inset-light focus:ring-2 focus:ring-cyan-500/50 focus:shadow-glow-cyan focus:bg-[#1A2235] hover:bg-[#1E273C]',
-          disabled ? 'opacity-50 cursor-not-allowed grayscale hover:bg-[#1A2235]' : '',
+          error
+            ? 'ring-2 ring-rose-500/50 shadow-[0_0_15px_rgba(244,63,94,0.15)] bg-input'
+            : 'shadow-inset-light focus:ring-2 focus:ring-cyan-500/50 focus:shadow-glow-cyan focus:bg-input hover:bg-input-hover',
+          disabled ? 'opacity-50 cursor-not-allowed grayscale hover:bg-input' : '',
           $slots.iconLeft ? 'pl-11' : '',
           ($slots.iconRight || type === 'password') ? 'pr-11' : ''
         ]"

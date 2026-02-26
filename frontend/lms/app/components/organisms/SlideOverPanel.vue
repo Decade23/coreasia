@@ -29,7 +29,7 @@ const widthClass = {
             leave-from-class="opacity-100"
             leave-to-class="opacity-0"
         >
-            <div v-if="open" class="fixed inset-0 z-[90] bg-[#050814]/60 backdrop-blur-sm" @click="emit('close')" />
+            <div v-if="open" class="fixed inset-0 z-[90] backdrop-blur-sm" :style="{ background: 'var(--th-overlay)' }" @click="emit('close')" />
         </Transition>
 
         <!-- Panel -->
@@ -43,16 +43,16 @@ const widthClass = {
         >
             <aside
                 v-if="open"
-                class="fixed top-0 right-0 bottom-0 z-[95] w-full bg-[#0A0F1E] border-l border-white/5 flex flex-col overflow-hidden"
+                class="fixed top-0 right-0 bottom-0 z-[95] w-full bg-core-900 border-l border-divider flex flex-col overflow-hidden"
                 :class="widthClass[width || 'md']"
             >
                 <!-- Header -->
-                <div class="flex items-center justify-between p-6 border-b border-white/5 shrink-0">
+                <div class="flex items-center justify-between p-6 border-b border-divider shrink-0">
                     <slot name="header">
-                        <h2 class="text-lg font-bold text-white">{{ title }}</h2>
+                        <h2 class="text-lg font-bold text-content">{{ title }}</h2>
                     </slot>
                     <button
-                        class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-content-subtle hover:text-white hover:bg-white/10 transition-all"
+                        class="w-10 h-10 rounded-xl bg-tint flex items-center justify-center text-content-subtle hover:text-content hover:bg-tint-hover transition-all"
                         @click="emit('close')"
                     >
                         <X class="w-5 h-5" />
@@ -65,7 +65,7 @@ const widthClass = {
                 </div>
 
                 <!-- Footer -->
-                <div v-if="$slots.footer" class="p-6 border-t border-white/5 shrink-0">
+                <div v-if="$slots.footer" class="p-6 border-t border-divider shrink-0">
                     <slot name="footer" />
                 </div>
             </aside>

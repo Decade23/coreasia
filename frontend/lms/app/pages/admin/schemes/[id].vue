@@ -35,11 +35,11 @@ const formatDate = (date: Date) => {
     <DashboardLayout>
         <template #header>
             <div class="flex items-center gap-4 w-full">
-                <NuxtLink to="/admin/schemes" class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-content-subtle hover:text-white hover:bg-white/10 transition-all shrink-0">
+                <NuxtLink to="/admin/schemes" class="w-10 h-10 rounded-xl bg-tint flex items-center justify-center text-content-subtle hover:text-content hover:bg-tint-hover transition-all shrink-0">
                     <ArrowLeft class="w-5 h-5" />
                 </NuxtLink>
                 <div class="flex-1 min-w-0">
-                    <h1 class="text-xl md:text-2xl font-bold text-white truncate">
+                    <h1 class="text-xl md:text-2xl font-bold text-content truncate">
                         {{ currentScheme?.name || 'Detail Skema' }}
                     </h1>
                     <p v-if="currentScheme" class="text-xs text-brand font-black uppercase tracking-widest mt-0.5">{{ currentScheme.code }}</p>
@@ -68,21 +68,21 @@ const formatDate = (date: Date) => {
                             <BookOpen class="w-4 h-4 text-brand" />
                             <span class="text-[10px] font-black uppercase tracking-widest text-content-subtle">Unit</span>
                         </div>
-                        <p class="text-3xl font-black text-white">{{ currentScheme.unitCount }}</p>
+                        <p class="text-3xl font-black text-content">{{ currentScheme.unitCount }}</p>
                     </div>
                     <div class="ca-card p-5">
                         <div class="flex items-center gap-2 mb-2">
                             <Users class="w-4 h-4 text-brand-secondary" />
                             <span class="text-[10px] font-black uppercase tracking-widest text-content-subtle">Asesi</span>
                         </div>
-                        <p class="text-3xl font-black text-white">{{ currentScheme.assesseeCount }}</p>
+                        <p class="text-3xl font-black text-content">{{ currentScheme.assesseeCount }}</p>
                     </div>
                     <div class="ca-card p-5">
                         <div class="flex items-center gap-2 mb-2">
                             <Layers class="w-4 h-4 text-purple-400" />
                             <span class="text-[10px] font-black uppercase tracking-widest text-content-subtle">Validitas</span>
                         </div>
-                        <p class="text-3xl font-black text-white">{{ currentScheme.validityYears }}<span class="text-sm text-content-subtle ml-1">tahun</span></p>
+                        <p class="text-3xl font-black text-content">{{ currentScheme.validityYears }}<span class="text-sm text-content-subtle ml-1">tahun</span></p>
                     </div>
                     <div class="ca-card p-5">
                         <div class="flex items-center gap-2 mb-2">
@@ -108,14 +108,14 @@ const formatDate = (date: Date) => {
                         <div
                             v-for="(unit, idx) in currentScheme.units"
                             :key="unit.id"
-                            class="flex items-start gap-4 p-4 rounded-xl bg-white/[0.03] border border-white/5 hover:border-brand/20 transition-colors group"
+                            class="flex items-start gap-4 p-4 rounded-xl bg-tint-subtle border border-divider hover:border-brand/20 transition-colors group"
                         >
                             <div class="w-10 h-10 rounded-xl bg-brand/10 flex items-center justify-center shrink-0 text-brand font-black text-sm group-hover:bg-brand/20 transition-colors">
                                 {{ idx + 1 }}
                             </div>
                             <div class="flex-1 min-w-0">
                                 <p class="text-[10px] font-black text-brand/70 uppercase tracking-wider">{{ unit.code }}</p>
-                                <p class="text-sm font-bold text-white mt-0.5">{{ unit.title }}</p>
+                                <p class="text-sm font-bold text-content mt-0.5">{{ unit.title }}</p>
                                 <p class="text-xs text-content-subtle mt-1">{{ unit.elementCount }} elemen kompetensi</p>
                             </div>
                         </div>

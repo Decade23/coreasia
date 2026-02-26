@@ -42,19 +42,19 @@ const removeFile = (id: string) => {
       class="p-5 md:p-6 rounded-2xl transition-all duration-300 group"
       :class="doc.uploadedFile 
         ? 'bg-cyan-500/10 shadow-glow-cyan' 
-        : 'bg-[#0F1423] shadow-xl glass-card hover:bg-[#1A2235]'"
+        : 'bg-core-800 shadow-xl glass-card hover:bg-input'"
     >
       <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div class="flex items-center gap-5">
           <div 
             class="w-12 h-12 rounded-xl flex items-center justify-center transition-all shrink-0 shadow-lg"
-            :class="doc.uploadedFile ? 'bg-cyan-500 text-slate-950' : 'bg-[#1A2235] text-content-muted group-hover:text-cyan-400 group-hover:shadow-glow-cyan'"
+            :class="doc.uploadedFile ? 'bg-cyan-500 text-slate-950' : 'bg-input text-content-muted group-hover:text-cyan-400 group-hover:shadow-glow-cyan'"
           >
             <FileCheck v-if="doc.uploadedFile" class="w-6 h-6" />
             <File v-else class="w-6 h-6 opacity-70" />
           </div>
           <div>
-            <h3 class="font-bold text-white text-sm md:text-base group-hover:text-cyan-400 transition-colors">{{ doc.label }}</h3>
+            <h3 class="font-bold text-content text-sm md:text-base group-hover:text-cyan-400 transition-colors">{{ doc.label }}</h3>
             <p class="text-[10px] md:text-xs text-content-subtle mt-0.5">{{ doc.description }}</p>
           </div>
         </div>

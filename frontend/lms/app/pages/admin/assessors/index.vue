@@ -72,7 +72,7 @@ const handleConfirmDelete = async () => {
 <template>
     <DashboardLayout>
         <template #header>
-            <h1 class="text-lg font-bold text-white hidden lg:block">Manajemen Asesor</h1>
+            <h1 class="text-lg font-bold text-content hidden lg:block">Manajemen Asesor</h1>
         </template>
 
         <div class="py-6 space-y-8">
@@ -120,17 +120,17 @@ const handleConfirmDelete = async () => {
                 <div
                     v-for="assessor in assessors"
                     :key="assessor.id"
-                    class="ca-card p-0 overflow-hidden group hover:border-white/10 transition-all duration-300"
+                    class="ca-card p-0 overflow-hidden group hover:border-divider-hover transition-all duration-300"
                 >
                     <!-- Card Header -->
-                    <div class="p-5 border-b border-white/5">
+                    <div class="p-5 border-b border-divider">
                         <div class="flex items-start justify-between">
                             <div class="flex items-center gap-3">
                                 <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-brand/20 to-brand-secondary/20 flex items-center justify-center text-brand font-black text-lg shrink-0">
                                     {{ assessor.fullName.charAt(0) }}
                                 </div>
                                 <div>
-                                    <h3 class="font-bold text-white text-base group-hover:text-brand transition-colors">{{ assessor.fullName }}</h3>
+                                    <h3 class="font-bold text-content text-base group-hover:text-brand transition-colors">{{ assessor.fullName }}</h3>
                                     <p class="text-xs text-content-subtle">{{ assessor.specialization }}</p>
                                 </div>
                             </div>
@@ -174,7 +174,7 @@ const handleConfirmDelete = async () => {
                             <div class="flex items-center gap-1.5">
                                 <Award class="w-3.5 h-3.5 text-brand" />
                                 <span class="text-xs text-content-muted">
-                                    <strong class="text-white">{{ assessor.completedAssessments }}</strong>/{{ assessor.totalAssessments }} asesmen
+                                    <strong class="text-content">{{ assessor.completedAssessments }}</strong>/{{ assessor.totalAssessments }} asesmen
                                 </span>
                             </div>
                             <div class="text-xs text-content-subtle">
@@ -184,7 +184,7 @@ const handleConfirmDelete = async () => {
                     </div>
 
                     <!-- Card Footer -->
-                    <div class="px-5 py-3 border-t border-white/5 flex items-center justify-between">
+                    <div class="px-5 py-3 border-t border-divider flex items-center justify-between">
                         <div class="flex gap-2">
                             <button
                                 class="text-xs text-content-subtle hover:text-brand transition-colors font-bold"

@@ -28,11 +28,11 @@ const submitReview = () => {
   <DashboardLayout>
     <template #header>
       <div class="flex items-center gap-4">
-        <button @click="navigateTo('/assessor')" class="p-2 rounded-xl bg-core-800 border border-core-700 text-content-muted hover:text-white transition-all">
+        <button @click="navigateTo('/assessor')" class="p-2 rounded-xl bg-core-800 border border-core-700 text-content-muted hover:text-content transition-all">
           <ArrowLeft class="w-5 h-5" />
         </button>
         <div>
-          <h1 class="text-xl font-bold text-white">Tinjauan Asesi</h1>
+          <h1 class="text-xl font-bold text-content">Tinjauan Asesi</h1>
           <p class="text-[10px] text-brand font-black uppercase tracking-widest mt-1">ID: {{ applicantId }}</p>
         </div>
       </div>
@@ -46,7 +46,7 @@ const submitReview = () => {
             <User class="w-10 h-10" />
           </div>
           <div>
-            <h2 class="text-2xl font-bold text-white mb-2">{{ applicant.name }}</h2>
+            <h2 class="text-2xl font-bold text-content mb-2">{{ applicant.name }}</h2>
             <div class="flex flex-wrap gap-4">
               <div class="flex items-center gap-2 text-content-subtle">
                 <FileText class="w-4 h-4" />
@@ -85,7 +85,7 @@ const submitReview = () => {
       <!-- Final Action -->
       <div class="p-10 rounded-3xl bg-emerald-500/5 border border-dashed border-emerald-500/30 flex flex-col items-center text-center space-y-6">
         <div class="max-w-md">
-          <h3 class="text-lg font-bold text-white mb-2">Rekomendasi Akhir Asesor</h3>
+          <h3 class="text-lg font-bold text-content mb-2">Rekomendasi Akhir Asesor</h3>
           <p class="text-sm text-content-muted leading-relaxed">
             Pastikan seluruh kriteria unjuk kerja telah dinilai dan bukti-bukti yang dilampirkan asesi telah valid sebelum mengirim rekomendasi.
           </p>

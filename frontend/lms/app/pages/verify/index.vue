@@ -35,7 +35,7 @@ const handleReset = () => {
                 <div class="w-16 h-16 rounded-2xl bg-brand/10 flex items-center justify-center mx-auto">
                     <ShieldCheck class="w-8 h-8 text-brand" />
                 </div>
-                <h1 class="text-3xl md:text-4xl font-black text-white tracking-tight">Verifikasi Sertifikat</h1>
+                <h1 class="text-3xl md:text-4xl font-black text-content tracking-tight">Verifikasi Sertifikat</h1>
                 <p class="text-base text-content-muted max-w-lg mx-auto">
                     Masukkan nomor sertifikat untuk memverifikasi keaslian dan status sertifikat kompetensi.
                 </p>
@@ -50,7 +50,7 @@ const handleReset = () => {
                             v-model="searchInput"
                             type="text"
                             placeholder="Contoh: BNSP/JWD/2025/001234"
-                            class="w-full pl-12 pr-4 py-4 rounded-2xl bg-[#0F1423] border border-white/10 text-white placeholder-content-subtle focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/30 transition-all text-sm font-medium"
+                            class="w-full pl-12 pr-4 py-4 rounded-2xl bg-core-800 border border-divider-strong text-content placeholder-content-subtle focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/30 transition-all text-sm font-medium"
                         />
                     </div>
                     <CaButton
@@ -74,7 +74,7 @@ const handleReset = () => {
             <template v-else-if="searched && result">
                 <div class="max-w-2xl mx-auto ca-card p-0 overflow-hidden">
                     <!-- Status Header -->
-                    <div class="p-6 border-b border-white/5" :class="result.valid ? 'bg-emerald-500/5' : 'bg-red-500/5'">
+                    <div class="p-6 border-b border-divider" :class="result.valid ? 'bg-emerald-500/5' : 'bg-red-500/5'">
                         <div class="flex items-center gap-3">
                             <div class="w-12 h-12 rounded-xl flex items-center justify-center" :class="result.valid ? 'bg-emerald-500/20' : 'bg-red-500/20'">
                                 <ShieldCheck v-if="result.valid" class="w-6 h-6 text-emerald-500" />
@@ -98,42 +98,42 @@ const handleReset = () => {
                     <!-- Details -->
                     <div class="p-6 space-y-4">
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div class="flex items-center gap-3 p-3 rounded-xl bg-white/5">
+                            <div class="flex items-center gap-3 p-3 rounded-xl bg-tint">
                                 <User class="w-4 h-4 text-content-subtle shrink-0" />
                                 <div>
                                     <p class="text-xs text-content-subtle">Pemegang Sertifikat</p>
-                                    <p class="text-sm font-bold text-white">{{ result.holderName }}</p>
+                                    <p class="text-sm font-bold text-content">{{ result.holderName }}</p>
                                 </div>
                             </div>
-                            <div class="flex items-center gap-3 p-3 rounded-xl bg-white/5">
+                            <div class="flex items-center gap-3 p-3 rounded-xl bg-tint">
                                 <Building2 class="w-4 h-4 text-content-subtle shrink-0" />
                                 <div>
                                     <p class="text-xs text-content-subtle">LSP Penerbit</p>
-                                    <p class="text-sm font-bold text-white">{{ result.lspName }}</p>
+                                    <p class="text-sm font-bold text-content">{{ result.lspName }}</p>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="p-3 rounded-xl bg-white/5">
+                        <div class="p-3 rounded-xl bg-tint">
                             <p class="text-xs text-content-subtle">Skema Sertifikasi</p>
-                            <p class="text-sm font-bold text-white">{{ result.schemeName }}</p>
+                            <p class="text-sm font-bold text-content">{{ result.schemeName }}</p>
                         </div>
 
                         <div class="grid grid-cols-2 gap-4">
-                            <div class="flex items-center gap-3 p-3 rounded-xl bg-white/5">
+                            <div class="flex items-center gap-3 p-3 rounded-xl bg-tint">
                                 <Calendar class="w-4 h-4 text-content-subtle shrink-0" />
                                 <div>
                                     <p class="text-xs text-content-subtle">Tanggal Terbit</p>
-                                    <p class="text-sm font-bold text-white">
+                                    <p class="text-sm font-bold text-content">
                                         {{ result.issuedDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) }}
                                     </p>
                                 </div>
                             </div>
-                            <div class="flex items-center gap-3 p-3 rounded-xl bg-white/5">
+                            <div class="flex items-center gap-3 p-3 rounded-xl bg-tint">
                                 <Calendar class="w-4 h-4 text-content-subtle shrink-0" />
                                 <div>
                                     <p class="text-xs text-content-subtle">Berlaku Hingga</p>
-                                    <p class="text-sm font-bold" :class="result.status === 'active' ? 'text-white' : 'text-amber-400'">
+                                    <p class="text-sm font-bold" :class="result.status === 'active' ? 'text-content' : 'text-amber-400'">
                                         {{ result.expiryDate.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) }}
                                     </p>
                                 </div>
@@ -142,7 +142,7 @@ const handleReset = () => {
                     </div>
 
                     <!-- Footer -->
-                    <div class="px-6 py-4 border-t border-white/5 flex justify-end">
+                    <div class="px-6 py-4 border-t border-divider flex justify-end">
                         <CaButton variant="outline" size="sm" @click="handleReset">
                             Verifikasi Lainnya
                         </CaButton>
@@ -156,7 +156,7 @@ const handleReset = () => {
                     <div class="w-16 h-16 rounded-2xl bg-red-500/10 flex items-center justify-center mx-auto mb-4">
                         <ShieldAlert class="w-8 h-8 text-red-400" />
                     </div>
-                    <h2 class="text-xl font-bold text-white mb-2">Sertifikat Tidak Ditemukan</h2>
+                    <h2 class="text-xl font-bold text-content mb-2">Sertifikat Tidak Ditemukan</h2>
                     <p class="text-sm text-content-muted mb-6">Nomor sertifikat yang Anda masukkan tidak terdaftar dalam sistem kami. Periksa kembali nomor sertifikat.</p>
                     <CaButton variant="outline" @click="handleReset">
                         Coba Lagi
