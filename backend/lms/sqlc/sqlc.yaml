@@ -1,0 +1,17 @@
+version: "2"
+sql:
+  - engine: "postgresql"
+    queries: "queries/"
+    schema: "../migrations/tenant/"
+    gen:
+      go:
+        package: "sqlcgen"
+        out: "../internal/infrastructure/persistence/sqlc"
+        sql_package: "pgx/v5"
+        emit_json_tags: true
+        emit_empty_slices: true
+        emit_pointers_for_null_types: true
+        rename:
+          id: "ID"
+          uuid: "UUID"
+          url: "URL"

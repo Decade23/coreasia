@@ -1,0 +1,48 @@
+app:
+  name: "coreasia-lms-api"
+  env: "development"        # development | staging | production
+  port: 8080
+  debug: true
+
+database:
+  host: "localhost"
+  port: 5432
+  user: "coreasia"
+  password: "your_password_here"
+  name: "coreasia_lms"
+  ssl_mode: "disable"       # disable | require | verify-full
+  max_conns: 25
+  min_conns: 5
+
+jwt:
+  secret: "change-me-in-production-min-32-chars!"
+  access_ttl: "15m"
+  refresh_ttl: "168h"       # 7 days
+  issuer: "coreasia-lms"
+
+storage:
+  endpoint: "localhost:9000"
+  access_key: "minioadmin"
+  secret_key: "minioadmin"
+  bucket: "lms-uploads"
+  use_ssl: false
+
+cors:
+  allowed_origins:
+    - "http://localhost:3000"
+  allowed_methods:
+    - "GET"
+    - "POST"
+    - "PUT"
+    - "DELETE"
+    - "OPTIONS"
+  allowed_headers:
+    - "Authorization"
+    - "Content-Type"
+    - "X-Tenant-ID"
+    - "X-Request-Id"
+
+tenant:
+  default_schema: "_template"
+  header_key: "X-Tenant-ID"
+  resolve_by: "header"      # header | subdomain

@@ -1,0 +1,62 @@
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: deployments/Dockerfile.dev
+    ports:
+      - "8080:8080"
+    volumes:
+      - ..:/app
+    environment:
+      - APP_ENV=development
+      - APP_PORT=8080
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=coreasia
+      - DB_PASSWORD=coreasia_secret
+      - DB_NAME=coreasia_lms
+      - DB_SSL_MODE=disable
+      - JWT_SECRET=dev-secret-change-in-production-min32
+      - STORAGE_ENDPOINT=minio:9000
+      - STORAGE_ACCESS_KEY=minioadmin
+      - STORAGE_SECRET_KEY=minioadmin
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:17-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: coreasia
+      POSTGRES_PASSWORD: coreasia_secret
+      POSTGRES_DB: coreasia_lms
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U coreasia -d coreasia_lms"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio:latest
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - miniodata:/data
+    command: server /data --console-address ":9001"
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  miniodata:

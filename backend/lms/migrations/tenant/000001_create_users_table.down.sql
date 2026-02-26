@@ -1,0 +1,4 @@
+DROP TABLE IF EXISTS notifications;
+DROP TABLE IF EXISTS audit_logs;
+DROP TABLE IF EXISTS tenant_settings;
+DROP TABLE IF EXISTS users;
