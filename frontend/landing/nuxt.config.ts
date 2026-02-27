@@ -197,12 +197,19 @@ export default defineNuxtConfig({
     image: {
         dir: "public",
     },
+    runtimeConfig: {
+        public: {
+            gatewayUrl: process.env.GATEWAY_URL || 'http://localhost:8081/api',
+        },
+    },
     routeRules: {
         // Landing page is static-first, revalidated every hour (SWR) or fully prerendered
         '/': { prerender: true },
         '/about': { prerender: true },
         '/contact': { prerender: true },
         '/solutions/**': { prerender: true },
+        '/pricing': { prerender: true },
+        '/register': { ssr: true },
         // API routes shouldn't be cached
         '/api/**': { cors: true },
     }

@@ -4,12 +4,14 @@ export const NAV_ITEMS = {
     { label: 'Home', to: '/' },
     { label: 'SaaS LMS', to: '/solutions/lms' },
     { label: 'Venture', to: '/solutions/venture' },
+    { label: 'Pricing', to: '/pricing' },
     { label: 'Tentang Kami', to: '/about' },
   ],
   en: [
     { label: 'Home', to: '/' },
     { label: 'SaaS LMS', to: '/solutions/lms' },
     { label: 'Venture', to: '/solutions/venture' },
+    { label: 'Pricing', to: '/pricing' },
     { label: 'About Us', to: '/about' },
   ],
 } as const

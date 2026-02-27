@@ -1,0 +1,27 @@
+app:
+  name: "coreasia-gateway"
+  env: "development"
+  port: 8081
+  debug: true
+
+database:
+  host: "localhost"
+  port: 5432
+  user: "coreasia"
+  password: "coreasia_secret"
+  name: "coreasia_lms"
+  ssl_mode: "disable"
+  max_conns: 10
+  min_conns: 2
+
+xendit:
+  api_key: ""
+  callback_token: ""
+  success_url: "https://coreasia.id/register/success"
+  failure_url: "https://coreasia.id/register?status=failed"
+
+cors:
+  allowed_origins:
+    - "http://localhost:3000"
+    - "http://localhost:3001"
+    - "https://coreasia.id"
