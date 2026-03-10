@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { useCoreI18n } from '~/composables/useCoreI18n'
 import { useGatewayApi } from '~/composables/useGatewayApi'
-import type { PricingPlan, RegisterPayload } from '~/composables/useGatewayApi'
+import type { PricingPlan, RegisterPayload, RegistrationStatusResult } from '~/composables/useGatewayApi'
 import { useDebounceFn } from '@vueuse/core'
 
 const { t } = useCoreI18n()
 const { useReveal } = useScrollReveal()
 const route = useRoute()
-const { fetchPlans, checkSlug, register } = useGatewayApi()
+const { fetchPlans, checkSlug, register, getRegistrationStatus } = useGatewayApi()
 
 const formSection = useReveal('slideLeft')
 const summarySection = useReveal('slideRight', 150)
@@ -20,23 +20,34 @@ useCoreSeo({
 
 // ── Plan Data ──
 const plans = ref<PricingPlan[]>([])
-const selectedPlanId = ref<string>((route.query.plan as string) || 'professional')
+const selectedPlanId = ref<string>((route.query.plan as string) || '')
 
 const selectedPlan = computed(() => {
-    return plans.value.find(p => p.id === selectedPlanId.value) || plans.value[1] || null
+    return plans.value.find(p => p.id === selectedPlanId.value)
+        || plans.value.find(p => p.popular)
+        || plans.value[0]
+        || null
 })
 
 onMounted(async () => {
     plans.value = await fetchPlans()
+    if (!selectedPlanId.value || !plans.value.some(plan => plan.id === selectedPlanId.value)) {
+        selectedPlanId.value = plans.value.find(plan => plan.popular)?.id || plans.value[0]?.id || ''
+    }
+
+    const registrationId = typeof route.query.registration_id === 'string'
+        ? route.query.registration_id
+        : ''
+    if (registrationId) {
+        await syncRegistrationStatus(registrationId)
+    }
 })
 
 // ── Organization Types ──
 const orgTypes = [
     { value: 'lsp', label: 'LSP (Lembaga Sertifikasi Profesi)' },
-    { value: 'lpk', label: 'LPK (Lembaga Pelatihan Kerja)' },
-    { value: 'korporat', label: 'Korporat' },
-    { value: 'asosiasi', label: 'Asosiasi' },
-    { value: 'lainnya', label: 'Lainnya' },
+    { value: 'training_center', label: 'LPK / Training Center' },
+    { value: 'corporate', label: 'Korporat' },
 ]
 
 // ── Form State ──
@@ -68,9 +79,18 @@ const formState = reactive({
     isSubmitting: false,
     isSuccess: false,
     errorMessage: '',
+    successTitle: 'Pendaftaran Berhasil!',
+    successMessage: '',
 })
 
 const errors = reactive<Record<string, string>>({})
+
+const paymentReturn = reactive({
+    isChecking: false,
+    status: '' as '' | RegistrationStatusResult['status'],
+    message: '',
+    invoiceUrl: '',
+})
 
 // ── Slug Checking ──
 const slugState = reactive({
@@ -256,6 +276,63 @@ const validate = (): boolean => {
     return Object.keys(errors).length === 0
 }
 
+const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
+
+const syncRegistrationStatus = async (registrationId: string) => {
+    paymentReturn.isChecking = true
+    paymentReturn.message = ''
+    paymentReturn.invoiceUrl = ''
+
+    try {
+        let latestStatus: RegistrationStatusResult | null = null
+
+        for (let attempt = 0; attempt < 8; attempt++) {
+            latestStatus = await getRegistrationStatus(registrationId)
+            if (!latestStatus) break
+
+            paymentReturn.status = latestStatus.status
+            paymentReturn.invoiceUrl = latestStatus.invoiceUrl || ''
+
+            if (latestStatus.status === 'ready' && latestStatus.loginUrl && process.client) {
+                window.location.href = latestStatus.loginUrl
+                return
+            }
+
+            if (latestStatus.status !== 'provisioning') {
+                break
+            }
+
+            await sleep(2500)
+        }
+
+        if (!latestStatus) {
+            paymentReturn.message = 'Status pembayaran belum dapat dimuat. Silakan refresh halaman atau hubungi tim kami.'
+            return
+        }
+
+        if (latestStatus.status === 'provisioning') {
+            paymentReturn.message = 'Pembayaran berhasil diterima. Workspace Anda sedang dipersiapkan dan halaman ini akan memperbarui otomatis.'
+            return
+        }
+
+        if (latestStatus.status === 'payment_failed') {
+            paymentReturn.message = 'Pembayaran belum berhasil diproses. Anda bisa melanjutkan pembayaran kembali dari link checkout.'
+            return
+        }
+
+        if (latestStatus.status === 'payment_review') {
+            paymentReturn.message = 'Pembayaran Anda sedang direview oleh payment gateway. Mohon tunggu beberapa saat.'
+            return
+        }
+
+        if (latestStatus.status === 'pending_payment') {
+            paymentReturn.message = 'Pendaftaran sudah tercatat. Silakan lanjutkan pembayaran untuk mengaktifkan workspace Anda.'
+        }
+    } finally {
+        paymentReturn.isChecking = false
+    }
+}
+
 // ── Submit ──
 const handleSubmit = async () => {
     if (!validate()) return
@@ -282,6 +359,15 @@ const handleSubmit = async () => {
         const result = await register(payload)
 
         if (result.success) {
+            if (result.redirectUrl && process.client) {
+                window.location.href = result.redirectUrl
+                return
+            }
+
+            formState.successTitle = result.status === 'ready'
+                ? 'Workspace Berhasil Dibuat!'
+                : 'Pendaftaran Berhasil!'
+            formState.successMessage = result.message
             formState.isSuccess = true
 
             if (process.client) {
@@ -351,11 +437,10 @@ const handleSubmit = async () => {
                         <Icon name="lucide:check-circle-2" class="h-10 w-10 text-emerald-300" />
                     </div>
                     <h2 class="text-2xl font-display font-bold text-white sm:text-3xl">
-                        Pendaftaran Berhasil!
+                        {{ formState.successTitle }}
                     </h2>
                     <p class="mt-3 text-slate-300">
-                        Akun organisasi <strong class="text-white">{{ form.orgName }}</strong> telah dibuat.
-                        Cek email <strong class="text-amber-200">{{ form.email }}</strong> untuk verifikasi akun.
+                        {{ formState.successMessage || `Akun organisasi ${form.orgName} telah dibuat.` }}
                     </p>
                     <div class="mt-4 rounded-xl border border-white/10 bg-white/[0.03] p-4">
                         <p class="text-sm text-slate-400">URL Subdomain Anda:</p>
@@ -376,6 +461,33 @@ const handleSubmit = async () => {
         <!-- Registration Form + Plan Summary -->
         <section v-else class="ca-section pt-0">
             <div class="ca-container">
+                <div
+                    v-if="paymentReturn.message"
+                    class="mb-6 rounded-2xl border px-5 py-4 text-sm"
+                    :class="paymentReturn.status === 'payment_failed'
+                        ? 'border-rose-300/35 bg-rose-300/10 text-rose-100'
+                        : 'border-amber-300/30 bg-amber-300/10 text-amber-100'"
+                >
+                    <div class="flex items-start gap-3">
+                        <Icon
+                            :name="paymentReturn.isChecking ? 'lucide:loader-2' : 'lucide:credit-card'"
+                            class="mt-0.5 h-4 w-4 flex-shrink-0"
+                            :class="paymentReturn.isChecking ? 'animate-spin' : ''"
+                        />
+                        <div class="space-y-3">
+                            <p>{{ paymentReturn.message }}</p>
+                            <a
+                                v-if="paymentReturn.invoiceUrl"
+                                :href="paymentReturn.invoiceUrl"
+                                class="inline-flex items-center gap-2 rounded-xl border border-amber-300/35 bg-amber-300/15 px-4 py-2 font-semibold text-amber-100 transition hover:bg-amber-300/20"
+                            >
+                                Lanjutkan Pembayaran
+                                <Icon name="lucide:arrow-right" class="h-4 w-4" />
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-start">
 
                     <!-- Left: Registration Form -->

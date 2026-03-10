@@ -118,12 +118,12 @@ func (r *TenantRepo) CreateRegistration(ctx context.Context, reg *model.TenantRe
 	query := `
 		INSERT INTO public.tenant_registrations (
 			id, tenant_id, org_name, org_type, admin_email, admin_name, admin_phone,
-			password_hash, plan_id, payment_status, amount, provision_status,
-			is_trial, trial_ends_at, created_at, updated_at
+			password_hash, plan_id, payment_provider, payment_reference, payment_checkout_url,
+			payment_status, amount, provision_status, is_trial, trial_ends_at, created_at, updated_at
 		) VALUES (
 			$1, $2, $3, $4, $5, $6, $7,
 			$8, $9, $10, $11, $12,
-			$13, $14, $15, $16
+			$13, $14, $15, $16, $17, $18, $19
 		)
 	`
 
@@ -137,9 +137,10 @@ func (r *TenantRepo) CreateRegistration(ctx context.Context, reg *model.TenantRe
 	_, err := r.pool.Exec(ctx, query,
 		reg.ID, reg.TenantID, reg.OrgName, reg.OrgType,
 		reg.AdminEmail, reg.AdminName, reg.AdminPhone,
-		reg.PasswordHash, reg.PlanID, reg.PaymentStatus,
-		reg.Amount, reg.ProvisionStatus,
-		reg.IsTrial, reg.TrialEndsAt,
+		reg.PasswordHash, reg.PlanID, reg.PaymentProvider,
+		reg.PaymentReference, reg.PaymentCheckout, reg.PaymentStatus,
+		reg.Amount, reg.ProvisionStatus, reg.IsTrial,
+		reg.TrialEndsAt,
 		reg.CreatedAt, reg.UpdatedAt,
 	)
 	if err != nil {
@@ -153,8 +154,9 @@ func (r *TenantRepo) CreateRegistration(ctx context.Context, reg *model.TenantRe
 func (r *TenantRepo) FindRegistrationByID(ctx context.Context, id uuid.UUID) (*model.TenantRegistration, error) {
 	query := `
 		SELECT id, tenant_id, org_name, org_type, admin_email, admin_name, admin_phone,
-			   password_hash, plan_id, payment_status, payment_method, paid_at, amount,
-			   provision_status, provisioned_at, is_trial, trial_ends_at, created_at, updated_at
+			   password_hash, plan_id, payment_provider, payment_reference, payment_checkout_url,
+			   payment_status, payment_method, paid_at, amount, provision_status,
+			   provisioned_at, is_trial, trial_ends_at, created_at, updated_at
 		FROM public.tenant_registrations
 		WHERE id = $1
 	`
@@ -163,7 +165,8 @@ func (r *TenantRepo) FindRegistrationByID(ctx context.Context, id uuid.UUID) (*m
 	err := r.pool.QueryRow(ctx, query, id).Scan(
 		&reg.ID, &reg.TenantID, &reg.OrgName, &reg.OrgType,
 		&reg.AdminEmail, &reg.AdminName, &reg.AdminPhone,
-		&reg.PasswordHash, &reg.PlanID, &reg.PaymentStatus,
+		&reg.PasswordHash, &reg.PlanID, &reg.PaymentProvider,
+		&reg.PaymentReference, &reg.PaymentCheckout, &reg.PaymentStatus,
 		&reg.PaymentMethod, &reg.PaidAt, &reg.Amount,
 		&reg.ProvisionStatus, &reg.ProvisionedAt,
 		&reg.IsTrial, &reg.TrialEndsAt,
@@ -174,6 +177,38 @@ func (r *TenantRepo) FindRegistrationByID(ctx context.Context, id uuid.UUID) (*m
 			return nil, nil
 		}
 		return nil, fmt.Errorf("finding registration by id: %w", err)
+	}
+
+	return &reg, nil
+}
+
+// FindRegistrationByPaymentReference fetches a tenant registration by external payment reference.
+func (r *TenantRepo) FindRegistrationByPaymentReference(ctx context.Context, reference string) (*model.TenantRegistration, error) {
+	query := `
+		SELECT id, tenant_id, org_name, org_type, admin_email, admin_name, admin_phone,
+			   password_hash, plan_id, payment_provider, payment_reference, payment_checkout_url,
+			   payment_status, payment_method, paid_at, amount, provision_status,
+			   provisioned_at, is_trial, trial_ends_at, created_at, updated_at
+		FROM public.tenant_registrations
+		WHERE payment_reference = $1
+	`
+
+	var reg model.TenantRegistration
+	err := r.pool.QueryRow(ctx, query, reference).Scan(
+		&reg.ID, &reg.TenantID, &reg.OrgName, &reg.OrgType,
+		&reg.AdminEmail, &reg.AdminName, &reg.AdminPhone,
+		&reg.PasswordHash, &reg.PlanID, &reg.PaymentProvider,
+		&reg.PaymentReference, &reg.PaymentCheckout, &reg.PaymentStatus,
+		&reg.PaymentMethod, &reg.PaidAt, &reg.Amount,
+		&reg.ProvisionStatus, &reg.ProvisionedAt,
+		&reg.IsTrial, &reg.TrialEndsAt,
+		&reg.CreatedAt, &reg.UpdatedAt,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("finding registration by payment reference: %w", err)
 	}
 
 	return &reg, nil
@@ -190,6 +225,31 @@ func (r *TenantRepo) UpdateRegistrationStatus(ctx context.Context, id uuid.UUID,
 	_, err := r.pool.Exec(ctx, query, id, provisionStatus, provisionedAt, paymentStatus)
 	if err != nil {
 		return fmt.Errorf("updating registration status: %w", err)
+	}
+
+	return nil
+}
+
+// UpdateRegistrationPayment updates payment-related fields after a gateway callback.
+func (r *TenantRepo) UpdateRegistrationPayment(
+	ctx context.Context,
+	id uuid.UUID,
+	paymentStatus string,
+	paymentMethod *string,
+	paidAt *time.Time,
+) error {
+	query := `
+		UPDATE public.tenant_registrations
+		SET payment_status = $2,
+			payment_method = COALESCE($3, payment_method),
+			paid_at = $4,
+			updated_at = NOW()
+		WHERE id = $1
+	`
+
+	_, err := r.pool.Exec(ctx, query, id, paymentStatus, paymentMethod, paidAt)
+	if err != nil {
+		return fmt.Errorf("updating registration payment: %w", err)
 	}
 
 	return nil

@@ -60,11 +60,12 @@ func (s *Server) setupRoutes() {
 		s.cfg.Database.DSN(),
 		"../lms/migrations/tenant",
 	)
+	midtransService := service.NewMidtransService(s.cfg.Midtrans)
 
 	// Handlers
 	healthHandler := NewHealthHandler(s.pool)
 	plansHandler := NewPlansHandler(planRepo)
-	onboardingHandler := NewOnboardingHandler(tenantRepo, planRepo, provisioner)
+	onboardingHandler := NewOnboardingHandler(tenantRepo, planRepo, provisioner, midtransService)
 
 	// Routes
 	healthHandler.RegisterRoutes(s.app)

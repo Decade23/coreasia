@@ -11,6 +11,7 @@ type Config struct {
 	Database DatabaseConfig `yaml:"database"`
 	CORS     CORSConfig     `yaml:"cors"`
 	Xendit   XenditConfig   `yaml:"xendit"`
+	Midtrans MidtransConfig `yaml:"midtrans"`
 }
 
 type AppConfig struct {
@@ -38,6 +39,18 @@ type XenditConfig struct {
 	FailureURL    string `yaml:"failure_url" env:"XENDIT_FAILURE_URL" env-default:"https://coreasia.id/register?status=failed"`
 }
 
+type MidtransConfig struct {
+	ServerKey       string `yaml:"server_key" env:"MIDTRANS_SERVER_KEY"`
+	ClientKey       string `yaml:"client_key" env:"MIDTRANS_CLIENT_KEY"`
+	MerchantID      string `yaml:"merchant_id" env:"MIDTRANS_MERCHANT_ID"`
+	IsProduction    bool   `yaml:"is_production" env:"MIDTRANS_IS_PRODUCTION" env-default:"false"`
+	NotificationURL string `yaml:"notification_url" env:"MIDTRANS_NOTIFICATION_URL"`
+	FinishURL       string `yaml:"finish_url" env:"MIDTRANS_FINISH_URL" env-default:"https://coreasia.id/register"`
+	UnfinishURL     string `yaml:"unfinish_url" env:"MIDTRANS_UNFINISH_URL" env-default:"https://coreasia.id/register"`
+	ErrorURL        string `yaml:"error_url" env:"MIDTRANS_ERROR_URL" env-default:"https://coreasia.id/register"`
+	MerchantName    string `yaml:"merchant_name" env:"MIDTRANS_MERCHANT_NAME" env-default:"CoreAsia"`
+}
+
 type CORSConfig struct {
 	AllowedOrigins []string `yaml:"allowed_origins" env:"CORS_ORIGINS"`
 }
@@ -49,6 +62,22 @@ func (d DatabaseConfig) DSN() string {
 
 func (a AppConfig) IsProduction() bool {
 	return a.Env == "production"
+}
+
+func (m MidtransConfig) SnapBaseURL() string {
+	if m.IsProduction {
+		return "https://app.midtrans.com/snap/v1"
+	}
+
+	return "https://app.sandbox.midtrans.com/snap/v1"
+}
+
+func (m MidtransConfig) CoreBaseURL() string {
+	if m.IsProduction {
+		return "https://api.midtrans.com/v2"
+	}
+
+	return "https://api.sandbox.midtrans.com/v2"
 }
 
 func Load(path string) (*Config, error) {

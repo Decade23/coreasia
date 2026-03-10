@@ -28,6 +28,9 @@ type TenantRegistration struct {
 	AdminPhone       *string    `json:"admin_phone"`
 	PasswordHash     string     `json:"-"`
 	PlanID           uuid.UUID  `json:"plan_id"`
+	PaymentProvider  *string    `json:"payment_provider"`
+	PaymentReference *string    `json:"payment_reference"`
+	PaymentCheckout  *string    `json:"payment_checkout_url"`
 	PaymentStatus    string     `json:"payment_status"`
 	PaymentMethod    *string    `json:"payment_method"`
 	PaidAt           *time.Time `json:"paid_at"`

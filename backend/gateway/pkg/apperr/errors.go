@@ -62,6 +62,22 @@ func NewConflict(message string) *AppError {
 	}
 }
 
+func NewUnauthorized(message string) *AppError {
+	return &AppError{
+		Code:       "UNAUTHORIZED",
+		Message:    message,
+		HTTPStatus: http.StatusUnauthorized,
+	}
+}
+
+func NewServiceUnavailable(message string) *AppError {
+	return &AppError{
+		Code:       "SERVICE_UNAVAILABLE",
+		Message:    message,
+		HTTPStatus: http.StatusServiceUnavailable,
+	}
+}
+
 func NewInternal(err error) *AppError {
 	return &AppError{
 		Code:       "INTERNAL_ERROR",

@@ -20,6 +20,17 @@ xendit:
   success_url: "https://coreasia.id/register/success"
   failure_url: "https://coreasia.id/register?status=failed"
 
+midtrans:
+  server_key: ""
+  client_key: ""
+  merchant_id: ""
+  is_production: false
+  notification_url: ""
+  finish_url: "https://coreasia.id/register"
+  unfinish_url: "https://coreasia.id/register"
+  error_url: "https://coreasia.id/register"
+  merchant_name: "CoreAsia"
+
 cors:
   allowed_origins:
     - "http://localhost:3000"

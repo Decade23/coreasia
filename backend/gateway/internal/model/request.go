@@ -35,4 +35,5 @@ type RegistrationStatusResponse struct {
 	PaymentStatus   string    `json:"payment_status"`
 	ProvisionStatus string    `json:"provision_status"`
 	LoginURL        *string   `json:"login_url,omitempty"`
+	InvoiceURL      *string   `json:"invoice_url,omitempty"`
 }
