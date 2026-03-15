@@ -9,7 +9,7 @@ const solutions = computed(() => [
         description: t('solutions.lms.description'),
         icon: 'lucide:monitor',
         features: t('solutions.lms.features'),
-        to: '/solutions/lms',
+        to: '/products/lms',
     },
     {
         title: t('solutions.venture.title'),

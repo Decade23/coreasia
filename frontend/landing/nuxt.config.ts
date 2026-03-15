@@ -207,7 +207,8 @@ export default defineNuxtConfig({
         '/': { prerender: true },
         '/about': { prerender: true },
         '/contact': { prerender: true },
-        '/solutions/**': { prerender: true },
+        '/products/**': { prerender: true },
+        '/solutions/venture': { prerender: true },
         '/pricing': { prerender: true },
         '/register': { ssr: true },
         // API routes shouldn't be cached

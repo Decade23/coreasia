@@ -71,7 +71,7 @@ const ID_CONTENT = {
             'Assessment, CBT, dan sertifikat digital',
           ],
           ctaLabel: 'Lihat Solusi LMS',
-          to: '/solutions/lms',
+          to: '/products/lms',
         },
         {
           name: 'Pantau by CoreAsia',
@@ -84,7 +84,7 @@ const ID_CONTENT = {
             'Cocok untuk audit performa rutin',
           ],
           ctaLabel: 'Pelajari Pantau',
-          to: '/solutions/pantau',
+          to: '/products/pantau',
         },
         {
           name: 'LeadKu by CoreAsia',
@@ -97,7 +97,7 @@ const ID_CONTENT = {
             'Aktivitas tim dan reporting lebih jelas',
           ],
           ctaLabel: 'Pelajari LeadKu',
-          to: '/solutions/leadku',
+          to: '/products/leadku',
         },
       ],
     },
@@ -1015,9 +1015,9 @@ const ID_CONTENT = {
         terms: 'TOS',
       },
       productLinks: [
-        { label: 'CoreAsia LMS', to: '/solutions/lms' },
-        { label: 'Pantau', to: '/solutions/pantau' },
-        { label: 'LeadKu', to: '/solutions/leadku' },
+        { label: 'CoreAsia LMS', to: '/products/lms' },
+        { label: 'Pantau', to: '/products/pantau' },
+        { label: 'LeadKu', to: '/products/leadku' },
       ],
       partnershipLinks: [
         { label: 'SaaS Subscription', to: '/pricing' },
@@ -1183,7 +1183,7 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
             'Assessment, CBT, and digital certificates',
           ],
           ctaLabel: 'Explore LMS',
-          to: '/solutions/lms',
+          to: '/products/lms',
         },
         {
           name: 'Pantau by CoreAsia',
@@ -1196,7 +1196,7 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
             'Useful for recurring monitoring audits',
           ],
           ctaLabel: 'Explore Pantau',
-          to: '/solutions/pantau',
+          to: '/products/pantau',
         },
         {
           name: 'LeadKu by CoreAsia',
@@ -1209,7 +1209,7 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
             'Sharper activity tracking and reporting',
           ],
           ctaLabel: 'Explore LeadKu',
-          to: '/solutions/leadku',
+          to: '/products/leadku',
         },
       ],
     },
@@ -2075,9 +2075,9 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
         terms: 'Terms',
       },
       productLinks: [
-        { label: 'CoreAsia LMS', to: '/solutions/lms' },
-        { label: 'Pantau', to: '/solutions/pantau' },
-        { label: 'LeadKu', to: '/solutions/leadku' },
+        { label: 'CoreAsia LMS', to: '/products/lms' },
+        { label: 'Pantau', to: '/products/pantau' },
+        { label: 'LeadKu', to: '/products/leadku' },
       ],
       partnershipLinks: [
         { label: 'SaaS Subscription', to: '/pricing' },
