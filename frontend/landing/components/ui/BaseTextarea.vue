@@ -3,7 +3,7 @@
         <label
             v-if="label"
             :for="id"
-            class="mb-2 block text-sm font-medium text-slate-200"
+            class="ca-field-label"
         >
             {{ label }}
             <span v-if="required" class="text-rose-300">*</span>
@@ -15,12 +15,13 @@
             :value="modelValue"
             :rows="rows"
             :disabled="disabled"
+            :required="required"
             :placeholder="placeholder"
-            class="w-full resize-none rounded-xl border bg-white/[0.03] px-4 py-3 text-sm text-white placeholder:text-slate-500 transition-colors focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
+            class="ca-field-control resize-none"
             :class="[
                 error
                     ? 'border-rose-300/50 focus:border-rose-400'
-                    : 'border-white/12 focus:border-amber-300/40',
+                    : 'border-[color:var(--ca-border)] focus:border-amber-300/40',
                 inputClass
             ]"
             @input="$emit('update:modelValue', ($event.target as HTMLTextAreaElement).value)"

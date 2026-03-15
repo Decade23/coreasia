@@ -32,7 +32,7 @@ export default defineNuxtConfig({
         url: "https://coreasia.id",
         name: "CoreAsia Teknologi",
         description:
-            "Mitra Teknologi Strategis dan Platform LMS SaaS untuk Lembaga Pelatihan & Sertifikasi.",
+            "Mitra teknologi strategis dengan ekosistem produk digital untuk sertifikasi, monitoring web, CRM, dan kemitraan pertumbuhan.",
         defaultLocale: "id",
     },
     app: {
@@ -137,7 +137,7 @@ export default defineNuxtConfig({
             ],
             meta: [
                 { name: "theme-color", content: "#050814" },
-                { name: "color-scheme", content: "dark" },
+                { name: "color-scheme", content: "dark light" },
                 { name: "msapplication-TileColor", content: "#050814" },
                 { name: "msapplication-config", content: "/browserconfig.xml" },
                 { name: "application-name", content: "CoreAsia" },

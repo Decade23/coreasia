@@ -57,7 +57,7 @@ const headerClass = computed(() => {
         classes += " bg-transparent border-b border-transparent"
     } else {
         // Glassmorphism when scrolled or menu open
-        classes += " bg-core-950/95 backdrop-blur-xl border-b border-white/10"
+        classes += " ca-glass-header backdrop-blur-xl"
     }
 
     return classes
@@ -66,9 +66,15 @@ const headerClass = computed(() => {
 const navItems = computed(() => getNavItems(locale.value));
 
 const isActive = (path: string) => {
+    if (path.includes("#")) {
+        const [targetPath, targetHash] = path.split("#");
+        return route.path === (targetPath || "/") && route.hash === `#${targetHash}`;
+    }
+
     if (path === "/") {
         return route.path === "/";
     }
+
     return route.path === path || route.path.startsWith(`${path}/`);
 };
 
@@ -142,11 +148,11 @@ const { style: magneticStyle } = useMagnetic(contactBtnRef, 0.3)
                     </span>
                     <span class="flex flex-col leading-none">
                         <span
-                            class="font-display text-base font-bold tracking-tight text-white lg:text-lg"
+                            class="font-display text-base font-bold tracking-tight text-[var(--ca-text)] lg:text-lg"
                             >{{ COMPANY.shortName }}</span
                         >
                         <span
-                            class="text-[10px] font-semibold uppercase tracking-[0.12em] text-content-muted block lg:text-[11px]"
+                            class="block text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--ca-muted)] lg:text-[11px]"
                             >{{ COMPANY.tagline }}</span
                         >
                     </span>
@@ -164,7 +170,7 @@ const { style: magneticStyle } = useMagnetic(contactBtnRef, 0.3)
                             'rounded-lg px-3 py-2 text-sm font-semibold transition-colors',
                             isActive(item.to)
                                 ? 'bg-white/[0.08] text-brand-primary'
-                                : 'text-content-muted hover:bg-white/5 hover:text-white',
+                                : 'text-[var(--ca-muted)] hover:bg-white/5 hover:text-[var(--ca-text)]',
                         ]"
                     >
                         {{ item.label }}
@@ -193,7 +199,7 @@ const { style: magneticStyle } = useMagnetic(contactBtnRef, 0.3)
 
                 <button
                     type="button"
-                    class="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 text-content-muted transition hover:border-white/20 hover:bg-white/5 lg:hidden"
+                    class="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-[color:var(--ca-border)] text-[var(--ca-muted)] transition hover:bg-white/5 hover:text-[var(--ca-text)] lg:hidden"
                     :aria-expanded="isMobileMenuOpen"
                     aria-controls="mobile-nav"
                     :aria-label="isMobileMenuOpen ? t('components.header.mobileMenuAriaClose') : t('components.header.mobileMenuAriaOpen')"
@@ -204,9 +210,6 @@ const { style: magneticStyle } = useMagnetic(contactBtnRef, 0.3)
                         class="h-5 w-5"
                     />
                 </button>
-
-                <!-- Language Switcher (Hidden: English not ready) -->
-                <!-- <LanguageSwitcher /> -->
             </div>
         </div>
 
@@ -221,7 +224,7 @@ const { style: magneticStyle } = useMagnetic(contactBtnRef, 0.3)
             <div
                 v-if="isMobileMenuOpen"
                 id="mobile-nav"
-                class="border-t border-white/10 bg-core-950/95 lg:hidden max-h-[calc(100vh-4rem)] overflow-y-auto"
+                class="ca-glass-drawer max-h-[calc(100vh-4rem)] overflow-y-auto lg:hidden"
             >
                 <div class="ca-container space-y-5 py-5">
                     <nav class="space-y-1" aria-label="Mobile Navigation">
@@ -233,7 +236,7 @@ const { style: magneticStyle } = useMagnetic(contactBtnRef, 0.3)
                             :class="
                                 isActive(item.to)
                                     ? 'border-brand-primary/40 bg-brand-primary/10 text-brand-primary'
-                                    : 'border-white/10 bg-white/[0.03] text-content-DEFAULT hover:border-white/20 hover:bg-white/5'
+                                    : 'border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] text-[var(--ca-text)] hover:bg-white/5'
                             "
                             @click="closeMobileMenu"
                         >
@@ -268,7 +271,7 @@ const { style: magneticStyle } = useMagnetic(contactBtnRef, 0.3)
                         </NuxtLink>
                     </div>
 
-                    <p class="text-center text-xs text-content-subtle">
+                    <p class="text-center text-xs text-[var(--ca-subtle)]">
                         {{ t('components.header.responseTime') }}: {{ CONTACT.businessHours }}
                     </p>
                 </div>

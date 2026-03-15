@@ -1,22 +1,18 @@
-// Navigation items with internationalization support
-export const NAV_ITEMS = {
-  id: [
-    { label: 'Home', to: '/' },
-    { label: 'SaaS LMS', to: '/solutions/lms' },
-    { label: 'Venture', to: '/solutions/venture' },
-    { label: 'Pricing', to: '/pricing' },
-    { label: 'Tentang Kami', to: '/about' },
-  ],
-  en: [
-    { label: 'Home', to: '/' },
-    { label: 'SaaS LMS', to: '/solutions/lms' },
-    { label: 'Venture', to: '/solutions/venture' },
-    { label: 'Pricing', to: '/pricing' },
-    { label: 'About Us', to: '/about' },
-  ],
-} as const
+import { getContent } from './content'
 
-// Helper to get navigation items for a locale
-export const getNavItems = (locale: string = 'id') => {
-  return NAV_ITEMS[locale as keyof typeof NAV_ITEMS] || NAV_ITEMS.id
+export interface NavItem {
+  label: string
+  to: string
+}
+
+export const getNavItems = (locale: string = 'id'): NavItem[] => {
+  const content = getContent(locale)
+
+  return [
+    { label: content.nav.home, to: '/' },
+    { label: content.nav.products, to: '/#products' },
+    { label: content.nav.partnerships, to: '/#engagement-models' },
+    { label: content.nav.pricing, to: '/pricing' },
+    { label: content.nav.about, to: '/about' },
+  ]
 }

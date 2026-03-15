@@ -3,7 +3,7 @@
         <label
             v-if="label"
             :for="id"
-            class="mb-2 block text-sm font-medium text-slate-200"
+            class="ca-field-label"
         >
             {{ label }}
             <span v-if="required" class="text-rose-300">*</span>
@@ -15,19 +15,20 @@
                 v-bind="$attrs"
                 :value="modelValue"
                 :disabled="disabled"
+                :required="required"
                 :type="type"
                 :placeholder="placeholder"
-                class="w-full rounded-xl border bg-white/[0.03] px-4 py-3 text-sm text-white placeholder:text-slate-500 transition-colors focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
+                class="ca-field-control"
                 :class="[
                     error
                         ? 'border-rose-300/50 focus:border-rose-400'
-                        : 'border-white/12 focus:border-amber-300/40',
+                        : 'border-[color:var(--ca-border)] focus:border-amber-300/40',
                     inputClass
                 ]"
                 @input="$emit('update:modelValue', ($event.target as HTMLInputElement).value)"
             />
             
-            <div v-if="icon" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
+            <div v-if="icon" class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[var(--ca-subtle)]">
                 <Icon :name="icon" class="h-4 w-4" />
             </div>
         </div>

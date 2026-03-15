@@ -39,7 +39,7 @@ export const COMPANY = {
   domain: 'coreasia.id',
   url: 'https://coreasia.id',
   description:
-    'Mitra transformasi digital untuk LSP, training center, dan bisnis yang ingin scale dengan model SaaS atau venture partnership.',
+    'Ekosistem produk digital dan mitra teknologi strategis untuk sertifikasi, monitoring web, CRM, dan model pertumbuhan berbasis SaaS maupun venture.',
 } as const
 
 // ──────────────────────────────────────

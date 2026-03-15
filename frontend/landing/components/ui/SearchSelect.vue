@@ -1,18 +1,18 @@
 <template>
   <div ref="container" class="relative w-full">
     <!-- Label -->
-    <label v-if="label" :for="id" class="mb-2 block text-sm font-medium text-slate-200">
+    <label v-if="label" :for="id" class="ca-field-label">
       {{ label }}
       <span v-if="required" class="text-rose-300">*</span>
     </label>
 
     <!-- Trigger / Input Area -->
     <div
-      class="relative flex w-full items-center justify-between rounded-xl border bg-white/[0.03] px-4 py-3 text-sm transition-all duration-200"
+      class="relative flex w-full items-center justify-between rounded-xl border px-4 py-3 text-sm transition-all duration-200"
       :class="[
-        isOpen || isFocused 
-            ? 'border-amber-300/40 bg-white/[0.05] shadow-[0_0_0_1px_rgba(252,211,77,0.1)]' 
-            : 'border-white/12 text-white hover:border-white/20',
+        isOpen || isFocused
+            ? 'border-amber-300/40 bg-[var(--ca-panel-bg-strong)] shadow-[0_0_0_1px_rgba(252,211,77,0.1)]'
+            : 'border-[color:var(--ca-border)] bg-[var(--ca-input-bg)] text-[var(--ca-text)]',
         disabled ? 'cursor-not-allowed opacity-50' : 'cursor-text',
         error ? '!border-rose-300/50' : ''
       ]"
@@ -24,11 +24,11 @@
         v-model="searchQuery"
         type="text"
         :placeholder="selectedLabel || placeholder"
-        class="w-full bg-transparent p-0 text-sm leading-normal text-white outline-hidden ring-0 placeholder:transition-colors focus:outline-hidden focus:ring-0"
+        class="w-full bg-transparent p-0 text-sm leading-normal text-[var(--ca-text)] outline-hidden ring-0 placeholder:transition-colors focus:outline-hidden focus:ring-0"
         :class="[
-            modelValue && !searchQuery 
-                ? 'placeholder:text-white' 
-                : 'placeholder:text-slate-500'
+            modelValue && !searchQuery
+                ? 'placeholder:text-[var(--ca-text)]'
+                : 'placeholder:text-[var(--ca-subtle)]'
         ]"
         :disabled="disabled"
         @focus="handleFocus"
@@ -40,10 +40,10 @@
         @keydown.esc="closeDropdown"
         autocomplete="off"
       />
-      
-      <div class="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-slate-400">
-        <Icon 
-            name="lucide:chevron-down" 
+
+      <div class="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[var(--ca-subtle)]">
+        <Icon
+            name="lucide:chevron-down"
             class="h-4 w-4 transition-transform duration-200"
             :class="{ 'rotate-180': isOpen }"
         />
@@ -61,7 +61,7 @@
     >
       <ul
         v-if="isOpen && filteredOptions.length > 0"
-        class="absolute z-50 mt-2 max-h-60 w-full overflow-auto rounded-xl border border-white/10 bg-[#0F172A] py-1 shadow-2xl ring-1 ring-black/5 focus:outline-hidden sm:text-sm"
+        class="ca-field-dropdown absolute z-50 mt-2 max-h-60 w-full overflow-auto rounded-xl py-1 shadow-2xl ring-1 ring-black/5 focus:outline-hidden sm:text-sm"
         role="listbox"
       >
         <li
@@ -69,14 +69,14 @@
           :key="option.value"
           :class="[
             'relative cursor-pointer select-none py-2.5 pl-4 pr-9 transition-colors',
-            highlightedIndex === index ? 'bg-white/5 text-amber-300' : 'text-slate-300',
+            highlightedIndex === index ? 'bg-white/5 text-amber-300' : 'text-[var(--ca-muted)]',
             option.value === modelValue ? 'font-medium text-amber-300 bg-white/[0.02]' : 'font-normal'
           ]"
           @click="selectOption(option)"
           @mouseenter="highlightedIndex = index"
         >
           <span class="block truncate">{{ option.label }}</span>
-          
+
           <span
             v-if="option.value === modelValue"
             class="absolute inset-y-0 right-0 flex items-center pr-3 text-amber-300"
@@ -88,9 +88,9 @@
 
       <div
          v-else-if="isOpen && filteredOptions.length === 0"
-         class="absolute z-50 mt-2 w-full rounded-xl border border-white/10 bg-[#0F172A] py-3 px-4 text-center text-sm text-slate-500 shadow-xl"
+         class="ca-field-empty absolute z-50 mt-2 w-full rounded-xl py-3 px-4 text-center text-sm shadow-xl"
       >
-        Tidak ada hasil ditemukan.
+        {{ t('common.noResults') }}
       </div>
     </Transition>
 
@@ -103,6 +103,7 @@
 <script setup lang="ts">
 import { ref, computed, watch, nextTick } from 'vue'
 import { onClickOutside } from '@vueuse/core'
+import { useCoreI18n } from '~/composables/useCoreI18n'
 
 interface Option {
   label: string
@@ -128,6 +129,7 @@ const props = withDefaults(defineProps<Props>(), {
 })
 
 const emit = defineEmits(['update:modelValue', 'change'])
+const { t } = useCoreI18n()
 
 const isOpen = ref(false)
 const isFocused = ref(false)

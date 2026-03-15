@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { LINKS, CONTACT, buildWhatsAppUrl, buildMailtoUrl } from '~/utils/constants'
+import { LINKS, CONTACT, COMPANY, buildWhatsAppUrl, buildMailtoUrl } from '~/utils/constants'
 import { useCoreI18n } from '~/composables/useCoreI18n'
 
 const { useReveal } = useScrollReveal()
 const { t } = useCoreI18n()
+const route = useRoute()
 
 const heroKicker = useReveal('fadeUp', 0)
 const heroTitle = useReveal('fadeUp', 100)
@@ -28,7 +29,6 @@ const subjectOptions = computed(() => {
     }))
 })
 
-
 const form = reactive<ContactForm>({
     name: "",
     email: "",
@@ -37,6 +37,21 @@ const form = reactive<ContactForm>({
     message: "",
     consent: false,
 });
+
+watchEffect(() => {
+    const rawSubject = Array.isArray(route.query.subject)
+        ? route.query.subject[0]
+        : route.query.subject
+
+    if (typeof rawSubject !== 'string' || form.subject) {
+        return
+    }
+
+    const hasMatchingSubject = subjectOptions.value.some((option) => option.value === rawSubject)
+    if (hasMatchingSubject) {
+        form.subject = rawSubject
+    }
+})
 
 const formState = reactive({
     isSubmitting: false,
@@ -100,6 +115,10 @@ const resetForm = () => {
     form.consent = false;
 };
 
+const isValidEmail = (value: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+};
+
 const buildMessage = () => {
     const subjectLabel =
         subjectOptions.value.find((option) => option.value === form.subject)?.label ||
@@ -125,6 +144,36 @@ const handleSubmit = async () => {
     formState.isSubmitting = true;
     formState.isSuccess = false;
     formState.errorMessage = "";
+
+    if (!form.name.trim()) {
+        formState.errorMessage = t('contact.form.validation.nameRequired') as string;
+        formState.isSubmitting = false;
+        return;
+    }
+
+    if (!form.email.trim()) {
+        formState.errorMessage = t('contact.form.validation.emailRequired') as string;
+        formState.isSubmitting = false;
+        return;
+    }
+
+    if (!isValidEmail(form.email.trim())) {
+        formState.errorMessage = t('contact.form.validation.emailInvalid') as string;
+        formState.isSubmitting = false;
+        return;
+    }
+
+    if (!form.subject.trim()) {
+        formState.errorMessage = t('contact.form.validation.subjectRequired') as string;
+        formState.isSubmitting = false;
+        return;
+    }
+
+    if (!form.message.trim()) {
+        formState.errorMessage = t('contact.form.validation.messageRequired') as string;
+        formState.isSubmitting = false;
+        return;
+    }
 
     if (!form.consent) {
         formState.errorMessage = t('contact.form.validation.consentRequired') as string;
@@ -207,10 +256,10 @@ useSchemaOrg([
             <div
                 class="ca-container relative ca-section pb-10 sm:pb-12 lg:pb-16"
             >
-                 <span ref="heroKicker" class="ca-kicker">{{ t('contact.kicker') }}</span>
+                <span ref="heroKicker" class="ca-kicker">{{ t('contact.kicker') }}</span>
                 <h1
                     ref="heroTitle"
-                    class="mt-5 text-balance font-display text-4xl font-bold leading-[1.08] text-white sm:text-5xl lg:text-[3.4rem]"
+                    class="mt-5 text-balance font-display text-4xl font-bold leading-[1.08] text-[var(--ca-text)] sm:text-5xl lg:text-[3.4rem]"
                     v-html="t('contact.hero.title')"
                 />
                 <p ref="heroCopy" class="ca-copy mt-5 max-w-3xl">
@@ -225,16 +274,16 @@ useSchemaOrg([
                     <aside ref="contactSidebar" class="space-y-4">
                         <article class="ca-card p-5 sm:p-6">
                             <p
-                                class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500"
+                                class="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--ca-subtle)]"
                             >
                                 {{ t('contact.channels.quickResponse') }}
                             </p>
                             <h2
-                                class="mt-2 text-xl font-display font-bold text-white"
+                                class="mt-2 text-xl font-display font-bold text-[var(--ca-text)]"
                             >
                                 {{ t('contact.channels.title') }}
                             </h2>
-                            <p class="mt-2 text-sm text-slate-300">
+                            <p class="mt-2 text-sm text-[var(--ca-muted)]">
                                 {{ t('contact.channels.subtitle') }}
                             </p>
 
@@ -243,7 +292,7 @@ useSchemaOrg([
                                     :href="LINKS.whatsapp"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    class="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 transition hover:border-emerald-300/40 hover:bg-emerald-300/10"
+                                    class="flex items-center justify-between rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] px-4 py-3 transition hover:border-emerald-300/40 hover:bg-emerald-300/10"
                                 >
                                     <span class="flex items-center gap-3">
                                         <span
@@ -256,24 +305,24 @@ useSchemaOrg([
                                         </span>
                                         <span>
                                             <span
-                                                class="block text-sm font-semibold text-white"
+                                                class="block text-sm font-semibold text-[var(--ca-text)]"
                                                 >{{ t('contact.channels.whatsapp') }}</span
                                             >
                                             <span
-                                                class="block text-xs text-slate-400"
+                                                class="block text-xs text-[var(--ca-subtle)]"
                                                 >{{ CONTACT.whatsappDisplay }}</span
                                             >
                                         </span>
                                     </span>
                                     <Icon
                                         name="lucide:arrow-up-right"
-                                        class="h-4 w-4 text-slate-400"
+                                        class="h-4 w-4 text-[var(--ca-subtle)]"
                                     />
                                 </a>
 
                                 <a
                                     :href="LINKS.email"
-                                    class="flex items-center justify-between rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 transition hover:border-amber-300/40 hover:bg-amber-300/10"
+                                    class="flex items-center justify-between rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] px-4 py-3 transition hover:border-amber-300/40 hover:bg-amber-300/10"
                                 >
                                     <span class="flex items-center gap-3">
                                         <span
@@ -286,18 +335,18 @@ useSchemaOrg([
                                         </span>
                                         <span>
                                             <span
-                                                class="block text-sm font-semibold text-white"
+                                                class="block text-sm font-semibold text-[var(--ca-text)]"
                                                 >{{ t('contact.channels.email') }}</span
                                             >
                                             <span
-                                                class="block text-xs text-slate-400"
+                                                class="block text-xs text-[var(--ca-subtle)]"
                                                 >{{ CONTACT.email }}</span
                                             >
                                         </span>
                                     </span>
                                     <Icon
                                         name="lucide:arrow-up-right"
-                                        class="h-4 w-4 text-slate-400"
+                                        class="h-4 w-4 text-[var(--ca-subtle)]"
                                     />
                                 </a>
                             </div>
@@ -305,11 +354,11 @@ useSchemaOrg([
 
                         <article class="ca-card-soft p-5 sm:p-6">
                             <h3
-                                class="text-sm font-semibold uppercase tracking-[0.14em] text-slate-500"
+                                class="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--ca-subtle)]"
                             >
                                 {{ t('contact.whatToPrepare.title') }}
                             </h3>
-                            <ul class="mt-4 space-y-2 text-sm text-slate-300">
+                            <ul class="mt-4 space-y-2 text-sm text-[var(--ca-muted)]">
                                 <li
                                     v-for="item in (t('contact.whatToPrepare.items') as string[])"
                                     :key="item"
@@ -322,7 +371,7 @@ useSchemaOrg([
                                     {{ item }}
                                 </li>
                             </ul>
-                            <p class="mt-4 text-xs text-slate-500">
+                            <p class="mt-4 text-xs text-[var(--ca-subtle)]">
                                 {{ t('contact.channels.businessHours') }}
                             </p>
                         </article>
@@ -331,11 +380,11 @@ useSchemaOrg([
                     <article ref="contactForm" class="ca-card p-5 sm:p-6 lg:p-7">
                         <div class="mb-6">
                             <h2
-                                class="text-2xl font-display font-bold text-white"
+                                class="text-2xl font-display font-bold text-[var(--ca-text)]"
                             >
                                 {{ t('contact.form.title') }}
                             </h2>
-                            <p class="mt-2 text-sm text-slate-300">
+                            <p class="mt-2 text-sm text-[var(--ca-muted)]">
                                 {{ t('contact.form.subtitle') }}
                             </p>
                         </div>
@@ -393,14 +442,14 @@ useSchemaOrg([
                             />
 
                             <label
-                                class="flex items-start gap-3 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-3 text-sm text-slate-300 transition-colors hover:bg-white/[0.05]"
+                                class="ca-checkbox-panel flex items-start gap-3 rounded-lg px-3 py-3 text-sm transition-colors hover:bg-[var(--ca-panel-bg-strong)]"
                             >
                                 <input
                                     v-model="form.consent"
                                     type="checkbox"
                                     required
                                     :disabled="formState.isSubmitting"
-                                    class="mt-0.5 h-4 w-4 rounded border-white/20 bg-transparent text-amber-300 focus:ring-amber-300 focus:ring-offset-0"
+                                    class="mt-0.5 h-4 w-4 rounded border-[color:var(--ca-border)] bg-transparent text-amber-300 focus:ring-amber-300 focus:ring-offset-0"
                                 />
                                 <span>
                                     {{ t('contact.form.fields.consent') }}

@@ -2,7 +2,7 @@
 import { LINKS } from '~/utils/constants'
 import { useCoreI18n } from '~/composables/useCoreI18n'
 
-const { locale, t } = useCoreI18n()
+const { t } = useCoreI18n()
 const { useReveal } = useScrollReveal()
 
 const ctaSection = useReveal('scaleUp')
@@ -15,7 +15,7 @@ useCoreSeo({
 
 useSchemaOrg([
     defineWebPage({
-        name: 'Platform Teknologi',
+        name: 'CoreAsia Product Ecosystem',
     }),
     defineOrganization({
         name: 'CoreAsia Teknologi',
@@ -59,7 +59,7 @@ useSchemaOrg([
                     </span>
 
                     <h1
-                        class="mt-5 text-balance font-display text-4xl font-bold leading-[1.08] text-white sm:text-5xl lg:text-[3.6rem] animate-fade-in-up delay-100"
+                        class="mt-5 text-balance font-display text-4xl font-bold leading-[1.08] text-[var(--ca-text)] sm:text-5xl lg:text-[3.6rem] animate-fade-in-up delay-100"
                         v-html="t('home.hero.title')"
                     />
 
@@ -84,7 +84,7 @@ useSchemaOrg([
                         </a>
                     </div>
 
-                    <p class="mt-4 text-xs font-medium text-slate-500 animate-fade-in delay-400">
+                    <p class="mt-4 text-xs font-medium text-[var(--ca-subtle)] animate-fade-in delay-400">
                         <Icon name="lucide:shield-check" class="inline-block h-3 w-3 mr-1 text-emerald-500" />
                         {{ t('home.hero.powerStatement') }}
                     </p>
@@ -102,7 +102,7 @@ useSchemaOrg([
             </div>
         </section>
 
-        <LazySolutionsGrid />
+        <HomeEcosystem />
 
         <section class="ca-section pt-0">
             <div class="ca-container">
@@ -110,10 +110,10 @@ useSchemaOrg([
                     ref="ctaSection"
                     class="ca-card p-6 text-center sm:p-10"
                 >
-                    <h2 class="text-balance font-display text-3xl font-bold text-white sm:text-4xl">
+                    <h2 class="text-balance font-display text-3xl font-bold text-[var(--ca-text)] sm:text-4xl">
                         {{ t('home.readyCTA.title') }}
                     </h2>
-                    <p class="mx-auto mt-3 max-w-2xl text-sm text-slate-300 sm:text-base">
+                    <p class="mx-auto mt-3 max-w-2xl text-sm text-[var(--ca-muted)] sm:text-base">
                         {{ t('home.readyCTA.subtitle') }}
                     </p>
                     <div class="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
