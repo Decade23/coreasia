@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { LINKS, CONTACT, COMPANY } from '~/utils/constants'
+import { LINKS, COMPANY } from '~/utils/constants'
 import { getNavItems } from '~/utils/navigation'
 import { useCoreI18n } from '~/composables/useCoreI18n'
 import { useMagnetic } from '~/composables/useMagnetic'
@@ -153,7 +153,7 @@ const { style: magneticStyle } = useMagnetic(contactBtnRef, 0.3)
                         >
                         <span
                             class="block text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--ca-muted)] lg:text-[11px]"
-                            >{{ COMPANY.tagline }}</span
+                            >{{ t('components.brand.tagline') }}</span
                         >
                     </span>
                 </NuxtLink>
@@ -169,8 +169,8 @@ const { style: magneticStyle } = useMagnetic(contactBtnRef, 0.3)
                         :class="[
                             'rounded-lg px-3 py-2 text-sm font-semibold transition-colors',
                             isActive(item.to)
-                                ? 'bg-white/[0.08] text-brand-primary'
-                                : 'text-[var(--ca-muted)] hover:bg-white/5 hover:text-[var(--ca-text)]',
+                                ? 'bg-[var(--ca-kicker-bg)] text-brand-primary'
+                                : 'text-[var(--ca-muted)] hover:bg-[var(--ca-panel-bg-strong)] hover:text-[var(--ca-text)]',
                         ]"
                     >
                         {{ item.label }}
@@ -199,7 +199,7 @@ const { style: magneticStyle } = useMagnetic(contactBtnRef, 0.3)
 
                 <button
                     type="button"
-                    class="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-[color:var(--ca-border)] text-[var(--ca-muted)] transition hover:bg-white/5 hover:text-[var(--ca-text)] lg:hidden"
+                    class="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-[color:var(--ca-border)] text-[var(--ca-muted)] transition hover:bg-[var(--ca-panel-bg-strong)] hover:text-[var(--ca-text)] lg:hidden"
                     :aria-expanded="isMobileMenuOpen"
                     aria-controls="mobile-nav"
                     :aria-label="isMobileMenuOpen ? t('components.header.mobileMenuAriaClose') : t('components.header.mobileMenuAriaOpen')"
@@ -236,7 +236,7 @@ const { style: magneticStyle } = useMagnetic(contactBtnRef, 0.3)
                             :class="
                                 isActive(item.to)
                                     ? 'border-brand-primary/40 bg-brand-primary/10 text-brand-primary'
-                                    : 'border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] text-[var(--ca-text)] hover:bg-white/5'
+                                    : 'border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] text-[var(--ca-text)] hover:bg-[var(--ca-panel-bg-strong)]'
                             "
                             @click="closeMobileMenu"
                         >
@@ -272,7 +272,7 @@ const { style: magneticStyle } = useMagnetic(contactBtnRef, 0.3)
                     </div>
 
                     <p class="text-center text-xs text-[var(--ca-subtle)]">
-                        {{ t('components.header.responseTime') }}: {{ CONTACT.businessHours }}
+                        {{ t('components.header.responseTime') }}: {{ t('components.header.businessHours') }}
                     </p>
                 </div>
             </div>

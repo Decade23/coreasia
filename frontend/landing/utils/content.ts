@@ -634,6 +634,7 @@ const ID_CONTENT = {
   },
   // Legal pages
   legal: {
+    kicker: 'Legal',
     privacy: {
       title: 'Kebijakan Privasi',
       description: 'Kebijakan privasi CoreAsia menjelaskan bagaimana kami mengumpulkan, menggunakan, dan melindungi informasi pribadi Anda.',
@@ -814,12 +815,19 @@ const ID_CONTENT = {
   },
   // Components
   components: {
+    brand: {
+      tagline: 'Mitra Teknologi Strategis',
+    },
     header: {
       ariaLabel: 'Main Navigation',
       mobileMenuAriaOpen: 'Buka menu',
       mobileMenuAriaClose: 'Tutup menu',
       ctaText: 'Konsultasi',
       responseTime: 'Respon tim',
+      businessHours: 'Senin - Jumat, 09.00 - 17.00 WIB',
+    },
+    backToTop: {
+      ariaLabel: 'Kembali ke atas',
     },
     footer: {
       copyright: 'All rights reserved.',
@@ -847,6 +855,30 @@ const ID_CONTENT = {
     trustedBy: {
       ariaLabel: 'Trusted by partners',
       title: 'Trusted By',
+    },
+    liveTicker: {
+      stats: [
+        {
+          label: 'Sertifikasi Terproses',
+          value: '1.2M+',
+          icon: 'lucide:file-check',
+        },
+        {
+          label: 'Uptime Platform',
+          value: '99.99%',
+          icon: 'lucide:server',
+        },
+        {
+          label: 'Mitra Lembaga',
+          value: '500+',
+          icon: 'lucide:building',
+        },
+        {
+          label: 'Pengguna Aktif',
+          value: '50k+',
+          icon: 'lucide:users',
+        },
+      ],
     },
     serviceCard: {
       learnDetail: 'Pelajari Detail',
@@ -1507,6 +1539,7 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
     },
   },
   legal: {
+    kicker: 'Legal',
     privacy: {
       title: 'Privacy Policy',
       description:
@@ -1675,9 +1708,16 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
     },
   },
   components: {
+    brand: {
+      tagline: 'Strategic Technology Partner',
+    },
     header: {
       ctaText: 'Consult',
       responseTime: 'Team response',
+      businessHours: 'Monday - Friday, 09.00 - 17.00 WIB',
+    },
+    backToTop: {
+      ariaLabel: 'Back to top',
     },
     footer: {
       description:
@@ -1697,6 +1737,30 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
         { label: 'SaaS Subscription', to: '/pricing' },
         { label: 'Venture Partnership', to: '/solutions/venture' },
         { label: 'Enterprise Custom', to: '/contact?subject=enterprise' },
+      ],
+    },
+    liveTicker: {
+      stats: [
+        {
+          label: 'Certificates Processed',
+          value: '1.2M+',
+          icon: 'lucide:file-check',
+        },
+        {
+          label: 'Platform Uptime',
+          value: '99.99%',
+          icon: 'lucide:server',
+        },
+        {
+          label: 'Institution Partners',
+          value: '500+',
+          icon: 'lucide:building',
+        },
+        {
+          label: 'Active Users',
+          value: '50k+',
+          icon: 'lucide:users',
+        },
       ],
     },
   },

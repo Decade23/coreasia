@@ -34,7 +34,7 @@ const sections = computed(() => {
             </div>
 
             <div ref="heroSection" class="ca-container relative ca-section pb-8">
-                <span class="ca-kicker">Legal</span>
+                <span class="ca-kicker">{{ t('legal.kicker') }}</span>
                 <h1
                     class="mt-5 font-display text-4xl font-bold text-[var(--ca-text)] sm:text-5xl"
                 >

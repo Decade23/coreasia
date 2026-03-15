@@ -69,8 +69,12 @@
           :key="option.value"
           :class="[
             'relative cursor-pointer select-none py-2.5 pl-4 pr-9 transition-colors',
-            highlightedIndex === index ? 'bg-white/5 text-amber-300' : 'text-[var(--ca-muted)]',
-            option.value === modelValue ? 'font-medium text-amber-300 bg-white/[0.02]' : 'font-normal'
+            highlightedIndex === index
+              ? 'bg-[var(--ca-panel-bg-strong)] text-[var(--ca-text)]'
+              : 'text-[var(--ca-muted)]',
+            option.value === modelValue
+              ? 'bg-[var(--ca-kicker-bg)] font-medium text-amber-300'
+              : 'font-normal'
           ]"
           @click="selectOption(option)"
           @mouseenter="highlightedIndex = index"

@@ -673,7 +673,7 @@ const handleSubmit = async () => {
                                         :error="errors.confirmPassword"
                                     />
                                     <p
-                                        v-else-if="form.confirmPassword && form.password === form.confirmPassword"
+                                        v-if="form.confirmPassword && form.password === form.confirmPassword"
                                         class="mt-1 text-xs text-emerald-300"
                                     >
                                         <Icon name="lucide:check" class="mr-0.5 inline h-3 w-3" />

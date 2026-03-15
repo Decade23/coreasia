@@ -81,7 +81,7 @@ const handleMouseLeave = (index: number) => {
                     :key="solution.title"
                     :ref="(el) => setCardRef(el, index)"
                     :to="solution.to"
-                    class="ca-card-soft group relative overflow-hidden p-5 transition hover:border-white/20"
+                    class="ca-card-soft group relative overflow-hidden p-5 transition hover:border-amber-300/25"
                     @mousemove="handleMouseMove(index, $event)"
                     @mouseleave="handleMouseLeave(index)"
                 >
@@ -94,7 +94,7 @@ const handleMouseLeave = (index: number) => {
                     />
 
                     <div
-                        class="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-white/[0.05]"
+                        class="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg-strong)]"
                     >
                         <Icon
                             :name="solution.icon"
@@ -103,7 +103,7 @@ const handleMouseLeave = (index: number) => {
                     </div>
 
                     <h3
-                        class="mt-4 text-lg font-display font-semibold text-white"
+                        class="mt-4 text-lg font-display font-semibold text-[var(--ca-text)]"
                     >
                         {{ solution.title }}
                         <span 
@@ -114,7 +114,7 @@ const handleMouseLeave = (index: number) => {
                         </span>
                     </h3>
 
-                    <p class="mt-2 text-sm leading-relaxed text-slate-300">
+                    <p class="mt-2 text-sm leading-relaxed text-[var(--ca-muted)]">
                         {{ solution.description }}
                     </p>
 
@@ -122,7 +122,7 @@ const handleMouseLeave = (index: number) => {
                         <li
                             v-for="feature in (solution.features || [])"
                             :key="feature"
-                            class="flex items-center gap-2 text-sm text-slate-400"
+                            class="flex items-center gap-2 text-sm text-[var(--ca-muted)]"
                         >
                             <Icon
                                 name="lucide:check"

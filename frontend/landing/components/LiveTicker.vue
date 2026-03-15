@@ -1,14 +1,13 @@
 <script setup lang="ts">
-const stats = [
-    { label: 'Sertifikasi Terproses', value: '1.2M+', icon: 'lucide:file-check' },
-    { label: 'Uptime Platform', value: '99.99%', icon: 'lucide:server' },
-    { label: 'Mitra Lembaga', value: '500+', icon: 'lucide:building' },
-    { label: 'User Aktif', value: '50k+', icon: 'lucide:users' },
-]
+const { t } = useCoreI18n()
+
+const stats = computed(
+    () => (t('components.liveTicker.stats') as Array<{ label: string; value: string; icon: string }>) || [],
+)
 </script>
 
 <template>
-    <div class="border-y border-white/5 bg-white/[0.02] py-4">
+    <div class="border-y border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] py-4">
         <div class="ca-container overflow-hidden">
             <div class="flex animate-marquee items-center gap-12 whitespace-nowrap">
                 <!-- Duplicate content for seamless loop -->
@@ -22,8 +21,8 @@ const stats = [
                             <Icon :name="stat.icon" class="h-4 w-4 text-emerald-400" />
                         </div>
                         <div class="flex flex-col">
-                            <span class="text-sm font-bold text-white">{{ stat.value }}</span>
-                            <span class="text-xs font-medium text-slate-400">{{ stat.label }}</span>
+                            <span class="text-sm font-bold text-[var(--ca-text)]">{{ stat.value }}</span>
+                            <span class="text-xs font-medium text-[var(--ca-muted)]">{{ stat.label }}</span>
                         </div>
                     </div>
                 </div>

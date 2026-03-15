@@ -193,7 +193,8 @@ const leadership = computed(() => t('about.leadership') as Record<string, any>)
                 <div ref="timelineGrid" class="relative">
                     <!-- Timeline line (desktop) -->
                     <div
-                        class="absolute left-0 right-0 top-12 mx-auto hidden h-[2px] bg-gradient-to-r from-slate-600 via-amber-400 to-emerald-400 md:block lg:left-1/2 lg:h-96 lg:w-0 lg:transform lg:-translate-x-1/2"
+                        class="absolute left-0 right-0 top-12 mx-auto hidden h-[2px] md:block lg:left-1/2 lg:h-96 lg:w-0 lg:transform lg:-translate-x-1/2"
+                        style="background: linear-gradient(to right, var(--ca-subtle) 0%, rgba(251,191,36,0.95) 50%, rgba(16,185,129,0.95) 100%);"
                     />
 
                     <!-- Timeline items -->
@@ -206,12 +207,14 @@ const leadership = computed(() => t('about.leadership') as Record<string, any>)
                         >
                             <!-- Timeline dot (mobile) -->
                             <div
-                                class="absolute left-0 top-3 hidden h-2 w-full bg-gradient-to-r from-slate-600 via-amber-400 to-emerald-400 md:left-1/2 md:top-4 md:block md:h-2 md:w-8 md:transform md:-translate-x-1/2"
+                                class="absolute left-0 top-3 hidden h-2 w-full md:left-1/2 md:top-4 md:block md:h-2 md:w-8 md:transform md:-translate-x-1/2"
+                                style="background: linear-gradient(to right, var(--ca-subtle) 0%, rgba(251,191,36,0.95) 50%, rgba(16,185,129,0.95) 100%);"
                             />
 
                             <!-- Timeline dot center -->
                             <div
-                                class="absolute left-0 top-3 hidden h-3 w-3 rounded-full border-2 border-slate-900 bg-gradient-to-br from-slate-600 via-amber-400 to-emerald-400 md:left-1/2 md:top-3 md:block md:h-4 md:w-4 md:transform md:-translate-x-1/2 md:border-slate-900 md:border-2"
+                                class="absolute left-0 top-3 hidden h-3 w-3 rounded-full border-2 md:left-1/2 md:top-3 md:block md:h-4 md:w-4 md:transform md:-translate-x-1/2 md:border-2"
+                                style="border-color: var(--ca-surface); background: linear-gradient(135deg, var(--ca-subtle) 0%, rgba(251,191,36,0.95) 50%, rgba(16,185,129,0.95) 100%);"
                             />
 
                             <!-- Content -->

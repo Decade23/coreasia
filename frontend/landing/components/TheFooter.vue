@@ -13,7 +13,7 @@ const partnershipLinks = computed(() => (t('components.footer.partnershipLinks')
         <div class="ca-container py-10 sm:py-12">
             <div class="grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.45fr_1fr_1fr_1fr]">
                 <div class="space-y-4">
-                    <NuxtLink to="/" class="inline-flex items-center gap-3" aria-label="CoreAsia Home">
+                    <NuxtLink to="/" class="inline-flex items-center gap-3" :aria-label="t('nav.home')">
                         <span class="inline-flex h-10 w-10 items-center justify-center">
                             <NuxtImg
                                 src="/logo.svg"
@@ -30,7 +30,7 @@ const partnershipLinks = computed(() => (t('components.footer.partnershipLinks')
                                 {{ COMPANY.name }}
                             </span>
                             <span class="block text-xs uppercase tracking-[0.14em] text-[var(--ca-muted)]">
-                                {{ COMPANY.tagline }}
+                                {{ t('components.brand.tagline') }}
                             </span>
                         </span>
                     </NuxtLink>
