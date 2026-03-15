@@ -10,8 +10,8 @@ export const getNavItems = (locale: string = 'id'): NavItem[] => {
 
   return [
     { label: content.nav.home, to: '/' },
-    { label: content.nav.products, to: '/#products' },
-    { label: content.nav.partnerships, to: '/#engagement-models' },
+    { label: content.nav.products, to: '/products' },
+    { label: content.nav.partnerships, to: '/partnerships' },
     { label: content.nav.pricing, to: '/pricing' },
     { label: content.nav.about, to: '/about' },
   ]

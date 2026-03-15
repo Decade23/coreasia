@@ -154,6 +154,95 @@ const ID_CONTENT = {
     },
   },
   // About page
+  productsPage: {
+    title: 'Produk CoreAsia - LMS, Pantau, dan LeadKu',
+    description:
+      'Jelajahi katalog produk CoreAsia untuk sertifikasi digital, monitoring website, dan CRM yang dirancang agar operasional lebih cepat dan siap scale.',
+    hero: {
+      kicker: 'Product Catalog',
+      title: 'Temukan <span class="ca-gradient-text">produk CoreAsia</span> yang paling cocok untuk operasi digital Anda.',
+      subtitle:
+        'Setiap produk CoreAsia dibangun untuk masalah operasional yang berbeda, tetapi tetap dirancang agar bisa berkembang dalam ekosistem yang saling melengkapi.',
+      ctaPrimary: 'Diskusikan Kebutuhan',
+      ctaSecondary: 'Lihat Pricing',
+      chips: ['Certification LMS', 'Website Monitoring', 'Sales CRM'],
+    },
+    highlights: {
+      title: 'Cara cepat memilih produk yang tepat',
+      items: [
+        {
+          title: 'Pilih berdasarkan bottleneck utama',
+          description:
+            'Jika masalah Anda ada di sertifikasi, monitoring performa web, atau pipeline sales, mulai dari produk yang langsung menyentuh bottleneck itu.',
+          icon: 'lucide:target',
+        },
+        {
+          title: 'Mulai lean, scale bertahap',
+          description:
+            'Produk dirancang agar Anda bisa mulai dari kebutuhan paling mendesak tanpa memaksa build yang terlalu besar di awal.',
+          icon: 'lucide:rocket',
+        },
+        {
+          title: 'Siapkan jalur integrasi berikutnya',
+          description:
+            'Saat kebutuhan bertumbuh, CoreAsia bisa diteruskan ke model enterprise atau partnership yang lebih kompleks.',
+          icon: 'lucide:git-branch-plus',
+        },
+      ],
+    },
+    cta: {
+      title: 'Masih ingin membandingkan opsi yang paling realistis?',
+      subtitle:
+        'Ceritakan konteks operasional, target revenue, atau alur kerja tim Anda. Kami bantu arahkan ke produk yang paling masuk akal.',
+      ctaPrimary: 'Hubungi Tim CoreAsia',
+      ctaSecondary: 'WhatsApp',
+    },
+  },
+  partnershipsPage: {
+    title: 'Model Kerja Sama CoreAsia - SaaS, Venture, dan Enterprise',
+    description:
+      'Pahami model kerja sama CoreAsia untuk berlangganan SaaS, venture partnership, dan enterprise delivery sesuai stage bisnis dan kompleksitas operasional.',
+    hero: {
+      kicker: 'Engagement Models',
+      title: 'Pilih <span class="ca-gradient-text">model kerja sama</span> yang paling realistis untuk stage bisnis Anda.',
+      subtitle:
+        'CoreAsia tidak memaksa semua kebutuhan masuk ke pola delivery yang sama. Setiap model dirancang untuk menyeimbangkan kecepatan launch, beban investasi, dan ruang bertumbuh.',
+      ctaPrimary: 'Konsultasi Strategis',
+      ctaSecondary: 'Lihat Produk',
+      chips: ['Subscription SaaS', 'Venture Partnership', 'Enterprise Delivery'],
+    },
+    principles: {
+      title: 'Kerangka memilih model kerja sama',
+      items: [
+        {
+          title: 'Kecepatan launch',
+          description:
+            'Jika Anda ingin go-live cepat dengan risiko delivery yang lebih rendah, model SaaS biasanya paling efisien.',
+          icon: 'lucide:gauge',
+        },
+        {
+          title: 'Kesiapan monetisasi',
+          description:
+            'Jika bisnis punya akses market tetapi ingin menekan biaya teknologi di awal, venture partnership bisa lebih relevan.',
+          icon: 'lucide:hand-coins',
+        },
+        {
+          title: 'Kompleksitas operasional',
+          description:
+            'Jika kebutuhan Anda menyentuh integrasi, workflow khusus, atau compliance, jalur enterprise lebih tepat dibanding paket generik.',
+          icon: 'lucide:building-2',
+        },
+      ],
+    },
+    cta: {
+      title: 'Perlu bantuan menentukan model delivery yang tepat?',
+      subtitle:
+        'Kami bisa bantu memetakan apakah kebutuhan Anda lebih cocok masuk ke SaaS subscription, venture, atau enterprise execution.',
+      ctaPrimary: 'Diskusikan Model Kerja Sama',
+      ctaSecondary: 'WhatsApp',
+    },
+  },
+  // About page
   about: {
     title: 'Tentang Kami - Strategic Technology Partner',
     description:
@@ -1263,6 +1352,94 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
         'Tell us where your business is heading. We will help map the most realistic path for implementation, launch, and the next stage of growth.',
       ctaPrimary: 'Book a Consultation',
       ctaSecondary: 'Chat via WhatsApp',
+    },
+  },
+  productsPage: {
+    title: 'CoreAsia Products - LMS, Pantau, and LeadKu',
+    description:
+      'Explore CoreAsia products for digital certification, website monitoring, and CRM workflows built to help teams move faster and scale cleanly.',
+    hero: {
+      kicker: 'Product Catalog',
+      title: 'Find the <span class="ca-gradient-text">CoreAsia product</span> that best fits your digital operations.',
+      subtitle:
+        'Each CoreAsia product focuses on a different operational problem, while still being designed to grow as part of a connected ecosystem.',
+      ctaPrimary: 'Discuss Your Needs',
+      ctaSecondary: 'View Pricing',
+      chips: ['Certification LMS', 'Website Monitoring', 'Sales CRM'],
+    },
+    highlights: {
+      title: 'A faster way to choose the right product',
+      items: [
+        {
+          title: 'Start from the main bottleneck',
+          description:
+            'If your bottleneck sits in certification, website visibility, or sales pipeline execution, begin with the product that directly addresses it.',
+          icon: 'lucide:target',
+        },
+        {
+          title: 'Launch lean, scale in stages',
+          description:
+            'The products are designed so you can start with the most urgent operational need without overbuilding too early.',
+          icon: 'lucide:rocket',
+        },
+        {
+          title: 'Keep the next integration path open',
+          description:
+            'As the business grows, CoreAsia can extend into enterprise delivery or a broader partnership model when needed.',
+          icon: 'lucide:git-branch-plus',
+        },
+      ],
+    },
+    cta: {
+      title: 'Still comparing which option is the most realistic?',
+      subtitle:
+        'Share your workflow, revenue target, or team context and we will help point you to the product with the strongest fit.',
+      ctaPrimary: 'Contact CoreAsia',
+      ctaSecondary: 'WhatsApp',
+    },
+  },
+  partnershipsPage: {
+    title: 'CoreAsia Engagement Models - SaaS, Venture, and Enterprise',
+    description:
+      'Understand CoreAsia engagement models for SaaS subscription, venture partnership, and enterprise delivery based on business stage and operational complexity.',
+    hero: {
+      kicker: 'Engagement Models',
+      title: 'Choose the <span class="ca-gradient-text">engagement model</span> that fits your business stage realistically.',
+      subtitle:
+        'CoreAsia does not force every client into the same delivery structure. Each model balances launch speed, upfront investment, and room to grow.',
+      ctaPrimary: 'Strategic Consultation',
+      ctaSecondary: 'View Products',
+      chips: ['Subscription SaaS', 'Venture Partnership', 'Enterprise Delivery'],
+    },
+    principles: {
+      title: 'A simple framework to choose the right model',
+      items: [
+        {
+          title: 'Launch speed',
+          description:
+            'If you want to go live quickly with lower delivery risk, the SaaS model is usually the most efficient starting point.',
+          icon: 'lucide:gauge',
+        },
+        {
+          title: 'Monetization readiness',
+          description:
+            'If the business has market access but wants to reduce early technology burden, venture partnership may be more relevant.',
+          icon: 'lucide:hand-coins',
+        },
+        {
+          title: 'Operational complexity',
+          description:
+            'If your needs involve integration, custom workflow design, or compliance, enterprise delivery is often the better fit.',
+          icon: 'lucide:building-2',
+        },
+      ],
+    },
+    cta: {
+      title: 'Need help choosing the right delivery model?',
+      subtitle:
+        'We can help map whether your current need is better served by SaaS subscription, venture, or enterprise execution.',
+      ctaPrimary: 'Discuss Engagement Options',
+      ctaSecondary: 'WhatsApp',
     },
   },
   about: {
