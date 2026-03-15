@@ -81,7 +81,7 @@ const leadership = computed(() => t('about.leadership') as Record<string, any>)
                     <span ref="heroKicker" class="ca-kicker">
                         <Icon
                             name="lucide:sparkles"
-                            class="h-3.5 w-3.5 text-amber-300"
+                            class="h-3.5 w-3.5 ca-tone-gold"
                         />
                         {{ t('about.kicker') }}
                     </span>
@@ -160,14 +160,14 @@ const leadership = computed(() => t('about.leadership') as Record<string, any>)
                         >
                             <Icon
                                 :name="value.icon"
-                                class="h-6 w-6 text-amber-300 transition-colors duration-300 group-hover:text-amber-200"
+                                class="h-6 w-6 ca-tone-gold transition-colors duration-300 group-hover:opacity-80"
                             />
                         </div>
 
                         <!-- Content -->
                         <div class="relative z-10">
                             <h3
-                                class="mt-4 text-lg font-display font-bold text-[var(--ca-text)] transition-colors duration-300 group-hover:text-amber-200"
+                                class="mt-4 text-lg font-display font-bold text-[var(--ca-text)] transition-colors duration-300 group-hover:opacity-90"
                             >
                                 {{ value.title }}
                             </h3>
@@ -225,7 +225,7 @@ const leadership = computed(() => t('about.leadership') as Record<string, any>)
                                 >
                                     <Icon
                                         :name="item.icon"
-                                        class="h-5 w-5 text-amber-300"
+                                        class="h-5 w-5 ca-tone-gold"
                                     />
                                 </div>
 

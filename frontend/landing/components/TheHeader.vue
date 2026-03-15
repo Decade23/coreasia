@@ -249,13 +249,8 @@ const { style: magneticStyle } = useMagnetic(contactBtnRef, 0.3)
                         </NuxtLink>
                     </nav>
 
-                    <div class="rounded-2xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-3">
-                        <p class="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--ca-subtle)]">
-                            {{ t('components.themeToggle.label') }}
-                        </p>
-                        <div class="mt-3">
-                            <ThemeToggle />
-                        </div>
+                    <div class="flex justify-center rounded-2xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-3">
+                        <ThemeToggle />
                     </div>
 
                     <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">

@@ -246,12 +246,12 @@ const ID_CONTENT = {
   about: {
     title: 'Tentang Kami - Strategic Technology Partner',
     description:
-      'Mengenal lebih dekat CoreAsia — mitra transformasi digital untuk lembaga pendidikan, bisnis berbasis layanan, dan product ecosystem yang sedang bertumbuh.',
+      'Mengenal lebih dekat CoreAsia yang sedang membangun fondasi sebagai strategic technology partner untuk produk digital, sertifikasi, dan kebutuhan operasional yang ingin tumbuh rapi.',
     kicker: 'Our Vision',
     hero: {
       title: 'Building <span class="ca-gradient-text">Digital Infrastructure for Future</span>',
       subtitle:
-        'CoreAsia berkembang dari pengalaman di sektor sertifikasi menjadi mitra teknologi untuk organisasi yang ingin membangun operasi digital yang lebih siap scale.',
+        'CoreAsia sedang berada pada fase awal untuk membangun product ecosystem yang fokus pada sertifikasi digital, monitoring web, CRM, dan delivery model yang realistis untuk bertumbuh.',
       ctaPrimary: 'Hubungi Kami',
       ctaSecondary: 'WhatsApp',
     },
@@ -281,41 +281,42 @@ const ID_CONTENT = {
       ],
     },
     journey: {
-      title: 'Perjalanan Kami',
-      subtitle: 'Evolusi dari Training Center hingga Product Ecosystem Builder',
+      title: 'Arah yang Sedang Kami Bangun',
+      subtitle: 'Bukan sejarah panjang yang dibuat-buat, tetapi roadmap yang sedang kami kerjakan dengan sengaja.',
       events: [
         {
-          year: '2020',
-          title: 'Training Center Foundation',
-          description: 'Dimulai sebagai pusat pelatihan teknologi dengan fokus pada sertifikasi digital.',
+          year: 'Mulai',
+          title: 'Founding Stage',
+          description: 'CoreAsia baru memulai dengan fokus membangun fondasi brand, delivery flow, dan positioning produk yang jelas.',
+          icon: 'lucide:sprout',
+        },
+        {
+          year: 'Fokus',
+          title: 'Flagship Product Validation',
+          description: 'CoreAsia LMS menjadi pijakan awal untuk memvalidasi kebutuhan pasar, workflow, dan kualitas operasional.',
           icon: 'lucide:graduation-cap',
         },
         {
-          year: '2022',
-          title: 'Technology Integration',
-          description: 'Pengembangan sistem manajemen pembelajaran pertama untuk internal use.',
-          icon: 'lucide:cpu',
+          year: 'Bangun',
+          title: 'Product Ecosystem Rollout',
+          description: 'Pantau dan LeadKu disiapkan bertahap agar CoreAsia berkembang sebagai product ecosystem, bukan satu produk tunggal.',
+          icon: 'lucide:boxes',
         },
         {
-          year: '2024',
-          title: 'SaaS Platform Launch',
-          description: 'Meluncurkan platform SaaS LMS untuk lembaga sertifikasi di seluruh Indonesia.',
-          icon: 'lucide:rocket',
-        },
-        {
-          year: '2026',
-          title: 'Product Ecosystem Expansion',
-          description: 'CoreAsia berkembang menjadi ekosistem produk dan partner teknologi untuk bisnis yang ingin scale.',
-          icon: 'lucide:building-2',
+          year: 'Scale',
+          title: 'Strategic Partnership Expansion',
+          description: 'Setelah fondasi produk kuat, CoreAsia diarahkan ke venture collaboration dan enterprise execution yang lebih matang.',
+          icon: 'lucide:handshake',
         },
       ],
     },
     leadership: {
       title: 'Leadership',
-      subtitle: 'Visi yang Dipimpin oleh Teknologi',
+      subtitle: 'Founder-led execution with realistic product thinking',
       name: 'Dedi - Founder & Principal Tech Lead',
-      description: 'Teknologi enthusiast dengan visi untuk mengintegrasikan pendidikan dengan solusi SaaS yang cutting-edge.',
-      chips: ['10+ Years Experience', 'SaaS Architecture', 'Education Technology'],
+      description:
+        'CoreAsia dibangun langsung oleh founder yang fokus menyusun fondasi produk, sistem delivery, dan monetisasi dengan ritme yang realistis, bukan sekadar terlihat besar di permukaan.',
+      chips: ['Founder-Led', 'Product Strategy', 'Execution-First'],
     },
     readyCTA: {
       title: 'Siap Transformasi Operasional Digital Anda?',
@@ -1445,11 +1446,11 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
   about: {
     title: 'About Us - Strategic Technology Partner',
     description:
-      'Get to know CoreAsia as a strategic technology partner for certification, digital operations, and scalable product delivery.',
+      'Get to know CoreAsia as an early-stage strategic technology partner building the foundation for digital products, certification workflows, and operational systems that can scale cleanly.',
     hero: {
       title: 'Building <span class="ca-gradient-text">digital infrastructure for the future</span>',
       subtitle:
-        'CoreAsia grew from hands-on work in certification operations into a technology partner for organizations that need cleaner execution and room to scale.',
+        'CoreAsia is in its early stage of building a product ecosystem focused on digital certification, website monitoring, CRM, and realistic delivery models for growth.',
       ctaPrimary: 'Contact Us',
       ctaSecondary: 'WhatsApp',
     },
@@ -1479,42 +1480,42 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
       ],
     },
     journey: {
-      title: 'Our Journey',
-      subtitle: 'From training operations to product ecosystem builder',
+      title: 'What We Are Building Now',
+      subtitle: 'Not an inflated company history, but a roadmap we are intentionally building step by step.',
       events: [
         {
-          year: '2020',
-          title: 'Training Center Foundation',
-          description: 'Started as a technology training center with a strong focus on digital certification.',
+          year: 'Start',
+          title: 'Founding Stage',
+          description: 'CoreAsia is starting by building a clear brand foundation, delivery rhythm, and sharper product positioning.',
+          icon: 'lucide:sprout',
+        },
+        {
+          year: 'Focus',
+          title: 'Flagship Product Validation',
+          description: 'CoreAsia LMS acts as the first proving ground for workflow quality, market fit, and delivery discipline.',
           icon: 'lucide:graduation-cap',
         },
         {
-          year: '2022',
-          title: 'Technology Integration',
-          description: 'Built the first internal learning management workflows to support operational delivery.',
-          icon: 'lucide:cpu',
+          year: 'Build',
+          title: 'Product Ecosystem Rollout',
+          description: 'Pantau and LeadKu are being prepared in stages so CoreAsia grows as a real product ecosystem, not a single-product story.',
+          icon: 'lucide:boxes',
         },
         {
-          year: '2024',
-          title: 'SaaS Platform Launch',
-          description: 'Launched LMS delivery for certification bodies and training organizations across Indonesia.',
-          icon: 'lucide:rocket',
-        },
-        {
-          year: '2026',
-          title: 'Product Ecosystem Expansion',
-          description: 'Expanded into a broader product ecosystem and strategic technology partnership model.',
-          icon: 'lucide:building-2',
+          year: 'Scale',
+          title: 'Strategic Partnership Expansion',
+          description: 'Once the product foundation is stronger, CoreAsia will expand into more mature venture collaboration and enterprise execution.',
+          icon: 'lucide:handshake',
         },
       ],
     },
     leadership: {
       title: 'Leadership',
-      subtitle: 'Technology-led direction with pragmatic execution',
+      subtitle: 'Founder-led direction with pragmatic execution',
       name: 'Dedi - Founder & Principal Tech Lead',
       description:
-        'A product-minded tech lead focused on turning operational complexity into scalable systems and monetizable digital products.',
-      chips: ['10+ Years Experience', 'SaaS Architecture', 'Education Technology'],
+        'CoreAsia is being built directly by its founder with a focus on product foundation, delivery quality, and realistic monetization instead of performative scale.',
+      chips: ['Founder-Led', 'Product Strategy', 'Execution-First'],
     },
     readyCTA: {
       title: 'Ready to strengthen your digital operations?',

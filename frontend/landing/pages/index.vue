@@ -6,6 +6,7 @@ const { t } = useCoreI18n()
 const { useReveal } = useScrollReveal()
 
 const ctaSection = useReveal('scaleUp')
+const featuredProducts = computed(() => ((t('home.products.items') as Array<Record<string, any>>) || []).slice(0, 3))
 
 useCoreSeo({
     title: t('home.title') as string,
@@ -82,6 +83,45 @@ useSchemaOrg([
                             <Icon name="lucide:message-circle" class="h-4 w-4" />
                             {{ t('home.hero.ctaSecondary') }}
                         </a>
+                    </div>
+
+                    <div class="mt-6 animate-fade-in-up delay-350">
+                        <p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-[var(--ca-subtle)]">
+                            {{ t('home.products.kicker') }}
+                        </p>
+                        <div class="mt-3 grid gap-3 text-left sm:grid-cols-3">
+                            <NuxtLink
+                                v-for="(product, index) in featuredProducts"
+                                :key="product.name"
+                                :to="product.to"
+                                class="ca-card-soft group rounded-2xl p-4 transition hover:-translate-y-0.5 hover:border-[color:var(--ca-gold-border)]"
+                            >
+                                <div class="flex items-start justify-between gap-3">
+                                    <div class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg-strong)]">
+                                        <Icon
+                                            :name="index === 0 ? 'lucide:graduation-cap' : index === 1 ? 'lucide:bar-chart-3' : 'lucide:briefcase-business'"
+                                            class="h-4.5 w-4.5"
+                                            :class="index === 1 ? 'ca-tone-emerald' : 'ca-tone-gold'"
+                                        />
+                                    </div>
+                                    <span class="ca-pill-gold px-2.5 py-1 text-[0.62rem] font-bold uppercase tracking-[0.12em]">
+                                        {{ product.badge }}
+                                    </span>
+                                </div>
+
+                                <h3 class="mt-4 text-base font-display font-semibold text-[var(--ca-text)]">
+                                    {{ product.name }}
+                                </h3>
+                                <p class="mt-2 text-sm leading-relaxed text-[var(--ca-muted)]">
+                                    {{ product.description }}
+                                </p>
+
+                                <span class="mt-4 inline-flex items-center gap-1 text-sm font-semibold ca-tone-gold">
+                                    {{ product.ctaLabel }}
+                                    <Icon name="lucide:arrow-right" class="h-4 w-4 transition group-hover:translate-x-0.5" />
+                                </span>
+                            </NuxtLink>
+                        </div>
                     </div>
 
                     <p class="mt-4 text-xs font-medium text-[var(--ca-subtle)] animate-fade-in delay-400">

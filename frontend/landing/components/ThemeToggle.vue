@@ -23,12 +23,6 @@ const options = computed<ThemeOption[]>(() => [
   },
 ])
 
-const currentLabel = computed(() =>
-  isLightTheme.value
-    ? (t('components.themeToggle.light') as string)
-    : (t('components.themeToggle.dark') as string),
-)
-
 const nextAriaLabel = computed(() =>
   isLightTheme.value
     ? (t('components.themeToggle.switchToDark') as string)
@@ -55,43 +49,18 @@ const toggleTheme = () => {
 </script>
 
 <template>
-  <div class="inline-flex items-center gap-3">
-    <button
-      type="button"
-      class="relative inline-flex h-11 w-20 items-center rounded-full border border-[color:var(--ca-border)] bg-[var(--ca-toggle-track)] p-1 shadow-sm transition hover:border-[color:var(--ca-gold-border)] hover:bg-[var(--ca-panel-bg-strong)]"
-      :aria-label="nextAriaLabel"
-      :aria-pressed="isLightTheme"
-      :disabled="isSwitching"
-      @click="toggleTheme"
-    >
-      <span
-        class="absolute left-1 top-1 inline-flex h-9 w-9 items-center justify-center rounded-full border border-[color:var(--ca-border)] bg-[var(--ca-toggle-thumb)] text-[var(--ca-text)] shadow-[var(--ca-toggle-thumb-shadow)] transition-transform duration-300"
-        :class="isLightTheme ? 'translate-x-9' : 'translate-x-0'"
-      >
-        <Icon :name="isLightTheme ? options[1]?.icon : options[0]?.icon" class="h-4 w-4" />
-      </span>
-
-      <span class="flex w-full items-center justify-between px-2">
-        <Icon
-          :name="options[0]?.icon"
-          class="h-4 w-4 transition"
-          :class="isLightTheme ? 'text-[var(--ca-subtle)] opacity-55' : 'ca-tone-gold opacity-100'"
-        />
-        <Icon
-          :name="options[1]?.icon"
-          class="h-4 w-4 transition"
-          :class="isLightTheme ? 'ca-tone-gold opacity-100' : 'text-[var(--ca-subtle)] opacity-55'"
-        />
-      </span>
-    </button>
-
-    <div class="hidden min-w-[4.5rem] text-left leading-none sm:block">
-      <p class="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-[var(--ca-subtle)]">
-        {{ t('components.themeToggle.label') }}
-      </p>
-      <p class="mt-1 text-xs font-semibold text-[var(--ca-text)]">
-        {{ currentLabel }}
-      </p>
-    </div>
-  </div>
+  <button
+    type="button"
+    class="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-full border border-[color:var(--ca-border)] bg-[var(--ca-toggle-track)] text-[var(--ca-text)] shadow-[var(--ca-toggle-thumb-shadow)] transition hover:-translate-y-0.5 hover:border-[color:var(--ca-gold-border)] hover:bg-[var(--ca-panel-bg-strong)] disabled:cursor-not-allowed disabled:opacity-60"
+    :aria-label="nextAriaLabel"
+    :aria-pressed="isLightTheme"
+    :disabled="isSwitching"
+    @click="toggleTheme"
+  >
+    <Icon
+      :name="isLightTheme ? options[1]?.icon : options[0]?.icon"
+      class="h-4.5 w-4.5"
+      :class="isLightTheme ? 'ca-tone-gold' : 'text-[var(--ca-text)]'"
+    />
+  </button>
 </template>
