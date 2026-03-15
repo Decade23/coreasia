@@ -1,5 +1,36 @@
 <script setup lang="ts">
+import {
+  DEFAULT_THEME,
+  SYSTEM_THEME_MEDIA_QUERY,
+  THEME_COOKIE_KEY,
+  THEME_QUERY_KEY,
+} from '~/composables/useCoreTheme'
+
 const { theme } = useCoreTheme()
+const themeBootstrapScript = `(() => {
+  try {
+    const allowedThemes = ['dark', 'light']
+    const queryTheme = new URLSearchParams(window.location.search).get('${THEME_QUERY_KEY}')
+    const cookieTheme = document.cookie
+      .split('; ')
+      .find((entry) => entry.startsWith('${THEME_COOKIE_KEY}='))
+      ?.split('=')
+      .slice(1)
+      .join('=')
+    const storedTheme = cookieTheme ? decodeURIComponent(cookieTheme) : null
+    const resolvedTheme = allowedThemes.includes(queryTheme ?? '')
+      ? queryTheme
+      : allowedThemes.includes(storedTheme ?? '')
+        ? storedTheme
+        : window.matchMedia('${SYSTEM_THEME_MEDIA_QUERY}').matches
+          ? 'dark'
+          : 'light'
+
+    document.documentElement.setAttribute('data-theme', resolvedTheme || '${DEFAULT_THEME}')
+  } catch (_error) {
+    document.documentElement.setAttribute('data-theme', '${DEFAULT_THEME}')
+  }
+})()`
 
 useHead(() => ({
   htmlAttrs: {
@@ -9,6 +40,13 @@ useHead(() => ({
     {
       name: 'theme-color',
       content: theme.value === 'light' ? '#f6f1e8' : '#050814',
+    },
+  ],
+  script: [
+    {
+      key: 'coreasia-theme-bootstrap',
+      tagPosition: 'head',
+      innerHTML: themeBootstrapScript,
     },
   ],
 }))

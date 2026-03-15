@@ -1,8 +1,10 @@
-import { computed, watch } from 'vue'
+import { computed, onMounted, type Ref, watch } from 'vue'
 
 export const THEME_QUERY_KEY = 'theme'
+export const THEME_COOKIE_KEY = 'coreasia-theme'
 export const DEFAULT_THEME = 'dark'
 export const THEMES = ['dark', 'light'] as const
+export const SYSTEM_THEME_MEDIA_QUERY = '(prefers-color-scheme: dark)'
 
 type CoreTheme = (typeof THEMES)[number]
 
@@ -10,16 +12,52 @@ const isSupportedTheme = (value: unknown): value is CoreTheme => {
   return typeof value === 'string' && THEMES.includes(value as CoreTheme)
 }
 
+const getThemeFromRoute = (value: unknown): CoreTheme | null => {
+  const routeTheme = Array.isArray(value) ? value[0] : value
+  return isSupportedTheme(routeTheme) ? routeTheme : null
+}
+
+const getSystemTheme = (): CoreTheme => {
+  return window.matchMedia(SYSTEM_THEME_MEDIA_QUERY).matches ? 'dark' : 'light'
+}
+
+let hasAttachedSystemThemeListener = false
+
+const syncSystemTheme = (systemTheme: Ref<CoreTheme | null>) => {
+  if (!import.meta.client) {
+    return
+  }
+
+  systemTheme.value = getSystemTheme()
+
+  if (hasAttachedSystemThemeListener) {
+    return
+  }
+
+  const mediaQuery = window.matchMedia(SYSTEM_THEME_MEDIA_QUERY)
+  const handleChange = (event: MediaQueryListEvent) => {
+    systemTheme.value = event.matches ? 'dark' : 'light'
+  }
+
+  mediaQuery.addEventListener('change', handleChange)
+  hasAttachedSystemThemeListener = true
+}
+
 export const useCoreTheme = () => {
   const route = useRoute()
-  const themeCookie = useCookie<CoreTheme>('coreasia-theme', {
-    default: () => DEFAULT_THEME,
+  const themeCookie = useCookie<CoreTheme | null>(THEME_COOKIE_KEY, {
+    default: () => null,
+  })
+  const systemTheme = useState<CoreTheme | null>('coreasia-system-theme', () => null)
+
+  onMounted(() => {
+    syncSystemTheme(systemTheme)
   })
 
   watch(
     () => route.query[THEME_QUERY_KEY],
     (value) => {
-      const queryTheme = Array.isArray(value) ? value[0] : value
+      const queryTheme = getThemeFromRoute(value)
       if (isSupportedTheme(queryTheme)) {
         themeCookie.value = queryTheme
       }
@@ -29,18 +67,24 @@ export const useCoreTheme = () => {
 
   const theme = computed<CoreTheme>({
     get() {
-      const rawQueryTheme = Array.isArray(route.query[THEME_QUERY_KEY])
-        ? route.query[THEME_QUERY_KEY][0]
-        : route.query[THEME_QUERY_KEY]
+      const queryTheme = getThemeFromRoute(route.query[THEME_QUERY_KEY])
 
-      if (isSupportedTheme(rawQueryTheme)) {
-        return rawQueryTheme
+      if (isSupportedTheme(queryTheme)) {
+        return queryTheme
       }
 
-      return isSupportedTheme(themeCookie.value) ? themeCookie.value : DEFAULT_THEME
+      if (isSupportedTheme(themeCookie.value)) {
+        return themeCookie.value
+      }
+
+      if (isSupportedTheme(systemTheme.value)) {
+        return systemTheme.value
+      }
+
+      return DEFAULT_THEME
     },
     set(value) {
-      themeCookie.value = isSupportedTheme(value) ? value : DEFAULT_THEME
+      themeCookie.value = isSupportedTheme(value) ? value : null
     },
   })
 
@@ -67,6 +111,7 @@ export const useCoreTheme = () => {
   return {
     theme,
     setTheme,
+    systemTheme,
     themes: THEMES,
   }
 }
