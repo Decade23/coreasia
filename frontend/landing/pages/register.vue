@@ -429,7 +429,7 @@ const handleSubmit = async () => {
                     {{ t('register.backToPricing') }}
                 </NuxtLink>
                 <span class="ca-kicker">
-                    <Icon name="lucide:rocket" class="h-3.5 w-3.5 text-amber-300" />
+                    <Icon name="lucide:rocket" class="h-3.5 w-3.5 ca-tone-gold" />
                     {{ t('register.kicker') }}
                 </span>
                 <h1
@@ -446,8 +446,8 @@ const handleSubmit = async () => {
         <section v-if="formState.isSuccess" class="ca-section pt-0">
             <div class="ca-container">
                 <div class="ca-card mx-auto max-w-2xl p-8 text-center sm:p-12">
-                    <div class="mx-auto mb-6 inline-flex h-20 w-20 items-center justify-center rounded-full bg-emerald-400/15">
-                        <Icon name="lucide:check-circle-2" class="h-10 w-10 text-emerald-300" />
+                    <div class="ca-icon-emerald mx-auto mb-6 inline-flex h-20 w-20 items-center justify-center rounded-full">
+                        <Icon name="lucide:check-circle-2" class="h-10 w-10" />
                     </div>
                     <h2 class="text-2xl font-display font-bold text-[var(--ca-text)] sm:text-3xl">
                         {{ formState.successTitle }}
@@ -457,7 +457,7 @@ const handleSubmit = async () => {
                     </p>
                     <div class="mt-4 rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-4">
                         <p class="text-sm text-[var(--ca-subtle)]">{{ t('register.success.subdomainLabel') }}</p>
-                        <p class="mt-1 text-lg font-bold text-amber-200">
+                        <p class="mt-1 text-lg font-bold ca-tone-gold">
                             {{ form.slug }}.coreasia.id
                         </p>
                     </div>
@@ -478,8 +478,8 @@ const handleSubmit = async () => {
                     v-if="paymentReturn.message"
                     class="mb-6 rounded-2xl border px-5 py-4 text-sm"
                     :class="paymentReturn.status === 'payment_failed'
-                        ? 'border-rose-300/35 bg-rose-300/10 text-rose-100'
-                        : 'border-amber-300/30 bg-amber-300/10 text-amber-100'"
+                        ? 'border-[color:var(--ca-danger-border)] bg-[var(--ca-danger-bg)] ca-tone-danger'
+                        : 'border-[color:var(--ca-gold-border)] bg-[var(--ca-gold-bg)] ca-tone-gold'"
                 >
                     <div class="flex items-start gap-3">
                         <Icon
@@ -492,7 +492,7 @@ const handleSubmit = async () => {
                             <a
                                 v-if="paymentReturn.invoiceUrl"
                                 :href="paymentReturn.invoiceUrl"
-                                class="inline-flex items-center gap-2 rounded-xl border border-amber-300/35 bg-amber-300/15 px-4 py-2 font-semibold text-amber-100 transition hover:bg-amber-300/20"
+                                class="ca-pill-gold rounded-xl px-4 py-2 font-semibold transition hover:bg-[var(--ca-panel-bg-strong)]"
                             >
                                 {{ t('register.payment.continuePayment') }}
                                 <Icon name="lucide:arrow-right" class="h-4 w-4" />
@@ -509,7 +509,7 @@ const handleSubmit = async () => {
                             <!-- Section: Organization -->
                             <div>
                                 <h2 class="flex items-center gap-2 text-lg font-display font-bold text-[var(--ca-text)]">
-                                    <Icon name="lucide:building" class="h-5 w-5 text-amber-300" />
+                                    <Icon name="lucide:building" class="h-5 w-5 ca-tone-gold" />
                                     {{ t('register.sections.organization') }}
                                 </h2>
                                 <div class="mt-1 h-px bg-[color:var(--ca-border)]" />
@@ -527,7 +527,7 @@ const handleSubmit = async () => {
 
                             <div class="w-full">
                                 <label for="slug" class="ca-field-label">
-                                    {{ t('register.fields.slug') }} <span class="text-rose-300">*</span>
+                                    {{ t('register.fields.slug') }} <span class="ca-required">*</span>
                                 </label>
                                 <div class="flex items-stretch">
                                     <div class="relative flex-1">
@@ -555,12 +555,12 @@ const handleSubmit = async () => {
                                             <Icon
                                                 v-else-if="slugState.isAvailable === true"
                                                 name="lucide:check-circle-2"
-                                                class="h-4 w-4 text-emerald-300"
+                                                class="h-4 w-4 ca-tone-emerald"
                                             />
                                             <Icon
                                                 v-else-if="slugState.isAvailable === false"
                                                 name="lucide:x-circle"
-                                                class="h-4 w-4 text-rose-300"
+                                                class="h-4 w-4 ca-tone-danger"
                                             />
                                         </div>
                                     </div>
@@ -570,13 +570,13 @@ const handleSubmit = async () => {
                                         {{ t('register.slug.suffix') }}
                                     </span>
                                 </div>
-                                <p v-if="errors.slug" class="mt-1 text-xs text-rose-300">
+                                <p v-if="errors.slug" class="mt-1 text-xs ca-field-error">
                                     {{ errors.slug }}
                                 </p>
-                                <p v-else-if="slugState.isAvailable === true && form.slug" class="mt-1 text-xs text-emerald-300">
+                                <p v-else-if="slugState.isAvailable === true && form.slug" class="mt-1 text-xs ca-field-success">
                                     {{ formatRegisterText('register.slug.available', { slug: form.slug }) }}
                                 </p>
-                                <p v-else-if="slugState.isAvailable === false && slugState.suggestion" class="mt-1 text-xs text-rose-300">
+                                <p v-else-if="slugState.isAvailable === false && slugState.suggestion" class="mt-1 text-xs ca-field-error">
                                     {{ t('register.slug.usedSuggestion') }}
                                     <button type="button" class="ml-1 font-semibold underline" @click="slugModel = slugState.suggestion">{{ slugState.suggestion }}</button>
                                 </p>
@@ -598,7 +598,7 @@ const handleSubmit = async () => {
                             <!-- Section: Admin Account -->
                             <div class="pt-2">
                                 <h2 class="flex items-center gap-2 text-lg font-display font-bold text-[var(--ca-text)]">
-                                    <Icon name="lucide:user-circle-2" class="h-5 w-5 text-amber-300" />
+                                    <Icon name="lucide:user-circle-2" class="h-5 w-5 ca-tone-gold" />
                                     {{ t('register.sections.admin') }}
                                 </h2>
                                 <div class="mt-1 h-px bg-[color:var(--ca-border)]" />
@@ -674,7 +674,7 @@ const handleSubmit = async () => {
                                     />
                                     <p
                                         v-if="form.confirmPassword && form.password === form.confirmPassword"
-                                        class="mt-1 text-xs text-emerald-300"
+                                        class="mt-1 text-xs ca-field-success"
                                     >
                                         <Icon name="lucide:check" class="mr-0.5 inline h-3 w-3" />
                                         {{ t('register.passwordStrength.matched') }}
@@ -689,9 +689,9 @@ const handleSubmit = async () => {
                                 :error="errors.agree"
                             >
                                 {{ t('register.consent.prefix') }}
-                                <a href="#" class="font-semibold text-amber-300 underline decoration-amber-300/30 underline-offset-4 transition hover:decoration-amber-300">{{ t('register.consent.terms') }}</a>
+                                <a href="#" class="font-semibold ca-link-accent">{{ t('register.consent.terms') }}</a>
                                 {{ t('register.consent.and') }}
-                                <a href="#" class="font-semibold text-amber-300 underline decoration-amber-300/30 underline-offset-4 transition hover:decoration-amber-300">{{ t('register.consent.privacy') }}</a>
+                                <a href="#" class="font-semibold ca-link-accent">{{ t('register.consent.privacy') }}</a>
                             </BaseCheckbox>
 
                             <!-- Submit -->
@@ -716,7 +716,7 @@ const handleSubmit = async () => {
                             <!-- Error Message -->
                             <p
                                 v-if="formState.errorMessage"
-                                class="rounded-lg border border-rose-300/35 bg-rose-300/10 px-3 py-2 text-sm text-rose-100"
+                                class="ca-status-danger"
                                 role="alert"
                             >
                                 {{ formState.errorMessage }}
@@ -733,7 +733,7 @@ const handleSubmit = async () => {
                                 </p>
                                 <NuxtLink
                                     to="/pricing"
-                                    class="inline-flex items-center gap-1 text-xs font-semibold text-amber-300 transition hover:text-amber-200"
+                                    class="inline-flex items-center gap-1 text-xs font-semibold ca-tone-gold transition hover:opacity-80"
                                 >
                                     <Icon name="lucide:repeat-2" class="h-3.5 w-3.5" />
                                     {{ t('register.summary.changePlan') }}
@@ -744,7 +744,7 @@ const handleSubmit = async () => {
                                 {{ selectedPlan.name }}
                             </h3>
                             <div class="mt-2 flex items-baseline gap-1">
-                                <span class="font-display text-3xl font-bold text-amber-200">
+                                <span class="font-display text-3xl font-bold ca-tone-gold">
                                     {{ selectedPlan.priceLabel }}
                                 </span>
                                 <span class="text-sm text-[var(--ca-subtle)]">{{ selectedPlan.period }}</span>
@@ -752,7 +752,7 @@ const handleSubmit = async () => {
                             <!-- Plan badge -->
                             <span
                                 v-if="selectedPlan.badge"
-                                class="mt-3 inline-flex items-center gap-1 rounded-full border border-amber-300/30 bg-amber-300/10 px-3 py-1 text-xs font-semibold text-amber-200"
+                                class="ca-pill-gold mt-3"
                             >
                                 <Icon name="lucide:sparkles" class="h-3 w-3" />
                                 {{ selectedPlan.badge }}
@@ -770,7 +770,7 @@ const handleSubmit = async () => {
                                     <Icon
                                         v-if="feature.included"
                                         name="lucide:check"
-                                        class="h-4 w-4 flex-shrink-0 text-emerald-300"
+                                        class="h-4 w-4 flex-shrink-0 ca-tone-emerald"
                                     />
                                     <Icon
                                         v-else
@@ -797,7 +797,7 @@ const handleSubmit = async () => {
                                     class="flex-1 rounded-lg border px-3 py-2 text-center text-xs font-semibold transition-all"
                                     :class="[
                                         plan.id === selectedPlanId
-                                            ? 'border-amber-300/40 bg-amber-300/10 text-amber-200'
+                                            ? 'border-[color:var(--ca-gold-border)] bg-[var(--ca-gold-bg)] ca-tone-gold'
                                             : 'border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] text-[var(--ca-subtle)] hover:border-amber-300/20 hover:text-[var(--ca-text)]',
                                     ]"
                                     @click="selectedPlanId = plan.id"
@@ -815,7 +815,7 @@ const handleSubmit = async () => {
                                     :key="signal"
                                     class="flex items-start gap-2"
                                 >
-                                    <Icon name="lucide:shield-check" class="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-300" />
+                                    <Icon name="lucide:shield-check" class="mt-0.5 h-4 w-4 flex-shrink-0 ca-tone-emerald" />
                                     {{ signal }}
                                 </li>
                             </ul>

@@ -43,7 +43,7 @@ useSchemaOrg([
                 <div class="grid gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
                     <div ref="heroText">
                         <span class="ca-kicker">
-                            <Icon name="lucide:handshake" class="h-3.5 w-3.5 text-emerald-300" />
+                            <Icon name="lucide:handshake" class="h-3.5 w-3.5 ca-tone-emerald" />
                             {{ t('partnershipsPage.hero.kicker') }}
                         </span>
                         <h1
@@ -124,7 +124,7 @@ useSchemaOrg([
                         class="ca-card group p-5 transition hover:-translate-y-0.5"
                     >
                         <div class="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg-strong)]">
-                            <Icon :name="index === 0 ? 'lucide:package-check' : index === 1 ? 'lucide:handshake' : 'lucide:building-2'" class="h-5 w-5 text-emerald-300" />
+                            <Icon :name="index === 0 ? 'lucide:package-check' : index === 1 ? 'lucide:handshake' : 'lucide:building-2'" class="h-5 w-5 ca-tone-emerald" />
                         </div>
 
                         <h3 class="mt-5 text-lg font-display font-semibold text-[var(--ca-text)]">
@@ -140,12 +140,12 @@ useSchemaOrg([
                                 :key="feature"
                                 class="flex items-start gap-2 text-sm text-[var(--ca-muted)]"
                             >
-                                <Icon name="lucide:check-circle-2" class="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-emerald-300" />
+                                <Icon name="lucide:check-circle-2" class="mt-0.5 h-3.5 w-3.5 flex-shrink-0 ca-tone-emerald" />
                                 <span>{{ feature }}</span>
                             </li>
                         </ul>
 
-                        <span class="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-amber-300">
+                        <span class="mt-5 inline-flex items-center gap-1 text-sm font-semibold ca-tone-gold">
                             {{ model.ctaLabel }}
                             <Icon name="lucide:arrow-right" class="h-4 w-4" />
                         </span>
@@ -164,7 +164,7 @@ useSchemaOrg([
                         class="ca-card-soft p-5"
                     >
                         <div class="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg-strong)]">
-                            <Icon :name="item.icon" class="h-5 w-5 text-amber-300" />
+                            <Icon :name="item.icon" class="h-5 w-5 ca-tone-gold" />
                         </div>
                         <h3 class="mt-4 text-lg font-display font-semibold text-[var(--ca-text)]">
                             {{ item.title }}

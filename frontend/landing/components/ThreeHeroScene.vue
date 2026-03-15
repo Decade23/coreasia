@@ -96,7 +96,9 @@ onBeforeUnmount(() => {
         :class="{ 'loaded': isLoaded }"
     >
         <!-- Overlay Content -->
-        <div class="pointer-events-none absolute inset-0 z-20 flex flex-col items-center justify-center bg-gradient-to-b from-transparent via-transparent to-core-950" />
+        <div class="pointer-events-none absolute inset-0 z-20 flex flex-col items-center justify-center">
+            <div class="ca-scene-base absolute inset-x-0 bottom-0 h-1/2 opacity-80" />
+        </div>
         
         <!-- Canvas Container (Fade In) -->
         <!-- The canvas is appended here by JS, we style it via deep selector or global styles, 
@@ -110,11 +112,11 @@ onBeforeUnmount(() => {
             class="absolute inset-0 z-0 transition-opacity duration-1000"
             :class="{ 'opacity-0': isLoaded, 'opacity-100': !isLoaded }"
         >
-             <div class="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
-             <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[500px] w-[800px] bg-amber-500/10 blur-[100px] rounded-full mix-blend-screen"></div>
+             <div class="ca-scene-grid absolute inset-0"></div>
+             <div class="ca-scene-glow ca-light-soft-blend absolute left-1/2 top-1/2 h-[500px] w-[800px] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[100px]"></div>
              
              <!-- Optional: Dark radial background base -->
-             <div class="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-core-900/50 via-core-950 to-core-950" />
+             <div class="ca-scene-base absolute inset-0 -z-10" />
         </div>
     </div>
 </template>

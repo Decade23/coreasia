@@ -96,28 +96,28 @@ useSchemaOrg([
 
                         <div class="mt-5 grid gap-3">
                             <article
-                                class="rounded-xl border border-rose-300/25 bg-rose-300/10 p-4"
+                                class="ca-panel-danger"
                             >
-                                <p class="text-xs uppercase tracking-[0.14em] text-rose-200">
+                                <p class="ca-tone-danger text-xs uppercase tracking-[0.14em]">
                                     {{ t('solutions.venture.relevance.buildSelf.label') }}
                                 </p>
                                 <p class="mt-2 font-display text-2xl font-bold text-[var(--ca-text)]">
                                     {{ t('solutions.venture.relevance.buildSelf.price') }}
                                 </p>
-                                <p class="mt-1 text-sm text-rose-100/90">
+                                <p class="mt-1 text-sm ca-tone-danger">
                                     {{ t('solutions.venture.relevance.buildSelf.desc') }}
                                 </p>
                             </article>
                             <article
-                                class="rounded-xl border border-emerald-300/35 bg-emerald-300/10 p-4"
+                                class="ca-panel-emerald"
                             >
-                                <p class="text-xs uppercase tracking-[0.14em] text-emerald-100">
+                                <p class="ca-tone-emerald text-xs uppercase tracking-[0.14em]">
                                     {{ t('solutions.venture.relevance.venture.label') }}
                                 </p>
                                 <p class="mt-2 font-display text-2xl font-bold text-[var(--ca-text)]">
                                     {{ t('solutions.venture.relevance.venture.price') }}
                                 </p>
-                                <p class="mt-1 text-sm text-emerald-50/90">
+                                <p class="mt-1 text-sm ca-tone-emerald">
                                     {{ t('solutions.venture.relevance.venture.desc') }}
                                 </p>
                             </article>

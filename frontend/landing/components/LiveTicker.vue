@@ -17,8 +17,8 @@ const stats = computed(
                         :key="stat.label"
                         class="flex items-center gap-3"
                     >
-                        <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10">
-                            <Icon :name="stat.icon" class="h-4 w-4 text-emerald-400" />
+                        <div class="ca-icon-emerald flex h-8 w-8 items-center justify-center rounded-lg">
+                            <Icon :name="stat.icon" class="h-4 w-4" />
                         </div>
                         <div class="flex flex-col">
                             <span class="text-sm font-bold text-[var(--ca-text)]">{{ stat.value }}</span>

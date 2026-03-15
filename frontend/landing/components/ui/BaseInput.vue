@@ -6,7 +6,7 @@
             class="ca-field-label"
         >
             {{ label }}
-            <span v-if="required" class="text-rose-300">*</span>
+            <span v-if="required" class="ca-required">*</span>
         </label>
         
         <div class="relative">
@@ -33,7 +33,7 @@
             </div>
         </div>
 
-        <p v-if="error" class="mt-1 text-xs text-rose-300">
+        <p v-if="error" class="mt-1 text-xs ca-field-error">
             {{ error }}
         </p>
     </div>

@@ -42,7 +42,7 @@ const workflowItems = computed(
         <div class="grid gap-10 lg:grid-cols-[1.08fr_0.92fr] lg:items-center">
           <div>
             <span class="ca-kicker">
-              <Icon name="lucide:activity" class="h-3.5 w-3.5 text-emerald-300" />
+              <Icon name="lucide:activity" class="h-3.5 w-3.5 ca-tone-emerald" />
               {{ t('solutions.pantau.kicker') }}
             </span>
             <h1
@@ -117,7 +117,7 @@ const workflowItems = computed(
             <div
               class="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg-strong)]"
             >
-              <Icon :name="feature.icon" class="h-5 w-5 text-emerald-300" />
+              <Icon :name="feature.icon" class="h-5 w-5 ca-tone-emerald" />
             </div>
             <h3 class="mt-4 text-lg font-display font-semibold text-[var(--ca-text)]">
               {{ feature.title }}
@@ -148,7 +148,7 @@ const workflowItems = computed(
               <div
                 class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)]"
               >
-                <Icon :name="item.icon" class="h-4 w-4 text-emerald-300" />
+                <Icon :name="item.icon" class="h-4 w-4 ca-tone-emerald" />
               </div>
               <h3 class="mt-4 text-base font-display font-semibold text-[var(--ca-text)]">
                 {{ item.title }}

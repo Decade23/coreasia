@@ -40,9 +40,9 @@ useSchemaOrg([
                     <ThreeHeroScene />
                     <template #fallback>
                         <div class="absolute inset-0 z-0">
-                            <div class="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
-                            <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-[500px] w-[800px] bg-amber-500/10 blur-[100px] rounded-full mix-blend-screen"></div>
-                            <div class="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-core-900/50 via-core-950 to-core-950" />
+                            <div class="ca-scene-grid absolute inset-0"></div>
+                            <div class="ca-scene-glow ca-light-soft-blend absolute left-1/2 top-1/2 h-[500px] w-[800px] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[100px]"></div>
+                            <div class="ca-scene-base absolute inset-0 -z-10" />
                         </div>
                     </template>
                 </ClientOnly>
@@ -53,7 +53,7 @@ useSchemaOrg([
                     <span class="ca-kicker animate-fade-in-up min-h-[32px]">
                         <Icon
                             name="lucide:sparkles"
-                            class="h-3.5 w-3.5 text-amber-300"
+                            class="h-3.5 w-3.5 ca-tone-gold"
                         />
                         <TypewriterEffect :text="t('home.kicker')" />
                     </span>
@@ -85,7 +85,7 @@ useSchemaOrg([
                     </div>
 
                     <p class="mt-4 text-xs font-medium text-[var(--ca-subtle)] animate-fade-in delay-400">
-                        <Icon name="lucide:shield-check" class="inline-block h-3 w-3 mr-1 text-emerald-500" />
+                        <Icon name="lucide:shield-check" class="mr-1 inline-block h-3 w-3 ca-tone-emerald" />
                         {{ t('home.hero.powerStatement') }}
                     </p>
 

@@ -41,7 +41,7 @@
                             <div
                                 class="inline-flex h-12 w-12 items-center justify-center rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg-strong)]"
                             >
-                                <Icon :name="icon" class="h-6 w-6 text-amber-300" />
+                                <Icon :name="icon" class="h-6 w-6 ca-tone-gold" />
                             </div>
 
                             <h2
@@ -64,7 +64,7 @@
                                     >
                                         <Icon
                                             :name="item.icon"
-                                            class="h-4 w-4 text-amber-200"
+                                            class="h-4 w-4 ca-tone-gold"
                                         />
                                     </div>
                                     <p

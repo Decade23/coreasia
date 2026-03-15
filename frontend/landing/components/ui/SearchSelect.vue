@@ -3,7 +3,7 @@
     <!-- Label -->
     <label v-if="label" :for="id" class="ca-field-label">
       {{ label }}
-      <span v-if="required" class="text-rose-300">*</span>
+      <span v-if="required" class="ca-required">*</span>
     </label>
 
     <!-- Trigger / Input Area -->
@@ -73,7 +73,7 @@
               ? 'bg-[var(--ca-panel-bg-strong)] text-[var(--ca-text)]'
               : 'text-[var(--ca-muted)]',
             option.value === modelValue
-              ? 'bg-[var(--ca-kicker-bg)] font-medium text-amber-300'
+              ? 'bg-[var(--ca-kicker-bg)] font-medium ca-tone-gold'
               : 'font-normal'
           ]"
           @click="selectOption(option)"
@@ -83,7 +83,7 @@
 
           <span
             v-if="option.value === modelValue"
-            class="absolute inset-y-0 right-0 flex items-center pr-3 text-amber-300"
+            class="absolute inset-y-0 right-0 flex items-center pr-3 ca-tone-gold"
           >
             <Icon name="lucide:check" class="h-4 w-4" aria-hidden="true" />
           </span>
@@ -98,7 +98,7 @@
       </div>
     </Transition>
 
-    <p v-if="error" class="mt-1 text-xs text-rose-300">
+    <p v-if="error" class="mt-1 text-xs ca-field-error">
         {{ error }}
     </p>
   </div>

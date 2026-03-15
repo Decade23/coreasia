@@ -59,7 +59,7 @@ const features = computed(() => {
                         :key="feature.title"
                         class="ca-card p-6 transition hover:border-amber-500/30"
                     >
-                        <div class="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-amber-500/10 text-amber-300">
+                        <div class="ca-icon-gold mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg">
                             <Icon :name="feature.icon" class="h-6 w-6" />
                         </div>
                         <h3 class="mb-2 text-lg font-display font-bold text-[var(--ca-text)]">

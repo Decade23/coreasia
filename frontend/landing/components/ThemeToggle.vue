@@ -5,28 +5,35 @@ import { useCoreTheme } from '~/composables/useCoreTheme'
 type ThemeOption = {
   value: 'dark' | 'light'
   icon: string
-  label: string
-  ariaLabel: string
 }
 
 const { t } = useCoreI18n()
 const { theme, setTheme } = useCoreTheme()
 const isSwitching = ref(false)
+const isLightTheme = computed(() => theme.value === 'light')
 
 const options = computed<ThemeOption[]>(() => [
   {
     value: 'dark',
     icon: 'lucide:moon-star',
-    label: t('components.themeToggle.dark') as string,
-    ariaLabel: t('components.themeToggle.switchToDark') as string,
   },
   {
     value: 'light',
     icon: 'lucide:sun-medium',
-    label: t('components.themeToggle.light') as string,
-    ariaLabel: t('components.themeToggle.switchToLight') as string,
   },
 ])
+
+const currentLabel = computed(() =>
+  isLightTheme.value
+    ? (t('components.themeToggle.light') as string)
+    : (t('components.themeToggle.dark') as string),
+)
+
+const nextAriaLabel = computed(() =>
+  isLightTheme.value
+    ? (t('components.themeToggle.switchToDark') as string)
+    : (t('components.themeToggle.switchToLight') as string),
+)
 
 const applyTheme = async (nextTheme: 'dark' | 'light') => {
   if (isSwitching.value || theme.value === nextTheme) {
@@ -41,30 +48,50 @@ const applyTheme = async (nextTheme: 'dark' | 'light') => {
     isSwitching.value = false
   }
 }
+
+const toggleTheme = () => {
+  void applyTheme(isLightTheme.value ? 'dark' : 'light')
+}
 </script>
 
 <template>
-  <div
-    class="inline-flex items-center gap-1 rounded-full border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-1 shadow-sm"
-    :aria-label="t('components.themeToggle.label')"
-  >
+  <div class="inline-flex items-center gap-3">
     <button
-      v-for="option in options"
-      :key="option.value"
       type="button"
-      class="inline-flex min-w-[2.5rem] items-center justify-center gap-1.5 rounded-full px-3 py-2 text-xs font-semibold transition"
-      :class="
-        theme === option.value
-          ? 'bg-[var(--ca-kicker-bg)] text-[var(--ca-text)]'
-          : 'text-[var(--ca-muted)] hover:bg-[var(--ca-panel-bg-strong)] hover:text-[var(--ca-text)]'
-      "
-      :aria-label="option.ariaLabel"
-      :aria-pressed="theme === option.value"
+      class="relative inline-flex h-11 w-20 items-center rounded-full border border-[color:var(--ca-border)] bg-[var(--ca-toggle-track)] p-1 shadow-sm transition hover:border-[color:var(--ca-gold-border)] hover:bg-[var(--ca-panel-bg-strong)]"
+      :aria-label="nextAriaLabel"
+      :aria-pressed="isLightTheme"
       :disabled="isSwitching"
-      @click="applyTheme(option.value)"
+      @click="toggleTheme"
     >
-      <Icon :name="option.icon" class="h-4 w-4" />
-      <span class="hidden sm:inline">{{ option.label }}</span>
+      <span
+        class="absolute left-1 top-1 inline-flex h-9 w-9 items-center justify-center rounded-full border border-[color:var(--ca-border)] bg-[var(--ca-toggle-thumb)] text-[var(--ca-text)] shadow-[var(--ca-toggle-thumb-shadow)] transition-transform duration-300"
+        :class="isLightTheme ? 'translate-x-9' : 'translate-x-0'"
+      >
+        <Icon :name="isLightTheme ? options[1]?.icon : options[0]?.icon" class="h-4 w-4" />
+      </span>
+
+      <span class="flex w-full items-center justify-between px-2">
+        <Icon
+          :name="options[0]?.icon"
+          class="h-4 w-4 transition"
+          :class="isLightTheme ? 'text-[var(--ca-subtle)] opacity-55' : 'ca-tone-gold opacity-100'"
+        />
+        <Icon
+          :name="options[1]?.icon"
+          class="h-4 w-4 transition"
+          :class="isLightTheme ? 'ca-tone-gold opacity-100' : 'text-[var(--ca-subtle)] opacity-55'"
+        />
+      </span>
     </button>
+
+    <div class="hidden min-w-[4.5rem] text-left leading-none sm:block">
+      <p class="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-[var(--ca-subtle)]">
+        {{ t('components.themeToggle.label') }}
+      </p>
+      <p class="mt-1 text-xs font-semibold text-[var(--ca-text)]">
+        {{ currentLabel }}
+      </p>
+    </div>
   </div>
 </template>

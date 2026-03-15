@@ -295,13 +295,8 @@ useSchemaOrg([
                                     class="flex items-center justify-between rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] px-4 py-3 transition hover:border-emerald-300/40 hover:bg-emerald-300/10"
                                 >
                                     <span class="flex items-center gap-3">
-                                        <span
-                                            class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-400/15"
-                                        >
-                                            <Icon
-                                                name="lucide:message-circle"
-                                                class="h-5 w-5 text-emerald-300"
-                                            />
+                                        <span class="ca-icon-emerald inline-flex h-10 w-10 items-center justify-center rounded-lg">
+                                            <Icon name="lucide:message-circle" class="h-5 w-5" />
                                         </span>
                                         <span>
                                             <span
@@ -325,13 +320,8 @@ useSchemaOrg([
                                     class="flex items-center justify-between rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] px-4 py-3 transition hover:border-amber-300/40 hover:bg-amber-300/10"
                                 >
                                     <span class="flex items-center gap-3">
-                                        <span
-                                            class="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-amber-400/15"
-                                        >
-                                            <Icon
-                                                name="lucide:mail"
-                                                class="h-5 w-5 text-amber-200"
-                                            />
+                                        <span class="ca-icon-gold inline-flex h-10 w-10 items-center justify-center rounded-lg">
+                                            <Icon name="lucide:mail" class="h-5 w-5" />
                                         </span>
                                         <span>
                                             <span
@@ -366,7 +356,7 @@ useSchemaOrg([
                                 >
                                     <Icon
                                         name="lucide:check"
-                                        class="mt-0.5 h-4 w-4 text-emerald-300"
+                                        class="mt-0.5 h-4 w-4 ca-tone-emerald"
                                     />
                                     {{ item }}
                                 </li>
@@ -474,7 +464,7 @@ useSchemaOrg([
 
                             <p
                                 v-if="formState.isSuccess"
-                                class="rounded-lg border border-emerald-300/35 bg-emerald-300/10 px-3 py-2 text-sm text-emerald-100"
+                                class="ca-status-success"
                                 role="status"
                                 aria-live="polite"
                             >
@@ -483,7 +473,7 @@ useSchemaOrg([
 
                             <p
                                 v-if="formState.errorMessage"
-                                class="rounded-lg border border-rose-300/35 bg-rose-300/10 px-3 py-2 text-sm text-rose-100"
+                                class="ca-status-danger"
                                 role="alert"
                             >
                                 {{ formState.errorMessage }}

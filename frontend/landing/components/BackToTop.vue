@@ -25,7 +25,7 @@ const scrollToTop = () => {
         <button
             v-if="isVisible"
             type="button"
-            class="fixed bottom-6 right-6 z-40 flex h-10 w-10 items-center justify-center rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg-strong)] text-amber-400 backdrop-blur transition hover:border-amber-400/30 hover:bg-amber-400/10 sm:bottom-8 sm:right-8 sm:h-12 sm:w-12"
+            class="fixed bottom-6 right-6 z-40 flex h-10 w-10 items-center justify-center rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg-strong)] text-[var(--ca-brand)] backdrop-blur transition hover:border-[color:var(--ca-gold-border)] hover:bg-[var(--ca-gold-bg)] sm:bottom-8 sm:right-8 sm:h-12 sm:w-12"
             :aria-label="t('components.backToTop.ariaLabel')"
             @click="scrollToTop"
         >

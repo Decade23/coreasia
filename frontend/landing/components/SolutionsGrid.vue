@@ -89,7 +89,7 @@ const handleMouseLeave = (index: number) => {
                     <div
                         class="pointer-events-none absolute -inset-px opacity-0 transition duration-300 group-hover:opacity-100"
                         :style="{
-                            background: `radial-gradient(600px circle at ${mousePositions[index].x}px ${mousePositions[index].y}px, rgba(255,255,255,0.06), transparent 40%)`
+                            background: `radial-gradient(600px circle at ${mousePositions[index].x}px ${mousePositions[index].y}px, var(--ca-spotlight), transparent 40%)`
                         }"
                     />
 
@@ -98,7 +98,7 @@ const handleMouseLeave = (index: number) => {
                     >
                         <Icon
                             :name="solution.icon"
-                            class="h-5 w-5 text-amber-300"
+                            class="h-5 w-5 ca-tone-gold"
                         />
                     </div>
 
@@ -126,15 +126,13 @@ const handleMouseLeave = (index: number) => {
                         >
                             <Icon
                                 name="lucide:check"
-                                class="h-3.5 w-3.5 text-emerald-300"
+                                class="h-3.5 w-3.5 ca-tone-emerald"
                             />
                             {{ feature }}
                         </li>
                     </ul>
 
-                    <span
-                        class="mt-5 inline-flex items-center gap-1 text-sm font-semibold text-amber-300 transition md:opacity-0 md:group-hover:opacity-100"
-                    >
+                    <span class="mt-5 inline-flex items-center gap-1 text-sm font-semibold ca-tone-gold transition md:opacity-0 md:group-hover:opacity-100">
                         {{ t('common.learnMore') }}
                         <Icon name="lucide:arrow-right" class="h-4 w-4" />
                     </span>

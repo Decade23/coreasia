@@ -6,7 +6,7 @@
             :class="[
                 modelValue ? 'border-amber-300/30 bg-[var(--ca-panel-bg-strong)] text-[var(--ca-text)]' : 'text-[var(--ca-muted)]',
                 disabled ? 'cursor-not-allowed opacity-60' : 'hover:bg-[var(--ca-panel-bg-strong)]',
-                error ? '!border-rose-300/50 bg-rose-300/5' : '',
+                error ? '!border-[color:var(--ca-danger-border)] bg-[var(--ca-danger-bg)]' : '',
             ]"
         >
             <input
@@ -38,7 +38,7 @@
             </span>
         </label>
 
-        <p v-if="error" class="mt-1 text-xs text-rose-300">
+        <p v-if="error" class="mt-1 text-xs ca-field-error">
             {{ error }}
         </p>
     </div>

@@ -45,7 +45,7 @@ onMounted(async () => {
 
             <div class="ca-container relative ca-section pb-10 text-center sm:pb-12 lg:pb-16">
                 <span ref="heroKicker" class="ca-kicker">
-                    <Icon name="lucide:sparkles" class="h-3.5 w-3.5 text-amber-300" />
+                    <Icon name="lucide:sparkles" class="h-3.5 w-3.5 ca-tone-gold" />
                     {{ t('pricing.kicker') }}
                 </span>
                 <h1
@@ -69,8 +69,8 @@ onMounted(async () => {
                         class="relative rounded-2xl border p-6 backdrop-blur transition-all duration-300 sm:p-8"
                         :class="[
                             plan.popular
-                                ? 'border-amber-400/40 bg-[linear-gradient(180deg,rgba(245,158,11,0.12),var(--ca-card-to))] shadow-[0_18px_60px_rgba(245,158,11,0.15)]'
-                                : 'border-[color:var(--ca-border)] bg-[linear-gradient(180deg,var(--ca-card-from),var(--ca-card-to))] shadow-[0_18px_60px_rgba(2,6,23,0.42)] hover:border-amber-300/20',
+                                ? 'border-[color:var(--ca-gold-border)] bg-[linear-gradient(180deg,rgba(245,158,11,0.12),var(--ca-card-to))] shadow-[var(--ca-card-shadow)]'
+                                : 'border-[color:var(--ca-border)] bg-[linear-gradient(180deg,var(--ca-card-from),var(--ca-card-to))] shadow-[var(--ca-card-shadow)] hover:border-amber-300/20',
                         ]"
                     >
                         <div
@@ -78,7 +78,7 @@ onMounted(async () => {
                             class="absolute -top-3.5 left-1/2 -translate-x-1/2"
                         >
                             <span
-                                class="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-amber-300 via-amber-400 to-amber-500 px-4 py-1.5 text-xs font-bold text-slate-950 shadow-lg"
+                                class="ca-pill-gold px-4 py-1.5 text-xs font-bold shadow-lg"
                             >
                                 <Icon name="lucide:crown" class="h-3.5 w-3.5" />
                                 {{ plan.badge }}
@@ -92,7 +92,7 @@ onMounted(async () => {
 
                             <span
                                 v-if="plan.id === 'starter'"
-                                class="mt-2 inline-flex items-center gap-1 rounded-full border border-emerald-300/30 bg-emerald-300/10 px-3 py-1 text-xs font-semibold text-emerald-200"
+                                class="ca-pill-emerald mt-2"
                             >
                                 <Icon name="lucide:gift" class="h-3 w-3" />
                                 {{ plan.badge }}
@@ -100,7 +100,7 @@ onMounted(async () => {
 
                             <span
                                 v-if="plan.id === 'enterprise'"
-                                class="mt-2 inline-flex items-center gap-1 rounded-full border border-sky-300/30 bg-sky-300/10 px-3 py-1 text-xs font-semibold text-sky-200"
+                                class="ca-pill-info mt-2"
                             >
                                 <Icon name="lucide:building-2" class="h-3 w-3" />
                                 {{ plan.badge }}
@@ -109,7 +109,7 @@ onMounted(async () => {
                             <div class="mt-4 flex items-baseline gap-1">
                                 <span
                                     class="font-display text-4xl font-bold tracking-tight"
-                                    :class="plan.popular ? 'text-amber-200' : 'text-[var(--ca-text)]'"
+                                    :class="plan.popular ? 'ca-tone-gold' : 'text-[var(--ca-text)]'"
                                 >
                                     {{ plan.priceLabel }}
                                 </span>
@@ -130,12 +130,9 @@ onMounted(async () => {
                             >
                                 <span
                                     v-if="feature.included"
-                                    class="inline-flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-emerald-400/15"
+                                    class="ca-icon-emerald inline-flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full"
                                 >
-                                    <Icon
-                                        name="lucide:check"
-                                        class="h-3.5 w-3.5 text-emerald-300"
-                                    />
+                                    <Icon name="lucide:check" class="h-3.5 w-3.5" />
                                 </span>
                                 <span
                                     v-else
@@ -172,7 +169,7 @@ onMounted(async () => {
                 </div>
 
                 <p class="mt-8 text-center text-sm text-[var(--ca-subtle)]">
-                    <Icon name="lucide:shield-check" class="mr-1 inline h-4 w-4 text-emerald-400" />
+                    <Icon name="lucide:shield-check" class="mr-1 inline h-4 w-4 ca-tone-emerald" />
                     {{ t('pricing.allPlansInclude') }}
                 </p>
             </div>
@@ -184,7 +181,7 @@ onMounted(async () => {
                     <div class="grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
                         <div>
                             <span class="ca-kicker">
-                                <Icon name="lucide:help-circle" class="h-3.5 w-3.5 text-amber-300" />
+                                <Icon name="lucide:help-circle" class="h-3.5 w-3.5 ca-tone-gold" />
                                 {{ t('pricing.faq.kicker') }}
                             </span>
                             <h2 class="ca-title mt-4">
@@ -194,7 +191,7 @@ onMounted(async () => {
                                 {{ t('pricing.faq.intro') }}
                                 <NuxtLink
                                     to="/contact"
-                                    class="font-semibold text-amber-300 underline decoration-amber-300/30 underline-offset-4 transition hover:decoration-amber-300"
+                                    class="font-semibold ca-link-accent"
                                 >
                                     {{ t('pricing.faq.contactCta') }}
                                 </NuxtLink>.

@@ -82,6 +82,35 @@
     --ca-chip-bg: rgba(255, 255, 255, 0.04);
     --ca-orb-primary: rgba(255, 190, 61, 0.12);
     --ca-orb-secondary: rgba(27, 196, 158, 0.10);
+    --ca-grid-line: rgba(255, 255, 255, 0.04);
+    --ca-card-shadow: 0 18px 60px rgba(2, 6, 23, 0.42);
+    --ca-card-soft-shadow: 0 14px 34px rgba(2, 6, 23, 0.24);
+    --ca-spotlight: rgba(255, 255, 255, 0.08);
+    --ca-toggle-track: rgba(255, 255, 255, 0.04);
+    --ca-toggle-thumb: linear-gradient(180deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 190, 61, 0.18) 100%);
+    --ca-toggle-thumb-shadow: 0 10px 24px rgba(2, 6, 23, 0.28);
+    --ca-gold-text: #f4c95d;
+    --ca-gold-bg: rgba(245, 158, 11, 0.14);
+    --ca-gold-border: rgba(245, 158, 11, 0.3);
+    --ca-emerald-text: #9ce7d1;
+    --ca-emerald-bg: rgba(16, 185, 129, 0.12);
+    --ca-emerald-border: rgba(16, 185, 129, 0.28);
+    --ca-danger-text: #f3b6bf;
+    --ca-danger-bg: rgba(244, 114, 182, 0.11);
+    --ca-danger-border: rgba(244, 114, 182, 0.24);
+    --ca-info-text: #bedaff;
+    --ca-info-bg: rgba(96, 165, 250, 0.12);
+    --ca-info-border: rgba(96, 165, 250, 0.26);
+    --ca-scene-grid-line: rgba(128, 128, 128, 0.12);
+    --ca-scene-glow: rgba(245, 158, 11, 0.14);
+    --ca-scene-base:
+        radial-gradient(ellipse at center,
+            rgba(15, 23, 42, 0.46) 0%,
+            rgba(2, 6, 23, 0.94) 60%,
+            rgba(2, 6, 23, 1) 100%);
+    --ca-scroll-track: #050814;
+    --ca-scroll-thumb: linear-gradient(180deg, #1f2937, #334155);
+    --ca-scroll-thumb-border: #050814;
     --ca-page-background:
         radial-gradient(1200px 600px at 10% -10%,
             rgba(255, 190, 61, 0.14),
@@ -115,6 +144,35 @@ html[data-theme="light"] {
     --ca-chip-bg: rgba(255, 255, 255, 0.8);
     --ca-orb-primary: rgba(214, 138, 6, 0.14);
     --ca-orb-secondary: rgba(15, 143, 119, 0.10);
+    --ca-grid-line: rgba(154, 123, 73, 0.08);
+    --ca-card-shadow: 0 22px 56px rgba(108, 82, 40, 0.12);
+    --ca-card-soft-shadow: 0 14px 32px rgba(108, 82, 40, 0.08);
+    --ca-spotlight: rgba(214, 138, 6, 0.12);
+    --ca-toggle-track: rgba(255, 255, 255, 0.92);
+    --ca-toggle-thumb: linear-gradient(180deg, #fffaf2 0%, #f4e8d4 100%);
+    --ca-toggle-thumb-shadow: 0 10px 22px rgba(130, 93, 28, 0.16);
+    --ca-gold-text: #9d6500;
+    --ca-gold-bg: rgba(214, 138, 6, 0.11);
+    --ca-gold-border: rgba(214, 138, 6, 0.2);
+    --ca-emerald-text: #0d7b67;
+    --ca-emerald-bg: rgba(15, 143, 119, 0.11);
+    --ca-emerald-border: rgba(15, 143, 119, 0.2);
+    --ca-danger-text: #b65763;
+    --ca-danger-bg: rgba(190, 87, 98, 0.1);
+    --ca-danger-border: rgba(190, 87, 98, 0.18);
+    --ca-info-text: #235d97;
+    --ca-info-bg: rgba(59, 130, 246, 0.09);
+    --ca-info-border: rgba(59, 130, 246, 0.18);
+    --ca-scene-grid-line: rgba(154, 123, 73, 0.12);
+    --ca-scene-glow: rgba(214, 138, 6, 0.16);
+    --ca-scene-base:
+        radial-gradient(ellipse at center,
+            rgba(255, 250, 242, 0.74) 0%,
+            rgba(246, 238, 225, 0.92) 58%,
+            rgba(239, 228, 210, 0.98) 100%);
+    --ca-scroll-track: #efe4d2;
+    --ca-scroll-thumb: linear-gradient(180deg, #d9be90, #b98f48);
+    --ca-scroll-thumb-border: #efe4d2;
     --ca-page-background:
         radial-gradient(1200px 600px at 10% -10%,
             rgba(214, 138, 6, 0.12),
@@ -208,13 +266,14 @@ a {
         @apply rounded-2xl backdrop-blur;
         border: 1px solid var(--ca-border);
         background: linear-gradient(180deg, var(--ca-card-from) 0%, var(--ca-card-to) 100%);
-        box-shadow: 0 18px 60px rgba(2, 6, 23, 0.42);
+        box-shadow: var(--ca-card-shadow);
     }
 
     .ca-card-soft {
         @apply rounded-2xl backdrop-blur;
         border: 1px solid color-mix(in srgb, var(--ca-border) 82%, transparent);
         background: var(--ca-panel-bg);
+        box-shadow: var(--ca-card-soft-shadow);
     }
 
     .ca-gradient-text {
@@ -259,9 +318,9 @@ a {
 
     .ca-grid-bg {
         background-image:
-            linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+            linear-gradient(var(--ca-grid-line) 1px, transparent 1px),
             linear-gradient(90deg,
-                rgba(255, 255, 255, 0.04) 1px,
+                var(--ca-grid-line) 1px,
                 transparent 1px);
         background-size: 34px 34px;
     }
@@ -355,6 +414,153 @@ a {
     .ca-prose li::marker {
         color: var(--ca-brand);
     }
+
+    .ca-tone-gold {
+        color: var(--ca-gold-text);
+    }
+
+    .ca-tone-emerald {
+        color: var(--ca-emerald-text);
+    }
+
+    .ca-tone-danger {
+        color: var(--ca-danger-text);
+    }
+
+    .ca-tone-info {
+        color: var(--ca-info-text);
+    }
+
+    .ca-pill-gold,
+    .ca-pill-emerald,
+    .ca-pill-danger,
+    .ca-pill-info {
+        @apply inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-semibold;
+    }
+
+    .ca-pill-gold {
+        border-color: var(--ca-gold-border);
+        background: var(--ca-gold-bg);
+        color: var(--ca-gold-text);
+    }
+
+    .ca-pill-emerald {
+        border-color: var(--ca-emerald-border);
+        background: var(--ca-emerald-bg);
+        color: var(--ca-emerald-text);
+    }
+
+    .ca-pill-danger {
+        border-color: var(--ca-danger-border);
+        background: var(--ca-danger-bg);
+        color: var(--ca-danger-text);
+    }
+
+    .ca-pill-info {
+        border-color: var(--ca-info-border);
+        background: var(--ca-info-bg);
+        color: var(--ca-info-text);
+    }
+
+    .ca-panel-emerald,
+    .ca-panel-danger {
+        @apply rounded-xl border p-4;
+    }
+
+    .ca-panel-emerald {
+        border-color: var(--ca-emerald-border);
+        background: var(--ca-emerald-bg);
+    }
+
+    .ca-panel-danger {
+        border-color: var(--ca-danger-border);
+        background: var(--ca-danger-bg);
+    }
+
+    .ca-icon-gold,
+    .ca-icon-emerald {
+        @apply inline-flex items-center justify-center rounded-lg;
+    }
+
+    .ca-icon-gold {
+        background: var(--ca-gold-bg);
+        color: var(--ca-gold-text);
+    }
+
+    .ca-icon-emerald {
+        background: var(--ca-emerald-bg);
+        color: var(--ca-emerald-text);
+    }
+
+    .ca-link-accent {
+        color: var(--ca-gold-text);
+        text-decoration: underline;
+        text-decoration-color: color-mix(in srgb, var(--ca-gold-border) 72%, transparent);
+        text-underline-offset: 0.24rem;
+        transition: color 160ms ease, text-decoration-color 160ms ease;
+    }
+
+    .ca-link-accent:hover {
+        color: color-mix(in srgb, var(--ca-gold-text) 84%, var(--ca-text));
+        text-decoration-color: var(--ca-gold-text);
+    }
+
+    .ca-required,
+    .ca-field-error {
+        color: var(--ca-danger-text);
+    }
+
+    .ca-field-success {
+        color: var(--ca-emerald-text);
+    }
+
+    .ca-status-success,
+    .ca-status-danger,
+    .ca-status-warning {
+        @apply rounded-lg border px-3 py-2 text-sm;
+    }
+
+    .ca-status-success {
+        border-color: var(--ca-emerald-border);
+        background: var(--ca-emerald-bg);
+        color: var(--ca-emerald-text);
+    }
+
+    .ca-status-danger {
+        border-color: var(--ca-danger-border);
+        background: var(--ca-danger-bg);
+        color: var(--ca-danger-text);
+    }
+
+    .ca-status-warning {
+        border-color: var(--ca-gold-border);
+        background: var(--ca-gold-bg);
+        color: var(--ca-gold-text);
+    }
+
+    .ca-scene-grid {
+        background-image:
+            linear-gradient(to right, var(--ca-scene-grid-line) 1px, transparent 1px),
+            linear-gradient(to bottom, var(--ca-scene-grid-line) 1px, transparent 1px);
+        background-size: 24px 24px;
+    }
+
+    .ca-scene-glow {
+        background: radial-gradient(ellipse at center, var(--ca-scene-glow) 0%, transparent 68%);
+    }
+
+    .ca-scene-base {
+        background: var(--ca-scene-base);
+    }
+
+    .ca-light-soft-blend {
+        mix-blend-mode: screen;
+    }
+}
+
+html[data-theme="light"] .ca-light-soft-blend {
+    mix-blend-mode: normal;
+    opacity: 0.72;
 }
 
 /* ── Scroll Reveal Animations ── */
@@ -433,11 +639,11 @@ a {
 }
 
 ::-webkit-scrollbar-track {
-    background: #050814;
+    background: var(--ca-scroll-track);
 }
 
 ::-webkit-scrollbar-thumb {
-    border: 2px solid #050814;
-    background: linear-gradient(180deg, #1f2937, #334155);
+    border: 2px solid var(--ca-scroll-thumb-border);
+    background: var(--ca-scroll-thumb);
     border-radius: 999px;
 }

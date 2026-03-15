@@ -30,7 +30,7 @@ const partners = [
                     :key="partner.name"
                     class="group relative flex h-12 w-40 items-center justify-center gap-2 rounded-lg border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg-strong)] px-4 opacity-70 transition duration-300 hover:border-amber-300/20 hover:opacity-100"
                 >
-                    <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-amber-400/10 text-[10px] font-bold text-amber-300">{{ partner.initials }}</span>
+                    <span class="ca-icon-gold flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[10px] font-bold">{{ partner.initials }}</span>
                     <span class="text-xs font-semibold text-[var(--ca-muted)] transition group-hover:text-[var(--ca-text)]">{{ partner.name }}</span>
                 </div>
 
@@ -40,7 +40,7 @@ const partners = [
                     :key="`${partner.name}-duplicate`"
                     class="group relative flex h-12 w-40 items-center justify-center gap-2 rounded-lg border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg-strong)] px-4 opacity-70 transition duration-300 hover:border-amber-300/20 hover:opacity-100"
                 >
-                    <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-amber-400/10 text-[10px] font-bold text-amber-300">{{ partner.initials }}</span>
+                    <span class="ca-icon-gold flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[10px] font-bold">{{ partner.initials }}</span>
                     <span class="text-xs font-semibold text-[var(--ca-muted)] transition group-hover:text-[var(--ca-text)]">{{ partner.name }}</span>
                 </div>
 
@@ -50,7 +50,7 @@ const partners = [
                     :key="`${partner.name}-triplicate`"
                     class="group relative flex h-12 w-40 items-center justify-center gap-2 rounded-lg border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg-strong)] px-4 opacity-70 transition duration-300 hover:border-amber-300/20 hover:opacity-100"
                 >
-                    <span class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-amber-400/10 text-[10px] font-bold text-amber-300">{{ partner.initials }}</span>
+                    <span class="ca-icon-gold flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[10px] font-bold">{{ partner.initials }}</span>
                     <span class="text-xs font-semibold text-[var(--ca-muted)] transition group-hover:text-[var(--ca-text)]">{{ partner.name }}</span>
                 </div>
             </div>
