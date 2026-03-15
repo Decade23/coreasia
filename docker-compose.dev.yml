@@ -1,0 +1,163 @@
+services:
+  # ============================================
+  # Backend API (Go + Air Hot-Reload)
+  # ============================================
+  api:
+    build:
+      context: ./backend/lms
+      dockerfile: deployments/Dockerfile.dev
+    container_name: coreasia-api
+    ports:
+      - "8083:8080"
+    volumes:
+      - ./backend/lms:/app
+    environment:
+      - APP_ENV=development
+      - APP_PORT=8080
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=coreasia
+      - DB_PASSWORD=coreasia_secret
+      - DB_NAME=coreasia_lms
+      - DB_SSL_MODE=disable
+      - JWT_SECRET=dev-secret-change-in-production-min32
+      - STORAGE_ENDPOINT=minio:9000
+      - STORAGE_ACCESS_KEY=minioadmin
+      - STORAGE_SECRET_KEY=minioadmin
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    networks:
+      - coreasia-net
+    restart: unless-stopped
+
+  # ============================================
+  # Gateway API (Go + Air Hot-Reload)
+  # ============================================
+  gateway:
+    build:
+      context: ./backend/gateway
+      dockerfile: Dockerfile.dev
+    container_name: coreasia-gateway
+    ports:
+      - "8084:8081"
+    volumes:
+      - ./backend/gateway:/app
+    environment:
+      - APP_ENV=development
+      - APP_PORT=8081
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=coreasia
+      - DB_PASSWORD=coreasia_secret
+      - DB_NAME=coreasia_lms
+      - DB_SSL_MODE=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - coreasia-net
+    restart: unless-stopped
+
+  # ============================================
+  # Frontend LMS (Nuxt.js + Bun Dev Server)
+  # ============================================
+  frontend:
+    build:
+      context: ./frontend/lms
+      dockerfile: Dockerfile.dev
+    container_name: coreasia-lms
+    ports:
+      - "3002:3000"
+      - "24678:24678"
+    volumes:
+      - ./frontend/lms:/app
+      - /app/node_modules
+      - /app/.nuxt
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - HOST=0.0.0.0
+      - NUXT_PUBLIC_API_BASE=http://localhost:8083/api
+    networks:
+      - coreasia-net
+    restart: unless-stopped
+
+  # ============================================
+  # Frontend Landing (Nuxt.js Dev Server)
+  # ============================================
+  landing:
+    build:
+      context: ./frontend/landing
+      dockerfile: Dockerfile
+      target: development
+    container_name: coreasia-landing
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./frontend/landing:/app
+      - /app/node_modules
+      - /app/.nuxt
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - HOST=0.0.0.0
+      - GATEWAY_URL=http://gateway:8081/api
+    depends_on:
+      - gateway
+    networks:
+      - coreasia-net
+    restart: unless-stopped
+
+  # ============================================
+  # PostgreSQL 17
+  # ============================================
+  postgres:
+    image: postgres:17-alpine
+    container_name: coreasia-postgres
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: coreasia
+      POSTGRES_PASSWORD: coreasia_secret
+      POSTGRES_DB: coreasia_lms
+    volumes:
+      - coreasia-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U coreasia -d coreasia_lms" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - coreasia-net
+    restart: unless-stopped
+
+  # ============================================
+  # MinIO (Object Storage)
+  # ============================================
+  minio:
+    image: minio/minio:latest
+    container_name: coreasia-minio
+    ports:
+      - "9002:9000"
+      - "9003:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - coreasia-miniodata:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - coreasia-net
+    restart: unless-stopped
+
+volumes:
+  coreasia-pgdata:
+  coreasia-miniodata:
+
+
+networks:
+  coreasia-net:
+    driver: bridge

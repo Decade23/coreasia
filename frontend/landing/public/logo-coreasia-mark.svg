@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500">
+  <defs>
+    <!-- Gradien Emas Premium untuk kesan eksklusif & profesional -->
+    <linearGradient id="premiumGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FDE047" />
+      <stop offset="25%" stop-color="#EAB308" />
+      <stop offset="75%" stop-color="#A16207" />
+      <stop offset="100%" stop-color="#713F12" />
+    </linearGradient>
+
+    <!-- Filter shadow halus untuk kedalaman (3D feel) pada The Core -->
+    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="4" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  
+  <g transform="translate(100, 100)" fill="none" stroke="url(#premiumGold)" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Outer Prism / Shield (Tech Framework & Stability) -->
+    <!-- Koordinat kubus isometrik sempurna -->
+    <path d="M 150 10 L 271.24 80 L 271.24 220 L 150 290 L 28.76 220 L 28.76 80 Z" stroke-width="28" />
+    
+    <!-- Central Sphere (The "Core" & Asia Insight) -->
+    <circle cx="150" cy="150" r="45" fill="url(#premiumGold)" stroke="none" filter="url(#softGlow)" />
+    
+    <!-- Inner Highlighting tipis pada Sphere -->
+    <circle cx="150" cy="150" r="41" stroke="#FEF08A" stroke-width="2" stroke-opacity="0.3" />
+    
+    <!-- Nexus Links (Jaringan Global & Konektivitas) -->
+    <line x1="150" y1="10" x2="150" y2="105" stroke-width="14" />
+    <line x1="28.76" y1="220" x2="111.03" y2="172.5" stroke-width="14" />
+    <line x1="271.24" y1="220" x2="188.97" y2="172.5" stroke-width="14" />
+  </g>
+</svg>

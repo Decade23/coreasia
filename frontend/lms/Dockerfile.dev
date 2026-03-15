@@ -8,7 +8,7 @@ WORKDIR /app
 COPY package.json bun.lock ./
 
 # Install dependensi
-RUN bun install --frozen-lockfile
+RUN bun install
 
 # Salin sisa kode sumber
 COPY . .
