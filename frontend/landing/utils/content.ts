@@ -84,7 +84,7 @@ const ID_CONTENT = {
             'Cocok untuk audit performa rutin',
           ],
           ctaLabel: 'Pelajari Pantau',
-          to: '/contact?subject=pantau',
+          to: '/solutions/pantau',
         },
         {
           name: 'LeadKu by CoreAsia',
@@ -97,7 +97,7 @@ const ID_CONTENT = {
             'Aktivitas tim dan reporting lebih jelas',
           ],
           ctaLabel: 'Pelajari LeadKu',
-          to: '/contact?subject=leadku',
+          to: '/solutions/leadku',
         },
       ],
     },
@@ -284,6 +284,172 @@ const ID_CONTENT = {
         title: 'Siap untuk upgrade sistem pelatihan Anda?',
         subtitle: 'Tim kami siap membantu migrasi data dan setup awal.',
         button: 'Hubungi Sales',
+      },
+    },
+    pantau: {
+      title: 'Pantau - Dashboard Monitoring Web yang Lebih Mudah Dibaca',
+      description:
+        'Pantau menggabungkan GA4 dan Google Search Console ke dashboard monitoring yang lebih ringkas untuk owner, freelancer, dan agency.',
+      kicker: 'Website Monitoring Dashboard',
+      hero: {
+        title:
+          'Pantau performa website dengan <span class="ca-gradient-text">dashboard yang langsung bisa dipahami</span>.',
+        subtitle:
+          'Pantau membantu tim marketing, freelancer, dan agency membaca insight penting dari GA4 serta Google Search Console tanpa tenggelam di dashboard yang rumit.',
+        ctaPrimary: 'Minta Preview Pantau',
+        ctaSecondary: 'WhatsApp',
+        chips: ['GA4 + GSC', 'Readable dashboard', 'Monitoring rutin lebih cepat'],
+      },
+      detailedFeatures: [
+        {
+          title: 'Ringkasan Traffic Cepat',
+          description: 'Lihat trafik, user aktif, dan tren performa utama dalam satu panel yang lebih mudah dipahami.',
+          icon: 'lucide:activity',
+        },
+        {
+          title: 'Search Console Snapshot',
+          description: 'Pantau query, impresi, klik, dan halaman penting tanpa harus berpindah-pindah dashboard.',
+          icon: 'lucide:search-check',
+        },
+        {
+          title: 'Insight untuk Audit Rutin',
+          description: 'Bantu tim Anda membaca perubahan performa mingguan untuk kebutuhan evaluasi dan reporting.',
+          icon: 'lucide:clipboard-list',
+        },
+        {
+          title: 'Ringkas untuk Klien atau Owner',
+          description: 'Insight disusun agar tetap nyaman dibaca oleh non-teknis, bukan hanya analyst internal.',
+          icon: 'lucide:layout-dashboard',
+        },
+      ],
+      audience: {
+        label: 'Best Fit',
+        title: 'Siapa yang paling cocok memakai Pantau',
+        subtitle:
+          'Produk ini dirancang untuk tim yang butuh monitoring performa web yang cepat dibaca dan mudah dijelaskan kembali.',
+        items: [
+          {
+            icon: 'lucide:briefcase-business',
+            title: 'Freelancer & consultant',
+            description: 'Memudahkan audit performa web dan penyusunan insight tanpa dashboard yang terlalu berat.',
+          },
+          {
+            icon: 'lucide:building-2',
+            title: 'Agency kecil sampai menengah',
+            description: 'Monitoring beberapa website jadi lebih rapi untuk kebutuhan review internal dan laporan klien.',
+          },
+          {
+            icon: 'lucide:megaphone',
+            title: 'Owner & marketing team',
+            description: 'Membaca sinyal performa lebih cepat tanpa harus memahami detail teknis GA4 dan GSC.',
+          },
+        ],
+      },
+      workflow: {
+        label: 'How It Works',
+        title: 'Alur monitoring yang lebih ringkas dari dashboard standar',
+        items: [
+          {
+            title: 'Hubungkan data source',
+            description: 'Sinkronkan data dari GA4 dan Google Search Console ke satu tempat yang lebih fokus.',
+          },
+          {
+            title: 'Baca sinyal terpenting',
+            description: 'Tim Anda langsung melihat angka, halaman, dan tren yang paling layak ditindaklanjuti.',
+          },
+          {
+            title: 'Tindak lanjuti insight',
+            description: 'Gunakan insight untuk audit rutin, review klien, atau keputusan optimasi konten dan SEO.',
+          },
+        ],
+      },
+      cta: {
+        title: 'Ingin monitoring web yang lebih cepat dibaca?',
+        subtitle: 'Ceritakan alur reporting Anda saat ini. Kami bantu tunjukkan bagaimana Pantau bisa masuk ke workflow tim.',
+        button: 'Diskusikan Pantau',
+      },
+    },
+    leadku: {
+      title: 'LeadKu - CRM Multi-Workspace untuk Tim Sales yang Butuh Pipeline Rapi',
+      description:
+        'LeadKu membantu tim sales menjaga pipeline, aktivitas, dan reporting tetap terstruktur dalam satu workspace yang ringan.',
+      kicker: 'Multi-Workspace CRM',
+      hero: {
+        title:
+          'Rapikan pipeline sales dengan <span class="ca-gradient-text">CRM multi-workspace</span> yang lebih ringan.',
+        subtitle:
+          'LeadKu dirancang untuk tim yang membutuhkan alur sales yang lebih terpantau, aktivitas tim yang lebih jelas, dan reporting yang tidak berbelit.',
+        ctaPrimary: 'Minta Preview LeadKu',
+        ctaSecondary: 'WhatsApp',
+        chips: ['Pipeline visibility', 'Team activity tracking', 'Multi-workspace ready'],
+      },
+      detailedFeatures: [
+        {
+          title: 'Pipeline yang Mudah Dipantau',
+          description: 'Lihat pergerakan lead dan deal di setiap stage tanpa setup CRM yang terlalu kompleks.',
+          icon: 'lucide:kanban-square',
+        },
+        {
+          title: 'Aktivitas Tim Tercatat',
+          description: 'Riwayat follow-up dan aktivitas penting tim sales tersimpan lebih rapi untuk evaluasi harian.',
+          icon: 'lucide:history',
+        },
+        {
+          title: 'Multi-Workspace',
+          description: 'Pisahkan pipeline antar brand, unit, atau tim tanpa harus berpindah sistem.',
+          icon: 'lucide:layers-3',
+        },
+        {
+          title: 'Reporting Lebih Cepat',
+          description: 'Ringkasan progres dan performa tim bisa dibaca lebih cepat oleh sales lead maupun owner bisnis.',
+          icon: 'lucide:line-chart',
+        },
+      ],
+      audience: {
+        label: 'Best Fit',
+        title: 'LeadKu paling relevan untuk tim seperti ini',
+        subtitle:
+          'Cocok untuk bisnis jasa, agency, dan tim sales internal yang butuh CRM praktis sebelum masuk tool yang terlalu berat.',
+        items: [
+          {
+            icon: 'lucide:users',
+            title: 'Tim sales kecil-menengah',
+            description: 'Membantu koordinasi lead, follow-up, dan progres deal agar tidak tercecer.',
+          },
+          {
+            icon: 'lucide:briefcase',
+            title: 'Agency & service business',
+            description: 'Pipeline prospek dan klien lebih mudah dibagi per layanan, unit, atau brand.',
+          },
+          {
+            icon: 'lucide:user-round-check',
+            title: 'Founder yang masih pegang sales',
+            description: 'Memberikan visibilitas lebih cepat ke aktivitas tim tanpa dashboard yang terlalu berat.',
+          },
+        ],
+      },
+      workflow: {
+        label: 'How It Works',
+        title: 'Lead management yang lebih bersih dari awal sampai closing',
+        items: [
+          {
+            title: 'Kumpulkan lead ke workspace yang tepat',
+            description: 'Pisahkan lead dan pipeline berdasarkan brand, divisi, atau tim yang menanganinya.',
+          },
+          {
+            title: 'Pantau follow-up tim',
+            description: 'Aktivitas tim tercatat lebih jelas sehingga sales lead tahu apa yang berjalan dan apa yang macet.',
+          },
+          {
+            title: 'Review performa lebih cepat',
+            description: 'Owner atau sales manager bisa membaca progres dan bottleneck tanpa mengurai spreadsheet manual.',
+          },
+        ],
+      },
+      cta: {
+        title: 'Butuh CRM yang lebih rapi tanpa terlalu berat?',
+        subtitle: 'Tunjukkan alur sales Anda sekarang. Kami bantu lihat apakah LeadKu cukup untuk kebutuhan pipeline tim.',
+        button: 'Diskusikan LeadKu',
       },
     },
     venture: {
@@ -826,6 +992,13 @@ const ID_CONTENT = {
       responseTime: 'Respon tim',
       businessHours: 'Senin - Jumat, 09.00 - 17.00 WIB',
     },
+    themeToggle: {
+      label: 'Tema',
+      light: 'Terang',
+      dark: 'Gelap',
+      switchToLight: 'Aktifkan mode terang',
+      switchToDark: 'Aktifkan mode gelap',
+    },
     backToTop: {
       ariaLabel: 'Kembali ke atas',
     },
@@ -843,8 +1016,8 @@ const ID_CONTENT = {
       },
       productLinks: [
         { label: 'CoreAsia LMS', to: '/solutions/lms' },
-        { label: 'Pantau', to: '/contact?subject=pantau' },
-        { label: 'LeadKu', to: '/contact?subject=leadku' },
+        { label: 'Pantau', to: '/solutions/pantau' },
+        { label: 'LeadKu', to: '/solutions/leadku' },
       ],
       partnershipLinks: [
         { label: 'SaaS Subscription', to: '/pricing' },
@@ -1023,7 +1196,7 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
             'Useful for recurring monitoring audits',
           ],
           ctaLabel: 'Explore Pantau',
-          to: '/contact?subject=pantau',
+          to: '/solutions/pantau',
         },
         {
           name: 'LeadKu by CoreAsia',
@@ -1036,7 +1209,7 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
             'Sharper activity tracking and reporting',
           ],
           ctaLabel: 'Explore LeadKu',
-          to: '/contact?subject=leadku',
+          to: '/solutions/leadku',
         },
       ],
     },
@@ -1385,6 +1558,172 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
         button: 'Contact Sales',
       },
     },
+    pantau: {
+      title: 'Pantau - A Web Monitoring Dashboard That Is Easier to Read',
+      description:
+        'Pantau brings GA4 and Google Search Console into a more focused monitoring dashboard for owners, freelancers, and agencies.',
+      kicker: 'Website Monitoring Dashboard',
+      hero: {
+        title:
+          'Monitor website performance with a <span class="ca-gradient-text">dashboard that is easier to understand</span>.',
+        subtitle:
+          'Pantau helps marketing teams, freelancers, and agencies read the most important insights from GA4 and Google Search Console without drowning in complex dashboards.',
+        ctaPrimary: 'Request Pantau Preview',
+        ctaSecondary: 'WhatsApp',
+        chips: ['GA4 + GSC', 'Readable dashboard', 'Faster recurring monitoring'],
+      },
+      detailedFeatures: [
+        {
+          title: 'Fast traffic overview',
+          description: 'See traffic, active users, and top performance trends in a single summary panel.',
+          icon: 'lucide:activity',
+        },
+        {
+          title: 'Search Console snapshot',
+          description: 'Track queries, impressions, clicks, and key pages without jumping across multiple views.',
+          icon: 'lucide:search-check',
+        },
+        {
+          title: 'Insight for recurring audits',
+          description: 'Helps your team read weekly performance changes for routine reviews and decision making.',
+          icon: 'lucide:clipboard-list',
+        },
+        {
+          title: 'Readable for clients or owners',
+          description: 'Insights are shaped to be useful for non-technical stakeholders, not only analysts.',
+          icon: 'lucide:layout-dashboard',
+        },
+      ],
+      audience: {
+        label: 'Best Fit',
+        title: 'Who gets the most value from Pantau',
+        subtitle:
+          'Designed for teams that need website monitoring insight that is fast to read and easy to explain back to stakeholders.',
+        items: [
+          {
+            icon: 'lucide:briefcase-business',
+            title: 'Freelancers and consultants',
+            description: 'Useful for faster performance audits and simpler insight delivery without heavy dashboards.',
+          },
+          {
+            icon: 'lucide:building-2',
+            title: 'Small to mid agencies',
+            description: 'Makes recurring website monitoring cleaner for internal reviews and client reporting.',
+          },
+          {
+            icon: 'lucide:megaphone',
+            title: 'Owners and marketing teams',
+            description: 'Lets teams read the main performance signals faster without deep GA4 or GSC expertise.',
+          },
+        ],
+      },
+      workflow: {
+        label: 'How It Works',
+        title: 'A leaner monitoring flow than standard dashboards',
+        items: [
+          {
+            title: 'Connect the data source',
+            description: 'Bring GA4 and Google Search Console data into one focused view.',
+          },
+          {
+            title: 'Read the most important signals',
+            description: 'Your team sees the metrics, pages, and trends that deserve action first.',
+          },
+          {
+            title: 'Act on the insight',
+            description: 'Use the insight for recurring audits, client reviews, or SEO and content decisions.',
+          },
+        ],
+      },
+      cta: {
+        title: 'Need website monitoring that is easier to read?',
+        subtitle: 'Show us how your reporting works today and we will map how Pantau can fit your team workflow.',
+        button: 'Discuss Pantau',
+      },
+    },
+    leadku: {
+      title: 'LeadKu - Multi-Workspace CRM for Teams That Need a Cleaner Pipeline',
+      description:
+        'LeadKu helps sales teams keep pipeline, activity, and reporting structured in a lighter multi-workspace CRM.',
+      kicker: 'Multi-Workspace CRM',
+      hero: {
+        title:
+          'Clean up your sales pipeline with a <span class="ca-gradient-text">lighter multi-workspace CRM</span>.',
+        subtitle:
+          'LeadKu is built for teams that need better sales visibility, clearer team activity, and reporting that does not feel heavy.',
+        ctaPrimary: 'Request LeadKu Preview',
+        ctaSecondary: 'WhatsApp',
+        chips: ['Pipeline visibility', 'Team activity tracking', 'Multi-workspace ready'],
+      },
+      detailedFeatures: [
+        {
+          title: 'Visible pipeline stages',
+          description: 'Track lead and deal movement across each stage without an overly complex CRM setup.',
+          icon: 'lucide:kanban-square',
+        },
+        {
+          title: 'Logged team activity',
+          description: 'Important follow-up history and sales activity stay clearer for daily review.',
+          icon: 'lucide:history',
+        },
+        {
+          title: 'Multi-workspace structure',
+          description: 'Separate pipelines across brands, business units, or teams without moving to another system.',
+          icon: 'lucide:layers-3',
+        },
+        {
+          title: 'Faster reporting',
+          description: 'Managers and owners can read team progress and bottlenecks without manual spreadsheets.',
+          icon: 'lucide:line-chart',
+        },
+      ],
+      audience: {
+        label: 'Best Fit',
+        title: 'LeadKu is most relevant for teams like these',
+        subtitle:
+          'A good fit for service businesses, agencies, and internal sales teams that want a practical CRM before jumping into heavier tools.',
+        items: [
+          {
+            icon: 'lucide:users',
+            title: 'Small to mid sales teams',
+            description: 'Helps coordinate leads, follow-up, and deal progress so opportunities do not get lost.',
+          },
+          {
+            icon: 'lucide:briefcase',
+            title: 'Agencies and service businesses',
+            description: 'Pipelines stay easier to separate by service line, unit, or brand.',
+          },
+          {
+            icon: 'lucide:user-round-check',
+            title: 'Founders still leading sales',
+            description: 'Gives faster visibility into team activity without a heavy CRM dashboard.',
+          },
+        ],
+      },
+      workflow: {
+        label: 'How It Works',
+        title: 'Cleaner lead management from first touch to closing',
+        items: [
+          {
+            title: 'Route leads to the right workspace',
+            description: 'Separate leads and pipelines by brand, division, or team ownership.',
+          },
+          {
+            title: 'Monitor team follow-up',
+            description: 'Sales activity is easier to read, so team leads know what is moving and what is stuck.',
+          },
+          {
+            title: 'Review performance faster',
+            description: 'Owners or sales managers can read progress and bottlenecks without manual spreadsheet cleanup.',
+          },
+        ],
+      },
+      cta: {
+        title: 'Need a cleaner CRM without the weight?',
+        subtitle: 'Show us your current sales workflow and we will help assess whether LeadKu is enough for your team.',
+        button: 'Discuss LeadKu',
+      },
+    },
     venture: {
       title: 'Venture Partnership',
       description:
@@ -1716,6 +2055,13 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
       responseTime: 'Team response',
       businessHours: 'Monday - Friday, 09.00 - 17.00 WIB',
     },
+    themeToggle: {
+      label: 'Theme',
+      light: 'Light',
+      dark: 'Dark',
+      switchToLight: 'Enable light mode',
+      switchToDark: 'Enable dark mode',
+    },
     backToTop: {
       ariaLabel: 'Back to top',
     },
@@ -1730,8 +2076,8 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
       },
       productLinks: [
         { label: 'CoreAsia LMS', to: '/solutions/lms' },
-        { label: 'Pantau', to: '/contact?subject=pantau' },
-        { label: 'LeadKu', to: '/contact?subject=leadku' },
+        { label: 'Pantau', to: '/solutions/pantau' },
+        { label: 'LeadKu', to: '/solutions/leadku' },
       ],
       partnershipLinks: [
         { label: 'SaaS Subscription', to: '/pricing' },
