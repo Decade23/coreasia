@@ -4,7 +4,7 @@ import { useGatewayApi } from '~/composables/useGatewayApi'
 import type { PricingPlan, RegisterPayload, RegistrationStatusResult } from '~/composables/useGatewayApi'
 import { useDebounceFn } from '@vueuse/core'
 
-const { t } = useCoreI18n()
+const { locale, t } = useCoreI18n()
 const { useReveal } = useScrollReveal()
 const route = useRoute()
 const { fetchPlans, checkSlug, register, getRegistrationStatus } = useGatewayApi()
@@ -13,10 +13,17 @@ const formSection = useReveal('slideLeft')
 const summarySection = useReveal('slideRight', 150)
 
 useCoreSeo({
-    title: 'Daftar Akun Baru',
-    description: 'Buat akun CoreAsia LMS untuk organisasi Anda. Mulai dengan 14 hari trial gratis.',
+    title: t('register.title') as string,
+    description: t('register.description') as string,
     path: '/register',
 })
+
+useSchemaOrg([
+    defineWebPage({
+        name: t('register.schema.name') as string,
+        description: t('register.schema.description') as string,
+    }),
+])
 
 // ── Plan Data ──
 const plans = ref<PricingPlan[]>([])
@@ -44,11 +51,7 @@ onMounted(async () => {
 })
 
 // ── Organization Types ──
-const orgTypes = [
-    { value: 'lsp', label: 'LSP (Lembaga Sertifikasi Profesi)' },
-    { value: 'training_center', label: 'LPK / Training Center' },
-    { value: 'corporate', label: 'Korporat' },
-]
+const orgTypes = computed(() => (t('register.orgTypes') as Array<{ value: string; label: string }>) || [])
 
 // ── Form State ──
 interface RegisterForm {
@@ -79,7 +82,7 @@ const formState = reactive({
     isSubmitting: false,
     isSuccess: false,
     errorMessage: '',
-    successTitle: 'Pendaftaran Berhasil!',
+    successTitle: t('register.success.createdTitle') as string,
     successMessage: '',
 })
 
@@ -91,6 +94,18 @@ const paymentReturn = reactive({
     message: '',
     invoiceUrl: '',
 })
+
+const trustSignals = computed(() => (t('register.summary.trustSignals') as string[]) || [])
+
+const formatRegisterText = (key: string, replacements: Record<string, string> = {}) => {
+    let text = t(key) as string
+
+    Object.entries(replacements).forEach(([token, value]) => {
+        text = text.replace(`{${token}}`, value)
+    })
+
+    return text
+}
 
 // ── Slug Checking ──
 const slugState = reactive({
@@ -180,10 +195,6 @@ const phoneModel = computed({
     },
 })
 
-// ── Password Visibility ──
-const showPassword = ref(false)
-const showConfirmPassword = ref(false)
-
 // ── Password Strength ──
 const passwordStrength = computed(() => {
     const pwd = form.password
@@ -197,10 +208,10 @@ const passwordStrength = computed(() => {
 
     const levels = [
         { level: 0, label: '', color: '' },
-        { level: 1, label: 'Lemah', color: 'bg-rose-400' },
-        { level: 2, label: 'Cukup', color: 'bg-amber-400' },
-        { level: 3, label: 'Baik', color: 'bg-emerald-400' },
-        { level: 4, label: 'Kuat', color: 'bg-emerald-300' },
+        { level: 1, label: t('register.passwordStrength.weak') as string, color: 'bg-rose-400' },
+        { level: 2, label: t('register.passwordStrength.fair') as string, color: 'bg-amber-400' },
+        { level: 3, label: t('register.passwordStrength.good') as string, color: 'bg-emerald-400' },
+        { level: 4, label: t('register.passwordStrength.strong') as string, color: 'bg-emerald-300' },
     ]
 
     return levels[score] || levels[0]
@@ -228,49 +239,49 @@ const validate = (): boolean => {
     Object.keys(errors).forEach(key => delete errors[key])
 
     if (!form.orgName.trim()) {
-        errors.orgName = 'Nama organisasi wajib diisi'
+        errors.orgName = t('register.validation.orgNameRequired') as string
     }
 
     if (!form.slug || form.slug.length < 3) {
-        errors.slug = 'Subdomain minimal 3 karakter'
+        errors.slug = t('register.validation.slugMin') as string
     } else if (!slugRegex.test(form.slug)) {
-        errors.slug = 'Hanya huruf kecil, angka, dan dash. Tidak boleh diawali/diakhiri dash.'
+        errors.slug = t('register.validation.slugFormat') as string
     } else if (slugState.isAvailable === false) {
-        errors.slug = 'Subdomain sudah digunakan'
+        errors.slug = t('register.validation.slugUnavailable') as string
     }
 
     if (!form.orgType) {
-        errors.orgType = 'Pilih tipe organisasi'
+        errors.orgType = t('register.validation.orgTypeRequired') as string
     }
 
     if (!form.fullName.trim()) {
-        errors.fullName = 'Nama lengkap wajib diisi'
+        errors.fullName = t('register.validation.fullNameRequired') as string
     }
 
     if (!form.email.trim()) {
-        errors.email = 'Email wajib diisi'
+        errors.email = t('register.validation.emailRequired') as string
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-        errors.email = 'Format email tidak valid'
+        errors.email = t('register.validation.emailInvalid') as string
     }
 
     if (!form.phone.trim()) {
-        errors.phone = 'Nomor handphone wajib diisi'
+        errors.phone = t('register.validation.phoneRequired') as string
     }
 
     if (!form.password) {
-        errors.password = 'Password wajib diisi'
+        errors.password = t('register.validation.passwordRequired') as string
     } else if (form.password.length < 8) {
-        errors.password = 'Password minimal 8 karakter'
+        errors.password = t('register.validation.passwordMin') as string
     }
 
     if (!form.confirmPassword) {
-        errors.confirmPassword = 'Konfirmasi password wajib diisi'
+        errors.confirmPassword = t('register.validation.confirmPasswordRequired') as string
     } else if (form.password !== form.confirmPassword) {
-        errors.confirmPassword = 'Password tidak cocok'
+        errors.confirmPassword = t('register.validation.confirmPasswordMismatch') as string
     }
 
     if (!form.agree) {
-        errors.agree = 'Anda harus menyetujui Syarat & Ketentuan'
+        errors.agree = t('register.validation.agreeRequired') as string
     }
 
     return Object.keys(errors).length === 0
@@ -306,27 +317,27 @@ const syncRegistrationStatus = async (registrationId: string) => {
         }
 
         if (!latestStatus) {
-            paymentReturn.message = 'Status pembayaran belum dapat dimuat. Silakan refresh halaman atau hubungi tim kami.'
+            paymentReturn.message = t('register.payment.unavailable') as string
             return
         }
 
         if (latestStatus.status === 'provisioning') {
-            paymentReturn.message = 'Pembayaran berhasil diterima. Workspace Anda sedang dipersiapkan dan halaman ini akan memperbarui otomatis.'
+            paymentReturn.message = t('register.payment.provisioning') as string
             return
         }
 
         if (latestStatus.status === 'payment_failed') {
-            paymentReturn.message = 'Pembayaran belum berhasil diproses. Anda bisa melanjutkan pembayaran kembali dari link checkout.'
+            paymentReturn.message = t('register.payment.failed') as string
             return
         }
 
         if (latestStatus.status === 'payment_review') {
-            paymentReturn.message = 'Pembayaran Anda sedang direview oleh payment gateway. Mohon tunggu beberapa saat.'
+            paymentReturn.message = t('register.payment.review') as string
             return
         }
 
         if (latestStatus.status === 'pending_payment') {
-            paymentReturn.message = 'Pendaftaran sudah tercatat. Silakan lanjutkan pembayaran untuk mengaktifkan workspace Anda.'
+            paymentReturn.message = t('register.payment.pending') as string
         }
     } finally {
         paymentReturn.isChecking = false
@@ -365,8 +376,8 @@ const handleSubmit = async () => {
             }
 
             formState.successTitle = result.status === 'ready'
-                ? 'Workspace Berhasil Dibuat!'
-                : 'Pendaftaran Berhasil!'
+                ? t('register.success.readyTitle') as string
+                : t('register.success.createdTitle') as string
             formState.successMessage = result.message
             formState.isSuccess = true
 
@@ -384,10 +395,12 @@ const handleSubmit = async () => {
                 }
             }
         } else {
-            formState.errorMessage = result.message || 'Terjadi kesalahan. Silakan coba lagi.'
+            formState.errorMessage = result.message || (t('common.error') as string)
         }
     } catch {
-        formState.errorMessage = 'Koneksi gagal. Periksa koneksi internet Anda.'
+        formState.errorMessage = locale.value === 'en'
+            ? 'Connection failed. Please check your internet connection.'
+            : 'Koneksi gagal. Periksa koneksi internet Anda.'
     } finally {
         formState.isSubmitting = false
     }
@@ -410,21 +423,21 @@ const handleSubmit = async () => {
             <div class="ca-container relative ca-section pb-10 sm:pb-12 lg:pb-16">
                 <NuxtLink
                     to="/pricing"
-                    class="mb-6 inline-flex items-center gap-2 text-sm text-slate-400 transition hover:text-white"
+                    class="mb-6 inline-flex items-center gap-2 text-sm text-[var(--ca-muted)] transition hover:text-[var(--ca-text)]"
                 >
                     <Icon name="lucide:arrow-left" class="h-4 w-4" />
-                    Kembali ke Pricing
+                    {{ t('register.backToPricing') }}
                 </NuxtLink>
-
                 <span class="ca-kicker">
                     <Icon name="lucide:rocket" class="h-3.5 w-3.5 text-amber-300" />
-                    Registrasi
+                    {{ t('register.kicker') }}
                 </span>
-                <h1 class="mt-5 text-balance font-display text-4xl font-bold leading-[1.08] text-white sm:text-5xl">
-                    Buat Akun <span class="ca-gradient-text">Organisasi Baru</span>
-                </h1>
+                <h1
+                    class="mt-5 text-balance font-display text-4xl font-bold leading-[1.08] text-[var(--ca-text)] sm:text-5xl"
+                    v-html="t('register.hero.title')"
+                />
                 <p class="ca-copy mt-4 max-w-2xl">
-                    Setup hanya 5 menit. Langsung aktif tanpa proses manual.
+                    {{ t('register.hero.subtitle') }}
                 </p>
             </div>
         </section>
@@ -436,21 +449,21 @@ const handleSubmit = async () => {
                     <div class="mx-auto mb-6 inline-flex h-20 w-20 items-center justify-center rounded-full bg-emerald-400/15">
                         <Icon name="lucide:check-circle-2" class="h-10 w-10 text-emerald-300" />
                     </div>
-                    <h2 class="text-2xl font-display font-bold text-white sm:text-3xl">
+                    <h2 class="text-2xl font-display font-bold text-[var(--ca-text)] sm:text-3xl">
                         {{ formState.successTitle }}
                     </h2>
-                    <p class="mt-3 text-slate-300">
-                        {{ formState.successMessage || `Akun organisasi ${form.orgName} telah dibuat.` }}
+                    <p class="mt-3 text-[var(--ca-muted)]">
+                        {{ formState.successMessage || formatRegisterText('register.success.defaultMessage', { orgName: form.orgName }) }}
                     </p>
-                    <div class="mt-4 rounded-xl border border-white/10 bg-white/[0.03] p-4">
-                        <p class="text-sm text-slate-400">URL Subdomain Anda:</p>
+                    <div class="mt-4 rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-4">
+                        <p class="text-sm text-[var(--ca-subtle)]">{{ t('register.success.subdomainLabel') }}</p>
                         <p class="mt-1 text-lg font-bold text-amber-200">
                             {{ form.slug }}.coreasia.id
                         </p>
                     </div>
                     <div class="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
                         <NuxtLink to="/" class="ca-btn-primary">
-                            Kembali ke Beranda
+                            {{ t('register.success.backHome') }}
                             <Icon name="lucide:arrow-right" class="h-4 w-4" />
                         </NuxtLink>
                     </div>
@@ -481,7 +494,7 @@ const handleSubmit = async () => {
                                 :href="paymentReturn.invoiceUrl"
                                 class="inline-flex items-center gap-2 rounded-xl border border-amber-300/35 bg-amber-300/15 px-4 py-2 font-semibold text-amber-100 transition hover:bg-amber-300/20"
                             >
-                                Lanjutkan Pembayaran
+                                {{ t('register.payment.continuePayment') }}
                                 <Icon name="lucide:arrow-right" class="h-4 w-4" />
                             </a>
                         </div>
@@ -489,33 +502,32 @@ const handleSubmit = async () => {
                 </div>
 
                 <div class="grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-start">
-
                     <!-- Left: Registration Form -->
                     <article ref="formSection" class="ca-card p-5 sm:p-6 lg:p-7">
                         <form class="space-y-6" @submit.prevent="handleSubmit">
 
                             <!-- Section: Organization -->
                             <div>
-                                <h2 class="flex items-center gap-2 text-lg font-display font-bold text-white">
+                                <h2 class="flex items-center gap-2 text-lg font-display font-bold text-[var(--ca-text)]">
                                     <Icon name="lucide:building" class="h-5 w-5 text-amber-300" />
-                                    Data Organisasi
+                                    {{ t('register.sections.organization') }}
                                 </h2>
-                                <div class="mt-1 h-px bg-white/10" />
+                                <div class="mt-1 h-px bg-[color:var(--ca-border)]" />
                             </div>
 
                             <BaseInput
                                 id="orgName"
                                 v-model.trim="form.orgName"
-                                label="Nama Organisasi"
+                                :label="t('register.fields.orgName') as string"
                                 required
                                 :disabled="formState.isSubmitting"
-                                placeholder="PT Sertifikasi Nusantara"
+                                :placeholder="t('register.placeholders.orgName') as string"
                                 :error="errors.orgName"
                             />
 
                             <div class="w-full">
-                                <label for="slug" class="mb-2 block text-sm font-medium text-slate-200">
-                                    URL Subdomain <span class="text-rose-300">*</span>
+                                <label for="slug" class="ca-field-label">
+                                    {{ t('register.fields.slug') }} <span class="text-rose-300">*</span>
                                 </label>
                                 <div class="flex items-stretch">
                                     <div class="relative flex-1">
@@ -523,13 +535,13 @@ const handleSubmit = async () => {
                                             id="slug"
                                             v-model="slugModel"
                                             type="text"
-                                            placeholder="nama-organisasi"
+                                            :placeholder="t('register.placeholders.slug') as string"
                                             :disabled="formState.isSubmitting"
-                                            class="w-full rounded-l-xl rounded-r-none border border-r-0 bg-white/[0.03] px-4 py-3 text-sm text-white placeholder:text-slate-500 transition-colors focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
+                                            class="w-full rounded-l-xl rounded-r-none border border-r-0 border-[color:var(--ca-border)] bg-[var(--ca-input-bg)] px-4 py-3 text-sm text-[var(--ca-text)] placeholder:text-[var(--ca-subtle)] transition-colors focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
                                             :class="[
                                                 errors.slug
                                                     ? 'border-rose-300/50 focus:border-rose-400'
-                                                    : 'border-white/12 focus:border-amber-300/40',
+                                                    : 'focus:border-amber-300/40',
                                             ]"
                                             maxlength="30"
                                         />
@@ -538,7 +550,7 @@ const handleSubmit = async () => {
                                             <Icon
                                                 v-if="slugState.isChecking"
                                                 name="lucide:loader-2"
-                                                class="h-4 w-4 animate-spin text-slate-400"
+                                                class="h-4 w-4 animate-spin text-[var(--ca-subtle)]"
                                             />
                                             <Icon
                                                 v-else-if="slugState.isAvailable === true"
@@ -553,22 +565,23 @@ const handleSubmit = async () => {
                                         </div>
                                     </div>
                                     <span
-                                        class="inline-flex items-center rounded-r-xl border border-l-0 border-white/12 bg-white/[0.06] px-3 text-sm text-slate-400"
+                                        class="inline-flex items-center rounded-r-xl border border-l-0 border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] px-3 text-sm text-[var(--ca-subtle)]"
                                     >
-                                        .coreasia.id
+                                        {{ t('register.slug.suffix') }}
                                     </span>
                                 </div>
                                 <p v-if="errors.slug" class="mt-1 text-xs text-rose-300">
                                     {{ errors.slug }}
                                 </p>
                                 <p v-else-if="slugState.isAvailable === true && form.slug" class="mt-1 text-xs text-emerald-300">
-                                    {{ form.slug }}.coreasia.id tersedia
+                                    {{ formatRegisterText('register.slug.available', { slug: form.slug }) }}
                                 </p>
                                 <p v-else-if="slugState.isAvailable === false && slugState.suggestion" class="mt-1 text-xs text-rose-300">
-                                    Sudah digunakan. Coba: <button type="button" class="font-semibold underline" @click="slugModel = slugState.suggestion">{{ slugState.suggestion }}</button>
+                                    {{ t('register.slug.usedSuggestion') }}
+                                    <button type="button" class="ml-1 font-semibold underline" @click="slugModel = slugState.suggestion">{{ slugState.suggestion }}</button>
                                 </p>
-                                <p v-else class="mt-1 text-xs text-slate-500">
-                                    Huruf kecil, angka, dan dash. Minimal 3 karakter.
+                                <p v-else class="mt-1 text-xs text-[var(--ca-subtle)]">
+                                    {{ t('register.slug.helper') }}
                                 </p>
                             </div>
 
@@ -576,29 +589,28 @@ const handleSubmit = async () => {
                                 id="orgType"
                                 v-model="form.orgType"
                                 :options="orgTypes"
-                                label="Tipe Organisasi"
+                                :label="t('register.fields.orgType') as string"
                                 required
                                 :disabled="formState.isSubmitting"
-                                placeholder="Pilih tipe organisasi..."
+                                :placeholder="t('register.placeholders.orgType') as string"
                                 :error="errors.orgType"
                             />
-
                             <!-- Section: Admin Account -->
                             <div class="pt-2">
-                                <h2 class="flex items-center gap-2 text-lg font-display font-bold text-white">
+                                <h2 class="flex items-center gap-2 text-lg font-display font-bold text-[var(--ca-text)]">
                                     <Icon name="lucide:user-circle-2" class="h-5 w-5 text-amber-300" />
-                                    Akun Administrator
+                                    {{ t('register.sections.admin') }}
                                 </h2>
-                                <div class="mt-1 h-px bg-white/10" />
+                                <div class="mt-1 h-px bg-[color:var(--ca-border)]" />
                             </div>
 
                             <BaseInput
                                 id="fullName"
                                 v-model.trim="form.fullName"
-                                label="Nama Lengkap"
+                                :label="t('register.fields.fullName') as string"
                                 required
                                 :disabled="formState.isSubmitting"
-                                placeholder="Nama lengkap Anda"
+                                :placeholder="t('register.placeholders.fullName') as string"
                                 :error="errors.fullName"
                             />
 
@@ -607,52 +619,35 @@ const handleSubmit = async () => {
                                     id="email"
                                     v-model.trim="form.email"
                                     type="email"
-                                    label="Email"
+                                    :label="t('register.fields.email') as string"
                                     required
                                     :disabled="formState.isSubmitting"
-                                    placeholder="nama@organisasi.id"
+                                    :placeholder="t('register.placeholders.email') as string"
                                     :error="errors.email"
                                 />
                                 <BaseInput
                                     id="phone"
                                     v-model="phoneModel"
                                     type="tel"
-                                    label="No. Handphone"
+                                    :label="t('register.fields.phone') as string"
                                     required
                                     :disabled="formState.isSubmitting"
-                                    placeholder="+62 812 3456 7890"
+                                    :placeholder="t('register.placeholders.phone') as string"
                                     :error="errors.phone"
                                 />
                             </div>
-
                             <!-- Password -->
                             <div class="grid gap-4 sm:grid-cols-2">
                                 <div class="w-full">
-                                    <label for="password" class="mb-2 block text-sm font-medium text-slate-200">
-                                        Password <span class="text-rose-300">*</span>
-                                    </label>
-                                    <div class="relative">
-                                        <input
-                                            id="password"
-                                            v-model="form.password"
-                                            :type="showPassword ? 'text' : 'password'"
-                                            placeholder="Minimal 8 karakter"
-                                            :disabled="formState.isSubmitting"
-                                            class="w-full rounded-xl border bg-white/[0.03] px-4 py-3 pr-10 text-sm text-white placeholder:text-slate-500 transition-colors focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
-                                            :class="[
-                                                errors.password
-                                                    ? 'border-rose-300/50 focus:border-rose-400'
-                                                    : 'border-white/12 focus:border-amber-300/40',
-                                            ]"
-                                        />
-                                        <button
-                                            type="button"
-                                            class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-white"
-                                            @click="showPassword = !showPassword"
-                                        >
-                                            <Icon :name="showPassword ? 'lucide:eye-off' : 'lucide:eye'" class="h-4 w-4" />
-                                        </button>
-                                    </div>
+                                    <BasePasswordInput
+                                        id="password"
+                                        v-model="form.password"
+                                        :label="t('register.fields.password') as string"
+                                        required
+                                        :disabled="formState.isSubmitting"
+                                        :placeholder="t('register.placeholders.password') as string"
+                                        :error="errors.password"
+                                    />
                                     <!-- Password strength bar -->
                                     <div v-if="form.password" class="mt-2 flex items-center gap-2">
                                         <div class="flex flex-1 gap-1">
@@ -660,55 +655,32 @@ const handleSubmit = async () => {
                                                 v-for="n in 4"
                                                 :key="n"
                                                 class="h-1 flex-1 rounded-full transition-colors"
-                                                :class="n <= passwordStrength.level ? passwordStrength.color : 'bg-white/10'"
+                                                :class="n <= passwordStrength.level ? passwordStrength.color : 'bg-[var(--ca-panel-bg)]'"
                                             />
                                         </div>
-                                        <span class="text-xs text-slate-400">{{ passwordStrength.label }}</span>
+                                        <span class="text-xs text-[var(--ca-subtle)]">{{ passwordStrength.label }}</span>
                                     </div>
-                                    <p v-if="errors.password" class="mt-1 text-xs text-rose-300">
-                                        {{ errors.password }}
-                                    </p>
                                 </div>
 
                                 <div class="w-full">
-                                    <label for="confirmPassword" class="mb-2 block text-sm font-medium text-slate-200">
-                                        Konfirmasi Password <span class="text-rose-300">*</span>
-                                    </label>
-                                    <div class="relative">
-                                        <input
-                                            id="confirmPassword"
-                                            v-model="form.confirmPassword"
-                                            :type="showConfirmPassword ? 'text' : 'password'"
-                                            placeholder="Ulangi password"
-                                            :disabled="formState.isSubmitting"
-                                            class="w-full rounded-xl border bg-white/[0.03] px-4 py-3 pr-10 text-sm text-white placeholder:text-slate-500 transition-colors focus:outline-hidden disabled:cursor-not-allowed disabled:opacity-50"
-                                            :class="[
-                                                errors.confirmPassword
-                                                    ? 'border-rose-300/50 focus:border-rose-400'
-                                                    : 'border-white/12 focus:border-amber-300/40',
-                                            ]"
-                                        />
-                                        <button
-                                            type="button"
-                                            class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 transition hover:text-white"
-                                            @click="showConfirmPassword = !showConfirmPassword"
-                                        >
-                                            <Icon :name="showConfirmPassword ? 'lucide:eye-off' : 'lucide:eye'" class="h-4 w-4" />
-                                        </button>
-                                    </div>
-                                    <p v-if="errors.confirmPassword" class="mt-1 text-xs text-rose-300">
-                                        {{ errors.confirmPassword }}
-                                    </p>
+                                    <BasePasswordInput
+                                        id="confirmPassword"
+                                        v-model="form.confirmPassword"
+                                        :label="t('register.fields.confirmPassword') as string"
+                                        required
+                                        :disabled="formState.isSubmitting"
+                                        :placeholder="t('register.placeholders.confirmPassword') as string"
+                                        :error="errors.confirmPassword"
+                                    />
                                     <p
                                         v-else-if="form.confirmPassword && form.password === form.confirmPassword"
                                         class="mt-1 text-xs text-emerald-300"
                                     >
                                         <Icon name="lucide:check" class="mr-0.5 inline h-3 w-3" />
-                                        Password cocok
+                                        {{ t('register.passwordStrength.matched') }}
                                     </p>
                                 </div>
                             </div>
-
                             <!-- Terms Consent -->
                             <BaseCheckbox
                                 id="agree"
@@ -716,10 +688,10 @@ const handleSubmit = async () => {
                                 :disabled="formState.isSubmitting"
                                 :error="errors.agree"
                             >
-                                Saya setuju dengan
-                                <a href="#" class="font-semibold text-amber-300 underline decoration-amber-300/30 underline-offset-4 transition hover:decoration-amber-300">Syarat & Ketentuan</a>
-                                dan
-                                <a href="#" class="font-semibold text-amber-300 underline decoration-amber-300/30 underline-offset-4 transition hover:decoration-amber-300">Kebijakan Privasi</a>
+                                {{ t('register.consent.prefix') }}
+                                <a href="#" class="font-semibold text-amber-300 underline decoration-amber-300/30 underline-offset-4 transition hover:decoration-amber-300">{{ t('register.consent.terms') }}</a>
+                                {{ t('register.consent.and') }}
+                                <a href="#" class="font-semibold text-amber-300 underline decoration-amber-300/30 underline-offset-4 transition hover:decoration-amber-300">{{ t('register.consent.privacy') }}</a>
                             </BaseCheckbox>
 
                             <!-- Submit -->
@@ -738,7 +710,7 @@ const handleSubmit = async () => {
                                     name="lucide:rocket"
                                     class="h-4 w-4"
                                 />
-                                {{ formState.isSubmitting ? 'Mendaftarkan...' : 'Daftar Sekarang' }}
+                                {{ formState.isSubmitting ? t('register.submit.loading') : t('register.submit.idle') }}
                             </button>
 
                             <!-- Error Message -->
@@ -756,29 +728,27 @@ const handleSubmit = async () => {
                     <aside ref="summarySection" class="space-y-4 lg:sticky lg:top-24">
                         <article v-if="selectedPlan" class="ca-card p-5 sm:p-6">
                             <div class="mb-4 flex items-center justify-between">
-                                <p class="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                                    Plan Terpilih
+                                <p class="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--ca-subtle)]">
+                                    {{ t('register.summary.selectedPlan') }}
                                 </p>
                                 <NuxtLink
                                     to="/pricing"
                                     class="inline-flex items-center gap-1 text-xs font-semibold text-amber-300 transition hover:text-amber-200"
                                 >
                                     <Icon name="lucide:repeat-2" class="h-3.5 w-3.5" />
-                                    Ubah Plan
+                                    {{ t('register.summary.changePlan') }}
                                 </NuxtLink>
                             </div>
 
-                            <h3 class="text-xl font-display font-bold text-white">
+                            <h3 class="text-xl font-display font-bold text-[var(--ca-text)]">
                                 {{ selectedPlan.name }}
                             </h3>
-
                             <div class="mt-2 flex items-baseline gap-1">
                                 <span class="font-display text-3xl font-bold text-amber-200">
                                     {{ selectedPlan.priceLabel }}
                                 </span>
-                                <span class="text-sm text-slate-400">{{ selectedPlan.period }}</span>
+                                <span class="text-sm text-[var(--ca-subtle)]">{{ selectedPlan.period }}</span>
                             </div>
-
                             <!-- Plan badge -->
                             <span
                                 v-if="selectedPlan.badge"
@@ -788,7 +758,7 @@ const handleSubmit = async () => {
                                 {{ selectedPlan.badge }}
                             </span>
 
-                            <div class="my-4 h-px bg-white/10" />
+                            <div class="my-4 h-px bg-[color:var(--ca-border)]" />
 
                             <!-- Features -->
                             <ul class="space-y-2.5">
@@ -805,9 +775,9 @@ const handleSubmit = async () => {
                                     <Icon
                                         v-else
                                         name="lucide:minus"
-                                        class="h-4 w-4 flex-shrink-0 text-slate-600"
+                                        class="h-4 w-4 flex-shrink-0 text-[var(--ca-subtle)]"
                                     />
-                                    <span :class="feature.included ? 'text-slate-200' : 'text-slate-500'">
+                                    <span :class="feature.included ? 'text-[var(--ca-muted)]' : 'text-[var(--ca-subtle)]'">
                                         {{ feature.label }}
                                     </span>
                                 </li>
@@ -816,8 +786,8 @@ const handleSubmit = async () => {
 
                         <!-- Plan switcher pills -->
                         <article class="ca-card-soft p-4">
-                            <p class="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                                Pilih Plan Lain
+                            <p class="mb-3 text-xs font-semibold uppercase tracking-[0.14em] text-[var(--ca-subtle)]">
+                                {{ t('register.summary.chooseOther') }}
                             </p>
                             <div class="flex gap-2">
                                 <button
@@ -828,7 +798,7 @@ const handleSubmit = async () => {
                                     :class="[
                                         plan.id === selectedPlanId
                                             ? 'border-amber-300/40 bg-amber-300/10 text-amber-200'
-                                            : 'border-white/10 bg-white/[0.03] text-slate-400 hover:border-white/20 hover:text-white',
+                                            : 'border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] text-[var(--ca-subtle)] hover:border-amber-300/20 hover:text-[var(--ca-text)]',
                                     ]"
                                     @click="selectedPlanId = plan.id"
                                 >
@@ -839,22 +809,14 @@ const handleSubmit = async () => {
 
                         <!-- Trust signals -->
                         <article class="ca-card-soft p-4">
-                            <ul class="space-y-2 text-sm text-slate-300">
-                                <li class="flex items-start gap-2">
+                            <ul class="space-y-2 text-sm text-[var(--ca-muted)]">
+                                <li
+                                    v-for="signal in trustSignals"
+                                    :key="signal"
+                                    class="flex items-start gap-2"
+                                >
                                     <Icon name="lucide:shield-check" class="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-300" />
-                                    Data terenkripsi & backup harian otomatis
-                                </li>
-                                <li class="flex items-start gap-2">
-                                    <Icon name="lucide:clock" class="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-300" />
-                                    Setup dalam 5 menit, langsung aktif
-                                </li>
-                                <li class="flex items-start gap-2">
-                                    <Icon name="lucide:headphones" class="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-300" />
-                                    Support teknis via WhatsApp
-                                </li>
-                                <li class="flex items-start gap-2">
-                                    <Icon name="lucide:credit-card" class="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-300" />
-                                    Tanpa kartu kredit untuk trial
+                                    {{ signal }}
                                 </li>
                             </ul>
                         </article>
