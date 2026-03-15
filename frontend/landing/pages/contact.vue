@@ -441,20 +441,14 @@ useSchemaOrg([
                                 :placeholder="t('contact.form.placeholders.message') as string"
                             />
 
-                            <label
-                                class="ca-checkbox-panel flex items-start gap-3 rounded-lg px-3 py-3 text-sm transition-colors hover:bg-[var(--ca-panel-bg-strong)]"
+                            <BaseCheckbox
+                                id="consent"
+                                v-model="form.consent"
+                                required
+                                :disabled="formState.isSubmitting"
                             >
-                                <input
-                                    v-model="form.consent"
-                                    type="checkbox"
-                                    required
-                                    :disabled="formState.isSubmitting"
-                                    class="mt-0.5 h-4 w-4 rounded border-[color:var(--ca-border)] bg-transparent text-amber-300 focus:ring-amber-300 focus:ring-offset-0"
-                                />
-                                <span>
-                                    {{ t('contact.form.fields.consent') }}
-                                </span>
-                            </label>
+                                {{ t('contact.form.fields.consent') }}
+                            </BaseCheckbox>
 
                             <button
                                 type="submit"

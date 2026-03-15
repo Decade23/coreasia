@@ -291,6 +291,20 @@ a {
         color: var(--ca-muted);
     }
 
+    .ca-checkbox-box {
+        @apply inline-flex h-5 w-5 items-center justify-center rounded-md transition-all duration-200;
+        border: 1px solid color-mix(in srgb, var(--ca-border) 96%, transparent);
+        background: color-mix(in srgb, var(--ca-panel-bg-strong) 92%, transparent);
+        color: transparent;
+    }
+
+    .ca-checkbox-box[data-checked="true"] {
+        border-color: rgba(252, 211, 77, 0.48);
+        background: linear-gradient(180deg, rgba(252, 211, 77, 0.22) 0%, rgba(245, 158, 11, 0.2) 100%);
+        color: #fef3c7;
+        box-shadow: 0 0 0 1px rgba(252, 211, 77, 0.08);
+    }
+
     .ca-field-label {
         @apply mb-2 block text-sm font-medium;
         color: var(--ca-text);

@@ -710,26 +710,17 @@ const handleSubmit = async () => {
                             </div>
 
                             <!-- Terms Consent -->
-                            <label
-                                class="flex items-start gap-3 rounded-lg border px-3 py-3 text-sm text-slate-300 transition-colors hover:bg-white/[0.05]"
-                                :class="errors.agree ? 'border-rose-300/50 bg-rose-300/5' : 'border-white/10 bg-white/[0.03]'"
+                            <BaseCheckbox
+                                id="agree"
+                                v-model="form.agree"
+                                :disabled="formState.isSubmitting"
+                                :error="errors.agree"
                             >
-                                <input
-                                    v-model="form.agree"
-                                    type="checkbox"
-                                    :disabled="formState.isSubmitting"
-                                    class="mt-0.5 h-4 w-4 rounded border-white/20 bg-transparent text-amber-300 focus:ring-amber-300 focus:ring-offset-0"
-                                />
-                                <span>
-                                    Saya setuju dengan
-                                    <a href="#" class="font-semibold text-amber-300 underline decoration-amber-300/30 underline-offset-4 transition hover:decoration-amber-300">Syarat & Ketentuan</a>
-                                    dan
-                                    <a href="#" class="font-semibold text-amber-300 underline decoration-amber-300/30 underline-offset-4 transition hover:decoration-amber-300">Kebijakan Privasi</a>
-                                </span>
-                            </label>
-                            <p v-if="errors.agree" class="mt-1 text-xs text-rose-300">
-                                {{ errors.agree }}
-                            </p>
+                                Saya setuju dengan
+                                <a href="#" class="font-semibold text-amber-300 underline decoration-amber-300/30 underline-offset-4 transition hover:decoration-amber-300">Syarat & Ketentuan</a>
+                                dan
+                                <a href="#" class="font-semibold text-amber-300 underline decoration-amber-300/30 underline-offset-4 transition hover:decoration-amber-300">Kebijakan Privasi</a>
+                            </BaseCheckbox>
 
                             <!-- Submit -->
                             <button
