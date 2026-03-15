@@ -332,6 +332,29 @@ a {
         background: color-mix(in srgb, var(--ca-surface) 94%, transparent);
         color: var(--ca-subtle);
     }
+
+    .ca-prose {
+        color: var(--ca-muted);
+    }
+
+    .ca-prose h2,
+    .ca-prose h3,
+    .ca-prose strong {
+        color: var(--ca-text);
+    }
+
+    .ca-prose p,
+    .ca-prose li {
+        color: var(--ca-muted);
+    }
+
+    .ca-prose ul {
+        padding-left: 1.2rem;
+    }
+
+    .ca-prose li::marker {
+        color: var(--ca-brand);
+    }
 }
 
 /* ── Scroll Reveal Animations ── */

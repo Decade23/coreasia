@@ -465,6 +465,64 @@ const ID_CONTENT = {
       description: 'Halaman kontak CoreAsia untuk konsultasi produk, pricing, venture, dan solusi enterprise.',
     },
   },
+  // Pricing page
+  pricing: {
+    title: 'Harga & Paket Layanan',
+    description:
+      'Pilih paket CoreAsia LMS yang sesuai dengan kebutuhan organisasi Anda, dari tim kecil hingga kebutuhan enterprise.',
+    kicker: 'Pricing',
+    hero: {
+      title: 'Pilih plan yang tepat <span class="ca-gradient-text">untuk organisasi Anda</span>',
+      subtitle:
+        'Mulai dari LSP kecil hingga enterprise, kami menyiapkan opsi yang realistis untuk launch, operasional, dan pertumbuhan berikutnya.',
+    },
+    faq: {
+      kicker: 'FAQ',
+      title: 'Pertanyaan yang Sering Diajukan',
+      intro: 'Belum menemukan jawaban? Hubungi tim kami via',
+      contactCta: 'halaman kontak',
+      items: [
+        {
+          question: 'Apakah ada trial gratis?',
+          answer:
+            'Ya, paket Starter menyediakan trial 14 hari dengan fitur inti yang bisa langsung dicoba tanpa kartu kredit.',
+        },
+        {
+          question: 'Bagaimana cara upgrade atau downgrade plan?',
+          answer:
+            'Plan dapat disesuaikan sesuai kebutuhan organisasi dan perubahan akan mengikuti siklus billing berikutnya.',
+        },
+        {
+          question: 'Apakah data saya aman?',
+          answer:
+            'Setiap tenant dipisahkan secara logis, dilindungi dengan kontrol akses yang sesuai, dan backup dilakukan secara berkala.',
+        },
+        {
+          question: 'Bisakah saya meminta fitur custom?',
+          answer:
+            'Bisa. Kebutuhan custom biasanya dibahas lewat skema enterprise atau scoped delivery setelah sesi konsultasi.',
+        },
+        {
+          question: 'Apa metode pembayaran yang diterima?',
+          answer:
+            'Pembayaran dapat disesuaikan dengan skema layanan. Tim kami akan menjelaskan opsi invoice dan termin saat proses konsultasi.',
+        },
+      ],
+    },
+    allPlansInclude:
+      'Semua plan termasuk SSL, backup rutin, dan support teknis untuk kebutuhan operasional dasar.',
+    cta: {
+      title: 'Siap digitalisasi sertifikasi Anda?',
+      subtitle:
+        'Mulai dengan trial atau diskusikan kebutuhan organisasi Anda sebelum menentukan plan yang paling tepat.',
+      primary: 'Mulai Trial Gratis',
+      secondary: 'Konsultasi Dulu',
+    },
+    schema: {
+      name: 'Pricing CoreAsia',
+      description: 'Halaman pricing CoreAsia untuk paket LMS, trial, dan kebutuhan enterprise.',
+    },
+  },
   // Legal pages
   legal: {
     privacy: {
@@ -893,6 +951,270 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
       ctaSecondary: 'Chat via WhatsApp',
     },
   },
+  about: {
+    title: 'About Us - Strategic Technology Partner',
+    description:
+      'Get to know CoreAsia as a strategic technology partner for certification, digital operations, and scalable product delivery.',
+    hero: {
+      title: 'Building <span class="ca-gradient-text">digital infrastructure for the future</span>',
+      subtitle:
+        'CoreAsia grew from hands-on work in certification operations into a technology partner for organizations that need cleaner execution and room to scale.',
+      ctaPrimary: 'Contact Us',
+      ctaSecondary: 'WhatsApp',
+    },
+    schema: {
+      name: 'About CoreAsia',
+      description: 'Company profile and vision of CoreAsia Teknologi.',
+    },
+    whyUs: {
+      title: 'Why CoreAsia',
+      subtitle: 'Technology designed for business growth',
+      values: [
+        {
+          title: 'High Performance',
+          description: 'Solutions optimized for speed, clarity, and sustainable scalability.',
+          icon: 'lucide:zap',
+        },
+        {
+          title: 'Data Integrity',
+          description: 'Security, traceability, and data quality remain part of the delivery baseline.',
+          icon: 'lucide:shield-check',
+        },
+        {
+          title: 'Future Proof',
+          description: 'Technology decisions are prepared so products can evolve with the client business.',
+          icon: 'lucide:bar-chart-3',
+        },
+      ],
+    },
+    journey: {
+      title: 'Our Journey',
+      subtitle: 'From training operations to product ecosystem builder',
+      events: [
+        {
+          year: '2020',
+          title: 'Training Center Foundation',
+          description: 'Started as a technology training center with a strong focus on digital certification.',
+          icon: 'lucide:graduation-cap',
+        },
+        {
+          year: '2022',
+          title: 'Technology Integration',
+          description: 'Built the first internal learning management workflows to support operational delivery.',
+          icon: 'lucide:cpu',
+        },
+        {
+          year: '2024',
+          title: 'SaaS Platform Launch',
+          description: 'Launched LMS delivery for certification bodies and training organizations across Indonesia.',
+          icon: 'lucide:rocket',
+        },
+        {
+          year: '2026',
+          title: 'Product Ecosystem Expansion',
+          description: 'Expanded into a broader product ecosystem and strategic technology partnership model.',
+          icon: 'lucide:building-2',
+        },
+      ],
+    },
+    leadership: {
+      title: 'Leadership',
+      subtitle: 'Technology-led direction with pragmatic execution',
+      name: 'Dedi - Founder & Principal Tech Lead',
+      description:
+        'A product-minded tech lead focused on turning operational complexity into scalable systems and monetizable digital products.',
+      chips: ['10+ Years Experience', 'SaaS Architecture', 'Education Technology'],
+    },
+    readyCTA: {
+      title: 'Ready to strengthen your digital operations?',
+      subtitle:
+        'Discuss your product direction, delivery model, or operational challenge with the CoreAsia team.',
+      ctaPrimary: 'Contact Us',
+      ctaSecondary: 'WhatsApp',
+    },
+  },
+  pricing: {
+    title: 'Pricing & Service Plans',
+    description:
+      'Choose the CoreAsia LMS plan that matches your organization, from smaller teams to enterprise-ready needs.',
+    hero: {
+      title: 'Choose the right plan <span class="ca-gradient-text">for your organization</span>',
+      subtitle:
+        'From lean certification teams to enterprise programs, we provide options that match launch speed, operational needs, and growth targets.',
+    },
+    faq: {
+      title: 'Frequently Asked Questions',
+      intro: 'Still need clarification? Reach out through our',
+      contactCta: 'contact page',
+      items: [
+        {
+          question: 'Is there a free trial?',
+          answer:
+            'Yes. The Starter plan includes a 14-day trial so your team can evaluate the core workflow without upfront commitment.',
+        },
+        {
+          question: 'How do plan upgrades or downgrades work?',
+          answer:
+            'Plans can be adjusted based on operational changes, and the update will follow the next billing cycle.',
+        },
+        {
+          question: 'Is our data secure?',
+          answer:
+            'Tenant access is isolated logically, operational access is controlled, and backups are handled on a recurring basis.',
+        },
+        {
+          question: 'Can we request custom features?',
+          answer:
+            'Yes. Custom requirements are usually scoped through enterprise delivery or a separate implementation discussion.',
+        },
+        {
+          question: 'What payment options are available?',
+          answer:
+            'Payment terms depend on the service model. Our team will explain invoice and payment options during consultation.',
+        },
+      ],
+    },
+    allPlansInclude:
+      'All plans include SSL, recurring backups, and technical support for baseline operational needs.',
+    cta: {
+      title: 'Ready to digitize your certification workflow?',
+      subtitle:
+        'Start with a trial or discuss your organizational needs before choosing the most suitable plan.',
+      primary: 'Start Free Trial',
+      secondary: 'Talk First',
+    },
+    schema: {
+      name: 'CoreAsia Pricing',
+      description: 'CoreAsia pricing page for LMS plans, trial options, and enterprise needs.',
+    },
+  },
+  solutions: {
+    lms: {
+      title: 'SaaS LMS Platform - Online Certification Solution',
+      description:
+        'Launch your digital academy faster with an all-in-one platform for certification workflow, online exams, and digital certificates.',
+      kicker: 'SaaS LMS for Certification',
+      hero: {
+        title: 'White-label LMS for <span class="ca-gradient-text">online certification</span> that is ready to sell.',
+        subtitle:
+          'An end-to-end solution for registration, assessment, and digital certificates designed for operational teams that need clean workflows across mobile and desktop.',
+        ctaPrimary: 'Request Demo',
+        ctaSecondary: 'WhatsApp Sales',
+        chips: ['Digital APL-01 & APL-02', 'CBT + essay grading', 'QR certificate validation'],
+      },
+      detailedFeatures: [
+        {
+          title: 'Proctored Online Exams',
+          description: 'Online exam workflow with proctoring-ready controls to help maintain assessment integrity.',
+          icon: 'lucide:shield-alert',
+        },
+        {
+          title: 'Digital Certificates',
+          description: 'Issue digital certificates that are easier to validate and protect from misuse.',
+          icon: 'lucide:award',
+        },
+        {
+          title: 'Hybrid Class Management',
+          description: 'Manage online and offline class operations through a unified workflow.',
+          icon: 'lucide:users',
+        },
+        {
+          title: 'Analytics & Reporting',
+          description: 'Track participant progress and operational performance through centralized reporting.',
+          icon: 'lucide:bar-chart-3',
+        },
+      ],
+      features: [
+        'Fraud-resistant digital certificates',
+        'White-label delivery',
+        'Automated payment invoicing',
+      ],
+      cta: {
+        title: 'Ready to upgrade your training system?',
+        subtitle: 'Our team can help you scope setup, migration, and the best rollout path for your organization.',
+        button: 'Contact Sales',
+      },
+    },
+    venture: {
+      title: 'Venture Partnership',
+      description:
+        'Accelerate digital business execution with a revenue-aligned partnership model that reduces upfront technology burden.',
+      kicker: 'Venture Partnership',
+      hero: {
+        title:
+          'Launch digital products with a <span class="bg-gradient-to-r from-emerald-200 via-emerald-400 to-teal-400 bg-clip-text text-transparent">transparent revenue-sharing</span> model.',
+        subtitle:
+          'Designed for founders or operators who understand their market but want to reduce the weight of initial technology investment.',
+        ctaPrimary: 'Apply for Partnership',
+        ctaSecondary: 'Quick Discussion',
+        chips: ['Zero upfront option', 'Shared execution model', 'Growth-aligned incentives'],
+      },
+      relevance: {
+        title: 'Why this model matters now',
+        subtitle:
+          'Many businesses fail to scale not because demand is missing, but because the upfront cost of building product infrastructure is too heavy.',
+        buildSelf: {
+          label: 'Build internally',
+          price: 'Rp 150m+',
+          desc: 'Higher upfront cost, technical team dependency, and ongoing maintenance can pressure cashflow.',
+        },
+        venture: {
+          label: 'Venture partnership',
+          price: 'Starting from Rp 0',
+          desc: 'You stay focused on growth while we handle product build and ongoing system improvement.',
+        },
+      },
+      steps: {
+        kicker: 'Execution Flow',
+        title: 'A structured partnership flow from the start',
+        items: [
+          { title: 'Business discovery', description: 'Discuss user problems, product positioning, and the most realistic monetization path.' },
+          { title: 'Feasibility review', description: 'Review market potential, unit economics, and the operational readiness of your team.' },
+          { title: 'Deal structure', description: 'Define revenue share, delivery scope, and execution milestones in a transparent model.' },
+          { title: 'Build and scale', description: 'Execute the product, validate the market, then improve the funnel based on traction and data.' },
+        ],
+      },
+      benefits: {
+        kicker: 'Strategic Benefits',
+        title: 'A model that keeps both sides focused on outcomes',
+        subtitle: 'Incentives are aligned to growth and monetization, not just project delivery.',
+        items: [
+          { icon: 'lucide:wallet', title: 'Lower upfront risk', description: 'Reduce initial cashflow pressure without compromising execution quality.' },
+          { icon: 'lucide:gauge', title: 'Faster go-to-market', description: 'Move faster because the technology stack and delivery workflow do not start from zero.' },
+          { icon: 'lucide:refresh-ccw', title: 'Continuous iteration', description: 'The product keeps improving based on market feedback and conversion insight.' },
+          { icon: 'lucide:line-chart', title: 'Aligned incentives', description: 'As the business grows, both parties benefit from the upside.' },
+        ],
+      },
+      partnerFit: {
+        label: 'Partner fit checklist',
+        title: 'Who usually succeeds in this model',
+        requirements: [
+          'A clear user problem and target market',
+          'A team ready to run operations and user acquisition',
+          'Commitment to medium-to-long-term collaboration',
+          'Growth mindset backed by data and execution discipline',
+        ],
+        targetLabel: 'Ideal target',
+        targetDesc: 'Business potential with meaningful monthly revenue or a validated path toward repeatable growth.',
+      },
+      faqs: {
+        kicker: 'FAQ',
+        title: 'Questions before starting a venture model',
+        items: [
+          { question: 'Can every business use this model?', answer: 'No. We stay selective so the partnership remains healthy and sustainable for both sides.' },
+          { question: 'What does zero upfront mean?', answer: 'It means the initial structure can be adjusted so the technology burden does not fully land on the partner at the beginning.' },
+          { question: 'How is revenue sharing defined?', answer: 'The scheme is discussed case by case based on business model, delivery scope, and operational readiness.' },
+          { question: 'Do I still control the business direction?', answer: 'Yes. Business decisions remain collaborative, with clear roles between market execution and technology delivery.' },
+        ],
+      },
+      cta: {
+        title: 'Ready to explore a venture partnership?',
+        subtitle: 'Tell us your market context, current traction, and execution target. We will assess whether the model fits.',
+        ctaPrimary: 'Apply for Partnership',
+        ctaSecondary: 'Quick Discussion',
+      },
+    },
+  },
   contact: {
     title: 'Contact Us',
     description:
@@ -964,6 +1286,174 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
     schema: {
       name: 'Contact CoreAsia',
       description: 'CoreAsia contact page for product, pricing, venture, and enterprise consultation.',
+    },
+  },
+  legal: {
+    privacy: {
+      title: 'Privacy Policy',
+      description:
+        'CoreAsia privacy policy explains how we collect, use, and protect your personal information.',
+      lastUpdated: 'Last updated: February 2026',
+      sections: {
+        informationCollected: {
+          title: '1. Information We Collect',
+          content: '{company} collects information that you voluntarily provide through our website forms, including:',
+          items: ['Full name', 'Email address', 'WhatsApp number (optional)', 'Business requirements shared through the form'],
+        },
+        informationUsage: {
+          title: '2. How We Use Information',
+          content: 'The information collected is used to:',
+          items: [
+            'Respond to your consultation requests and inquiries',
+            'Provide relevant information about our services',
+            'Improve service quality and user experience',
+          ],
+        },
+        dataProtection: {
+          title: '3. Data Protection',
+          content: 'We apply reasonable security measures to protect your personal information from unauthorized access, alteration, disclosure, or destruction.',
+        },
+        dataSharing: {
+          title: '4. Information Sharing',
+          content: 'We do not sell, trade, or rent your personal information to third parties. Information is only shared when needed to fulfill your service request.',
+        },
+        cookies: {
+          title: '5. Cookies and Tracking Technologies',
+          content: 'This website uses technical cookies required for core functionality. We do not use third-party tracking cookies without consent.',
+        },
+        userRights: {
+          title: '6. Your Rights',
+          content: 'You have the right to:',
+          items: [
+            'Request access to your personal data',
+            'Request correction of inaccurate data',
+            'Request deletion of your personal data',
+            'Withdraw consent for data usage',
+          ],
+        },
+        policyChanges: {
+          title: '7. Policy Changes',
+          content: 'We may update this privacy policy from time to time. Changes will be communicated through this page.',
+        },
+        contact: {
+          title: '8. Contact Us',
+          content: 'For questions about this privacy policy, contact us at {email}.',
+        },
+      },
+    },
+    terms: {
+      title: 'Terms and Conditions',
+      description:
+        'Terms and conditions for using CoreAsia services. Please review them carefully before using our services.',
+      lastUpdated: 'Last updated: February 2026',
+      sections: {
+        generalTerms: {
+          title: '1. General Terms',
+          content: 'By accessing and using the {company} website, you agree to be bound by these terms and conditions.',
+        },
+        serviceDescription: {
+          title: '2. Service Description',
+          content: '{company} provides technology services including:',
+          items: [
+            'SaaS LMS platform for certification bodies and training centers',
+            'Venture partnership programs with revenue-sharing models',
+            'Custom enterprise solutions for organizational needs',
+          ],
+        },
+        websiteUsage: {
+          title: '3. Website Usage',
+          content: 'You agree to:',
+          items: [
+            'Use the website only for lawful purposes',
+            'Avoid actions that may damage or disrupt website functionality',
+            'Provide accurate information in contact forms',
+          ],
+        },
+        intellectualProperty: {
+          title: '4. Intellectual Property',
+          content: 'All content on this website, including text, graphics, logos, and source code, belongs to {company} and is protected by applicable copyright law.',
+        },
+        liabilityLimitation: {
+          title: '5. Limitation of Liability',
+          content: '{company} strives to keep the information on this website accurate. However, we do not guarantee that all information is always current or error-free.',
+        },
+        serviceAgreement: {
+          title: '6. Service Agreement',
+          content: 'Specific service agreements for SaaS, venture, or enterprise work will be governed by separate contracts between {company} and the client.',
+        },
+        applicableLaw: {
+          title: '7. Governing Law',
+          content: 'These terms and conditions are governed by the laws of the Republic of Indonesia.',
+        },
+        termsChanges: {
+          title: '8. Changes to Terms',
+          content: '{company} may update these terms and conditions at any time. Changes become effective after publication on this page.',
+        },
+        contact: {
+          title: '9. Contact Us',
+          content: 'For questions about these terms and conditions, contact us at {email}.',
+        },
+      },
+    },
+  },
+  errors: {
+    notFound: {
+      title: 'Page Not Found (404)',
+      description: 'The page could not be found. Return to the CoreAsia homepage to continue browsing.',
+      statusLabel: 'Error 404',
+      pageTitle: 'Oops! Page Not Found (404)',
+      pageDescription: 'The page you are looking for may have moved or no longer exists.',
+      visualTitle: 'Digital route not found',
+      visualDescription: 'The page routing map shows a disconnected path. Return home to continue navigation.',
+      progressLabel: 'Path Recovery',
+      highlights: [
+        {
+          icon: 'lucide:map-pinned',
+          label: 'Node Status',
+          value: 'Route endpoint is inactive',
+        },
+        {
+          icon: 'lucide:wifi-off',
+          label: 'Connection',
+          value: 'Page link is disconnected',
+        },
+      ],
+      backToHome: 'Back to Home',
+    },
+    serverError: {
+      title: 'System Error (500)',
+      description: 'There is a temporary system issue. The CoreAsia team is working to restore normal service.',
+      statusLabel: 'Error 500',
+      pageTitle: 'A System Error Occurred (500)',
+      pageDescription: 'There is an issue on our server side. Our technical team is working on it. Please try again shortly.',
+      visualTitle: 'System recovery in progress',
+      visualDescription: 'Our server cluster is being stabilized and recovery is monitored automatically.',
+      progressLabel: 'Recovery Progress',
+      highlights: [
+        {
+          icon: 'lucide:wrench',
+          label: 'Maintenance',
+          value: 'Service patch is being applied',
+        },
+        {
+          icon: 'lucide:activity',
+          label: 'Health Check',
+          value: 'Server performance validation is active',
+        },
+      ],
+      reload: 'Reload Page',
+      contactSupport: 'Contact Support',
+    },
+    maintenance: {
+      title: 'Maintenance in Progress',
+      description: 'CoreAsia is performing system maintenance to improve platform performance.',
+      statusLabel: 'Maintenance Mode',
+      pageTitle: 'Maintenance in Progress',
+      pageDescription: 'We are improving the CoreAsia platform and will be back shortly.',
+      visualTitle: 'Platform upgrade in progress',
+      visualDescription: 'Infrastructure optimization is running to improve stability and platform speed.',
+      progressLabel: 'Upgrade Timeline',
+      estimatedCompletion: 'Estimated completion 03.30 WIB',
     },
   },
   components: {

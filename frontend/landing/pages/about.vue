@@ -72,7 +72,7 @@ const leadership = computed(() => t('about.leadership') as Record<string, any>)
                     class="h-64 w-64 rounded-full bg-gradient-to-br from-amber-400/20 via-transparent to-emerald-400/20 blur-3xl"
                 />
                 <div
-                    class="absolute inset-0 h-64 w-64 rounded-full border border-white/10 animate-pulse"
+                    class="absolute inset-0 h-64 w-64 rounded-full border border-[color:var(--ca-border)] animate-pulse"
                 />
             </div>
 
@@ -88,7 +88,7 @@ const leadership = computed(() => t('about.leadership') as Record<string, any>)
 
                     <h1
                         ref="heroTitle"
-                        class="mt-5 text-balance font-display text-4xl font-bold leading-[1.08] text-white sm:text-5xl lg:text-[3.8rem]"
+                        class="mt-5 text-balance font-display text-4xl font-bold leading-[1.08] text-[var(--ca-text)] sm:text-5xl lg:text-[3.8rem]"
                     >
                         <span v-html="t('about.hero.title')" />
                     </h1>
@@ -146,7 +146,7 @@ const leadership = computed(() => t('about.leadership') as Record<string, any>)
                         v-for="(value, index) in values"
                         :key="value.title"
                         :ref="revealRef('fadeUp', index * 120)"
-                        class="group relative overflow-hidden rounded-2xl border border-slate-600/30 bg-gradient-to-b from-white/[0.05] to-white/[0.02] p-6 transition-all duration-300 hover:border-amber-400/50"
+                        class="group relative overflow-hidden rounded-2xl border border-[color:var(--ca-border)] bg-[linear-gradient(180deg,var(--ca-card-from),var(--ca-card-to))] p-6 transition-all duration-300 hover:border-amber-400/50"
                     >
                         <!-- Background gradient effect -->
                         <div
@@ -156,7 +156,7 @@ const leadership = computed(() => t('about.leadership') as Record<string, any>)
 
                         <!-- Icon -->
                         <div
-                            class="relative z-10 inline-flex h-12 w-12 items-center justify-center rounded-xl border border-slate-600/30 bg-white/[0.05]"
+                            class="relative z-10 inline-flex h-12 w-12 items-center justify-center rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)]"
                         >
                             <Icon
                                 :name="value.icon"
@@ -167,11 +167,11 @@ const leadership = computed(() => t('about.leadership') as Record<string, any>)
                         <!-- Content -->
                         <div class="relative z-10">
                             <h3
-                                class="mt-4 text-lg font-display font-bold text-white transition-colors duration-300 group-hover:text-amber-200"
+                                class="mt-4 text-lg font-display font-bold text-[var(--ca-text)] transition-colors duration-300 group-hover:text-amber-200"
                             >
                                 {{ value.title }}
                             </h3>
-                            <p class="mt-2 text-sm leading-relaxed text-slate-300">
+                            <p class="mt-2 text-sm leading-relaxed text-[var(--ca-muted)]">
                                 {{ value.description }}
                             </p>
                         </div>
@@ -218,7 +218,7 @@ const leadership = computed(() => t('about.leadership') as Record<string, any>)
                             <div class="relative">
                                 <!-- Icon background -->
                                 <div
-                                    class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-600/30 bg-white/[0.05]"
+                                    class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)]"
                                 >
                                     <Icon
                                         :name="item.icon"
@@ -227,16 +227,16 @@ const leadership = computed(() => t('about.leadership') as Record<string, any>)
                                 </div>
 
                                 <h3
-                                    class="mt-4 text-sm font-bold uppercase tracking-[0.14em] text-slate-400"
+                                    class="mt-4 text-sm font-bold uppercase tracking-[0.14em] text-[var(--ca-subtle)]"
                                 >
                                     {{ item.year }}
                                 </h3>
                                 <h4
-                                    class="mt-1 text-lg font-display font-bold text-white"
+                                    class="mt-1 text-lg font-display font-bold text-[var(--ca-text)]"
                                 >
                                     {{ item.title }}
                                 </h4>
-                                <p class="mt-2 text-sm leading-relaxed text-slate-300">
+                                <p class="mt-2 text-sm leading-relaxed text-[var(--ca-muted)]">
                                     {{ item.description }}
                                 </p>
                             </div>
@@ -277,12 +277,12 @@ const leadership = computed(() => t('about.leadership') as Record<string, any>)
                         />
 
                         <!-- Profile image placeholder -->
-                        <div class="relative overflow-hidden rounded-3xl border border-slate-600/30 bg-white/[0.05] p-1">
+                        <div class="relative overflow-hidden rounded-3xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-1">
                             <div
-                                class="aspect-square w-full max-w-sm rounded-2xl border border-slate-600/20 bg-gradient-to-br from-slate-800 to-slate-900 md:aspect-[4/5]"
+                                class="aspect-square w-full max-w-sm rounded-2xl border border-[color:var(--ca-border)] bg-[linear-gradient(180deg,var(--ca-surface),var(--ca-bg-soft))] md:aspect-[4/5]"
                             >
                                 <div
-                                    class="flex h-full items-center justify-center text-slate-400"
+                                    class="flex h-full items-center justify-center text-[var(--ca-subtle)]"
                                 >
                                     <Icon
                                         name="lucide:user"
@@ -301,12 +301,12 @@ const leadership = computed(() => t('about.leadership') as Record<string, any>)
             <div class="ca-container">
                 <div ref="ctaSection" class="ca-card p-8 text-center sm:p-10">
                     <h2
-                        class="text-balance font-display text-3xl font-bold text-white sm:text-4xl"
+                        class="text-balance font-display text-3xl font-bold text-[var(--ca-text)] sm:text-4xl"
                     >
                         {{ t('about.readyCTA.title') }}
                     </h2>
                     <p
-                        class="mx-auto mt-3 max-w-2xl text-sm text-slate-300 sm:text-base"
+                        class="mx-auto mt-3 max-w-2xl text-sm text-[var(--ca-muted)] sm:text-base"
                     >
                         {{ t('about.readyCTA.subtitle') }}
                     </p>

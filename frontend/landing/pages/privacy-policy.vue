@@ -36,7 +36,7 @@ const sections = computed(() => {
             <div ref="heroSection" class="ca-container relative ca-section pb-8">
                 <span class="ca-kicker">Legal</span>
                 <h1
-                    class="mt-5 font-display text-4xl font-bold text-white sm:text-5xl"
+                    class="mt-5 font-display text-4xl font-bold text-[var(--ca-text)] sm:text-5xl"
                 >
                     {{ t('legal.privacy.title') }}
                 </h1>
@@ -50,7 +50,7 @@ const sections = computed(() => {
             <div class="ca-container">
                 <article
                     ref="contentCard"
-                    class="ca-card prose prose-invert max-w-none p-6 sm:p-8 lg:p-10"
+                    class="ca-card ca-prose max-w-none p-6 sm:p-8 lg:p-10"
                 >
                     <div v-for="(section, index) in sections" :key="index">
                         <h2 v-if="section.title">{{ section.title }}</h2>

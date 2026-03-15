@@ -8,12 +8,12 @@
                     <div>
                         <span class="ca-kicker">{{ statusLabel }}</span>
                         <h1
-                            class="mt-5 text-balance font-display text-3xl font-bold leading-[1.08] text-white sm:text-4xl lg:text-5xl"
+                            class="mt-5 text-balance font-display text-3xl font-bold leading-[1.08] text-[var(--ca-text)] sm:text-4xl lg:text-5xl"
                         >
                             {{ title }}
                         </h1>
                         <p
-                            class="mt-4 max-w-2xl text-base leading-relaxed text-slate-200 sm:text-lg"
+                            class="mt-4 max-w-2xl text-base leading-relaxed text-[var(--ca-muted)] sm:text-lg"
                         >
                             {{ description }}
                         </p>
@@ -25,13 +25,13 @@
                             <slot name="actions" />
                         </div>
 
-                        <div v-if="$slots.meta" class="mt-5 text-sm text-slate-300">
+                        <div v-if="$slots.meta" class="mt-5 text-sm text-[var(--ca-muted)]">
                             <slot name="meta" />
                         </div>
                     </div>
 
                     <aside
-                        class="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] p-5 sm:p-6"
+                        class="relative overflow-hidden rounded-2xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-5 sm:p-6"
                     >
                         <div
                             class="pointer-events-none absolute inset-0 opacity-80"
@@ -39,17 +39,17 @@
                         />
                         <div class="relative">
                             <div
-                                class="inline-flex h-12 w-12 items-center justify-center rounded-xl border border-white/15 bg-white/[0.06]"
+                                class="inline-flex h-12 w-12 items-center justify-center rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg-strong)]"
                             >
                                 <Icon :name="icon" class="h-6 w-6 text-amber-300" />
                             </div>
 
                             <h2
-                                class="mt-4 text-lg font-display font-bold text-white sm:text-xl"
+                                class="mt-4 text-lg font-display font-bold text-[var(--ca-text)] sm:text-xl"
                             >
                                 {{ visualTitle }}
                             </h2>
-                            <p class="mt-2 text-sm leading-relaxed text-slate-200">
+                            <p class="mt-2 text-sm leading-relaxed text-[var(--ca-muted)]">
                                 {{ visualDescription }}
                             </p>
 
@@ -57,10 +57,10 @@
                                 <article
                                     v-for="item in highlights"
                                     :key="item.label"
-                                    class="rounded-xl border border-white/10 bg-white/[0.02] p-3"
+                                    class="rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg-strong)] p-3"
                                 >
                                     <div
-                                        class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-white/[0.06]"
+                                        class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--ca-panel-bg)]"
                                     >
                                         <Icon
                                             :name="item.icon"
@@ -68,26 +68,26 @@
                                         />
                                     </div>
                                     <p
-                                        class="mt-2 text-xs uppercase tracking-[0.12em] text-slate-300"
+                                        class="mt-2 text-xs uppercase tracking-[0.12em] text-[var(--ca-subtle)]"
                                     >
                                         {{ item.label }}
                                     </p>
-                                    <p class="mt-1 text-sm text-slate-100">
+                                    <p class="mt-1 text-sm text-[var(--ca-text)]">
                                         {{ item.value }}
                                     </p>
                                 </article>
                             </div>
 
                             <div
-                                class="mt-5 rounded-lg border border-white/10 bg-white/[0.02] p-3"
+                                class="mt-5 rounded-lg border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg-strong)] p-3"
                             >
                                 <p
-                                    class="text-xs uppercase tracking-[0.12em] text-slate-300"
+                                    class="text-xs uppercase tracking-[0.12em] text-[var(--ca-subtle)]"
                                 >
                                     {{ progressLabel }}
                                 </p>
                                 <div
-                                    class="mt-2 h-2 overflow-hidden rounded-full bg-white/10"
+                                    class="mt-2 h-2 overflow-hidden rounded-full bg-[var(--ca-panel-bg)]"
                                 >
                                     <span
                                         class="block h-full rounded-full bg-gradient-to-r from-amber-300 via-amber-400 to-amber-500 transition-all duration-500"
