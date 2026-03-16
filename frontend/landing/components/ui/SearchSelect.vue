@@ -11,7 +11,7 @@
       class="relative flex w-full items-center justify-between rounded-xl border px-4 py-3 text-sm transition-all duration-200"
       :class="[
         isOpen || isFocused
-            ? 'border-amber-300/40 bg-[var(--ca-panel-bg-strong)] shadow-[0_0_0_1px_rgba(252,211,77,0.1)]'
+            ? 'border-amber-300/40 bg-[var(--ca-panel-bg-strong)]'
             : 'border-[color:var(--ca-border)] bg-[var(--ca-input-bg)] text-[var(--ca-text)]',
         disabled ? 'cursor-not-allowed opacity-50' : 'cursor-text',
         error ? '!border-rose-300/50' : ''
@@ -24,7 +24,7 @@
         v-model="searchQuery"
         type="text"
         :placeholder="selectedLabel || placeholder"
-        class="w-full bg-transparent p-0 text-sm leading-normal text-[var(--ca-text)] outline-hidden ring-0 placeholder:transition-colors focus:outline-hidden focus:ring-0"
+        class="w-full bg-transparent p-0 text-sm leading-normal text-[var(--ca-text)] outline-none ring-0 placeholder:transition-colors focus:outline-none focus:ring-0 focus-visible:outline-none"
         :class="[
             modelValue && !searchQuery
                 ? 'placeholder:text-[var(--ca-text)]'
