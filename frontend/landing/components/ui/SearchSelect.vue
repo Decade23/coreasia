@@ -238,10 +238,14 @@ watch(() => props.modelValue, () => {
 </script>
 
 <style scoped>
+input,
 input:focus,
-input:focus-visible {
-  outline: none;
-  box-shadow: none;
+input:focus-visible,
+input:focus-within {
+  outline: none !important;
+  outline-offset: 0 !important;
+  box-shadow: none !important;
+  border: none !important;
 }
 
 ul::-webkit-scrollbar {

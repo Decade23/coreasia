@@ -232,6 +232,16 @@ a {
     border-radius: 0.4rem;
 }
 
+/* Form controls: use border-color change on focus, not outline */
+.ca-field-control:focus,
+.ca-field-control:focus-visible,
+[class*="rounded-xl"] > input:focus,
+[class*="rounded-xl"] > input:focus-visible {
+    outline: none !important;
+    outline-offset: 0 !important;
+    box-shadow: none !important;
+}
+
 @layer components {
     .ca-page-shell {
         isolation: isolate;
@@ -561,6 +571,22 @@ a {
 html[data-theme="light"] .ca-light-soft-blend {
     mix-blend-mode: normal;
     opacity: 0.72;
+}
+
+html[data-theme="light"] .ca-checkbox-panel {
+    border-color: rgba(148, 115, 48, 0.22);
+    background: rgba(255, 250, 240, 0.72);
+}
+
+html[data-theme="light"] .ca-checkbox-box {
+    border-color: rgba(148, 115, 48, 0.28);
+    background: #fff;
+}
+
+html[data-theme="light"] .ca-checkbox-box[data-checked="true"] {
+    border-color: rgba(214, 138, 6, 0.5);
+    background: linear-gradient(180deg, rgba(214, 138, 6, 0.15) 0%, rgba(214, 138, 6, 0.22) 100%);
+    color: #92400e;
 }
 
 /* ── Scroll Reveal Animations ── */

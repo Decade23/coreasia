@@ -2,7 +2,7 @@
     <div class="w-full">
         <label
             :for="id"
-            class="ca-checkbox-panel flex cursor-pointer items-start gap-3 rounded-lg px-3 py-3 text-sm transition-colors duration-200 focus-within:ring-2 focus-within:ring-amber-300/30"
+            class="ca-checkbox-panel flex cursor-pointer items-start gap-3 rounded-lg px-3 py-3 text-sm transition-colors duration-200"
             :class="[
                 modelValue ? 'border-amber-300/30 bg-[var(--ca-panel-bg-strong)] text-[var(--ca-text)]' : 'text-[var(--ca-muted)]',
                 disabled ? 'cursor-not-allowed opacity-60' : 'hover:bg-[var(--ca-panel-bg-strong)]',
