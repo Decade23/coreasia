@@ -44,10 +44,12 @@ const ID_CONTENT = {
       'CoreAsia membangun produk digital dan model kerja sama strategis untuk sertifikasi, web monitoring, CRM, dan kebutuhan enterprise yang siap tumbuh.',
     kicker: 'Strategic Technology Partner',
     hero: {
+      // v1: 'Bangun operasi digital lebih cepat dengan ekosistem produk CoreAsia.'
+      // v1: 'Dari sertifikasi digital, web monitoring, sampai CRM multi-workspace, CoreAsia membantu bisnis Anda memilih produk yang tepat dan model kerja sama yang realistis untuk launch, scale, dan monetisasi.'
       title:
-        'Bangun operasi digital lebih cepat dengan <span class="ca-gradient-text">ekosistem produk CoreAsia</span>.',
+        'Eksekusi digital yang lebih cepat, rapi, dan <span class="ca-gradient-text">siap di-scale</span>.',
       subtitle:
-        'Dari sertifikasi digital, web monitoring, sampai CRM multi-workspace, CoreAsia membantu bisnis Anda memilih produk yang tepat dan model kerja sama yang realistis untuk launch, scale, dan monetisasi.',
+        'CoreAsia menyediakan produk dan model kerja sama yang membantu bisnis Anda launch lebih cepat tanpa build dari nol.',
       ctaPrimary: 'Diskusikan Kebutuhan',
       ctaSecondary: 'WhatsApp',
       powerStatement:
@@ -1251,9 +1253,11 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
     description:
       'CoreAsia builds digital products and strategic engagement models for certification, web monitoring, CRM, and enterprise operations that need room to grow.',
     hero: {
-      title: 'Move faster with the <span class="ca-gradient-text">CoreAsia product ecosystem</span>.',
+      // v1: 'Move faster with the CoreAsia product ecosystem.'
+      // v1: 'From certification operations to web monitoring and multi-workspace CRM, CoreAsia helps you choose the right product and engagement model for launch, scale, and monetization.'
+      title: 'Faster digital execution, cleaner ops, <span class="ca-gradient-text">ready to scale</span>.',
       subtitle:
-        'From certification operations to web monitoring and multi-workspace CRM, CoreAsia helps you choose the right product and engagement model for launch, scale, and monetization.',
+        'CoreAsia provides products and engagement models that help your business launch faster without building from scratch.',
       ctaPrimary: 'Discuss Your Needs',
       powerStatement:
         'One ecosystem, many solutions — from certification to monitoring to CRM, CoreAsia helps you launch faster and scale smarter.',
