@@ -51,7 +51,7 @@ const ID_CONTENT = {
       ctaPrimary: 'Diskusikan Kebutuhan',
       ctaSecondary: 'WhatsApp',
       powerStatement:
-        'Berangkat dari pengalaman membangun sistem sertifikasi skala besar, kini CoreAsia berkembang sebagai product ecosystem untuk bisnis yang ingin bertumbuh lebih cepat.',
+        'Dipercaya untuk membangun sistem sertifikasi berskala nasional — kini CoreAsia hadir sebagai ekosistem produk digital untuk bisnis yang siap bertumbuh.',
       chips: ['Product Ecosystem', 'Growth Partnership', 'Enterprise Delivery'],
     },
     products: {
@@ -1253,7 +1253,7 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
         'From certification operations to web monitoring and multi-workspace CRM, CoreAsia helps you choose the right product and engagement model for launch, scale, and monetization.',
       ctaPrimary: 'Discuss Your Needs',
       powerStatement:
-        'Built on experience delivering large-scale certification systems, CoreAsia is growing into a product ecosystem for businesses that want sharper digital execution.',
+        'Trusted to build national-scale certification systems — CoreAsia is now a digital product ecosystem for businesses ready to grow.',
       chips: ['Product Ecosystem', 'Growth Partnership', 'Enterprise Delivery'],
     },
     products: {

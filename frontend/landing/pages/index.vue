@@ -8,6 +8,23 @@ const { useReveal } = useScrollReveal()
 const ctaSection = useReveal('scaleUp')
 const featuredProducts = computed(() => ((t('home.products.items') as Array<Record<string, any>>) || []).slice(0, 3))
 
+const heroCardRefs = ref<HTMLElement[]>([])
+const heroMousePositions = ref(Array.from({ length: 3 }, () => ({ x: 0, y: 0 })))
+
+const updateHeroSpotlight = (index: number, event: MouseEvent) => {
+    const card = heroCardRefs.value[index]
+    if (!card) return
+    const rect = card.getBoundingClientRect()
+    heroMousePositions.value[index] = {
+        x: event.clientX - rect.left,
+        y: event.clientY - rect.top,
+    }
+}
+
+const resetHeroSpotlight = (index: number) => {
+    heroMousePositions.value[index] = { x: 0, y: 0 }
+}
+
 useCoreSeo({
     title: t('home.title') as string,
     description: t('home.description') as string,
@@ -93,33 +110,34 @@ useSchemaOrg([
                             <NuxtLink
                                 v-for="(product, index) in featuredProducts"
                                 :key="product.name"
+                                :ref="(el: any) => { if (el) heroCardRefs[index] = el.$el || el }"
                                 :to="product.to"
-                                class="ca-card-soft group rounded-2xl p-4 transition hover:-translate-y-0.5 hover:border-[color:var(--ca-gold-border)]"
+                                class="ca-card-soft group relative overflow-hidden rounded-2xl p-4 transition-all duration-300 hover:-translate-y-1 hover:border-[color:var(--ca-gold-border)] hover:shadow-[0_8px_30px_rgba(245,158,11,0.08)]"
+                                @mousemove="updateHeroSpotlight(index, $event)"
+                                @mouseleave="resetHeroSpotlight(index)"
                             >
-                                <div class="flex items-start justify-between gap-3">
-                                    <div class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg-strong)]">
+                                <div
+                                    class="pointer-events-none absolute -inset-px opacity-0 transition duration-300 group-hover:opacity-100"
+                                    :style="{
+                                        background: `radial-gradient(320px circle at ${heroMousePositions[index].x}px ${heroMousePositions[index].y}px, var(--ca-spotlight), transparent 42%)`,
+                                    }"
+                                />
+
+                                <div class="relative z-10 flex items-center gap-3">
+                                    <div class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg-strong)]">
                                         <Icon
                                             :name="index === 0 ? 'lucide:graduation-cap' : index === 1 ? 'lucide:bar-chart-3' : 'lucide:briefcase-business'"
-                                            class="h-4.5 w-4.5"
-                                            :class="index === 1 ? 'ca-tone-emerald' : 'ca-tone-gold'"
+                                            class="h-4 w-4 ca-tone-gold"
                                         />
                                     </div>
-                                    <span class="ca-pill-gold px-2.5 py-1 text-[0.62rem] font-bold uppercase tracking-[0.12em]">
-                                        {{ product.badge }}
-                                    </span>
+                                    <div class="flex-1 min-w-0">
+                                        <h3 class="text-sm font-display font-bold text-[var(--ca-text)] truncate">
+                                            {{ product.name }}
+                                        </h3>
+                                        <span class="text-[0.68rem] text-[var(--ca-muted)]">{{ product.badge }}</span>
+                                    </div>
+                                    <Icon name="lucide:arrow-right" class="h-4 w-4 flex-shrink-0 text-[var(--ca-subtle)] transition-all group-hover:translate-x-0.5 group-hover:text-[var(--ca-gold-text)]" />
                                 </div>
-
-                                <h3 class="mt-4 text-base font-display font-semibold text-[var(--ca-text)]">
-                                    {{ product.name }}
-                                </h3>
-                                <p class="mt-2 text-sm leading-relaxed text-[var(--ca-muted)]">
-                                    {{ product.description }}
-                                </p>
-
-                                <span class="mt-4 inline-flex items-center gap-1 text-sm font-semibold ca-tone-gold">
-                                    {{ product.ctaLabel }}
-                                    <Icon name="lucide:arrow-right" class="h-4 w-4 transition group-hover:translate-x-0.5" />
-                                </span>
                             </NuxtLink>
                         </div>
                     </div>
