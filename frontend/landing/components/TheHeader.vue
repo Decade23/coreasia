@@ -227,13 +227,13 @@ const { style: magneticStyle } = useMagnetic(contactBtnRef, 0.3)
                 id="mobile-nav"
                 class="ca-glass-drawer max-h-[calc(100vh-4rem)] overflow-y-auto lg:hidden"
             >
-                <div class="ca-container space-y-5 py-5">
-                    <nav class="space-y-1" aria-label="Mobile Navigation">
+                <div class="ca-container space-y-4 py-5">
+                    <nav class="space-y-1.5" aria-label="Mobile Navigation">
                         <NuxtLink
                             v-for="item in navItems"
                             :key="`mobile-${item.to}`"
                             :to="item.to"
-                            class="flex items-center justify-between rounded-xl border px-4 py-3 text-sm font-semibold transition"
+                            class="flex items-center justify-between rounded-xl border px-4 py-3.5 text-sm font-semibold transition"
                             :class="
                                 isActive(item.to)
                                     ? 'border-brand-primary/40 bg-brand-primary/10 text-brand-primary'
@@ -244,21 +244,18 @@ const { style: magneticStyle } = useMagnetic(contactBtnRef, 0.3)
                             <span>{{ item.label }}</span>
                             <Icon
                                 name="lucide:arrow-right"
-                                class="h-4 w-4 opacity-70"
+                                class="h-4 w-4 opacity-50"
                             />
                         </NuxtLink>
                     </nav>
 
-                    <div class="flex justify-center rounded-2xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-3">
+                    <div class="flex items-center gap-2">
                         <ThemeToggle />
-                    </div>
-
-                    <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
                         <a
                             :href="LINKS.whatsapp"
                             target="_blank"
                             rel="noopener noreferrer"
-                            class="ca-btn-secondary w-full"
+                            class="ca-btn-secondary flex-1 py-2.5!"
                             @click="closeMobileMenu"
                         >
                             <Icon
@@ -267,14 +264,15 @@ const { style: magneticStyle } = useMagnetic(contactBtnRef, 0.3)
                             />
                             {{ t('common.whatsapp') }}
                         </a>
-                        <NuxtLink
-                            to="/contact"
-                            class="ca-btn-primary w-full"
-                            @click="closeMobileMenu"
-                        >
-                            {{ t('components.header.ctaText') }}
-                        </NuxtLink>
                     </div>
+
+                    <NuxtLink
+                        to="/contact"
+                        class="ca-btn-primary w-full"
+                        @click="closeMobileMenu"
+                    >
+                        {{ t('components.header.ctaText') }}
+                    </NuxtLink>
 
                     <p class="text-center text-xs text-[var(--ca-subtle)]">
                         {{ t('components.header.responseTime') }}: {{ t('components.header.businessHours') }}
