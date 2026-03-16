@@ -167,9 +167,9 @@ html[data-theme="light"] {
     --ca-scene-glow: rgba(214, 138, 6, 0.16);
     --ca-scene-base:
         radial-gradient(ellipse at center,
-            rgba(255, 250, 242, 0.74) 0%,
-            rgba(246, 238, 225, 0.92) 58%,
-            rgba(239, 228, 210, 0.98) 100%);
+            rgba(248, 242, 231, 0.5) 0%,
+            rgba(245, 239, 227, 0.3) 50%,
+            transparent 100%);
     --ca-scroll-track: #efe4d2;
     --ca-scroll-thumb: linear-gradient(180deg, #d9be90, #b98f48);
     --ca-scroll-thumb-border: #efe4d2;
@@ -180,7 +180,7 @@ html[data-theme="light"] {
         radial-gradient(920px 560px at 100% 0%,
             rgba(15, 143, 119, 0.1),
             transparent 58%),
-        linear-gradient(180deg, #f8f2e7 0%, #f6f1e8 44%, #efe4d2 100%);
+        linear-gradient(180deg, #f8f2e7 0%, #f7f1e6 50%, #f5efe3 100%);
 }
 
 * {
