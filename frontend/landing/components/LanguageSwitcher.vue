@@ -1,93 +1,70 @@
 <script setup lang="ts">
 import { LOCALES, type Locale } from '~/utils/i18n'
 import { useCoreI18n } from '~/composables/useCoreI18n'
+import { onClickOutside } from '@vueuse/core'
 
 const { locale, availableLocales, setLocale } = useCoreI18n()
 
-// Toggle language menu
 const isOpen = ref(false)
+const container = ref<HTMLElement | null>(null)
 
-// Handle language selection
+onClickOutside(container, () => { isOpen.value = false })
+
 const selectLanguage = (newLocale: string) => {
   setLocale(newLocale)
   isOpen.value = false
-  
-  // Reload page to apply new language
   if (typeof window !== 'undefined') {
     window.location.reload()
   }
 }
 
-// Close menu when clicking outside
-const closeMenu = () => {
-  isOpen.value = false
-}
-
-// Watch for clicks outside
-onMounted(() => {
-  if (typeof window !== 'undefined') {
-    document.addEventListener('click', (e) => {
-      const target = e.target as HTMLElement
-      if (!target.closest('.language-switcher')) {
-        closeMenu()
-      }
-    })
-  }
-})
+const currentLocale = computed(() =>
+  (availableLocales as Locale[]).find((l: Locale) => l.code === locale.value)
+)
 </script>
 
 <template>
-  <div class="language-switcher relative">
-    <!-- Current Language Button -->
+  <div ref="container" class="relative">
     <button
       type="button"
-      class="flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-sm font-semibold text-content-DEFAULT transition hover:border-white/20 hover:bg-white/[0.06]"
-      @click="isOpen = !isOpen"
+      class="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-full border border-[color:var(--ca-border)] bg-[var(--ca-toggle-track)] text-[var(--ca-text)] shadow-[var(--ca-toggle-thumb-shadow)] transition hover:-translate-y-0.5 hover:border-[color:var(--ca-gold-border)] hover:bg-[var(--ca-panel-bg-strong)]"
       :aria-expanded="isOpen"
       aria-label="Select language"
+      @click="isOpen = !isOpen"
     >
-      <span class="text-base">{{ (availableLocales as Locale[]).find((l: Locale) => l.code === locale)?.flag }}</span>
-      <span class="hidden sm:inline">{{ (availableLocales as Locale[]).find((l: Locale) => l.code === locale)?.name }}</span>
-      <Icon
-        name="lucide:chevron-down"
-        class="h-4 w-4 transition-transform"
-        :class="{ 'rotate-180': isOpen }"
-      />
+      <span class="text-base leading-none">{{ currentLocale?.flag }}</span>
     </button>
 
-    <!-- Language Options Dropdown -->
     <Transition
-      enter-active-class="transition duration-200 ease-out"
+      enter-active-class="transition duration-100 ease-out"
       enter-from-class="opacity-0 scale-95"
       enter-to-class="opacity-100 scale-100"
-      leave-active-class="transition duration-150 ease-in"
+      leave-active-class="transition duration-75 ease-in"
       leave-from-class="opacity-100 scale-100"
       leave-to-class="opacity-0 scale-95"
     >
       <div
         v-if="isOpen"
-        class="absolute right-0 top-full z-50 mt-2 w-48 rounded-xl border border-white/10 bg-core-950/95 backdrop-blur-md shadow-[0_18px_60px_rgba(2,6,23,0.42)]"
+        class="ca-field-dropdown absolute right-0 top-full z-50 mt-2 w-44 rounded-xl py-1 shadow-2xl"
       >
-        <div class="py-2">
-          <button
-            v-for="lang in availableLocales"
-            :key="lang.code"
-            type="button"
-            class="flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-medium transition hover:bg-white/[0.06]"
-            :class="locale === lang.code ? 'text-brand-primary bg-white/[0.05]' : 'text-content-DEFAULT'"
-            @click="selectLanguage(lang.code)"
-          >
-            <span class="text-base">{{ lang.flag }}</span>
-            <span>{{ lang.name }}</span>
-            
-            <!-- Current indicator -->
-            <Icon
-              v-if="locale === lang.code"
-              name="lucide:check"
-              class="ml-auto h-4 w-4 text-brand-primary"
-            />
-          </button>
-        </div>
+        <button
+          v-for="lang in availableLocales"
+          :key="lang.code"
+          type="button"
+          class="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-medium transition-colors"
+          :class="locale === lang.code
+            ? 'bg-[var(--ca-kicker-bg)] ca-tone-gold font-semibold'
+            : 'text-[var(--ca-muted)] hover:bg-[var(--ca-panel-bg-strong)] hover:text-[var(--ca-text)]'"
+          @click="selectLanguage(lang.code)"
+        >
+          <span class="text-base leading-none">{{ lang.flag }}</span>
+          <span>{{ lang.name }}</span>
+          <Icon
+            v-if="locale === lang.code"
+            name="lucide:check"
+            class="ml-auto h-4 w-4"
+          />
+        </button>
       </div>
     </Transition>
   </div>

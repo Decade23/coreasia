@@ -180,6 +180,7 @@ const { style: magneticStyle } = useMagnetic(contactBtnRef, 0.3)
                 </nav>
 
                 <div class="hidden items-center gap-2 lg:flex">
+                    <LanguageSwitcher />
                     <ThemeToggle />
                     <a
                         :href="LINKS.whatsapp"
@@ -254,6 +255,7 @@ const { style: magneticStyle } = useMagnetic(contactBtnRef, 0.3)
                     </nav>
 
                     <div class="flex items-center gap-2">
+                        <LanguageSwitcher />
                         <ThemeToggle />
                         <a
                             :href="LINKS.whatsapp"
