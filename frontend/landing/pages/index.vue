@@ -134,7 +134,7 @@ useSchemaOrg([
                                         <h3 class="text-sm font-display font-bold text-[var(--ca-text)] truncate">
                                             {{ product.name }}
                                         </h3>
-                                        <span class="text-[0.68rem] text-[var(--ca-muted)]">{{ product.badge }}</span>
+                                        <span class="text-[0.68rem] text-[var(--ca-muted)]">{{ product.tagline }}</span>
                                     </div>
                                     <Icon name="lucide:arrow-right" class="h-4 w-4 flex-shrink-0 text-[var(--ca-subtle)] transition-all group-hover:translate-x-0.5 group-hover:text-[var(--ca-gold-text)]" />
                                 </div>

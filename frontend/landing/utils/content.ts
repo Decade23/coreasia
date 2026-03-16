@@ -51,7 +51,7 @@ const ID_CONTENT = {
       ctaPrimary: 'Diskusikan Kebutuhan',
       ctaSecondary: 'WhatsApp',
       powerStatement:
-        'Dipercaya untuk membangun sistem sertifikasi berskala nasional — kini CoreAsia hadir sebagai ekosistem produk digital untuk bisnis yang siap bertumbuh.',
+        'Satu ekosistem, banyak solusi — dari sertifikasi, monitoring, hingga CRM, CoreAsia bantu bisnis Anda launch lebih cepat dan scale lebih rapi.',
       chips: ['Product Ecosystem', 'Growth Partnership', 'Enterprise Delivery'],
     },
     products: {
@@ -63,6 +63,7 @@ const ID_CONTENT = {
         {
           name: 'CoreAsia LMS',
           badge: 'Flagship',
+          tagline: 'Sertifikasi & Training',
           description:
             'Platform sertifikasi dan training management untuk operasional yang butuh workflow rapi, audit-ready, dan siap di-scale.',
           features: [
@@ -76,6 +77,7 @@ const ID_CONTENT = {
         {
           name: 'Pantau by CoreAsia',
           badge: 'New',
+          tagline: 'Web Monitoring',
           description:
             'Dashboard monitoring yang menggabungkan GA4 dan Google Search Console untuk freelancer, agensi, dan bisnis yang butuh insight web yang cepat dibaca.',
           features: [
@@ -89,6 +91,7 @@ const ID_CONTENT = {
         {
           name: 'LeadKu by CoreAsia',
           badge: 'Early Access',
+          tagline: 'Sales CRM',
           description:
             'CRM multi-workspace untuk tim sales yang perlu pipeline lebih rapi, aktivitas tim terlacak, dan reporting yang cepat.',
           features: [
@@ -1253,7 +1256,7 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
         'From certification operations to web monitoring and multi-workspace CRM, CoreAsia helps you choose the right product and engagement model for launch, scale, and monetization.',
       ctaPrimary: 'Discuss Your Needs',
       powerStatement:
-        'Trusted to build national-scale certification systems — CoreAsia is now a digital product ecosystem for businesses ready to grow.',
+        'One ecosystem, many solutions — from certification to monitoring to CRM, CoreAsia helps you launch faster and scale smarter.',
       chips: ['Product Ecosystem', 'Growth Partnership', 'Enterprise Delivery'],
     },
     products: {
@@ -1265,6 +1268,7 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
         {
           name: 'CoreAsia LMS',
           badge: 'Flagship',
+          tagline: 'Certification & Training',
           description:
             'A certification and training management platform for teams that need clean workflows, audit-ready operations, and scalable delivery.',
           features: [
@@ -1278,6 +1282,7 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
         {
           name: 'Pantau by CoreAsia',
           badge: 'New',
+          tagline: 'Web Monitoring',
           description:
             'A monitoring dashboard that brings GA4 and Google Search Console together for freelancers, agencies, and businesses that need web insights in one place.',
           features: [
@@ -1291,6 +1296,7 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
         {
           name: 'LeadKu by CoreAsia',
           badge: 'Early Access',
+          tagline: 'Sales CRM',
           description:
             'A multi-workspace CRM for sales teams that need cleaner pipelines, visible team activity, and faster reporting.',
           features: [
