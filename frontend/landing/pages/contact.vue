@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { LINKS, CONTACT, COMPANY, buildWhatsAppUrl, buildMailtoUrl } from '~/utils/constants'
 import { useCoreI18n } from '~/composables/useCoreI18n'
+import { useAnalytics } from '~/composables/useAnalytics'
 
 const { useReveal } = useScrollReveal()
 const { t } = useCoreI18n()
+const { trackFormSubmit, trackFormStart, trackWhatsAppClick } = useAnalytics()
 const route = useRoute()
 
 const heroKicker = useReveal('fadeUp', 0)
@@ -195,7 +197,8 @@ const handleSubmit = async () => {
         }
 
         formState.isSuccess = true;
-        
+        trackFormSubmit('contact_brief', { subject: form.subject })
+
         if (process.client) {
             try {
                 const confetti = (await import('canvas-confetti')).default;
@@ -293,6 +296,7 @@ useSchemaOrg([
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     class="flex items-center justify-between rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] px-4 py-3 transition hover:border-emerald-300/40 hover:bg-emerald-300/10"
+                                    @click="trackWhatsAppClick('contact_sidebar')"
                                 >
                                     <span class="flex items-center gap-3">
                                         <span class="ca-icon-emerald inline-flex h-10 w-10 items-center justify-center rounded-lg">

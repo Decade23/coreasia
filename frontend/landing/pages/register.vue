@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { useCoreI18n } from '~/composables/useCoreI18n'
+import { useAnalytics } from '~/composables/useAnalytics'
 import { useGatewayApi } from '~/composables/useGatewayApi'
 import type { PricingPlan, RegisterPayload, RegistrationStatusResult } from '~/composables/useGatewayApi'
 import { useDebounceFn } from '@vueuse/core'
 
 const { locale, t } = useCoreI18n()
+const { trackFormSubmit } = useAnalytics()
 const { useReveal } = useScrollReveal()
 const route = useRoute()
 const { fetchPlans, checkSlug, register, getRegistrationStatus } = useGatewayApi()
@@ -380,6 +382,7 @@ const handleSubmit = async () => {
                 : t('register.success.createdTitle') as string
             formState.successMessage = result.message
             formState.isSuccess = true
+            trackFormSubmit('registration', { plan: selectedPlanId.value, org_type: form.orgType })
 
             if (process.client) {
                 try {

@@ -2,11 +2,13 @@
 import { LINKS, COMPANY } from '~/utils/constants'
 import { getNavItems } from '~/utils/navigation'
 import { useCoreI18n } from '~/composables/useCoreI18n'
+import { useAnalytics } from '~/composables/useAnalytics'
 import { useMagnetic } from '~/composables/useMagnetic'
 import { useWindowScroll } from '@vueuse/core'
 
 const route = useRoute();
 const { locale, t } = useCoreI18n()
+const { trackWhatsAppClick, trackCTAClick } = useAnalytics()
 const { y } = useWindowScroll()
 
 const isMobileMenuOpen = ref(false);
@@ -184,6 +186,7 @@ const { style: magneticStyle } = useMagnetic(contactBtnRef, 0.3)
                         target="_blank"
                         rel="noopener noreferrer"
                         class="ca-btn-secondary !px-3 !py-2"
+                        @click="trackWhatsAppClick('header')"
                     >
                         <Icon name="lucide:message-circle" class="h-4 w-4" />
                         {{ t('common.whatsapp') }}
@@ -193,6 +196,7 @@ const { style: magneticStyle } = useMagnetic(contactBtnRef, 0.3)
                         to="/contact"
                         class="ca-btn-primary !px-4 !py-2"
                         :style="magneticStyle"
+                        @click="trackCTAClick('header_konsultasi', '/contact')"
                     >
                         {{ t('components.header.ctaText') }}
                     </NuxtLink>
@@ -256,7 +260,7 @@ const { style: magneticStyle } = useMagnetic(contactBtnRef, 0.3)
                             target="_blank"
                             rel="noopener noreferrer"
                             class="ca-btn-secondary flex-1 py-2.5!"
-                            @click="closeMobileMenu"
+                            @click="trackWhatsAppClick('mobile_menu'); closeMobileMenu()"
                         >
                             <Icon
                                 name="lucide:message-circle"
@@ -269,7 +273,7 @@ const { style: magneticStyle } = useMagnetic(contactBtnRef, 0.3)
                     <NuxtLink
                         to="/contact"
                         class="ca-btn-primary w-full"
-                        @click="closeMobileMenu"
+                        @click="trackCTAClick('mobile_konsultasi', '/contact'); closeMobileMenu()"
                     >
                         {{ t('components.header.ctaText') }}
                     </NuxtLink>

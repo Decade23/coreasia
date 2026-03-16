@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { LINKS } from '~/utils/constants'
 import { useCoreI18n } from '~/composables/useCoreI18n'
+import { useAnalytics } from '~/composables/useAnalytics'
 
 const { t } = useCoreI18n()
+const { trackWhatsAppClick, trackCTAClick } = useAnalytics()
 const { useReveal } = useScrollReveal()
 
 const ctaSection = useReveal('scaleUp')
@@ -81,7 +83,7 @@ useSchemaOrg([
                     />
 
                     <div class="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row animate-fade-in-up delay-300">
-                        <NuxtLink to="/contact" class="ca-btn-primary">
+                        <NuxtLink to="/contact" class="ca-btn-primary" @click="trackCTAClick('hero_primary', '/contact')">
                             {{ t('home.hero.ctaPrimary') }}
                             <Icon name="lucide:arrow-right" class="h-4 w-4" />
                         </NuxtLink>
@@ -90,6 +92,7 @@ useSchemaOrg([
                             target="_blank"
                             rel="noopener noreferrer"
                             class="ca-btn-secondary"
+                            @click="trackWhatsAppClick('hero')"
                         >
                             <Icon name="lucide:message-circle" class="h-4 w-4" />
                             {{ t('home.hero.ctaSecondary') }}
@@ -172,6 +175,7 @@ useSchemaOrg([
                         <NuxtLink
                             to="/contact"
                             class="ca-btn-primary"
+                            @click="trackCTAClick('bottom_cta', '/contact')"
                         >
                             {{ t('home.readyCTA.ctaPrimary') }}
                         </NuxtLink>
@@ -180,6 +184,7 @@ useSchemaOrg([
                             target="_blank"
                             rel="noopener noreferrer"
                             class="ca-btn-secondary"
+                            @click="trackWhatsAppClick('bottom_cta')"
                         >
                             {{ t('home.readyCTA.ctaSecondary') }}
                         </a>
