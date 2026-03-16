@@ -1,30 +1,32 @@
 /**
- * GA4 (gtag.js) client-side plugin.
- * Loads the GA4 script, initializes gtag, and tracks SPA navigations.
- * Gracefully does nothing when measurement ID is not configured.
+ * Google Tag Manager (GTM) client-side plugin.
+ * Loads the GTM container script and tracks SPA navigations via dataLayer.
+ * Gracefully does nothing when GTM ID is not configured.
  */
 export default defineNuxtPlugin(() => {
   const config = useRuntimeConfig()
-  const id = config.public.gaMeasurementId as string
+  const id = config.public.gtmId as string
 
   if (!id) return
 
   // Initialize dataLayer
   window.dataLayer = window.dataLayer || []
-  function gtag(...args: any[]) {
-    window.dataLayer!.push(args)
-  }
-  window.gtag = gtag as any
+  window.dataLayer.push({
+    'gtm.start': new Date().getTime(),
+    event: 'gtm.js',
+  })
 
-  gtag('js', new Date())
-  gtag('config', id, { send_page_view: true })
-
-  // Load gtag.js script async
+  // Load GTM script async
   useHead({
     script: [
       {
-        src: `https://www.googletagmanager.com/gtag/js?id=${id}`,
+        src: `https://www.googletagmanager.com/gtm.js?id=${id}`,
         async: true,
+      },
+    ],
+    noscript: [
+      {
+        innerHTML: `<iframe src="https://www.googletagmanager.com/ns.html?id=${id}" height="0" width="0" style="display:none;visibility:hidden"></iframe>`,
       },
     ],
   })
@@ -32,7 +34,8 @@ export default defineNuxtPlugin(() => {
   // Track SPA page navigations
   const router = useRouter()
   router.afterEach((to) => {
-    gtag('config', id, {
+    window.dataLayer?.push({
+      event: 'page_view',
       page_path: to.fullPath,
       page_title: typeof document !== 'undefined' ? document.title : '',
     })

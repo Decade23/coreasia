@@ -1,36 +1,31 @@
 /**
- * Analytics composable for GA4 event tracking.
- * Wraps gtag calls with type-safe helpers and graceful fallback
- * when gtag is blocked (ad-blockers, incognito).
+ * Analytics composable for GTM dataLayer event tracking.
+ * Pushes events to dataLayer which GTM picks up and routes
+ * to GA4, Facebook Pixel, or any other tag configured in GTM.
+ * Graceful fallback when GTM is blocked (ad-blockers, incognito).
  */
 
-type GtagEventParams = Record<string, string | number | boolean | undefined>
+type EventParams = Record<string, string | number | boolean | undefined>
 
 declare global {
   interface Window {
-    gtag?: (...args: any[]) => void
     dataLayer?: any[]
   }
 }
 
-const gtag = (...args: any[]) => {
+const pushEvent = (event: string, params?: EventParams) => {
   if (import.meta.server) return
-  window.gtag?.(...args)
+  window.dataLayer = window.dataLayer || []
+  window.dataLayer.push({ event, ...params })
 }
 
 export const useAnalytics = () => {
-  /**
-   * Track a custom GA4 event.
-   */
-  const trackEvent = (eventName: string, params?: GtagEventParams) => {
-    gtag('event', eventName, params)
+  const trackEvent = (eventName: string, params?: EventParams) => {
+    pushEvent(eventName, params)
   }
 
-  /**
-   * Track form submission.
-   */
-  const trackFormSubmit = (formName: string, extra?: GtagEventParams) => {
-    trackEvent('form_submit', {
+  const trackFormSubmit = (formName: string, extra?: EventParams) => {
+    pushEvent('form_submit', {
       event_category: 'Lead Generation',
       form_name: formName,
       value: 1,
@@ -38,55 +33,38 @@ export const useAnalytics = () => {
     })
   }
 
-  /**
-   * Track form start (first interaction).
-   */
   const trackFormStart = (formName: string) => {
-    trackEvent('form_start', {
+    pushEvent('form_start', {
       event_category: 'Lead Generation',
       form_name: formName,
     })
   }
 
-  /**
-   * Track WhatsApp button clicks.
-   * Uses sendBeacon pattern to ensure the event fires before navigation.
-   */
   const trackWhatsAppClick = (source: string) => {
-    trackEvent('whatsapp_click', {
+    pushEvent('whatsapp_click', {
       event_category: 'Contact',
       event_label: source,
-      link_url: 'https://wa.me/',
     })
   }
 
-  /**
-   * Track CTA button clicks.
-   */
   const trackCTAClick = (buttonName: string, destination?: string) => {
-    trackEvent('cta_click', {
+    pushEvent('cta_click', {
       event_category: 'Engagement',
       button_name: buttonName,
       destination: destination || '',
     })
   }
 
-  /**
-   * Track outbound link clicks.
-   */
   const trackOutboundClick = (url: string, label?: string) => {
-    trackEvent('click', {
+    pushEvent('outbound_click', {
       event_category: 'Outbound',
       event_label: label || url,
       link_url: url,
     })
   }
 
-  /**
-   * Track page/product views.
-   */
-  const trackView = (itemName: string, extra?: GtagEventParams) => {
-    trackEvent('view_item', {
+  const trackView = (itemName: string, extra?: EventParams) => {
+    pushEvent('view_item', {
       event_category: 'Discovery',
       item_name: itemName,
       ...extra,

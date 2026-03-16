@@ -200,7 +200,7 @@ export default defineNuxtConfig({
     runtimeConfig: {
         public: {
             gatewayUrl: process.env.GATEWAY_URL || 'http://localhost:8081/api',
-            gaMeasurementId: process.env.GA_MEASUREMENT_ID || '',
+            gtmId: process.env.GTM_ID || '',
         },
     },
     routeRules: {
