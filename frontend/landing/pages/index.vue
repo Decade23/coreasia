@@ -47,13 +47,7 @@ useSchemaOrg([
     <div>
         <section class="relative overflow-hidden">
             <div class="pointer-events-none absolute inset-0">
-                <div
-                    class="absolute inset-0 bg-[radial-gradient(1000px_460px_at_20%_0%,rgba(251,191,36,0.14),transparent_62%)]"
-                />
-                <div
-                    class="absolute inset-0 bg-[radial-gradient(900px_440px_at_90%_15%,rgba(16,185,129,0.1),transparent_64%)]"
-                />
-
+                <!-- Ambient glow handled by --ca-page-background -->
                 <ClientOnly>
                     <ThreeHeroScene />
                     <template #fallback>
