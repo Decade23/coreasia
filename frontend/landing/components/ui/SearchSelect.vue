@@ -31,6 +31,7 @@
                 : 'placeholder:text-[var(--ca-subtle)]'
         ]"
         :disabled="disabled"
+        @click.stop
         @focus="handleFocus"
         @blur="handleBlur"
         @input="onSearch"
