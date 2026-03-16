@@ -8,7 +8,7 @@ export const LOCALES = {
   en: {
     code: 'en',
     name: 'English',
-    flag: '🇺🇸',
+    flag: 'EN',
   },
 } as const
 
