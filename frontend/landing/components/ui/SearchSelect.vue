@@ -238,6 +238,12 @@ watch(() => props.modelValue, () => {
 </script>
 
 <style scoped>
+input:focus,
+input:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
 ul::-webkit-scrollbar {
   width: 6px;
 }
