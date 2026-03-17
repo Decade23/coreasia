@@ -6,6 +6,17 @@ const isLoaded = ref(false)
 let networkScene: any = null
 let observer: IntersectionObserver | null = null
 
+// Theme-aware colors
+const getThemeColors = () => {
+    const isDark = document.documentElement.getAttribute('data-theme') !== 'light'
+    return {
+        particle: isDark ? themeColors.brand.DEFAULT : '#9d6500',
+        line: isDark ? themeColors.brand.secondary : '#0d7b67',
+        particleOpacity: isDark ? 0.6 : 0.35,
+        lineOpacity: isDark ? 0.2 : 0.12,
+    }
+}
+
 // Adaptive particle count based on device
 const getParticleCount = () => {
     if (process.client) {
@@ -41,11 +52,14 @@ onMounted(async () => {
     const { NeuralNetworkScene } = await import('~/utils/NeuralNetworkScene')
 
     if (containerRef.value) {
+        const tc = getThemeColors()
         networkScene = new NeuralNetworkScene(containerRef.value, {
             particleCount: getParticleCount(),
+            particleOpacity: tc.particleOpacity,
+            lineOpacity: tc.lineOpacity,
             colors: {
-                particle: themeColors.brand.DEFAULT,
-                line: themeColors.brand.secondary
+                particle: tc.particle,
+                line: tc.line,
             }
         })
         networkScene.start()
@@ -117,6 +131,7 @@ onBeforeUnmount(() => {
     display: block;
     outline: none;
     opacity: 0;
+    z-index: 10;
     transition: opacity 1.5s ease-in-out;
 }
 

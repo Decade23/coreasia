@@ -5,6 +5,8 @@ interface NeuralNetworkOptions {
     connectionDistance?: number
     particleSpeed?: number
     maxConnectionsPerParticle?: number
+    particleOpacity?: number
+    lineOpacity?: number
     colors?: {
         particle?: string
         line?: string
@@ -31,6 +33,8 @@ export class NeuralNetworkScene {
     private targetMouse = { x: -1000, y: -1000 }
 
     private options: Required<NeuralNetworkOptions>
+    private particleOpacity: number
+    private lineOpacity: number
     private width = 0
     private height = 0
     private dpr = 1
@@ -40,11 +44,16 @@ export class NeuralNetworkScene {
 
         const isMobile = window.innerWidth < 768
 
+        this.particleOpacity = options.particleOpacity ?? 0.6
+        this.lineOpacity = options.lineOpacity ?? 0.2
+
         this.options = {
             particleCount: options.particleCount ?? (isMobile ? 60 : 150),
             connectionDistance: options.connectionDistance ?? 150,
             particleSpeed: options.particleSpeed ?? 0.3,
             maxConnectionsPerParticle: options.maxConnectionsPerParticle ?? 6,
+            particleOpacity: this.particleOpacity,
+            lineOpacity: this.lineOpacity,
             colors: {
                 particle: options.colors?.particle ?? themeColors.brand.DEFAULT,
                 line: options.colors?.line ?? themeColors.brand.secondary,
@@ -54,8 +63,8 @@ export class NeuralNetworkScene {
         this.canvas = document.createElement('canvas')
         this.canvas.style.display = 'block'
         this.canvas.style.outline = 'none'
-        this.canvas.style.opacity = '0'
-        this.canvas.style.transition = 'opacity 1.5s ease-in-out'
+        this.canvas.style.position = 'absolute'
+        this.canvas.style.inset = '0'
 
         this.ctx = this.canvas.getContext('2d')!
         this.container.appendChild(this.canvas)
@@ -187,7 +196,7 @@ export class NeuralNetworkScene {
 
                 if (distSq < distSqThreshold) {
                     const alpha = 1 - Math.sqrt(distSq) / connectionDistance
-                    ctx.strokeStyle = this.hexToRgba(colors.line!, alpha * 0.2)
+                    ctx.strokeStyle = this.hexToRgba(colors.line!, alpha * this.lineOpacity)
                     ctx.moveTo(a.x, a.y)
                     ctx.lineTo(b.x, b.y)
                     ctx.stroke()
@@ -203,7 +212,7 @@ export class NeuralNetworkScene {
         for (const p of this.particles) {
             ctx.beginPath()
             ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2)
-            ctx.fillStyle = this.hexToRgba(colors.particle!, 0.6)
+            ctx.fillStyle = this.hexToRgba(colors.particle!, this.particleOpacity)
             ctx.fill()
         }
 
