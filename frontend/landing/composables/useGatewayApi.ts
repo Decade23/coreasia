@@ -291,13 +291,27 @@ export const useGatewayApi = () => {
                 redirectUrl: redirectUrl || undefined,
             }
         } catch (err: unknown) {
-            // Parse error response from Fiber
             const fetchErr = err as { data?: ApiResponse<null> }
             const apiMessage = fetchErr?.data?.errors?.message
 
+            // Whitelist safe error messages, hide internal details
+            const safeMessages = [
+                'slug sudah digunakan',
+                'email sudah terdaftar',
+                'slug is already taken',
+                'email is already registered',
+                'validasi gagal',
+                'validation failed',
+            ]
+            const isSafe = apiMessage && safeMessages.some(m =>
+                apiMessage.toLowerCase().includes(m)
+            )
+
             return {
                 success: false,
-                message: apiMessage || 'Koneksi gagal. Periksa koneksi internet Anda.',
+                message: isSafe
+                    ? apiMessage
+                    : 'Pendaftaran gagal. Silakan coba lagi atau hubungi support.',
             }
         }
     }

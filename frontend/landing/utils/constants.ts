@@ -8,9 +8,9 @@
 // ──────────────────────────────────────
 export const CONTACT = {
   /** WhatsApp number in international format (tanpa +) */
-  whatsapp: '6281234567890',
+  whatsapp: '6285693380123',
   /** Display format untuk UI */
-  whatsappDisplay: '+62 812-3456-7890',
+  whatsappDisplay: '+62 856-9338-0123',
   /** Primary email */
   email: 'hello@coreasia.id',
   /** Office location */

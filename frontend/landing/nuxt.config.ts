@@ -231,6 +231,9 @@ export default defineNuxtConfig({
                 'X-Frame-Options': 'SAMEORIGIN',
                 'X-Content-Type-Options': 'nosniff',
                 'Referrer-Policy': 'strict-origin-when-cross-origin',
+                'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+                'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://www.googletagmanager.com https://*.coreasia.id; frame-ancestors 'self'",
+                'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
             },
         },
         // Immutable cache for built assets

@@ -291,6 +291,22 @@ const validate = (): boolean => {
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 
+const isSafeRedirect = (url: string): boolean => {
+    try {
+        const parsed = new URL(url)
+        const allowed = ['coreasia.id', 'www.coreasia.id']
+        return allowed.some(h => parsed.hostname === h || parsed.hostname.endsWith(`.${h}`))
+    } catch {
+        return false
+    }
+}
+
+const safeRedirect = (url: string) => {
+    if (isSafeRedirect(url)) {
+        window.location.href = url
+    }
+}
+
 const syncRegistrationStatus = async (registrationId: string) => {
     paymentReturn.isChecking = true
     paymentReturn.message = ''
@@ -307,7 +323,7 @@ const syncRegistrationStatus = async (registrationId: string) => {
             paymentReturn.invoiceUrl = latestStatus.invoiceUrl || ''
 
             if (latestStatus.status === 'ready' && latestStatus.loginUrl && process.client) {
-                window.location.href = latestStatus.loginUrl
+                safeRedirect(latestStatus.loginUrl)
                 return
             }
 
@@ -373,7 +389,7 @@ const handleSubmit = async () => {
 
         if (result.success) {
             if (result.redirectUrl && process.client) {
-                window.location.href = result.redirectUrl
+                safeRedirect(result.redirectUrl)
                 return
             }
 
