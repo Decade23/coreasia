@@ -1,11 +1,4 @@
-import * as THREE from 'three'
 import { themeColors } from './theme'
-
-interface ParticleVelocity {
-    x: number
-    y: number
-    z: number
-}
 
 interface NeuralNetworkOptions {
     particleCount?: number
@@ -13,35 +6,34 @@ interface NeuralNetworkOptions {
     particleSpeed?: number
     maxConnectionsPerParticle?: number
     colors?: {
-        particle?: number | string
-        line?: number | string
+        particle?: string
+        line?: string
     }
 }
 
-// Helper to convert color string to number for Three.js
-const colorToNumber = (color: number | string): number => {
-    if (typeof color === 'number') return color
-    if (typeof color === 'string') {
-        const hex = color.replace('#', '')
-        return parseInt(hex, 16)
-    }
-    return themeColors.brand.DEFAULT as unknown as number
+interface Particle {
+    x: number
+    y: number
+    vx: number
+    vy: number
+    size: number
 }
 
 export class NeuralNetworkScene {
-    private scene: THREE.Scene
-    private camera: THREE.PerspectiveCamera
-    private renderer: THREE.WebGLRenderer
-    private particles: THREE.BufferGeometry | null = null
-    private particleSystem: THREE.Points | null = null
-    private linesMesh: THREE.LineSegments | null = null
-    private animationId: number | null = null
+    private canvas: HTMLCanvasElement
+    private ctx: CanvasRenderingContext2D
     private container: HTMLElement
+    private particles: Particle[] = []
+    private animationId: number | null = null
+    private rotation = 0
 
     private mouse = { x: -1000, y: -1000 }
     private targetMouse = { x: -1000, y: -1000 }
 
     private options: Required<NeuralNetworkOptions>
+    private width = 0
+    private height = 0
+    private dpr = 1
 
     constructor(container: HTMLElement, options: NeuralNetworkOptions = {}) {
         this.container = container
@@ -55,97 +47,54 @@ export class NeuralNetworkScene {
             maxConnectionsPerParticle: options.maxConnectionsPerParticle ?? 6,
             colors: {
                 particle: options.colors?.particle ?? themeColors.brand.DEFAULT,
-                line: options.colors?.line ?? themeColors.brand.secondary
-            }
+                line: options.colors?.line ?? themeColors.brand.secondary,
+            },
         }
 
-        this.scene = new THREE.Scene()
-        this.camera = new THREE.PerspectiveCamera(75, 1, 1, 1000)
-        this.renderer = new THREE.WebGLRenderer({
-            alpha: true,
-            antialias: !isMobile, // Disable antialias on mobile for performance
-            powerPreference: 'high-performance'
-        })
+        this.canvas = document.createElement('canvas')
+        this.canvas.style.display = 'block'
+        this.canvas.style.outline = 'none'
+        this.canvas.style.opacity = '0'
+        this.canvas.style.transition = 'opacity 1.5s ease-in-out'
 
-        this.init()
-    }
+        this.ctx = this.canvas.getContext('2d')!
+        this.container.appendChild(this.canvas)
 
-    private init() {
-        this.camera.position.z = 400
-
-        // Renderer Setup — cap pixel ratio at 2
-        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+        this.dpr = Math.min(window.devicePixelRatio, 2)
         this.updateSize()
-        this.container.appendChild(this.renderer.domElement)
-
-        // Objects
         this.createParticles()
 
-        // Bindings
         this.animate = this.animate.bind(this)
     }
 
     private createParticles() {
-        const { particleCount, particleSpeed, maxConnectionsPerParticle, colors } = this.options
-
-        const geometry = new THREE.BufferGeometry()
-        const positions = new Float32Array(particleCount * 3)
-        const velocities: ParticleVelocity[] = []
+        const { particleCount, particleSpeed } = this.options
+        this.particles = []
 
         for (let i = 0; i < particleCount; i++) {
-            positions[i * 3] = (Math.random() - 0.5) * 800
-            positions[i * 3 + 1] = (Math.random() - 0.5) * 600
-            positions[i * 3 + 2] = (Math.random() - 0.5) * 400
-
-            velocities.push({
-                x: (Math.random() - 0.5) * particleSpeed,
-                y: (Math.random() - 0.5) * particleSpeed,
-                z: (Math.random() - 0.5) * particleSpeed
+            this.particles.push({
+                x: (Math.random() - 0.5) * this.width,
+                y: (Math.random() - 0.5) * this.height,
+                vx: (Math.random() - 0.5) * particleSpeed,
+                vy: (Math.random() - 0.5) * particleSpeed,
+                size: 1.5 + Math.random() * 1.5,
             })
         }
-
-        geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
-        geometry.userData = { velocities }
-        this.particles = geometry
-
-        // Particle System
-        const material = new THREE.PointsMaterial({
-            color: colorToNumber(colors.particle ?? themeColors.brand.DEFAULT),
-            size: 3,
-            transparent: true,
-            opacity: 0.6,
-            sizeAttenuation: true
-        })
-
-        this.particleSystem = new THREE.Points(this.particles, material)
-        this.scene.add(this.particleSystem)
-
-        // Lines — sized for realistic max connections, not n²
-        const lineGeometry = new THREE.BufferGeometry()
-        const maxLines = particleCount * maxConnectionsPerParticle
-        const linePositions = new Float32Array(maxLines * 6) // 2 vertices × 3 coords per line
-        lineGeometry.setAttribute('position', new THREE.BufferAttribute(linePositions, 3))
-
-        const lineMaterial = new THREE.LineBasicMaterial({
-            color: colorToNumber(colors.line ?? themeColors.brand.secondary),
-            transparent: true,
-            opacity: 0.15
-        })
-
-        this.linesMesh = new THREE.LineSegments(lineGeometry, lineMaterial)
-        this.scene.add(this.linesMesh)
     }
 
     public updateSize() {
         if (!this.container) return
         const { clientWidth, clientHeight } = this.container
-        this.camera.aspect = clientWidth / clientHeight
-        this.camera.updateProjectionMatrix()
-        this.renderer.setSize(clientWidth, clientHeight)
+        this.width = clientWidth
+        this.height = clientHeight
+        this.canvas.width = clientWidth * this.dpr
+        this.canvas.height = clientHeight * this.dpr
+        this.canvas.style.width = `${clientWidth}px`
+        this.canvas.style.height = `${clientHeight}px`
+        this.ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0)
     }
 
     public updateMouse(x: number, y: number) {
-        // x, y are already relative to container (calculated in ThreeHeroScene.vue)
         this.targetMouse.x = x
         this.targetMouse.y = y
     }
@@ -169,131 +118,110 @@ export class NeuralNetworkScene {
     private animate() {
         this.animationId = requestAnimationFrame(this.animate)
 
-        // Mouse Interpolation
+        // Mouse interpolation
         this.mouse.x += (this.targetMouse.x - this.mouse.x) * 0.1
         this.mouse.y += (this.targetMouse.y - this.mouse.y) * 0.1
 
-        if (this.particles && this.linesMesh && this.particleSystem) {
-            this.updatePhysics()
+        // Slow rotation
+        this.rotation += 0.0005
 
-            // Rotation
-            this.particleSystem.rotation.y += 0.0005
-            this.linesMesh.rotation.y += 0.0005
-
-            this.renderer.render(this.scene, this.camera)
-        }
+        this.updatePhysics()
+        this.draw()
     }
 
     private updatePhysics() {
-        if (!this.particles || !this.linesMesh) return
+        const halfW = this.width / 2
+        const halfH = this.height / 2
 
-        const posAttr = this.particles.attributes.position
-        if (!posAttr) return
-        const positions = posAttr.array as Float32Array
-        const velocities = this.particles.userData.velocities as ParticleVelocity[]
-        const count = this.options.particleCount
+        for (const p of this.particles) {
+            p.x += p.vx
+            p.y += p.vy
 
-        for (let i = 0; i < count; i++) {
-            const v = velocities[i]
-            if (!v) continue
+            // Boundary bounce
+            if (Math.abs(p.x) > halfW) p.vx *= -1
+            if (Math.abs(p.y) > halfH) p.vy *= -1
 
-            const i3 = i * 3
-
-            const px = positions[i3]!
-            const py = positions[i3 + 1]!
-            const pz = positions[i3 + 2]!
-
-            positions[i3] = px + v.x
-            positions[i3 + 1] = py + v.y
-            positions[i3 + 2] = pz + v.z
-
-            // Boundary
-            if (Math.abs(positions[i3]!) > 400) v.x *= -1
-            if (Math.abs(positions[i3 + 1]!) > 300) v.y *= -1
-            if (Math.abs(positions[i3 + 2]!) > 200) v.z *= -1
-
-            // Mouse Interaction
-            const dx = this.mouse.x - positions[i3]!
-            const dy = this.mouse.y - positions[i3 + 1]!
+            // Mouse repulsion (convert mouse from container coords to centered coords)
+            const mx = this.mouse.x - halfW
+            const my = this.mouse.y - halfH
+            const dx = mx - p.x
+            const dy = my - p.y
             const dist = Math.sqrt(dx * dx + dy * dy)
 
             if (dist < 200) {
-                positions[i3]! -= dx * 0.02
-                positions[i3 + 1]! -= dy * 0.02
+                p.x -= dx * 0.02
+                p.y -= dy * 0.02
             }
         }
-
-        posAttr.needsUpdate = true
-        this.updateConnections(positions)
     }
 
-    private updateConnections(positions: Float32Array) {
-        if (!this.linesMesh) return
+    private draw() {
+        const ctx = this.ctx
+        const halfW = this.width / 2
+        const halfH = this.height / 2
+        const { connectionDistance, maxConnectionsPerParticle, colors } = this.options
+        const distSqThreshold = connectionDistance * connectionDistance
 
-        const lineGeometry = this.linesMesh.geometry
-        const linePosAttr = lineGeometry.attributes.position
-        if (!linePosAttr) return
-        const linePositions = linePosAttr.array as Float32Array
+        ctx.clearRect(0, 0, this.width, this.height)
+        ctx.save()
+        ctx.translate(halfW, halfH)
+        ctx.rotate(this.rotation)
 
-        let vertexIndex = 0
-        let numConnected = 0
-        const distSqThreshold = this.options.connectionDistance ** 2
-        const count = this.options.particleCount
-        const maxLines = count * this.options.maxConnectionsPerParticle
-        const connectionCounts = new Uint8Array(count)
+        // Draw connections
+        const connectionCounts = new Uint8Array(this.particles.length)
 
-        for (let i = 0; i < count; i++) {
-            if (connectionCounts[i]! >= this.options.maxConnectionsPerParticle) continue
+        ctx.lineWidth = 0.5
+        ctx.beginPath()
 
-            const x1 = positions[i * 3]!
-            const y1 = positions[i * 3 + 1]!
-            const z1 = positions[i * 3 + 2]!
+        for (let i = 0; i < this.particles.length; i++) {
+            if (connectionCounts[i]! >= maxConnectionsPerParticle) continue
+            const a = this.particles[i]!
 
-            for (let j = i + 1; j < count; j++) {
-                if (connectionCounts[j]! >= this.options.maxConnectionsPerParticle) continue
-                if (numConnected >= maxLines) break
+            for (let j = i + 1; j < this.particles.length; j++) {
+                if (connectionCounts[j]! >= maxConnectionsPerParticle) continue
+                const b = this.particles[j]!
 
-                const x2 = positions[j * 3]!
-                const y2 = positions[j * 3 + 1]!
-                const z2 = positions[j * 3 + 2]!
-
-                const dx = x1 - x2
-                const dy = y1 - y2
-                const dz = z1 - z2
-                const distSq = dx * dx + dy * dy + dz * dz
+                const dx = a.x - b.x
+                const dy = a.y - b.y
+                const distSq = dx * dx + dy * dy
 
                 if (distSq < distSqThreshold) {
-                    linePositions[vertexIndex++] = x1
-                    linePositions[vertexIndex++] = y1
-                    linePositions[vertexIndex++] = z1
+                    const alpha = 1 - Math.sqrt(distSq) / connectionDistance
+                    ctx.strokeStyle = this.hexToRgba(colors.line!, alpha * 0.2)
+                    ctx.moveTo(a.x, a.y)
+                    ctx.lineTo(b.x, b.y)
+                    ctx.stroke()
+                    ctx.beginPath()
 
-                    linePositions[vertexIndex++] = x2
-                    linePositions[vertexIndex++] = y2
-                    linePositions[vertexIndex++] = z2
-
-                    numConnected++
                     connectionCounts[i]!++
                     connectionCounts[j]!++
                 }
             }
         }
 
-        lineGeometry.setDrawRange(0, numConnected * 2)
-        linePosAttr.needsUpdate = true
+        // Draw particles
+        for (const p of this.particles) {
+            ctx.beginPath()
+            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2)
+            ctx.fillStyle = this.hexToRgba(colors.particle!, 0.6)
+            ctx.fill()
+        }
+
+        ctx.restore()
+    }
+
+    private hexToRgba(hex: string, alpha: number): string {
+        const h = hex.replace('#', '')
+        const r = parseInt(h.substring(0, 2), 16)
+        const g = parseInt(h.substring(2, 4), 16)
+        const b = parseInt(h.substring(4, 6), 16)
+        return `rgba(${r},${g},${b},${alpha})`
     }
 
     public dispose() {
         this.stop()
-        if (this.container && this.renderer.domElement.parentNode === this.container) {
-            this.container.removeChild(this.renderer.domElement)
+        if (this.canvas.parentNode === this.container) {
+            this.container.removeChild(this.canvas)
         }
-
-        if (this.particles) this.particles.dispose()
-        if (this.particleSystem) (this.particleSystem.material as THREE.Material).dispose()
-        if (this.linesMesh) {
-            this.linesMesh.geometry.dispose();
-            (this.linesMesh.material as THREE.Material).dispose()
-        }
-        this.renderer.dispose()
     }
 }

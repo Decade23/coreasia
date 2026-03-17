@@ -38,10 +38,8 @@ const handleMouseLeave = () => networkScene?.resetMouse()
 
 
 onMounted(async () => {
-    // Dynamic import to avoid SSR issues with Three.js
     const { NeuralNetworkScene } = await import('~/utils/NeuralNetworkScene')
 
-    // Initialize Logic
     if (containerRef.value) {
         networkScene = new NeuralNetworkScene(containerRef.value, {
             particleCount: getParticleCount(),
@@ -52,7 +50,6 @@ onMounted(async () => {
         })
         networkScene.start()
 
-        
         // Slight delay to ensure first frame rendered
         setTimeout(() => {
             isLoaded.value = true
@@ -90,7 +87,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <div 
+    <div
         ref="containerRef"
         class="absolute inset-0 z-0 h-full w-full overflow-hidden"
         :class="{ 'loaded': isLoaded }"
@@ -99,22 +96,15 @@ onBeforeUnmount(() => {
         <div class="pointer-events-none absolute inset-0 z-20 flex flex-col items-center justify-center">
             <div class="ca-scene-base absolute inset-x-0 bottom-0 h-1/2 opacity-80" />
         </div>
-        
-        <!-- Canvas Container (Fade In) -->
-        <!-- The canvas is appended here by JS, we style it via deep selector or global styles, 
-             but we can control its visibility by toggling a class on the container or using a wrapper. 
-             Since NeuralNetworkScene appends directly to containerRef, we rely on :class on the container 
-             to style children or we manually style the canvas in onMounted. 
-             Easier: Let's style the canvas via deep selector using a bound class on the container. -->
-        
+
         <!-- Static Fallback (Visible until loaded) -->
-        <div 
+        <div
             class="absolute inset-0 z-0 transition-opacity duration-1000"
             :class="{ 'opacity-0': isLoaded, 'opacity-100': !isLoaded }"
         >
              <div class="ca-scene-grid absolute inset-0"></div>
-             <div class="ca-scene-glow ca-light-soft-blend absolute left-1/2 top-1/2 h-[500px] w-[800px] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[100px]"></div>
-             
+             <div class="ca-scene-glow ca-light-soft-blend absolute left-1/2 top-1/2 h-125 w-200 -translate-x-1/2 -translate-y-1/2 rounded-full blur-[100px]"></div>
+
              <!-- Optional: Dark radial background base -->
              <div class="ca-scene-base absolute inset-0 -z-10" />
         </div>
@@ -122,7 +112,7 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-/* Target the canvas created by Three.js */
+/* Target the canvas created by NeuralNetworkScene */
 :deep(canvas) {
     display: block;
     outline: none;
@@ -130,7 +120,7 @@ onBeforeUnmount(() => {
     transition: opacity 1.5s ease-in-out;
 }
 
-/* When the component signals loaded (we can add a class to container) */
+/* When the component signals loaded */
 .loaded :deep(canvas) {
     opacity: 1;
 }

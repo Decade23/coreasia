@@ -154,7 +154,7 @@ const { style: magneticStyle } = useMagnetic(contactBtnRef, 0.3)
                             >{{ COMPANY.shortName }}</span
                         >
                         <span
-                            class="block text-[10px] font-semibold uppercase tracking-[0.12em] text-[var(--ca-muted)] lg:text-[11px]"
+                            class="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--ca-muted)]"
                             >{{ t('components.brand.tagline') }}</span
                         >
                     </span>

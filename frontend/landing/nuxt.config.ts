@@ -43,6 +43,14 @@ export default defineNuxtConfig({
             },
             link: [
                 {
+                    rel: "preconnect",
+                    href: "https://www.googletagmanager.com",
+                },
+                {
+                    rel: "dns-prefetch",
+                    href: "https://www.googletagmanager.com",
+                },
+                {
                     rel: "icon",
                     type: "image/svg+xml",
                     href: asset("/logo.svg"),
@@ -194,6 +202,16 @@ export default defineNuxtConfig({
         identity: "Organization",
     },
 
+    fonts: {
+        families: [
+            { name: 'Plus Jakarta Sans', provider: 'google', weights: [400, 500, 600, 700, 800] },
+            { name: 'Space Grotesk', provider: 'google', weights: [500, 600, 700] },
+        ],
+        defaults: {
+            weights: [400, 500, 600, 700],
+        },
+    },
+
     image: {
         dir: "public",
     },
@@ -203,7 +221,22 @@ export default defineNuxtConfig({
             gtmId: process.env.GTM_ID || '',
         },
     },
+    nitro: {
+        compressPublicAssets: { gzip: true, brotli: true },
+    },
     routeRules: {
+        // Default security headers
+        '/**': {
+            headers: {
+                'X-Frame-Options': 'SAMEORIGIN',
+                'X-Content-Type-Options': 'nosniff',
+                'Referrer-Policy': 'strict-origin-when-cross-origin',
+            },
+        },
+        // Immutable cache for built assets
+        '/_nuxt/**': {
+            headers: { 'Cache-Control': 'public, max-age=31536000, immutable' },
+        },
         // Landing page is static-first, revalidated every hour (SWR) or fully prerendered
         '/': { prerender: true },
         '/about': { prerender: true },

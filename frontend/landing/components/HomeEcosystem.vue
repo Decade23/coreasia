@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useThrottleFn } from '@vueuse/core'
+
 const { t } = useCoreI18n()
 const { useReveal, revealRef } = useScrollReveal()
 
@@ -42,7 +44,7 @@ const setEngagementCardRef = (el: Element | any | null, index: number) => {
   registerCard(engagementCardsRef.value, el, 'fadeUp', index * 120, index)
 }
 
-const updateSpotlight = (
+const updateSpotlight = useThrottleFn((
   cards: HTMLElement[],
   positions: Array<{ x: number; y: number }>,
   index: number,
@@ -58,7 +60,7 @@ const updateSpotlight = (
     x: event.clientX - rect.left,
     y: event.clientY - rect.top,
   }
-}
+}, 16)
 
 const resetSpotlight = (positions: Array<{ x: number; y: number }>, index: number) => {
   positions[index] = { x: 0, y: 0 }

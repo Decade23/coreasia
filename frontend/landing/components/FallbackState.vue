@@ -135,13 +135,31 @@ const clampedProgress = computed(() => {
 
 const motifClass = computed(() => {
     if (props.tone === "danger") {
-        return "bg-[radial-gradient(360px_220px_at_20%_0%,rgba(248,113,113,0.2),transparent_70%),radial-gradient(320px_180px_at_100%_100%,rgba(251,191,36,0.15),transparent_70%)]";
+        return "fallback-motif-danger";
     }
 
     if (props.tone === "maintenance") {
-        return "bg-[radial-gradient(360px_220px_at_10%_10%,rgba(56,189,248,0.18),transparent_70%),radial-gradient(320px_180px_at_90%_100%,rgba(251,191,36,0.16),transparent_70%)]";
+        return "fallback-motif-maintenance";
     }
 
-    return "bg-[radial-gradient(360px_220px_at_10%_0%,rgba(251,191,36,0.2),transparent_70%),radial-gradient(320px_180px_at_90%_100%,rgba(125,211,252,0.16),transparent_70%)]";
+    return "fallback-motif-default";
 });
 </script>
+
+<style scoped>
+.fallback-motif-danger {
+    background:
+        radial-gradient(360px 220px at 20% 0%, var(--ca-danger-bg) 0%, transparent 70%),
+        radial-gradient(320px 180px at 100% 100%, var(--ca-gold-bg) 0%, transparent 70%);
+}
+.fallback-motif-maintenance {
+    background:
+        radial-gradient(360px 220px at 10% 10%, var(--ca-info-bg) 0%, transparent 70%),
+        radial-gradient(320px 180px at 90% 100%, var(--ca-gold-bg) 0%, transparent 70%);
+}
+.fallback-motif-default {
+    background:
+        radial-gradient(360px 220px at 10% 0%, var(--ca-gold-bg) 0%, transparent 70%),
+        radial-gradient(320px 180px at 90% 100%, var(--ca-info-bg) 0%, transparent 70%);
+}
+</style>

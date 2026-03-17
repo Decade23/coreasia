@@ -692,9 +692,9 @@ const handleSubmit = async () => {
                                 :error="errors.agree"
                             >
                                 {{ t('register.consent.prefix') }}
-                                <a href="#" class="font-semibold ca-link-accent">{{ t('register.consent.terms') }}</a>
+                                <NuxtLink to="/terms" target="_blank" class="font-semibold ca-link-accent" @click.stop>{{ t('register.consent.terms') }}</NuxtLink>
                                 {{ t('register.consent.and') }}
-                                <a href="#" class="font-semibold ca-link-accent">{{ t('register.consent.privacy') }}</a>
+                                <NuxtLink to="/privacy-policy" target="_blank" class="font-semibold ca-link-accent" @click.stop>{{ t('register.consent.privacy') }}</NuxtLink>
                             </BaseCheckbox>
 
                             <!-- Submit -->

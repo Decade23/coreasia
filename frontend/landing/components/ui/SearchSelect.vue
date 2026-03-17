@@ -31,6 +31,8 @@
                 : 'placeholder:text-[var(--ca-subtle)]'
         ]"
         :disabled="disabled"
+        :aria-invalid="error ? 'true' : undefined"
+        :aria-describedby="error ? id + '-error' : undefined"
         @click.stop
         @focus="handleFocus"
         @blur="handleBlur"
@@ -99,7 +101,7 @@
       </div>
     </Transition>
 
-    <p v-if="error" class="mt-1 text-xs ca-field-error">
+    <p v-if="error" :id="id + '-error'" class="mt-1 text-xs ca-field-error">
         {{ error }}
     </p>
   </div>
@@ -256,7 +258,7 @@ ul::-webkit-scrollbar-track {
   background: transparent;
 }
 ul::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.1);
+  background-color: var(--ca-subtle);
   border-radius: 20px;
 }
 </style>

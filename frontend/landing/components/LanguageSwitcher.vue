@@ -37,11 +37,47 @@ const handleOutsideClick = (event: MouseEvent) => {
 onMounted(() => document.addEventListener('mousedown', handleOutsideClick))
 onUnmounted(() => document.removeEventListener('mousedown', handleOutsideClick))
 
+const highlightedIndex = ref(0)
+
 const selectLanguage = (newLocale: string) => {
   setLocale(newLocale)
   close()
   if (typeof window !== 'undefined') {
     window.location.reload()
+  }
+}
+
+const handleKeydown = (e: KeyboardEvent) => {
+  const locales = availableLocales.value
+  if (!isOpen.value) {
+    if (e.key === 'ArrowDown' || e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      open()
+    }
+    return
+  }
+
+  switch (e.key) {
+    case 'Escape':
+      e.preventDefault()
+      close()
+      triggerRef.value?.focus()
+      break
+    case 'ArrowDown':
+      e.preventDefault()
+      highlightedIndex.value = (highlightedIndex.value + 1) % locales.length
+      break
+    case 'ArrowUp':
+      e.preventDefault()
+      highlightedIndex.value = (highlightedIndex.value - 1 + locales.length) % locales.length
+      break
+    case 'Enter':
+    case ' ':
+      e.preventDefault()
+      if (locales[highlightedIndex.value]) {
+        selectLanguage(locales[highlightedIndex.value].code)
+      }
+      break
   }
 }
 
@@ -62,8 +98,10 @@ const flagIsText = computed(() => {
       type="button"
       class="inline-flex h-11 w-11 cursor-pointer items-center justify-center rounded-full border border-[color:var(--ca-border)] bg-[var(--ca-toggle-track)] text-[var(--ca-text)] shadow-[var(--ca-toggle-thumb-shadow)] transition hover:-translate-y-0.5 hover:border-[color:var(--ca-gold-border)] hover:bg-[var(--ca-panel-bg-strong)]"
       :aria-expanded="isOpen"
+      aria-haspopup="listbox"
       aria-label="Select language"
       @click="isOpen ? close() : open()"
+      @keydown="handleKeydown"
     >
       <span
         :class="flagIsText ? 'text-xs font-bold tracking-wide' : 'text-base leading-none'"
@@ -82,6 +120,7 @@ const flagIsText = computed(() => {
         <div
           v-if="isOpen"
           ref="dropdownRef"
+          role="listbox"
           class="ca-field-dropdown fixed w-44 rounded-xl py-1 shadow-2xl"
           :style="{
             top: `${dropdownPos.top}px`,
@@ -90,13 +129,18 @@ const flagIsText = computed(() => {
           }"
         >
           <button
-            v-for="lang in availableLocales"
+            v-for="(lang, index) in availableLocales"
             :key="lang.code"
             type="button"
+            role="option"
+            :aria-selected="locale === lang.code"
             class="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-medium transition-colors"
-            :class="locale === lang.code
-              ? 'bg-(--ca-kicker-bg) ca-tone-gold font-semibold'
-              : 'text-(--ca-muted) hover:bg-(--ca-panel-bg-strong) hover:text-(--ca-text)'"
+            :class="[
+              locale === lang.code
+                ? 'bg-(--ca-kicker-bg) ca-tone-gold font-semibold'
+                : 'text-(--ca-muted) hover:bg-(--ca-panel-bg-strong) hover:text-(--ca-text)',
+              highlightedIndex === index ? 'bg-(--ca-panel-bg-strong)' : ''
+            ]"
             @click="selectLanguage(lang.code)"
           >
             <span

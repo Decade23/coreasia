@@ -18,6 +18,8 @@
                 :required="required"
                 :type="type"
                 :placeholder="placeholder"
+                :aria-invalid="error ? 'true' : undefined"
+                :aria-describedby="error ? id + '-error' : undefined"
                 class="ca-field-control"
                 :class="[
                     error
@@ -33,7 +35,7 @@
             </div>
         </div>
 
-        <p v-if="error" class="mt-1 text-xs ca-field-error">
+        <p v-if="error" :id="id + '-error'" class="mt-1 text-xs ca-field-error">
             {{ error }}
         </p>
     </div>

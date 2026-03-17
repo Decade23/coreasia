@@ -28,7 +28,6 @@
     "canvas-confetti": "^1.9.4",
     "nuxt": "4.3.1",
     "tailwindcss": "^4.2.0",
-    "three": "^0.182.0",
     "vite": "7.3.1",
     "vue": "3.5.27",
     "vue-router": "5.0.2"
@@ -42,7 +41,6 @@
     "@nuxt/image": "2.0.0",
     "@nuxtjs/seo": "3.4.0",
     "@types/canvas-confetti": "^1.9.0",
-    "@types/three": "^0.182.0",
     "eslint": "^9.17.0",
     "prettier": "^3.4.2"
   }

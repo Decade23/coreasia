@@ -106,11 +106,7 @@ const state500 = computed<FallbackStatePayload>(() => ({
 }))
 
 const activeState = computed(() => (isNotFound.value ? state404.value : state500.value))
-const metaLabel = computed(() =>
-    locale.value === 'en'
-        ? 'If the issue continues, share this error code with our team: '
-        : 'Jika kendala berulang, sertakan kode error ini ke tim kami: ',
-)
+const metaLabel = computed(() => t('errors.metaLabel') as string)
 
 useSeoMeta({
     title: computed(() => activeState.value.pageTitle),

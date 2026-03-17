@@ -1,19 +1,22 @@
 <template>
     <div class="w-full">
-        <label
-            :for="id"
+        <div
             class="ca-checkbox-panel flex cursor-pointer items-start gap-3 rounded-lg px-3 py-3 text-sm transition-colors duration-200"
             :class="[
                 modelValue ? 'border-amber-300/30 bg-[var(--ca-panel-bg-strong)] text-[var(--ca-text)]' : 'text-[var(--ca-muted)]',
                 disabled ? 'cursor-not-allowed opacity-60' : 'hover:bg-[var(--ca-panel-bg-strong)]',
                 error ? '!border-[color:var(--ca-danger-border)] bg-[var(--ca-danger-bg)]' : '',
             ]"
+            @click="onToggle"
         >
             <input
                 :id="id"
+                ref="inputRef"
                 :checked="modelValue"
                 :disabled="disabled"
                 :required="required"
+                :aria-invalid="error ? 'true' : undefined"
+                :aria-describedby="error ? id + '-error' : undefined"
                 type="checkbox"
                 class="sr-only"
                 @change="$emit('update:modelValue', ($event.target as HTMLInputElement).checked)"
@@ -36,9 +39,9 @@
                     {{ label }}
                 </slot>
             </span>
-        </label>
+        </div>
 
-        <p v-if="error" class="mt-1 text-xs ca-field-error">
+        <p v-if="error" :id="id + '-error'" class="mt-1 text-xs ca-field-error">
             {{ error }}
         </p>
     </div>
@@ -54,12 +57,21 @@ interface Props {
     error?: string
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
     label: '',
     required: false,
     disabled: false,
     error: '',
 })
 
-defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue'])
+
+const inputRef = ref<HTMLInputElement | null>(null)
+
+const onToggle = (e: MouseEvent) => {
+    const target = e.target as HTMLElement
+    if (target.closest('a')) return
+    if (props.disabled) return
+    emit('update:modelValue', !props.modelValue)
+}
 </script>

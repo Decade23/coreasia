@@ -1003,6 +1003,7 @@ const ID_CONTENT = {
   },
   // Error pages
   errors: {
+    metaLabel: 'Jika kendala berulang, sertakan kode error ini ke tim kami: ',
     notFound: {
       title: 'Halaman Tidak Ditemukan (404)',
       description: 'Halaman tidak ditemukan. Kembali ke beranda CoreAsia untuk melanjutkan navigasi.',
@@ -2175,6 +2176,7 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
     },
   },
   errors: {
+    metaLabel: 'If the issue continues, share this error code with our team: ',
     notFound: {
       title: 'Page Not Found (404)',
       description: 'The page could not be found. Return to the CoreAsia homepage to continue browsing.',
