@@ -132,7 +132,7 @@ const flagIsText = computed(() => {
             type="button"
             role="option"
             :aria-selected="locale === lang.code"
-            class="flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm font-medium transition-colors"
+            class="flex w-full cursor-pointer items-center gap-3 px-4 py-2.5 text-left text-sm font-medium transition-colors"
             :class="[
               locale === lang.code
                 ? 'bg-(--ca-kicker-bg) ca-tone-gold font-semibold'

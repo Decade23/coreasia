@@ -152,7 +152,7 @@ useSchemaOrg([
                         :key="product.name"
                         :ref="revealRef('fadeUp', index * 100)"
                         :to="product.to"
-                        class="ca-card-soft group flex flex-col p-6 transition hover:-translate-y-1 hover:shadow-lg sm:p-8"
+                        class="ca-card-soft group flex flex-col p-6 transition hover:-translate-y-1 hover:border-[color:var(--ca-gold-border)] hover:shadow-lg sm:p-8"
                     >
                         <div class="flex items-center gap-4">
                             <div class="inline-flex h-14 w-14 items-center justify-center rounded-2xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg-strong)]">

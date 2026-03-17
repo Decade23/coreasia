@@ -911,12 +911,12 @@ const ID_CONTENT = {
   pricing: {
     title: 'Harga & Paket Layanan',
     description:
-      'Pilih paket CoreAsia LMS yang sesuai dengan kebutuhan organisasi Anda, dari tim kecil hingga kebutuhan enterprise.',
+      'Pilih paket CoreAsia yang sesuai dengan kebutuhan organisasi Anda, dari tim kecil hingga kebutuhan enterprise.',
     kicker: 'Pricing',
     hero: {
-      title: 'Pilih plan yang tepat <span class="ca-gradient-text">untuk organisasi Anda</span>',
+      title: 'Pilih plan yang tepat <span class="ca-gradient-text">untuk kebutuhan Anda</span>',
       subtitle:
-        'Mulai dari LSP kecil hingga enterprise, kami menyiapkan opsi yang realistis untuk launch, operasional, dan pertumbuhan berikutnya.',
+        'Mulai dari kebutuhan dasar hingga enterprise, kami menyiapkan opsi yang realistis untuk launch, operasional, dan pertumbuhan berikutnya.',
     },
     faq: {
       kicker: 'FAQ',

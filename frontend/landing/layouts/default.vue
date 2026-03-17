@@ -57,6 +57,7 @@ useHead(() => ({
     </div>
     <TheHeader />
     <main id="main-content" class="relative">
+      <TheBreadcrumb />
       <slot />
     </main>
     <TheFooter />

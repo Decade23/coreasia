@@ -11,7 +11,7 @@ const products = computed(() => (t('home.products.items') as Array<Record<string
 const engagementModels = computed(() => (t('home.engagementModels.items') as Array<Record<string, any>>) || [])
 
 const productMousePositions = ref(
-  Array.from({ length: 3 }, () => ({ x: 0, y: 0 })),
+  Array.from({ length: 10 }, () => ({ x: 0, y: 0 })),
 )
 const engagementMousePositions = ref(
   Array.from({ length: 3 }, () => ({ x: 0, y: 0 })),
@@ -76,13 +76,13 @@ const resetSpotlight = (positions: Array<{ x: number; y: number }>, index: numbe
         <p class="ca-copy mt-3 max-w-3xl">{{ t('home.products.subtitle') }}</p>
       </div>
 
-      <div class="grid gap-4 md:grid-cols-3">
+      <div class="mx-auto grid max-w-3xl gap-4 md:grid-cols-2" :class="products.length >= 3 ? 'md:grid-cols-3 max-w-none' : ''">
         <NuxtLink
           v-for="(product, index) in products"
           :key="product.name"
           :ref="(el) => setProductCardRef(el, index)"
           :to="product.to"
-          class="ca-card-soft group relative overflow-hidden p-5 transition hover:-translate-y-0.5"
+          class="ca-card-soft group relative overflow-hidden p-5 transition hover:-translate-y-0.5 hover:border-[color:var(--ca-gold-border)] hover:shadow-lg"
           @mousemove="updateSpotlight(productCardsRef, productMousePositions, index, $event)"
           @mouseleave="resetSpotlight(productMousePositions, index)"
         >
@@ -97,7 +97,7 @@ const resetSpotlight = (positions: Array<{ x: number; y: number }>, index: numbe
             <div
               class="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg-strong)]"
             >
-              <Icon :name="index === 0 ? 'lucide:graduation-cap' : index === 1 ? 'lucide:bar-chart-3' : 'lucide:briefcase-business'" class="h-5 w-5 ca-tone-gold" />
+              <Icon :name="index === 0 ? 'lucide:bar-chart-3' : index === 1 ? 'lucide:code-2' : 'lucide:box'" class="h-5 w-5 ca-tone-gold" />
             </div>
             <span class="ca-pill-gold px-2.5 py-1 text-[0.68rem] font-bold uppercase tracking-[0.12em]">
               {{ product.badge }}
