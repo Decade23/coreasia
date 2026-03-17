@@ -131,6 +131,14 @@ onUnmounted(() => {
 // Magnetic Button implementation
 const contactBtnRef = ref(null)
 const { style: magneticStyle } = useMagnetic(contactBtnRef, 0.3)
+
+const navIconMap: Record<string, string> = {
+    '/': 'lucide:home',
+    '/products': 'lucide:box',
+    '/partnerships': 'lucide:handshake',
+    '/pricing': 'lucide:tag',
+    '/about': 'lucide:users',
+}
 </script>
 
 <template>
@@ -227,69 +235,82 @@ const { style: magneticStyle } = useMagnetic(contactBtnRef, 0.3)
         </div>
 
         <Transition
-            enter-active-class="transition duration-200 ease-out"
-            enter-from-class="opacity-0 -translate-y-1"
+            enter-active-class="transition duration-250 ease-out"
+            enter-from-class="opacity-0 translate-y-[-8px]"
             enter-to-class="opacity-100 translate-y-0"
             leave-active-class="transition duration-150 ease-in"
             leave-from-class="opacity-100 translate-y-0"
-            leave-to-class="opacity-0 -translate-y-1"
+            leave-to-class="opacity-0 translate-y-[-8px]"
         >
             <div
                 v-if="isMobileMenuOpen"
                 id="mobile-nav"
-                class="ca-glass-drawer max-h-[calc(100vh-4rem)] overflow-y-auto lg:hidden"
+                class="ca-glass-drawer max-h-[calc(100vh-3.5rem)] overflow-y-auto lg:hidden"
             >
-                <div class="ca-container space-y-4 py-5">
-                    <nav class="space-y-1.5" aria-label="Mobile Navigation">
+                <div class="ca-container py-4">
+                    <!-- Nav links -->
+                    <nav class="space-y-0.5" aria-label="Mobile Navigation">
                         <NuxtLink
                             v-for="item in navItems"
                             :key="`mobile-${item.to}`"
                             :to="item.to"
-                            class="flex items-center justify-between rounded-xl border px-4 py-3.5 text-sm font-semibold transition"
+                            class="group flex items-center gap-3 rounded-xl px-3 py-3 transition-colors"
                             :class="
                                 isActive(item.to)
-                                    ? 'border-brand-primary/40 bg-brand-primary/10 text-brand-primary'
-                                    : 'border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] text-[var(--ca-text)] hover:bg-[var(--ca-panel-bg-strong)]'
+                                    ? 'bg-brand-primary/8 text-brand-primary'
+                                    : 'text-[var(--ca-text)] hover:bg-[var(--ca-panel-bg-strong)]'
                             "
                             @click="closeMobileMenu"
                         >
-                            <span>{{ item.label }}</span>
+                            <span
+                                class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors"
+                                :class="isActive(item.to) ? 'bg-brand-primary/12 text-brand-primary' : 'bg-[var(--ca-panel-bg-strong)] text-[var(--ca-muted)]'"
+                            >
+                                <Icon :name="navIconMap[item.to] || 'lucide:circle'" class="h-4 w-4" />
+                            </span>
+                            <span class="flex-1 text-[0.9375rem] font-semibold">{{ item.label }}</span>
                             <Icon
-                                name="lucide:arrow-right"
-                                class="h-4 w-4 opacity-50"
+                                name="lucide:chevron-right"
+                                class="h-3.5 w-3.5 opacity-25 transition-opacity group-hover:opacity-50"
                             />
                         </NuxtLink>
                     </nav>
 
-                    <div class="flex items-center gap-2">
-                        <LanguageSwitcher />
-                        <ThemeToggle />
+                    <!-- Divider -->
+                    <div class="my-3 h-px bg-[var(--ca-border)]" />
+
+                    <!-- CTA actions -->
+                    <div class="flex flex-col gap-2">
+                        <NuxtLink
+                            to="/contact"
+                            class="ca-btn-primary w-full"
+                            @click="trackCTAClick('mobile_konsultasi', '/contact'); closeMobileMenu()"
+                        >
+                            {{ t('components.header.ctaText') }}
+                        </NuxtLink>
                         <a
                             :href="LINKS.whatsapp"
                             target="_blank"
                             rel="noopener noreferrer"
-                            class="ca-btn-secondary flex-1 py-2.5!"
+                            class="ca-btn-secondary w-full"
                             @click="trackWhatsAppClick('mobile_menu'); closeMobileMenu()"
                         >
-                            <Icon
-                                name="lucide:message-circle"
-                                class="h-4 w-4"
-                            />
+                            <Icon name="lucide:message-circle" class="h-4 w-4" />
                             {{ t('common.whatsapp') }}
                         </a>
                     </div>
 
-                    <NuxtLink
-                        to="/contact"
-                        class="ca-btn-primary w-full"
-                        @click="trackCTAClick('mobile_konsultasi', '/contact'); closeMobileMenu()"
-                    >
-                        {{ t('components.header.ctaText') }}
-                    </NuxtLink>
-
-                    <p class="text-center text-xs text-[var(--ca-subtle)]">
-                        {{ t('components.header.responseTime') }}: {{ t('components.header.businessHours') }}
-                    </p>
+                    <!-- Utility row -->
+                    <div class="mt-3 flex items-center justify-between">
+                        <div class="flex items-center gap-1.5">
+                            <LanguageSwitcher />
+                            <ThemeToggle />
+                        </div>
+                        <p class="text-right text-[0.7rem] leading-snug text-[var(--ca-subtle)]">
+                            {{ t('components.header.responseTime') }}<br />
+                            {{ t('components.header.businessHours') }}
+                        </p>
+                    </div>
                 </div>
             </div>
         </Transition>

@@ -436,7 +436,7 @@ const handleSubmit = async () => {
                 />
             </div>
 
-            <div class="ca-container relative ca-section pt-0 sm:pt-0 pb-10 sm:pb-12 lg:pb-16">
+            <div class="ca-container relative ca-section pt-6 sm:pt-8 pb-10 sm:pb-12 lg:pb-16">
                 <NuxtLink
                     to="/pricing"
                     class="mb-6 inline-flex items-center gap-2 text-sm text-[var(--ca-muted)] transition hover:text-[var(--ca-text)]"

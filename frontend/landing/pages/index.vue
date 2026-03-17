@@ -62,7 +62,7 @@ useSchemaOrg([
                 </ClientOnly>
             </div>
 
-            <div class="ca-container relative ca-section pt-0 sm:pt-0 lg:py-28">
+            <div class="ca-container relative ca-section pt-6 sm:pt-8 lg:py-28">
                 <div class="mx-auto max-w-4xl text-center">
                     <span class="ca-kicker animate-fade-in-up min-h-[32px]">
                         <Icon

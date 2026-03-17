@@ -257,7 +257,7 @@ useSchemaOrg([
             </div>
 
             <div
-                class="ca-container relative ca-section pt-0 sm:pt-0 pb-10 sm:pb-12 lg:pb-16"
+                class="ca-container relative ca-section pt-6 sm:pt-8 pb-10 sm:pb-12 lg:pb-16"
             >
                 <span ref="heroKicker" class="ca-kicker">{{ t('contact.kicker') }}</span>
                 <h1
