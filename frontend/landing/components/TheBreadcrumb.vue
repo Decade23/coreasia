@@ -7,7 +7,11 @@ interface BreadcrumbItem {
   to?: string
 }
 
+const isHomePage = computed(() => route.path === '/' || route.path === '')
+
 const breadcrumbs = computed<BreadcrumbItem[]>(() => {
+  if (isHomePage.value) return []
+
   const segments = route.path.split('/').filter(Boolean)
   const items: BreadcrumbItem[] = [{ label: t('nav.home') as string, to: '/' }]
 
@@ -58,25 +62,25 @@ useSchemaOrg([
   <nav
     v-if="breadcrumbs.length > 1"
     aria-label="Breadcrumb"
-    class="ca-container py-3"
+    class="ca-container pt-17 pb-0 lg:pt-20"
   >
-    <ol class="flex flex-wrap items-center gap-1 text-xs text-[var(--ca-muted)] sm:text-sm">
-      <li v-for="(crumb, index) in breadcrumbs" :key="index" class="flex items-center gap-1">
+    <ol class="flex flex-wrap items-center gap-1.5 text-[0.7rem] tracking-wide sm:text-xs">
+      <li v-for="(crumb, index) in breadcrumbs" :key="index" class="flex items-center gap-1.5">
         <Icon
           v-if="index > 0"
           name="lucide:chevron-right"
-          class="h-3 w-3 text-[var(--ca-subtle)]"
+          class="h-3 w-3 text-[var(--ca-subtle)] opacity-50"
         />
         <NuxtLink
           v-if="crumb.to"
           :to="crumb.to"
-          class="transition hover:text-[var(--ca-text)]"
+          class="text-[var(--ca-muted)] transition hover:text-[var(--ca-text)]"
         >
           {{ crumb.label }}
         </NuxtLink>
         <span
           v-else
-          class="font-medium text-[var(--ca-text)]"
+          class="font-semibold text-[var(--ca-text)]"
         >
           {{ crumb.label }}
         </span>
