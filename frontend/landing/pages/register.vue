@@ -116,14 +116,13 @@ const slugState = reactive({
     suggestion: '',
 })
 
-const slugRegex = /^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$/
+const slugRegex = /^[a-z0-9]{3,50}$/
 
 const normalizeSlug = (value: string): string => {
     return value
         .toLowerCase()
-        .replace(/[^a-z0-9-]/g, '')
-        .replace(/--+/g, '-')
-        .slice(0, 30)
+        .replace(/[^a-z0-9]/g, '')
+        .slice(0, 50)
 }
 
 const debouncedSlugCheck = useDebounceFn(async (slug: string) => {
@@ -224,10 +223,8 @@ watch(() => form.orgName, (name) => {
     if (!form.slug || form.slug === normalizeSlug(form.orgName.replace(name, ''))) {
         const auto = name
             .toLowerCase()
-            .replace(/[^a-z0-9\s-]/g, '')
-            .replace(/\s+/g, '-')
-            .replace(/--+/g, '-')
-            .slice(0, 30)
+            .replace(/[^a-z0-9]/g, '')
+            .slice(0, 50)
         form.slug = auto
         if (auto.length >= 3 && slugRegex.test(auto)) {
             debouncedSlugCheck(auto)

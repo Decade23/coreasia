@@ -825,14 +825,14 @@ const ID_CONTENT = {
     ],
     slug: {
       suffix: '.coreasia.id',
-      helper: 'Huruf kecil, angka, dan dash. Minimal 3 karakter.',
+      helper: 'Huruf kecil dan angka saja. Minimal 3 karakter.',
       available: '{slug}.coreasia.id tersedia',
       usedSuggestion: 'Sudah digunakan. Coba:',
     },
     validation: {
       orgNameRequired: 'Nama organisasi wajib diisi',
       slugMin: 'Subdomain minimal 3 karakter',
-      slugFormat: 'Hanya huruf kecil, angka, dan dash. Tidak boleh diawali atau diakhiri dash.',
+      slugFormat: 'Hanya huruf kecil dan angka. Tanpa spasi, dash, atau karakter khusus.',
       slugUnavailable: 'Subdomain sudah digunakan',
       orgTypeRequired: 'Pilih tipe organisasi',
       fullNameRequired: 'Nama lengkap wajib diisi',
@@ -1632,14 +1632,14 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
     ],
     slug: {
       suffix: '.coreasia.id',
-      helper: 'Use lowercase letters, numbers, and dashes. Minimum 3 characters.',
+      helper: 'Lowercase letters and numbers only. Minimum 3 characters.',
       available: '{slug}.coreasia.id is available',
       usedSuggestion: 'Already taken. Try:',
     },
     validation: {
       orgNameRequired: 'Organization name is required',
       slugMin: 'Subdomain must be at least 3 characters',
-      slugFormat: 'Use lowercase letters, numbers, and dashes only. It cannot start or end with a dash.',
+      slugFormat: 'Only lowercase letters and numbers. No spaces, dashes, or special characters.',
       slugUnavailable: 'Subdomain is already taken',
       orgTypeRequired: 'Please choose an organization type',
       fullNameRequired: 'Full name is required',
