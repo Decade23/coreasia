@@ -42,7 +42,7 @@ useSchemaOrg([
                 />
             </div>
 
-            <div class="ca-container relative ca-section lg:py-28">
+            <div class="ca-container relative ca-section pt-0 sm:pt-0 lg:py-28">
                 <div class="grid gap-10 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
                     <div ref="heroText">
                         <span class="ca-kicker">

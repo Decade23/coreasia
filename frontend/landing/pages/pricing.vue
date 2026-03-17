@@ -43,7 +43,7 @@ onMounted(async () => {
                 />
             </div>
 
-            <div class="ca-container relative ca-section pb-10 text-center sm:pb-12 lg:pb-16">
+            <div class="ca-container relative ca-section pt-0 sm:pt-0 pb-10 text-center sm:pb-12 lg:pb-16">
                 <span ref="heroKicker" class="ca-kicker">
                     <Icon name="lucide:sparkles" class="h-3.5 w-3.5 ca-tone-gold" />
                     {{ t('pricing.kicker') }}

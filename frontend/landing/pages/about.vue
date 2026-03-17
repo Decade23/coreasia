@@ -76,7 +76,7 @@ const leadership = computed(() => t('about.leadership') as Record<string, any>)
                 />
             </div>
 
-            <div class="ca-container relative ca-section lg:py-28">
+            <div class="ca-container relative ca-section pt-0 sm:pt-0 lg:py-28">
                 <div class="max-w-5xl text-center lg:text-left">
                     <span ref="heroKicker" class="ca-kicker">
                         <Icon

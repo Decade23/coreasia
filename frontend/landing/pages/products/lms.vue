@@ -29,7 +29,7 @@ const features = computed(() => {
                 />
             </div>
 
-            <div class="ca-container relative ca-section text-center lg:py-28">
+            <div class="ca-container relative ca-section pt-0 sm:pt-0 text-center lg:py-28">
                 <span class="ca-kicker mb-6 animate-fade-in-up">{{ t('solutions.lms.kicker') }}</span>
                 <h1 class="ca-title mx-auto max-w-4xl animate-fade-in-up delay-100">
                     <span v-html="t('solutions.lms.hero.title')" />

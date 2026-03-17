@@ -56,7 +56,7 @@ useHead(() => ({
       <div class="absolute bottom-[-8rem] right-[-5rem] h-[24rem] w-[24rem] rounded-full bg-[var(--ca-orb-secondary)] blur-[120px]" />
     </div>
     <TheHeader />
-    <main id="main-content" class="relative">
+    <main id="main-content" class="relative pt-14 lg:pt-16">
       <TheBreadcrumb />
       <slot />
     </main>

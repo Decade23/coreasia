@@ -62,9 +62,9 @@ useSchemaOrg([
   <nav
     v-if="breadcrumbs.length > 1"
     aria-label="Breadcrumb"
-    class="pointer-events-none absolute left-0 right-0 top-14 z-40 lg:top-16"
+    class="relative z-40"
   >
-    <div class="ca-container pointer-events-auto py-2.5">
+    <div class="ca-container py-2.5">
       <ol class="flex flex-wrap items-center gap-1.5 text-[0.65rem] font-medium tracking-wider uppercase sm:text-[0.7rem]">
         <li v-for="(crumb, index) in breadcrumbs" :key="index" class="flex items-center gap-1.5">
           <Icon
