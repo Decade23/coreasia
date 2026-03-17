@@ -4,28 +4,28 @@ import { LINKS } from '~/utils/constants'
 const { t } = useCoreI18n()
 
 useCoreSeo({
-  title: t('solutions.pantau.title') as string,
-  description: t('solutions.pantau.description') as string,
-  path: '/products/pantau',
+  title: t('solutions.custom.title') as string,
+  description: t('solutions.custom.description') as string,
+  path: '/products/custom',
 })
 
 useSchemaOrg([
   defineWebPage({
-    name: 'Pantau by CoreAsia',
+    name: 'Custom Development - CoreAsia',
   }),
 ])
 
 const features = computed(
-  () => (t('solutions.pantau.detailedFeatures') as Array<Record<string, string>>) || [],
+  () => (t('solutions.custom.detailedFeatures') as Array<Record<string, string>>) || [],
 )
 const audienceItems = computed(
-  () => (t('solutions.pantau.audience.items') as Array<Record<string, string>>) || [],
+  () => (t('solutions.custom.audience.items') as Array<Record<string, string>>) || [],
 )
-const workflowItems = computed(
-  () => (t('solutions.pantau.workflow.items') as Array<Record<string, string>>) || [],
+const processItems = computed(
+  () => (t('solutions.custom.process.items') as Array<Record<string, string>>) || [],
 )
-const pricingPlans = computed(
-  () => (t('solutions.pantau.pricing.plans') as Array<Record<string, any>>) || [],
+const techStack = computed(
+  () => (t('solutions.custom.techStack.items') as string[]) || [],
 )
 </script>
 
@@ -34,10 +34,10 @@ const pricingPlans = computed(
     <section class="relative overflow-hidden">
       <div class="pointer-events-none absolute inset-0">
         <div
-          class="absolute inset-0 bg-[radial-gradient(980px_420px_at_15%_0%,rgba(16,185,129,0.2),transparent_60%)]"
+          class="absolute inset-0 bg-[radial-gradient(980px_420px_at_15%_0%,rgba(251,191,36,0.18),transparent_60%)]"
         />
         <div
-          class="absolute inset-0 bg-[radial-gradient(880px_460px_at_95%_10%,rgba(14,165,233,0.16),transparent_64%)]"
+          class="absolute inset-0 bg-[radial-gradient(880px_460px_at_95%_10%,rgba(139,92,246,0.14),transparent_64%)]"
         />
       </div>
 
@@ -45,20 +45,20 @@ const pricingPlans = computed(
         <div class="grid gap-10 lg:grid-cols-[1.08fr_0.92fr] lg:items-center">
           <div>
             <span class="ca-kicker">
-              <Icon name="lucide:bar-chart-3" class="h-3.5 w-3.5 ca-tone-emerald" />
-              {{ t('solutions.pantau.kicker') }}
+              <Icon name="lucide:code-2" class="h-3.5 w-3.5 ca-tone-gold" />
+              {{ t('solutions.custom.kicker') }}
             </span>
             <h1
               class="mt-5 text-balance font-display text-4xl font-bold leading-[1.08] text-[var(--ca-text)] sm:text-5xl lg:text-[3.45rem]"
-              v-html="t('solutions.pantau.hero.title')"
+              v-html="t('solutions.custom.hero.title')"
             />
             <p class="ca-copy mt-5 max-w-2xl">
-              {{ t('solutions.pantau.hero.subtitle') }}
+              {{ t('solutions.custom.hero.subtitle') }}
             </p>
 
             <div class="mt-8 flex flex-col gap-3 sm:flex-row">
-              <NuxtLink to="/contact?subject=pantau" class="ca-btn-primary-emerald">
-                {{ t('solutions.pantau.hero.ctaPrimary') }}
+              <NuxtLink to="/contact?subject=custom" class="ca-btn-primary">
+                {{ t('solutions.custom.hero.ctaPrimary') }}
                 <Icon name="lucide:arrow-right" class="h-4 w-4" />
               </NuxtLink>
               <a
@@ -67,13 +67,13 @@ const pricingPlans = computed(
                 rel="noopener noreferrer"
                 class="ca-btn-secondary"
               >
-                {{ t('solutions.pantau.hero.ctaSecondary') }}
+                {{ t('solutions.custom.hero.ctaSecondary') }}
               </a>
             </div>
 
             <div class="mt-6 flex flex-wrap gap-2">
               <span
-                v-for="chip in (t('solutions.pantau.hero.chips') as string[])"
+                v-for="chip in (t('solutions.custom.hero.chips') as string[])"
                 :key="chip"
                 class="ca-chip"
               >
@@ -84,15 +84,15 @@ const pricingPlans = computed(
 
           <aside class="ca-card p-5 sm:p-6">
             <p class="text-xs uppercase tracking-[0.14em] text-[var(--ca-subtle)]">
-              {{ t('solutions.pantau.workflow.label') }}
+              {{ t('solutions.custom.process.label') }}
             </p>
             <h2 class="mt-2 text-xl font-display font-bold text-[var(--ca-text)]">
-              {{ t('solutions.pantau.workflow.title') }}
+              {{ t('solutions.custom.process.title') }}
             </h2>
 
             <div class="mt-5 space-y-3">
               <article
-                v-for="item in workflowItems"
+                v-for="item in processItems"
                 :key="item.title"
                 class="rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-4"
               >
@@ -111,7 +111,7 @@ const pricingPlans = computed(
 
     <section class="ca-section pt-0">
       <div class="ca-container">
-        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           <article
             v-for="feature in features"
             :key="feature.title"
@@ -120,7 +120,7 @@ const pricingPlans = computed(
             <div
               class="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg-strong)]"
             >
-              <Icon :name="feature.icon" class="h-5 w-5 ca-tone-emerald" />
+              <Icon :name="feature.icon" class="h-5 w-5 ca-tone-gold" />
             </div>
             <h3 class="mt-4 text-lg font-display font-semibold text-[var(--ca-text)]">
               {{ feature.title }}
@@ -133,60 +133,16 @@ const pricingPlans = computed(
       </div>
     </section>
 
-    <section v-if="pricingPlans.length" class="ca-section pt-0">
-      <div class="ca-container">
-        <div class="mb-8 text-center">
-          <span class="ca-kicker">{{ t('solutions.pantau.pricing.label') }}</span>
-          <h2 class="ca-title mt-4">{{ t('solutions.pantau.pricing.title') }}</h2>
-          <p class="ca-copy mx-auto mt-3 max-w-2xl">{{ t('solutions.pantau.pricing.subtitle') }}</p>
-        </div>
-
-        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <article
-            v-for="plan in pricingPlans"
-            :key="plan.name"
-            class="ca-card p-5 transition"
-            :class="plan.popular ? 'ring-2 ring-[var(--ca-emerald)]' : ''"
-          >
-            <div v-if="plan.popular" class="mb-3">
-              <span class="rounded-full bg-[var(--ca-emerald)] px-2.5 py-1 text-[0.68rem] font-bold uppercase tracking-[0.12em] text-white">
-                Popular
-              </span>
-            </div>
-            <h3 class="text-lg font-display font-bold text-[var(--ca-text)]">
-              {{ plan.name }}
-            </h3>
-            <p class="mt-1 text-2xl font-bold text-[var(--ca-text)]">
-              {{ plan.price }}
-            </p>
-            <p class="mt-2 text-sm text-[var(--ca-muted)]">
-              {{ plan.description }}
-            </p>
-            <ul class="mt-4 space-y-2">
-              <li
-                v-for="feature in plan.features"
-                :key="feature"
-                class="flex items-start gap-2 text-sm text-[var(--ca-muted)]"
-              >
-                <Icon name="lucide:check" class="mt-0.5 h-3.5 w-3.5 flex-shrink-0 ca-tone-emerald" />
-                <span>{{ feature }}</span>
-              </li>
-            </ul>
-          </article>
-        </div>
-      </div>
-    </section>
-
     <section class="ca-section pt-0">
       <div class="ca-container">
         <div class="grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
           <div>
-            <span class="ca-kicker">{{ t('solutions.pantau.audience.label') }}</span>
-            <h2 class="ca-title mt-4">{{ t('solutions.pantau.audience.title') }}</h2>
-            <p class="ca-copy mt-4 max-w-2xl">{{ t('solutions.pantau.audience.subtitle') }}</p>
+            <span class="ca-kicker">{{ t('solutions.custom.audience.label') }}</span>
+            <h2 class="ca-title mt-4">{{ t('solutions.custom.audience.title') }}</h2>
+            <p class="ca-copy mt-4 max-w-2xl">{{ t('solutions.custom.audience.subtitle') }}</p>
           </div>
 
-          <div class="grid gap-3 sm:grid-cols-2">
+          <div class="grid gap-3">
             <article
               v-for="item in audienceItems"
               :key="item.title"
@@ -195,7 +151,7 @@ const pricingPlans = computed(
               <div
                 class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)]"
               >
-                <Icon :name="item.icon" class="h-4 w-4 ca-tone-emerald" />
+                <Icon :name="item.icon" class="h-4 w-4 ca-tone-gold" />
               </div>
               <h3 class="mt-4 text-base font-display font-semibold text-[var(--ca-text)]">
                 {{ item.title }}
@@ -211,16 +167,36 @@ const pricingPlans = computed(
 
     <section class="ca-section pt-0">
       <div class="ca-container">
+        <div class="ca-card p-5 sm:p-6">
+          <span class="ca-kicker">{{ t('solutions.custom.techStack.label') }}</span>
+          <h2 class="mt-3 text-xl font-display font-bold text-[var(--ca-text)]">
+            {{ t('solutions.custom.techStack.title') }}
+          </h2>
+          <div class="mt-5 flex flex-wrap gap-2">
+            <span
+              v-for="tech in techStack"
+              :key="tech"
+              class="rounded-lg border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] px-3 py-1.5 text-sm font-medium text-[var(--ca-text)]"
+            >
+              {{ tech }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="ca-section pt-0">
+      <div class="ca-container">
         <div class="ca-card p-6 text-center sm:p-10">
           <h2 class="text-balance font-display text-3xl font-bold text-[var(--ca-text)] sm:text-4xl">
-            {{ t('solutions.pantau.cta.title') }}
+            {{ t('solutions.custom.cta.title') }}
           </h2>
           <p class="mx-auto mt-3 max-w-2xl text-sm text-[var(--ca-muted)] sm:text-base">
-            {{ t('solutions.pantau.cta.subtitle') }}
+            {{ t('solutions.custom.cta.subtitle') }}
           </p>
           <div class="mt-6">
-            <NuxtLink to="/contact?subject=pantau" class="ca-btn-primary-emerald">
-              {{ t('solutions.pantau.cta.button') }}
+            <NuxtLink to="/contact?subject=custom" class="ca-btn-primary">
+              {{ t('solutions.custom.cta.button') }}
             </NuxtLink>
           </div>
         </div>

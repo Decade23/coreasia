@@ -11,7 +11,10 @@ const highlightsHeader = useReveal('fadeUp')
 const ctaSection = useReveal('scaleUp')
 
 const products = computed(() => (t('home.products.items') as Array<Record<string, any>>) || [])
+const comingSoon = computed(() => (t('home.products.comingSoon') as Array<Record<string, any>>) || [])
 const highlights = computed(() => (t('productsPage.highlights.items') as Array<Record<string, any>>) || [])
+
+const productIcons = ['lucide:bar-chart-3', 'lucide:code-2']
 
 useCoreSeo({
     title: t('productsPage.title') as string,
@@ -104,6 +107,26 @@ useSchemaOrg([
                                     </span>
                                 </div>
                             </article>
+
+                            <article
+                                v-for="item in comingSoon"
+                                :key="item.name"
+                                class="rounded-xl border border-dashed border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-4 opacity-60"
+                            >
+                                <div class="flex items-start justify-between gap-3">
+                                    <div>
+                                        <h3 class="text-sm font-semibold text-[var(--ca-text)] sm:text-base">
+                                            {{ item.name }}
+                                        </h3>
+                                        <p class="mt-1 text-sm text-[var(--ca-muted)]">
+                                            {{ item.description }}
+                                        </p>
+                                    </div>
+                                    <span class="shrink-0 rounded-full border border-[color:var(--ca-border)] px-2.5 py-1 text-[0.68rem] font-bold uppercase tracking-[0.12em] text-[var(--ca-muted)]">
+                                        {{ item.badge }}
+                                    </span>
+                                </div>
+                            </article>
                         </div>
                     </aside>
                 </div>
@@ -122,7 +145,7 @@ useSchemaOrg([
                     </p>
                 </div>
 
-                <div class="grid gap-4 md:grid-cols-3">
+                <div class="grid gap-4 md:grid-cols-2">
                     <NuxtLink
                         v-for="(product, index) in products"
                         :key="product.name"
@@ -131,7 +154,7 @@ useSchemaOrg([
                         class="ca-card-soft group p-5 transition hover:-translate-y-0.5"
                     >
                         <div class="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg-strong)]">
-                            <Icon :name="index === 0 ? 'lucide:graduation-cap' : index === 1 ? 'lucide:bar-chart-3' : 'lucide:briefcase-business'" class="h-5 w-5 ca-tone-gold" />
+                            <Icon :name="productIcons[index] || 'lucide:box'" class="h-5 w-5 ca-tone-gold" />
                         </div>
 
                         <div class="mt-5 flex items-center justify-between gap-3">
@@ -163,6 +186,34 @@ useSchemaOrg([
                             <Icon name="lucide:arrow-right" class="h-4 w-4" />
                         </span>
                     </NuxtLink>
+                </div>
+            </div>
+        </section>
+
+        <section v-if="comingSoon.length" class="ca-section pt-0">
+            <div class="ca-container">
+                <div class="mb-6">
+                    <span class="ca-kicker">Coming Soon</span>
+                </div>
+                <div class="grid gap-4 md:grid-cols-2">
+                    <article
+                        v-for="(item, index) in comingSoon"
+                        :key="item.name"
+                        :ref="revealRef('fadeUp', index * 100)"
+                        class="ca-card p-5 opacity-70"
+                    >
+                        <div class="flex items-center justify-between gap-3">
+                            <h3 class="text-lg font-display font-semibold text-[var(--ca-text)]">
+                                {{ item.name }}
+                            </h3>
+                            <span class="shrink-0 rounded-full border border-[color:var(--ca-border)] px-2.5 py-1 text-[0.68rem] font-bold uppercase tracking-[0.12em] text-[var(--ca-muted)]">
+                                {{ item.badge }}
+                            </span>
+                        </div>
+                        <p class="mt-3 text-sm leading-relaxed text-[var(--ca-muted)]">
+                            {{ item.description }}
+                        </p>
+                    </article>
                 </div>
             </div>
         </section>

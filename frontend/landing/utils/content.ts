@@ -63,46 +63,49 @@ const ID_CONTENT = {
         'Setiap produk dirancang untuk menyelesaikan masalah yang spesifik, tetapi tetap bisa berkembang dalam satu ekosistem yang terhubung.',
       items: [
         {
-          name: 'CoreAsia LMS',
-          badge: 'Flagship',
-          tagline: 'Sertifikasi & Training',
-          description:
-            'Platform sertifikasi dan training management untuk operasional yang butuh workflow rapi, audit-ready, dan siap di-scale.',
-          features: [
-            'Workflow sertifikasi end-to-end',
-            'White-label untuk brand organisasi',
-            'Assessment, CBT, dan sertifikat digital',
-          ],
-          ctaLabel: 'Lihat Solusi LMS',
-          to: '/products/lms',
-        },
-        {
           name: 'Pantau by CoreAsia',
-          badge: 'New',
+          badge: 'Live',
           tagline: 'Web Monitoring',
           description:
-            'Dashboard monitoring yang menggabungkan GA4 dan Google Search Console untuk freelancer, agensi, dan bisnis yang butuh insight web yang cepat dibaca.',
+            'Dashboard analytics yang menggabungkan GA4, Google Search Console, leads, dan laporan PDF otomatis untuk freelancer, agensi, dan bisnis yang butuh insight web lengkap.',
           features: [
             'GA4 & GSC dalam satu dashboard',
-            'Ringkasan performa yang mudah dipahami',
-            'Cocok untuk audit performa rutin',
+            'Laporan PDF otomatis & terjadwal',
+            'Leads management & webhook',
+            'AI assistant untuk analisa performa',
           ],
           ctaLabel: 'Pelajari Pantau',
           to: '/products/pantau',
         },
         {
+          name: 'Custom Development',
+          badge: 'Service',
+          tagline: 'Web & App',
+          description:
+            'Bangun website, web app, atau sistem custom sesuai kebutuhan bisnis Anda. Dari landing page hingga platform SaaS, kami eksekusi dari konsep sampai live.',
+          features: [
+            'Website & landing page profesional',
+            'Web application & dashboard custom',
+            'Integrasi API & sistem pihak ketiga',
+          ],
+          ctaLabel: 'Lihat Layanan',
+          to: '/products/custom',
+        },
+      ],
+      comingSoon: [
+        {
+          name: 'CoreAsia LMS',
+          badge: 'Coming Soon',
+          tagline: 'Sertifikasi & Training',
+          description:
+            'Platform sertifikasi dan training management untuk operasional yang butuh workflow rapi, audit-ready, dan siap di-scale.',
+        },
+        {
           name: 'LeadKu by CoreAsia',
-          badge: 'Early Access',
+          badge: 'Coming Soon',
           tagline: 'Sales CRM',
           description:
             'CRM multi-workspace untuk tim sales yang perlu pipeline lebih rapi, aktivitas tim terlacak, dan reporting yang cepat.',
-          features: [
-            'Pipeline management yang ringan',
-            'Multi-workspace dalam satu akun',
-            'Aktivitas tim dan reporting lebih jelas',
-          ],
-          ctaLabel: 'Pelajari LeadKu',
-          to: '/products/leadku',
         },
       ],
     },
@@ -160,17 +163,17 @@ const ID_CONTENT = {
   },
   // About page
   productsPage: {
-    title: 'Produk CoreAsia - LMS, Pantau, dan LeadKu',
+    title: 'Produk & Layanan CoreAsia',
     description:
-      'Jelajahi katalog produk CoreAsia untuk sertifikasi digital, monitoring website, dan CRM yang dirancang agar operasional lebih cepat dan siap scale.',
+      'Jelajahi produk dan layanan CoreAsia untuk monitoring website, pembuatan web/app custom, dan solusi digital yang siap scale.',
     hero: {
-      kicker: 'Product Catalog',
-      title: 'Temukan <span class="ca-gradient-text">produk CoreAsia</span> yang paling cocok untuk operasi digital Anda.',
+      kicker: 'Product & Services',
+      title: 'Temukan <span class="ca-gradient-text">produk dan layanan CoreAsia</span> yang paling cocok untuk kebutuhan digital Anda.',
       subtitle:
-        'Setiap produk CoreAsia dibangun untuk masalah operasional yang berbeda, tetapi tetap dirancang agar bisa berkembang dalam ekosistem yang saling melengkapi.',
+        'Dari monitoring performa website hingga pembuatan web dan aplikasi custom, CoreAsia membantu bisnis Anda beroperasi lebih cepat dan terukur.',
       ctaPrimary: 'Diskusikan Kebutuhan',
       ctaSecondary: 'Lihat Pricing',
-      chips: ['Certification LMS', 'Website Monitoring', 'Sales CRM'],
+      chips: ['Website Analytics', 'Custom Development', 'Digital Solutions'],
     },
     highlights: {
       title: 'Cara cepat memilih produk yang tepat',
@@ -382,86 +385,258 @@ const ID_CONTENT = {
       },
     },
     pantau: {
-      title: 'Pantau - Dashboard Monitoring Web yang Lebih Mudah Dibaca',
+      title: 'Pantau - Dashboard Analytics & Monitoring Website Lengkap',
       description:
-        'Pantau menggabungkan GA4 dan Google Search Console ke dashboard monitoring yang lebih ringkas untuk owner, freelancer, dan agency.',
-      kicker: 'Website Monitoring Dashboard',
+        'Pantau menggabungkan GA4, Google Search Console, leads management, laporan PDF otomatis, dan AI assistant ke satu dashboard yang mudah dipahami.',
+      kicker: 'Website Analytics Dashboard',
       hero: {
         title:
-          'Pantau performa website dengan <span class="ca-gradient-text">dashboard yang langsung bisa dipahami</span>.',
+          'Semua data website Anda dalam <span class="ca-gradient-text">satu dashboard yang langsung bisa dipahami</span>.',
         subtitle:
-          'Pantau membantu tim marketing, freelancer, dan agency membaca insight penting dari GA4 serta Google Search Console tanpa tenggelam di dashboard yang rumit.',
-        ctaPrimary: 'Minta Preview Pantau',
+          'Pantau menggabungkan Google Analytics, Search Console, leads, laporan otomatis, dan AI assistant — sehingga tim Anda bisa fokus mengambil keputusan, bukan mengumpulkan data.',
+        ctaPrimary: 'Coba Pantau Gratis',
         ctaSecondary: 'WhatsApp',
-        chips: ['GA4 + GSC', 'Readable dashboard', 'Monitoring rutin lebih cepat'],
+        chips: ['GA4 + GSC', 'Laporan PDF Otomatis', 'AI Assistant', 'Leads & CRM'],
       },
       detailedFeatures: [
         {
-          title: 'Ringkasan Traffic Cepat',
-          description: 'Lihat trafik, user aktif, dan tren performa utama dalam satu panel yang lebih mudah dipahami.',
-          icon: 'lucide:activity',
+          title: 'Google Analytics & Search Console',
+          description: 'Lihat sessions, users, page views, bounce rate, klik, impresi, CTR, dan posisi rata-rata dalam satu tampilan terpadu.',
+          icon: 'lucide:bar-chart-3',
         },
         {
-          title: 'Search Console Snapshot',
-          description: 'Pantau query, impresi, klik, dan halaman penting tanpa harus berpindah-pindah dashboard.',
-          icon: 'lucide:search-check',
+          title: 'Laporan PDF Otomatis',
+          description: 'Generate laporan performa website dalam format PDF. Atur jadwal mingguan, bulanan, atau kuartalan dengan pengiriman otomatis via email.',
+          icon: 'lucide:file-text',
         },
         {
-          title: 'Insight untuk Audit Rutin',
-          description: 'Bantu tim Anda membaca perubahan performa mingguan untuk kebutuhan evaluasi dan reporting.',
-          icon: 'lucide:clipboard-list',
+          title: 'Leads Management',
+          description: 'Kelola prospek dari berbagai sumber. Terima leads via webhook dari form, CRM, atau platform lain secara otomatis.',
+          icon: 'lucide:users',
         },
         {
-          title: 'Ringkas untuk Klien atau Owner',
-          description: 'Insight disusun agar tetap nyaman dibaca oleh non-teknis, bukan hanya analyst internal.',
-          icon: 'lucide:layout-dashboard',
+          title: 'AI Assistant (Dexter)',
+          description: 'Tanyakan apa saja tentang performa website Anda. AI membantu menganalisa data dan memberikan rekomendasi yang actionable.',
+          icon: 'lucide:sparkles',
+        },
+        {
+          title: 'PageSpeed Monitoring',
+          description: 'Pantau skor PageSpeed Insights secara berkala. Dapatkan notifikasi jika performa website menurun.',
+          icon: 'lucide:gauge',
+        },
+        {
+          title: 'Multi-Website & Tim',
+          description: 'Kelola banyak website dalam satu akun. Undang anggota tim dengan role berbeda untuk kolaborasi yang lebih rapi.',
+          icon: 'lucide:globe',
+        },
+        {
+          title: 'Analisa Kata Kunci & Halaman',
+          description: 'Identifikasi kata kunci dan halaman yang paling berdampak. Temukan peluang SEO yang belum dioptimalkan.',
+          icon: 'lucide:search',
+        },
+        {
+          title: 'Admin Panel & Billing',
+          description: 'Panel admin lengkap untuk mengelola pengguna, paket langganan, penggunaan API, broadcast notifikasi, dan audit log.',
+          icon: 'lucide:settings',
         },
       ],
+      pricing: {
+        label: 'Pricing',
+        title: 'Harga yang transparan, mulai dari gratis',
+        subtitle: 'Pilih paket yang sesuai dengan jumlah website dan kebutuhan tim Anda.',
+        plans: [
+          {
+            name: 'Starter',
+            price: 'Gratis',
+            description: 'Untuk memulai monitoring 1 website.',
+            features: ['1 website', 'Data 7 hari', 'GSC dasar', '10 AI query/hari'],
+          },
+          {
+            name: 'Professional',
+            price: 'Rp 199.000/bln',
+            description: 'Analitik mendalam untuk profesional.',
+            popular: true,
+            features: ['10 website', 'Data 90 hari', 'GA4 + GSC lengkap', 'Laporan PDF', '3 anggota tim', '50 AI query/hari'],
+          },
+          {
+            name: 'Business',
+            price: 'Rp 499.000/bln',
+            description: 'Untuk agensi dengan banyak klien.',
+            features: ['25 website', 'Data 180 hari', 'White-label', 'Jadwal laporan custom', '10 anggota tim', '100 AI query/hari'],
+          },
+          {
+            name: 'Enterprise',
+            price: 'Rp 999.000/bln',
+            description: 'Akses penuh tanpa batas.',
+            features: ['50 website', 'Data 365 hari', 'API access', 'Semua fitur Business', '25 anggota tim', '500 AI query/hari'],
+          },
+        ],
+      },
       audience: {
         label: 'Best Fit',
         title: 'Siapa yang paling cocok memakai Pantau',
         subtitle:
-          'Produk ini dirancang untuk tim yang butuh monitoring performa web yang cepat dibaca dan mudah dijelaskan kembali.',
+          'Dirancang untuk siapa saja yang butuh monitoring performa web yang lengkap tapi tetap mudah dipahami.',
         items: [
           {
             icon: 'lucide:briefcase-business',
             title: 'Freelancer & consultant',
-            description: 'Memudahkan audit performa web dan penyusunan insight tanpa dashboard yang terlalu berat.',
+            description: 'Audit performa web, generate laporan PDF untuk klien, dan kelola leads dari berbagai project dalam satu tempat.',
           },
           {
             icon: 'lucide:building-2',
-            title: 'Agency kecil sampai menengah',
-            description: 'Monitoring beberapa website jadi lebih rapi untuk kebutuhan review internal dan laporan klien.',
+            title: 'Agency digital',
+            description: 'Monitoring puluhan website klien, laporan otomatis, white-label dashboard, dan kolaborasi tim yang terstruktur.',
           },
           {
             icon: 'lucide:megaphone',
             title: 'Owner & marketing team',
-            description: 'Membaca sinyal performa lebih cepat tanpa harus memahami detail teknis GA4 dan GSC.',
+            description: 'Baca performa website tanpa harus buka GA4 dan GSC terpisah. Tanya AI jika butuh insight lebih dalam.',
+          },
+          {
+            icon: 'lucide:store',
+            title: 'Bisnis online & e-commerce',
+            description: 'Pantau traffic, konversi, dan sumber pengunjung. Terima leads dari form website langsung ke dashboard.',
           },
         ],
       },
       workflow: {
         label: 'How It Works',
-        title: 'Alur monitoring yang lebih ringkas dari dashboard standar',
+        title: 'Mulai monitoring dalam 3 langkah',
         items: [
           {
-            title: 'Hubungkan data source',
-            description: 'Sinkronkan data dari GA4 dan Google Search Console ke satu tempat yang lebih fokus.',
+            title: '1. Hubungkan website Anda',
+            description: 'Login dengan Google, lalu pilih property GA4 dan Search Console yang ingin dipantau. Setup selesai dalam 2 menit.',
           },
           {
-            title: 'Baca sinyal terpenting',
-            description: 'Tim Anda langsung melihat angka, halaman, dan tren yang paling layak ditindaklanjuti.',
+            title: '2. Lihat insight lengkap',
+            description: 'Dashboard langsung menampilkan traffic, kata kunci, halaman terbaik, PageSpeed score, dan tren performa secara real-time.',
           },
           {
-            title: 'Tindak lanjuti insight',
-            description: 'Gunakan insight untuk audit rutin, review klien, atau keputusan optimasi konten dan SEO.',
+            title: '3. Ambil tindakan',
+            description: 'Generate laporan PDF, analisa dengan AI, kelola leads yang masuk, dan bagikan insight ke tim atau klien.',
           },
         ],
       },
       cta: {
-        title: 'Ingin monitoring web yang lebih cepat dibaca?',
-        subtitle: 'Ceritakan alur reporting Anda saat ini. Kami bantu tunjukkan bagaimana Pantau bisa masuk ke workflow tim.',
-        button: 'Diskusikan Pantau',
+        title: 'Siap memonitor website Anda dengan lebih efektif?',
+        subtitle: 'Mulai gratis dengan paket Starter. Upgrade kapan saja saat kebutuhan Anda berkembang.',
+        button: 'Coba Pantau Gratis',
+      },
+    },
+    custom: {
+      title: 'Custom Development - Pembuatan Website, Web App, dan Sistem Digital',
+      description:
+        'CoreAsia membantu bisnis membangun website profesional, web application, dan sistem custom yang dirancang sesuai kebutuhan spesifik Anda.',
+      kicker: 'Custom Development',
+      hero: {
+        title:
+          'Bangun solusi digital yang <span class="ca-gradient-text">benar-benar sesuai kebutuhan bisnis Anda</span>.',
+        subtitle:
+          'Dari landing page yang converting, web app untuk operasional internal, hingga platform SaaS yang siap scale — kami eksekusi dari konsep, desain, development, sampai live.',
+        ctaPrimary: 'Konsultasi Gratis',
+        ctaSecondary: 'WhatsApp',
+        chips: ['Website', 'Web App', 'SaaS Platform', 'API Integration'],
+      },
+      detailedFeatures: [
+        {
+          title: 'Website & Landing Page',
+          description: 'Website profesional yang cepat, SEO-friendly, dan dioptimasi untuk konversi. Cocok untuk company profile, produk, atau campaign.',
+          icon: 'lucide:monitor',
+        },
+        {
+          title: 'Web Application',
+          description: 'Aplikasi web custom untuk dashboard, portal, booking system, inventory, atau kebutuhan operasional lainnya.',
+          icon: 'lucide:layout-dashboard',
+        },
+        {
+          title: 'Platform SaaS',
+          description: 'Bangun produk SaaS dari nol dengan arsitektur multi-tenant, billing, dan infrastruktur yang siap scale.',
+          icon: 'lucide:cloud',
+        },
+        {
+          title: 'Integrasi API & Sistem',
+          description: 'Hubungkan sistem Anda dengan payment gateway, CRM, ERP, Google APIs, atau layanan pihak ketiga lainnya.',
+          icon: 'lucide:plug',
+        },
+        {
+          title: 'Mobile-Responsive Design',
+          description: 'Setiap project dibangun dengan pendekatan mobile-first. Tampil sempurna di semua ukuran layar.',
+          icon: 'lucide:smartphone',
+        },
+        {
+          title: 'Maintenance & Support',
+          description: 'Setelah live, kami tetap mendampingi dengan maintenance berkala, monitoring, dan update fitur sesuai kebutuhan.',
+          icon: 'lucide:wrench',
+        },
+      ],
+      process: {
+        label: 'Process',
+        title: 'Dari ide ke produk dalam 4 tahap',
+        items: [
+          {
+            title: '1. Discovery & konsultasi',
+            description: 'Kami pahami kebutuhan bisnis, target user, dan goals Anda. Dari sini kami tentukan scope, timeline, dan teknologi yang tepat.',
+          },
+          {
+            title: '2. Desain & prototyping',
+            description: 'UI/UX design yang clean dan modern. Anda bisa review dan memberikan feedback sebelum development dimulai.',
+          },
+          {
+            title: '3. Development & testing',
+            description: 'Proses build dengan standar engineering yang rapi. Setiap milestone bisa di-review dan di-test bersama.',
+          },
+          {
+            title: '4. Launch & maintenance',
+            description: 'Deployment ke production, monitoring performa, dan pendampingan setelah launch untuk memastikan semuanya berjalan lancar.',
+          },
+        ],
+      },
+      audience: {
+        label: 'Best Fit',
+        title: 'Siapa yang cocok menggunakan layanan ini',
+        subtitle: 'Layanan custom development kami dirancang untuk berbagai kebutuhan bisnis, dari startup hingga enterprise.',
+        items: [
+          {
+            icon: 'lucide:rocket',
+            title: 'Startup & founder',
+            description: 'Validasi ide produk dengan MVP yang cepat dibangun, tanpa harus recruit tim engineering sendiri.',
+          },
+          {
+            icon: 'lucide:building-2',
+            title: 'Bisnis yang butuh digitalisasi',
+            description: 'Transformasi proses manual ke sistem digital yang lebih efisien dan terukur.',
+          },
+          {
+            icon: 'lucide:briefcase-business',
+            title: 'Agency & consultant',
+            description: 'Butuh development partner untuk project klien? Kami bisa jadi extended team Anda.',
+          },
+          {
+            icon: 'lucide:shield-check',
+            title: 'Enterprise & government',
+            description: 'Sistem custom dengan standar keamanan dan compliance yang ketat, didukung dokumentasi lengkap.',
+          },
+        ],
+      },
+      techStack: {
+        label: 'Tech Stack',
+        title: 'Teknologi yang kami gunakan',
+        items: [
+          'Nuxt.js / Next.js',
+          'Vue.js / React',
+          'Go / Node.js',
+          'PostgreSQL / MySQL',
+          'Docker & CI/CD',
+          'Tailwind CSS',
+          'TypeScript',
+          'REST & GraphQL API',
+        ],
+      },
+      cta: {
+        title: 'Punya ide project? Mari diskusikan.',
+        subtitle: 'Konsultasi gratis untuk membahas kebutuhan, scope, dan estimasi project Anda. Tanpa komitmen.',
+        button: 'Konsultasi Gratis',
       },
     },
     leadku: {
@@ -1111,9 +1286,8 @@ const ID_CONTENT = {
         terms: 'TOS',
       },
       productLinks: [
-        { label: 'CoreAsia LMS', to: '/products/lms' },
         { label: 'Pantau', to: '/products/pantau' },
-        { label: 'LeadKu', to: '/products/leadku' },
+        { label: 'Custom Development', to: '/products/custom' },
       ],
       partnershipLinks: [
         { label: 'SaaS Subscription', to: '/pricing' },
@@ -1271,46 +1445,49 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
         'Each product solves a focused operational problem while still fitting into a broader ecosystem built for business growth.',
       items: [
         {
-          name: 'CoreAsia LMS',
-          badge: 'Flagship',
-          tagline: 'Certification & Training',
-          description:
-            'A certification and training management platform for teams that need clean workflows, audit-ready operations, and scalable delivery.',
-          features: [
-            'End-to-end certification workflow',
-            'White-label delivery for your organization',
-            'Assessment, CBT, and digital certificates',
-          ],
-          ctaLabel: 'Explore LMS',
-          to: '/products/lms',
-        },
-        {
           name: 'Pantau by CoreAsia',
-          badge: 'New',
+          badge: 'Live',
           tagline: 'Web Monitoring',
           description:
-            'A monitoring dashboard that brings GA4 and Google Search Console together for freelancers, agencies, and businesses that need web insights in one place.',
+            'An analytics dashboard that brings GA4, Google Search Console, leads, automated PDF reports, and AI assistant together for freelancers, agencies, and businesses.',
           features: [
-            'GA4 and GSC in a single view',
-            'Readable performance summaries',
-            'Useful for recurring monitoring audits',
+            'GA4 & GSC in a single dashboard',
+            'Automated PDF reports & scheduling',
+            'Leads management & webhook',
+            'AI assistant for performance analysis',
           ],
           ctaLabel: 'Explore Pantau',
           to: '/products/pantau',
         },
         {
+          name: 'Custom Development',
+          badge: 'Service',
+          tagline: 'Web & App',
+          description:
+            'Build websites, web apps, or custom systems tailored to your business needs. From landing pages to SaaS platforms, we deliver from concept to launch.',
+          features: [
+            'Professional websites & landing pages',
+            'Custom web applications & dashboards',
+            'Third-party API & system integration',
+          ],
+          ctaLabel: 'View Services',
+          to: '/products/custom',
+        },
+      ],
+      comingSoon: [
+        {
+          name: 'CoreAsia LMS',
+          badge: 'Coming Soon',
+          tagline: 'Certification & Training',
+          description:
+            'A certification and training management platform for teams that need clean workflows, audit-ready operations, and scalable delivery.',
+        },
+        {
           name: 'LeadKu by CoreAsia',
-          badge: 'Early Access',
+          badge: 'Coming Soon',
           tagline: 'Sales CRM',
           description:
             'A multi-workspace CRM for sales teams that need cleaner pipelines, visible team activity, and faster reporting.',
-          features: [
-            'Lightweight pipeline management',
-            'Multi-workspace under one account',
-            'Sharper activity tracking and reporting',
-          ],
-          ctaLabel: 'Explore LeadKu',
-          to: '/products/leadku',
         },
       ],
     },
@@ -1367,17 +1544,17 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
     },
   },
   productsPage: {
-    title: 'CoreAsia Products - LMS, Pantau, and LeadKu',
+    title: 'CoreAsia Products & Services',
     description:
-      'Explore CoreAsia products for digital certification, website monitoring, and CRM workflows built to help teams move faster and scale cleanly.',
+      'Explore CoreAsia products and services for website monitoring, custom web/app development, and digital solutions built to scale.',
     hero: {
-      kicker: 'Product Catalog',
-      title: 'Find the <span class="ca-gradient-text">CoreAsia product</span> that best fits your digital operations.',
+      kicker: 'Products & Services',
+      title: 'Find the <span class="ca-gradient-text">products and services</span> that best fit your digital needs.',
       subtitle:
-        'Each CoreAsia product focuses on a different operational problem, while still being designed to grow as part of a connected ecosystem.',
+        'From website performance monitoring to custom web and app development, CoreAsia helps your business operate faster and smarter.',
       ctaPrimary: 'Discuss Your Needs',
       ctaSecondary: 'View Pricing',
-      chips: ['Certification LMS', 'Website Monitoring', 'Sales CRM'],
+      chips: ['Website Analytics', 'Custom Development', 'Digital Solutions'],
     },
     highlights: {
       title: 'A faster way to choose the right product',
@@ -1748,86 +1925,258 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
       },
     },
     pantau: {
-      title: 'Pantau - A Web Monitoring Dashboard That Is Easier to Read',
+      title: 'Pantau - Complete Website Analytics & Monitoring Dashboard',
       description:
-        'Pantau brings GA4 and Google Search Console into a more focused monitoring dashboard for owners, freelancers, and agencies.',
-      kicker: 'Website Monitoring Dashboard',
+        'Pantau brings GA4, Google Search Console, leads management, automated PDF reports, and AI assistant into one easy-to-read dashboard.',
+      kicker: 'Website Analytics Dashboard',
       hero: {
         title:
-          'Monitor website performance with a <span class="ca-gradient-text">dashboard that is easier to understand</span>.',
+          'All your website data in <span class="ca-gradient-text">one dashboard that just makes sense</span>.',
         subtitle:
-          'Pantau helps marketing teams, freelancers, and agencies read the most important insights from GA4 and Google Search Console without drowning in complex dashboards.',
-        ctaPrimary: 'Request Pantau Preview',
+          'Pantau combines Google Analytics, Search Console, leads, automated reports, and AI assistant — so your team can focus on decisions, not data collection.',
+        ctaPrimary: 'Try Pantau Free',
         ctaSecondary: 'WhatsApp',
-        chips: ['GA4 + GSC', 'Readable dashboard', 'Faster recurring monitoring'],
+        chips: ['GA4 + GSC', 'Auto PDF Reports', 'AI Assistant', 'Leads & CRM'],
       },
       detailedFeatures: [
         {
-          title: 'Fast traffic overview',
-          description: 'See traffic, active users, and top performance trends in a single summary panel.',
-          icon: 'lucide:activity',
+          title: 'Google Analytics & Search Console',
+          description: 'See sessions, users, page views, bounce rate, clicks, impressions, CTR, and average position in one unified view.',
+          icon: 'lucide:bar-chart-3',
         },
         {
-          title: 'Search Console snapshot',
-          description: 'Track queries, impressions, clicks, and key pages without jumping across multiple views.',
-          icon: 'lucide:search-check',
+          title: 'Automated PDF Reports',
+          description: 'Generate website performance reports in PDF format. Schedule weekly, monthly, or quarterly delivery via email.',
+          icon: 'lucide:file-text',
         },
         {
-          title: 'Insight for recurring audits',
-          description: 'Helps your team read weekly performance changes for routine reviews and decision making.',
-          icon: 'lucide:clipboard-list',
+          title: 'Leads Management',
+          description: 'Manage prospects from multiple sources. Receive leads via webhook from forms, CRM, or other platforms automatically.',
+          icon: 'lucide:users',
         },
         {
-          title: 'Readable for clients or owners',
-          description: 'Insights are shaped to be useful for non-technical stakeholders, not only analysts.',
-          icon: 'lucide:layout-dashboard',
+          title: 'AI Assistant (Dexter)',
+          description: 'Ask anything about your website performance. AI helps analyze data and provides actionable recommendations.',
+          icon: 'lucide:sparkles',
+        },
+        {
+          title: 'PageSpeed Monitoring',
+          description: 'Track PageSpeed Insights scores regularly. Get notified when website performance drops.',
+          icon: 'lucide:gauge',
+        },
+        {
+          title: 'Multi-Website & Team',
+          description: 'Manage multiple websites in one account. Invite team members with different roles for structured collaboration.',
+          icon: 'lucide:globe',
+        },
+        {
+          title: 'Keyword & Page Analysis',
+          description: 'Identify the most impactful keywords and pages. Discover untapped SEO opportunities.',
+          icon: 'lucide:search',
+        },
+        {
+          title: 'Admin Panel & Billing',
+          description: 'Full admin panel to manage users, subscription plans, API usage, broadcast notifications, and audit logs.',
+          icon: 'lucide:settings',
         },
       ],
+      pricing: {
+        label: 'Pricing',
+        title: 'Transparent pricing, starting from free',
+        subtitle: 'Choose the plan that fits your website count and team needs.',
+        plans: [
+          {
+            name: 'Starter',
+            price: 'Free',
+            description: 'Get started monitoring 1 website.',
+            features: ['1 website', '7-day data', 'Basic GSC', '10 AI queries/day'],
+          },
+          {
+            name: 'Professional',
+            price: 'Rp 199,000/mo',
+            description: 'Deep analytics for professionals.',
+            popular: true,
+            features: ['10 websites', '90-day data', 'Full GA4 + GSC', 'PDF reports', '3 team members', '50 AI queries/day'],
+          },
+          {
+            name: 'Business',
+            price: 'Rp 499,000/mo',
+            description: 'For agencies managing multiple clients.',
+            features: ['25 websites', '180-day data', 'White-label', 'Custom report schedule', '10 team members', '100 AI queries/day'],
+          },
+          {
+            name: 'Enterprise',
+            price: 'Rp 999,000/mo',
+            description: 'Full access without limits.',
+            features: ['50 websites', '365-day data', 'API access', 'All Business features', '25 team members', '500 AI queries/day'],
+          },
+        ],
+      },
       audience: {
         label: 'Best Fit',
         title: 'Who gets the most value from Pantau',
         subtitle:
-          'Designed for teams that need website monitoring insight that is fast to read and easy to explain back to stakeholders.',
+          'Designed for anyone who needs comprehensive web monitoring that stays easy to understand.',
         items: [
           {
             icon: 'lucide:briefcase-business',
-            title: 'Freelancers and consultants',
-            description: 'Useful for faster performance audits and simpler insight delivery without heavy dashboards.',
+            title: 'Freelancers & consultants',
+            description: 'Run performance audits, generate PDF reports for clients, and manage leads from multiple projects in one place.',
           },
           {
             icon: 'lucide:building-2',
-            title: 'Small to mid agencies',
-            description: 'Makes recurring website monitoring cleaner for internal reviews and client reporting.',
+            title: 'Digital agencies',
+            description: 'Monitor dozens of client websites, automate reports, white-label dashboards, and keep team collaboration structured.',
           },
           {
             icon: 'lucide:megaphone',
-            title: 'Owners and marketing teams',
-            description: 'Lets teams read the main performance signals faster without deep GA4 or GSC expertise.',
+            title: 'Owners & marketing teams',
+            description: 'Read website performance without opening GA4 and GSC separately. Ask AI when you need deeper insight.',
+          },
+          {
+            icon: 'lucide:store',
+            title: 'Online businesses & e-commerce',
+            description: 'Track traffic, conversions, and visitor sources. Receive leads from website forms directly in the dashboard.',
           },
         ],
       },
       workflow: {
         label: 'How It Works',
-        title: 'A leaner monitoring flow than standard dashboards',
+        title: 'Start monitoring in 3 steps',
         items: [
           {
-            title: 'Connect the data source',
-            description: 'Bring GA4 and Google Search Console data into one focused view.',
+            title: '1. Connect your website',
+            description: 'Sign in with Google, then select the GA4 and Search Console properties you want to monitor. Setup done in 2 minutes.',
           },
           {
-            title: 'Read the most important signals',
-            description: 'Your team sees the metrics, pages, and trends that deserve action first.',
+            title: '2. See the full picture',
+            description: 'The dashboard instantly shows traffic, keywords, top pages, PageSpeed scores, and performance trends in real-time.',
           },
           {
-            title: 'Act on the insight',
-            description: 'Use the insight for recurring audits, client reviews, or SEO and content decisions.',
+            title: '3. Take action',
+            description: 'Generate PDF reports, analyze with AI, manage incoming leads, and share insights with your team or clients.',
           },
         ],
       },
       cta: {
-        title: 'Need website monitoring that is easier to read?',
-        subtitle: 'Show us how your reporting works today and we will map how Pantau can fit your team workflow.',
-        button: 'Discuss Pantau',
+        title: 'Ready to monitor your website more effectively?',
+        subtitle: 'Start free with the Starter plan. Upgrade anytime as your needs grow.',
+        button: 'Try Pantau Free',
+      },
+    },
+    custom: {
+      title: 'Custom Development - Websites, Web Apps, and Digital Systems',
+      description:
+        'CoreAsia helps businesses build professional websites, web applications, and custom systems designed to match your specific needs.',
+      kicker: 'Custom Development',
+      hero: {
+        title:
+          'Build digital solutions that <span class="ca-gradient-text">truly fit your business needs</span>.',
+        subtitle:
+          'From high-converting landing pages, internal web apps, to scalable SaaS platforms — we deliver from concept, design, development, to launch.',
+        ctaPrimary: 'Free Consultation',
+        ctaSecondary: 'WhatsApp',
+        chips: ['Website', 'Web App', 'SaaS Platform', 'API Integration'],
+      },
+      detailedFeatures: [
+        {
+          title: 'Website & Landing Page',
+          description: 'Fast, SEO-friendly, conversion-optimized professional websites. Perfect for company profiles, products, or campaigns.',
+          icon: 'lucide:monitor',
+        },
+        {
+          title: 'Web Application',
+          description: 'Custom web apps for dashboards, portals, booking systems, inventory, or other operational needs.',
+          icon: 'lucide:layout-dashboard',
+        },
+        {
+          title: 'SaaS Platform',
+          description: 'Build SaaS products from scratch with multi-tenant architecture, billing, and infrastructure ready to scale.',
+          icon: 'lucide:cloud',
+        },
+        {
+          title: 'API & System Integration',
+          description: 'Connect your systems with payment gateways, CRM, ERP, Google APIs, or other third-party services.',
+          icon: 'lucide:plug',
+        },
+        {
+          title: 'Mobile-Responsive Design',
+          description: 'Every project is built mobile-first. Looks perfect on all screen sizes.',
+          icon: 'lucide:smartphone',
+        },
+        {
+          title: 'Maintenance & Support',
+          description: 'After launch, we stay with you through regular maintenance, monitoring, and feature updates as needed.',
+          icon: 'lucide:wrench',
+        },
+      ],
+      process: {
+        label: 'Process',
+        title: 'From idea to product in 4 stages',
+        items: [
+          {
+            title: '1. Discovery & consultation',
+            description: 'We understand your business needs, target users, and goals. From here we determine scope, timeline, and the right technology.',
+          },
+          {
+            title: '2. Design & prototyping',
+            description: 'Clean and modern UI/UX design. You can review and provide feedback before development begins.',
+          },
+          {
+            title: '3. Development & testing',
+            description: 'Built with clean engineering standards. Every milestone can be reviewed and tested together.',
+          },
+          {
+            title: '4. Launch & maintenance',
+            description: 'Production deployment, performance monitoring, and post-launch support to make sure everything runs smoothly.',
+          },
+        ],
+      },
+      audience: {
+        label: 'Best Fit',
+        title: 'Who should use this service',
+        subtitle: 'Our custom development service is designed for various business needs, from startups to enterprise.',
+        items: [
+          {
+            icon: 'lucide:rocket',
+            title: 'Startups & founders',
+            description: 'Validate your product idea with a fast-built MVP without having to recruit your own engineering team.',
+          },
+          {
+            icon: 'lucide:building-2',
+            title: 'Businesses going digital',
+            description: 'Transform manual processes into more efficient and measurable digital systems.',
+          },
+          {
+            icon: 'lucide:briefcase-business',
+            title: 'Agencies & consultants',
+            description: 'Need a development partner for client projects? We can be your extended team.',
+          },
+          {
+            icon: 'lucide:shield-check',
+            title: 'Enterprise & government',
+            description: 'Custom systems with strict security and compliance standards, backed by complete documentation.',
+          },
+        ],
+      },
+      techStack: {
+        label: 'Tech Stack',
+        title: 'Technologies we use',
+        items: [
+          'Nuxt.js / Next.js',
+          'Vue.js / React',
+          'Go / Node.js',
+          'PostgreSQL / MySQL',
+          'Docker & CI/CD',
+          'Tailwind CSS',
+          'TypeScript',
+          'REST & GraphQL API',
+        ],
+      },
+      cta: {
+        title: 'Have a project idea? Let\'s discuss.',
+        subtitle: 'Free consultation to discuss your needs, scope, and project estimates. No commitment required.',
+        button: 'Free Consultation',
       },
     },
     leadku: {
@@ -2265,9 +2614,8 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
         terms: 'Terms',
       },
       productLinks: [
-        { label: 'CoreAsia LMS', to: '/products/lms' },
         { label: 'Pantau', to: '/products/pantau' },
-        { label: 'LeadKu', to: '/products/leadku' },
+        { label: 'Custom Development', to: '/products/custom' },
       ],
       partnershipLinks: [
         { label: 'SaaS Subscription', to: '/pricing' },
