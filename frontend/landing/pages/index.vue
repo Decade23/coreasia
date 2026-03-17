@@ -120,20 +120,25 @@ useSchemaOrg([
                                     }"
                                 />
 
-                                <div class="relative z-10 flex items-center gap-3">
-                                    <div class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg-strong)]">
-                                        <Icon
-                                            :name="index === 0 ? 'lucide:graduation-cap' : index === 1 ? 'lucide:bar-chart-3' : 'lucide:briefcase-business'"
-                                            class="h-4 w-4 ca-tone-gold"
-                                        />
+                                <div class="relative z-10">
+                                    <div class="flex items-center gap-3">
+                                        <div class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg-strong)]">
+                                            <Icon
+                                                :name="index === 0 ? 'lucide:bar-chart-3' : index === 1 ? 'lucide:code-2' : 'lucide:box'"
+                                                class="h-4 w-4 ca-tone-gold"
+                                            />
+                                        </div>
+                                        <div class="flex-1 min-w-0">
+                                            <h3 class="text-sm font-display font-bold text-[var(--ca-text)] truncate">
+                                                {{ product.name }}
+                                            </h3>
+                                            <span class="text-[0.68rem] text-[var(--ca-muted)]">{{ product.tagline }}</span>
+                                        </div>
+                                        <Icon name="lucide:arrow-right" class="h-4 w-4 flex-shrink-0 text-[var(--ca-subtle)] transition-all group-hover:translate-x-0.5 group-hover:text-[var(--ca-gold-text)]" />
                                     </div>
-                                    <div class="flex-1 min-w-0">
-                                        <h3 class="text-sm font-display font-bold text-[var(--ca-text)] truncate">
-                                            {{ product.name }}
-                                        </h3>
-                                        <span class="text-[0.68rem] text-[var(--ca-muted)]">{{ product.tagline }}</span>
-                                    </div>
-                                    <Icon name="lucide:arrow-right" class="h-4 w-4 flex-shrink-0 text-[var(--ca-subtle)] transition-all group-hover:translate-x-0.5 group-hover:text-[var(--ca-gold-text)]" />
+                                    <p class="mt-2 line-clamp-2 text-xs leading-relaxed text-[var(--ca-muted)]">
+                                        {{ product.heroDesc || product.description }}
+                                    </p>
                                 </div>
                             </NuxtLink>
                         </div>

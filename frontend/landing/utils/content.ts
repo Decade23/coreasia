@@ -66,6 +66,7 @@ const ID_CONTENT = {
           name: 'Pantau by CoreAsia',
           badge: 'Live',
           tagline: 'Web Monitoring',
+          heroDesc: 'GA4 + Search Console + leads + laporan PDF dalam satu dashboard yang mudah dipahami.',
           description:
             'Dashboard analytics yang menggabungkan GA4, Google Search Console, leads, dan laporan PDF otomatis untuk freelancer, agensi, dan bisnis yang butuh insight web lengkap.',
           features: [
@@ -81,6 +82,7 @@ const ID_CONTENT = {
           name: 'Build by CoreAsia',
           badge: 'Service',
           tagline: 'Web & App',
+          heroDesc: 'Website, web app, atau sistem custom — dari konsep sampai live, kami yang eksekusi.',
           description:
             'Bangun website, web app, atau sistem custom sesuai kebutuhan bisnis Anda. Dari landing page hingga platform SaaS, kami eksekusi dari konsep sampai live.',
           features: [
@@ -1454,6 +1456,7 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
           name: 'Pantau by CoreAsia',
           badge: 'Live',
           tagline: 'Web Monitoring',
+          heroDesc: 'GA4 + Search Console + leads + PDF reports in one easy-to-read dashboard.',
           description:
             'An analytics dashboard that brings GA4, Google Search Console, leads, automated PDF reports, and AI assistant together for freelancers, agencies, and businesses.',
           features: [
@@ -1469,6 +1472,7 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
           name: 'Build by CoreAsia',
           badge: 'Service',
           tagline: 'Web & App',
+          heroDesc: 'Websites, web apps, or custom systems — from concept to launch, we deliver.',
           description:
             'Build websites, web apps, or custom systems tailored to your business needs. From landing pages to SaaS platforms, we deliver from concept to launch.',
           features: [
