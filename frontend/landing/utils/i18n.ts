@@ -3,7 +3,7 @@ export const LOCALES = {
   id: {
     code: 'id',
     name: 'Indonesian',
-    flag: '🇮🇩',
+    flag: 'ID',
   },
   en: {
     code: 'en',
