@@ -42,9 +42,6 @@ const highlightedIndex = ref(0)
 const selectLanguage = (newLocale: string) => {
   setLocale(newLocale)
   close()
-  if (typeof window !== 'undefined') {
-    window.location.reload()
-  }
 }
 
 const handleKeydown = (e: KeyboardEvent) => {
@@ -104,7 +101,8 @@ const flagIsText = computed(() => {
       @keydown="handleKeydown"
     >
       <span
-        :class="flagIsText ? 'text-xs font-bold tracking-wide' : 'text-base leading-none'"
+        :class="flagIsText ? 'text-xs font-bold leading-none tracking-wide' : 'text-base leading-none'"
+        class="flex items-center justify-center"
       >{{ currentLocale?.flag }}</span>
     </button>
 

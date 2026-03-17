@@ -23,7 +23,7 @@ export const CONTACT = {
 // Generated URLs
 // ──────────────────────────────────────
 export const LINKS = {
-  whatsapp: `https://wa.me/${CONTACT.whatsapp}`,
+  whatsapp: `https://wa.me/${CONTACT.whatsapp}?text=${encodeURIComponent('Halo CoreAsia, saya ingin mengetahui lebih lanjut tentang produk dan layanan Anda.')}`,
   email: `mailto:${CONTACT.email}`,
   linkedin: 'https://www.linkedin.com/company/coreasia',
   instagram: 'https://www.instagram.com/coreasia',
