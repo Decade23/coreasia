@@ -103,7 +103,7 @@ useSchemaOrg([
                         <p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-[var(--ca-subtle)]">
                             {{ t('home.products.kicker') }}
                         </p>
-                        <div class="mt-3 grid gap-3 text-left sm:grid-cols-3">
+                        <div class="mx-auto mt-3 grid max-w-md gap-3 text-left sm:max-w-none" :class="featuredProducts.length >= 3 ? 'sm:grid-cols-3' : 'sm:grid-cols-2 sm:max-w-lg'">
                             <NuxtLink
                                 v-for="(product, index) in featuredProducts"
                                 :key="product.name"
