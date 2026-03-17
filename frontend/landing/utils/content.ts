@@ -78,7 +78,7 @@ const ID_CONTENT = {
           to: '/products/pantau',
         },
         {
-          name: 'Custom Development',
+          name: 'Build by CoreAsia',
           badge: 'Service',
           tagline: 'Web & App',
           description:
@@ -89,7 +89,7 @@ const ID_CONTENT = {
             'Integrasi API & sistem pihak ketiga',
           ],
           ctaLabel: 'Lihat Layanan',
-          to: '/products/custom',
+          to: '/products/build',
         },
       ],
       comingSoon: [
@@ -173,7 +173,7 @@ const ID_CONTENT = {
         'Dari monitoring performa website hingga pembuatan web dan aplikasi custom, CoreAsia membantu bisnis Anda beroperasi lebih cepat dan terukur.',
       ctaPrimary: 'Diskusikan Kebutuhan',
       ctaSecondary: 'Lihat Pricing',
-      chips: ['Website Analytics', 'Custom Development', 'Digital Solutions'],
+      chips: ['Website Analytics', 'Digital Build', 'Custom Solutions'],
     },
     highlights: {
       title: 'Cara cepat memilih produk yang tepat',
@@ -525,10 +525,10 @@ const ID_CONTENT = {
       },
     },
     custom: {
-      title: 'Custom Development - Pembuatan Website, Web App, dan Sistem Digital',
+      title: 'Build by CoreAsia - Pembuatan Website, Web App, dan Sistem Digital',
       description:
         'CoreAsia membantu bisnis membangun website profesional, web application, dan sistem custom yang dirancang sesuai kebutuhan spesifik Anda.',
-      kicker: 'Custom Development',
+      kicker: 'Digital Build Service',
       hero: {
         title:
           'Bangun solusi digital yang <span class="ca-gradient-text">benar-benar sesuai kebutuhan bisnis Anda</span>.',
@@ -622,16 +622,22 @@ const ID_CONTENT = {
       techStack: {
         label: 'Tech Stack',
         title: 'Teknologi yang kami gunakan',
+        subtitle: 'Kami tidak terbatas pada teknologi tertentu. Berikut beberapa yang sering kami gunakan — dan kami selalu terbuka untuk menyesuaikan dengan kebutuhan project Anda.',
         items: [
           'Nuxt.js / Next.js',
           'Vue.js / React',
           'Go / Node.js',
+          'Python / FastAPI',
           'PostgreSQL / MySQL',
+          'Redis / MongoDB',
           'Docker & CI/CD',
           'Tailwind CSS',
           'TypeScript',
           'REST & GraphQL API',
+          'AWS / GCP / VPS',
+          'WordPress / Headless CMS',
         ],
+        moreLabel: 'Dan teknologi lainnya sesuai kebutuhan project Anda',
       },
       cta: {
         title: 'Punya ide project? Mari diskusikan.',
@@ -1287,7 +1293,7 @@ const ID_CONTENT = {
       },
       productLinks: [
         { label: 'Pantau', to: '/products/pantau' },
-        { label: 'Custom Development', to: '/products/custom' },
+        { label: 'Build by CoreAsia', to: '/products/build' },
       ],
       partnershipLinks: [
         { label: 'SaaS Subscription', to: '/pricing' },
@@ -1460,7 +1466,7 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
           to: '/products/pantau',
         },
         {
-          name: 'Custom Development',
+          name: 'Build by CoreAsia',
           badge: 'Service',
           tagline: 'Web & App',
           description:
@@ -1471,7 +1477,7 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
             'Third-party API & system integration',
           ],
           ctaLabel: 'View Services',
-          to: '/products/custom',
+          to: '/products/build',
         },
       ],
       comingSoon: [
@@ -1554,7 +1560,7 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
         'From website performance monitoring to custom web and app development, CoreAsia helps your business operate faster and smarter.',
       ctaPrimary: 'Discuss Your Needs',
       ctaSecondary: 'View Pricing',
-      chips: ['Website Analytics', 'Custom Development', 'Digital Solutions'],
+      chips: ['Website Analytics', 'Digital Build', 'Custom Solutions'],
     },
     highlights: {
       title: 'A faster way to choose the right product',
@@ -2065,10 +2071,10 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
       },
     },
     custom: {
-      title: 'Custom Development - Websites, Web Apps, and Digital Systems',
+      title: 'Build by CoreAsia - Websites, Web Apps, and Digital Systems',
       description:
         'CoreAsia helps businesses build professional websites, web applications, and custom systems designed to match your specific needs.',
-      kicker: 'Custom Development',
+      kicker: 'Digital Build Service',
       hero: {
         title:
           'Build digital solutions that <span class="ca-gradient-text">truly fit your business needs</span>.',
@@ -2162,16 +2168,22 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
       techStack: {
         label: 'Tech Stack',
         title: 'Technologies we use',
+        subtitle: 'We are not limited to specific technologies. Here are some we frequently use — and we are always open to adapting to your project needs.',
         items: [
           'Nuxt.js / Next.js',
           'Vue.js / React',
           'Go / Node.js',
+          'Python / FastAPI',
           'PostgreSQL / MySQL',
+          'Redis / MongoDB',
           'Docker & CI/CD',
           'Tailwind CSS',
           'TypeScript',
           'REST & GraphQL API',
+          'AWS / GCP / VPS',
+          'WordPress / Headless CMS',
         ],
+        moreLabel: 'And other technologies based on your project needs',
       },
       cta: {
         title: 'Have a project idea? Let\'s discuss.',
@@ -2615,7 +2627,7 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
       },
       productLinks: [
         { label: 'Pantau', to: '/products/pantau' },
-        { label: 'Custom Development', to: '/products/custom' },
+        { label: 'Build by CoreAsia', to: '/products/build' },
       ],
       partnershipLinks: [
         { label: 'SaaS Subscription', to: '/pricing' },

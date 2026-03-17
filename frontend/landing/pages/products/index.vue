@@ -88,10 +88,11 @@ useSchemaOrg([
                         </p>
 
                         <div class="mt-5 space-y-3">
-                            <article
+                            <NuxtLink
                                 v-for="product in products"
                                 :key="product.name"
-                                class="rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-4"
+                                :to="product.to"
+                                class="block rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-4 transition hover:border-[color:var(--ca-gold)] hover:shadow-sm"
                             >
                                 <div class="flex items-start justify-between gap-3">
                                     <div>
@@ -99,16 +100,16 @@ useSchemaOrg([
                                             {{ product.name }}
                                         </h3>
                                         <p class="mt-1 text-sm text-[var(--ca-muted)]">
-                                            {{ product.description }}
+                                            {{ product.tagline }}
                                         </p>
                                     </div>
                                     <span class="ca-pill-gold px-2.5 py-1 text-[0.68rem] font-bold uppercase tracking-[0.12em]">
                                         {{ product.badge }}
                                     </span>
                                 </div>
-                            </article>
+                            </NuxtLink>
 
-                            <article
+                            <div
                                 v-for="item in comingSoon"
                                 :key="item.name"
                                 class="rounded-xl border border-dashed border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-4 opacity-60"
@@ -119,14 +120,14 @@ useSchemaOrg([
                                             {{ item.name }}
                                         </h3>
                                         <p class="mt-1 text-sm text-[var(--ca-muted)]">
-                                            {{ item.description }}
+                                            {{ item.tagline }}
                                         </p>
                                     </div>
                                     <span class="shrink-0 rounded-full border border-[color:var(--ca-border)] px-2.5 py-1 text-[0.68rem] font-bold uppercase tracking-[0.12em] text-[var(--ca-muted)]">
                                         {{ item.badge }}
                                     </span>
                                 </div>
-                            </article>
+                            </div>
                         </div>
                     </aside>
                 </div>
@@ -145,45 +146,46 @@ useSchemaOrg([
                     </p>
                 </div>
 
-                <div class="grid gap-4 md:grid-cols-2">
+                <div class="grid gap-6 md:grid-cols-2">
                     <NuxtLink
                         v-for="(product, index) in products"
                         :key="product.name"
                         :ref="revealRef('fadeUp', index * 100)"
                         :to="product.to"
-                        class="ca-card-soft group p-5 transition hover:-translate-y-0.5"
+                        class="ca-card-soft group flex flex-col p-6 transition hover:-translate-y-1 hover:shadow-lg sm:p-8"
                     >
-                        <div class="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg-strong)]">
-                            <Icon :name="productIcons[index] || 'lucide:box'" class="h-5 w-5 ca-tone-gold" />
+                        <div class="flex items-center gap-4">
+                            <div class="inline-flex h-14 w-14 items-center justify-center rounded-2xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg-strong)]">
+                                <Icon :name="productIcons[index] || 'lucide:box'" class="h-6 w-6 ca-tone-gold" />
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-display font-bold text-[var(--ca-text)]">
+                                    {{ product.name }}
+                                </h3>
+                                <span class="mt-1 inline-block ca-pill-gold px-2.5 py-0.5 text-[0.68rem] font-bold uppercase tracking-[0.12em]">
+                                    {{ product.badge }}
+                                </span>
+                            </div>
                         </div>
 
-                        <div class="mt-5 flex items-center justify-between gap-3">
-                            <h3 class="text-lg font-display font-semibold text-[var(--ca-text)]">
-                                {{ product.name }}
-                            </h3>
-                            <span class="ca-pill-gold px-2.5 py-1 text-[0.68rem] font-bold uppercase tracking-[0.12em]">
-                                {{ product.badge }}
-                            </span>
-                        </div>
-
-                        <p class="mt-3 text-sm leading-relaxed text-[var(--ca-muted)]">
+                        <p class="mt-5 text-[0.94rem] leading-relaxed text-[var(--ca-muted)]">
                             {{ product.description }}
                         </p>
 
-                        <ul class="mt-4 space-y-2">
+                        <ul class="mt-5 flex-1 space-y-2.5">
                             <li
                                 v-for="feature in product.features"
                                 :key="feature"
-                                class="flex items-start gap-2 text-sm text-[var(--ca-muted)]"
+                                class="flex items-start gap-2.5 text-sm text-[var(--ca-muted)]"
                             >
-                                <Icon name="lucide:check" class="mt-0.5 h-3.5 w-3.5 flex-shrink-0 ca-tone-emerald" />
+                                <Icon name="lucide:check" class="mt-0.5 h-4 w-4 flex-shrink-0 ca-tone-emerald" />
                                 <span>{{ feature }}</span>
                             </li>
                         </ul>
 
-                        <span class="mt-5 inline-flex items-center gap-1 text-sm font-semibold ca-tone-gold">
+                        <span class="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold ca-tone-gold group-hover:gap-2.5 transition-all">
                             {{ product.ctaLabel }}
-                            <Icon name="lucide:arrow-right" class="h-4 w-4" />
+                            <Icon name="lucide:arrow-right" class="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                         </span>
                     </NuxtLink>
                 </div>

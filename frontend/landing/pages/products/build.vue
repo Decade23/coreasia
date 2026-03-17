@@ -6,12 +6,12 @@ const { t } = useCoreI18n()
 useCoreSeo({
   title: t('solutions.custom.title') as string,
   description: t('solutions.custom.description') as string,
-  path: '/products/custom',
+  path: '/products/build',
 })
 
 useSchemaOrg([
   defineWebPage({
-    name: 'Custom Development - CoreAsia',
+    name: 'Build by CoreAsia',
   }),
 ])
 
@@ -172,6 +172,9 @@ const techStack = computed(
           <h2 class="mt-3 text-xl font-display font-bold text-[var(--ca-text)]">
             {{ t('solutions.custom.techStack.title') }}
           </h2>
+          <p class="mt-2 text-sm leading-relaxed text-[var(--ca-muted)]">
+            {{ t('solutions.custom.techStack.subtitle') }}
+          </p>
           <div class="mt-5 flex flex-wrap gap-2">
             <span
               v-for="tech in techStack"
@@ -179,6 +182,9 @@ const techStack = computed(
               class="rounded-lg border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] px-3 py-1.5 text-sm font-medium text-[var(--ca-text)]"
             >
               {{ tech }}
+            </span>
+            <span class="rounded-lg border border-dashed border-[color:var(--ca-border)] px-3 py-1.5 text-sm text-[var(--ca-muted)]">
+              {{ t('solutions.custom.techStack.moreLabel') }}
             </span>
           </div>
         </div>
