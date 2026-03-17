@@ -62,29 +62,31 @@ useSchemaOrg([
   <nav
     v-if="breadcrumbs.length > 1"
     aria-label="Breadcrumb"
-    class="ca-container pt-17 pb-0 lg:pt-20"
+    class="pointer-events-none absolute left-0 right-0 top-14 z-40 lg:top-16"
   >
-    <ol class="flex flex-wrap items-center gap-1.5 text-[0.7rem] tracking-wide sm:text-xs">
-      <li v-for="(crumb, index) in breadcrumbs" :key="index" class="flex items-center gap-1.5">
-        <Icon
-          v-if="index > 0"
-          name="lucide:chevron-right"
-          class="h-3 w-3 text-[var(--ca-subtle)] opacity-50"
-        />
-        <NuxtLink
-          v-if="crumb.to"
-          :to="crumb.to"
-          class="text-[var(--ca-muted)] transition hover:text-[var(--ca-text)]"
-        >
-          {{ crumb.label }}
-        </NuxtLink>
-        <span
-          v-else
-          class="font-semibold text-[var(--ca-text)]"
-        >
-          {{ crumb.label }}
-        </span>
-      </li>
-    </ol>
+    <div class="ca-container pointer-events-auto py-2.5">
+      <ol class="flex flex-wrap items-center gap-1.5 text-[0.65rem] font-medium tracking-wider uppercase sm:text-[0.7rem]">
+        <li v-for="(crumb, index) in breadcrumbs" :key="index" class="flex items-center gap-1.5">
+          <Icon
+            v-if="index > 0"
+            name="lucide:chevron-right"
+            class="h-2.5 w-2.5 text-[var(--ca-subtle)] opacity-40"
+          />
+          <NuxtLink
+            v-if="crumb.to"
+            :to="crumb.to"
+            class="text-[var(--ca-muted)] opacity-70 transition hover:opacity-100 hover:text-[var(--ca-text)]"
+          >
+            {{ crumb.label }}
+          </NuxtLink>
+          <span
+            v-else
+            class="text-[var(--ca-text)] opacity-80"
+          >
+            {{ crumb.label }}
+          </span>
+        </li>
+      </ol>
+    </div>
   </nav>
 </template>
