@@ -3,14 +3,12 @@ import {
   DEFAULT_THEME,
   SYSTEM_THEME_MEDIA_QUERY,
   THEME_COOKIE_KEY,
-  THEME_QUERY_KEY,
 } from '~/composables/useCoreTheme'
 
 const { theme } = useCoreTheme()
 const themeBootstrapScript = `(() => {
   try {
     const allowedThemes = ['dark', 'light']
-    const queryTheme = new URLSearchParams(window.location.search).get('${THEME_QUERY_KEY}')
     const cookieTheme = document.cookie
       .split('; ')
       .find((entry) => entry.startsWith('${THEME_COOKIE_KEY}='))
@@ -18,13 +16,11 @@ const themeBootstrapScript = `(() => {
       .slice(1)
       .join('=')
     const storedTheme = cookieTheme ? decodeURIComponent(cookieTheme) : null
-    const resolvedTheme = allowedThemes.includes(queryTheme ?? '')
-      ? queryTheme
-      : allowedThemes.includes(storedTheme ?? '')
-        ? storedTheme
-        : window.matchMedia('${SYSTEM_THEME_MEDIA_QUERY}').matches
-          ? 'dark'
-          : 'light'
+    const resolvedTheme = allowedThemes.includes(storedTheme ?? '')
+      ? storedTheme
+      : window.matchMedia('${SYSTEM_THEME_MEDIA_QUERY}').matches
+        ? 'dark'
+        : 'light'
 
     document.documentElement.setAttribute('data-theme', resolvedTheme || '${DEFAULT_THEME}')
   } catch (_error) {

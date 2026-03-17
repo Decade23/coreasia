@@ -1,6 +1,5 @@
-import { computed, onMounted, type Ref, watch } from 'vue'
+import { computed, onMounted, type Ref } from 'vue'
 
-export const THEME_QUERY_KEY = 'theme'
 export const THEME_COOKIE_KEY = 'coreasia-theme'
 export const DEFAULT_THEME = 'dark'
 export const THEMES = ['dark', 'light'] as const
@@ -10,11 +9,6 @@ type CoreTheme = (typeof THEMES)[number]
 
 const isSupportedTheme = (value: unknown): value is CoreTheme => {
   return typeof value === 'string' && THEMES.includes(value as CoreTheme)
-}
-
-const getThemeFromRoute = (value: unknown): CoreTheme | null => {
-  const routeTheme = Array.isArray(value) ? value[0] : value
-  return isSupportedTheme(routeTheme) ? routeTheme : null
 }
 
 const getSystemTheme = (): CoreTheme => {
@@ -44,7 +38,6 @@ const syncSystemTheme = (systemTheme: Ref<CoreTheme | null>) => {
 }
 
 export const useCoreTheme = () => {
-  const route = useRoute()
   const themeCookie = useCookie<CoreTheme | null>(THEME_COOKIE_KEY, {
     default: () => null,
   })
@@ -54,25 +47,8 @@ export const useCoreTheme = () => {
     syncSystemTheme(systemTheme)
   })
 
-  watch(
-    () => route.query[THEME_QUERY_KEY],
-    (value) => {
-      const queryTheme = getThemeFromRoute(value)
-      if (isSupportedTheme(queryTheme)) {
-        themeCookie.value = queryTheme
-      }
-    },
-    { immediate: true },
-  )
-
   const theme = computed<CoreTheme>({
     get() {
-      const queryTheme = getThemeFromRoute(route.query[THEME_QUERY_KEY])
-
-      if (isSupportedTheme(queryTheme)) {
-        return queryTheme
-      }
-
       if (isSupportedTheme(themeCookie.value)) {
         return themeCookie.value
       }
@@ -88,24 +64,8 @@ export const useCoreTheme = () => {
     },
   })
 
-  const setTheme = async (nextTheme: CoreTheme) => {
+  const setTheme = (nextTheme: CoreTheme) => {
     theme.value = nextTheme
-
-    const nextQuery = { ...route.query }
-    if (nextTheme === DEFAULT_THEME) {
-      delete nextQuery[THEME_QUERY_KEY]
-    } else {
-      nextQuery[THEME_QUERY_KEY] = nextTheme
-    }
-
-    await navigateTo(
-      {
-        path: route.path,
-        query: nextQuery,
-        hash: route.hash,
-      },
-      { replace: true },
-    )
   }
 
   return {
