@@ -1,4 +1,4 @@
-.PHONY: build run dev test lint migrate docker-up docker-down clean tidy
+.PHONY: build run dev test lint migrate seed seed-dev docker-up docker-down clean tidy
 
 APP_NAME := coreasia-lms-api
 BUILD_DIR := ./tmp
@@ -27,6 +27,14 @@ lint:
 ## migrate: Run database migrations
 migrate: build
 	$(BUILD_DIR)/$(APP_NAME) -config $(CONFIG) -migrate
+
+## seed: Run system seeds (after migration)
+seed: build
+	$(BUILD_DIR)/$(APP_NAME) -config $(CONFIG) -seed
+
+## seed-dev: Run system + dev seeds (after migration)
+seed-dev: build
+	$(BUILD_DIR)/$(APP_NAME) -config $(CONFIG) -seed-dev
 
 ## tidy: Clean up dependencies
 tidy:

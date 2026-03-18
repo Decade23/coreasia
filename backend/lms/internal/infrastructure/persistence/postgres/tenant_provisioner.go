@@ -8,13 +8,24 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
+// TenantSeeder is an interface for running tenant seeds after provisioning.
+type TenantSeeder interface {
+	RunTenantSystem(ctx context.Context, schemaName string) error
+}
+
 type TenantProvisioner struct {
 	db       *TenantDB
 	migrator *Migrator
+	seeder   TenantSeeder
 }
 
 func NewTenantProvisioner(db *TenantDB, migrator *Migrator) *TenantProvisioner {
 	return &TenantProvisioner{db: db, migrator: migrator}
+}
+
+// SetSeeder sets the tenant seeder to run after provisioning.
+func (p *TenantProvisioner) SetSeeder(s TenantSeeder) {
+	p.seeder = s
 }
 
 func (p *TenantProvisioner) Provision(ctx context.Context, schemaName string) error {
@@ -27,8 +38,16 @@ func (p *TenantProvisioner) Provision(ctx context.Context, schemaName string) er
 		return fmt.Errorf("membuat schema %s: %w", schemaName, err)
 	}
 
-	if err := p.migrator.RunTenant(schemaName); err != nil {
-		return fmt.Errorf("menjalankan migrasi untuk %s: %w", schemaName, err)
+	if p.migrator != nil {
+		if err := p.migrator.RunTenant(schemaName); err != nil {
+			return fmt.Errorf("menjalankan migrasi untuk %s: %w", schemaName, err)
+		}
+	}
+
+	if p.seeder != nil {
+		if err := p.seeder.RunTenantSystem(ctx, schemaName); err != nil {
+			return fmt.Errorf("menjalankan seed untuk %s: %w", schemaName, err)
+		}
 	}
 
 	slog.Info("tenant schema berhasil diprovisioning", "schema", schemaName)
