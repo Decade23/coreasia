@@ -46,7 +46,7 @@ const categoryLabel = (key: string) => {
       <div class="ca-container relative ca-section pt-6 sm:pt-8 pb-10 text-center sm:pb-12 lg:pb-16">
         <span class="ca-kicker">
           <Icon name="lucide:pen-tool" class="h-3.5 w-3.5 ca-tone-gold" />
-          Blog
+          Artikel
         </span>
         <h1 class="mx-auto mt-5 max-w-3xl text-balance font-display text-4xl font-bold leading-[1.08] text-[var(--ca-text)] sm:text-5xl lg:text-[3.4rem]">
           Insight &amp; panduan untuk <span class="ca-gradient-text">pertumbuhan digital</span>
