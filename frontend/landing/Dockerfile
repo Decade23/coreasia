@@ -18,6 +18,7 @@ FROM deps AS development
 
 ENV NODE_ENV=development
 COPY . .
+RUN mkdir -p /app/.nuxt /app/.output
 
 EXPOSE 3000
 CMD ["bun", "run", "dev", "--host", "0.0.0.0", "--port", "3000"]

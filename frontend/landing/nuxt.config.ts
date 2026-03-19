@@ -16,6 +16,18 @@ export default defineNuxtConfig({
         "@nuxt/image",
         "@pinia/nuxt",
     ],
+    i18n: {
+        strategy: 'no_prefix',
+        defaultLocale: 'id',
+        locales: [
+            { code: 'id', iso: 'id-ID' },
+            { code: 'en', iso: 'en-US' },
+        ],
+        pages: undefined,
+        skipSettingLocaleOnNavigate: true,
+        detectBrowserLanguage: false,
+    },
+    ogImage: { enabled: false },
     css: ["~/assets/css/main.css"],
     vite: {
         plugins: [
@@ -253,9 +265,8 @@ export default defineNuxtConfig({
         '/layanan/**': { prerender: true },
         '/artikel': { swr: 3600 },
         '/artikel/**': { swr: 3600 },
-        '/blog': { redirect: '/artikel' },
-        '/blog/**': { redirect: '/artikel' },
-        '/admin/**': { ssr: false },
+        '/admin': { ssr: true },
+        '/admin/**': { ssr: true },
         '/register': { ssr: true },
         // API routes shouldn't be cached
         '/api/**': { cors: true },

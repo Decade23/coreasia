@@ -12,6 +12,8 @@ services:
     volumes:
       - .:/app
       - /app/node_modules
+      - /app/.nuxt
+      - /app/.output
     environment:
       NODE_ENV: development
       NUXT_HOST: 0.0.0.0
@@ -67,3 +69,4 @@ services:
     depends_on:
       - landing-dev
     restart: unless-stopped
+
