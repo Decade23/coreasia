@@ -1504,7 +1504,7 @@ const ID_CONTENT = {
       productLinks: [
         { label: 'Pantau', to: '/products/pantau' },
         { label: 'Build by CoreAsia', to: '/products/build' },
-        { label: 'Blog & Insight', to: '/blog' },
+        { label: 'Blog & Insight', to: '/artikel' },
       ],
       partnershipLinks: [
         { label: 'SaaS Subscription', to: '/pricing' },
@@ -3004,7 +3004,7 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
       productLinks: [
         { label: 'Pantau', to: '/products/pantau' },
         { label: 'Build by CoreAsia', to: '/products/build' },
-        { label: 'Blog & Insights', to: '/blog' },
+        { label: 'Blog & Insights', to: '/artikel' },
       ],
       partnershipLinks: [
         { label: 'SaaS Subscription', to: '/pricing' },

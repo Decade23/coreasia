@@ -14,6 +14,7 @@ export default defineNuxtConfig({
         "@nuxt/fonts",
         "@nuxt/icon",
         "@nuxt/image",
+        "@pinia/nuxt",
     ],
     css: ["~/assets/css/main.css"],
     vite: {
@@ -250,7 +251,11 @@ export default defineNuxtConfig({
         '/solutions/venture': { prerender: true },
         '/pricing': { prerender: true },
         '/layanan/**': { prerender: true },
-        '/blog': { prerender: true },
+        '/artikel': { swr: 3600 },
+        '/artikel/**': { swr: 3600 },
+        '/blog': { redirect: '/artikel' },
+        '/blog/**': { redirect: '/artikel' },
+        '/admin/**': { ssr: false },
         '/register': { ssr: true },
         // API routes shouldn't be cached
         '/api/**': { cors: true },
