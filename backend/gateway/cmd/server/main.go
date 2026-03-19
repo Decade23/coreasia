@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/coreasia/gateway/internal/config"
@@ -114,7 +115,17 @@ func connectDB(ctx context.Context, cfg config.DatabaseConfig) (*pgxpool.Pool, e
 func runMigrations(dsn string) {
 	slog.Info("menjalankan migrasi database...")
 
-	m, err := migrate.New("file://migrations", dsn)
+	// Use separate migration table to avoid conflict with LMS migrations
+	dsnWithTable := dsn
+	if !strings.Contains(dsnWithTable, "x-migrations-table") {
+		sep := "?"
+		if strings.Contains(dsnWithTable, "?") {
+			sep = "&"
+		}
+		dsnWithTable += sep + "x-migrations-table=gateway_schema_migrations"
+	}
+
+	m, err := migrate.New("file://migrations", dsnWithTable)
 	if err != nil {
 		slog.Error("gagal membuat migrator", "error", err)
 		os.Exit(1)

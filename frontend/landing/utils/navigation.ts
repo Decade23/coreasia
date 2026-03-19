@@ -13,6 +13,7 @@ export const getNavItems = (locale: string = 'id'): NavItem[] => {
     { label: content.nav.products, to: '/products' },
     { label: content.nav.partnerships, to: '/partnerships' },
     { label: content.nav.pricing, to: '/pricing' },
+    { label: content.nav.articles, to: '/artikel' },
     { label: content.nav.about, to: '/about' },
   ]
 }

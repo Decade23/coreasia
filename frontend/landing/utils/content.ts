@@ -11,6 +11,7 @@ const ID_CONTENT = {
     about: 'Tentang Kami',
     contact: 'Hubungi Kami',
     pricing: 'Harga',
+    articles: 'Artikel',
   },
   // Common
   common: {
@@ -1621,6 +1622,7 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
     about: 'About Us',
     contact: 'Contact',
     pricing: 'Pricing',
+    articles: 'Articles',
   },
   common: {
     loading: 'Loading...',

@@ -137,6 +137,7 @@ const navIconMap: Record<string, string> = {
     '/products': 'lucide:box',
     '/partnerships': 'lucide:handshake',
     '/pricing': 'lucide:tag',
+    '/artikel': 'lucide:pen-tool',
     '/about': 'lucide:users',
 }
 </script>
