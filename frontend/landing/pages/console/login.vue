@@ -8,11 +8,11 @@ const password = ref('')
 
 const handleSubmit = async () => {
   const success = await login(email.value, password.value)
-  if (success) navigateTo('/admin')
+  if (success) navigateTo('/console')
 }
 
 onMounted(() => {
-  if (isAuthenticated.value) navigateTo('/admin')
+  if (isAuthenticated.value) navigateTo('/console')
 })
 </script>
 

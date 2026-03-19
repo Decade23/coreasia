@@ -74,7 +74,7 @@ export const useAdminAuth = () => {
     token.value = null
     refreshToken.value = null
     user.value = null
-    navigateTo('/admin/login')
+    navigateTo('/console/login')
   }
 
   return { user, token, isAuthenticated, loginError, pending, login, fetchMe, logout }

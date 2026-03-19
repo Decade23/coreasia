@@ -1,5 +1,5 @@
 <script setup lang="ts">
-definePageMeta({ layout: 'admin', middleware: 'admin' })
+definePageMeta({ layout: 'console', middleware: 'console' })
 
 const { createArticle, saving, error } = useArticles()
 const { generateArticle, generating, error: aiError } = useAIGenerate()
@@ -60,7 +60,7 @@ const handleSubmit = async () => {
     seo_description: form.value.seo_description || null,
   }
   const ok = await createArticle(data)
-  if (ok) navigateTo('/admin/articles')
+  if (ok) navigateTo('/console/articles')
 }
 
 // AI modal state
@@ -75,7 +75,7 @@ const aiCategory = ref('general')
 <template>
   <div>
     <div class="mb-6 flex items-center gap-3">
-      <NuxtLink to="/admin/articles" class="rounded-lg p-1.5 text-[var(--ca-muted)] hover:bg-[var(--ca-panel-bg-strong)]">
+      <NuxtLink to="/console/articles" class="rounded-lg p-1.5 text-[var(--ca-muted)] hover:bg-[var(--ca-panel-bg-strong)]">
         <Icon name="lucide:arrow-left" class="h-5 w-5" />
       </NuxtLink>
       <div>
@@ -154,7 +154,7 @@ const aiCategory = ref('general')
         <p v-if="error" class="mt-3 text-sm text-rose-400">{{ error }}</p>
 
         <div class="mt-6 flex justify-end gap-3">
-          <NuxtLink to="/admin/articles" class="ca-btn-secondary">Batal</NuxtLink>
+          <NuxtLink to="/console/articles" class="ca-btn-secondary">Batal</NuxtLink>
           <button type="submit" class="ca-btn-primary" :disabled="saving">
             {{ saving ? 'Menyimpan...' : 'Simpan Artikel' }}
           </button>

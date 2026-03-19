@@ -1,5 +1,5 @@
 <script setup lang="ts">
-definePageMeta({ layout: 'admin', middleware: 'admin' })
+definePageMeta({ layout: 'console', middleware: 'console' })
 
 const { items, loading, error, totalItems, currentPage, fetchArticles, deleteArticle, publishArticle, unpublishArticle } = useArticles()
 
@@ -60,7 +60,7 @@ const formatDate = (d: string) => new Date(d).toLocaleDateString('id-ID', { year
         <h1 class="font-display text-2xl font-bold text-[var(--ca-text)]">Artikel</h1>
         <p class="mt-1 text-sm text-[var(--ca-muted)]">Kelola semua artikel blog</p>
       </div>
-      <NuxtLink to="/admin/articles/create" class="ca-btn-primary">
+      <NuxtLink to="/console/articles/create" class="ca-btn-primary">
         <Icon name="lucide:plus" class="h-4 w-4" />
         Buat Artikel
       </NuxtLink>
@@ -102,7 +102,7 @@ const formatDate = (d: string) => new Date(d).toLocaleDateString('id-ID', { year
     <div v-else-if="!items.length" class="ca-card p-10 text-center">
       <Icon name="lucide:file-text" class="mx-auto h-12 w-12 text-[var(--ca-subtle)]" />
       <p class="mt-3 text-sm text-[var(--ca-muted)]">Belum ada artikel</p>
-      <NuxtLink to="/admin/articles/create" class="ca-btn-primary mt-4">Buat Artikel Pertama</NuxtLink>
+      <NuxtLink to="/console/articles/create" class="ca-btn-primary mt-4">Buat Artikel Pertama</NuxtLink>
     </div>
 
     <!-- Table -->
@@ -124,7 +124,7 @@ const formatDate = (d: string) => new Date(d).toLocaleDateString('id-ID', { year
             class="border-b border-[color:var(--ca-border)] transition hover:bg-[var(--ca-panel-bg)]"
           >
             <td class="px-4 py-3">
-              <NuxtLink :to="`/admin/articles/${article.id}`" class="text-sm font-medium text-[var(--ca-text)] hover:ca-tone-gold transition">
+              <NuxtLink :to="`/console/articles/${article.id}`" class="text-sm font-medium text-[var(--ca-text)] hover:ca-tone-gold transition">
                 {{ article.title }}
               </NuxtLink>
               <p class="mt-0.5 text-xs text-[var(--ca-subtle)]">/artikel/{{ article.slug }}</p>
@@ -138,7 +138,7 @@ const formatDate = (d: string) => new Date(d).toLocaleDateString('id-ID', { year
             <td class="px-4 py-3 text-sm text-[var(--ca-muted)]">{{ formatDate(article.created_at) }}</td>
             <td class="px-4 py-3 text-right">
               <div class="flex items-center justify-end gap-1">
-                <NuxtLink :to="`/admin/articles/${article.id}`" class="rounded-lg p-1.5 text-[var(--ca-muted)] hover:bg-[var(--ca-panel-bg-strong)] hover:text-[var(--ca-text)]">
+                <NuxtLink :to="`/console/articles/${article.id}`" class="rounded-lg p-1.5 text-[var(--ca-muted)] hover:bg-[var(--ca-panel-bg-strong)] hover:text-[var(--ca-text)]">
                   <Icon name="lucide:edit-3" class="h-4 w-4" />
                 </NuxtLink>
                 <button

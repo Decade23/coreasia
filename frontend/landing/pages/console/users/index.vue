@@ -1,5 +1,5 @@
 <script setup lang="ts">
-definePageMeta({ layout: 'admin', middleware: 'admin' })
+definePageMeta({ layout: 'console', middleware: 'console' })
 
 const { items, loading, saving, error, totalItems, fetchUsers, createUser, updateUser, deleteUser } = useAdminUsers()
 const { user: currentAdmin } = useAdminAuth()

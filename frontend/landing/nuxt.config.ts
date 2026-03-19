@@ -270,8 +270,8 @@ export default defineNuxtConfig({
         '/layanan/**': { prerender: true },
         '/artikel': { swr: 3600 },
         '/artikel/**': { swr: 3600 },
-        '/admin': { ssr: true },
-        '/admin/**': { ssr: true },
+        '/console': { ssr: true },
+        '/console/**': { ssr: true },
         '/register': { ssr: true },
         // API routes shouldn't be cached
         '/api/**': { cors: true },

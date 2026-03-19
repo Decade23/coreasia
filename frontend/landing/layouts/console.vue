@@ -1,17 +1,21 @@
 <script setup lang="ts">
-const { t } = useCoreI18n()
+const { locale, setLocale } = useCoreI18n()
 const { user, logout } = useAdminAuth()
 const route = useRoute()
 
+const toggleLocale = () => {
+  setLocale(locale.value === 'id' ? 'en' : 'id')
+}
+
 const menuItems = [
-  { label: 'Dashboard', icon: 'lucide:layout-dashboard', to: '/admin' },
-  { label: 'Artikel', icon: 'lucide:file-text', to: '/admin/articles' },
-  { label: 'Users', icon: 'lucide:users', to: '/admin/users' },
-  { label: 'Audit Log', icon: 'lucide:scroll-text', to: '/admin/audit-log' },
+  { label: 'Dashboard', icon: 'lucide:layout-dashboard', to: '/console' },
+  { label: 'Artikel', icon: 'lucide:file-text', to: '/console/articles' },
+  { label: 'Users', icon: 'lucide:users', to: '/console/users' },
+  { label: 'Audit Log', icon: 'lucide:scroll-text', to: '/console/audit-log' },
 ]
 
 const isActive = (path: string) => {
-  if (path === '/admin') return route.path === '/admin'
+  if (path === '/console') return route.path === '/console'
   return route.path.startsWith(path)
 }
 
@@ -26,7 +30,7 @@ const isSidebarOpen = ref(false)
         <button type="button" class="text-[var(--ca-muted)]" @click="isSidebarOpen = !isSidebarOpen">
           <Icon name="lucide:menu" class="h-5 w-5" />
         </button>
-        <span class="font-display text-sm font-bold text-[var(--ca-text)]">CoreAsia Admin</span>
+        <span class="font-display text-sm font-bold text-[var(--ca-text)]">CoreAsia Console</span>
         <ThemeToggle />
       </div>
     </header>
@@ -42,7 +46,7 @@ const isSidebarOpen = ref(false)
           <NuxtImg src="/logo.svg" alt="CoreAsia" width="32" height="32" class="h-8 w-8" />
           <div>
             <span class="block font-display text-sm font-bold text-[var(--ca-text)]">CoreAsia</span>
-            <span class="block text-[0.65rem] uppercase tracking-[0.14em] text-[var(--ca-muted)]">Admin Panel</span>
+            <span class="block text-[0.65rem] uppercase tracking-[0.14em] text-[var(--ca-muted)]">Console</span>
           </div>
         </div>
 
@@ -65,6 +69,14 @@ const isSidebarOpen = ref(false)
         <div class="border-t border-[color:var(--ca-border)] p-3">
           <div class="mb-3 flex items-center justify-between px-3">
             <ThemeToggle />
+            <button
+              type="button"
+              class="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-xs font-medium text-[var(--ca-muted)] transition hover:bg-[var(--ca-panel-bg-strong)] hover:text-[var(--ca-text)]"
+              @click="toggleLocale"
+            >
+              <Icon name="lucide:languages" class="h-3.5 w-3.5" />
+              {{ locale === 'id' ? 'EN' : 'ID' }}
+            </button>
           </div>
           <div v-if="user" class="mb-2 px-3">
             <p class="text-xs font-medium text-[var(--ca-text)] truncate">{{ user.full_name }}</p>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-definePageMeta({ layout: 'admin', middleware: 'admin' })
+definePageMeta({ layout: 'console', middleware: 'console' })
 
 const { logs, loading, error, totalItems, fetchLogs } = useAuditLogs()
 const currentPage = ref(1)

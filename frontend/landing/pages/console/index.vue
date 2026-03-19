@@ -1,5 +1,5 @@
 <script setup lang="ts">
-definePageMeta({ layout: 'admin', middleware: 'admin' })
+definePageMeta({ layout: 'console', middleware: 'console' })
 
 const { fetchStats } = useArticles()
 const stats = ref<Record<string, number>>({})
@@ -71,7 +71,7 @@ const totalArticles = computed(() => Object.values(stats.value).reduce((a, b) =>
 
     <!-- Quick Actions -->
     <div class="mt-8 grid gap-4 sm:grid-cols-2">
-      <NuxtLink to="/admin/articles/create" class="ca-card-soft group flex items-center gap-4 p-5 transition hover:-translate-y-0.5">
+      <NuxtLink to="/console/articles/create" class="ca-card-soft group flex items-center gap-4 p-5 transition hover:-translate-y-0.5">
         <div class="inline-flex h-12 w-12 items-center justify-center rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg-strong)]">
           <Icon name="lucide:plus" class="h-5 w-5 ca-tone-gold" />
         </div>
@@ -81,7 +81,7 @@ const totalArticles = computed(() => Object.values(stats.value).reduce((a, b) =>
         </div>
       </NuxtLink>
 
-      <NuxtLink to="/admin/articles" class="ca-card-soft group flex items-center gap-4 p-5 transition hover:-translate-y-0.5">
+      <NuxtLink to="/console/articles" class="ca-card-soft group flex items-center gap-4 p-5 transition hover:-translate-y-0.5">
         <div class="inline-flex h-12 w-12 items-center justify-center rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg-strong)]">
           <Icon name="lucide:list" class="h-5 w-5 ca-tone-emerald" />
         </div>
