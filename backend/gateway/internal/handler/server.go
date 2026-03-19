@@ -98,8 +98,10 @@ func (s *Server) setupRoutes() {
 	articleHandler := NewArticleHandler(articleRepo, auditLogRepo)
 	adminUserHandler := NewAdminUserHandler(adminUserRepo, auditLogRepo)
 	uploadHandler := NewUploadHandler(r2Service, auditLogRepo)
-	aiHandler := NewAIHandler(s.cfg.AI, auditLogRepo)
+	apiKeyRepo := repository.NewAPIKeyRepo(s.pool)
+	aiHandler := NewAIHandler(s.cfg.AI, auditLogRepo, apiKeyRepo)
 	auditHandler := NewAuditHandler(auditLogRepo)
+	apiKeyHandler := NewAPIKeyHandler(apiKeyRepo, auditLogRepo)
 
 	// Auth middleware
 	authMiddleware := mw.AuthMiddleware(jwtProvider)
@@ -148,6 +150,14 @@ func (s *Server) setupRoutes() {
 	admin.Post("/users", adminUserHandler.Create)
 	admin.Put("/users/:id", adminUserHandler.Update)
 	admin.Delete("/users/:id", adminUserHandler.Delete)
+
+	// API key management
+	admin.Get("/api-keys", apiKeyHandler.List)
+	admin.Get("/api-keys/:id", apiKeyHandler.GetByID)
+	admin.Get("/api-keys/:id/copy", apiKeyHandler.CopyKey)
+	admin.Post("/api-keys", apiKeyHandler.Create)
+	admin.Put("/api-keys/:id", apiKeyHandler.Update)
+	admin.Delete("/api-keys/:id", apiKeyHandler.Delete)
 
 	// Audit logs
 	admin.Get("/audit-logs", auditHandler.List)

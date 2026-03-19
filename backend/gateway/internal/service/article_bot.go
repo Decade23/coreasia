@@ -24,10 +24,11 @@ type ArticleBot struct {
 	cfg         config.AIConfig
 	articleRepo *repository.ArticleRepo
 	auditRepo   *repository.AuditLogRepo
+	apiKeyRepo  *repository.APIKeyRepo
 }
 
-func NewArticleBot(cfg config.AIConfig, articleRepo *repository.ArticleRepo, auditRepo *repository.AuditLogRepo) *ArticleBot {
-	return &ArticleBot{cfg: cfg, articleRepo: articleRepo, auditRepo: auditRepo}
+func NewArticleBot(cfg config.AIConfig, articleRepo *repository.ArticleRepo, auditRepo *repository.AuditLogRepo, apiKeyRepo *repository.APIKeyRepo) *ArticleBot {
+	return &ArticleBot{cfg: cfg, articleRepo: articleRepo, auditRepo: auditRepo, apiKeyRepo: apiKeyRepo}
 }
 
 // topicPool contains potential article topics grouped by category.
@@ -79,9 +80,15 @@ var topicPool = []struct {
 
 // Run picks a topic not yet written, generates the article, and saves it as draft.
 func (b *ArticleBot) Run(ctx context.Context) error {
-	if b.cfg.APIKey == "" {
-		return fmt.Errorf("AI_API_KEY belum dikonfigurasi")
+	// Load API key from DB first, fallback to env config
+	apiKey := b.cfg.APIKey
+	if dbKey, err := b.apiKeyRepo.FindActiveByProvider(ctx, "claude"); err == nil && dbKey != nil {
+		apiKey = dbKey.KeyValue
 	}
+	if apiKey == "" {
+		return fmt.Errorf("AI API key belum dikonfigurasi (env atau DB)")
+	}
+	b.cfg.APIKey = apiKey // use for callClaudeAPI
 
 	// Fetch existing article titles to avoid duplicates
 	existing, _, err := b.articleRepo.FindAll(ctx, model.ArticleListFilter{Page: 1, PerPage: 500})

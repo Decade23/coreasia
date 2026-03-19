@@ -62,10 +62,12 @@ func main() {
 	server := handler.NewServer(cfg, pool)
 
 	// Start article bot scheduler (generates 1 article/day at 08:00 WIB)
-	if cfg.AI.APIKey != "" {
+	// Bot checks DB for API key dynamically, so start even without env key
+	{
 		articleRepo := repository.NewArticleRepo(pool)
 		auditRepo := repository.NewAuditLogRepo(pool)
-		bot := service.NewArticleBot(cfg.AI, articleRepo, auditRepo)
+		apiKeyRepo := repository.NewAPIKeyRepo(pool)
+		bot := service.NewArticleBot(cfg.AI, articleRepo, auditRepo, apiKeyRepo)
 		go runArticleBot(ctx, bot)
 	}
 

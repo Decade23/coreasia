@@ -19,16 +19,22 @@ import (
 )
 
 type AIHandler struct {
-	cfg      config.AIConfig
-	auditLog *repository.AuditLogRepo
+	cfg        config.AIConfig
+	auditLog   *repository.AuditLogRepo
+	apiKeyRepo *repository.APIKeyRepo
 }
 
-func NewAIHandler(cfg config.AIConfig, auditLog *repository.AuditLogRepo) *AIHandler {
-	return &AIHandler{cfg: cfg, auditLog: auditLog}
+func NewAIHandler(cfg config.AIConfig, auditLog *repository.AuditLogRepo, apiKeyRepo *repository.APIKeyRepo) *AIHandler {
+	return &AIHandler{cfg: cfg, auditLog: auditLog, apiKeyRepo: apiKeyRepo}
 }
 
 func (h *AIHandler) Generate(c fiber.Ctx) error {
-	if h.cfg.APIKey == "" {
+	// Try to load API key from DB first, fallback to env config
+	apiKey := h.cfg.APIKey
+	if dbKey, err := h.apiKeyRepo.FindActiveByProvider(c.Context(), "claude"); err == nil && dbKey != nil {
+		apiKey = dbKey.KeyValue
+	}
+	if apiKey == "" {
 		return errResponse(c, apperr.NewServiceUnavailable("AI generation tidak dikonfigurasi"))
 	}
 
@@ -42,7 +48,7 @@ func (h *AIHandler) Generate(c fiber.Ctx) error {
 		return errResponse(c, appErr)
 	}
 
-	result, err := h.callClaudeAPI(req)
+	result, err := h.callClaudeAPI(req, apiKey)
 	if err != nil {
 		slog.Error("gagal generate artikel AI", "error", err)
 		return errResponse(c, apperr.NewInternal(err))
@@ -54,7 +60,7 @@ func (h *AIHandler) Generate(c fiber.Ctx) error {
 	return ok(c, result)
 }
 
-func (h *AIHandler) callClaudeAPI(req model.AIGenerateRequest) (*model.AIGenerateResponse, error) {
+func (h *AIHandler) callClaudeAPI(req model.AIGenerateRequest, apiKey string) (*model.AIGenerateResponse, error) {
 	lang := "Bahasa Indonesia"
 	if req.Language == "en" {
 		lang = "English"
@@ -115,7 +121,7 @@ Hanya berikan JSON, tanpa penjelasan tambahan.`, req.Topic, keywords, req.Catego
 	}
 
 	httpReq.Header.Set("Content-Type", "application/json")
-	httpReq.Header.Set("x-api-key", h.cfg.APIKey)
+	httpReq.Header.Set("x-api-key", apiKey)
 	httpReq.Header.Set("anthropic-version", "2023-06-01")
 
 	resp, err := http.DefaultClient.Do(httpReq)
