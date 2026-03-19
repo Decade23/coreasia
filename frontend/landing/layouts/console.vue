@@ -1,8 +1,43 @@
 <script setup lang="ts">
+import {
+  DEFAULT_THEME,
+  SYSTEM_THEME_MEDIA_QUERY,
+  THEME_COOKIE_KEY,
+} from '~/composables/useCoreTheme'
+
+const { theme } = useCoreTheme()
 const { locale, setLocale } = useCoreI18n()
 const { user, logout } = useAdminAuth()
 const route = useRoute()
 
+/* ── Theme bootstrap (same as default layout) ── */
+const themeBootstrapScript = `(() => {
+  try {
+    const allowedThemes = ['dark', 'light']
+    const cookieTheme = document.cookie
+      .split('; ')
+      .find((entry) => entry.startsWith('${THEME_COOKIE_KEY}='))
+      ?.split('=')
+      .slice(1)
+      .join('=')
+    const storedTheme = cookieTheme ? decodeURIComponent(cookieTheme) : null
+    const resolvedTheme = allowedThemes.includes(storedTheme ?? '')
+      ? storedTheme
+      : window.matchMedia('${SYSTEM_THEME_MEDIA_QUERY}').matches
+        ? 'dark'
+        : 'light'
+    document.documentElement.setAttribute('data-theme', resolvedTheme || '${DEFAULT_THEME}')
+  } catch (_error) {
+    document.documentElement.setAttribute('data-theme', '${DEFAULT_THEME}')
+  }
+})()`
+
+useHead(() => ({
+  htmlAttrs: { 'data-theme': theme.value },
+  script: [{ innerHTML: themeBootstrapScript, tagPosition: 'head' }],
+}))
+
+/* ── Locale toggle ── */
 const toggleLocale = () => {
   setLocale(locale.value === 'id' ? 'en' : 'id')
 }

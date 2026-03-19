@@ -20,7 +20,6 @@ const form = ref({
   seo_description: '',
 })
 
-const showPreview = ref(false)
 const showAIModal = ref(false)
 
 const slugify = (text: string) => text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
@@ -70,6 +69,24 @@ const aiTone = ref('professional')
 const aiLanguage = ref('id')
 const aiWordCount = ref(1000)
 const aiCategory = ref('general')
+
+// Topic suggestions based on CoreAsia services
+const topicSuggestions = [
+  { topic: 'Cara Meningkatkan SEO Website Bisnis di 2026', keywords: 'seo, website, bisnis, ranking google', category: 'seo' },
+  { topic: 'Panduan Memilih Software House di Indonesia', keywords: 'software house, vendor IT, development', category: 'bisnis' },
+  { topic: 'Apa Itu Web Monitoring dan Mengapa Bisnis Membutuhkannya', keywords: 'web monitoring, uptime, performa website', category: 'teknologi' },
+  { topic: 'Tips Membangun Landing Page yang Konversi Tinggi', keywords: 'landing page, konversi, CTA, desain web', category: 'marketing' },
+  { topic: 'Keuntungan Menggunakan LMS untuk Training Karyawan', keywords: 'lms, e-learning, training, HR', category: 'edukasi' },
+  { topic: 'Strategi Digital Marketing untuk UMKM 2026', keywords: 'digital marketing, umkm, sosial media, ads', category: 'marketing' },
+  { topic: 'Pentingnya Website Responsif untuk Bisnis Modern', keywords: 'responsive design, mobile first, UX', category: 'teknologi' },
+  { topic: 'Cara Mengukur Performa Website dengan Google Analytics', keywords: 'google analytics, ga4, metrics, data', category: 'analitik' },
+]
+
+const applySuggestion = (s: typeof topicSuggestions[0]) => {
+  aiTopic.value = s.topic
+  aiKeywords.value = s.keywords
+  aiCategory.value = s.category
+}
 </script>
 
 <template>
@@ -92,10 +109,6 @@ const aiCategory = ref('general')
             <Icon name="lucide:sparkles" class="h-4 w-4" />
             Generate AI
           </button>
-          <button type="button" class="ca-btn-secondary text-sm" @click="showPreview = !showPreview">
-            <Icon :name="showPreview ? 'lucide:edit-3' : 'lucide:eye'" class="h-4 w-4" />
-            {{ showPreview ? 'Edit' : 'Preview' }}
-          </button>
         </div>
 
         <div class="space-y-4">
@@ -104,22 +117,15 @@ const aiCategory = ref('general')
 
           <BaseTextarea id="description" v-model="form.description" label="Deskripsi" placeholder="Ringkasan singkat untuk meta description" rows="2" required />
 
-          <!-- Content editor / preview -->
-          <div>
-            <label class="ca-field-label">Konten <span class="ca-required">*</span></label>
-            <div v-if="!showPreview">
-              <textarea
-                v-model="form.content"
-                class="ca-field-control min-h-[400px] border-[color:var(--ca-border)] focus:border-amber-300/40 font-mono text-sm"
-                placeholder="Tulis konten dalam Markdown..."
-                required
-              />
-              <p class="mt-1 text-xs text-[var(--ca-subtle)]">Mendukung Markdown: ## Heading, **bold**, [link](url), - list</p>
-            </div>
-            <div v-else class="min-h-[400px] rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-5">
-              <div class="prose-sm text-[var(--ca-muted)]" v-html="form.content.replace(/^### (.+)$/gm, '<h3 class=\'mt-4 mb-2 font-bold text-[var(--ca-text)]\'>$1</h3>').replace(/^## (.+)$/gm, '<h2 class=\'mt-6 mb-2 text-lg font-bold text-[var(--ca-text)]\'>$1</h2>').replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\n\n/g, '<br><br>')" />
-            </div>
-          </div>
+          <!-- Content WYSIWYG editor -->
+          <RichEditor
+            id="content"
+            v-model="form.content"
+            label="Konten"
+            placeholder="Tulis konten artikel di sini..."
+            min-height="400px"
+            required
+          />
 
           <div class="grid gap-4 sm:grid-cols-2">
             <BaseInput id="category" v-model="form.category" label="Kategori" placeholder="general" required />
@@ -170,25 +176,49 @@ const aiCategory = ref('general')
             <Icon name="lucide:sparkles" class="mr-2 inline h-5 w-5 ca-tone-gold" />
             Generate Artikel dengan AI
           </h3>
+
+          <!-- Topic Suggestions -->
+          <div class="mt-3">
+            <p class="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--ca-muted)]">
+              <Icon name="lucide:lightbulb" class="mr-1 inline h-3.5 w-3.5 text-amber-400" />
+              Saran Topik
+            </p>
+            <div class="flex flex-wrap gap-1.5">
+              <button
+                v-for="s in topicSuggestions"
+                :key="s.topic"
+                type="button"
+                class="rounded-full border border-[color:var(--ca-border)] px-2.5 py-1 text-[0.68rem] text-[var(--ca-muted)] transition hover:border-amber-300/40 hover:bg-[var(--ca-kicker-bg)] hover:text-brand-primary"
+                @click="applySuggestion(s)"
+              >
+                {{ s.topic.length > 40 ? s.topic.slice(0, 40) + '...' : s.topic }}
+              </button>
+            </div>
+          </div>
+
           <div class="mt-4 space-y-3">
             <BaseInput id="ai-topic" v-model="aiTopic" label="Topik" placeholder="Apa topik artikel yang ingin digenerate?" required />
             <BaseInput id="ai-keywords" v-model="aiKeywords" label="Keywords" placeholder="seo, web monitoring, bisnis digital" />
             <div class="grid gap-3 sm:grid-cols-2">
-              <div>
-                <label class="ca-field-label">Gaya Penulisan</label>
-                <select v-model="aiTone" class="ca-field-control border-[color:var(--ca-border)]">
-                  <option value="professional">Profesional</option>
-                  <option value="casual">Kasual</option>
-                  <option value="informative">Informatif</option>
-                </select>
-              </div>
-              <div>
-                <label class="ca-field-label">Bahasa</label>
-                <select v-model="aiLanguage" class="ca-field-control border-[color:var(--ca-border)]">
-                  <option value="id">Indonesia</option>
-                  <option value="en">English</option>
-                </select>
-              </div>
+              <SearchSelect
+                id="ai-tone"
+                v-model="aiTone"
+                label="Gaya Penulisan"
+                :options="[
+                  { label: 'Profesional', value: 'professional' },
+                  { label: 'Kasual', value: 'casual' },
+                  { label: 'Informatif', value: 'informative' },
+                ]"
+              />
+              <SearchSelect
+                id="ai-language"
+                v-model="aiLanguage"
+                label="Bahasa"
+                :options="[
+                  { label: 'Indonesia', value: 'id' },
+                  { label: 'English', value: 'en' },
+                ]"
+              />
             </div>
             <div class="grid gap-3 sm:grid-cols-2">
               <BaseInput id="ai-wordcount" v-model.number="aiWordCount" label="Jumlah Kata" type="number" />

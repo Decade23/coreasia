@@ -10,8 +10,12 @@ import (
 	"strings"
 	"syscall"
 
+	"time"
+
 	"github.com/coreasia/gateway/internal/config"
 	"github.com/coreasia/gateway/internal/handler"
+	"github.com/coreasia/gateway/internal/repository"
+	"github.com/coreasia/gateway/internal/service"
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -57,6 +61,14 @@ func main() {
 	// Create and start HTTP server
 	server := handler.NewServer(cfg, pool)
 
+	// Start article bot scheduler (generates 1 article/day at 08:00 WIB)
+	if cfg.AI.APIKey != "" {
+		articleRepo := repository.NewArticleRepo(pool)
+		auditRepo := repository.NewAuditLogRepo(pool)
+		bot := service.NewArticleBot(cfg.AI, articleRepo, auditRepo)
+		go runArticleBot(ctx, bot)
+	}
+
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 
@@ -75,6 +87,31 @@ func main() {
 	}
 
 	slog.Info("gateway server berhenti")
+}
+
+// runArticleBot runs the article bot on a daily schedule (08:00 WIB).
+func runArticleBot(ctx context.Context, bot *service.ArticleBot) {
+	wib := time.FixedZone("WIB", 7*60*60)
+
+	for {
+		now := time.Now().In(wib)
+		next := time.Date(now.Year(), now.Month(), now.Day(), 8, 0, 0, 0, wib)
+		if now.After(next) {
+			next = next.Add(24 * time.Hour)
+		}
+		wait := time.Until(next)
+		slog.Info("article-bot: jadwal generate berikutnya", "waktu", next.Format("2006-01-02 15:04 WIB"), "tunggu", wait.Round(time.Minute))
+
+		select {
+		case <-ctx.Done():
+			slog.Info("article-bot: shutdown")
+			return
+		case <-time.After(wait):
+			if err := bot.Run(ctx); err != nil {
+				slog.Error("article-bot: gagal generate", "error", err)
+			}
+		}
+	}
 }
 
 func setupLogger() {

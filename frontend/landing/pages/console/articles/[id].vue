@@ -20,8 +20,6 @@ const form = ref({
   seo_description: '',
 })
 
-const showPreview = ref(false)
-
 onMounted(async () => {
   await fetchArticle(id)
   if (currentItem.value) {
@@ -79,27 +77,20 @@ const handleSubmit = async () => {
 
     <form v-else class="mx-auto max-w-4xl" @submit.prevent="handleSubmit">
       <div class="ca-card p-6">
-        <div class="mb-6">
-          <button type="button" class="ca-btn-secondary text-sm" @click="showPreview = !showPreview">
-            <Icon :name="showPreview ? 'lucide:edit-3' : 'lucide:eye'" class="h-4 w-4" />
-            {{ showPreview ? 'Edit' : 'Preview' }}
-          </button>
-        </div>
-
         <div class="space-y-4">
           <BaseInput id="title" v-model="form.title" label="Judul" placeholder="Judul artikel" required />
           <BaseInput id="slug" v-model="form.slug" label="Slug" placeholder="judul-artikel" required />
           <BaseTextarea id="description" v-model="form.description" label="Deskripsi" rows="2" required />
 
-          <div>
-            <label class="ca-field-label">Konten <span class="ca-required">*</span></label>
-            <div v-if="!showPreview">
-              <textarea v-model="form.content" class="ca-field-control min-h-[400px] border-[color:var(--ca-border)] focus:border-amber-300/40 font-mono text-sm" required />
-            </div>
-            <div v-else class="min-h-[400px] rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-5">
-              <div class="prose-sm text-[var(--ca-muted)]" v-html="form.content.replace(/^### (.+)$/gm, '<h3 class=\'mt-4 mb-2 font-bold text-[var(--ca-text)]\'>$1</h3>').replace(/^## (.+)$/gm, '<h2 class=\'mt-6 mb-2 text-lg font-bold text-[var(--ca-text)]\'>$1</h2>').replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/\n\n/g, '<br><br>')" />
-            </div>
-          </div>
+          <!-- Content WYSIWYG editor -->
+          <RichEditor
+            id="content"
+            v-model="form.content"
+            label="Konten"
+            placeholder="Tulis konten artikel di sini..."
+            min-height="400px"
+            required
+          />
 
           <div class="grid gap-4 sm:grid-cols-2">
             <BaseInput id="category" v-model="form.category" label="Kategori" required />

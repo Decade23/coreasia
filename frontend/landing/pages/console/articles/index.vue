@@ -76,15 +76,19 @@ const formatDate = (d: string) => new Date(d).toLocaleDateString('id-ID', { year
           icon="lucide:search"
         />
       </div>
-      <select
-        v-model="statusFilter"
-        class="ca-field-control border-[color:var(--ca-border)] focus:border-amber-300/40 w-full sm:w-40"
-      >
-        <option value="">Semua Status</option>
-        <option value="draft">Draft</option>
-        <option value="published">Published</option>
-        <option value="archived">Archived</option>
-      </select>
+      <div class="w-full sm:w-48">
+        <SearchSelect
+          id="status-filter"
+          v-model="statusFilter"
+          placeholder="Semua Status"
+          :options="[
+            { label: 'Semua Status', value: '' },
+            { label: 'Draft', value: 'draft' },
+            { label: 'Published', value: 'published' },
+            { label: 'Archived', value: 'archived' },
+          ]"
+        />
+      </div>
     </div>
 
     <!-- Loading -->
