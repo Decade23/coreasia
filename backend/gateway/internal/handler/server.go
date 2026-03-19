@@ -102,6 +102,8 @@ func (s *Server) setupRoutes() {
 	aiHandler := NewAIHandler(s.cfg.AI, auditLogRepo, apiKeyRepo)
 	auditHandler := NewAuditHandler(auditLogRepo)
 	apiKeyHandler := NewAPIKeyHandler(apiKeyRepo, auditLogRepo)
+	botScheduleRepo := repository.NewBotScheduleRepo(s.pool)
+	botScheduleHandler := NewBotScheduleHandler(botScheduleRepo, auditLogRepo)
 
 	// Auth middleware
 	authMiddleware := mw.AuthMiddleware(jwtProvider)
@@ -158,6 +160,14 @@ func (s *Server) setupRoutes() {
 	admin.Post("/api-keys", apiKeyHandler.Create)
 	admin.Put("/api-keys/:id", apiKeyHandler.Update)
 	admin.Delete("/api-keys/:id", apiKeyHandler.Delete)
+
+	// Bot schedules
+	admin.Get("/bots", botScheduleHandler.List)
+	admin.Get("/bots/:id", botScheduleHandler.GetByID)
+	admin.Post("/bots", botScheduleHandler.Create)
+	admin.Put("/bots/:id", botScheduleHandler.Update)
+	admin.Delete("/bots/:id", botScheduleHandler.Delete)
+	admin.Post("/bots/:id/trigger", botScheduleHandler.Trigger)
 
 	// Audit logs
 	admin.Get("/audit-logs", auditHandler.List)

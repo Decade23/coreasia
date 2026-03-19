@@ -14,6 +14,7 @@ import (
 
 	"github.com/coreasia/gateway/internal/config"
 	"github.com/coreasia/gateway/internal/handler"
+	"github.com/coreasia/gateway/internal/model"
 	"github.com/coreasia/gateway/internal/repository"
 	"github.com/coreasia/gateway/internal/service"
 	"github.com/golang-migrate/migrate/v4"
@@ -61,14 +62,14 @@ func main() {
 	// Create and start HTTP server
 	server := handler.NewServer(cfg, pool)
 
-	// Start article bot scheduler (generates 1 article/day at 08:00 WIB)
-	// Bot checks DB for API key dynamically, so start even without env key
+	// Start bot scheduler — reads schedules from DB dynamically
 	{
 		articleRepo := repository.NewArticleRepo(pool)
 		auditRepo := repository.NewAuditLogRepo(pool)
 		apiKeyRepo := repository.NewAPIKeyRepo(pool)
+		botScheduleRepo := repository.NewBotScheduleRepo(pool)
 		bot := service.NewArticleBot(cfg.AI, articleRepo, auditRepo, apiKeyRepo)
-		go runArticleBot(ctx, bot)
+		go runBotScheduler(ctx, bot, botScheduleRepo)
 	}
 
 	quit := make(chan os.Signal, 1)
@@ -91,29 +92,76 @@ func main() {
 	slog.Info("gateway server berhenti")
 }
 
-// runArticleBot runs the article bot on a daily schedule (08:00 WIB).
-func runArticleBot(ctx context.Context, bot *service.ArticleBot) {
-	wib := time.FixedZone("WIB", 7*60*60)
+// runBotScheduler polls DB every 60s for active bot schedules and runs them at the configured time.
+func runBotScheduler(ctx context.Context, articleBot *service.ArticleBot, scheduleRepo *repository.BotScheduleRepo) {
+	slog.Info("bot-scheduler: dimulai")
+	ticker := time.NewTicker(60 * time.Second)
+	defer ticker.Stop()
 
 	for {
-		now := time.Now().In(wib)
-		next := time.Date(now.Year(), now.Month(), now.Day(), 8, 0, 0, 0, wib)
-		if now.After(next) {
-			next = next.Add(24 * time.Hour)
-		}
-		wait := time.Until(next)
-		slog.Info("article-bot: jadwal generate berikutnya", "waktu", next.Format("2006-01-02 15:04 WIB"), "tunggu", wait.Round(time.Minute))
-
 		select {
 		case <-ctx.Done():
-			slog.Info("article-bot: shutdown")
+			slog.Info("bot-scheduler: shutdown")
 			return
-		case <-time.After(wait):
-			if err := bot.Run(ctx); err != nil {
-				slog.Error("article-bot: gagal generate", "error", err)
+		case <-ticker.C:
+			bots, err := scheduleRepo.FindAll(ctx)
+			if err != nil {
+				slog.Error("bot-scheduler: gagal baca schedule", "error", err)
+				continue
+			}
+			for _, bot := range bots {
+				if !bot.IsActive {
+					continue
+				}
+				if shouldRun(bot) {
+					slog.Info("bot-scheduler: menjalankan bot", "name", bot.Name, "type", bot.BotType)
+					var runErr error
+					switch bot.BotType {
+					case "article_generator":
+						runErr = articleBot.Run(ctx)
+					default:
+						slog.Warn("bot-scheduler: tipe bot tidak dikenal", "type", bot.BotType)
+						continue
+					}
+					status := "success"
+					var errMsg *string
+					if runErr != nil {
+						status = "error"
+						msg := runErr.Error()
+						errMsg = &msg
+						slog.Error("bot-scheduler: gagal jalankan bot", "name", bot.Name, "error", runErr)
+					}
+					scheduleRepo.UpdateRunStatus(ctx, bot.ID, status, errMsg)
+				}
 			}
 		}
 	}
+}
+
+// shouldRun checks if a bot should run now based on schedule (HH:MM) and timezone.
+func shouldRun(bot model.BotSchedule) bool {
+	loc, err := time.LoadLocation(bot.Timezone)
+	if err != nil {
+		loc = time.FixedZone("WIB", 7*60*60)
+	}
+	now := time.Now().In(loc)
+	hour, min := now.Hour(), now.Minute()
+	schedHour, schedMin := 8, 0
+	fmt.Sscanf(bot.Schedule, "%d:%d", &schedHour, &schedMin)
+
+	// Run if within the same minute as scheduled
+	if hour != schedHour || min != schedMin {
+		return false
+	}
+
+	// Don't run if already ran today
+	if bot.LastRunAt != nil {
+		lastRun := bot.LastRunAt.In(loc)
+		if lastRun.Year() == now.Year() && lastRun.YearDay() == now.YearDay() {
+			return false
+		}
+	}
+	return true
 }
 
 func setupLogger() {

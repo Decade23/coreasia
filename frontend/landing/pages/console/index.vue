@@ -2,11 +2,20 @@
 definePageMeta({ layout: 'console', middleware: 'console' })
 
 const { fetchStats } = useArticles()
+const { items: bots, fetchBots } = useBotSchedules()
 const stats = ref<Record<string, number>>({})
 
 onMounted(async () => {
   stats.value = await fetchStats()
+  fetchBots()
 })
+
+const activeBots = computed(() => bots.value.filter(b => b.is_active).length)
+const botStatusColor = (s: string) => {
+  const m: Record<string, string> = { idle: 'text-[var(--ca-muted)]', running: 'text-blue-400', success: 'text-emerald-400', error: 'text-rose-400' }
+  return m[s] || m.idle
+}
+const formatBotDate = (d: string | null) => d ? new Date(d).toLocaleString('id-ID', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'
 
 const totalArticles = computed(() => Object.values(stats.value).reduce((a, b) => a + b, 0))
 </script>
@@ -66,6 +75,36 @@ const totalArticles = computed(() => Object.values(stats.value).reduce((a, b) =>
             <p class="text-xs text-[var(--ca-muted)]">Archived</p>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Bot Status -->
+    <div v-if="bots.length" class="mt-8">
+      <div class="mb-3 flex items-center justify-between">
+        <h2 class="font-display text-sm font-semibold text-[var(--ca-text)]">
+          <Icon name="lucide:bot" class="mr-1.5 inline h-4 w-4 text-amber-400" />
+          Bot Scheduler
+        </h2>
+        <NuxtLink to="/console/bots" class="text-xs ca-tone-gold hover:underline">Kelola &rarr;</NuxtLink>
+      </div>
+      <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <NuxtLink
+          v-for="b in bots"
+          :key="b.id"
+          to="/console/bots"
+          class="ca-card flex items-center gap-3 p-4 transition hover:-translate-y-0.5"
+        >
+          <div class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg" :class="b.is_active ? 'bg-emerald-500/10' : 'bg-slate-500/10'">
+            <Icon name="lucide:bot" class="h-4 w-4" :class="b.is_active ? 'text-emerald-400' : 'text-[var(--ca-subtle)]'" />
+          </div>
+          <div class="min-w-0 flex-1">
+            <p class="text-sm font-medium text-[var(--ca-text)] truncate">{{ b.name }}</p>
+            <div class="flex items-center gap-2 text-[0.65rem]">
+              <span :class="botStatusColor(b.last_status)" class="font-semibold uppercase">{{ b.last_status }}</span>
+              <span class="text-[var(--ca-subtle)]">{{ formatBotDate(b.last_run_at) }}</span>
+            </div>
+          </div>
+        </NuxtLink>
       </div>
     </div>
 
