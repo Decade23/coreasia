@@ -203,8 +203,11 @@ const formatDate = (d: string) => new Date(d).toLocaleDateString('id-ID', { year
             <Icon name="lucide:key-round" class="mr-2 inline h-5 w-5 text-amber-400" />
             {{ editingKey ? 'Edit API Key' : 'Tambah API Key' }}
           </h3>
-          <form class="mt-4 space-y-3" @submit.prevent="handleSubmit">
-            <BaseInput id="key-name" v-model="formData.name" label="Nama" placeholder="Claude AI Production" required />
+          <form class="mt-4 space-y-3" autocomplete="off" @submit.prevent="handleSubmit">
+            <!-- Hidden fields to prevent browser autofill -->
+            <input type="text" name="prevent_autofill" style="display:none" />
+            <input type="password" name="prevent_autofill_pw" style="display:none" />
+            <BaseInput id="key-name" v-model="formData.name" label="Nama" placeholder="Claude AI Production" required autocomplete="off" />
             <SearchSelect
               id="key-provider"
               v-model="formData.provider"
@@ -221,6 +224,7 @@ const formatDate = (d: string) => new Date(d).toLocaleDateString('id-ID', { year
                 :placeholder="editingKey ? '••••••••' : 'sk-ant-api03-...'"
                 :required="!editingKey"
                 input-class="font-mono tracking-wider"
+                autocomplete="new-password"
               />
               <p class="mt-1 text-[0.65rem] text-[var(--ca-subtle)]">
                 Key disimpan terenkripsi dan tidak bisa dilihat setelah disimpan
