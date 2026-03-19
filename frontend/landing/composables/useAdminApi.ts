@@ -11,7 +11,10 @@ interface ApiResponse<T> {
 
 export const useAdminApi = () => {
   const config = useRuntimeConfig()
-  const baseURL = config.public?.gatewayUrl || 'http://localhost:8081/api'
+  // Use public URL for client-side calls (browser), internal URL for SSR
+  const baseURL = import.meta.client
+    ? (config.public?.gatewayPublicUrl || 'http://localhost:8084/api')
+    : (config.public?.gatewayUrl || 'http://localhost:8081/api')
   const token = useCookie('auth_admin_token')
 
   const headers = () => {

@@ -231,6 +231,7 @@ export default defineNuxtConfig({
     runtimeConfig: {
         public: {
             gatewayUrl: process.env.GATEWAY_URL || 'http://localhost:8081/api',
+            gatewayPublicUrl: process.env.GATEWAY_PUBLIC_URL || process.env.GATEWAY_URL || 'http://localhost:8084/api',
             gtmId: process.env.GTM_ID || '',
         },
     },
