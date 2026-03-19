@@ -68,7 +68,11 @@ export default defineNuxtConfig({
                     type: "image/svg+xml",
                     href: asset("/logo.svg"),
                 },
-                { rel: "icon", href: asset("/logo.svg"), sizes: "any" },
+                {
+                    rel: "icon",
+                    type: "image/x-icon",
+                    href: asset("/favicon.ico"),
+                },
                 {
                     rel: "icon",
                     type: "image/png",
