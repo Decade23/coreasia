@@ -86,8 +86,9 @@ func (s *Server) setupRoutes() {
 	}
 	jwtProvider := auth.NewJWTProvider(s.cfg.JWT.Secret, accessTTL, refreshTTL, s.cfg.JWT.Issuer)
 
-	// Rate limiter for AI endpoint (10 requests per hour)
+	// Rate limiters
 	aiRateLimiter := mw.NewRateLimiter(10, 1*time.Hour)
+	loginRateLimiter := mw.NewIPRateLimiter(5, 15*time.Minute, s.cfg.App.Env == "development")
 
 	// Handlers
 	healthHandler := NewHealthHandler(s.pool)
@@ -116,9 +117,9 @@ func (s *Server) setupRoutes() {
 	api.Get("/articles", articleHandler.ListPublished)
 	api.Get("/articles/:slug", articleHandler.GetBySlug)
 
-	// Admin auth routes (no auth required)
+	// Admin auth routes (no auth required, login rate limited)
 	adminAuth := api.Group("/admin/auth")
-	adminAuth.Post("/login", authHandler.Login)
+	adminAuth.Post("/login", loginRateLimiter.Middleware(), authHandler.Login)
 	adminAuth.Post("/refresh", authHandler.Refresh)
 
 	// Protected admin routes
