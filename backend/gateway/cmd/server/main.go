@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"log/slog"
 	"os"
 	"os/signal"
@@ -10,11 +11,17 @@ import (
 
 	"github.com/coreasia/gateway/internal/config"
 	"github.com/coreasia/gateway/internal/handler"
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func main() {
 	configPath := flag.String("config", "configs/config.yaml", "path to config file")
+	runMigrate := flag.Bool("migrate", false, "run database migrations")
+	runSeed := flag.Bool("seed", false, "seed initial admin user")
 	flag.Parse()
 
 	setupLogger()
@@ -35,6 +42,16 @@ func main() {
 		os.Exit(1)
 	}
 	defer pool.Close()
+
+	if *runMigrate || *runSeed {
+		if *runMigrate {
+			runMigrations(cfg.Database.DSN())
+		}
+		if *runSeed {
+			seedAdminUser(ctx, pool, cfg)
+		}
+		return
+	}
 
 	// Create and start HTTP server
 	server := handler.NewServer(cfg, pool)
@@ -92,4 +109,68 @@ func connectDB(ctx context.Context, cfg config.DatabaseConfig) (*pgxpool.Pool, e
 	)
 
 	return pool, nil
+}
+
+func runMigrations(dsn string) {
+	slog.Info("menjalankan migrasi database...")
+
+	m, err := migrate.New("file://migrations", dsn)
+	if err != nil {
+		slog.Error("gagal membuat migrator", "error", err)
+		os.Exit(1)
+	}
+	defer m.Close()
+
+	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
+		slog.Error("gagal menjalankan migrasi", "error", err)
+		os.Exit(1)
+	}
+
+	version, dirty, _ := m.Version()
+	slog.Info("migrasi selesai", "version", version, "dirty", dirty)
+}
+
+func seedAdminUser(ctx context.Context, pool *pgxpool.Pool, cfg *config.Config) {
+	email := os.Getenv("ADMIN_EMAIL")
+	password := os.Getenv("ADMIN_PASSWORD")
+	fullName := os.Getenv("ADMIN_NAME")
+
+	if email == "" || password == "" {
+		slog.Error("ADMIN_EMAIL dan ADMIN_PASSWORD harus di-set untuk seed")
+		os.Exit(1)
+	}
+	if fullName == "" {
+		fullName = "Administrator"
+	}
+
+	// Check if admin already exists
+	var exists bool
+	err := pool.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM public.admin_users WHERE email = $1)", email).Scan(&exists)
+	if err != nil {
+		slog.Error("gagal cek admin user", "error", err)
+		os.Exit(1)
+	}
+	if exists {
+		slog.Info("admin user sudah ada, skip seed", "email", email)
+		return
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		slog.Error("gagal hash password", "error", err)
+		os.Exit(1)
+	}
+
+	_, err = pool.Exec(ctx,
+		`INSERT INTO public.admin_users (email, password_hash, full_name, role)
+		 VALUES ($1, $2, $3, 'super_admin')`,
+		email, string(hash), fullName,
+	)
+	if err != nil {
+		slog.Error("gagal seed admin user", "error", err)
+		os.Exit(1)
+	}
+
+	slog.Info("admin user berhasil dibuat", "email", email)
+	fmt.Printf("Admin user created: %s\n", email)
 }

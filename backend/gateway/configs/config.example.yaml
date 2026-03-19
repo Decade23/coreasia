@@ -1,0 +1,56 @@
+app:
+  name: "coreasia-gateway"
+  env: "development"
+  port: 8081
+  debug: true
+
+database:
+  host: "localhost"
+  port: 5432
+  user: "coreasia"
+  password: "coreasia_secret"
+  name: "coreasia_lms"
+  ssl_mode: "disable"
+  max_conns: 10
+  min_conns: 2
+
+xendit:
+  api_key: ""
+  callback_token: ""
+  success_url: "https://coreasia.id/register/success"
+  failure_url: "https://coreasia.id/register?status=failed"
+
+midtrans:
+  server_key: ""
+  client_key: ""
+  merchant_id: ""
+  is_production: false
+  notification_url: ""
+  finish_url: "https://coreasia.id/register"
+  unfinish_url: "https://coreasia.id/register"
+  error_url: "https://coreasia.id/register"
+  merchant_name: "CoreAsia"
+
+jwt:
+  secret: "dev-gateway-secret-change-in-production-min32chars"
+  access_ttl: "60m"
+  refresh_ttl: "720h"
+  issuer: "coreasia-gateway"
+
+ai:
+  api_key: ""
+  provider: "claude"
+  model: "claude-sonnet-4-20250514"
+
+r2:
+  account_id: ""
+  access_key_id: ""
+  secret_access_key: ""
+  bucket_name: "coreasia-articles"
+  public_url: ""
+
+cors:
+  allowed_origins:
+    - "http://localhost:3000"
+    - "http://localhost:3001"
+    - "https://coreasia.id"

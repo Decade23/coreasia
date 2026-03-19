@@ -70,6 +70,22 @@ func NewUnauthorized(message string) *AppError {
 	}
 }
 
+func NewForbidden(message string) *AppError {
+	return &AppError{
+		Code:       "FORBIDDEN",
+		Message:    message,
+		HTTPStatus: http.StatusForbidden,
+	}
+}
+
+func NewTooManyRequests(message string) *AppError {
+	return &AppError{
+		Code:       "TOO_MANY_REQUESTS",
+		Message:    message,
+		HTTPStatus: http.StatusTooManyRequests,
+	}
+}
+
 func NewServiceUnavailable(message string) *AppError {
 	return &AppError{
 		Code:       "SERVICE_UNAVAILABLE",

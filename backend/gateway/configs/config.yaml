@@ -31,6 +31,24 @@ midtrans:
   error_url: "https://coreasia.id/register"
   merchant_name: "CoreAsia"
 
+jwt:
+  secret: "dev-gateway-secret-change-in-production-min32chars"
+  access_ttl: "60m"
+  refresh_ttl: "720h"
+  issuer: "coreasia-gateway"
+
+ai:
+  api_key: ""
+  provider: "claude"
+  model: "claude-sonnet-4-20250514"
+
+r2:
+  account_id: ""
+  access_key_id: ""
+  secret_access_key: ""
+  bucket_name: "coreasia-articles"
+  public_url: ""
+
 cors:
   allowed_origins:
     - "http://localhost:3000"

@@ -10,6 +10,9 @@ type Config struct {
 	App      AppConfig      `yaml:"app"`
 	Database DatabaseConfig `yaml:"database"`
 	CORS     CORSConfig     `yaml:"cors"`
+	JWT      JWTConfig      `yaml:"jwt"`
+	AI       AIConfig       `yaml:"ai"`
+	R2       R2Config       `yaml:"r2"`
 	Xendit   XenditConfig   `yaml:"xendit"`
 	Midtrans MidtransConfig `yaml:"midtrans"`
 }
@@ -53,6 +56,27 @@ type MidtransConfig struct {
 
 type CORSConfig struct {
 	AllowedOrigins []string `yaml:"allowed_origins" env:"CORS_ORIGINS"`
+}
+
+type JWTConfig struct {
+	Secret     string `yaml:"secret" env:"JWT_SECRET"`
+	AccessTTL  string `yaml:"access_ttl" env:"JWT_ACCESS_TTL" env-default:"60m"`
+	RefreshTTL string `yaml:"refresh_ttl" env:"JWT_REFRESH_TTL" env-default:"720h"`
+	Issuer     string `yaml:"issuer" env:"JWT_ISSUER" env-default:"coreasia-gateway"`
+}
+
+type AIConfig struct {
+	APIKey   string `yaml:"api_key" env:"AI_API_KEY"`
+	Provider string `yaml:"provider" env:"AI_PROVIDER" env-default:"claude"`
+	Model    string `yaml:"model" env:"AI_MODEL" env-default:"claude-sonnet-4-20250514"`
+}
+
+type R2Config struct {
+	AccountID      string `yaml:"account_id" env:"R2_ACCOUNT_ID"`
+	AccessKeyID    string `yaml:"access_key_id" env:"R2_ACCESS_KEY_ID"`
+	SecretAccessKey string `yaml:"secret_access_key" env:"R2_SECRET_ACCESS_KEY"`
+	BucketName     string `yaml:"bucket_name" env:"R2_BUCKET_NAME" env-default:"coreasia-articles"`
+	PublicURL      string `yaml:"public_url" env:"R2_PUBLIC_URL"`
 }
 
 func (d DatabaseConfig) DSN() string {
