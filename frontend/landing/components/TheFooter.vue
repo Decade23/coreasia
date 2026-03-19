@@ -6,12 +6,13 @@ const { t } = useCoreI18n()
 
 const productLinks = computed(() => (t('components.footer.productLinks') as Array<{ label: string; to: string }>) || [])
 const partnershipLinks = computed(() => (t('components.footer.partnershipLinks') as Array<{ label: string; to: string }>) || [])
+const serviceLinks = computed(() => (t('components.footer.serviceLinks') as Array<{ label: string; to: string }>) || [])
 </script>
 
 <template>
     <footer class="ca-glass-footer">
         <div class="ca-container py-10 sm:py-12">
-            <div class="grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.45fr_1fr_1fr_1fr]">
+            <div class="grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.45fr_1fr_1fr_1fr_1fr]">
                 <div class="space-y-4">
                     <NuxtLink to="/" class="inline-flex items-center gap-3" :aria-label="t('nav.home')">
                         <span class="inline-flex h-10 w-10 items-center justify-center">
@@ -69,6 +70,19 @@ const partnershipLinks = computed(() => (t('components.footer.partnershipLinks')
                     </h3>
                     <ul class="mt-4 space-y-2 text-sm text-[var(--ca-muted)]">
                         <li v-for="item in partnershipLinks" :key="item.to">
+                            <NuxtLink :to="item.to" class="transition hover:text-brand-primary">
+                                {{ item.label }}
+                            </NuxtLink>
+                        </li>
+                    </ul>
+                </div>
+
+                <div v-if="serviceLinks.length">
+                    <h3 class="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--ca-muted)]">
+                        Layanan
+                    </h3>
+                    <ul class="mt-4 space-y-2 text-sm text-[var(--ca-muted)]">
+                        <li v-for="item in serviceLinks" :key="item.to">
                             <NuxtLink :to="item.to" class="transition hover:text-brand-primary">
                                 {{ item.label }}
                             </NuxtLink>

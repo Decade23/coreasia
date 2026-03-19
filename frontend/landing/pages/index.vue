@@ -41,8 +41,50 @@ useSchemaOrg([
         name: 'CoreAsia Teknologi',
         url: 'https://coreasia.id',
         logo: 'https://coreasia.id/logos/logo-512.webp',
+        sameAs: [
+            'https://www.linkedin.com/company/coreasia',
+            'https://www.instagram.com/coreasia',
+        ],
     }),
 ])
+
+// LocalBusiness schema for Google Business Profile
+useHead({
+    script: [
+        {
+            type: 'application/ld+json',
+            innerHTML: JSON.stringify({
+                '@context': 'https://schema.org',
+                '@type': 'ProfessionalService',
+                name: 'CoreAsia Teknologi',
+                url: 'https://coreasia.id',
+                logo: 'https://coreasia.id/logos/logo-512.webp',
+                image: 'https://coreasia.id/social/og-image.png',
+                description: t('home.description') as string,
+                address: {
+                    '@type': 'PostalAddress',
+                    addressLocality: 'Jakarta',
+                    addressCountry: 'ID',
+                },
+                contactPoint: {
+                    '@type': 'ContactPoint',
+                    contactType: 'Customer Service',
+                    email: 'hello@coreasia.id',
+                    availableLanguage: ['Indonesian', 'English'],
+                },
+                sameAs: [
+                    'https://www.linkedin.com/company/coreasia',
+                    'https://www.instagram.com/coreasia',
+                ],
+                priceRange: '$$',
+                serviceArea: {
+                    '@type': 'Country',
+                    name: 'Indonesia',
+                },
+            }),
+        },
+    ],
+})
 </script>
 
 <template>

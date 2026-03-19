@@ -12,8 +12,37 @@ useCoreSeo({
 useSchemaOrg([
   defineWebPage({
     name: 'Pantau by CoreAsia',
+    description: t('solutions.pantau.description') as string,
   }),
 ])
+
+// Service schema for rich snippets
+useHead({
+  script: [
+    {
+      type: 'application/ld+json',
+      innerHTML: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'SoftwareApplication',
+        name: 'Pantau by CoreAsia',
+        applicationCategory: 'BusinessApplication',
+        operatingSystem: 'Web',
+        description: t('solutions.pantau.description') as string,
+        url: 'https://coreasia.id/products/pantau',
+        provider: {
+          '@type': 'Organization',
+          name: 'CoreAsia Teknologi',
+          url: 'https://coreasia.id',
+        },
+        offers: {
+          '@type': 'AggregateOffer',
+          priceCurrency: 'IDR',
+          availability: 'https://schema.org/InStock',
+        },
+      }),
+    },
+  ],
+})
 
 const features = computed(
   () => (t('solutions.pantau.detailedFeatures') as Array<Record<string, string>>) || [],

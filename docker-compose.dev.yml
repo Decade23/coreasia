@@ -105,6 +105,7 @@ services:
       - PORT=3000
       - HOST=0.0.0.0
       - GATEWAY_URL=http://gateway:8081/api
+      - GTM_ID=${GTM_ID:-GTM-59R46GVZ}
     depends_on:
       - gateway
     networks:

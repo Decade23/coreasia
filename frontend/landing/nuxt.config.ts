@@ -249,6 +249,8 @@ export default defineNuxtConfig({
         '/partnerships': { prerender: true },
         '/solutions/venture': { prerender: true },
         '/pricing': { prerender: true },
+        '/layanan/**': { prerender: true },
+        '/blog': { prerender: true },
         '/register': { ssr: true },
         // API routes shouldn't be cached
         '/api/**': { cors: true },

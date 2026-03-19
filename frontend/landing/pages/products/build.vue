@@ -12,8 +12,35 @@ useCoreSeo({
 useSchemaOrg([
   defineWebPage({
     name: 'Build by CoreAsia',
+    description: t('solutions.custom.description') as string,
   }),
 ])
+
+// Service schema for rich snippets
+useHead({
+  script: [
+    {
+      type: 'application/ld+json',
+      innerHTML: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'Service',
+        name: 'Build by CoreAsia',
+        serviceType: 'Web Development',
+        description: t('solutions.custom.description') as string,
+        url: 'https://coreasia.id/products/build',
+        provider: {
+          '@type': 'Organization',
+          name: 'CoreAsia Teknologi',
+          url: 'https://coreasia.id',
+        },
+        areaServed: {
+          '@type': 'Country',
+          name: 'Indonesia',
+        },
+      }),
+    },
+  ],
+})
 
 const features = computed(
   () => (t('solutions.custom.detailedFeatures') as Array<Record<string, string>>) || [],

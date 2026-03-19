@@ -26,6 +26,34 @@ useSchemaOrg([
     }),
 ])
 
+// FAQ Schema for rich snippets in Google
+const faqSchema = computed(() => {
+    const items = (t('pricing.faq.items') as Array<{ question: string; answer: string }>) || []
+    if (!items.length) return null
+    return {
+        '@type': 'FAQPage',
+        mainEntity: items.map((item) => ({
+            '@type': 'Question',
+            name: item.question,
+            acceptedAnswer: {
+                '@type': 'Answer',
+                text: item.answer,
+            },
+        })),
+    }
+})
+
+useHead({
+    script: faqSchema.value
+        ? [
+              {
+                  type: 'application/ld+json',
+                  innerHTML: JSON.stringify(faqSchema.value),
+              },
+          ]
+        : [],
+})
+
 const plans = ref<PricingPlan[]>([])
 const faqs = computed(() => (t('pricing.faq.items') as Array<{ question: string; answer: string }>) || [])
 

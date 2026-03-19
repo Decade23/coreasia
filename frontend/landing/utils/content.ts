@@ -1076,6 +1076,214 @@ const ID_CONTENT = {
       description: 'Halaman registrasi tenant CoreAsia LMS untuk membuat workspace organisasi baru.',
     },
   },
+  // Keyword-targeted SEO pages
+  services: {
+    jasaPembuatanWebsite: {
+      title: 'Jasa Pembuatan Website Profesional',
+      description: 'CoreAsia menyediakan jasa pembuatan website profesional untuk bisnis, UMKM, dan korporasi di Indonesia. Custom design, performa tinggi, dan SEO-ready.',
+      kicker: 'Jasa Website',
+      hero: {
+        title: 'Website profesional yang <span class="ca-gradient-text">membangun kredibilitas</span> bisnis Anda',
+        subtitle: 'CoreAsia membantu Anda memiliki website yang bukan sekadar ada, tapi benar-benar bekerja — cepat, SEO-ready, dan dirancang untuk konversi.',
+        ctaPrimary: 'Konsultasi Gratis',
+        ctaSecondary: 'Lihat Portofolio',
+      },
+      whyUs: {
+        title: 'Mengapa Pilih CoreAsia?',
+        subtitle: 'Bukan sekadar jasa pembuatan website — kami adalah mitra teknologi untuk pertumbuhan bisnis Anda.',
+        items: [
+          {
+            icon: 'lucide:palette',
+            title: 'Design Custom & Responsif',
+            description: 'Setiap website dirancang khusus sesuai brand dan kebutuhan bisnis Anda. Tampil sempurna di semua perangkat.',
+          },
+          {
+            icon: 'lucide:zap',
+            title: 'Performa & Kecepatan Tinggi',
+            description: 'Dibangun dengan teknologi modern untuk kecepatan loading optimal dan pengalaman pengguna yang smooth.',
+          },
+          {
+            icon: 'lucide:search',
+            title: 'SEO-Ready dari Awal',
+            description: 'Struktur kode, meta tags, dan performa dioptimasi agar website Anda mudah ditemukan di Google.',
+          },
+          {
+            icon: 'lucide:shield-check',
+            title: 'Keamanan & Maintenance',
+            description: 'SSL, backup otomatis, dan monitoring keamanan memastikan website Anda selalu aman dan stabil.',
+          },
+          {
+            icon: 'lucide:settings',
+            title: 'Teknologi Modern',
+            description: 'Menggunakan stack terkini seperti Nuxt.js, Vue, Go, dan PostgreSQL untuk hasil yang scalable.',
+          },
+          {
+            icon: 'lucide:headphones',
+            title: 'Support Berkelanjutan',
+            description: 'Tim teknis siap membantu setelah website launch. Tidak ditinggal begitu saja setelah serah terima.',
+          },
+        ],
+      },
+      process: {
+        title: 'Proses Kerja',
+        subtitle: 'Langkah-langkah pembuatan website yang transparan dan terstruktur.',
+        items: [
+          { step: '01', title: 'Konsultasi & Brief', description: 'Diskusi kebutuhan, target audiens, dan tujuan website Anda.' },
+          { step: '02', title: 'Design & Wireframe', description: 'Pembuatan konsep visual dan struktur halaman sebelum development.' },
+          { step: '03', title: 'Development', description: 'Coding dengan teknologi modern, responsif, dan SEO-optimized.' },
+          { step: '04', title: 'Testing & Launch', description: 'Pengujian menyeluruh di semua device dan browser, lalu deploy.' },
+        ],
+      },
+      faq: {
+        title: 'FAQ — Jasa Pembuatan Website',
+        items: [
+          { question: 'Berapa lama proses pembuatan website?', answer: 'Tergantung kompleksitas, umumnya 2-6 minggu untuk website company profile, dan 4-12 minggu untuk web app custom.' },
+          { question: 'Apakah bisa request revisi design?', answer: 'Ya, revisi design termasuk dalam paket. Kami memastikan hasil akhir sesuai dengan kebutuhan Anda.' },
+          { question: 'Apakah website sudah termasuk hosting dan domain?', answer: 'Kami membantu setup hosting dan domain. Biaya hosting dan domain terpisah dan bisa disesuaikan.' },
+          { question: 'Apakah website mobile-friendly?', answer: 'Ya, semua website yang kami buat responsif dan tampil optimal di desktop, tablet, dan smartphone.' },
+          { question: 'Bagaimana dengan maintenance setelah launch?', answer: 'Kami menyediakan paket maintenance bulanan yang mencakup update, backup, dan support teknis.' },
+        ],
+      },
+      cta: {
+        title: 'Siap punya website profesional?',
+        subtitle: 'Konsultasikan kebutuhan website Anda dengan tim CoreAsia. Gratis, tanpa komitmen.',
+        button: 'Hubungi Kami Sekarang',
+      },
+    },
+    webMonitoringDashboard: {
+      title: 'Web Monitoring Dashboard Indonesia',
+      description: 'Pantau performa website Anda dengan dashboard monitoring yang menggabungkan Google Analytics 4, Search Console, leads tracking, dan laporan otomatis.',
+      kicker: 'Web Monitoring',
+      hero: {
+        title: 'Semua data website Anda dalam <span class="ca-gradient-text">satu dashboard</span>',
+        subtitle: 'Berhenti buka banyak tab. Pantau GA4, Search Console, leads, dan performa SEO dari satu tempat yang mudah dipahami.',
+        ctaPrimary: 'Coba Pantau Gratis',
+        ctaSecondary: 'Pelajari Fitur',
+      },
+      features: {
+        title: 'Fitur Lengkap untuk Monitoring Website',
+        items: [
+          {
+            icon: 'lucide:bar-chart-3',
+            title: 'Google Analytics 4 Integration',
+            description: 'Data traffic, user behavior, dan konversi dari GA4 ditampilkan dalam visualisasi yang mudah dibaca.',
+          },
+          {
+            icon: 'lucide:search',
+            title: 'Google Search Console',
+            description: 'Pantau ranking keyword, impressions, clicks, dan indexing status langsung dari dashboard.',
+          },
+          {
+            icon: 'lucide:users',
+            title: 'Leads Management',
+            description: 'Lacak leads dari form website Anda. Terima notifikasi dan kelola pipeline dalam satu tempat.',
+          },
+          {
+            icon: 'lucide:file-text',
+            title: 'Laporan PDF Otomatis',
+            description: 'Generate laporan performa website secara otomatis dan terjadwal. Cocok untuk report ke klien atau manajemen.',
+          },
+          {
+            icon: 'lucide:brain',
+            title: 'AI Performance Assistant',
+            description: 'Dapatkan insight dan rekomendasi dari AI berdasarkan data performa website Anda.',
+          },
+          {
+            icon: 'lucide:webhook',
+            title: 'Webhook & Notifikasi',
+            description: 'Terima notifikasi real-time saat ada leads baru, anomali traffic, atau perubahan ranking.',
+          },
+        ],
+      },
+      audience: {
+        title: 'Cocok untuk Siapa?',
+        items: [
+          { icon: 'lucide:briefcase', title: 'Pemilik Bisnis', description: 'Monitor performa website bisnis Anda tanpa perlu memahami tools analytics yang rumit.' },
+          { icon: 'lucide:palette', title: 'Freelancer & Agensi', description: 'Kelola monitoring website banyak klien dari satu dashboard. Laporan otomatis hemat waktu.' },
+          { icon: 'lucide:megaphone', title: 'Tim Marketing', description: 'Lihat dampak kampanye pada traffic dan leads. Data terintegrasi untuk pengambilan keputusan.' },
+        ],
+      },
+      faq: {
+        title: 'FAQ — Web Monitoring Dashboard',
+        items: [
+          { question: 'Apakah perlu install software?', answer: 'Tidak. Pantau adalah web-based SaaS, cukup login dari browser untuk mengakses dashboard Anda.' },
+          { question: 'Berapa website yang bisa dimonitor?', answer: 'Tergantung paket. Paket Starter mendukung 1 website, paket Professional hingga 5, dan Enterprise unlimited.' },
+          { question: 'Apakah data aman?', answer: 'Ya. Data diproses dengan koneksi terenkripsi dan disimpan di server yang aman. Kami tidak membagikan data Anda ke pihak ketiga.' },
+          { question: 'Bagaimana cara menghubungkan GA4?', answer: 'Cukup otentikasi akun Google Anda dari dashboard Pantau. Proses setup hanya beberapa menit.' },
+        ],
+      },
+      cta: {
+        title: 'Mulai monitoring website Anda',
+        subtitle: 'Coba Pantau gratis dan lihat semua data website Anda dalam satu dashboard.',
+        button: 'Mulai Gratis Sekarang',
+      },
+    },
+    jasaPembuatanAplikasiWeb: {
+      title: 'Jasa Pembuatan Aplikasi Web Custom',
+      description: 'CoreAsia menyediakan jasa pembuatan aplikasi web custom untuk bisnis dan enterprise. Dari CRM, LMS, hingga ERP — dibangun dengan teknologi modern.',
+      kicker: 'Web App Development',
+      hero: {
+        title: 'Aplikasi web custom yang <span class="ca-gradient-text">benar-benar sesuai</span> kebutuhan bisnis',
+        subtitle: 'Berhenti menyesuaikan bisnis Anda dengan software generik. Kami bangun aplikasi web yang dirancang khusus untuk proses dan skala operasi Anda.',
+        ctaPrimary: 'Konsultasi Gratis',
+        ctaSecondary: 'Lihat Produk Kami',
+      },
+      capabilities: {
+        title: 'Apa yang Bisa Kami Bangun?',
+        items: [
+          { icon: 'lucide:layout-dashboard', title: 'Dashboard & Analytics', description: 'Dashboard bisnis custom dengan visualisasi data real-time untuk pengambilan keputusan.' },
+          { icon: 'lucide:users', title: 'CRM & Lead Management', description: 'Sistem CRM yang disesuaikan dengan pipeline dan workflow bisnis Anda.' },
+          { icon: 'lucide:graduation-cap', title: 'LMS & E-Learning', description: 'Platform pembelajaran online dengan sertifikasi, ujian, dan tracking progress.' },
+          { icon: 'lucide:file-stack', title: 'ERP & Operasional', description: 'Sistem manajemen operasional dari inventory, billing, hingga reporting.' },
+          { icon: 'lucide:plug', title: 'API & Integrasi', description: 'Integrasi dengan sistem existing, payment gateway, dan layanan pihak ketiga.' },
+          { icon: 'lucide:smartphone', title: 'Progressive Web App', description: 'Aplikasi web yang bisa diinstall dan bekerja seperti native app di mobile.' },
+        ],
+      },
+      techStack: {
+        title: 'Teknologi yang Kami Gunakan',
+        items: ['Vue.js / Nuxt', 'Go (Golang)', 'PostgreSQL', 'Docker', 'Tailwind CSS', 'REST API', 'MinIO / S3', 'Redis'],
+      },
+      faq: {
+        title: 'FAQ — Jasa Pembuatan Aplikasi Web',
+        items: [
+          { question: 'Berapa biaya pembuatan aplikasi web?', answer: 'Biaya tergantung kompleksitas. Kami menyediakan estimasi setelah sesi konsultasi dan scoping kebutuhan.' },
+          { question: 'Apakah bisa dikembangkan bertahap?', answer: 'Ya, kami mendukung pendekatan MVP (Minimum Viable Product) — launch fitur inti dulu, lalu iterasi berdasarkan feedback.' },
+          { question: 'Bagaimana dengan source code?', answer: 'Source code menjadi milik Anda sepenuhnya setelah proyek selesai dan pembayaran lunas.' },
+          { question: 'Apakah ada garansi?', answer: 'Ya, kami memberikan garansi bug-fix setelah launch. Durasi garansi disesuaikan dengan lingkup proyek.' },
+        ],
+      },
+      cta: {
+        title: 'Punya ide aplikasi web?',
+        subtitle: 'Ceritakan kebutuhan Anda, kami bantu dari konsep hingga deployment.',
+        button: 'Diskusikan Sekarang',
+      },
+    },
+  },
+  // Blog
+  blog: {
+    title: 'Blog & Insight',
+    description: 'Artikel, panduan, dan insight seputar teknologi digital, web development, dan strategi pertumbuhan bisnis.',
+    kicker: 'Blog',
+    hero: {
+      title: 'Insight & panduan untuk <span class="ca-gradient-text">pertumbuhan digital</span>',
+      subtitle: 'Tips, tutorial, dan insight dari tim CoreAsia untuk membantu Anda memahami teknologi dan membuat keputusan bisnis yang lebih baik.',
+    },
+    readMore: 'Baca selengkapnya',
+    readTime: 'menit baca',
+    noArticles: 'Belum ada artikel. Nantikan konten terbaru dari kami.',
+    categories: {
+      all: 'Semua',
+      webDevelopment: 'Web Development',
+      seo: 'SEO & Marketing',
+      business: 'Bisnis & Teknologi',
+      tutorial: 'Tutorial',
+    },
+    cta: {
+      title: 'Butuh solusi digital?',
+      subtitle: 'Hubungi tim CoreAsia untuk konsultasi tentang kebutuhan teknologi bisnis Anda.',
+      button: 'Hubungi Kami',
+    },
+  },
   // Legal pages
   legal: {
     kicker: 'Legal',
@@ -1296,11 +1504,17 @@ const ID_CONTENT = {
       productLinks: [
         { label: 'Pantau', to: '/products/pantau' },
         { label: 'Build by CoreAsia', to: '/products/build' },
+        { label: 'Blog & Insight', to: '/blog' },
       ],
       partnershipLinks: [
         { label: 'SaaS Subscription', to: '/pricing' },
         { label: 'Venture Partnership', to: '/solutions/venture' },
         { label: 'Enterprise Custom', to: '/contact?subject=enterprise' },
+      ],
+      serviceLinks: [
+        { label: 'Jasa Pembuatan Website', to: '/layanan/jasa-pembuatan-website' },
+        { label: 'Web Monitoring Dashboard', to: '/layanan/web-monitoring-dashboard' },
+        { label: 'Jasa Pembuatan Aplikasi Web', to: '/layanan/jasa-pembuatan-aplikasi-web' },
       ],
     },
     trustedBy: {
@@ -2431,6 +2645,164 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
       description: 'CoreAsia contact page for product, pricing, venture, and enterprise consultation.',
     },
   },
+  services: {
+    jasaPembuatanWebsite: {
+      title: 'Professional Website Development Services',
+      description: 'CoreAsia provides professional website development services for businesses, SMEs, and corporations in Indonesia. Custom design, high performance, and SEO-ready.',
+      kicker: 'Web Services',
+      hero: {
+        title: 'Professional websites that <span class="ca-gradient-text">build credibility</span> for your business',
+        subtitle: 'CoreAsia helps you build a website that truly works — fast, SEO-ready, and designed for conversion.',
+        ctaPrimary: 'Free Consultation',
+        ctaSecondary: 'View Portfolio',
+      },
+      whyUs: {
+        title: 'Why Choose CoreAsia?',
+        subtitle: 'Not just website development — we are your technology partner for business growth.',
+        items: [
+          { icon: 'lucide:palette', title: 'Custom & Responsive Design', description: 'Every website is designed specifically for your brand and business needs. Looks perfect on all devices.' },
+          { icon: 'lucide:zap', title: 'High Performance & Speed', description: 'Built with modern technology for optimal loading speed and smooth user experience.' },
+          { icon: 'lucide:search', title: 'SEO-Ready from Day One', description: 'Code structure, meta tags, and performance optimized so your website is easily found on Google.' },
+          { icon: 'lucide:shield-check', title: 'Security & Maintenance', description: 'SSL, automatic backups, and security monitoring ensure your website stays safe and stable.' },
+          { icon: 'lucide:settings', title: 'Modern Technology', description: 'Using cutting-edge stack like Nuxt.js, Vue, Go, and PostgreSQL for scalable results.' },
+          { icon: 'lucide:headphones', title: 'Ongoing Support', description: 'Our technical team is ready to help after launch. You won\'t be left alone after handover.' },
+        ],
+      },
+      process: {
+        title: 'Our Process',
+        subtitle: 'Transparent and structured website development workflow.',
+        items: [
+          { step: '01', title: 'Consultation & Brief', description: 'Discuss your needs, target audience, and website goals.' },
+          { step: '02', title: 'Design & Wireframe', description: 'Create visual concepts and page structure before development.' },
+          { step: '03', title: 'Development', description: 'Coding with modern tech, responsive, and SEO-optimized.' },
+          { step: '04', title: 'Testing & Launch', description: 'Thorough testing across all devices and browsers, then deploy.' },
+        ],
+      },
+      faq: {
+        title: 'FAQ — Website Development Services',
+        items: [
+          { question: 'How long does it take to build a website?', answer: 'Depending on complexity, typically 2-6 weeks for company profile websites, and 4-12 weeks for custom web apps.' },
+          { question: 'Can I request design revisions?', answer: 'Yes, design revisions are included in the package. We ensure the final result meets your needs.' },
+          { question: 'Does it include hosting and domain?', answer: 'We help set up hosting and domain. Hosting and domain costs are separate and customizable.' },
+          { question: 'Is the website mobile-friendly?', answer: 'Yes, all websites we build are responsive and look optimal on desktop, tablet, and smartphone.' },
+          { question: 'What about maintenance after launch?', answer: 'We provide monthly maintenance packages covering updates, backups, and technical support.' },
+        ],
+      },
+      cta: {
+        title: 'Ready for a professional website?',
+        subtitle: 'Discuss your website needs with the CoreAsia team. Free, no commitment.',
+        button: 'Contact Us Now',
+      },
+    },
+    webMonitoringDashboard: {
+      title: 'Web Monitoring Dashboard Indonesia',
+      description: 'Monitor your website performance with a dashboard that combines Google Analytics 4, Search Console, leads tracking, and automated reports.',
+      kicker: 'Web Monitoring',
+      hero: {
+        title: 'All your website data in <span class="ca-gradient-text">one dashboard</span>',
+        subtitle: 'Stop opening multiple tabs. Monitor GA4, Search Console, leads, and SEO performance from one easy-to-understand place.',
+        ctaPrimary: 'Try Pantau Free',
+        ctaSecondary: 'Explore Features',
+      },
+      features: {
+        title: 'Complete Website Monitoring Features',
+        items: [
+          { icon: 'lucide:bar-chart-3', title: 'Google Analytics 4 Integration', description: 'Traffic data, user behavior, and conversions from GA4 displayed in easy-to-read visualizations.' },
+          { icon: 'lucide:search', title: 'Google Search Console', description: 'Monitor keyword rankings, impressions, clicks, and indexing status directly from the dashboard.' },
+          { icon: 'lucide:users', title: 'Leads Management', description: 'Track leads from your website forms. Receive notifications and manage pipeline in one place.' },
+          { icon: 'lucide:file-text', title: 'Automated PDF Reports', description: 'Generate website performance reports automatically and on schedule. Perfect for client or management reporting.' },
+          { icon: 'lucide:brain', title: 'AI Performance Assistant', description: 'Get insights and recommendations from AI based on your website performance data.' },
+          { icon: 'lucide:webhook', title: 'Webhooks & Notifications', description: 'Receive real-time notifications for new leads, traffic anomalies, or ranking changes.' },
+        ],
+      },
+      audience: {
+        title: 'Who Is It For?',
+        items: [
+          { icon: 'lucide:briefcase', title: 'Business Owners', description: 'Monitor your business website performance without needing to understand complex analytics tools.' },
+          { icon: 'lucide:palette', title: 'Freelancers & Agencies', description: 'Manage website monitoring for multiple clients from one dashboard. Automated reports save time.' },
+          { icon: 'lucide:megaphone', title: 'Marketing Teams', description: 'See campaign impact on traffic and leads. Integrated data for better decision making.' },
+        ],
+      },
+      faq: {
+        title: 'FAQ — Web Monitoring Dashboard',
+        items: [
+          { question: 'Do I need to install software?', answer: 'No. Pantau is a web-based SaaS, just log in from your browser to access your dashboard.' },
+          { question: 'How many websites can I monitor?', answer: 'Depends on the plan. Starter supports 1 website, Professional up to 5, and Enterprise unlimited.' },
+          { question: 'Is my data safe?', answer: 'Yes. Data is processed with encrypted connections and stored on secure servers. We do not share your data with third parties.' },
+          { question: 'How do I connect GA4?', answer: 'Simply authenticate your Google account from the Pantau dashboard. Setup takes just a few minutes.' },
+        ],
+      },
+      cta: {
+        title: 'Start monitoring your website',
+        subtitle: 'Try Pantau for free and see all your website data in one dashboard.',
+        button: 'Start Free Now',
+      },
+    },
+    jasaPembuatanAplikasiWeb: {
+      title: 'Custom Web Application Development',
+      description: 'CoreAsia provides custom web application development for businesses and enterprises. From CRM, LMS, to ERP — built with modern technology.',
+      kicker: 'Web App Development',
+      hero: {
+        title: 'Custom web apps that <span class="ca-gradient-text">truly fit</span> your business needs',
+        subtitle: 'Stop adapting your business to generic software. We build web applications designed specifically for your processes and operational scale.',
+        ctaPrimary: 'Free Consultation',
+        ctaSecondary: 'View Our Products',
+      },
+      capabilities: {
+        title: 'What Can We Build?',
+        items: [
+          { icon: 'lucide:layout-dashboard', title: 'Dashboards & Analytics', description: 'Custom business dashboards with real-time data visualization for decision making.' },
+          { icon: 'lucide:users', title: 'CRM & Lead Management', description: 'CRM systems tailored to your business pipeline and workflow.' },
+          { icon: 'lucide:graduation-cap', title: 'LMS & E-Learning', description: 'Online learning platforms with certification, exams, and progress tracking.' },
+          { icon: 'lucide:file-stack', title: 'ERP & Operations', description: 'Operational management systems from inventory, billing, to reporting.' },
+          { icon: 'lucide:plug', title: 'API & Integration', description: 'Integration with existing systems, payment gateways, and third-party services.' },
+          { icon: 'lucide:smartphone', title: 'Progressive Web App', description: 'Web applications that can be installed and work like native apps on mobile.' },
+        ],
+      },
+      techStack: {
+        title: 'Technologies We Use',
+        items: ['Vue.js / Nuxt', 'Go (Golang)', 'PostgreSQL', 'Docker', 'Tailwind CSS', 'REST API', 'MinIO / S3', 'Redis'],
+      },
+      faq: {
+        title: 'FAQ — Web Application Development',
+        items: [
+          { question: 'How much does web app development cost?', answer: 'Cost depends on complexity. We provide estimates after consultation and requirements scoping.' },
+          { question: 'Can it be developed in phases?', answer: 'Yes, we support MVP (Minimum Viable Product) approach — launch core features first, then iterate based on feedback.' },
+          { question: 'What about the source code?', answer: 'Source code becomes fully yours after project completion and full payment.' },
+          { question: 'Is there a warranty?', answer: 'Yes, we provide a bug-fix warranty after launch. Warranty duration is adjusted based on project scope.' },
+        ],
+      },
+      cta: {
+        title: 'Have a web app idea?',
+        subtitle: 'Tell us your needs, we help from concept to deployment.',
+        button: 'Discuss Now',
+      },
+    },
+  },
+  blog: {
+    title: 'Blog & Insights',
+    description: 'Articles, guides, and insights about digital technology, web development, and business growth strategies.',
+    kicker: 'Blog',
+    hero: {
+      title: 'Insights & guides for <span class="ca-gradient-text">digital growth</span>',
+      subtitle: 'Tips, tutorials, and insights from the CoreAsia team to help you understand technology and make better business decisions.',
+    },
+    readMore: 'Read more',
+    readTime: 'min read',
+    noArticles: 'No articles yet. Stay tuned for our latest content.',
+    categories: {
+      all: 'All',
+      webDevelopment: 'Web Development',
+      seo: 'SEO & Marketing',
+      business: 'Business & Technology',
+      tutorial: 'Tutorial',
+    },
+    cta: {
+      title: 'Need a digital solution?',
+      subtitle: 'Contact CoreAsia to discuss your business technology needs.',
+      button: 'Contact Us',
+    },
+  },
   legal: {
     kicker: 'Legal',
     privacy: {
@@ -2632,11 +3004,17 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
       productLinks: [
         { label: 'Pantau', to: '/products/pantau' },
         { label: 'Build by CoreAsia', to: '/products/build' },
+        { label: 'Blog & Insights', to: '/blog' },
       ],
       partnershipLinks: [
         { label: 'SaaS Subscription', to: '/pricing' },
         { label: 'Venture Partnership', to: '/solutions/venture' },
         { label: 'Enterprise Custom', to: '/contact?subject=enterprise' },
+      ],
+      serviceLinks: [
+        { label: 'Website Development', to: '/layanan/jasa-pembuatan-website' },
+        { label: 'Web Monitoring Dashboard', to: '/layanan/web-monitoring-dashboard' },
+        { label: 'Web App Development', to: '/layanan/jasa-pembuatan-aplikasi-web' },
       ],
     },
     liveTicker: {
