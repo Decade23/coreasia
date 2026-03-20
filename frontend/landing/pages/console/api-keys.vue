@@ -17,11 +17,13 @@ const formData = ref({
   description: '',
 })
 
+const showKeyValue = ref(false)
+
 const providerOptions = [
   { label: 'Claude (Anthropic)', value: 'claude' },
   { label: 'OpenAI', value: 'openai' },
+  { label: 'Groq', value: 'groq' },
   { label: 'Google Gemini', value: 'gemini' },
-  { label: 'Mistral', value: 'mistral' },
   { label: 'Lainnya', value: 'other' },
 ]
 
@@ -207,8 +209,8 @@ const formatDate = (d: string) => new Date(d).toLocaleDateString('id-ID', { year
             <Icon name="lucide:key-round" class="mr-2 inline h-5 w-5 text-amber-400" />
             {{ editingKey ? 'Edit API Key' : 'Tambah API Key' }}
           </h3>
-          <form class="mt-4 space-y-3" autocomplete="off" data-form-type="other" data-lpignore="true" @submit.prevent="handleSubmit">
-            <BaseInput id="apikey-name" v-model="formData.name" label="Nama" placeholder="Claude AI Production" required autocomplete="one-time-code" data-1p-ignore data-lpignore="true" />
+          <form class="mt-4 space-y-3" autocomplete="off" data-form-type="other" @submit.prevent="handleSubmit">
+            <BaseInput id="apikey-name" v-model="formData.name" label="Nama" placeholder="Claude AI Production" required autocomplete="off" />
             <SearchSelect
               id="apikey-provider"
               v-model="formData.provider"
@@ -217,23 +219,36 @@ const formatDate = (d: string) => new Date(d).toLocaleDateString('id-ID', { year
               required
             />
             <div>
-              <BaseInput
-                id="apikey-value"
-                v-model="formData.key_value"
-                :label="editingKey ? 'API Key (kosongkan jika tidak diubah)' : 'API Key'"
-                type="password"
-                :placeholder="editingKey ? '••••••••' : 'sk-ant-api03-...'"
-                :required="!editingKey"
-                input-class="font-mono tracking-wider"
-                autocomplete="one-time-code"
-                data-1p-ignore
-                data-lpignore="true"
-              />
+              <label for="apikey-value" class="ca-field-label">
+                {{ editingKey ? 'API Key (kosongkan jika tidak diubah)' : 'API Key' }}
+                <span v-if="!editingKey" class="ca-required">*</span>
+              </label>
+              <div class="relative">
+                <input
+                  id="apikey-value"
+                  v-model="formData.key_value"
+                  type="text"
+                  :class="['ca-field-control font-mono tracking-wider border-[color:var(--ca-border)] focus:border-amber-300/40', !showKeyValue ? 'ca-text-masked' : '']"
+                  :placeholder="editingKey ? '••••••••' : 'sk-ant-api03-...'"
+                  :required="!editingKey"
+                  autocomplete="off"
+                  data-1p-ignore
+                  data-lpignore="true"
+                  spellcheck="false"
+                />
+                <button
+                  type="button"
+                  class="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--ca-subtle)] hover:text-[var(--ca-muted)] transition"
+                  @click="showKeyValue = !showKeyValue"
+                >
+                  <Icon :name="showKeyValue ? 'lucide:eye-off' : 'lucide:eye'" class="h-4 w-4" />
+                </button>
+              </div>
               <p class="mt-1 text-[0.65rem] text-[var(--ca-subtle)]">
                 Key disimpan terenkripsi dan tidak bisa dilihat setelah disimpan
               </p>
             </div>
-            <BaseInput id="key-desc" v-model="formData.description" label="Deskripsi (opsional)" placeholder="Untuk generate artikel harian" />
+            <BaseInput id="apikey-desc" v-model="formData.description" label="Deskripsi (opsional)" placeholder="Untuk generate artikel harian" autocomplete="off" />
 
             <p v-if="error" class="text-sm text-rose-400">{{ error }}</p>
 

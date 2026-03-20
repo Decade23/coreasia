@@ -24,8 +24,6 @@
         v-model="searchQuery"
         type="text"
         autocomplete="off"
-        data-1p-ignore
-        data-lpignore="true"
         role="combobox"
         :placeholder="selectedLabel || placeholder"
         class="w-full bg-transparent p-0 text-sm leading-normal text-[var(--ca-text)] outline-none ring-0 placeholder:transition-colors focus:outline-none focus:ring-0 focus-visible:outline-none"
@@ -45,7 +43,6 @@
         @keydown.up.prevent="navigateOptions(-1)"
         @keydown.enter.prevent="selectHighlighted"
         @keydown.esc="closeDropdown"
-        autocomplete="off"
       />
 
       <div class="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[var(--ca-subtle)]">

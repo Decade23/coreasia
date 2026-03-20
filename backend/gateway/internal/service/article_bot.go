@@ -18,8 +18,7 @@ import (
 )
 
 // ArticleBot generates articles automatically using AI.
-// It checks existing articles to avoid duplicates and picks topics
-// relevant to CoreAsia's services.
+// Supports multiple providers: claude, openai, groq, gemini.
 type ArticleBot struct {
 	cfg         config.AIConfig
 	articleRepo *repository.ArticleRepo
@@ -78,17 +77,53 @@ var topicPool = []struct {
 	}},
 }
 
-// Run picks a topic not yet written, generates the article, and saves it as draft.
-func (b *ArticleBot) Run(ctx context.Context) error {
-	// Load API key from DB first, fallback to env config
-	apiKey := b.cfg.APIKey
-	if dbKey, err := b.apiKeyRepo.FindActiveByProvider(ctx, "claude"); err == nil && dbKey != nil {
+// RunWithConfig runs the bot with provider/model from bot schedule config.
+func (b *ArticleBot) RunWithConfig(ctx context.Context, botConfig json.RawMessage) error {
+	// Parse bot config for provider/model overrides
+	var cfg struct {
+		Provider  string `json:"provider"`
+		Model     string `json:"model"`
+		Tone      string `json:"tone"`
+		Language  string `json:"language"`
+		WordCount int    `json:"word_count"`
+	}
+	if len(botConfig) > 0 {
+		_ = json.Unmarshal(botConfig, &cfg)
+	}
+
+	// Defaults
+	provider := b.cfg.Provider
+	aiModel := b.cfg.Model
+	if cfg.Provider != "" {
+		provider = cfg.Provider
+	}
+	if cfg.Model != "" {
+		aiModel = cfg.Model
+	}
+	tone := "professional"
+	if cfg.Tone != "" {
+		tone = cfg.Tone
+	}
+	language := "id"
+	if cfg.Language != "" {
+		language = cfg.Language
+	}
+	wordCount := 1200
+	if cfg.WordCount > 0 {
+		wordCount = cfg.WordCount
+	}
+
+	// Load API key from DB (by provider), fallback to env
+	apiKey := ""
+	if dbKey, err := b.apiKeyRepo.FindActiveByProvider(ctx, provider); err == nil && dbKey != nil {
 		apiKey = dbKey.KeyValue
 	}
 	if apiKey == "" {
-		return fmt.Errorf("AI API key belum dikonfigurasi (env atau DB)")
+		apiKey = b.cfg.APIKey
 	}
-	b.cfg.APIKey = apiKey // use for callClaudeAPI
+	if apiKey == "" {
+		return fmt.Errorf("API key belum dikonfigurasi untuk provider %q (env atau DB)", provider)
+	}
 
 	// Fetch existing article titles to avoid duplicates
 	existing, _, err := b.articleRepo.FindAll(ctx, model.ArticleListFilter{Page: 1, PerPage: 500})
@@ -101,27 +136,26 @@ func (b *ArticleBot) Run(ctx context.Context) error {
 		existingTitles[strings.ToLower(a.Title)] = true
 	}
 
-	// Pick a random topic that doesn't exist yet
 	topic, category := b.pickTopic(existingTitles)
 	if topic == "" {
 		slog.Info("article-bot: semua topik sudah ditulis, skip")
 		return nil
 	}
 
-	slog.Info("article-bot: generating article", "topic", topic, "category", category)
+	slog.Info("article-bot: generating article", "topic", topic, "category", category, "provider", provider, "model", aiModel)
 
 	req := model.AIGenerateRequest{
 		Topic:     topic,
 		Keywords:  []string{category, "coreasia", "bisnis digital"},
-		Tone:      "professional",
-		Language:  "id",
-		WordCount: 1200,
+		Tone:      tone,
+		Language:  language,
+		WordCount: wordCount,
 		Category:  category,
 	}
 
-	result, err := b.callClaudeAPI(req)
+	result, err := b.callAI(provider, aiModel, apiKey, req)
 	if err != nil {
-		return fmt.Errorf("gagal generate artikel: %w", err)
+		return fmt.Errorf("gagal generate artikel via %s: %w", provider, err)
 	}
 
 	// Save as draft
@@ -143,17 +177,28 @@ func (b *ArticleBot) Run(ctx context.Context) error {
 		return fmt.Errorf("gagal simpan artikel: %w", err)
 	}
 
-	desc := fmt.Sprintf("Bot auto-generated artikel: %s", article.Title)
+	desc := fmt.Sprintf("Bot auto-generated artikel via %s/%s: %s", provider, aiModel, article.Title)
 	botName := "ArticleBot"
 	articleID := article.ID.String()
 	b.auditRepo.LogAction(ctx, nil, &botName, "ai_generate", "articles", &articleID, &desc, "system")
 
-	slog.Info("article-bot: artikel berhasil dibuat", "title", article.Title, "id", article.ID)
+	slog.Info("article-bot: artikel berhasil dibuat", "title", article.Title, "id", article.ID, "provider", provider)
 	return nil
 }
 
+// Run is the legacy entrypoint — uses default config.
+func (b *ArticleBot) Run(ctx context.Context) error {
+	defaultConfig, _ := json.Marshal(map[string]interface{}{
+		"provider":   b.cfg.Provider,
+		"model":      b.cfg.Model,
+		"tone":       "professional",
+		"language":   "id",
+		"word_count": 1200,
+	})
+	return b.RunWithConfig(ctx, defaultConfig)
+}
+
 func (b *ArticleBot) pickTopic(existing map[string]bool) (string, string) {
-	// Shuffle categories
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	indices := r.Perm(len(topicPool))
 
@@ -170,7 +215,25 @@ func (b *ArticleBot) pickTopic(existing map[string]bool) (string, string) {
 	return "", ""
 }
 
-func (b *ArticleBot) callClaudeAPI(req model.AIGenerateRequest) (*model.AIGenerateResponse, error) {
+// callAI dispatches to the correct provider.
+func (b *ArticleBot) callAI(provider, aiModel, apiKey string, req model.AIGenerateRequest) (*model.AIGenerateResponse, error) {
+	systemPrompt, userPrompt := b.buildPrompts(req)
+
+	switch provider {
+	case "claude", "anthropic":
+		return b.callClaude(aiModel, apiKey, systemPrompt, userPrompt)
+	case "openai":
+		return b.callOpenAI(aiModel, apiKey, systemPrompt, userPrompt)
+	case "groq":
+		return b.callOpenAI(aiModel, apiKey, systemPrompt, userPrompt) // Groq uses OpenAI-compatible API
+	case "gemini":
+		return b.callGemini(aiModel, apiKey, systemPrompt, userPrompt)
+	default:
+		return nil, fmt.Errorf("provider %q tidak didukung", provider)
+	}
+}
+
+func (b *ArticleBot) buildPrompts(req model.AIGenerateRequest) (string, string) {
 	lang := "Bahasa Indonesia"
 	if req.Language == "en" {
 		lang = "English"
@@ -211,43 +274,39 @@ Berikan response dalam format JSON:
 
 Hanya berikan JSON, tanpa penjelasan tambahan.`, req.Topic, keywords, req.Category, req.WordCount)
 
+	return systemPrompt, userPrompt
+}
+
+func (b *ArticleBot) parseArticleJSON(raw []byte) (*model.AIGenerateResponse, error) {
+	text := string(raw)
+	text = strings.TrimPrefix(text, "```json")
+	text = strings.TrimPrefix(text, "```")
+	text = strings.TrimSuffix(text, "```")
+	text = strings.TrimSpace(text)
+
+	var result model.AIGenerateResponse
+	if err := json.Unmarshal([]byte(text), &result); err != nil {
+		return nil, fmt.Errorf("parsing AI article JSON: %w", err)
+	}
+	return &result, nil
+}
+
+// --- Provider implementations ---
+
+func (b *ArticleBot) callClaude(aiModel, apiKey, systemPrompt, userPrompt string) (*model.AIGenerateResponse, error) {
 	body := map[string]interface{}{
-		"model":      b.cfg.Model,
+		"model":      aiModel,
 		"max_tokens": 4096,
-		"messages": []map[string]string{
-			{"role": "user", "content": userPrompt},
-		},
-		"system": systemPrompt,
+		"messages":   []map[string]string{{"role": "user", "content": userPrompt}},
+		"system":     systemPrompt,
 	}
 
-	jsonBody, err := json.Marshal(body)
+	respBody, err := b.httpPost("https://api.anthropic.com/v1/messages", apiKey, body, map[string]string{
+		"x-api-key":         apiKey,
+		"anthropic-version":  "2023-06-01",
+	})
 	if err != nil {
-		return nil, fmt.Errorf("marshaling request: %w", err)
-	}
-
-	httpReq, err := http.NewRequestWithContext(context.Background(), "POST", "https://api.anthropic.com/v1/messages", bytes.NewReader(jsonBody))
-	if err != nil {
-		return nil, fmt.Errorf("creating request: %w", err)
-	}
-
-	httpReq.Header.Set("Content-Type", "application/json")
-	httpReq.Header.Set("x-api-key", b.cfg.APIKey)
-	httpReq.Header.Set("anthropic-version", "2023-06-01")
-
-	resp, err := http.DefaultClient.Do(httpReq)
-	if err != nil {
-		return nil, fmt.Errorf("calling Claude API: %w", err)
-	}
-	defer resp.Body.Close()
-
-	respBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("reading response: %w", err)
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		slog.Error("Claude API error", "status", resp.StatusCode, "body", string(respBody))
-		return nil, fmt.Errorf("Claude API returned status %d", resp.StatusCode)
+		return nil, err
 	}
 
 	var claudeResp struct {
@@ -258,21 +317,123 @@ Hanya berikan JSON, tanpa penjelasan tambahan.`, req.Topic, keywords, req.Catego
 	if err := json.Unmarshal(respBody, &claudeResp); err != nil {
 		return nil, fmt.Errorf("parsing Claude response: %w", err)
 	}
-
 	if len(claudeResp.Content) == 0 {
 		return nil, fmt.Errorf("empty response from Claude")
 	}
 
-	text := claudeResp.Content[0].Text
-	text = strings.TrimPrefix(text, "```json")
-	text = strings.TrimPrefix(text, "```")
-	text = strings.TrimSuffix(text, "```")
-	text = strings.TrimSpace(text)
+	return b.parseArticleJSON([]byte(claudeResp.Content[0].Text))
+}
 
-	var result model.AIGenerateResponse
-	if err := json.Unmarshal([]byte(text), &result); err != nil {
-		return nil, fmt.Errorf("parsing AI article JSON: %w", err)
+func (b *ArticleBot) callOpenAI(aiModel, apiKey, systemPrompt, userPrompt string) (*model.AIGenerateResponse, error) {
+	// OpenAI-compatible API (also works for Groq)
+	baseURL := "https://api.openai.com/v1/chat/completions"
+	if strings.Contains(aiModel, "llama") || strings.Contains(aiModel, "qwen") || strings.Contains(aiModel, "mixtral") {
+		baseURL = "https://api.groq.com/openai/v1/chat/completions"
 	}
 
-	return &result, nil
+	body := map[string]interface{}{
+		"model":      aiModel,
+		"max_tokens": 4096,
+		"messages": []map[string]string{
+			{"role": "system", "content": systemPrompt},
+			{"role": "user", "content": userPrompt},
+		},
+	}
+
+	respBody, err := b.httpPost(baseURL, apiKey, body, map[string]string{
+		"Authorization": "Bearer " + apiKey,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var openaiResp struct {
+		Choices []struct {
+			Message struct {
+				Content string `json:"content"`
+			} `json:"message"`
+		} `json:"choices"`
+	}
+	if err := json.Unmarshal(respBody, &openaiResp); err != nil {
+		return nil, fmt.Errorf("parsing OpenAI response: %w", err)
+	}
+	if len(openaiResp.Choices) == 0 {
+		return nil, fmt.Errorf("empty response from OpenAI")
+	}
+
+	return b.parseArticleJSON([]byte(openaiResp.Choices[0].Message.Content))
+}
+
+func (b *ArticleBot) callGemini(aiModel, apiKey, systemPrompt, userPrompt string) (*model.AIGenerateResponse, error) {
+	url := fmt.Sprintf("https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s", aiModel, apiKey)
+
+	body := map[string]interface{}{
+		"system_instruction": map[string]interface{}{
+			"parts": []map[string]string{{"text": systemPrompt}},
+		},
+		"contents": []map[string]interface{}{
+			{"parts": []map[string]string{{"text": userPrompt}}},
+		},
+		"generationConfig": map[string]interface{}{
+			"maxOutputTokens": 4096,
+		},
+	}
+
+	respBody, err := b.httpPost(url, "", body, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var geminiResp struct {
+		Candidates []struct {
+			Content struct {
+				Parts []struct {
+					Text string `json:"text"`
+				} `json:"parts"`
+			} `json:"content"`
+		} `json:"candidates"`
+	}
+	if err := json.Unmarshal(respBody, &geminiResp); err != nil {
+		return nil, fmt.Errorf("parsing Gemini response: %w", err)
+	}
+	if len(geminiResp.Candidates) == 0 || len(geminiResp.Candidates[0].Content.Parts) == 0 {
+		return nil, fmt.Errorf("empty response from Gemini")
+	}
+
+	return b.parseArticleJSON([]byte(geminiResp.Candidates[0].Content.Parts[0].Text))
+}
+
+func (b *ArticleBot) httpPost(url, _ string, body interface{}, headers map[string]string) ([]byte, error) {
+	jsonBody, err := json.Marshal(body)
+	if err != nil {
+		return nil, fmt.Errorf("marshaling request: %w", err)
+	}
+
+	httpReq, err := http.NewRequestWithContext(context.Background(), "POST", url, bytes.NewReader(jsonBody))
+	if err != nil {
+		return nil, fmt.Errorf("creating request: %w", err)
+	}
+
+	httpReq.Header.Set("Content-Type", "application/json")
+	for k, v := range headers {
+		httpReq.Header.Set(k, v)
+	}
+
+	resp, err := http.DefaultClient.Do(httpReq)
+	if err != nil {
+		return nil, fmt.Errorf("HTTP request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("reading response: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		slog.Error("AI API error", "status", resp.StatusCode, "body", string(respBody))
+		return nil, fmt.Errorf("AI API returned status %d", resp.StatusCode)
+	}
+
+	return respBody, nil
 }

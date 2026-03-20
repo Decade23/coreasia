@@ -14,7 +14,11 @@ const formData = ref({
   bot_type: 'article_generator',
   schedule: '08:00',
   timezone: 'Asia/Jakarta',
-  config: '{}',
+  provider: 'claude',
+  model: '',
+  tone: 'professional',
+  language: 'id',
+  word_count: 1200,
 })
 
 const botTypeOptions = [
@@ -28,32 +32,94 @@ const timezoneOptions = [
   { label: 'UTC', value: 'UTC' },
 ]
 
-onMounted(() => fetchBots())
+const providerOptions = [
+  { label: 'Claude (Anthropic)', value: 'claude' },
+  { label: 'OpenAI', value: 'openai' },
+  { label: 'Groq', value: 'groq' },
+  { label: 'Google Gemini', value: 'gemini' },
+]
+
+const modelsByProvider: Record<string, { label: string; value: string }[]> = {
+  claude: [
+    { label: 'Claude Sonnet 4.6', value: 'claude-sonnet-4-6-20250514' },
+    { label: 'Claude Haiku 4.5 - Hemat', value: 'claude-haiku-4-5-20251001' },
+    { label: 'Claude Opus 4.6 - Premium', value: 'claude-opus-4-6-20250515' },
+  ],
+  openai: [
+    { label: 'GPT-4.1 - Terbaik', value: 'gpt-4.1' },
+    { label: 'GPT-4.1 Mini - Hemat', value: 'gpt-4.1-mini' },
+    { label: 'GPT-4.1 Nano - Tercepat', value: 'gpt-4.1-nano' },
+  ],
+  groq: [
+    { label: 'Llama 4 Scout (17B) - Cepat', value: 'meta-llama/llama-4-scout-17b-16e-instruct' },
+    { label: 'Llama 4 Maverick (128E) - Kuat', value: 'meta-llama/llama-4-maverick-17b-128e-instruct' },
+    { label: 'Llama 3.3 70B - Serbaguna', value: 'llama-3.3-70b-versatile' },
+    { label: 'Qwen3 32B - Reasoning', value: 'qwen/qwen3-32b' },
+  ],
+  gemini: [
+    { label: 'Gemini 2.5 Flash - Cepat', value: 'gemini-2.5-flash' },
+    { label: 'Gemini 2.5 Pro - Terbaik', value: 'gemini-2.5-pro' },
+  ],
+}
+
+const toneOptions = [
+  { label: 'Profesional', value: 'professional' },
+  { label: 'Kasual', value: 'casual' },
+  { label: 'Informatif', value: 'informative' },
+]
+
+const languageOptions = [
+  { label: 'Bahasa Indonesia', value: 'id' },
+  { label: 'English', value: 'en' },
+]
+
+const filteredModels = computed(() => modelsByProvider[formData.value.provider] || [])
+
+watch(() => formData.value.provider, () => {
+  const models = modelsByProvider[formData.value.provider]
+  formData.value.model = models?.[0]?.value || ''
+})
+
+onMounted(() => {
+  fetchBots()
+  // Set default model
+  formData.value.model = modelsByProvider.claude[0].value
+})
 
 const openCreate = () => {
   editingBot.value = null
-  formData.value = { name: '', bot_type: 'article_generator', schedule: '08:00', timezone: 'Asia/Jakarta', config: '{}' }
+  formData.value = {
+    name: '', bot_type: 'article_generator', schedule: '08:00', timezone: 'Asia/Jakarta',
+    provider: 'claude', model: modelsByProvider.claude[0].value,
+    tone: 'professional', language: 'id', word_count: 1200,
+  }
   showFormModal.value = true
 }
 
 const openEdit = (b: any) => {
   editingBot.value = b
+  const cfg = typeof b.config === 'string' ? JSON.parse(b.config) : (b.config || {})
   formData.value = {
     name: b.name,
     bot_type: b.bot_type,
     schedule: b.schedule,
     timezone: b.timezone,
-    config: JSON.stringify(b.config, null, 2),
+    provider: cfg.provider || 'claude',
+    model: cfg.model || modelsByProvider.claude[0].value,
+    tone: cfg.tone || 'professional',
+    language: cfg.language || 'id',
+    word_count: cfg.word_count || 1200,
   }
   showFormModal.value = true
 }
 
 const handleSubmit = async () => {
-  let configParsed: any
-  try {
-    configParsed = JSON.parse(formData.value.config)
-  } catch {
-    configParsed = {}
+  const configParsed = {
+    provider: formData.value.provider,
+    model: formData.value.model,
+    tone: formData.value.tone,
+    language: formData.value.language,
+    word_count: formData.value.word_count,
   }
 
   let ok: boolean
@@ -66,7 +132,10 @@ const handleSubmit = async () => {
     })
   } else {
     ok = await createBot({
-      ...formData.value,
+      name: formData.value.name,
+      bot_type: formData.value.bot_type,
+      schedule: formData.value.schedule,
+      timezone: formData.value.timezone,
       config: configParsed,
     })
   }
@@ -170,6 +239,12 @@ const formatDate = (d: string | null) => {
               </div>
               <div class="flex flex-wrap items-center gap-2 text-xs text-[var(--ca-muted)]">
                 <span class="rounded bg-[var(--ca-panel-bg-strong)] px-1.5 py-0.5 font-mono text-[0.65rem]">{{ b.bot_type }}</span>
+                <span v-if="b.config?.provider" class="rounded bg-[var(--ca-panel-bg-strong)] px-1.5 py-0.5 text-[0.65rem]">
+                  {{ providerOptions.find(p => p.value === b.config.provider)?.label || b.config.provider }}
+                </span>
+                <span v-if="b.config?.model" class="rounded bg-[var(--ca-panel-bg-strong)] px-1.5 py-0.5 font-mono text-[0.65rem]">
+                  {{ b.config.model.split('/').pop() }}
+                </span>
                 <span>
                   <Icon name="lucide:clock" class="mr-0.5 inline h-3 w-3" />
                   {{ b.schedule }} {{ b.timezone === 'Asia/Jakarta' ? 'WIB' : b.timezone }}
@@ -269,7 +344,40 @@ const formatDate = (d: string | null) => {
                 required
               />
             </div>
-            <BaseTextarea id="bot-config" v-model="formData.config" label="Config (JSON)" :rows="3" placeholder='{"tone": "professional"}' />
+
+            <!-- AI Provider & Model -->
+            <p class="text-[0.65rem] font-semibold uppercase tracking-widest text-[var(--ca-subtle)] pt-2">Konfigurasi AI</p>
+            <div class="grid gap-3 sm:grid-cols-2">
+              <SearchSelect
+                id="bot-provider"
+                v-model="formData.provider"
+                label="Provider"
+                :options="providerOptions"
+                required
+              />
+              <SearchSelect
+                id="bot-model"
+                v-model="formData.model"
+                label="Model"
+                :options="filteredModels"
+                required
+              />
+            </div>
+            <div class="grid gap-3 sm:grid-cols-3">
+              <SearchSelect
+                id="bot-tone"
+                v-model="formData.tone"
+                label="Tone"
+                :options="toneOptions"
+              />
+              <SearchSelect
+                id="bot-language"
+                v-model="formData.language"
+                label="Bahasa"
+                :options="languageOptions"
+              />
+              <BaseInput id="bot-wordcount" v-model.number="formData.word_count" label="Jumlah Kata" type="number" placeholder="1200" autocomplete="off" />
+            </div>
 
             <p v-if="error" class="text-sm text-rose-400">{{ error }}</p>
 

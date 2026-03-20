@@ -400,6 +400,11 @@ a {
         color: var(--ca-subtle);
     }
 
+    .ca-text-masked {
+        -webkit-text-security: disc;
+        text-security: disc;
+    }
+
     .ca-field-dropdown {
         border: 1px solid var(--ca-border);
         background: color-mix(in srgb, var(--ca-surface) 94%, transparent);
