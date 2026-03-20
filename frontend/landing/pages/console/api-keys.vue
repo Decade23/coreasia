@@ -18,6 +18,7 @@ const formData = ref({
 })
 
 const showKeyValue = ref(false)
+const changingKey = ref(false)
 
 const providerOptions = [
   { label: 'Claude (Anthropic)', value: 'claude' },
@@ -31,12 +32,16 @@ onMounted(() => fetchKeys())
 
 const openCreate = () => {
   editingKey.value = null
+  changingKey.value = false
+  showKeyValue.value = false
   formData.value = { name: '', provider: 'claude', key_value: '', description: '' }
   showFormModal.value = true
 }
 
 const openEdit = (k: any) => {
   editingKey.value = k
+  changingKey.value = false
+  showKeyValue.value = false
   formData.value = {
     name: k.name,
     provider: k.provider,
@@ -219,21 +224,36 @@ const formatDate = (d: string) => new Date(d).toLocaleDateString('id-ID', { year
               required
             />
             <div>
-              <label for="apikey-value" class="ca-field-label">
-                {{ editingKey ? 'API Key (kosongkan jika tidak diubah)' : 'API Key' }}
+              <label class="ca-field-label">
+                API Key
                 <span v-if="!editingKey" class="ca-required">*</span>
               </label>
-              <div class="relative">
+
+              <!-- Edit mode: show masked key + change button -->
+              <div v-if="editingKey && !changingKey" class="flex items-center gap-2">
+                <div class="ca-field-control flex-1 flex items-center gap-2 border-[color:var(--ca-border)]">
+                  <Icon name="lucide:shield-check" class="h-4 w-4 text-emerald-400 shrink-0" />
+                  <span class="font-mono text-sm text-[var(--ca-muted)]">{{ editingKey.key_masked || '••••••••' }}</span>
+                </div>
+                <button
+                  type="button"
+                  class="shrink-0 rounded-lg border border-amber-400/30 px-3 py-2.5 text-xs font-semibold text-amber-400 hover:bg-amber-500/10 transition"
+                  @click="changingKey = true"
+                >
+                  Ganti Key
+                </button>
+              </div>
+
+              <!-- Create mode or changing key: show input -->
+              <div v-else class="relative">
                 <input
                   id="apikey-value"
                   v-model="formData.key_value"
                   type="text"
-                  :class="['ca-field-control font-mono tracking-wider border-[color:var(--ca-border)] focus:border-amber-300/40', !showKeyValue ? 'ca-text-masked' : '']"
-                  :placeholder="editingKey ? '••••••••' : 'sk-ant-api03-...'"
+                  :class="['ca-field-control font-mono tracking-wider border-[color:var(--ca-border)] focus:border-amber-300/40 pr-10', !showKeyValue ? 'ca-text-masked' : '']"
+                  :placeholder="editingKey ? 'Masukkan key baru...' : 'sk-ant-api03-...'"
                   :required="!editingKey"
                   autocomplete="off"
-                  data-1p-ignore
-                  data-lpignore="true"
                   spellcheck="false"
                 />
                 <button
@@ -244,8 +264,9 @@ const formatDate = (d: string) => new Date(d).toLocaleDateString('id-ID', { year
                   <Icon :name="showKeyValue ? 'lucide:eye-off' : 'lucide:eye'" class="h-4 w-4" />
                 </button>
               </div>
+
               <p class="mt-1 text-[0.65rem] text-[var(--ca-subtle)]">
-                Key disimpan terenkripsi dan tidak bisa dilihat setelah disimpan
+                {{ editingKey && !changingKey ? 'Key tersimpan aman. Klik "Ganti Key" untuk mengubah.' : 'Key disimpan terenkripsi dan tidak bisa dilihat setelah disimpan' }}
               </p>
             </div>
             <BaseInput id="apikey-desc" v-model="formData.description" label="Deskripsi (opsional)" placeholder="Untuk generate artikel harian" autocomplete="off" />
