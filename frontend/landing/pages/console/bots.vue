@@ -111,6 +111,16 @@ const statusColor = (status: string) => {
   return map[status] || map.idle
 }
 
+const statusLabel = (status: string) => {
+  const map: Record<string, string> = {
+    idle: 'Menunggu',
+    running: 'Berjalan',
+    success: 'Berhasil',
+    error: 'Gagal',
+  }
+  return map[status] || status
+}
+
 const formatDate = (d: string | null) => {
   if (!d) return '-'
   return new Date(d).toLocaleString('id-ID', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
@@ -149,7 +159,15 @@ const formatDate = (d: string | null) => {
               <Icon name="lucide:bot" class="h-5 w-5" :class="b.is_active ? 'text-emerald-400' : 'text-[var(--ca-subtle)]'" />
             </div>
             <div>
-              <h3 class="font-display font-semibold text-[var(--ca-text)]">{{ b.name }}</h3>
+              <div class="flex items-center gap-2">
+                <h3 class="font-display font-semibold text-[var(--ca-text)]">{{ b.name }}</h3>
+                <span
+                  class="rounded-full px-2 py-0.5 text-[0.6rem] font-bold uppercase"
+                  :class="b.is_active ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-500/10 text-[var(--ca-subtle)]'"
+                >
+                  {{ b.is_active ? 'Aktif' : 'Nonaktif' }}
+                </span>
+              </div>
               <div class="flex flex-wrap items-center gap-2 text-xs text-[var(--ca-muted)]">
                 <span class="rounded bg-[var(--ca-panel-bg-strong)] px-1.5 py-0.5 font-mono text-[0.65rem]">{{ b.bot_type }}</span>
                 <span>
@@ -161,56 +179,64 @@ const formatDate = (d: string | null) => {
           </div>
           <div class="flex items-center gap-1">
             <!-- Trigger -->
-            <button
-              type="button"
-              class="rounded-lg p-1.5 transition"
-              :class="triggerSuccess === b.id ? 'text-emerald-400' : 'text-[var(--ca-muted)] hover:bg-[var(--ca-panel-bg-strong)]'"
-              :title="triggerSuccess === b.id ? 'Triggered!' : 'Jalankan sekarang'"
-              @click="handleTrigger(b)"
-            >
-              <Icon :name="triggerSuccess === b.id ? 'lucide:check' : 'lucide:play'" class="h-4 w-4" />
-            </button>
-            <!-- Toggle -->
-            <button
-              type="button"
-              class="rounded-lg p-1.5 transition"
-              :class="b.is_active ? 'text-emerald-400 hover:bg-emerald-500/10' : 'text-[var(--ca-subtle)] hover:bg-[var(--ca-panel-bg-strong)]'"
-              :title="b.is_active ? 'Nonaktifkan' : 'Aktifkan'"
-              @click="handleToggle(b)"
-            >
-              <Icon :name="b.is_active ? 'lucide:toggle-right' : 'lucide:toggle-left'" class="h-4 w-4" />
-            </button>
+            <CaTooltip :text="triggerSuccess === b.id ? 'Berhasil dipicu!' : 'Jalankan sekarang'" position="bottom">
+              <button
+                type="button"
+                class="rounded-lg p-1.5 transition"
+                :class="triggerSuccess === b.id ? 'text-emerald-400' : 'text-[var(--ca-muted)] hover:bg-[var(--ca-panel-bg-strong)]'"
+                @click="handleTrigger(b)"
+              >
+                <Icon :name="triggerSuccess === b.id ? 'lucide:check' : 'lucide:play'" class="h-4 w-4" />
+              </button>
+            </CaTooltip>
+            <!-- Toggle active/inactive -->
+            <CaTooltip :text="b.is_active ? 'Nonaktifkan jadwal' : 'Aktifkan jadwal'" position="bottom">
+              <button
+                type="button"
+                class="rounded-lg p-1.5 transition"
+                :class="b.is_active ? 'text-emerald-400 hover:bg-emerald-500/10' : 'text-[var(--ca-subtle)] hover:bg-[var(--ca-panel-bg-strong)]'"
+                @click="handleToggle(b)"
+              >
+                <Icon :name="b.is_active ? 'lucide:toggle-right' : 'lucide:toggle-left'" class="h-4 w-4" />
+              </button>
+            </CaTooltip>
             <!-- Edit -->
-            <button type="button" class="rounded-lg p-1.5 text-[var(--ca-muted)] hover:bg-[var(--ca-panel-bg-strong)]" title="Edit" @click="openEdit(b)">
-              <Icon name="lucide:edit-3" class="h-4 w-4" />
-            </button>
+            <CaTooltip text="Edit konfigurasi" position="bottom">
+              <button type="button" class="rounded-lg p-1.5 text-[var(--ca-muted)] hover:bg-[var(--ca-panel-bg-strong)]" @click="openEdit(b)">
+                <Icon name="lucide:edit-3" class="h-4 w-4" />
+              </button>
+            </CaTooltip>
             <!-- Delete -->
-            <button type="button" class="rounded-lg p-1.5 text-rose-400 hover:bg-rose-500/10" title="Hapus" @click="handleDelete(b)">
-              <Icon name="lucide:trash-2" class="h-4 w-4" />
-            </button>
+            <CaTooltip text="Hapus bot" position="bottom">
+              <button type="button" class="rounded-lg p-1.5 text-rose-400 hover:bg-rose-500/10" @click="handleDelete(b)">
+                <Icon name="lucide:trash-2" class="h-4 w-4" />
+              </button>
+            </CaTooltip>
           </div>
         </div>
 
         <!-- Status bar -->
         <div class="mt-4 flex flex-wrap items-center gap-4 rounded-lg border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] px-4 py-2.5">
           <div class="flex items-center gap-2">
-            <span class="text-[0.65rem] font-semibold uppercase tracking-wider text-[var(--ca-subtle)]">Status</span>
+            <span class="text-[0.65rem] font-semibold uppercase tracking-wider text-[var(--ca-subtle)]">Terakhir</span>
             <span class="rounded-full px-2 py-0.5 text-[0.6rem] font-bold uppercase" :class="statusColor(b.last_status)">
-              {{ b.last_status }}
+              {{ statusLabel(b.last_status) }}
             </span>
           </div>
           <div class="flex items-center gap-2">
-            <span class="text-[0.65rem] font-semibold uppercase tracking-wider text-[var(--ca-subtle)]">Terakhir</span>
+            <span class="text-[0.65rem] font-semibold uppercase tracking-wider text-[var(--ca-subtle)]">Waktu</span>
             <span class="text-xs text-[var(--ca-muted)]">{{ formatDate(b.last_run_at) }}</span>
           </div>
           <div class="flex items-center gap-2">
             <span class="text-[0.65rem] font-semibold uppercase tracking-wider text-[var(--ca-subtle)]">Total Run</span>
             <span class="text-xs font-semibold text-[var(--ca-text)]">{{ b.run_count }}</span>
           </div>
-          <div v-if="b.last_error" class="flex items-center gap-2">
-            <span class="text-[0.65rem] font-semibold uppercase tracking-wider text-[var(--ca-subtle)]">Error</span>
-            <span class="text-xs text-rose-400 truncate max-w-[200px]" :title="b.last_error">{{ b.last_error }}</span>
-          </div>
+          <CaTooltip v-if="b.last_error" :text="b.last_error" position="bottom">
+            <div class="flex items-center gap-2">
+              <span class="text-[0.65rem] font-semibold uppercase tracking-wider text-[var(--ca-subtle)]">Error</span>
+              <span class="text-xs text-rose-400 truncate max-w-[200px]">{{ b.last_error }}</span>
+            </div>
+          </CaTooltip>
         </div>
       </div>
     </div>
@@ -223,8 +249,8 @@ const formatDate = (d: string | null) => {
             <Icon name="lucide:bot" class="mr-2 inline h-5 w-5 text-amber-400" />
             {{ editingBot ? 'Edit Bot' : 'Tambah Bot' }}
           </h3>
-          <form class="mt-4 space-y-3" @submit.prevent="handleSubmit">
-            <BaseInput id="bot-name" v-model="formData.name" label="Nama Bot" placeholder="Article Generator Harian" required />
+          <form class="mt-4 space-y-3" autocomplete="off" @submit.prevent="handleSubmit">
+            <BaseInput id="bot-name" v-model="formData.name" label="Nama Bot" placeholder="Article Generator Harian" required autocomplete="off" />
             <SearchSelect
               v-if="!editingBot"
               id="bot-type"
@@ -234,7 +260,7 @@ const formatDate = (d: string | null) => {
               required
             />
             <div class="grid gap-3 sm:grid-cols-2">
-              <BaseInput id="bot-schedule" v-model="formData.schedule" label="Jadwal (HH:MM)" placeholder="08:00" required />
+              <BaseInput id="bot-schedule" v-model="formData.schedule" label="Jadwal (HH:MM)" placeholder="08:00" required autocomplete="off" />
               <SearchSelect
                 id="bot-timezone"
                 v-model="formData.timezone"

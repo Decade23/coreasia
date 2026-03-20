@@ -154,43 +154,47 @@ const formatDate = (d: string) => new Date(d).toLocaleDateString('id-ID', { year
 
         <div class="flex items-center gap-1 shrink-0">
           <!-- Copy -->
-          <button
-            type="button"
-            class="rounded-lg p-1.5 transition"
-            :class="copySuccess === k.id ? 'text-emerald-400' : 'text-[var(--ca-muted)] hover:bg-[var(--ca-panel-bg-strong)]'"
-            :title="copySuccess === k.id ? 'Tersalin!' : 'Salin key'"
-            @click="handleCopy(k)"
-          >
-            <Icon :name="copySuccess === k.id ? 'lucide:check' : 'lucide:copy'" class="h-4 w-4" />
-          </button>
+          <CaTooltip :text="copySuccess === k.id ? 'Tersalin!' : 'Salin key'" position="bottom">
+            <button
+              type="button"
+              class="rounded-lg p-1.5 transition"
+              :class="copySuccess === k.id ? 'text-emerald-400' : 'text-[var(--ca-muted)] hover:bg-[var(--ca-panel-bg-strong)]'"
+              @click="handleCopy(k)"
+            >
+              <Icon :name="copySuccess === k.id ? 'lucide:check' : 'lucide:copy'" class="h-4 w-4" />
+            </button>
+          </CaTooltip>
           <!-- Toggle active -->
-          <button
-            type="button"
-            class="rounded-lg p-1.5 transition"
-            :class="k.is_active ? 'text-emerald-400 hover:bg-emerald-500/10' : 'text-[var(--ca-subtle)] hover:bg-[var(--ca-panel-bg-strong)]'"
-            :title="k.is_active ? 'Nonaktifkan' : 'Aktifkan'"
-            @click="handleToggleActive(k)"
-          >
-            <Icon :name="k.is_active ? 'lucide:toggle-right' : 'lucide:toggle-left'" class="h-4 w-4" />
-          </button>
+          <CaTooltip :text="k.is_active ? 'Nonaktifkan' : 'Aktifkan'" position="bottom">
+            <button
+              type="button"
+              class="rounded-lg p-1.5 transition"
+              :class="k.is_active ? 'text-emerald-400 hover:bg-emerald-500/10' : 'text-[var(--ca-subtle)] hover:bg-[var(--ca-panel-bg-strong)]'"
+              @click="handleToggleActive(k)"
+            >
+              <Icon :name="k.is_active ? 'lucide:toggle-right' : 'lucide:toggle-left'" class="h-4 w-4" />
+            </button>
+          </CaTooltip>
           <!-- Edit -->
-          <button
-            type="button"
-            class="rounded-lg p-1.5 text-[var(--ca-muted)] hover:bg-[var(--ca-panel-bg-strong)]"
-            title="Edit"
-            @click="openEdit(k)"
-          >
-            <Icon name="lucide:edit-3" class="h-4 w-4" />
-          </button>
+          <CaTooltip text="Edit" position="bottom">
+            <button
+              type="button"
+              class="rounded-lg p-1.5 text-[var(--ca-muted)] hover:bg-[var(--ca-panel-bg-strong)]"
+              @click="openEdit(k)"
+            >
+              <Icon name="lucide:edit-3" class="h-4 w-4" />
+            </button>
+          </CaTooltip>
           <!-- Delete -->
-          <button
-            type="button"
-            class="rounded-lg p-1.5 text-rose-400 hover:bg-rose-500/10"
-            title="Hapus"
-            @click="handleDelete(k)"
-          >
-            <Icon name="lucide:trash-2" class="h-4 w-4" />
-          </button>
+          <CaTooltip text="Hapus" position="bottom">
+            <button
+              type="button"
+              class="rounded-lg p-1.5 text-rose-400 hover:bg-rose-500/10"
+              @click="handleDelete(k)"
+            >
+              <Icon name="lucide:trash-2" class="h-4 w-4" />
+            </button>
+          </CaTooltip>
         </div>
       </div>
     </div>

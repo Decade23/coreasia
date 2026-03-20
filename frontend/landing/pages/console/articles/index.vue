@@ -110,9 +110,9 @@ const formatDate = (d: string) => new Date(d).toLocaleDateString('id-ID', { year
     </div>
 
     <!-- Table -->
-    <div v-else class="overflow-x-auto">
+    <div v-else class="overflow-x-auto overflow-y-auto max-h-[60vh] ca-scrollbar">
       <table class="w-full">
-        <thead>
+        <thead class="sticky top-0 z-10 bg-[var(--ca-bg)]">
           <tr class="border-b border-[color:var(--ca-border)]">
             <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[var(--ca-muted)]">Judul</th>
             <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[var(--ca-muted)]">Kategori</th>
@@ -142,35 +142,38 @@ const formatDate = (d: string) => new Date(d).toLocaleDateString('id-ID', { year
             <td class="px-4 py-3 text-sm text-[var(--ca-muted)]">{{ formatDate(article.created_at) }}</td>
             <td class="px-4 py-3 text-right">
               <div class="flex items-center justify-end gap-1">
-                <NuxtLink :to="`/console/articles/${article.id}`" class="rounded-lg p-1.5 text-[var(--ca-muted)] hover:bg-[var(--ca-panel-bg-strong)] hover:text-[var(--ca-text)]">
-                  <Icon name="lucide:edit-3" class="h-4 w-4" />
-                </NuxtLink>
-                <button
-                  v-if="article.status === 'draft'"
-                  type="button"
-                  class="rounded-lg p-1.5 text-emerald-400 hover:bg-emerald-500/10"
-                  title="Publish"
-                  @click="handlePublish(article.id)"
-                >
-                  <Icon name="lucide:upload" class="h-4 w-4" />
-                </button>
-                <button
-                  v-if="article.status === 'published'"
-                  type="button"
-                  class="rounded-lg p-1.5 text-amber-400 hover:bg-amber-500/10"
-                  title="Unpublish"
-                  @click="handleUnpublish(article.id)"
-                >
-                  <Icon name="lucide:download" class="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
-                  class="rounded-lg p-1.5 text-rose-400 hover:bg-rose-500/10"
-                  title="Hapus"
-                  @click="handleDelete(article.id, article.title)"
-                >
-                  <Icon name="lucide:trash-2" class="h-4 w-4" />
-                </button>
+                <CaTooltip text="Edit" position="bottom">
+                  <NuxtLink :to="`/console/articles/${article.id}`" class="rounded-lg p-1.5 text-[var(--ca-muted)] hover:bg-[var(--ca-panel-bg-strong)] hover:text-[var(--ca-text)]">
+                    <Icon name="lucide:edit-3" class="h-4 w-4" />
+                  </NuxtLink>
+                </CaTooltip>
+                <CaTooltip v-if="article.status === 'draft'" text="Publish" position="bottom">
+                  <button
+                    type="button"
+                    class="rounded-lg p-1.5 text-emerald-400 hover:bg-emerald-500/10"
+                    @click="handlePublish(article.id)"
+                  >
+                    <Icon name="lucide:upload" class="h-4 w-4" />
+                  </button>
+                </CaTooltip>
+                <CaTooltip v-if="article.status === 'published'" text="Unpublish" position="bottom">
+                  <button
+                    type="button"
+                    class="rounded-lg p-1.5 text-amber-400 hover:bg-amber-500/10"
+                    @click="handleUnpublish(article.id)"
+                  >
+                    <Icon name="lucide:download" class="h-4 w-4" />
+                  </button>
+                </CaTooltip>
+                <CaTooltip text="Hapus" position="bottom">
+                  <button
+                    type="button"
+                    class="rounded-lg p-1.5 text-rose-400 hover:bg-rose-500/10"
+                    @click="handleDelete(article.id, article.title)"
+                  >
+                    <Icon name="lucide:trash-2" class="h-4 w-4" />
+                  </button>
+                </CaTooltip>
               </div>
             </td>
           </tr>

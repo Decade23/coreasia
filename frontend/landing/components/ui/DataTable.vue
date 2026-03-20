@@ -133,9 +133,9 @@ const formatDate = (d: string) => {
     </div>
 
     <!-- Table -->
-    <div v-else class="overflow-x-auto">
+    <div v-else class="overflow-x-auto overflow-y-auto max-h-[60vh] ca-scrollbar">
       <table class="w-full">
-        <thead>
+        <thead class="sticky top-0 z-10 bg-[var(--ca-bg)]">
           <tr class="border-b border-[color:var(--ca-border)]">
             <th
               v-for="col in columns"
@@ -146,15 +146,16 @@ const formatDate = (d: string) => {
               <div class="flex items-center gap-1.5">
                 <span>{{ col.label }}</span>
                 <!-- Column filter trigger -->
-                <button
-                  type="button"
-                  class="rounded p-0.5 transition"
-                  :class="columnFilters[col.key] ? 'text-brand-primary' : 'text-[var(--ca-subtle)] hover:text-[var(--ca-muted)]'"
-                  :title="`Filter ${col.label}`"
-                  @click.stop="toggleFilter(col.key)"
-                >
-                  <Icon name="lucide:more-vertical" class="h-3.5 w-3.5" />
-                </button>
+                <CaTooltip :text="`Filter ${col.label}`">
+                  <button
+                    type="button"
+                    class="rounded p-0.5 transition"
+                    :class="columnFilters[col.key] ? 'text-brand-primary' : 'text-[var(--ca-subtle)] hover:text-[var(--ca-muted)]'"
+                    @click.stop="toggleFilter(col.key)"
+                  >
+                    <Icon name="lucide:more-vertical" class="h-3.5 w-3.5" />
+                  </button>
+                </CaTooltip>
               </div>
 
               <!-- Filter dropdown -->
