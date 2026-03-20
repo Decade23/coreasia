@@ -207,13 +207,10 @@ const formatDate = (d: string) => new Date(d).toLocaleDateString('id-ID', { year
             <Icon name="lucide:key-round" class="mr-2 inline h-5 w-5 text-amber-400" />
             {{ editingKey ? 'Edit API Key' : 'Tambah API Key' }}
           </h3>
-          <form class="mt-4 space-y-3" autocomplete="off" @submit.prevent="handleSubmit">
-            <!-- Hidden fields to prevent browser autofill -->
-            <input type="text" name="prevent_autofill" style="display:none" />
-            <input type="password" name="prevent_autofill_pw" style="display:none" />
-            <BaseInput id="key-name" v-model="formData.name" label="Nama" placeholder="Claude AI Production" required autocomplete="off" />
+          <form class="mt-4 space-y-3" autocomplete="off" data-form-type="other" data-lpignore="true" @submit.prevent="handleSubmit">
+            <BaseInput id="apikey-name" v-model="formData.name" label="Nama" placeholder="Claude AI Production" required autocomplete="one-time-code" data-1p-ignore data-lpignore="true" />
             <SearchSelect
-              id="key-provider"
+              id="apikey-provider"
               v-model="formData.provider"
               label="Provider"
               :options="providerOptions"
@@ -221,14 +218,16 @@ const formatDate = (d: string) => new Date(d).toLocaleDateString('id-ID', { year
             />
             <div>
               <BaseInput
-                id="key-value"
+                id="apikey-value"
                 v-model="formData.key_value"
                 :label="editingKey ? 'API Key (kosongkan jika tidak diubah)' : 'API Key'"
                 type="password"
                 :placeholder="editingKey ? '••••••••' : 'sk-ant-api03-...'"
                 :required="!editingKey"
                 input-class="font-mono tracking-wider"
-                autocomplete="new-password"
+                autocomplete="one-time-code"
+                data-1p-ignore
+                data-lpignore="true"
               />
               <p class="mt-1 text-[0.65rem] text-[var(--ca-subtle)]">
                 Key disimpan terenkripsi dan tidak bisa dilihat setelah disimpan

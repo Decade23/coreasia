@@ -23,6 +23,10 @@
         :id="id"
         v-model="searchQuery"
         type="text"
+        autocomplete="off"
+        data-1p-ignore
+        data-lpignore="true"
+        role="combobox"
         :placeholder="selectedLabel || placeholder"
         class="w-full bg-transparent p-0 text-sm leading-normal text-[var(--ca-text)] outline-none ring-0 placeholder:transition-colors focus:outline-none focus:ring-0 focus-visible:outline-none"
         :class="[
