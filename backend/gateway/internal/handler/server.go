@@ -104,7 +104,7 @@ func (s *Server) setupRoutes() {
 	auditHandler := NewAuditHandler(auditLogRepo)
 	apiKeyHandler := NewAPIKeyHandler(apiKeyRepo, auditLogRepo)
 	botScheduleRepo := repository.NewBotScheduleRepo(s.pool)
-	botScheduleHandler := NewBotScheduleHandler(botScheduleRepo, auditLogRepo)
+	botScheduleHandler := NewBotScheduleHandler(botScheduleRepo, auditLogRepo, articleBot)
 
 	// Auth middleware
 	authMiddleware := mw.AuthMiddleware(jwtProvider)

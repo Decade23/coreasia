@@ -8,6 +8,7 @@ import (
 	"github.com/coreasia/gateway/internal/middleware"
 	"github.com/coreasia/gateway/internal/model"
 	"github.com/coreasia/gateway/internal/repository"
+	"github.com/coreasia/gateway/internal/service"
 	"github.com/coreasia/gateway/pkg/apperr"
 	"github.com/coreasia/gateway/pkg/validate"
 	"github.com/gofiber/fiber/v3"
@@ -15,12 +16,13 @@ import (
 )
 
 type BotScheduleHandler struct {
-	repo     *repository.BotScheduleRepo
-	auditLog *repository.AuditLogRepo
+	repo       *repository.BotScheduleRepo
+	auditLog   *repository.AuditLogRepo
+	articleBot *service.ArticleBot
 }
 
-func NewBotScheduleHandler(repo *repository.BotScheduleRepo, auditLog *repository.AuditLogRepo) *BotScheduleHandler {
-	return &BotScheduleHandler{repo: repo, auditLog: auditLog}
+func NewBotScheduleHandler(repo *repository.BotScheduleRepo, auditLog *repository.AuditLogRepo, articleBot *service.ArticleBot) *BotScheduleHandler {
+	return &BotScheduleHandler{repo: repo, auditLog: auditLog, articleBot: articleBot}
 }
 
 func (h *BotScheduleHandler) List(c fiber.Ctx) error {
@@ -196,6 +198,33 @@ func (h *BotScheduleHandler) Trigger(c fiber.Ctx) error {
 	desc := fmt.Sprintf("Trigger manual bot: %s", existing.Name)
 	botID := existing.ID.String()
 	h.auditLog.LogAction(c.Context(), &claims.UserID, &claims.FullName, "trigger", "bot_schedules", &botID, &desc, c.IP())
+
+	// Run bot asynchronously
+	go func() {
+		slog.Info("bot-trigger: menjalankan bot", "name", existing.Name, "type", existing.BotType)
+		var runErr error
+		switch existing.BotType {
+		case "article_generator":
+			runErr = h.articleBot.RunWithConfig(c.Context(), existing.Config)
+		default:
+			slog.Warn("bot-trigger: tipe bot tidak dikenal", "type", existing.BotType)
+			errMsg := "tipe bot tidak dikenal: " + existing.BotType
+			h.repo.UpdateRunStatus(c.Context(), id, "error", &errMsg)
+			return
+		}
+
+		status := "success"
+		var errMsg *string
+		if runErr != nil {
+			status = "error"
+			msg := runErr.Error()
+			errMsg = &msg
+			slog.Error("bot-trigger: gagal jalankan bot", "name", existing.Name, "error", runErr)
+		} else {
+			slog.Info("bot-trigger: bot berhasil", "name", existing.Name)
+		}
+		h.repo.UpdateRunStatus(c.Context(), id, status, errMsg)
+	}()
 
 	return ok(c, fiber.Map{"message": "Bot triggered", "bot_id": existing.ID})
 }
