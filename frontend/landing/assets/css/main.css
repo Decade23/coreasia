@@ -241,6 +241,16 @@ a {
     border-radius: 0.4rem;
 }
 
+/* Cursor: pointer for all interactive elements */
+button:not(:disabled),
+a,
+[role="button"],
+[role="tab"],
+[role="combobox"],
+summary {
+    cursor: pointer;
+}
+
 /* Form controls: use border-color change on focus, not outline */
 .ca-field-control:focus,
 .ca-field-control:focus-visible,

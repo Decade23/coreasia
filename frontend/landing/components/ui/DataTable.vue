@@ -220,7 +220,7 @@ const formatDate = (d: string) => {
           <tr
             v-for="(row, i) in filteredData"
             :key="i"
-            class="border-b border-[color:var(--ca-border)] transition hover:bg-[var(--ca-panel-bg)]"
+            class="border-b border-[color:var(--ca-border)] transition hover:bg-[var(--ca-panel-bg)] cursor-pointer"
             @click="emit('row-click', row)"
           >
             <td
