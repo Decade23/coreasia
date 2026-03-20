@@ -9,6 +9,7 @@ definePageMeta({ layout: false })
 
 const { theme } = useCoreTheme()
 const { login, loginError, pending, isAuthenticated } = useAdminAuth()
+const toast = useToast()
 
 const email = ref('')
 const password = ref('')
@@ -42,7 +43,12 @@ useHead(() => ({
 
 const handleSubmit = async () => {
   const success = await login(email.value, password.value)
-  if (success) navigateTo('/console')
+  if (success) {
+    toast.success('Login berhasil')
+    navigateTo('/console')
+  } else {
+    toast.error('Login gagal. Periksa email dan password.')
+  }
 }
 
 onMounted(() => {
@@ -98,4 +104,5 @@ onMounted(() => {
       </p>
     </div>
   </div>
+  <ToastContainer />
 </template>

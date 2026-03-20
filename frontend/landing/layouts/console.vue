@@ -145,4 +145,5 @@ const isSidebarOpen = ref(false)
       </div>
     </main>
   </div>
+  <ToastContainer />
 </template>

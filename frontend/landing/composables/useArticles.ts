@@ -23,6 +23,7 @@ export interface ArticleDomain {
 
 export const useArticles = () => {
   const api = useAdminApi()
+  const toast = useToast()
   const items = ref<ArticleDomain[]>([])
   const currentItem = ref<ArticleDomain | null>(null)
   const loading = ref(false)
@@ -64,9 +65,11 @@ export const useArticles = () => {
     error.value = ''
     try {
       await api.post('/admin/articles', data)
+      toast.success('Artikel berhasil dibuat')
       return true
     } catch (err: any) {
       error.value = err?.data?.errors?.message || 'Gagal membuat artikel'
+      toast.error(error.value)
       return false
     } finally {
       saving.value = false
@@ -78,9 +81,11 @@ export const useArticles = () => {
     error.value = ''
     try {
       await api.put(`/admin/articles/${id}`, data)
+      toast.success('Artikel berhasil diperbarui')
       return true
     } catch (err: any) {
       error.value = err?.data?.errors?.message || 'Gagal mengupdate artikel'
+      toast.error(error.value)
       return false
     } finally {
       saving.value = false
@@ -92,9 +97,11 @@ export const useArticles = () => {
     error.value = ''
     try {
       await api.del(`/admin/articles/${id}`)
+      toast.success('Artikel berhasil dihapus')
       return true
     } catch (err: any) {
       error.value = err?.data?.errors?.message || 'Gagal menghapus artikel'
+      toast.error(error.value)
       return false
     } finally {
       saving.value = false
@@ -105,9 +112,11 @@ export const useArticles = () => {
     saving.value = true
     try {
       await api.post(`/admin/articles/${id}/publish`)
+      toast.success('Artikel berhasil dipublish')
       return true
     } catch (err: any) {
       error.value = err?.data?.errors?.message || 'Gagal mempublish artikel'
+      toast.error(error.value)
       return false
     } finally {
       saving.value = false
@@ -118,9 +127,11 @@ export const useArticles = () => {
     saving.value = true
     try {
       await api.post(`/admin/articles/${id}/unpublish`)
+      toast.info('Artikel di-unpublish')
       return true
     } catch (err: any) {
       error.value = err?.data?.errors?.message || 'Gagal meng-unpublish artikel'
+      toast.error(error.value)
       return false
     } finally {
       saving.value = false

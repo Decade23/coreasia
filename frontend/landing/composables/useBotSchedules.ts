@@ -20,6 +20,7 @@ interface BotSchedule {
 
 export const useBotSchedules = () => {
   const api = useAdminApi()
+  const toast = useToast()
   const items = ref<BotSchedule[]>([])
   const loading = ref(false)
   const saving = ref(false)
@@ -43,9 +44,11 @@ export const useBotSchedules = () => {
     error.value = ''
     try {
       await api.post('/admin/bots', data)
+      toast.success('Bot berhasil dibuat')
       return true
     } catch (err: any) {
       error.value = err?.data?.errors?.message || 'Gagal membuat bot'
+      toast.error(error.value)
       return false
     } finally {
       saving.value = false
@@ -57,9 +60,11 @@ export const useBotSchedules = () => {
     error.value = ''
     try {
       await api.put(`/admin/bots/${id}`, data)
+      toast.success('Bot berhasil diperbarui')
       return true
     } catch (err: any) {
       error.value = err?.data?.errors?.message || 'Gagal update bot'
+      toast.error(error.value)
       return false
     } finally {
       saving.value = false
@@ -71,9 +76,11 @@ export const useBotSchedules = () => {
     error.value = ''
     try {
       await api.del(`/admin/bots/${id}`)
+      toast.success('Bot berhasil dihapus')
       return true
     } catch (err: any) {
       error.value = err?.data?.errors?.message || 'Gagal hapus bot'
+      toast.error(error.value)
       return false
     } finally {
       saving.value = false
@@ -83,8 +90,20 @@ export const useBotSchedules = () => {
   const triggerBot = async (id: string): Promise<boolean> => {
     try {
       await api.post(`/admin/bots/${id}/trigger`)
+      toast.info('Bot sedang dijalankan...')
+      // Poll status after a few seconds
+      setTimeout(async () => {
+        await fetchBots()
+        const bot = items.value.find(b => b.id === id)
+        if (bot?.last_status === 'error') {
+          toast.error(`Bot gagal: ${bot.last_error || 'Terjadi kesalahan'}`)
+        } else if (bot?.last_status === 'success') {
+          toast.success('Bot berhasil menyelesaikan tugas')
+        }
+      }, 12000)
       return true
     } catch {
+      toast.error('Gagal menjalankan bot')
       return false
     }
   }

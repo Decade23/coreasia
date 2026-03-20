@@ -14,6 +14,7 @@ export interface AdminUserDomain {
 
 export const useAdminUsers = () => {
   const api = useAdminApi()
+  const toast = useToast()
   const items = ref<AdminUserDomain[]>([])
   const loading = ref(false)
   const saving = ref(false)
@@ -39,9 +40,11 @@ export const useAdminUsers = () => {
     error.value = ''
     try {
       await api.post('/admin/users', data)
+      toast.success('User berhasil dibuat')
       return true
     } catch (err: any) {
       error.value = err?.data?.errors?.message || 'Gagal membuat user'
+      toast.error(error.value)
       return false
     } finally {
       saving.value = false
@@ -53,9 +56,11 @@ export const useAdminUsers = () => {
     error.value = ''
     try {
       await api.put(`/admin/users/${id}`, data)
+      toast.success('User berhasil diperbarui')
       return true
     } catch (err: any) {
       error.value = err?.data?.errors?.message || 'Gagal mengupdate user'
+      toast.error(error.value)
       return false
     } finally {
       saving.value = false
@@ -67,9 +72,11 @@ export const useAdminUsers = () => {
     error.value = ''
     try {
       await api.del(`/admin/users/${id}`)
+      toast.success('User berhasil dihapus')
       return true
     } catch (err: any) {
       error.value = err?.data?.errors?.message || 'Gagal menghapus user'
+      toast.error(error.value)
       return false
     } finally {
       saving.value = false

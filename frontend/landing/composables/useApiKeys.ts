@@ -16,6 +16,7 @@ interface APIKeyDomain {
 
 export const useApiKeys = () => {
   const api = useAdminApi()
+  const toast = useToast()
   const items = ref<APIKeyDomain[]>([])
   const loading = ref(false)
   const saving = ref(false)
@@ -39,9 +40,11 @@ export const useApiKeys = () => {
     error.value = ''
     try {
       await api.post('/admin/api-keys', data)
+      toast.success('API key berhasil ditambahkan')
       return true
     } catch (err: any) {
       error.value = err?.data?.errors?.message || 'Gagal membuat API key'
+      toast.error(error.value)
       return false
     } finally {
       saving.value = false
@@ -53,9 +56,11 @@ export const useApiKeys = () => {
     error.value = ''
     try {
       await api.put(`/admin/api-keys/${id}`, data)
+      toast.success('API key berhasil diperbarui')
       return true
     } catch (err: any) {
       error.value = err?.data?.errors?.message || 'Gagal update API key'
+      toast.error(error.value)
       return false
     } finally {
       saving.value = false
@@ -67,9 +72,11 @@ export const useApiKeys = () => {
     error.value = ''
     try {
       await api.del(`/admin/api-keys/${id}`)
+      toast.success('API key berhasil dihapus')
       return true
     } catch (err: any) {
       error.value = err?.data?.errors?.message || 'Gagal hapus API key'
+      toast.error(error.value)
       return false
     } finally {
       saving.value = false
@@ -79,8 +86,13 @@ export const useApiKeys = () => {
   const copyKey = async (id: string): Promise<string | null> => {
     try {
       const res = await api.get<{ key_value: string }>(`/admin/api-keys/${id}/copy`)
+      if (res.data?.key_value) {
+        await navigator.clipboard.writeText(res.data.key_value)
+        toast.success('API key berhasil disalin ke clipboard')
+      }
       return res.data?.key_value || null
     } catch {
+      toast.error('Gagal menyalin API key')
       return null
     }
   }
