@@ -26,7 +26,6 @@ import (
 
 func main() {
 	configPath := flag.String("config", "configs/config.yaml", "path to config file")
-	runMigrate := flag.Bool("migrate", false, "run database migrations")
 	runSeed := flag.Bool("seed", false, "seed initial admin user")
 	flag.Parse()
 
@@ -49,15 +48,16 @@ func main() {
 	}
 	defer pool.Close()
 
-	if *runMigrate || *runSeed {
-		if *runMigrate {
-			runMigrations(cfg.Database.DSN())
-		}
-		if *runSeed {
-			seedAdminUser(ctx, pool, cfg)
-		}
+	// Always run migrations on startup (idempotent — skips if already up-to-date)
+	runMigrations(cfg.Database.DSN())
+
+	if *runSeed {
+		seedAdminUser(ctx, pool, cfg)
 		return
 	}
+
+	// Auto-seed: ensure at least one admin user exists
+	ensureAdminExists(ctx, pool, cfg)
 
 	// Create and start HTTP server
 	server := handler.NewServer(cfg, pool)
@@ -271,4 +271,25 @@ func seedAdminUser(ctx context.Context, pool *pgxpool.Pool, cfg *config.Config) 
 
 	slog.Info("admin user berhasil dibuat", "email", email)
 	fmt.Printf("Admin user created: %s\n", email)
+}
+
+func ensureAdminExists(ctx context.Context, pool *pgxpool.Pool, cfg *config.Config) {
+	var count int
+	err := pool.QueryRow(ctx, "SELECT COUNT(*) FROM public.admin_users").Scan(&count)
+	if err != nil {
+		slog.Warn("gagal cek admin_users, table mungkin belum ada", "error", err)
+		return
+	}
+	if count > 0 {
+		return
+	}
+
+	email := os.Getenv("ADMIN_EMAIL")
+	password := os.Getenv("ADMIN_PASSWORD")
+	if email == "" || password == "" {
+		slog.Warn("tidak ada admin user dan ADMIN_EMAIL/ADMIN_PASSWORD tidak di-set, skip auto-seed")
+		return
+	}
+
+	seedAdminUser(ctx, pool, cfg)
 }
