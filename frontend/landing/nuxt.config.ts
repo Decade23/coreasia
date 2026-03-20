@@ -34,6 +34,19 @@ export default defineNuxtConfig({
             // @ts-expect-error - Tailwind CSS v4 Vite plugin
             (await import("@tailwindcss/vite")).default(),
         ],
+        optimizeDeps: {
+            include: [
+                '@tiptap/vue-3',
+                '@tiptap/starter-kit',
+                '@tiptap/extension-image',
+                '@tiptap/extension-link',
+                '@tiptap/extension-placeholder',
+                '@tiptap/extension-text-align',
+                '@tiptap/extension-underline',
+                '@vueuse/core',
+                'canvas-confetti',
+            ],
+        },
     },
     components: [
         {
