@@ -4,6 +4,7 @@ definePageMeta({ layout: 'console', middleware: 'console' })
 const { logs, loading, error, totalItems, fetchLogs } = useAuditLogs()
 const currentPage = ref(1)
 const resourceFilter = ref('')
+const selectedLog = ref<any>(null)
 
 onMounted(() => fetchLogs(1, ''))
 
@@ -21,6 +22,7 @@ const actionOptions = [
   { label: 'unpublish', value: 'unpublish', class: 'bg-slate-500/10 text-[var(--ca-muted)]' },
   { label: 'upload', value: 'upload', class: 'bg-blue-500/10 text-blue-400' },
   { label: 'ai_generate', value: 'ai_generate', class: 'bg-violet-500/10 text-violet-400' },
+  { label: 'trigger', value: 'trigger', class: 'bg-orange-500/10 text-orange-400' },
 ]
 
 const columns = [
@@ -32,13 +34,43 @@ const columns = [
   { key: 'created_at', label: 'Waktu', type: 'date' as const, width: '160px' },
 ]
 
-// Map logs to add fallback description
 const tableData = computed(() =>
   logs.value.map(log => ({
     ...log,
     description: log.description || `${log.action} ${log.resource}`,
   }))
 )
+
+const actionLabel = (action: string) => {
+  const map: Record<string, string> = {
+    create: 'Buat Baru',
+    update: 'Perbarui',
+    delete: 'Hapus',
+    login: 'Login',
+    publish: 'Publish',
+    unpublish: 'Unpublish',
+    upload: 'Upload',
+    ai_generate: 'Generate AI',
+    trigger: 'Trigger Bot',
+  }
+  return map[action] || action
+}
+
+const actionColor = (action: string) => {
+  return actionOptions.find(o => o.value === action)?.class || 'bg-slate-500/10 text-[var(--ca-muted)]'
+}
+
+const formatDateTime = (d: string) => {
+  if (!d) return '-'
+  return new Date(d).toLocaleString('id-ID', {
+    year: 'numeric', month: 'long', day: 'numeric',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+  })
+}
+
+const handleRowClick = (row: any) => {
+  selectedLog.value = row
+}
 </script>
 
 <template>
@@ -57,6 +89,7 @@ const tableData = computed(() =>
             { label: 'Semua Resource', value: '' },
             { label: 'Articles', value: 'articles' },
             { label: 'Admin Users', value: 'admin_users' },
+            { label: 'Bot Schedules', value: 'bot_schedules' },
             { label: 'Files', value: 'files' },
           ]"
         />
@@ -69,6 +102,7 @@ const tableData = computed(() =>
       :loading="loading"
       empty-icon="lucide:scroll-text"
       empty-text="Belum ada aktivitas"
+      @row-click="handleRowClick"
     />
 
     <!-- Pagination -->
@@ -94,5 +128,66 @@ const tableData = computed(() =>
         </button>
       </div>
     </div>
+
+    <!-- Detail Modal -->
+    <Teleport to="body">
+      <div v-if="selectedLog" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" @click.self="selectedLog = null">
+        <div class="ca-card w-full max-w-lg p-6">
+          <div class="flex items-start justify-between mb-5">
+            <div class="flex items-center gap-3">
+              <div class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--ca-panel-bg-strong)]">
+                <Icon name="lucide:scroll-text" class="h-5 w-5 text-amber-400" />
+              </div>
+              <div>
+                <h3 class="font-display text-lg font-bold text-[var(--ca-text)]">Detail Log</h3>
+                <span class="rounded-full px-2 py-0.5 text-[0.6rem] font-bold uppercase" :class="actionColor(selectedLog.action)">
+                  {{ actionLabel(selectedLog.action) }}
+                </span>
+              </div>
+            </div>
+            <button type="button" class="rounded-lg p-1.5 text-[var(--ca-subtle)] hover:bg-[var(--ca-panel-bg-strong)]" @click="selectedLog = null">
+              <Icon name="lucide:x" class="h-5 w-5" />
+            </button>
+          </div>
+
+          <div class="space-y-3">
+            <!-- Description -->
+            <div class="rounded-lg border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-3">
+              <p class="text-sm text-[var(--ca-text)]">{{ selectedLog.description || `${selectedLog.action} ${selectedLog.resource}` }}</p>
+            </div>
+
+            <!-- Details grid -->
+            <div class="grid grid-cols-2 gap-3">
+              <div class="rounded-lg border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-3">
+                <p class="text-[0.65rem] font-semibold uppercase tracking-widest text-[var(--ca-subtle)]">User</p>
+                <p class="mt-1 text-sm font-medium text-[var(--ca-text)]">{{ selectedLog.user_name || 'System' }}</p>
+              </div>
+              <div class="rounded-lg border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-3">
+                <p class="text-[0.65rem] font-semibold uppercase tracking-widest text-[var(--ca-subtle)]">Resource</p>
+                <p class="mt-1 text-sm font-medium text-[var(--ca-text)]">{{ selectedLog.resource || '-' }}</p>
+              </div>
+              <div class="rounded-lg border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-3">
+                <p class="text-[0.65rem] font-semibold uppercase tracking-widest text-[var(--ca-subtle)]">IP Address</p>
+                <p class="mt-1 font-mono text-sm text-[var(--ca-text)]">{{ selectedLog.ip_address || '-' }}</p>
+              </div>
+              <div class="rounded-lg border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-3">
+                <p class="text-[0.65rem] font-semibold uppercase tracking-widest text-[var(--ca-subtle)]">Waktu</p>
+                <p class="mt-1 text-sm text-[var(--ca-text)]">{{ formatDateTime(selectedLog.created_at) }}</p>
+              </div>
+            </div>
+
+            <!-- Resource ID -->
+            <div v-if="selectedLog.resource_id" class="rounded-lg border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-3">
+              <p class="text-[0.65rem] font-semibold uppercase tracking-widest text-[var(--ca-subtle)]">Resource ID</p>
+              <p class="mt-1 font-mono text-xs text-[var(--ca-muted)] break-all">{{ selectedLog.resource_id }}</p>
+            </div>
+          </div>
+
+          <div class="mt-5 flex justify-end">
+            <button type="button" class="ca-btn-secondary" @click="selectedLog = null">Tutup</button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>

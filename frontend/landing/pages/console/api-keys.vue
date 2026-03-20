@@ -28,6 +28,27 @@ const providerOptions = [
   { label: 'Lainnya', value: 'other' },
 ]
 
+const api = useAdminApi()
+const availableModels = ref<{ id: string; name: string }[]>([])
+const modelsLoading = ref(false)
+
+const fetchModelsForProvider = async (provider: string) => {
+  if (provider === 'other') { availableModels.value = []; return }
+  modelsLoading.value = true
+  try {
+    const res = await api.get<{ id: string; name: string }[]>(`/admin/ai/models/${provider}`)
+    availableModels.value = res.data || []
+  } catch {
+    availableModels.value = []
+  } finally {
+    modelsLoading.value = false
+  }
+}
+
+watch(() => formData.value.provider, (p) => {
+  if (showFormModal.value) fetchModelsForProvider(p)
+})
+
 onMounted(() => fetchKeys())
 
 const openCreate = () => {
@@ -36,6 +57,7 @@ const openCreate = () => {
   showKeyValue.value = false
   formData.value = { name: '', provider: 'claude', key_value: '', description: '' }
   showFormModal.value = true
+  fetchModelsForProvider('claude')
 }
 
 const openEdit = (k: any) => {
@@ -49,6 +71,7 @@ const openEdit = (k: any) => {
     description: k.description || '',
   }
   showFormModal.value = true
+  fetchModelsForProvider(k.provider)
 }
 
 const handleSubmit = async () => {
@@ -91,7 +114,6 @@ const handleToggleActive = async (k: any) => {
 const handleCopy = async (k: any) => {
   const val = await copyKey(k.id)
   if (val) {
-    await navigator.clipboard.writeText(val)
     copySuccess.value = k.id
     setTimeout(() => { copySuccess.value = null }, 2000)
   }
@@ -270,6 +292,34 @@ const formatDate = (d: string) => new Date(d).toLocaleDateString('id-ID', { year
               </p>
             </div>
             <BaseInput id="apikey-desc" v-model="formData.description" label="Deskripsi (opsional)" placeholder="Untuk generate artikel harian" autocomplete="off" />
+
+            <!-- Available models info -->
+            <div v-if="formData.provider !== 'other'" class="rounded-lg border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-3">
+              <p class="text-[0.65rem] font-semibold uppercase tracking-widest text-[var(--ca-subtle)] mb-2">
+                <Icon name="lucide:cpu" class="mr-1 inline h-3 w-3" />
+                Model tersedia untuk {{ providerOptions.find(p => p.value === formData.provider)?.label }}
+              </p>
+              <div v-if="modelsLoading" class="flex items-center gap-2 text-xs text-[var(--ca-muted)]">
+                <Icon name="lucide:loader-2" class="h-3 w-3 animate-spin" />
+                Memuat model...
+              </div>
+              <div v-else-if="availableModels.length" class="flex flex-wrap gap-1.5">
+                <span
+                  v-for="m in availableModels.slice(0, 8)"
+                  :key="m.id"
+                  class="rounded bg-[var(--ca-panel-bg-strong)] px-1.5 py-0.5 font-mono text-[0.6rem] text-[var(--ca-muted)]"
+                >
+                  {{ m.name || m.id }}
+                </span>
+                <span v-if="availableModels.length > 8" class="text-[0.6rem] text-[var(--ca-subtle)]">
+                  +{{ availableModels.length - 8 }} lainnya
+                </span>
+              </div>
+              <p v-else class="text-[0.6rem] text-amber-400">
+                <Icon name="lucide:alert-triangle" class="mr-1 inline h-3 w-3" />
+                Tidak bisa memuat model. Pastikan API key sudah tersimpan untuk provider ini.
+              </p>
+            </div>
 
             <p v-if="error" class="text-sm text-rose-400">{{ error }}</p>
 
