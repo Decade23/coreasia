@@ -100,7 +100,7 @@ func (s *Server) setupRoutes() {
 	uploadHandler := NewUploadHandler(r2Service, auditLogRepo)
 	apiKeyRepo := repository.NewAPIKeyRepo(s.pool)
 	articleBot := service.NewArticleBot(s.cfg.AI, articleRepo, auditLogRepo, apiKeyRepo)
-	aiHandler := NewAIHandler(articleBot, auditLogRepo)
+	aiHandler := NewAIHandler(articleBot, auditLogRepo, apiKeyRepo)
 	auditHandler := NewAuditHandler(auditLogRepo)
 	apiKeyHandler := NewAPIKeyHandler(apiKeyRepo, auditLogRepo)
 	botScheduleRepo := repository.NewBotScheduleRepo(s.pool)
@@ -145,8 +145,9 @@ func (s *Server) setupRoutes() {
 	// File upload
 	admin.Post("/upload", uploadHandler.Upload)
 
-	// AI generation (rate limited)
+	// AI generation (rate limited) & model listing
 	admin.Post("/ai/generate", aiRateLimiter.Middleware(), aiHandler.Generate)
+	admin.Get("/ai/models/:provider", aiHandler.ListModels)
 
 	// Admin user management
 	admin.Get("/users", adminUserHandler.List)

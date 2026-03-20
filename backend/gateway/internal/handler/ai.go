@@ -3,7 +3,10 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"log/slog"
+	"net/http"
+	"strings"
 
 	"github.com/coreasia/gateway/internal/middleware"
 	"github.com/coreasia/gateway/internal/model"
@@ -17,10 +20,11 @@ import (
 type AIHandler struct {
 	articleBot *service.ArticleBot
 	auditLog   *repository.AuditLogRepo
+	apiKeyRepo *repository.APIKeyRepo
 }
 
-func NewAIHandler(articleBot *service.ArticleBot, auditLog *repository.AuditLogRepo) *AIHandler {
-	return &AIHandler{articleBot: articleBot, auditLog: auditLog}
+func NewAIHandler(articleBot *service.ArticleBot, auditLog *repository.AuditLogRepo, apiKeyRepo *repository.APIKeyRepo) *AIHandler {
+	return &AIHandler{articleBot: articleBot, auditLog: auditLog, apiKeyRepo: apiKeyRepo}
 }
 
 func (h *AIHandler) Generate(c fiber.Ctx) error {
@@ -34,7 +38,6 @@ func (h *AIHandler) Generate(c fiber.Ctx) error {
 		return errResponse(c, appErr)
 	}
 
-	// Build config from request
 	cfg := map[string]interface{}{
 		"tone":       req.Tone,
 		"language":   req.Language,
@@ -51,4 +54,157 @@ func (h *AIHandler) Generate(c fiber.Ctx) error {
 	h.auditLog.LogAction(c.Context(), &claims.UserID, &claims.FullName, "ai_generate", "articles", nil, &desc, c.IP())
 
 	return ok(c, map[string]string{"message": "Artikel berhasil di-generate sebagai draft"})
+}
+
+// ListModels fetches available models from the provider's API using the stored API key.
+func (h *AIHandler) ListModels(c fiber.Ctx) error {
+	provider := c.Params("provider")
+
+	dbKey, err := h.apiKeyRepo.FindActiveByProvider(c.Context(), provider)
+	if err != nil || dbKey == nil {
+		return errResponse(c, apperr.NewBadRequest("API key belum dikonfigurasi untuk provider: "+provider))
+	}
+
+	models, err := fetchModelsFromProvider(provider, dbKey.KeyValue)
+	if err != nil {
+		slog.Error("gagal fetch models", "provider", provider, "error", err)
+		return errResponse(c, apperr.NewServiceUnavailable("Gagal mengambil daftar model dari "+provider))
+	}
+
+	return ok(c, models)
+}
+
+type aiModel struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+func fetchModelsFromProvider(provider, apiKey string) ([]aiModel, error) {
+	switch provider {
+	case "claude", "anthropic":
+		return fetchClaudeModels(apiKey)
+	case "openai":
+		return fetchOpenAIModels(apiKey, "https://api.openai.com/v1/models")
+	case "groq":
+		return fetchOpenAIModels(apiKey, "https://api.groq.com/openai/v1/models")
+	case "gemini":
+		return fetchGeminiModels(apiKey)
+	default:
+		return nil, fmt.Errorf("provider %q tidak didukung", provider)
+	}
+}
+
+func fetchClaudeModels(apiKey string) ([]aiModel, error) {
+	req, _ := http.NewRequest("GET", "https://api.anthropic.com/v1/models", nil)
+	req.Header.Set("x-api-key", apiKey)
+	req.Header.Set("anthropic-version", "2023-06-01")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("Anthropic API returned %d", resp.StatusCode)
+	}
+
+	var result struct {
+		Data []struct {
+			ID          string `json:"id"`
+			DisplayName string `json:"display_name"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(body, &result); err != nil {
+		return nil, err
+	}
+
+	models := make([]aiModel, 0, len(result.Data))
+	for _, m := range result.Data {
+		name := m.DisplayName
+		if name == "" {
+			name = m.ID
+		}
+		models = append(models, aiModel{ID: m.ID, Name: name})
+	}
+	return models, nil
+}
+
+func fetchOpenAIModels(apiKey, baseURL string) ([]aiModel, error) {
+	req, _ := http.NewRequest("GET", baseURL, nil)
+	req.Header.Set("Authorization", "Bearer "+apiKey)
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("API returned %d", resp.StatusCode)
+	}
+
+	var result struct {
+		Data []struct {
+			ID      string `json:"id"`
+			OwnedBy string `json:"owned_by"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(body, &result); err != nil {
+		return nil, err
+	}
+
+	models := make([]aiModel, 0)
+	for _, m := range result.Data {
+		// Filter: only show chat/text models, skip embedding/whisper/tts/dall-e
+		id := strings.ToLower(m.ID)
+		if strings.Contains(id, "embedding") || strings.Contains(id, "whisper") ||
+			strings.Contains(id, "tts") || strings.Contains(id, "dall-e") ||
+			strings.Contains(id, "moderation") {
+			continue
+		}
+		models = append(models, aiModel{ID: m.ID, Name: m.ID})
+	}
+	return models, nil
+}
+
+func fetchGeminiModels(apiKey string) ([]aiModel, error) {
+	url := fmt.Sprintf("https://generativelanguage.googleapis.com/v1beta/models?key=%s", apiKey)
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("Gemini API returned %d", resp.StatusCode)
+	}
+
+	var result struct {
+		Models []struct {
+			Name        string `json:"name"`
+			DisplayName string `json:"displayName"`
+		} `json:"models"`
+	}
+	if err := json.Unmarshal(body, &result); err != nil {
+		return nil, err
+	}
+
+	models := make([]aiModel, 0)
+	for _, m := range result.Models {
+		id := strings.TrimPrefix(m.Name, "models/")
+		// Filter: only generateContent-capable models
+		if strings.Contains(id, "embedding") || strings.Contains(id, "aqa") {
+			continue
+		}
+		name := m.DisplayName
+		if name == "" {
+			name = id
+		}
+		models = append(models, aiModel{ID: id, Name: name})
+	}
+	return models, nil
 }
