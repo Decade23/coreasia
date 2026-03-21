@@ -431,8 +431,9 @@ func (b *ArticleBot) httpPost(url, _ string, body interface{}, headers map[strin
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		slog.Error("AI API error", "status", resp.StatusCode, "body", string(respBody))
-		return nil, fmt.Errorf("AI API returned status %d", resp.StatusCode)
+		bodyStr := string(respBody)
+		slog.Error("AI API error", "status", resp.StatusCode, "body", bodyStr)
+		return nil, fmt.Errorf("AI API status %d: %s", resp.StatusCode, bodyStr)
 	}
 
 	return respBody, nil

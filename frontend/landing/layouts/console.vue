@@ -44,6 +44,7 @@ const menuItems = [
   { label: 'Dashboard', icon: 'lucide:layout-dashboard', to: '/console' },
   { label: 'Artikel', icon: 'lucide:file-text', to: '/console/articles' },
   { label: 'Bots', icon: 'lucide:bot', to: '/console/bots' },
+  { label: 'AI Settings', icon: 'lucide:sparkles', to: '/console/ai-settings' },
   { label: 'API Keys', icon: 'lucide:key-round', to: '/console/api-keys' },
   { label: 'Users', icon: 'lucide:users', to: '/console/users' },
   { label: 'Audit Log', icon: 'lucide:scroll-text', to: '/console/audit-log' },

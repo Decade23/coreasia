@@ -22,6 +22,7 @@ export interface AIGenerateResult {
 
 export const useAIGenerate = () => {
   const api = useAdminApi()
+  const toast = useToast()
   const generating = ref(false)
   const result = ref<AIGenerateResult | null>(null)
   const error = ref('')
@@ -37,9 +38,11 @@ export const useAIGenerate = () => {
         return null
       }
       result.value = res.data
+      toast.success('Artikel berhasil di-generate')
       return res.data
     } catch (err: any) {
       error.value = err?.data?.errors?.message || 'Gagal generate artikel. Coba lagi nanti.'
+      toast.error(error.value)
       return null
     } finally {
       generating.value = false

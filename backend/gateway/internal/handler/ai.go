@@ -18,13 +18,14 @@ import (
 )
 
 type AIHandler struct {
-	articleBot *service.ArticleBot
-	auditLog   *repository.AuditLogRepo
-	apiKeyRepo *repository.APIKeyRepo
+	articleBot  *service.ArticleBot
+	auditLog    *repository.AuditLogRepo
+	apiKeyRepo  *repository.APIKeyRepo
+	settingsRepo *repository.AppSettingsRepo
 }
 
-func NewAIHandler(articleBot *service.ArticleBot, auditLog *repository.AuditLogRepo, apiKeyRepo *repository.APIKeyRepo) *AIHandler {
-	return &AIHandler{articleBot: articleBot, auditLog: auditLog, apiKeyRepo: apiKeyRepo}
+func NewAIHandler(articleBot *service.ArticleBot, auditLog *repository.AuditLogRepo, apiKeyRepo *repository.APIKeyRepo, settingsRepo *repository.AppSettingsRepo) *AIHandler {
+	return &AIHandler{articleBot: articleBot, auditLog: auditLog, apiKeyRepo: apiKeyRepo, settingsRepo: settingsRepo}
 }
 
 func (h *AIHandler) Generate(c fiber.Ctx) error {
@@ -47,13 +48,67 @@ func (h *AIHandler) Generate(c fiber.Ctx) error {
 
 	if err := h.articleBot.RunWithConfig(c.Context(), botConfig); err != nil {
 		slog.Error("gagal generate artikel AI", "error", err)
-		return errResponse(c, apperr.NewInternal(err))
+		msg := classifyAIError(err)
+		return errResponse(c, apperr.NewServiceUnavailable(msg))
 	}
 
 	desc := fmt.Sprintf("Generate artikel AI: %s", req.Topic)
 	h.auditLog.LogAction(c.Context(), &claims.UserID, &claims.FullName, "ai_generate", "articles", nil, &desc, c.IP())
 
 	return ok(c, map[string]string{"message": "Artikel berhasil di-generate sebagai draft"})
+}
+
+// GetSettings returns AI configuration.
+func (h *AIHandler) GetSettings(c fiber.Ctx) error {
+	settings, err := h.settingsRepo.GetAll(c.Context())
+	if err != nil {
+		slog.Error("gagal get AI settings", "error", err)
+		return errResponse(c, apperr.NewInternal(err))
+	}
+	return ok(c, settings)
+}
+
+// UpdateSettings saves AI configuration.
+func (h *AIHandler) UpdateSettings(c fiber.Ctx) error {
+	claims := middleware.GetClaims(c)
+
+	var req map[string]string
+	if err := c.Bind().JSON(&req); err != nil {
+		return errResponse(c, apperr.NewBadRequest("Format request tidak valid"))
+	}
+
+	if err := h.settingsRepo.SetMultiple(c.Context(), req, &claims.UserID); err != nil {
+		slog.Error("gagal update AI settings", "error", err)
+		return errResponse(c, apperr.NewInternal(err))
+	}
+
+	desc := fmt.Sprintf("Update pengaturan AI: provider=%s model=%s", req["ai_provider"], req["ai_model"])
+	h.auditLog.LogAction(c.Context(), &claims.UserID, &claims.FullName, "update", "ai_settings", nil, &desc, c.IP())
+
+	return ok(c, map[string]string{"message": "Pengaturan AI berhasil disimpan"})
+}
+
+// classifyAIError converts raw AI errors into user-friendly messages.
+func classifyAIError(err error) string {
+	msg := err.Error()
+	switch {
+	case strings.Contains(msg, "credit balance is too low"):
+		return "Credit API habis. Isi ulang credit di dashboard provider AI Anda."
+	case strings.Contains(msg, "API key belum dikonfigurasi"):
+		return "API key belum dikonfigurasi. Tambahkan API key di halaman API Keys."
+	case strings.Contains(msg, "invalid x-api-key"), strings.Contains(msg, "Incorrect API key"), strings.Contains(msg, "invalid_api_key"):
+		return "API key tidak valid. Periksa kembali key yang tersimpan."
+	case strings.Contains(msg, "rate limit"), strings.Contains(msg, "429"):
+		return "Rate limit tercapai. Coba lagi dalam beberapa menit."
+	case strings.Contains(msg, "model"), strings.Contains(msg, "not found"):
+		return "Model AI tidak ditemukan. Periksa konfigurasi model di pengaturan bot."
+	case strings.Contains(msg, "timeout"), strings.Contains(msg, "deadline"):
+		return "Request timeout. Server AI tidak merespons, coba lagi nanti."
+	case strings.Contains(msg, "provider") && strings.Contains(msg, "tidak didukung"):
+		return msg
+	default:
+		return "Gagal generate artikel. Periksa konfigurasi AI dan coba lagi."
+	}
 }
 
 // ListModels fetches available models from the provider's API using the stored API key.
