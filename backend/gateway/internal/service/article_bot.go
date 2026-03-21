@@ -403,6 +403,27 @@ func (b *ArticleBot) callGemini(aiModel, apiKey, systemPrompt, userPrompt string
 	return b.parseArticleJSON([]byte(geminiResp.Candidates[0].Content.Parts[0].Text))
 }
 
+// GenerateFromRequest generates an article from explicit user params and returns the result (no auto-save).
+func (b *ArticleBot) GenerateFromRequest(ctx context.Context, req model.AIGenerateRequest, provider, aiModel string) (*model.AIGenerateResponse, error) {
+	// Load API key from DB (by provider), fallback to env
+	apiKey := ""
+	if dbKey, err := b.apiKeyRepo.FindActiveByProvider(ctx, provider); err == nil && dbKey != nil {
+		apiKey = dbKey.KeyValue
+	}
+	if apiKey == "" {
+		apiKey = b.cfg.APIKey
+	}
+	if apiKey == "" {
+		return nil, fmt.Errorf("API key belum dikonfigurasi untuk provider %q (env atau DB)", provider)
+	}
+
+	result, err := b.callAI(provider, aiModel, apiKey, req)
+	if err != nil {
+		return nil, fmt.Errorf("gagal generate artikel via %s: %w", provider, err)
+	}
+	return result, nil
+}
+
 func (b *ArticleBot) httpPost(url, _ string, body interface{}, headers map[string]string) ([]byte, error) {
 	jsonBody, err := json.Marshal(body)
 	if err != nil {

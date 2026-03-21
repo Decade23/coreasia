@@ -118,7 +118,7 @@ func runBotScheduler(ctx context.Context, articleBot *service.ArticleBot, schedu
 					var runErr error
 					switch bot.BotType {
 					case "article_generator":
-						runErr = articleBot.Run(ctx)
+						runErr = articleBot.RunWithConfig(ctx, bot.Config)
 					default:
 						slog.Warn("bot-scheduler: tipe bot tidak dikenal", "type", bot.BotType)
 						continue

@@ -149,6 +149,7 @@ func (s *Server) setupRoutes() {
 	// AI generation (rate limited) & model listing
 	admin.Post("/ai/generate", aiRateLimiter.Middleware(), aiHandler.Generate)
 	admin.Get("/ai/models/:provider", aiHandler.ListModels)
+	admin.Get("/ai/active-key/:provider", aiHandler.GetActiveKey)
 	admin.Get("/ai/settings", aiHandler.GetSettings)
 	admin.Put("/ai/settings", aiHandler.UpdateSettings)
 

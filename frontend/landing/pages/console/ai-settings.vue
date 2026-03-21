@@ -24,8 +24,8 @@ const modelOptions = ref<{ label: string; value: string }[]>([])
 const modelsLoading = ref(false)
 const modelsError = ref('')
 
-// API keys status
-const apiKeys = ref<{ provider: string; name: string; is_active: boolean }[]>([])
+// Active key info for current provider
+const activeKeyInfo = ref<{ id: string; name: string; provider: string } | null>(null)
 
 const fetchSettings = async () => {
   loading.value = true
@@ -39,12 +39,15 @@ const fetchSettings = async () => {
   } catch {
     // Use defaults
   }
-  // Load API keys for status display
-  try {
-    const res = await api.get<any[]>('/admin/api-keys')
-    apiKeys.value = (res.data || []).map((k: any) => ({ provider: k.provider, name: k.name, is_active: k.is_active }))
-  } catch { /* ignore */ }
   loading.value = false
+}
+
+const fetchActiveKey = async (provider: string) => {
+  activeKeyInfo.value = null
+  try {
+    const res = await api.get<{ id: string; name: string; provider: string }>(`/admin/ai/active-key/${provider}`)
+    activeKeyInfo.value = res.data || null
+  } catch { /* ignore */ }
 }
 
 const fetchModels = async (provider: string) => {
@@ -64,6 +67,7 @@ const fetchModels = async (provider: string) => {
 watch(() => settings.value.ai_provider, (p) => {
   settings.value.ai_model = ''
   fetchModels(p)
+  fetchActiveKey(p)
 })
 
 const saveSettings = async () => {
@@ -82,13 +86,12 @@ const saveSettings = async () => {
   }
 }
 
-const hasActiveKey = computed(() => {
-  return apiKeys.value.some(k => k.provider === settings.value.ai_provider && k.is_active)
-})
+const hasActiveKey = computed(() => !!activeKeyInfo.value)
 
 onMounted(async () => {
   await fetchSettings()
   fetchModels(settings.value.ai_provider)
+  fetchActiveKey(settings.value.ai_provider)
 })
 </script>
 
@@ -150,7 +153,7 @@ onMounted(async () => {
         <div v-else class="rounded-lg border border-emerald-400/20 bg-emerald-500/5 p-3 flex items-center gap-2.5">
           <Icon name="lucide:shield-check" class="h-4 w-4 text-emerald-400 shrink-0" />
           <p class="text-xs text-[var(--ca-muted)]">
-            API key <strong class="text-emerald-400">aktif</strong> untuk {{ providerOptions.find(p => p.value === settings.ai_provider)?.label }}
+            Menggunakan key <strong class="text-emerald-400">{{ activeKeyInfo?.name }}</strong> untuk {{ providerOptions.find(p => p.value === settings.ai_provider)?.label }}
           </p>
         </div>
 

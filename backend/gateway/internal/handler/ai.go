@@ -39,23 +39,38 @@ func (h *AIHandler) Generate(c fiber.Ctx) error {
 		return errResponse(c, appErr)
 	}
 
-	cfg := map[string]interface{}{
-		"tone":       req.Tone,
-		"language":   req.Language,
-		"word_count": req.WordCount,
+	// Check AI enabled
+	if enabled, _ := h.settingsRepo.Get(c.Context(), "ai_enabled"); enabled == "false" {
+		return errResponse(c, apperr.NewBadRequest("Fitur AI sedang dinonaktifkan. Aktifkan di halaman Pengaturan AI."))
 	}
-	botConfig, _ := json.Marshal(cfg)
 
-	if err := h.articleBot.RunWithConfig(c.Context(), botConfig); err != nil {
-		slog.Error("gagal generate artikel AI", "error", err)
+	// Load provider & model from settings
+	provider, _ := h.settingsRepo.Get(c.Context(), "ai_provider")
+	if provider == "" {
+		provider = "claude"
+	}
+	aiModel, _ := h.settingsRepo.Get(c.Context(), "ai_model")
+	if aiModel == "" {
+		return errResponse(c, apperr.NewBadRequest("Model AI belum dikonfigurasi. Pilih model di halaman Pengaturan AI."))
+	}
+
+	result, err := h.articleBot.GenerateFromRequest(c.Context(), req, provider, aiModel)
+	if err != nil {
+		slog.Error("gagal generate artikel AI",
+			"error", err,
+			"provider", provider,
+			"model", aiModel,
+			"topic", req.Topic,
+			"user", claims.FullName,
+		)
 		msg := classifyAIError(err)
 		return errResponse(c, apperr.NewServiceUnavailable(msg))
 	}
 
-	desc := fmt.Sprintf("Generate artikel AI: %s", req.Topic)
+	desc := fmt.Sprintf("Generate artikel AI via %s/%s: %s", provider, aiModel, req.Topic)
 	h.auditLog.LogAction(c.Context(), &claims.UserID, &claims.FullName, "ai_generate", "articles", nil, &desc, c.IP())
 
-	return ok(c, map[string]string{"message": "Artikel berhasil di-generate sebagai draft"})
+	return ok(c, result)
 }
 
 // GetSettings returns AI configuration.
@@ -91,24 +106,50 @@ func (h *AIHandler) UpdateSettings(c fiber.Ctx) error {
 // classifyAIError converts raw AI errors into user-friendly messages.
 func classifyAIError(err error) string {
 	msg := err.Error()
+	lower := strings.ToLower(msg)
 	switch {
-	case strings.Contains(msg, "credit balance is too low"):
+	case strings.Contains(lower, "credit balance is too low"), strings.Contains(lower, "insufficient_quota"), strings.Contains(lower, "billing"):
 		return "Credit API habis. Isi ulang credit di dashboard provider AI Anda."
 	case strings.Contains(msg, "API key belum dikonfigurasi"):
 		return "API key belum dikonfigurasi. Tambahkan API key di halaman API Keys."
-	case strings.Contains(msg, "invalid x-api-key"), strings.Contains(msg, "Incorrect API key"), strings.Contains(msg, "invalid_api_key"):
-		return "API key tidak valid. Periksa kembali key yang tersimpan."
-	case strings.Contains(msg, "rate limit"), strings.Contains(msg, "429"):
+	case strings.Contains(lower, "invalid x-api-key"), strings.Contains(lower, "incorrect api key"),
+		strings.Contains(lower, "invalid_api_key"), strings.Contains(lower, "authentication"),
+		strings.Contains(lower, "unauthorized"), strings.Contains(lower, "status 401"):
+		return "API key tidak valid atau sudah kedaluwarsa. Periksa kembali key yang tersimpan di halaman API Keys."
+	case strings.Contains(lower, "rate limit"), strings.Contains(lower, "429"), strings.Contains(lower, "too many requests"):
 		return "Rate limit tercapai. Coba lagi dalam beberapa menit."
-	case strings.Contains(msg, "model"), strings.Contains(msg, "not found"):
-		return "Model AI tidak ditemukan. Periksa konfigurasi model di pengaturan bot."
-	case strings.Contains(msg, "timeout"), strings.Contains(msg, "deadline"):
+	case strings.Contains(lower, "overloaded"), strings.Contains(lower, "status 529"), strings.Contains(lower, "status 503"):
+		return "Server AI sedang overload. Coba lagi dalam beberapa menit."
+	case strings.Contains(lower, "model") && (strings.Contains(lower, "not found") || strings.Contains(lower, "does not exist")),
+		strings.Contains(lower, "status 404"):
+		return "Model AI tidak ditemukan. Periksa konfigurasi model di halaman Pengaturan AI."
+	case strings.Contains(lower, "timeout"), strings.Contains(lower, "deadline"), strings.Contains(lower, "context canceled"):
 		return "Request timeout. Server AI tidak merespons, coba lagi nanti."
-	case strings.Contains(msg, "provider") && strings.Contains(msg, "tidak didukung"):
+	case strings.Contains(lower, "permission"), strings.Contains(lower, "status 403"):
+		return "API key tidak memiliki akses ke model ini. Periksa permission key di dashboard provider."
+	case strings.Contains(lower, "parsing ai article json"):
+		return "AI memberikan respons dalam format yang tidak valid. Coba generate ulang."
+	case strings.Contains(lower, "empty response"):
+		return "AI memberikan respons kosong. Coba generate ulang atau ganti model."
+	case strings.Contains(lower, "provider") && strings.Contains(lower, "tidak didukung"):
 		return msg
 	default:
 		return "Gagal generate artikel. Periksa konfigurasi AI dan coba lagi."
 	}
+}
+
+// GetActiveKey returns the active API key info for a given provider (used by AI settings page).
+func (h *AIHandler) GetActiveKey(c fiber.Ctx) error {
+	provider := c.Params("provider")
+	key, err := h.apiKeyRepo.FindActiveByProvider(c.Context(), provider)
+	if err != nil || key == nil {
+		return ok(c, nil)
+	}
+	return ok(c, map[string]interface{}{
+		"id":       key.ID,
+		"name":     key.Name,
+		"provider": key.Provider,
+	})
 }
 
 // ListModels fetches available models from the provider's API using the stored API key.

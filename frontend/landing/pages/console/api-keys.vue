@@ -3,6 +3,22 @@ definePageMeta({ layout: 'console', middleware: 'console' })
 
 const { items, loading, saving, error, fetchKeys, createKey, updateKey, deleteKey, copyKey } = useApiKeys()
 const { user: currentAdmin } = useAdminAuth()
+const api = useAdminApi()
+
+// Track which provider's key is currently in use by AI
+const aiProvider = ref('')
+const activeKeyId = ref<string | null>(null)
+
+const fetchAIContext = async () => {
+  try {
+    const res = await api.get<Record<string, string>>('/admin/ai/settings')
+    aiProvider.value = res.data?.ai_provider || 'claude'
+  } catch { aiProvider.value = 'claude' }
+  try {
+    const res = await api.get<{ id: string }>(`/admin/ai/active-key/${aiProvider.value}`)
+    activeKeyId.value = res.data?.id || null
+  } catch { activeKeyId.value = null }
+}
 
 const showFormModal = ref(false)
 const showDeleteConfirm = ref(false)
@@ -28,7 +44,6 @@ const providerOptions = [
   { label: 'Lainnya', value: 'other' },
 ]
 
-const api = useAdminApi()
 const availableModels = ref<{ id: string; name: string }[]>([])
 const modelsLoading = ref(false)
 
@@ -49,7 +64,7 @@ watch(() => formData.value.provider, (p) => {
   if (showFormModal.value) fetchModelsForProvider(p)
 })
 
-onMounted(() => fetchKeys())
+onMounted(() => { fetchKeys(); fetchAIContext() })
 
 const openCreate = () => {
   editingKey.value = null
@@ -141,7 +156,7 @@ const formatDate = (d: string) => new Date(d).toLocaleDateString('id-ID', { year
         <Icon name="lucide:info" class="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
         <div class="text-xs text-[var(--ca-muted)]">
           <p>API key digunakan oleh sistem untuk integrasi AI article generator dan fitur lainnya.</p>
-          <p class="mt-1">Key yang aktif dengan provider <strong>claude</strong> akan otomatis digunakan untuk generate artikel.</p>
+          <p class="mt-1">Key yang aktif untuk provider <strong>{{ aiProvider || 'claude' }}</strong> (sesuai <NuxtLink to="/console/ai-settings" class="text-amber-400 underline">Pengaturan AI</NuxtLink>) akan digunakan untuk generate artikel. Jika ada lebih dari satu key aktif per provider, yang terakhir diperbarui akan digunakan.</p>
         </div>
       </div>
     </div>
@@ -171,6 +186,12 @@ const formatDate = (d: string) => new Date(d).toLocaleDateString('id-ID', { year
               :class="k.is_active ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-500/10 text-[var(--ca-muted)]'"
             >
               {{ k.is_active ? 'Aktif' : 'Nonaktif' }}
+            </span>
+            <span
+              v-if="activeKeyId === k.id"
+              class="rounded-full bg-amber-500/10 px-2 py-0.5 text-[0.6rem] font-bold uppercase text-amber-400"
+            >
+              Digunakan AI
             </span>
           </div>
           <div class="mt-1 flex flex-wrap items-center gap-3 text-xs text-[var(--ca-muted)]">

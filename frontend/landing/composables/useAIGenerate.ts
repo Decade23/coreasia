@@ -35,13 +35,21 @@ export const useAIGenerate = () => {
       const res = await api.post<AIGenerateResult>('/admin/ai/generate', params)
       if (res.errors) {
         error.value = res.errors.message
+        toast.error(error.value)
         return null
       }
       result.value = res.data
       toast.success('Artikel berhasil di-generate')
       return res.data
     } catch (err: any) {
-      error.value = err?.data?.errors?.message || 'Gagal generate artikel. Coba lagi nanti.'
+      const msg = err?.data?.errors?.message
+      if (msg) {
+        error.value = msg
+      } else if (err?.status === 429 || err?.statusCode === 429) {
+        error.value = 'Rate limit tercapai. Coba lagi dalam beberapa menit.'
+      } else {
+        error.value = 'Gagal generate artikel. Periksa koneksi dan coba lagi.'
+      }
       toast.error(error.value)
       return null
     } finally {
