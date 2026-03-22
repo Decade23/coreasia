@@ -1,9 +1,10 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'console', middleware: 'console' })
 
-const { createArticle, saving, error } = useArticles()
+const { createArticle, publishArticle, saving, error } = useArticles()
 const { generateArticle, generating, error: aiError } = useAIGenerate()
 const { uploadImage, uploading } = useImageUpload()
+const toast = useToast()
 
 const form = ref({
   title: '',
@@ -37,6 +38,17 @@ const handleImageUpload = async (e: Event) => {
   if (url) form.value.featured_image = url
 }
 
+// AI modal featured image
+const aiImageUploading = ref(false)
+const handleAIImageUpload = async (e: Event) => {
+  const file = (e.target as HTMLInputElement).files?.[0]
+  if (!file) return
+  aiImageUploading.value = true
+  const url = await uploadImage(file)
+  if (url) form.value.featured_image = url
+  aiImageUploading.value = false
+}
+
 const handleAIGenerate = async (params: any) => {
   const result = await generateArticle(params)
   if (result) {
@@ -53,16 +65,35 @@ const handleAIGenerate = async (params: any) => {
   }
 }
 
+const buildFormData = () => ({
+  ...form.value,
+  tags: form.value.tags.split(',').map(t => t.trim()).filter(Boolean),
+  featured_image: form.value.featured_image || null,
+  seo_title: form.value.seo_title || null,
+  seo_description: form.value.seo_description || null,
+})
+
 const handleSubmit = async () => {
-  const data = {
-    ...form.value,
-    tags: form.value.tags.split(',').map(t => t.trim()).filter(Boolean),
-    featured_image: form.value.featured_image || null,
-    seo_title: form.value.seo_title || null,
-    seo_description: form.value.seo_description || null,
-  }
-  const ok = await createArticle(data)
+  const ok = await createArticle(buildFormData())
   if (ok) navigateTo('/console/articles')
+}
+
+const handleSaveAndPublish = async () => {
+  const data = buildFormData()
+  const api = useAdminApi()
+  saving.value = true
+  try {
+    const res = await api.post<{ id: string }>('/admin/articles', data)
+    if (res.data?.id) {
+      await publishArticle(res.data.id)
+      toast.success('Artikel berhasil dibuat dan dipublish')
+      navigateTo('/console/articles')
+    }
+  } catch (err: any) {
+    toast.error(err?.data?.errors?.message || 'Gagal membuat artikel')
+  } finally {
+    saving.value = false
+  }
 }
 
 // AI modal state
@@ -162,10 +193,15 @@ const applySuggestion = (s: typeof topicSuggestions[0]) => {
 
         <p v-if="error" class="mt-3 text-sm text-rose-400">{{ error }}</p>
 
-        <div class="mt-6 flex justify-end gap-3">
+        <div class="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
           <NuxtLink to="/console/articles" class="ca-btn-secondary">Batal</NuxtLink>
-          <button type="submit" class="ca-btn-primary" :disabled="saving">
-            {{ saving ? 'Menyimpan...' : 'Simpan Artikel' }}
+          <button type="submit" class="ca-btn-secondary" :disabled="saving">
+            <Icon name="lucide:save" class="h-4 w-4" />
+            {{ saving ? 'Menyimpan...' : 'Simpan Draft' }}
+          </button>
+          <button type="button" class="inline-flex items-center justify-center gap-1.5 rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-600" :disabled="saving" @click="handleSaveAndPublish">
+            <Icon name="lucide:globe" class="h-4 w-4" />
+            {{ saving ? 'Publishing...' : 'Simpan & Publish' }}
           </button>
         </div>
       </div>
@@ -174,7 +210,7 @@ const applySuggestion = (s: typeof topicSuggestions[0]) => {
     <!-- AI Generate Modal -->
     <Teleport to="body">
       <div v-if="showAIModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" @click.self="showAIModal = false">
-        <div class="ca-card w-full max-w-lg p-6">
+        <div class="ca-card w-full max-w-lg max-h-[90vh] overflow-y-auto p-6">
           <h3 class="font-display text-lg font-bold text-[var(--ca-text)]">
             <Icon name="lucide:sparkles" class="mr-2 inline h-5 w-5 ca-tone-gold" />
             Generate Artikel dengan AI
@@ -234,6 +270,17 @@ const applySuggestion = (s: typeof topicSuggestions[0]) => {
             <div class="grid gap-3 sm:grid-cols-2">
               <BaseInput id="ai-wordcount" v-model.number="aiWordCount" label="Jumlah Kata" type="number" />
               <BaseInput id="ai-category" v-model="aiCategory" label="Kategori" placeholder="general" />
+            </div>
+
+            <!-- Featured Image in AI Modal -->
+            <div>
+              <label class="ca-field-label">Featured Image</label>
+              <p class="mb-1.5 text-[0.68rem] text-[var(--ca-subtle)]">Upload gambar untuk artikel. AI hanya generate teks, gambar perlu diupload manual.</p>
+              <div class="flex items-center gap-3">
+                <input type="file" accept="image/jpeg,image/png,image/webp" class="ca-field-control border-[color:var(--ca-border)] text-sm" @change="handleAIImageUpload" />
+                <span v-if="aiImageUploading" class="text-xs text-[var(--ca-muted)]">Mengupload...</span>
+              </div>
+              <img v-if="form.featured_image" :src="form.featured_image" class="mt-2 h-24 rounded-lg object-cover" />
             </div>
           </div>
 

@@ -2,6 +2,8 @@
 import { ARTICLES } from '~/utils/articles'
 
 const { t } = useCoreI18n()
+const config = useRuntimeConfig()
+const baseURL = config.public?.gatewayUrl || 'http://localhost:8081/api'
 
 useCoreSeo({
   title: (t('blog.title') || 'Blog & Insight') as string,
@@ -10,20 +12,81 @@ useCoreSeo({
 })
 
 const activeCategory = ref('all')
+const loadingArticles = ref(true)
 
 const categories = [
   { key: 'all', label: 'Semua' },
-  { key: 'business', label: 'Bisnis & Teknologi' },
+  { key: 'bisnis', label: 'Bisnis & Teknologi' },
   { key: 'seo', label: 'SEO & Marketing' },
-  { key: 'tutorial', label: 'Tutorial' },
+  { key: 'teknologi', label: 'Teknologi' },
+  { key: 'marketing', label: 'Marketing' },
+  { key: 'edukasi', label: 'Edukasi' },
 ]
 
-const articles = computed(() => ARTICLES)
+interface PublicArticle {
+  id: string
+  slug: string
+  title: string
+  description: string
+  category: string
+  tags: string[]
+  author: string
+  read_time: number
+  featured_image: string | null
+  published_at: string
+  created_at: string
+}
+
+const apiArticles = ref<PublicArticle[]>([])
+
+const fetchPublicArticles = async () => {
+  loadingArticles.value = true
+  try {
+    const params: Record<string, string> = { per_page: '50' }
+    if (activeCategory.value !== 'all') {
+      params.category = activeCategory.value
+    }
+    const query = new URLSearchParams(params).toString()
+    const res = await $fetch<{ data: PublicArticle[] }>(`${baseURL}/articles?${query}`)
+    apiArticles.value = res?.data || []
+  } catch {
+    apiArticles.value = []
+  } finally {
+    loadingArticles.value = false
+  }
+}
+
+// Merge API articles with static fallback
+const articles = computed(() => {
+  if (apiArticles.value.length > 0) return apiArticles.value
+  // Fallback to static articles if API returns empty
+  return ARTICLES.map(a => ({
+    id: a.slug,
+    slug: a.slug,
+    title: a.title,
+    description: a.description,
+    category: a.category,
+    tags: a.tags || [],
+    author: a.author || 'Tim CoreAsia',
+    read_time: a.readTime || 5,
+    featured_image: null,
+    published_at: a.publishedAt,
+    created_at: a.publishedAt,
+  }))
+})
 
 const filteredArticles = computed(() => {
   if (activeCategory.value === 'all') return articles.value
   return articles.value.filter((a) => a.category === activeCategory.value)
 })
+
+watch(activeCategory, () => {
+  if (apiArticles.value.length > 0) {
+    fetchPublicArticles()
+  }
+})
+
+onMounted(() => fetchPublicArticles())
 
 const formatDate = (dateStr: string) => {
   try {
@@ -67,24 +130,38 @@ const categoryLabel = (key: string) => {
           >{{ cat.label }}</button>
         </div>
 
-        <div v-if="filteredArticles.length" class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div v-if="loadingArticles" class="py-10 text-center">
+          <Icon name="lucide:loader-2" class="mx-auto h-8 w-8 animate-spin text-[var(--ca-subtle)]" />
+        </div>
+
+        <div v-else-if="filteredArticles.length" class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           <NuxtLink v-for="article in filteredArticles" :key="article.slug" :to="`/artikel/${article.slug}`"
-            class="ca-card-soft group flex flex-col p-5 transition hover:-translate-y-1 hover:border-[color:var(--ca-gold-border)] hover:shadow-lg"
+            class="ca-card-soft group flex flex-col overflow-hidden transition hover:-translate-y-1 hover:border-[color:var(--ca-gold-border)] hover:shadow-lg"
           >
-            <div class="flex items-center gap-2">
-              <span class="rounded-md bg-[var(--ca-kicker-bg)] px-2 py-0.5 text-[0.68rem] font-bold uppercase tracking-[0.12em] text-brand-primary">
-                {{ categoryLabel(article.category) }}
-              </span>
-              <span class="text-xs text-[var(--ca-subtle)]">{{ article.readTime }} menit baca</span>
+            <!-- Featured Image -->
+            <div v-if="article.featured_image" class="aspect-[16/9] w-full overflow-hidden">
+              <img :src="article.featured_image" :alt="article.title" class="h-full w-full object-cover transition group-hover:scale-105" />
             </div>
-            <h2 class="mt-3 text-lg font-display font-bold leading-snug text-[var(--ca-text)]">{{ article.title }}</h2>
-            <p class="mt-2 flex-1 text-sm leading-relaxed text-[var(--ca-muted)] line-clamp-3">{{ article.description }}</p>
-            <div class="mt-4 flex items-center justify-between">
-              <span class="text-xs text-[var(--ca-subtle)]">{{ formatDate(article.publishedAt) }}</span>
-              <span class="inline-flex items-center gap-1 text-sm font-semibold ca-tone-gold">
-                Baca selengkapnya
-                <Icon name="lucide:arrow-right" class="h-3.5 w-3.5" />
-              </span>
+            <div v-else class="flex aspect-[16/9] w-full items-center justify-center bg-[var(--ca-panel-bg-strong)]">
+              <Icon name="lucide:image" class="h-10 w-10 text-[var(--ca-subtle)]" />
+            </div>
+
+            <div class="flex flex-1 flex-col p-5">
+              <div class="flex items-center gap-2">
+                <span class="rounded-md bg-[var(--ca-kicker-bg)] px-2 py-0.5 text-[0.68rem] font-bold uppercase tracking-[0.12em] text-brand-primary">
+                  {{ categoryLabel(article.category) }}
+                </span>
+                <span class="text-xs text-[var(--ca-subtle)]">{{ article.read_time }} menit baca</span>
+              </div>
+              <h2 class="mt-3 text-lg font-display font-bold leading-snug text-[var(--ca-text)]">{{ article.title }}</h2>
+              <p class="mt-2 flex-1 text-sm leading-relaxed text-[var(--ca-muted)] line-clamp-3">{{ article.description }}</p>
+              <div class="mt-4 flex items-center justify-between">
+                <span class="text-xs text-[var(--ca-subtle)]">{{ formatDate(article.published_at || article.created_at) }}</span>
+                <span class="inline-flex items-center gap-1 text-sm font-semibold ca-tone-gold">
+                  Baca selengkapnya
+                  <Icon name="lucide:arrow-right" class="h-3.5 w-3.5" />
+                </span>
+              </div>
             </div>
           </NuxtLink>
         </div>
