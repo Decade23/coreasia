@@ -129,7 +129,7 @@ onMounted(async () => {
       </div>
 
       <!-- Provider & Model -->
-      <div class="ca-card p-5 space-y-4">
+      <div class="ca-card p-5 space-y-4 relative z-10">
         <h3 class="font-display font-semibold text-[var(--ca-text)]">Provider & Model</h3>
 
         <SearchSelect
