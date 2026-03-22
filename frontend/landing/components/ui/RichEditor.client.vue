@@ -21,6 +21,19 @@ const emit = defineEmits<{
   'update:modelValue': [value: string]
 }>()
 
+// Modal state for link/image input
+const showLinkModal = ref(false)
+const showImageModal = ref(false)
+const linkUrl = ref('')
+const imageUrl = ref('')
+
+// Link bubble tooltip state
+const linkBubble = ref<{ show: boolean; href: string; top: number; left: number }>({
+  show: false, href: '', top: 0, left: 0,
+})
+
+const editorContainer = ref<HTMLElement | null>(null)
+
 const editor = useEditor({
   content: props.modelValue,
   extensions: [
@@ -28,7 +41,7 @@ const editor = useEditor({
       heading: { levels: [2, 3, 4] },
     }),
     Image.configure({ inline: false }),
-    Link.configure({ openOnClick: false, HTMLAttributes: { class: 'ca-tone-gold underline' } }),
+    Link.configure({ openOnClick: false, HTMLAttributes: { class: 'ca-tone-gold underline cursor-pointer' } }),
     Placeholder.configure({ placeholder: props.placeholder || 'Tulis konten di sini...' }),
     TextAlign.configure({ types: ['heading', 'paragraph'] }),
     Underline,
@@ -37,9 +50,32 @@ const editor = useEditor({
     attributes: {
       class: 'prose prose-sm max-w-none focus:outline-none min-h-[300px] px-4 py-3 text-[var(--ca-text)]',
     },
+    handleClick: (view, pos, event) => {
+      const target = event.target as HTMLElement
+      const linkEl = target.closest('a')
+      if (linkEl && editorContainer.value) {
+        const containerRect = editorContainer.value.getBoundingClientRect()
+        const linkRect = linkEl.getBoundingClientRect()
+        linkBubble.value = {
+          show: true,
+          href: linkEl.getAttribute('href') || '',
+          top: linkRect.bottom - containerRect.top + 4,
+          left: linkRect.left - containerRect.left,
+        }
+        return false
+      }
+      linkBubble.value.show = false
+      return false
+    },
   },
   onUpdate: ({ editor: e }) => {
     emit('update:modelValue', e.getHTML())
+  },
+  onSelectionUpdate: () => {
+    // Hide bubble when selection changes to non-link
+    if (editor.value && !editor.value.isActive('link')) {
+      linkBubble.value.show = false
+    }
   },
 })
 
@@ -53,23 +89,48 @@ onBeforeUnmount(() => {
   editor.value?.destroy()
 })
 
-const addImage = () => {
-  const url = window.prompt('URL gambar:')
-  if (url && editor.value) {
-    editor.value.chain().focus().setImage({ src: url }).run()
-  }
+// Link modal
+const openLinkModal = () => {
+  if (!editor.value) return
+  linkUrl.value = editor.value.getAttributes('link').href || ''
+  linkBubble.value.show = false
+  showLinkModal.value = true
 }
 
-const addLink = () => {
+const confirmLink = () => {
   if (!editor.value) return
-  const prev = editor.value.getAttributes('link').href
-  const url = window.prompt('URL link:', prev)
-  if (url === null) return
-  if (url === '') {
+  showLinkModal.value = false
+  if (linkUrl.value === '') {
     editor.value.chain().focus().extendMarkRange('link').unsetLink().run()
   } else {
-    editor.value.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
+    editor.value.chain().focus().extendMarkRange('link').setLink({ href: linkUrl.value }).run()
   }
+  linkUrl.value = ''
+}
+
+const removeLink = () => {
+  if (!editor.value) return
+  editor.value.chain().focus().extendMarkRange('link').unsetLink().run()
+  linkBubble.value.show = false
+}
+
+const editLinkFromBubble = () => {
+  linkUrl.value = linkBubble.value.href
+  linkBubble.value.show = false
+  showLinkModal.value = true
+}
+
+// Image modal
+const openImageModal = () => {
+  imageUrl.value = ''
+  showImageModal.value = true
+}
+
+const confirmImage = () => {
+  if (!editor.value || !imageUrl.value) return
+  showImageModal.value = false
+  editor.value.chain().focus().setImage({ src: imageUrl.value }).run()
+  imageUrl.value = ''
 }
 
 type BtnDef = { icon: string; action: () => void; active?: () => boolean; title: string }
@@ -98,8 +159,8 @@ const toolbarGroups = computed<BtnDef[][]>(() => {
       { icon: 'lucide:file-code', action: () => e.chain().focus().toggleCodeBlock().run(), active: () => e.isActive('codeBlock'), title: 'Code block' },
     ],
     [
-      { icon: 'lucide:link', action: addLink, active: () => e.isActive('link'), title: 'Link' },
-      { icon: 'lucide:image', action: addImage, title: 'Image' },
+      { icon: 'lucide:link', action: openLinkModal, active: () => e.isActive('link'), title: 'Link' },
+      { icon: 'lucide:image', action: openImageModal, title: 'Image' },
       { icon: 'lucide:minus', action: () => e.chain().focus().setHorizontalRule().run(), title: 'Horizontal rule' },
     ],
     [
@@ -117,7 +178,8 @@ const toolbarGroups = computed<BtnDef[][]>(() => {
       <span v-if="required" class="ca-required">*</span>
     </label>
     <div
-      class="overflow-hidden rounded-xl border transition-colors"
+      ref="editorContainer"
+      class="relative overflow-hidden rounded-xl border transition-colors"
       :class="error ? 'border-rose-300/50' : 'border-[color:var(--ca-border)] focus-within:border-amber-300/40'"
     >
       <!-- Toolbar -->
@@ -142,8 +204,90 @@ const toolbarGroups = computed<BtnDef[][]>(() => {
       <div class="bg-[var(--ca-panel-bg)]" :style="{ minHeight: minHeight || '300px' }">
         <EditorContent :editor="editor" />
       </div>
+
+      <!-- Link Bubble Tooltip -->
+      <div
+        v-if="linkBubble.show"
+        class="absolute z-20 flex items-center gap-1.5 rounded-lg border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg-strong)] px-3 py-1.5 shadow-lg"
+        :style="{ top: linkBubble.top + 'px', left: linkBubble.left + 'px' }"
+      >
+        <Icon name="lucide:link" class="h-3.5 w-3.5 shrink-0 text-[var(--ca-subtle)]" />
+        <a
+          :href="linkBubble.href"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="max-w-[250px] truncate text-xs text-amber-400 underline"
+          :title="linkBubble.href"
+        >
+          {{ linkBubble.href }}
+        </a>
+        <div class="ml-1 flex items-center gap-0.5">
+          <button type="button" class="rounded p-1 text-[var(--ca-muted)] hover:bg-[var(--ca-panel-bg)] hover:text-[var(--ca-text)]" title="Edit link" @click="editLinkFromBubble">
+            <Icon name="lucide:edit-3" class="h-3.5 w-3.5" />
+          </button>
+          <button type="button" class="rounded p-1 text-rose-400 hover:bg-rose-500/10" title="Hapus link" @click="removeLink">
+            <Icon name="lucide:unlink" class="h-3.5 w-3.5" />
+          </button>
+        </div>
+      </div>
     </div>
     <p v-if="error" class="ca-field-error mt-1">{{ error }}</p>
+
+    <!-- Link Modal -->
+    <Teleport to="body">
+      <div v-if="showLinkModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" @click.self="showLinkModal = false">
+        <div class="ca-card w-full max-w-md p-6">
+          <h3 class="font-display text-lg font-bold text-[var(--ca-text)]">
+            <Icon name="lucide:link" class="mr-2 inline h-5 w-5 text-amber-400" />
+            {{ linkUrl ? 'Edit Link' : 'Tambah Link' }}
+          </h3>
+          <div class="mt-4">
+            <label class="ca-field-label">URL</label>
+            <input
+              v-model="linkUrl"
+              type="url"
+              class="ca-field-control w-full border-[color:var(--ca-border)]"
+              placeholder="https://example.com"
+              @keydown.enter.prevent="confirmLink"
+            />
+            <p class="mt-1 text-[0.65rem] text-[var(--ca-subtle)]">Kosongkan untuk menghapus link</p>
+          </div>
+          <div class="mt-5 flex justify-end gap-3">
+            <button type="button" class="ca-btn-secondary" @click="showLinkModal = false">Batal</button>
+            <button type="button" class="ca-btn-primary" @click="confirmLink">Simpan</button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
+    <!-- Image Modal -->
+    <Teleport to="body">
+      <div v-if="showImageModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" @click.self="showImageModal = false">
+        <div class="ca-card w-full max-w-md p-6">
+          <h3 class="font-display text-lg font-bold text-[var(--ca-text)]">
+            <Icon name="lucide:image" class="mr-2 inline h-5 w-5 text-amber-400" />
+            Tambah Gambar
+          </h3>
+          <div class="mt-4">
+            <label class="ca-field-label">URL Gambar</label>
+            <input
+              v-model="imageUrl"
+              type="url"
+              class="ca-field-control w-full border-[color:var(--ca-border)]"
+              placeholder="https://example.com/image.jpg"
+              @keydown.enter.prevent="confirmImage"
+            />
+          </div>
+          <div v-if="imageUrl" class="mt-3">
+            <img :src="imageUrl" class="h-32 rounded-lg object-cover" @error="($event.target as HTMLImageElement).style.display = 'none'" />
+          </div>
+          <div class="mt-5 flex justify-end gap-3">
+            <button type="button" class="ca-btn-secondary" @click="showImageModal = false">Batal</button>
+            <button type="button" class="ca-btn-primary" :disabled="!imageUrl" @click="confirmImage">Sisipkan</button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
