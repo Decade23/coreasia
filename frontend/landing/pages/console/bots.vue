@@ -2,12 +2,14 @@
 definePageMeta({ layout: 'console', middleware: 'console' })
 
 const { items, loading, saving, error, fetchBots, createBot, updateBot, deleteBot, triggerBot } = useBotSchedules()
+const toast = useToast()
 
 const showFormModal = ref(false)
 const showDeleteConfirm = ref(false)
 const editingBot = ref<any>(null)
 const deletingBot = ref<any>(null)
 const triggerSuccess = ref<string | null>(null)
+const triggeringBot = ref<string | null>(null)
 
 const formData = ref({
   name: '',
@@ -151,11 +153,34 @@ const handleToggle = async (b: any) => {
 }
 
 const handleTrigger = async (b: any) => {
+  if (triggeringBot.value) return
+  triggeringBot.value = b.id
   const ok = await triggerBot(b.id)
   if (ok) {
-    triggerSuccess.value = b.id
-    setTimeout(() => { triggerSuccess.value = null }, 3000)
-    fetchBots()
+    // Poll until status changes from "running"
+    const poll = async (retries = 0) => {
+      if (retries >= 20) {
+        triggeringBot.value = null
+        return
+      }
+      await fetchBots()
+      const bot = items.value.find(x => x.id === b.id)
+      if (bot && bot.last_status !== 'running') {
+        triggeringBot.value = null
+        if (bot.last_status === 'error') {
+          toast.error(bot.last_error || 'Bot gagal menjalankan tugas')
+        } else if (bot.last_status === 'success') {
+          toast.success('Bot berhasil menyelesaikan tugas')
+          triggerSuccess.value = b.id
+          setTimeout(() => { triggerSuccess.value = null }, 3000)
+        }
+      } else {
+        setTimeout(() => poll(retries + 1), 3000)
+      }
+    }
+    setTimeout(() => poll(), 3000)
+  } else {
+    triggeringBot.value = null
   }
 }
 
@@ -254,14 +279,19 @@ const formatDate = (d: string | null) => {
           </div>
           <div class="flex items-center gap-1">
             <!-- Trigger -->
-            <CaTooltip :text="triggerSuccess === b.id ? 'Berhasil dipicu!' : 'Jalankan sekarang'" position="bottom">
+            <CaTooltip :text="triggeringBot === b.id ? 'Sedang berjalan...' : triggerSuccess === b.id ? 'Berhasil dipicu!' : 'Jalankan sekarang'" position="bottom">
               <button
                 type="button"
                 class="rounded-lg p-1.5 transition"
-                :class="triggerSuccess === b.id ? 'text-emerald-400' : 'text-[var(--ca-muted)] hover:bg-[var(--ca-panel-bg-strong)]'"
+                :class="[
+                  triggeringBot === b.id ? 'text-blue-400 animate-pulse' :
+                  triggerSuccess === b.id ? 'text-emerald-400' :
+                  'text-[var(--ca-muted)] hover:bg-[var(--ca-panel-bg-strong)]'
+                ]"
+                :disabled="triggeringBot !== null"
                 @click="handleTrigger(b)"
               >
-                <Icon :name="triggerSuccess === b.id ? 'lucide:check' : 'lucide:play'" class="h-4 w-4" />
+                <Icon :name="triggeringBot === b.id ? 'lucide:loader-2' : triggerSuccess === b.id ? 'lucide:check' : 'lucide:play'" class="h-4 w-4" :class="{ 'animate-spin': triggeringBot === b.id }" />
               </button>
             </CaTooltip>
             <!-- Toggle active/inactive -->
@@ -294,7 +324,11 @@ const formatDate = (d: string | null) => {
         <div class="mt-4 flex flex-wrap items-center gap-4 rounded-lg border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] px-4 py-2.5">
           <div class="flex items-center gap-2">
             <span class="text-[0.65rem] font-semibold uppercase tracking-wider text-[var(--ca-subtle)]">Terakhir</span>
-            <span class="rounded-full px-2 py-0.5 text-[0.6rem] font-bold uppercase" :class="statusColor(b.last_status)">
+            <span v-if="triggeringBot === b.id" class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[0.6rem] font-bold uppercase bg-blue-500/10 text-blue-400">
+              <Icon name="lucide:loader-2" class="h-3 w-3 animate-spin" />
+              Menjalankan...
+            </span>
+            <span v-else class="rounded-full px-2 py-0.5 text-[0.6rem] font-bold uppercase" :class="statusColor(b.last_status)">
               {{ statusLabel(b.last_status) }}
             </span>
           </div>

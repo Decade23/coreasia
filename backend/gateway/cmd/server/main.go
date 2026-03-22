@@ -132,9 +132,9 @@ func runBotScheduler(ctx context.Context, articleBot *service.ArticleBot, schedu
 					var errMsg *string
 					if runErr != nil {
 						status = "error"
-						msg := runErr.Error()
-						errMsg = &msg
 						slog.Error("bot-scheduler: gagal jalankan bot", "name", bot.Name, "error", runErr)
+						msg := service.ClassifyBotError(runErr)
+						errMsg = &msg
 					}
 					scheduleRepo.UpdateRunStatus(ctx, bot.ID, status, errMsg)
 				}

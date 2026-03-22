@@ -17,6 +17,42 @@ import (
 	"github.com/coreasia/gateway/internal/repository"
 )
 
+// ClassifyBotError converts raw AI/bot errors into user-friendly messages.
+// Sensitive details stay in server logs only.
+func ClassifyBotError(err error) string {
+	msg := err.Error()
+	lower := strings.ToLower(msg)
+	switch {
+	case strings.Contains(lower, "credit balance is too low"), strings.Contains(lower, "insufficient_quota"), strings.Contains(lower, "billing"):
+		return "Credit API habis. Isi ulang credit di dashboard provider."
+	case strings.Contains(msg, "API key belum dikonfigurasi"):
+		return "API key belum dikonfigurasi. Tambahkan di halaman API Keys."
+	case strings.Contains(lower, "invalid x-api-key"), strings.Contains(lower, "incorrect api key"),
+		strings.Contains(lower, "invalid_api_key"), strings.Contains(lower, "authentication"),
+		strings.Contains(lower, "unauthorized"), strings.Contains(lower, "status 401"):
+		return "API key tidak valid atau sudah kedaluwarsa."
+	case strings.Contains(lower, "rate limit"), strings.Contains(lower, "429"), strings.Contains(lower, "too many requests"):
+		return "Rate limit tercapai. Coba lagi dalam beberapa menit."
+	case strings.Contains(lower, "overloaded"), strings.Contains(lower, "status 529"), strings.Contains(lower, "status 503"):
+		return "Server AI sedang overload. Coba lagi nanti."
+	case strings.Contains(lower, "model") && (strings.Contains(lower, "not found") || strings.Contains(lower, "does not exist")),
+		strings.Contains(lower, "status 404"):
+		return "Model tidak ditemukan. Periksa konfigurasi model."
+	case strings.Contains(lower, "timeout"), strings.Contains(lower, "deadline"), strings.Contains(lower, "context canceled"):
+		return "Request timeout. Coba lagi nanti."
+	case strings.Contains(lower, "permission"), strings.Contains(lower, "status 403"):
+		return "API key tidak memiliki akses ke model ini."
+	case strings.Contains(lower, "parsing ai article json"):
+		return "Respons AI dalam format tidak valid. Coba generate ulang."
+	case strings.Contains(lower, "empty response"):
+		return "Respons AI kosong. Coba generate ulang atau ganti model."
+	case strings.Contains(lower, "provider") && strings.Contains(lower, "tidak didukung"):
+		return msg
+	default:
+		return "Gagal generate artikel. Periksa konfigurasi dan coba lagi."
+	}
+}
+
 // ArticleBot generates articles automatically using AI.
 // Supports multiple providers: claude, openai, groq, gemini.
 type ArticleBot struct {
@@ -223,9 +259,9 @@ func (b *ArticleBot) callAI(provider, aiModel, apiKey string, req model.AIGenera
 	case "claude", "anthropic":
 		return b.callClaude(aiModel, apiKey, systemPrompt, userPrompt)
 	case "openai":
-		return b.callOpenAI(aiModel, apiKey, systemPrompt, userPrompt)
+		return b.callOpenAICompat("https://api.openai.com/v1/chat/completions", aiModel, apiKey, systemPrompt, userPrompt)
 	case "groq":
-		return b.callOpenAI(aiModel, apiKey, systemPrompt, userPrompt) // Groq uses OpenAI-compatible API
+		return b.callOpenAICompat("https://api.groq.com/openai/v1/chat/completions", aiModel, apiKey, systemPrompt, userPrompt)
 	case "gemini":
 		return b.callGemini(aiModel, apiKey, systemPrompt, userPrompt)
 	default:
@@ -324,13 +360,7 @@ func (b *ArticleBot) callClaude(aiModel, apiKey, systemPrompt, userPrompt string
 	return b.parseArticleJSON([]byte(claudeResp.Content[0].Text))
 }
 
-func (b *ArticleBot) callOpenAI(aiModel, apiKey, systemPrompt, userPrompt string) (*model.AIGenerateResponse, error) {
-	// OpenAI-compatible API (also works for Groq)
-	baseURL := "https://api.openai.com/v1/chat/completions"
-	if strings.Contains(aiModel, "llama") || strings.Contains(aiModel, "qwen") || strings.Contains(aiModel, "mixtral") {
-		baseURL = "https://api.groq.com/openai/v1/chat/completions"
-	}
-
+func (b *ArticleBot) callOpenAICompat(baseURL, aiModel, apiKey, systemPrompt, userPrompt string) (*model.AIGenerateResponse, error) {
 	body := map[string]interface{}{
 		"model":      aiModel,
 		"max_tokens": 4096,

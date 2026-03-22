@@ -91,16 +91,6 @@ export const useBotSchedules = () => {
     try {
       await api.post(`/admin/bots/${id}/trigger`)
       toast.info('Bot sedang dijalankan...')
-      // Poll status after a few seconds
-      setTimeout(async () => {
-        await fetchBots()
-        const bot = items.value.find(b => b.id === id)
-        if (bot?.last_status === 'error') {
-          toast.error(`Bot gagal: ${bot.last_error || 'Terjadi kesalahan'}`)
-        } else if (bot?.last_status === 'success') {
-          toast.success('Bot berhasil menyelesaikan tugas')
-        }
-      }, 12000)
       return true
     } catch {
       toast.error('Gagal menjalankan bot')

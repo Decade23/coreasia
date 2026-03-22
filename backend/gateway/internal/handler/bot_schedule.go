@@ -217,9 +217,9 @@ func (h *BotScheduleHandler) Trigger(c fiber.Ctx) error {
 		var errMsg *string
 		if runErr != nil {
 			status = "error"
-			msg := runErr.Error()
-			errMsg = &msg
 			slog.Error("bot-trigger: gagal jalankan bot", "name", existing.Name, "error", runErr)
+			msg := service.ClassifyBotError(runErr)
+			errMsg = &msg
 		} else {
 			slog.Info("bot-trigger: bot berhasil", "name", existing.Name)
 		}
