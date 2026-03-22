@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import DashboardLayout from '~/components/templates/DashboardLayout.vue'
+import Breadcrumb from '~/components/molecules/Breadcrumb.vue'
+import PageHeader from '~/components/molecules/PageHeader.vue'
 import CaButton from '~/components/atoms/CaButton.vue'
 import CaInputSearch from '~/components/molecules/CaInputSearch.vue'
 import ScheduleFormModal from '~/components/organisms/ScheduleFormModal.vue'
@@ -12,6 +14,8 @@ import { Plus, Calendar, MapPin, Users, MoreVertical, Edit3, Trash2 } from 'luci
 import { useSchedules } from '~/composables/useSchedules'
 import { useSchemes } from '~/composables/useSchemes'
 import type { ScheduleDomain, ScheduleFormData } from '~/types/schedule'
+
+const { t, locale } = useI18n()
 
 const {
     schedules, loading, saving, error,
@@ -81,20 +85,14 @@ const toggleMenu = (id: string) => {
 }
 
 const formatDateRange = (start: Date, end: Date) => {
+    const loc = locale.value === 'en' ? 'en-US' : 'id-ID'
     const opts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', year: 'numeric' }
-    const s = start.toLocaleDateString('id-ID', opts)
-    const e = end.toLocaleDateString('id-ID', opts)
+    const s = start.toLocaleDateString(loc, opts)
+    const e = end.toLocaleDateString(loc, opts)
     return s === e ? s : `${s} - ${e}`
 }
 
-const typeLabel = (type: string) => {
-    switch (type) {
-        case 'cbt_online': return 'CBT Online'
-        case 'lab_offline': return 'Lab Offline'
-        case 'hybrid': return 'Hybrid'
-        default: return type
-    }
-}
+const typeLabel = (type: string) => t(`admin.schedules.types.${type}`) || type
 
 const statusVariant = (status: string): 'success' | 'warning' | 'default' => {
     switch (status) {
@@ -104,42 +102,31 @@ const statusVariant = (status: string): 'success' | 'warning' | 'default' => {
     }
 }
 
-const statusLabel = (status: string) => {
-    switch (status) {
-        case 'draft': return 'Draft'
-        case 'published': return 'Terpublikasi'
-        case 'ongoing': return 'Berlangsung'
-        case 'completed': return 'Selesai'
-        case 'cancelled': return 'Dibatalkan'
-        default: return status
-    }
-}
+const statusLabel = (status: string) => t(`admin.schedules.status.${status}`) || status
 </script>
 
 <template>
     <DashboardLayout>
         <template #header>
-            <div class="flex items-center justify-between w-full">
-                <div>
-                    <h1 class="text-xl md:text-3xl font-bold truncate mr-4 text-content">Penjadwalan Ujian</h1>
-                    <p class="text-sm text-content-subtle hidden md:block mt-1">Atur jadwal, kuota, dan plotting asesor ujian kompetensi.</p>
-                </div>
-
-                <div class="flex items-center gap-3 shrink-0">
-                    <CaButton variant="primary" size="sm" @click="handleCreate">
-                        <Plus class="w-4 h-4 mr-2" />
-                        Jadwal Baru
-                    </CaButton>
-                </div>
-            </div>
+            <h1 class="text-lg font-bold text-content hidden lg:block">{{ t('admin.schedules.title') }}</h1>
         </template>
 
         <div class="py-6 space-y-6">
-            <!-- Toolbar -->
-            <div class="flex flex-col sm:flex-row gap-4 items-center justify-between p-4 rounded-2xl bg-core-800 border border-divider shadow-xl glass-card">
-                <div class="w-full sm:w-96">
-                    <CaInputSearch v-model="searchQuery" placeholder="Cari nama jadwal..." />
-                </div>
+            <div class="space-y-4">
+                <Breadcrumb :items="[{ label: 'Admin', to: '/admin' }, { label: t('admin.schedules.title') }]" />
+                <PageHeader :title="t('admin.schedules.title')" :subtitle="t('admin.schedules.subtitle')">
+                    <template #actions>
+                        <CaButton variant="primary" @click="handleCreate">
+                            <Plus class="w-4 h-4 mr-2" />
+                            {{ t('admin.schedules.newSchedule') }}
+                        </CaButton>
+                    </template>
+                </PageHeader>
+            </div>
+
+            <!-- Search -->
+            <div class="max-w-md">
+                <CaInputSearch v-model="searchQuery" :placeholder="t('admin.schedules.searchPlaceholder')" />
             </div>
 
             <!-- Error -->
@@ -147,19 +134,19 @@ const statusLabel = (status: string) => {
 
             <!-- Loading -->
             <div v-if="loading" class="flex justify-center py-20">
-                <LoadingSpinner size="lg" label="Memuat jadwal..." />
+                <LoadingSpinner size="lg" :label="t('admin.schedules.loadingSchedules')" />
             </div>
 
             <!-- Empty State -->
             <EmptyState
                 v-else-if="schedules.length === 0 && !loading"
-                title="Belum ada jadwal"
-                description="Buat jadwal ujian pertama untuk memulai."
+                :title="t('admin.schedules.empty')"
+                :description="t('admin.schedules.emptyDesc')"
             >
                 <template #action>
                     <CaButton variant="primary" @click="handleCreate">
                         <Plus class="w-4 h-4 mr-2" />
-                        Jadwal Baru
+                        {{ t('admin.schedules.newSchedule') }}
                     </CaButton>
                 </template>
             </EmptyState>
@@ -174,30 +161,30 @@ const statusLabel = (status: string) => {
                                 <BaseBadge :text="statusLabel(jadwal.status)" :variant="statusVariant(jadwal.status)" />
                             </div>
                             <h3 class="text-lg font-bold text-content mt-1">{{ jadwal.title }}</h3>
-                            <p class="text-content-muted text-sm mt-1 saturate-50">{{ jadwal.schemeName }}</p>
+                            <p class="text-content-muted text-sm mt-1">{{ jadwal.schemeName }}</p>
                         </div>
                         <div class="relative">
                             <button
-                                class="text-content-subtle hover:text-content transition-colors p-1 bg-tint rounded-lg border border-divider-strong"
+                                class="text-content-subtle hover:text-content transition-colors p-1.5 bg-tint rounded-lg border border-divider"
                                 @click="toggleMenu(jadwal.id)"
                             >
                                 <MoreVertical class="w-4 h-4" />
                             </button>
                             <div
                                 v-if="openMenuId === jadwal.id"
-                                class="absolute right-0 top-full mt-1 w-36 bg-core-800 border border-divider-strong rounded-xl shadow-xl z-20 py-1 overflow-hidden"
+                                class="absolute right-0 top-full mt-1 w-36 bg-surface border border-divider rounded-xl shadow-glass-lg z-20 py-1 overflow-hidden"
                             >
                                 <button
                                     class="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-content-subtle hover:text-content hover:bg-tint transition-colors"
                                     @click="handleEdit(jadwal)"
                                 >
-                                    <Edit3 class="w-3.5 h-3.5" /> Edit
+                                    <Edit3 class="w-3.5 h-3.5" /> {{ t('common.edit') }}
                                 </button>
                                 <button
                                     class="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors"
                                     @click="handleDeleteClick(jadwal)"
                                 >
-                                    <Trash2 class="w-3.5 h-3.5" /> Hapus
+                                    <Trash2 class="w-3.5 h-3.5" /> {{ t('common.delete') }}
                                 </button>
                             </div>
                         </div>
@@ -205,42 +192,42 @@ const statusLabel = (status: string) => {
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                         <div class="flex items-start gap-3">
-                            <div class="w-8 h-8 rounded-lg bg-tint border border-divider-strong flex items-center justify-center shrink-0">
+                            <div class="w-9 h-9 rounded-xl bg-brand/10 flex items-center justify-center shrink-0">
                                 <Calendar class="w-4 h-4 text-brand" />
                             </div>
                             <div>
-                                <span class="text-[10px] font-black uppercase text-content-subtle tracking-widest block mb-0.5">Waktu</span>
-                                <span class="text-sm font-medium text-content">{{ formatDateRange(jadwal.startDate, jadwal.endDate) }}</span>
+                                <span class="text-[10px] font-black uppercase text-content-faint tracking-widest block mb-0.5">{{ t('admin.schedules.time') }}</span>
+                                <span class="text-sm font-semibold text-content">{{ formatDateRange(jadwal.startDate, jadwal.endDate) }}</span>
                             </div>
                         </div>
                         <div class="flex items-start gap-3">
-                            <div class="w-8 h-8 rounded-lg bg-tint border border-divider-strong flex items-center justify-center shrink-0">
+                            <div class="w-9 h-9 rounded-xl bg-brand/10 flex items-center justify-center shrink-0">
                                 <MapPin class="w-4 h-4 text-brand" />
                             </div>
                             <div>
-                                <span class="text-[10px] font-black uppercase text-content-subtle tracking-widest block mb-0.5">Metode</span>
-                                <span class="text-sm font-medium text-content">{{ typeLabel(jadwal.type) }}</span>
+                                <span class="text-[10px] font-black uppercase text-content-faint tracking-widest block mb-0.5">{{ t('admin.schedules.method') }}</span>
+                                <span class="text-sm font-semibold text-content">{{ typeLabel(jadwal.type) }}</span>
                                 <span class="text-content-muted block text-xs truncate">{{ jadwal.location }}</span>
                             </div>
                         </div>
                     </div>
 
-                    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-2xl bg-core-900/50 border border-divider">
+                    <div class="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-xl bg-tint-subtle border border-divider">
                         <div class="flex items-center gap-2 w-full sm:w-auto">
-                            <Users class="w-4 h-4 text-cyan-400" />
+                            <Users class="w-4 h-4 text-brand" />
                             <div class="flex-1">
                                 <div class="flex justify-between w-full mb-1">
                                     <span class="text-xs font-bold text-content">
                                         {{ jadwal.currentParticipants }}
-                                        <span class="text-content-subtle font-medium text-[10px] uppercase">dari</span>
+                                        <span class="text-content-faint font-medium text-[10px] uppercase">{{ t('admin.schedules.filledOf') }}</span>
                                         {{ jadwal.maxParticipants }}
-                                        <span class="text-content-subtle font-medium text-[10px] uppercase">Terisi</span>
+                                        <span class="text-content-faint font-medium text-[10px] uppercase">{{ t('admin.schedules.filled') }}</span>
                                     </span>
                                 </div>
                                 <div class="w-full sm:w-32 h-1.5 bg-core-800 rounded-full overflow-hidden">
                                     <div
                                         class="h-full rounded-full transition-all"
-                                        :class="jadwal.currentParticipants === jadwal.maxParticipants ? 'bg-brand-secondary' : 'bg-cyan-400'"
+                                        :class="jadwal.currentParticipants === jadwal.maxParticipants ? 'bg-brand-secondary' : 'bg-brand'"
                                         :style="{ width: `${(jadwal.currentParticipants / jadwal.maxParticipants) * 100}%` }"
                                     />
                                 </div>
@@ -251,12 +238,12 @@ const statusLabel = (status: string) => {
                             <div
                                 v-for="assessor in jadwal.assessors"
                                 :key="assessor.id"
-                                class="w-8 h-8 rounded-full bg-linear-to-br from-core-700 to-core-800 border-2 border-core-800 flex items-center justify-center text-[10px] font-black text-brand shadow-sm"
+                                class="w-8 h-8 rounded-full bg-linear-to-br from-core-700 to-core-800 border-2 border-surface flex items-center justify-center text-[10px] font-black text-brand shadow-sm"
                                 :title="assessor.name"
                             >
                                 {{ assessor.initials }}
                             </div>
-                            <div class="w-8 h-8 rounded-full bg-core-900 border-2 border-core-800 border-dashed flex items-center justify-center group cursor-pointer hover:border-brand/40 transition-colors" title="Tambah Asesor">
+                            <div class="w-8 h-8 rounded-full border-2 border-dashed border-divider-strong flex items-center justify-center group cursor-pointer hover:border-brand/40 transition-colors" :title="t('admin.schedules.addAssessor')">
                                 <Plus class="w-3 h-3 text-content-subtle group-hover:text-brand" />
                             </div>
                         </div>
@@ -279,9 +266,9 @@ const statusLabel = (status: string) => {
         <ConfirmDialog
             :open="showDeleteConfirm"
             variant="danger"
-            title="Hapus Jadwal"
-            :message="`Apakah Anda yakin ingin menghapus jadwal '${deletingSchedule?.title}'?`"
-            confirm-label="Hapus"
+            :title="t('admin.schedules.deleteTitle')"
+            :message="t('admin.schedules.deleteMessage', { name: deletingSchedule?.title || '' })"
+            :confirm-label="t('common.delete')"
             :loading="saving"
             @confirm="handleConfirmDelete"
             @cancel="showDeleteConfirm = false"

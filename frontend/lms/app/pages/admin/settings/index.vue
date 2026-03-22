@@ -521,26 +521,26 @@ onBeforeUnmount(() => {
 
                     <template v-else>
                         <div class="overflow-x-auto">
-                            <table class="min-w-[880px] w-full border-collapse text-left">
+                            <table class="ca-table min-w-220">
                                 <thead>
-                                    <tr class="border-b border-divider bg-core-900/80">
-                                        <th class="p-4 pl-6 text-xs font-black uppercase tracking-widest text-content-subtle">{{ t('admin.settings.table.name') }}</th>
-                                        <th class="p-4 text-xs font-black uppercase tracking-widest text-content-subtle">{{ t('admin.settings.table.email') }}</th>
-                                        <th class="p-4 text-xs font-black uppercase tracking-widest text-content-subtle">{{ t('admin.settings.table.role') }}</th>
-                                        <th class="p-4 text-xs font-black uppercase tracking-widest text-content-subtle">{{ t('admin.settings.table.status') }}</th>
-                                        <th class="p-4 text-xs font-black uppercase tracking-widest text-content-subtle">{{ t('admin.settings.table.lastLogin') }}</th>
-                                        <th class="p-4 pr-6 text-right text-xs font-black uppercase tracking-widest text-content-subtle">{{ t('admin.settings.table.actions') }}</th>
+                                    <tr>
+                                        <th class="pl-6">{{ t('admin.settings.table.name') }}</th>
+                                        <th>{{ t('admin.settings.table.email') }}</th>
+                                        <th>{{ t('admin.settings.table.role') }}</th>
+                                        <th>{{ t('admin.settings.table.status') }}</th>
+                                        <th>{{ t('admin.settings.table.lastLogin') }}</th>
+                                        <th class="pr-6 text-right">{{ t('admin.settings.table.actions') }}</th>
                                     </tr>
                                 </thead>
 
-                                <tbody class="divide-y divide-divider">
+                                <tbody>
                                     <tr v-if="users.length === 0">
                                         <td colspan="6" class="p-8 text-center text-sm text-content-subtle">
                                             {{ t('admin.settings.table.empty') }}
                                         </td>
                                     </tr>
 
-                                    <tr v-for="user in users" :key="user.id" class="transition-colors hover:bg-core-800/70">
+                                    <tr v-for="user in users" :key="user.id">
                                         <td class="p-4 pl-6">
                                             <div class="flex items-center gap-3">
                                                 <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand/10 text-sm font-bold text-brand">

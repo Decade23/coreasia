@@ -1,11 +1,16 @@
 <script setup lang="ts">
 import DashboardLayout from '~/components/templates/DashboardLayout.vue'
+import Breadcrumb from '~/components/molecules/Breadcrumb.vue'
+import PageHeader from '~/components/molecules/PageHeader.vue'
+import CaButton from '~/components/atoms/CaButton.vue'
 import QualityReviewCard from '~/components/organisms/QualityReviewCard.vue'
 import LoadingSpinner from '~/components/atoms/LoadingSpinner.vue'
 import EmptyState from '~/components/atoms/EmptyState.vue'
 import ErrorAlert from '~/components/atoms/ErrorAlert.vue'
 import { ArrowLeft, FileSearch } from 'lucide-vue-next'
 import { useQualityManager } from '~/composables/useQualityManager'
+
+const { t } = useI18n()
 
 const {
     reviews, loading, saving, error,
@@ -32,28 +37,34 @@ const handleRevision = async (id: string, notes: string) => {
 <template>
     <DashboardLayout>
         <template #header>
-            <div class="flex items-center gap-4 w-full">
-                <NuxtLink to="/admin/quality" class="w-10 h-10 rounded-xl bg-tint flex items-center justify-center text-content-subtle hover:text-content hover:bg-tint-hover transition-all shrink-0">
-                    <ArrowLeft class="w-5 h-5" />
-                </NuxtLink>
-                <div>
-                    <h1 class="text-xl md:text-3xl font-black tracking-tight text-content">Review Keputusan Asesor</h1>
-                    <p class="text-sm text-content-subtle hidden md:block mt-1">Tinjau dan validasi hasil penilaian asesor.</p>
-                </div>
-            </div>
+            <h1 class="text-lg font-bold text-content hidden lg:block">{{ t('admin.quality.reviewLink') }}</h1>
         </template>
 
         <div class="py-6 space-y-6">
+            <div class="space-y-4">
+                <Breadcrumb :items="[{ label: 'Admin', to: '/admin' }, { label: t('nav.quality'), to: '/admin/quality' }, { label: t('admin.quality.reviewLink') }]" />
+                <PageHeader :title="t('admin.quality.reviewLink')" :subtitle="t('admin.quality.reviewLinkDesc', { count: reviews.length })">
+                    <template #actions>
+                        <NuxtLink to="/admin/quality">
+                            <CaButton variant="outline">
+                                <ArrowLeft class="mr-1.5 h-4 w-4" />
+                                {{ t('common.back') }}
+                            </CaButton>
+                        </NuxtLink>
+                    </template>
+                </PageHeader>
+            </div>
+
             <ErrorAlert v-if="error" :message="error" @dismiss="error = null" />
 
             <div v-if="loading" class="flex justify-center py-20">
-                <LoadingSpinner size="lg" label="Memuat data review..." />
+                <LoadingSpinner size="lg" :label="t('common.loading')" />
             </div>
 
             <EmptyState
                 v-else-if="reviews.length === 0 && !loading"
-                title="Tidak ada review"
-                description="Semua keputusan asesor sudah ditinjau."
+                :title="t('common.noData')"
+                :description="t('common.noData')"
             >
                 <template #icon>
                     <FileSearch class="w-12 h-12 text-content-subtle" />

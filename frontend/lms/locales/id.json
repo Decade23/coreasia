@@ -118,6 +118,17 @@
             "reviewedAt": "Direview"
         },
         "questions": {
+            "title": "Bank Soal",
+            "subtitle": "Kelola perbendaharaan soal ujian untuk seluruh skema.",
+            "newQuestion": "Buat Soal",
+            "searchPlaceholder": "Cari konten soal...",
+            "loadingQuestions": "Memuat bank soal...",
+            "empty": "Belum ada soal",
+            "emptyDesc": "Mulai dengan membuat soal pertama untuk bank soal Anda.",
+            "deleteTitle": "Hapus Soal",
+            "deleteMessage": "Apakah Anda yakin ingin menghapus soal ini? Tindakan ini tidak dapat dibatalkan.",
+            "filterAllSchemes": "Semua Skema",
+            "filterAllTypes": "Semua Tipe",
             "modalCreateTitle": "Buat Soal Baru",
             "modalEditTitle": "Edit Soal",
             "schemeLabel": "Skema Sertifikasi",

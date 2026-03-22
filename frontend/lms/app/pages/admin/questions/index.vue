@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import DashboardLayout from '~/components/templates/DashboardLayout.vue'
+import Breadcrumb from '~/components/molecules/Breadcrumb.vue'
+import PageHeader from '~/components/molecules/PageHeader.vue'
 import CaButton from '~/components/atoms/CaButton.vue'
 import CaInputSearch from '~/components/molecules/CaInputSearch.vue'
+import CaSelect from '~/components/molecules/CaSelect.vue'
 import QuestionPreview from '~/components/organisms/QuestionPreview.vue'
 import QuestionFormModal from '~/components/organisms/QuestionFormModal.vue'
 import ConfirmDialog from '~/components/molecules/ConfirmDialog.vue'
@@ -12,6 +15,8 @@ import { Plus } from 'lucide-vue-next'
 import { useQuestionBank } from '~/composables/useQuestionBank'
 import { useSchemes } from '~/composables/useSchemes'
 import type { QuestionDomain, QuestionFormData } from '~/types/question'
+
+const { t } = useI18n()
 
 const {
     questions, loading, saving, error,
@@ -30,17 +35,17 @@ const showDeleteConfirm = ref(false)
 const deletingQuestion = ref<QuestionDomain | null>(null)
 
 const schemeSelectOptions = computed(() => [
-    { value: '', label: 'Semua Skema' },
+    { value: '', label: t('admin.questions.filterAllSchemes') },
     ...schemes.value.map(s => ({ value: s.id, label: s.name })),
 ])
 
-const typeSelectOptions = [
-    { value: '', label: 'Semua Tipe' },
-    { value: 'multiple_choice', label: 'Pilihan Ganda' },
-    { value: 'essay', label: 'Esai' },
-    { value: 'upload', label: 'Upload Bukti' },
-    { value: 'observation', label: 'Observasi' },
-]
+const typeSelectOptions = computed(() => [
+    { value: '', label: t('admin.questions.filterAllTypes') },
+    { value: 'multiple_choice', label: t('admin.questions.types.multiple_choice') },
+    { value: 'essay', label: t('admin.questions.types.essay') },
+    { value: 'upload', label: t('admin.questions.types.upload') },
+    { value: 'observation', label: t('admin.questions.types.observation') },
+])
 
 const schemeFormOptions = computed(() =>
     schemes.value.map(s => ({ value: s.id, label: s.name }))
@@ -110,29 +115,28 @@ const handleConfirmDelete = async () => {
 <template>
     <DashboardLayout>
         <template #header>
-            <div class="flex items-center justify-between w-full">
-                <div>
-                    <h1 class="text-2xl md:text-3xl font-black tracking-tight text-content">Bank Soal</h1>
-                    <p class="text-sm text-content-subtle hidden md:block mt-1">Kelola perbendaharaan soal ujian untuk seluruh skema.</p>
-                </div>
-
-                <div class="flex items-center gap-4 shrink-0">
-                    <div class="relative hidden lg:block w-64 xl:w-80">
-                        <CaInputSearch v-model="searchQuery" placeholder="Cari konten soal..." />
-                    </div>
-                    <div class="h-8 w-px bg-tint-strong hidden lg:block" />
-                    <CaButton variant="primary" class="rounded-full px-5 py-2 flex items-center gap-2 transition-all hover:scale-105" @click="handleCreate">
-                        <Plus class="w-4 h-4" />
-                        <span class="hidden sm:inline">Buat Soal</span>
-                    </CaButton>
-                </div>
-            </div>
+            <h1 class="text-lg font-bold text-content hidden lg:block">{{ t('admin.questions.title') }}</h1>
         </template>
 
-        <div class="py-6 space-y-8">
+        <div class="py-6 space-y-6">
+            <div class="space-y-4">
+                <Breadcrumb :items="[{ label: 'Admin', to: '/admin' }, { label: t('admin.questions.title') }]" />
+                <PageHeader :title="t('admin.questions.title')" :subtitle="t('admin.questions.subtitle')">
+                    <template #actions>
+                        <div class="hidden lg:block w-64 xl:w-80">
+                            <CaInputSearch v-model="searchQuery" :placeholder="t('admin.questions.searchPlaceholder')" />
+                        </div>
+                        <CaButton variant="primary" @click="handleCreate">
+                            <Plus class="w-4 h-4 mr-2" />
+                            <span class="hidden sm:inline">{{ t('admin.questions.newQuestion') }}</span>
+                        </CaButton>
+                    </template>
+                </PageHeader>
+            </div>
+
             <!-- Mobile Search & Filters -->
             <div class="flex flex-col lg:hidden gap-4">
-                <CaInputSearch v-model="searchQuery" placeholder="Cari konten soal..." />
+                <CaInputSearch v-model="searchQuery" :placeholder="t('admin.questions.searchPlaceholder')" />
                 <div class="flex flex-col sm:flex-row gap-3">
                     <CaSelect
                         id="filter-scheme-mobile"
@@ -170,19 +174,19 @@ const handleConfirmDelete = async () => {
 
             <!-- Loading -->
             <div v-if="loading" class="flex justify-center py-20">
-                <LoadingSpinner size="lg" label="Memuat bank soal..." />
+                <LoadingSpinner size="lg" :label="t('admin.questions.loadingQuestions')" />
             </div>
 
             <!-- Empty State -->
             <EmptyState
                 v-else-if="questions.length === 0 && !loading"
-                title="Belum ada soal"
-                description="Mulai dengan membuat soal pertama untuk bank soal Anda."
+                :title="t('admin.questions.empty')"
+                :description="t('admin.questions.emptyDesc')"
             >
                 <template #action>
                     <CaButton variant="primary" @click="handleCreate">
                         <Plus class="w-4 h-4 mr-2" />
-                        Buat Soal
+                        {{ t('admin.questions.newQuestion') }}
                     </CaButton>
                 </template>
             </EmptyState>
@@ -196,16 +200,16 @@ const handleConfirmDelete = async () => {
                 >
                     <template #actions>
                         <button
-                            class="text-content-subtle hover:text-content px-3 py-1.5 rounded-lg hover:bg-tint-hover text-xs font-semibold transition-all"
+                            class="ca-action-link px-3 py-1.5 rounded-lg hover:bg-tint-hover"
                             @click="handleEdit(q)"
                         >
-                            Edit
+                            {{ t('common.edit') }}
                         </button>
                         <button
-                            class="text-red-400 hover:text-red-300 px-3 py-1.5 rounded-lg hover:bg-red-500/10 text-xs font-semibold transition-all border border-transparent hover:border-red-500/20"
+                            class="ca-action-link-danger px-3 py-1.5 rounded-lg hover:bg-red-500/10"
                             @click="handleDeleteClick(q)"
                         >
-                            Hapus
+                            {{ t('common.delete') }}
                         </button>
                     </template>
                 </QuestionPreview>
@@ -226,9 +230,9 @@ const handleConfirmDelete = async () => {
         <ConfirmDialog
             :open="showDeleteConfirm"
             variant="danger"
-            title="Hapus Soal"
-            message="Apakah Anda yakin ingin menghapus soal ini? Tindakan ini tidak dapat dibatalkan."
-            confirm-label="Hapus"
+            :title="t('admin.questions.deleteTitle')"
+            :message="t('admin.questions.deleteMessage')"
+            :confirm-label="t('common.delete')"
             :loading="saving"
             @confirm="handleConfirmDelete"
             @cancel="showDeleteConfirm = false"

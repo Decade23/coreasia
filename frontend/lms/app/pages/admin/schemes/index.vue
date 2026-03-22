@@ -11,9 +11,11 @@ import ConfirmDialog from '~/components/molecules/ConfirmDialog.vue'
 import LoadingSpinner from '~/components/atoms/LoadingSpinner.vue'
 import EmptyState from '~/components/atoms/EmptyState.vue'
 import ErrorAlert from '~/components/atoms/ErrorAlert.vue'
-import { Plus, Filter } from 'lucide-vue-next'
+import { Plus } from 'lucide-vue-next'
 import { useSchemes } from '~/composables/useSchemes'
 import type { SchemeDomain, SchemeFormData } from '~/types/scheme'
+
+const { t } = useI18n()
 
 const {
     schemes, loading, saving, error, searchQuery,
@@ -87,32 +89,29 @@ const handleConfirmDelete = async () => {
 <template>
     <DashboardLayout>
         <template #header>
-            <h1 class="text-lg font-bold text-content hidden lg:block">Manajemen Skema</h1>
+            <h1 class="text-lg font-bold text-content hidden lg:block">{{ t('admin.schemes.title') }}</h1>
         </template>
 
         <div class="py-6 space-y-8">
             <!-- Breadcrumb + Page Header -->
             <div class="space-y-4">
-                <Breadcrumb :items="[{ label: 'Admin', to: '/admin' }, { label: 'Manajemen Skema' }]" />
-                <PageHeader title="Manajemen Skema" subtitle="Kelola daftar sertifikasi dan unit kompetensi aktif.">
+                <Breadcrumb :items="[{ label: 'Admin', to: '/admin' }, { label: t('admin.schemes.title') }]" />
+                <PageHeader :title="t('admin.schemes.title')" :subtitle="t('admin.schemes.subtitle')">
                     <template #actions>
                         <div class="hidden lg:block w-64 xl:w-80">
-                            <CaInputSearch v-model="searchQuery" placeholder="Cari skema..." />
+                            <CaInputSearch v-model="searchQuery" :placeholder="t('admin.schemes.searchPlaceholder')" />
                         </div>
                         <CaButton variant="primary" class="flex items-center gap-2" @click="handleCreate">
                             <Plus class="w-4 h-4" />
-                            <span class="hidden sm:inline">Skema Baru</span>
+                            <span class="hidden sm:inline">{{ t('admin.schemes.newScheme') }}</span>
                         </CaButton>
                     </template>
                 </PageHeader>
             </div>
 
             <!-- Mobile Search -->
-            <div class="lg:hidden flex gap-3">
-                <CaInputSearch v-model="searchQuery" placeholder="Cari kode atau nama skema..." />
-                <button class="shrink-0 w-14 h-14 rounded-xl bg-core-700 flex items-center justify-center text-brand hover:text-white hover:bg-brand transition-all">
-                    <Filter class="w-5 h-5" />
-                </button>
+            <div class="lg:hidden">
+                <CaInputSearch v-model="searchQuery" :placeholder="t('admin.schemes.searchPlaceholder')" />
             </div>
 
             <!-- Error State -->
@@ -120,19 +119,19 @@ const handleConfirmDelete = async () => {
 
             <!-- Loading State -->
             <div v-if="loading" class="flex justify-center py-20">
-                <LoadingSpinner size="lg" label="Memuat skema..." />
+                <LoadingSpinner size="lg" :label="t('common.loading')" />
             </div>
 
             <!-- Empty State -->
             <EmptyState
                 v-else-if="schemes.length === 0 && !loading"
-                title="Belum ada skema"
-                description="Mulai dengan menambahkan skema sertifikasi pertama Anda."
+                :title="t('admin.schemes.empty')"
+                :description="t('admin.schemes.emptyDesc')"
             >
                 <template #action>
                     <CaButton variant="primary" @click="handleCreate">
                         <Plus class="w-4 h-4 mr-2" />
-                        Buat Skema
+                        {{ t('admin.schemes.newScheme') }}
                     </CaButton>
                 </template>
             </EmptyState>
@@ -169,9 +168,9 @@ const handleConfirmDelete = async () => {
         <ConfirmDialog
             :open="showDeleteConfirm"
             variant="danger"
-            title="Hapus Skema"
-            :message="`Apakah Anda yakin ingin menghapus skema '${deletingScheme?.name}'? Tindakan ini tidak dapat dibatalkan.`"
-            confirm-label="Hapus"
+            :title="t('common.delete')"
+            :message="t('admin.schemes.deleteConfirm')"
+            :confirm-label="t('common.delete')"
             :loading="saving"
             @confirm="handleConfirmDelete"
             @cancel="showDeleteConfirm = false"

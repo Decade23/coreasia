@@ -73,65 +73,65 @@
 }
 
 :root.light {
-    /* Light theme — warm, muted tones to reduce glare */
-    --th-core-950: #F0F2F5;
-    --th-core-900: #E8EAEF;
-    --th-core-800: #DFE2E8;
-    --th-core-700: #D4D8E0;
-    --th-core-600: #BFC5CF;
+    /* Light theme — crisp whites with clear surface hierarchy */
+    --th-core-950: #F4F6F9;
+    --th-core-900: #EBEDF2;
+    --th-core-800: #E2E5EB;
+    --th-core-700: #D5D9E2;
+    --th-core-600: #C2C8D4;
 
-    --th-surface: #F7F8FA;
-    --th-surface-soft: #F0F2F5;
-    --th-surface-card: #F7F8FA;
+    --th-surface: #FFFFFF;
+    --th-surface-soft: #FFFFFF;
+    --th-surface-card: #FFFFFF;
 
-    --th-content: #1A2332;
-    --th-content-muted: #4A5568;
-    --th-content-subtle: #6B7A8D;
-    --th-content-faint: #8E9AAB;
+    --th-content: #111827;
+    --th-content-muted: #374151;
+    --th-content-subtle: #6B7280;
+    --th-content-faint: #9CA3AF;
 
-    --th-input-bg: #E8EAEF;
-    --th-input-hover: #DFE2E8;
+    --th-input-bg: #F4F6F9;
+    --th-input-hover: #EBEDF2;
 
-    --th-border: rgba(15, 23, 42, 0.12);
+    --th-border: rgba(15, 23, 42, 0.10);
     --th-border-soft: rgba(15, 23, 42, 0.06);
-    --th-border-hover: rgba(15, 23, 42, 0.2);
+    --th-border-hover: rgba(6, 182, 212, 0.25);
 
     --th-overlay: rgba(15, 23, 42, 0.5);
-    --th-ring-offset: #F0F2F5;
+    --th-ring-offset: #F4F6F9;
 
-    --th-glass-bg: rgba(240, 242, 245, 0.8);
-    --th-glass-hover: rgba(240, 242, 245, 0.92);
-    --th-glass-border: rgba(15, 23, 42, 0.1);
-    --th-glass-border-hover: rgba(15, 23, 42, 0.15);
-    --th-header-bg: rgba(240, 242, 245, 0.85);
-    --th-sidebar-bg: rgba(240, 242, 245, 0.97);
-    --th-sidebar-bg-desktop: rgba(235, 237, 242, 0.65);
+    --th-glass-bg: rgba(255, 255, 255, 0.85);
+    --th-glass-hover: rgba(255, 255, 255, 0.95);
+    --th-glass-border: rgba(15, 23, 42, 0.08);
+    --th-glass-border-hover: rgba(6, 182, 212, 0.2);
+    --th-header-bg: rgba(255, 255, 255, 0.8);
+    --th-sidebar-bg: rgba(255, 255, 255, 0.97);
+    --th-sidebar-bg-desktop: rgba(255, 255, 255, 0.6);
 
-    --th-shadow-card: 0 1px 3px rgba(0, 0, 0, 0.05), 0 4px 16px rgba(0, 0, 0, 0.03);
-    --th-shadow-soft: 0 1px 4px rgba(0, 0, 0, 0.04);
-    --th-shadow-glass: 0 1px 8px 0 rgba(0, 0, 0, 0.05);
-    --th-shadow-glass-sm: 0 1px 4px 0 rgba(0, 0, 0, 0.03);
-    --th-shadow-glass-lg: 0 4px 16px 0 rgba(0, 0, 0, 0.06);
-    --th-shadow-glass-glow: 0 2px 12px 0 rgba(6, 182, 212, 0.05);
-    --th-shadow-inset: inset 0 1px 0 rgba(0, 0, 0, 0.03);
+    --th-shadow-card: 0 1px 2px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(0, 0, 0, 0.04);
+    --th-shadow-soft: 0 1px 3px rgba(0, 0, 0, 0.06);
+    --th-shadow-glass: 0 1px 8px 0 rgba(0, 0, 0, 0.06);
+    --th-shadow-glass-sm: 0 1px 4px 0 rgba(0, 0, 0, 0.04);
+    --th-shadow-glass-lg: 0 4px 20px 0 rgba(0, 0, 0, 0.07);
+    --th-shadow-glass-glow: 0 2px 16px 0 rgba(6, 182, 212, 0.08);
+    --th-shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.8);
 
-    --th-scrollbar-track: #E8EAEF;
-    --th-scrollbar-thumb: #BFC5CF;
-    --th-scrollbar-thumb-end: #8E9AAB;
-    --th-scrollbar-hover: #8E9AAB;
-    --th-scrollbar-hover-end: #6B7A8D;
+    --th-scrollbar-track: #F4F6F9;
+    --th-scrollbar-thumb: #C2C8D4;
+    --th-scrollbar-thumb-end: #9CA3AF;
+    --th-scrollbar-hover: #9CA3AF;
+    --th-scrollbar-hover-end: #6B7280;
 
     --th-selection-bg: rgba(6, 182, 212, 0.18);
-    --th-selection-text: #1A2332;
+    --th-selection-text: #111827;
 
-    --th-gradient-1: rgba(6, 182, 212, 0.02);
-    --th-gradient-2: rgba(16, 185, 129, 0.012);
-    --th-gradient-3: rgba(6, 182, 212, 0.008);
+    --th-gradient-1: rgba(6, 182, 212, 0.025);
+    --th-gradient-2: rgba(16, 185, 129, 0.015);
+    --th-gradient-3: rgba(6, 182, 212, 0.01);
 
-    --th-soft-overlay: rgba(0, 0, 0, 0.035);
-    --th-soft-overlay-2: rgba(0, 0, 0, 0.025);
-    --th-soft-overlay-hover: rgba(0, 0, 0, 0.06);
-    --th-soft-overlay-10: rgba(0, 0, 0, 0.07);
+    --th-soft-overlay: rgba(15, 23, 42, 0.03);
+    --th-soft-overlay-2: rgba(15, 23, 42, 0.02);
+    --th-soft-overlay-hover: rgba(15, 23, 42, 0.05);
+    --th-soft-overlay-10: rgba(15, 23, 42, 0.06);
 }
 
 /* ── 2. Tailwind Design Tokens ── */
@@ -367,7 +367,7 @@ button,
 
     /* ── Card System ── */
     .ca-card {
-        @apply rounded-[2rem] relative overflow-hidden transition-all duration-500;
+        @apply rounded-2xl relative overflow-hidden transition-all duration-300;
         background: var(--th-surface-soft);
         border: 1px solid var(--th-border);
         box-shadow: var(--th-shadow-card);
@@ -375,6 +375,7 @@ button,
 
     .ca-card:hover {
         border-color: var(--th-border-hover);
+        box-shadow: var(--th-shadow-glass-lg);
     }
 
     .ca-card-glass {
@@ -399,7 +400,7 @@ button,
     }
 
     .ca-card-interactive {
-        @apply rounded-[2rem] relative overflow-hidden transition-all duration-500 cursor-pointer;
+        @apply rounded-2xl relative overflow-hidden transition-all duration-300 cursor-pointer;
         background: var(--th-surface-soft);
         border: 1px solid var(--th-border);
         box-shadow: var(--th-shadow-card);
@@ -408,7 +409,7 @@ button,
     .ca-card-interactive:hover {
         transform: translateY(-2px);
         border-color: rgba(6, 182, 212, 0.15);
-        box-shadow: var(--th-shadow-card), 0 0 0 1px rgba(6, 182, 212, 0.1);
+        box-shadow: var(--th-shadow-glass-lg), 0 0 0 1px rgba(6, 182, 212, 0.1);
     }
 
     /* ── Glass Header ── */
@@ -482,12 +483,19 @@ button,
 
     /* ── Stat Card ── */
     .ca-stat-card {
-        @apply rounded-2xl relative overflow-hidden transition-all duration-300 p-6;
-        background: var(--th-glass-bg);
-        backdrop-filter: blur(20px) saturate(1.2);
-        -webkit-backdrop-filter: blur(20px) saturate(1.2);
-        border: 1px solid var(--th-glass-border);
+        @apply rounded-2xl relative overflow-hidden transition-all duration-300 p-5;
+        background: var(--th-surface-soft);
+        border: 1px solid var(--th-border);
+        box-shadow: var(--th-shadow-glass-sm);
+    }
+
+    .ca-stat-card:hover {
+        border-color: var(--th-border-hover);
         box-shadow: var(--th-shadow-glass);
+    }
+
+    .ca-stat-card .ca-stat-icon {
+        @apply w-10 h-10 rounded-xl flex items-center justify-center mb-3;
     }
 
     .ca-stat-card .ca-stat-value {
@@ -496,8 +504,61 @@ button,
     }
 
     .ca-stat-card .ca-stat-label {
-        @apply text-xs font-bold uppercase tracking-widest mt-1;
+        @apply text-[11px] font-bold uppercase tracking-widest mt-1;
         color: var(--th-content-subtle);
+    }
+
+    /* ── Table ── */
+    .ca-table {
+        @apply w-full text-left border-collapse;
+    }
+
+    .ca-table thead tr {
+        border-bottom: 1px solid var(--th-border);
+        background: var(--th-soft-overlay-2);
+    }
+
+    .ca-table th {
+        @apply p-4 text-[11px] font-black uppercase tracking-widest;
+        color: var(--th-content-subtle);
+    }
+
+    .ca-table tbody {
+        @apply divide-y;
+        --tw-divide-opacity: 1;
+        border-color: var(--th-border-soft);
+    }
+
+    .ca-table tbody tr {
+        @apply transition-colors duration-150;
+    }
+
+    .ca-table tbody tr:hover {
+        background: var(--th-soft-overlay);
+    }
+
+    .ca-table td {
+        @apply p-4 text-sm;
+        color: var(--th-content-muted);
+    }
+
+    /* ── Action Link ── */
+    .ca-action-link {
+        @apply text-xs font-bold transition-colors duration-200;
+        color: var(--th-content-subtle);
+    }
+
+    .ca-action-link:hover {
+        color: #06B6D4;
+    }
+
+    .ca-action-link-danger {
+        @apply text-xs font-bold transition-colors duration-200;
+        color: var(--th-content-subtle);
+    }
+
+    .ca-action-link-danger:hover {
+        color: #F87171;
     }
 
     /* ── Grid & Layout ── */

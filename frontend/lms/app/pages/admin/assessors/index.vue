@@ -13,6 +13,8 @@ import { Plus, Shield, Mail, Phone, ChevronRight, Award } from 'lucide-vue-next'
 import { useAssessors } from '~/composables/useAssessors'
 import type { AssessorProfileDomain, AssessorFormData } from '~/types/assessor-profile'
 
+const { t } = useI18n()
+
 const {
     assessors, loading, saving, error, searchQuery,
     fetchAssessors, createAssessor, updateAssessor, deleteAssessor,
@@ -72,20 +74,20 @@ const handleConfirmDelete = async () => {
 <template>
     <DashboardLayout>
         <template #header>
-            <h1 class="text-lg font-bold text-content hidden lg:block">Manajemen Asesor</h1>
+            <h1 class="text-lg font-bold text-content hidden lg:block">{{ t('admin.assessors.title') }}</h1>
         </template>
 
         <div class="py-6 space-y-8">
             <div class="space-y-4">
-                <Breadcrumb :items="[{ label: 'Admin', to: '/admin' }, { label: 'Manajemen Asesor' }]" />
-                <PageHeader title="Manajemen Asesor" subtitle="Kelola daftar asesor, lisensi, dan penugasan skema.">
+                <Breadcrumb :items="[{ label: 'Admin', to: '/admin' }, { label: t('admin.assessors.title') }]" />
+                <PageHeader :title="t('admin.assessors.title')" :subtitle="t('admin.assessors.subtitle')">
                     <template #actions>
                         <div class="hidden lg:block w-64 xl:w-80">
-                            <CaInputSearch v-model="searchQuery" placeholder="Cari asesor..." />
+                            <CaInputSearch v-model="searchQuery" :placeholder="t('common.search') + '...'" />
                         </div>
                         <CaButton variant="primary" class="flex items-center gap-2" @click="handleCreate">
                             <Plus class="w-4 h-4" />
-                            <span class="hidden sm:inline">Asesor Baru</span>
+                            <span class="hidden sm:inline">{{ t('admin.assessors.newAssessor') }}</span>
                         </CaButton>
                     </template>
                 </PageHeader>
@@ -93,24 +95,24 @@ const handleConfirmDelete = async () => {
 
             <!-- Mobile Search -->
             <div class="lg:hidden">
-                <CaInputSearch v-model="searchQuery" placeholder="Cari nama atau email asesor..." />
+                <CaInputSearch v-model="searchQuery" :placeholder="t('common.search') + '...'" />
             </div>
 
             <ErrorAlert v-if="error" :message="error" @dismiss="error = null" />
 
             <div v-if="loading" class="flex justify-center py-20">
-                <LoadingSpinner size="lg" label="Memuat data asesor..." />
+                <LoadingSpinner size="lg" :label="t('common.loading')" />
             </div>
 
             <EmptyState
                 v-else-if="assessors.length === 0 && !loading"
-                title="Belum ada asesor"
-                description="Mulai dengan menambahkan asesor pertama untuk LSP Anda."
+                :title="t('admin.assessors.empty')"
+                :description="t('admin.assessors.emptyDesc')"
             >
                 <template #action>
                     <CaButton variant="primary" @click="handleCreate">
                         <Plus class="w-4 h-4 mr-2" />
-                        Tambah Asesor
+                        {{ t('admin.assessors.newAssessor') }}
                     </CaButton>
                 </template>
             </EmptyState>
@@ -166,7 +168,7 @@ const handleConfirmDelete = async () => {
                         </div>
                         <div v-else class="flex items-center gap-2 text-sm text-content-subtle italic">
                             <Shield class="w-4 h-4 shrink-0" />
-                            <span>Belum ada lisensi</span>
+                            <span>{{ t('common.noData') }}</span>
                         </div>
 
                         <!-- Stats -->
@@ -186,22 +188,16 @@ const handleConfirmDelete = async () => {
                     <!-- Card Footer -->
                     <div class="px-5 py-3 border-t border-divider flex items-center justify-between">
                         <div class="flex gap-2">
-                            <button
-                                class="text-xs text-content-subtle hover:text-brand transition-colors font-bold"
-                                @click="handleEdit(assessor)"
-                            >
-                                Edit
+                            <button class="ca-action-link" @click="handleEdit(assessor)">
+                                {{ t('common.edit') }}
                             </button>
-                            <span class="text-content-subtle/30">|</span>
-                            <button
-                                class="text-xs text-content-subtle hover:text-red-400 transition-colors font-bold"
-                                @click="handleDeleteClick(assessor)"
-                            >
-                                Hapus
+                            <span class="text-divider">|</span>
+                            <button class="ca-action-link-danger" @click="handleDeleteClick(assessor)">
+                                {{ t('common.delete') }}
                             </button>
                         </div>
-                        <NuxtLink :to="`/admin/assessors/${assessor.id}`" class="text-xs text-brand hover:text-brand-secondary transition-colors font-bold flex items-center gap-1">
-                            Detail
+                        <NuxtLink :to="`/admin/assessors/${assessor.id}`" class="ca-action-link flex items-center gap-1">
+                            {{ t('common.detail') }}
                             <ChevronRight class="w-3.5 h-3.5" />
                         </NuxtLink>
                     </div>
@@ -220,9 +216,9 @@ const handleConfirmDelete = async () => {
         <ConfirmDialog
             :open="showDeleteConfirm"
             variant="danger"
-            title="Hapus Asesor"
-            :message="`Apakah Anda yakin ingin menghapus asesor '${deletingAssessor?.fullName}'? Tindakan ini tidak dapat dibatalkan.`"
-            confirm-label="Hapus"
+            :title="t('common.delete')"
+            :message="t('common.confirm') + '?'"
+            :confirm-label="t('common.delete')"
             :loading="saving"
             @confirm="handleConfirmDelete"
             @cancel="showDeleteConfirm = false"
