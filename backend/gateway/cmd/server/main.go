@@ -21,6 +21,7 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/redis/go-redis/v9"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -59,8 +60,12 @@ func main() {
 	// Auto-seed: ensure at least one admin user exists
 	ensureAdminExists(ctx, pool, cfg)
 
+	// Connect to Redis
+	rdb := connectRedis(ctx, cfg.Redis)
+	defer rdb.Close()
+
 	// Create and start HTTP server
-	server := handler.NewServer(cfg, pool)
+	server := handler.NewServer(cfg, pool, rdb)
 
 	// Start bot scheduler — reads schedules from DB dynamically
 	{
@@ -162,6 +167,22 @@ func shouldRun(bot model.BotSchedule) bool {
 		}
 	}
 	return true
+}
+
+func connectRedis(ctx context.Context, cfg config.RedisConfig) *redis.Client {
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     cfg.Addr(),
+		Password: cfg.Password,
+		DB:       cfg.DB,
+	})
+
+	if err := rdb.Ping(ctx).Err(); err != nil {
+		slog.Warn("redis tidak tersedia, cache dinonaktifkan", "error", err)
+	} else {
+		slog.Info("redis terhubung", "addr", cfg.Addr())
+	}
+
+	return rdb
 }
 
 func setupLogger() {

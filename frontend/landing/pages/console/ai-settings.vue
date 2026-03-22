@@ -64,7 +64,10 @@ const fetchModels = async (provider: string) => {
   }
 }
 
+const initialized = ref(false)
+
 watch(() => settings.value.ai_provider, (p) => {
+  if (!initialized.value) return
   settings.value.ai_model = ''
   fetchModels(p)
   fetchActiveKey(p)
@@ -90,8 +93,9 @@ const hasActiveKey = computed(() => !!activeKeyInfo.value)
 
 onMounted(async () => {
   await fetchSettings()
-  fetchModels(settings.value.ai_provider)
+  await fetchModels(settings.value.ai_provider)
   fetchActiveKey(settings.value.ai_provider)
+  initialized.value = true
 })
 </script>
 

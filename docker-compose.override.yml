@@ -1,0 +1,60 @@
+# Override: use shared IAT infrastructure (iat-postgres, iat-redis, iat-minio)
+# Removes local postgres/minio, connects to iat_default network
+
+services:
+  postgres:
+    deploy:
+      replicas: 0
+
+  minio:
+    deploy:
+      replicas: 0
+
+  api:
+    environment:
+      - DB_HOST=iat-postgres
+      - DB_PORT=5432
+      - DB_USER=coreasia
+      - DB_PASSWORD=coreasia_secret
+      - DB_NAME=coreasia_lms
+      - STORAGE_ENDPOINT=iat-minio:9000
+    depends_on: []
+    networks:
+      - coreasia-net
+      - iat-net
+
+  redis:
+    deploy:
+      replicas: 0
+
+  gateway:
+    environment:
+      - DB_HOST=iat-postgres
+      - DB_PORT=5432
+      - DB_USER=coreasia
+      - DB_PASSWORD=coreasia_secret
+      - DB_NAME=coreasia_lms
+      - REDIS_HOST=iat-redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=iat_redis_secret_2026
+    depends_on: []
+    networks:
+      - coreasia-net
+      - iat-net
+
+  frontend:
+    networks:
+      - coreasia-net
+      - iat-net
+
+  landing:
+    depends_on:
+      - gateway
+    networks:
+      - coreasia-net
+      - iat-net
+
+networks:
+  iat-net:
+    external: true
+    name: iat_default

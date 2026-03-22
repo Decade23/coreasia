@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"strings"
 
+	"time"
+
 	"github.com/coreasia/gateway/internal/middleware"
 	"github.com/coreasia/gateway/internal/model"
 	"github.com/coreasia/gateway/internal/repository"
@@ -15,17 +17,19 @@ import (
 	"github.com/coreasia/gateway/pkg/apperr"
 	"github.com/coreasia/gateway/pkg/validate"
 	"github.com/gofiber/fiber/v3"
+	"github.com/redis/go-redis/v9"
 )
 
 type AIHandler struct {
-	articleBot  *service.ArticleBot
-	auditLog    *repository.AuditLogRepo
-	apiKeyRepo  *repository.APIKeyRepo
+	articleBot   *service.ArticleBot
+	auditLog     *repository.AuditLogRepo
+	apiKeyRepo   *repository.APIKeyRepo
 	settingsRepo *repository.AppSettingsRepo
+	rdb          *redis.Client
 }
 
-func NewAIHandler(articleBot *service.ArticleBot, auditLog *repository.AuditLogRepo, apiKeyRepo *repository.APIKeyRepo, settingsRepo *repository.AppSettingsRepo) *AIHandler {
-	return &AIHandler{articleBot: articleBot, auditLog: auditLog, apiKeyRepo: apiKeyRepo, settingsRepo: settingsRepo}
+func NewAIHandler(articleBot *service.ArticleBot, auditLog *repository.AuditLogRepo, apiKeyRepo *repository.APIKeyRepo, settingsRepo *repository.AppSettingsRepo, rdb *redis.Client) *AIHandler {
+	return &AIHandler{articleBot: articleBot, auditLog: auditLog, apiKeyRepo: apiKeyRepo, settingsRepo: settingsRepo, rdb: rdb}
 }
 
 func (h *AIHandler) Generate(c fiber.Ctx) error {
@@ -152,9 +156,21 @@ func (h *AIHandler) GetActiveKey(c fiber.Ctx) error {
 	})
 }
 
-// ListModels fetches available models from the provider's API using the stored API key.
+// ListModels fetches available models from the provider's API, with Redis caching.
 func (h *AIHandler) ListModels(c fiber.Ctx) error {
 	provider := c.Params("provider")
+
+	// Try Redis cache first
+	cacheKey := "ai_models:" + provider
+	if h.rdb != nil {
+		cached, err := h.rdb.Get(c.Context(), cacheKey).Result()
+		if err == nil && cached != "" {
+			var models []aiModel
+			if json.Unmarshal([]byte(cached), &models) == nil {
+				return ok(c, models)
+			}
+		}
+	}
 
 	dbKey, err := h.apiKeyRepo.FindActiveByProvider(c.Context(), provider)
 	if err != nil || dbKey == nil {
@@ -165,6 +181,13 @@ func (h *AIHandler) ListModels(c fiber.Ctx) error {
 	if err != nil {
 		slog.Error("gagal fetch models", "provider", provider, "error", err)
 		return errResponse(c, apperr.NewServiceUnavailable("Gagal mengambil daftar model dari "+provider))
+	}
+
+	// Store in Redis cache (TTL 24 hours)
+	if h.rdb != nil {
+		if data, err := json.Marshal(models); err == nil {
+			h.rdb.Set(c.Context(), cacheKey, data, 24*time.Hour)
+		}
 	}
 
 	return ok(c, models)

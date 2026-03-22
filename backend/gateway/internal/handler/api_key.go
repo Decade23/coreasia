@@ -11,15 +11,24 @@ import (
 	"github.com/coreasia/gateway/pkg/validate"
 	"github.com/gofiber/fiber/v3"
 	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 )
 
 type APIKeyHandler struct {
 	repo     *repository.APIKeyRepo
 	auditLog *repository.AuditLogRepo
+	rdb      *redis.Client
 }
 
-func NewAPIKeyHandler(repo *repository.APIKeyRepo, auditLog *repository.AuditLogRepo) *APIKeyHandler {
-	return &APIKeyHandler{repo: repo, auditLog: auditLog}
+func NewAPIKeyHandler(repo *repository.APIKeyRepo, auditLog *repository.AuditLogRepo, rdb *redis.Client) *APIKeyHandler {
+	return &APIKeyHandler{repo: repo, auditLog: auditLog, rdb: rdb}
+}
+
+// invalidateModelCache removes cached model list for a provider.
+func (h *APIKeyHandler) invalidateModelCache(c fiber.Ctx, provider string) {
+	if h.rdb != nil {
+		h.rdb.Del(c.Context(), "ai_models:"+provider)
+	}
 }
 
 func (h *APIKeyHandler) List(c fiber.Ctx) error {
@@ -107,6 +116,8 @@ func (h *APIKeyHandler) Create(c fiber.Ctx) error {
 	keyID := key.ID.String()
 	h.auditLog.LogAction(c.Context(), &claims.UserID, &claims.FullName, "create", "api_keys", &keyID, &desc, c.IP())
 
+	h.invalidateModelCache(c, key.Provider)
+
 	return created(c, key.ToResponse())
 }
 
@@ -156,6 +167,8 @@ func (h *APIKeyHandler) Update(c fiber.Ctx) error {
 	keyID := existing.ID.String()
 	h.auditLog.LogAction(c.Context(), &claims.UserID, &claims.FullName, "update", "api_keys", &keyID, &desc, c.IP())
 
+	h.invalidateModelCache(c, existing.Provider)
+
 	return ok(c, existing.ToResponse())
 }
 
@@ -183,6 +196,8 @@ func (h *APIKeyHandler) Delete(c fiber.Ctx) error {
 	desc := fmt.Sprintf("Hapus API key: %s (%s)", existing.Name, existing.Provider)
 	keyID := existing.ID.String()
 	h.auditLog.LogAction(c.Context(), &claims.UserID, &claims.FullName, "delete", "api_keys", &keyID, &desc, c.IP())
+
+	h.invalidateModelCache(c, existing.Provider)
 
 	return c.Status(fiber.StatusNoContent).Send(nil)
 }

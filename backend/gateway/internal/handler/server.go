@@ -14,22 +14,24 @@ import (
 	"github.com/gofiber/fiber/v3/middleware/cors"
 	"github.com/gofiber/fiber/v3/middleware/recover"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/redis/go-redis/v9"
 )
 
 type Server struct {
 	app  *fiber.App
 	cfg  *config.Config
 	pool *pgxpool.Pool
+	rdb  *redis.Client
 }
 
-func NewServer(cfg *config.Config, pool *pgxpool.Pool) *Server {
+func NewServer(cfg *config.Config, pool *pgxpool.Pool, rdb *redis.Client) *Server {
 	app := fiber.New(fiber.Config{
 		AppName:      cfg.App.Name,
 		ErrorHandler: globalErrorHandler,
 		BodyLimit:    10 * 1024 * 1024, // 10MB for file uploads
 	})
 
-	s := &Server{app: app, cfg: cfg, pool: pool}
+	s := &Server{app: app, cfg: cfg, pool: pool, rdb: rdb}
 	s.setupMiddleware()
 	s.setupRoutes()
 
@@ -101,9 +103,9 @@ func (s *Server) setupRoutes() {
 	apiKeyRepo := repository.NewAPIKeyRepo(s.pool)
 	articleBot := service.NewArticleBot(s.cfg.AI, articleRepo, auditLogRepo, apiKeyRepo)
 	appSettingsRepo := repository.NewAppSettingsRepo(s.pool)
-	aiHandler := NewAIHandler(articleBot, auditLogRepo, apiKeyRepo, appSettingsRepo)
+	aiHandler := NewAIHandler(articleBot, auditLogRepo, apiKeyRepo, appSettingsRepo, s.rdb)
 	auditHandler := NewAuditHandler(auditLogRepo)
-	apiKeyHandler := NewAPIKeyHandler(apiKeyRepo, auditLogRepo)
+	apiKeyHandler := NewAPIKeyHandler(apiKeyRepo, auditLogRepo, s.rdb)
 	botScheduleRepo := repository.NewBotScheduleRepo(s.pool)
 	botScheduleHandler := NewBotScheduleHandler(botScheduleRepo, auditLogRepo, articleBot)
 

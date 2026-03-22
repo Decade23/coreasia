@@ -9,6 +9,7 @@ import (
 type Config struct {
 	App      AppConfig      `yaml:"app"`
 	Database DatabaseConfig `yaml:"database"`
+	Redis    RedisConfig    `yaml:"redis"`
 	CORS     CORSConfig     `yaml:"cors"`
 	JWT      JWTConfig      `yaml:"jwt"`
 	AI       AIConfig       `yaml:"ai"`
@@ -63,6 +64,17 @@ type JWTConfig struct {
 	AccessTTL  string `yaml:"access_ttl" env:"JWT_ACCESS_TTL" env-default:"60m"`
 	RefreshTTL string `yaml:"refresh_ttl" env:"JWT_REFRESH_TTL" env-default:"720h"`
 	Issuer     string `yaml:"issuer" env:"JWT_ISSUER" env-default:"coreasia-gateway"`
+}
+
+type RedisConfig struct {
+	Host     string `yaml:"host" env:"REDIS_HOST" env-default:"localhost"`
+	Port     int    `yaml:"port" env:"REDIS_PORT" env-default:"6379"`
+	Password string `yaml:"password" env:"REDIS_PASSWORD"`
+	DB       int    `yaml:"db" env:"REDIS_DB" env-default:"0"`
+}
+
+func (r RedisConfig) Addr() string {
+	return fmt.Sprintf("%s:%d", r.Host, r.Port)
 }
 
 type AIConfig struct {

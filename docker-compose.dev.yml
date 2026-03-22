@@ -54,6 +54,9 @@ services:
       - DB_PASSWORD=coreasia_secret
       - DB_NAME=coreasia_lms
       - DB_SSL_MODE=disable
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=
       - JWT_SECRET=${JWT_SECRET:-dev-gateway-secret-change-in-production-min32chars}
       - AI_API_KEY=${AI_API_KEY:-}
       - AI_PROVIDER=claude
@@ -67,6 +70,8 @@ services:
       - ADMIN_PASSWORD=${ADMIN_PASSWORD:-CoreAsia2026!}
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - coreasia-net
@@ -148,6 +153,26 @@ services:
     restart: unless-stopped
 
   # ============================================
+  # Redis (Cache)
+  # ============================================
+  redis:
+    image: redis:7-alpine
+    container_name: coreasia-redis
+    ports:
+      - "6380:6379"
+    command: redis-server --appendonly yes --maxmemory 128mb --maxmemory-policy allkeys-lru
+    volumes:
+      - coreasia-redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - coreasia-net
+    restart: unless-stopped
+
+  # ============================================
   # MinIO (Object Storage)
   # ============================================
   minio:
@@ -168,6 +193,7 @@ services:
 
 volumes:
   coreasia-pgdata:
+  coreasia-redisdata:
   coreasia-miniodata:
 
 
