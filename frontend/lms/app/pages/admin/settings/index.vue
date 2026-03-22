@@ -1,68 +1,82 @@
 <script setup lang="ts">
-import { reactive, watch } from 'vue'
+import { reactive, watch, computed } from 'vue'
 import DashboardLayout from '~/components/templates/DashboardLayout.vue'
 import Breadcrumb from '~/components/molecules/Breadcrumb.vue'
 import PageHeader from '~/components/molecules/PageHeader.vue'
 import CaButton from '~/components/atoms/CaButton.vue'
+import BaseInput from '~/components/atoms/BaseInput.vue'
+import BaseTextarea from '~/components/atoms/BaseTextarea.vue'
+import CaInputSearch from '~/components/molecules/CaInputSearch.vue'
+import CaSelect from '~/components/molecules/CaSelect.vue'
+import CaToggle from '~/components/atoms/CaToggle.vue'
+import Modal from '~/components/organisms/Modal.vue'
+import ConfirmDialog from '~/components/molecules/ConfirmDialog.vue'
 import LoadingSpinner from '~/components/atoms/LoadingSpinner.vue'
 import ErrorAlert from '~/components/atoms/ErrorAlert.vue'
-import { Building2, Palette, Users, Save, Check, Plus, Pencil, Trash2, X, Search } from 'lucide-vue-next'
+import { Building2, Palette, Users, Save, Check, Plus, Pencil, Trash2 } from 'lucide-vue-next'
 import { useTenantSettings, type TenantGeneral, type TenantBranding } from '~/composables/useTenantSettings'
 import { useUsers, type CreateUserPayload, type UpdateUserPayload } from '~/composables/useUsers'
 import type { UserDomain } from '~/adapters/UserAdapter'
 
-const {
-    settings, loading, saving, error,
-    fetchSettings, updateGeneral, updateBranding,
-    getRoleLabel, getRoleColor,
-} = useTenantSettings()
-
-const {
-    users, loading: usersLoading, saving: usersSaving,
-    error: usersError, totalItems, currentPage,
-    fetchUsers, createUser, updateUser, deleteUser,
-} = useUsers()
-
-const activeTab = ref<'general' | 'branding' | 'users'>('general')
-
-const tabs = [
-    { key: 'general' as const, label: 'Umum', icon: Building2 },
-    { key: 'branding' as const, label: 'Branding', icon: Palette },
-    { key: 'users' as const, label: 'Pengguna', icon: Users },
-]
-
-const generalForm = reactive<TenantGeneral>({
+const defaultGeneral: TenantGeneral = {
     name: '',
     license_number: '',
     address: '',
     phone: '',
     email: '',
     website: '',
-})
+}
 
-const brandingForm = reactive<TenantBranding>({
+const defaultBranding: TenantBranding = {
     logo_url: '',
     primary_color: '#06B6D4',
     secondary_color: '#10B981',
     custom_domain: '',
-})
+}
 
+const brandPalettes = [
+    { primary: '#06B6D4', secondary: '#10B981' },
+    { primary: '#2563EB', secondary: '#14B8A6' },
+    { primary: '#F97316', secondary: '#0F766E' },
+    { primary: '#DC2626', secondary: '#7C3AED' },
+]
+
+const {
+    settings,
+    loading,
+    saving,
+    error,
+    fetchSettings,
+    updateGeneral,
+    updateBranding,
+    getRoleColor,
+} = useTenantSettings()
+
+const {
+    users,
+    loading: usersLoading,
+    saving: usersSaving,
+    error: usersError,
+    totalItems,
+    currentPage,
+    fetchUsers,
+    createUser,
+    updateUser,
+    deleteUser,
+} = useUsers()
+
+const { t, locale } = useI18n()
+
+const activeTab = ref<'general' | 'branding' | 'users'>('general')
 const savedGeneral = ref(false)
 const savedBranding = ref(false)
-
-// ----- User Modal State -----
 const showUserModal = ref(false)
 const editingUser = ref<UserDomain | null>(null)
 const userSearch = ref('')
-const deleteConfirmId = ref<string | null>(null)
+const deleteTarget = ref<UserDomain | null>(null)
 
-const roleOptions = [
-    { value: 'admin', label: 'Administrator' },
-    { value: 'quality_manager', label: 'Manajer Mutu' },
-    { value: 'assessor', label: 'Asesor' },
-    { value: 'assessee', label: 'Asesi' },
-]
-
+const generalForm = reactive<TenantGeneral>({ ...defaultGeneral })
+const brandingForm = reactive<TenantBranding>({ ...defaultBranding })
 const userForm = reactive({
     full_name: '',
     email: '',
@@ -71,6 +85,38 @@ const userForm = reactive({
     role: 'assessee',
     is_active: true,
 })
+
+const tabs = computed(() => [
+    { key: 'general' as const, label: t('admin.settings.general'), icon: Building2 },
+    { key: 'branding' as const, label: t('admin.settings.branding'), icon: Palette },
+    { key: 'users' as const, label: t('admin.settings.users'), icon: Users },
+])
+
+const roleOptions = computed(() => [
+    { value: 'admin', label: t('role.admin') },
+    { value: 'quality_manager', label: t('role.qualityManager') },
+    { value: 'assessor', label: t('role.assessor') },
+    { value: 'assessee', label: t('role.assessee') },
+])
+
+const totalPages = computed(() => Math.max(1, Math.ceil(totalItems.value / 10)))
+
+const roleLabel = (role: string) => {
+    switch (role) {
+        case 'super_admin':
+            return t('role.superAdmin')
+        case 'admin':
+            return t('role.admin')
+        case 'quality_manager':
+            return t('role.qualityManager')
+        case 'assessor':
+            return t('role.assessor')
+        case 'assessee':
+            return t('role.assessee')
+        default:
+            return role
+    }
+}
 
 const resetUserForm = () => {
     userForm.full_name = ''
@@ -113,55 +159,50 @@ const handleSaveUser = async () => {
             role: userForm.role,
             is_active: userForm.is_active,
         }
+
         const success = await updateUser(editingUser.value.id, payload)
-        if (success) closeUserModal()
-    } else {
-        const payload: CreateUserPayload = {
-            email: userForm.email,
-            password: userForm.password,
-            full_name: userForm.full_name,
-            phone_number: userForm.phone_number || undefined,
-            role: userForm.role,
+        if (success) {
+            closeUserModal()
         }
-        const success = await createUser(payload)
-        if (success) closeUserModal()
+        return
+    }
+
+    const payload: CreateUserPayload = {
+        email: userForm.email,
+        password: userForm.password,
+        full_name: userForm.full_name,
+        phone_number: userForm.phone_number || undefined,
+        role: userForm.role,
+    }
+
+    const success = await createUser(payload)
+    if (success) {
+        closeUserModal()
     }
 }
 
-const handleDeleteUser = async (id: string) => {
-    const success = await deleteUser(id)
-    if (success) deleteConfirmId.value = null
+const confirmDeleteUser = async () => {
+    if (!deleteTarget.value) {
+        return
+    }
+
+    const success = await deleteUser(deleteTarget.value.id)
+    if (success) {
+        deleteTarget.value = null
+    }
 }
 
 const handleSearchUsers = () => {
-    fetchUsers(1, userSearch.value)
+    fetchUsers(1, userSearch.value.trim())
 }
-
-const totalPages = computed(() => Math.ceil(totalItems.value / 10))
-
-// ----- Lifecycle -----
-onMounted(async () => {
-    await fetchSettings()
-})
-
-watch(activeTab, (tab) => {
-    if (tab === 'users' && users.value.length === 0) {
-        fetchUsers(1, '')
-    }
-})
-
-watch(settings, (val) => {
-    if (val) {
-        Object.assign(generalForm, val.general)
-        Object.assign(brandingForm, val.branding)
-    }
-}, { immediate: true })
 
 const handleSaveGeneral = async () => {
     const success = await updateGeneral({ ...generalForm })
     if (success) {
         savedGeneral.value = true
-        setTimeout(() => { savedGeneral.value = false }, 2000)
+        setTimeout(() => {
+            savedGeneral.value = false
+        }, 2000)
     }
 }
 
@@ -169,317 +210,385 @@ const handleSaveBranding = async () => {
     const success = await updateBranding({ ...brandingForm })
     if (success) {
         savedBranding.value = true
-        setTimeout(() => { savedBranding.value = false }, 2000)
+        setTimeout(() => {
+            savedBranding.value = false
+        }, 2000)
     }
 }
 
-const formatDate = (date: Date | null) => {
-    if (!date) return '-'
-    return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })
+const applyPalette = (primary: string, secondary: string) => {
+    brandingForm.primary_color = primary
+    brandingForm.secondary_color = secondary
 }
+
+const formatDate = (date: Date | null) => {
+    if (!date) {
+        return t('admin.settings.lastLoginEmpty')
+    }
+
+    return date.toLocaleDateString(locale.value === 'en' ? 'en-US' : 'id-ID', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+    })
+}
+
+let searchTimer: ReturnType<typeof setTimeout> | null = null
+
+onMounted(async () => {
+    await fetchSettings()
+})
+
+watch(activeTab, (tab) => {
+    if (tab === 'users' && users.value.length === 0) {
+        fetchUsers(1, userSearch.value.trim())
+    }
+})
+
+watch(userSearch, () => {
+    if (activeTab.value !== 'users') {
+        return
+    }
+
+    if (searchTimer) {
+        clearTimeout(searchTimer)
+    }
+
+    searchTimer = setTimeout(() => {
+        handleSearchUsers()
+    }, 300)
+})
+
+watch(
+    settings,
+    (value) => {
+        if (!value) {
+            return
+        }
+
+        Object.assign(generalForm, defaultGeneral, value.general || {})
+        Object.assign(brandingForm, defaultBranding, value.branding || {})
+    },
+    { immediate: true },
+)
+
+onBeforeUnmount(() => {
+    if (searchTimer) {
+        clearTimeout(searchTimer)
+    }
+})
 </script>
 
 <template>
     <DashboardLayout>
         <template #header>
-            <h1 class="text-lg font-bold text-content hidden lg:block">Pengaturan</h1>
+            <h1 class="hidden text-lg font-bold text-content lg:block">{{ t('nav.settings') }}</h1>
         </template>
 
-        <div class="py-6 space-y-6">
+        <div class="space-y-6 py-6">
             <div class="space-y-4">
-                <Breadcrumb :items="[{ label: 'Admin', to: '/admin' }, { label: 'Pengaturan' }]" />
-                <PageHeader title="Pengaturan Tenant" subtitle="Kelola informasi LSP, branding, dan pengguna admin." />
+                <Breadcrumb :items="[{ label: 'Admin', to: '/admin' }, { label: t('nav.settings') }]" />
+                <PageHeader
+                    :eyebrow="t('nav.settings')"
+                    :title="t('admin.settings.title')"
+                    :subtitle="t('admin.settings.subtitle')"
+                />
             </div>
+
             <ErrorAlert v-if="error" :message="error" @dismiss="error = null" />
             <ErrorAlert v-if="usersError" :message="usersError" @dismiss="usersError = null" />
 
             <div v-if="loading" class="flex justify-center py-20">
-                <LoadingSpinner size="lg" label="Memuat pengaturan..." />
+                <LoadingSpinner size="lg" :label="t('admin.settings.loading')" />
             </div>
 
-            <template v-else-if="settings">
-                <!-- Tab Navigation -->
-                <div class="flex gap-1 p-1 rounded-2xl bg-core-800 border border-divider w-fit">
-                    <button
-                        v-for="tab in tabs"
-                        :key="tab.key"
-                        class="flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-bold transition-all duration-200"
-                        :class="activeTab === tab.key
-                            ? 'bg-brand/10 text-brand shadow-md'
-                            : 'text-content-subtle hover:text-content hover:bg-tint'"
-                        @click="activeTab = tab.key"
-                    >
-                        <component :is="tab.icon" class="w-4 h-4" />
-                        <span class="hidden sm:inline">{{ tab.label }}</span>
-                    </button>
+            <template v-else>
+                <div class="w-fit rounded-2xl border border-divider bg-core-800 p-1">
+                    <div class="flex flex-wrap gap-1">
+                        <button
+                            v-for="tab in tabs"
+                            :key="tab.key"
+                            class="flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-bold transition-all duration-200"
+                            :class="activeTab === tab.key ? 'bg-brand/10 text-brand shadow-md' : 'text-content-subtle hover:bg-tint hover:text-content'"
+                            @click="activeTab = tab.key"
+                        >
+                            <component :is="tab.icon" class="h-4 w-4" />
+                            <span class="hidden sm:inline">{{ tab.label }}</span>
+                        </button>
+                    </div>
                 </div>
 
-                <!-- Tab: General -->
-                <div v-if="activeTab === 'general'" class="ca-card p-0 overflow-hidden">
-                    <div class="p-6 border-b border-divider">
-                        <h2 class="text-lg font-bold text-content">Informasi Umum LSP</h2>
-                        <p class="text-sm text-content-subtle mt-1">Data dasar lembaga sertifikasi profesi Anda.</p>
+                <div v-if="activeTab === 'general'" class="ca-card overflow-hidden p-0">
+                    <div class="border-b border-divider p-6">
+                        <h2 class="text-lg font-bold text-content">{{ t('admin.settings.generalSectionTitle') }}</h2>
+                        <p class="mt-1 text-sm text-content-subtle">{{ t('admin.settings.generalSectionSubtitle') }}</p>
                     </div>
-                    <div class="p-6 space-y-5">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+                    <div class="space-y-5 p-6">
+                        <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
                             <BaseInput
                                 id="tenant-name"
-                                label="Nama LSP"
+                                :label="t('admin.settings.fields.name')"
                                 v-model="generalForm.name"
-                                placeholder="Nama Lembaga"
+                                :placeholder="t('admin.settings.placeholders.name')"
                                 required
                             />
+
                             <BaseInput
                                 id="tenant-license"
-                                label="Nomor Lisensi BNSP"
+                                :label="t('admin.settings.fields.license')"
                                 v-model="generalForm.license_number"
-                                placeholder="KEP.xxxx/BNSP/xxxx"
+                                :placeholder="t('admin.settings.placeholders.license')"
                             />
                         </div>
 
-                        <BaseInput
+                        <BaseTextarea
                             id="tenant-address"
-                            label="Alamat"
+                            :label="t('admin.settings.fields.address')"
                             v-model="generalForm.address"
-                            placeholder="Alamat lengkap kantor"
+                            :placeholder="t('admin.settings.placeholders.address')"
+                            :rows="4"
                         />
 
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                        <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
                             <BaseInput
                                 id="tenant-phone"
-                                label="Telepon"
+                                :label="t('admin.settings.fields.phone')"
                                 v-model="generalForm.phone"
-                                placeholder="021-xxxxxxx"
+                                :placeholder="t('admin.settings.placeholders.phone')"
                             />
+
                             <BaseInput
                                 id="tenant-email"
-                                label="Email"
+                                :label="t('admin.settings.fields.email')"
                                 type="email"
                                 v-model="generalForm.email"
-                                placeholder="info@lsp.id"
+                                :placeholder="t('admin.settings.placeholders.email')"
                             />
+
                             <BaseInput
                                 id="tenant-website"
-                                label="Website"
+                                :label="t('admin.settings.fields.website')"
                                 v-model="generalForm.website"
-                                placeholder="https://lms.lsp.id"
+                                :placeholder="t('admin.settings.placeholders.website')"
                             />
                         </div>
                     </div>
-                    <div class="p-6 border-t border-divider flex justify-end">
+
+                    <div class="flex justify-end border-t border-divider p-6">
                         <CaButton variant="primary" :loading="saving" @click="handleSaveGeneral">
-                            <component :is="savedGeneral ? Check : Save" class="w-4 h-4 mr-1.5" />
-                            {{ savedGeneral ? 'Tersimpan!' : 'Simpan Perubahan' }}
+                            <component :is="savedGeneral ? Check : Save" class="mr-1.5 h-4 w-4" />
+                            {{ savedGeneral ? t('admin.settings.generalSaved') : t('admin.settings.saveChanges') }}
                         </CaButton>
                     </div>
                 </div>
 
-                <!-- Tab: Branding -->
-                <div v-if="activeTab === 'branding'" class="ca-card p-0 overflow-hidden">
-                    <div class="p-6 border-b border-divider">
-                        <h2 class="text-lg font-bold text-content">Branding & Tampilan</h2>
-                        <p class="text-sm text-content-subtle mt-1">Kustomisasi tampilan platform sesuai identitas LSP.</p>
+                <div v-if="activeTab === 'branding'" class="ca-card overflow-hidden p-0">
+                    <div class="border-b border-divider p-6">
+                        <h2 class="text-lg font-bold text-content">{{ t('admin.settings.brandingSectionTitle') }}</h2>
+                        <p class="mt-1 text-sm text-content-subtle">{{ t('admin.settings.brandingSectionSubtitle') }}</p>
                     </div>
-                    <div class="p-6 space-y-5">
-                        <!-- Logo Preview -->
-                        <div>
-                            <label class="block text-sm font-bold text-content-muted mb-2">Logo LSP</label>
-                            <div class="flex items-center gap-4">
-                                <div class="w-20 h-20 rounded-2xl bg-tint border border-dashed border-divider-strong flex items-center justify-center overflow-hidden">
-                                    <img v-if="brandingForm.logo_url" :src="brandingForm.logo_url" alt="Logo" class="w-full h-full object-contain p-2" />
-                                    <Palette v-else class="w-8 h-8 text-content-subtle" />
-                                </div>
-                                <div>
-                                    <CaButton variant="outline" size="sm">Upload Logo</CaButton>
-                                    <p class="text-xs text-content-subtle mt-1">PNG, SVG. Maks 1MB.</p>
-                                </div>
-                            </div>
-                        </div>
 
-                        <!-- Colors -->
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                            <div>
-                                <label class="block text-sm font-bold text-content-muted mb-2">Warna Primer</label>
-                                <div class="flex items-center gap-3">
-                                    <input
-                                        type="color"
-                                        v-model="brandingForm.primary_color"
-                                        class="w-12 h-12 rounded-xl border-2 border-divider-strong bg-transparent cursor-pointer"
-                                    />
+                    <div class="space-y-6 p-6">
+                        <div class="grid grid-cols-1 gap-5 lg:grid-cols-[1.2fr_0.8fr]">
+                            <div class="space-y-5">
+                                <BaseInput
+                                    id="tenant-logo"
+                                    :label="t('admin.settings.logoLabel')"
+                                    v-model="brandingForm.logo_url"
+                                    :placeholder="t('admin.settings.placeholders.logo')"
+                                />
+
+                                <BaseInput
+                                    id="tenant-domain"
+                                    :label="t('admin.settings.fields.customDomain')"
+                                    v-model="brandingForm.custom_domain"
+                                    :placeholder="t('admin.settings.placeholders.customDomain')"
+                                />
+
+                                <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
                                     <BaseInput
                                         id="color-primary"
+                                        :label="t('admin.settings.fields.primaryColor')"
                                         v-model="brandingForm.primary_color"
                                         placeholder="#06B6D4"
-                                        class="flex-1"
+                                    />
+
+                                    <BaseInput
+                                        id="color-secondary"
+                                        :label="t('admin.settings.fields.secondaryColor')"
+                                        v-model="brandingForm.secondary_color"
+                                        placeholder="#10B981"
                                     />
                                 </div>
                             </div>
-                            <div>
-                                <label class="block text-sm font-bold text-content-muted mb-2">Warna Sekunder</label>
-                                <div class="flex items-center gap-3">
-                                    <input
-                                        type="color"
-                                        v-model="brandingForm.secondary_color"
-                                        class="w-12 h-12 rounded-xl border-2 border-divider-strong bg-transparent cursor-pointer"
-                                    />
-                                    <BaseInput
-                                        id="color-secondary"
-                                        v-model="brandingForm.secondary_color"
-                                        placeholder="#10B981"
-                                        class="flex-1"
-                                    />
+
+                            <div class="rounded-2xl border border-divider bg-tint-subtle p-5">
+                                <p class="text-xs font-black uppercase tracking-[0.18em] text-content-faint">
+                                    {{ t('admin.settings.previewTitle') }}
+                                </p>
+
+                                <div class="mt-4 space-y-3">
+                                    <div class="rounded-2xl border border-divider bg-core-900/60 p-4">
+                                        <div class="flex items-center gap-3">
+                                            <div
+                                                class="flex h-12 w-12 items-center justify-center rounded-2xl text-lg font-black text-white"
+                                                :style="{ backgroundColor: brandingForm.primary_color }"
+                                            >
+                                                C
+                                            </div>
+                                            <div>
+                                                <p class="font-bold text-content">CoreAsia LMS</p>
+                                                <p class="text-xs text-content-subtle">{{ t('admin.settings.logoHelper') }}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <div
+                                            class="flex h-16 items-center justify-center rounded-2xl text-sm font-black text-white"
+                                            :style="{ backgroundColor: brandingForm.primary_color }"
+                                        >
+                                            {{ t('admin.settings.previewPrimary') }}
+                                        </div>
+
+                                        <div
+                                            class="flex h-16 items-center justify-center rounded-2xl text-sm font-black text-white"
+                                            :style="{ backgroundColor: brandingForm.secondary_color }"
+                                        >
+                                            {{ t('admin.settings.previewSecondary') }}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <BaseInput
-                            id="tenant-domain"
-                            label="Domain Kustom"
-                            v-model="brandingForm.custom_domain"
-                            placeholder="lms.namalsp.id"
-                        />
+                        <div class="space-y-3">
+                            <p class="text-xs font-black uppercase tracking-[0.18em] text-content-faint">
+                                {{ t('admin.settings.colorPresets') }}
+                            </p>
 
-                        <!-- Preview -->
-                        <div class="p-4 rounded-xl bg-tint border border-divider">
-                            <p class="text-xs font-bold text-content-subtle uppercase tracking-widest mb-3">Preview Warna</p>
-                            <div class="flex gap-3">
-                                <div
-                                    class="flex-1 h-12 rounded-xl flex items-center justify-center text-sm font-bold text-white"
-                                    :style="{ backgroundColor: brandingForm.primary_color }"
+                            <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
+                                <button
+                                    v-for="palette in brandPalettes"
+                                    :key="`${palette.primary}-${palette.secondary}`"
+                                    type="button"
+                                    class="rounded-2xl border border-divider p-3 transition-all hover:border-brand/30 hover:bg-tint"
+                                    @click="applyPalette(palette.primary, palette.secondary)"
                                 >
-                                    Primer
-                                </div>
-                                <div
-                                    class="flex-1 h-12 rounded-xl flex items-center justify-center text-sm font-bold text-white"
-                                    :style="{ backgroundColor: brandingForm.secondary_color }"
-                                >
-                                    Sekunder
-                                </div>
+                                    <div class="flex gap-2">
+                                        <span class="h-10 flex-1 rounded-xl" :style="{ backgroundColor: palette.primary }" />
+                                        <span class="h-10 flex-1 rounded-xl" :style="{ backgroundColor: palette.secondary }" />
+                                    </div>
+                                </button>
                             </div>
                         </div>
                     </div>
-                    <div class="p-6 border-t border-divider flex justify-end">
+
+                    <div class="flex justify-end border-t border-divider p-6">
                         <CaButton variant="primary" :loading="saving" @click="handleSaveBranding">
-                            <component :is="savedBranding ? Check : Save" class="w-4 h-4 mr-1.5" />
-                            {{ savedBranding ? 'Tersimpan!' : 'Simpan Branding' }}
+                            <component :is="savedBranding ? Check : Save" class="mr-1.5 h-4 w-4" />
+                            {{ savedBranding ? t('admin.settings.brandingSaved') : t('admin.settings.saveBranding') }}
                         </CaButton>
                     </div>
                 </div>
 
-                <!-- Tab: Users -->
-                <div v-if="activeTab === 'users'" class="ca-card p-0 overflow-hidden">
-                    <div class="p-6 border-b border-divider flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div v-if="activeTab === 'users'" class="ca-card overflow-hidden p-0">
+                    <div class="flex flex-col gap-4 border-b border-divider p-6 sm:flex-row sm:items-center sm:justify-between">
                         <div>
-                            <h2 class="text-lg font-bold text-content">Pengguna Admin</h2>
-                            <p class="text-sm text-content-subtle mt-1">Kelola pengguna dengan akses ke platform.</p>
+                            <h2 class="text-lg font-bold text-content">{{ t('admin.settings.usersSectionTitle') }}</h2>
+                            <p class="mt-1 text-sm text-content-subtle">{{ t('admin.settings.usersSectionSubtitle') }}</p>
                         </div>
+
                         <CaButton variant="primary" size="sm" @click="openCreateModal">
-                            <Plus class="w-4 h-4 mr-1.5" />
-                            Tambah Pengguna
+                            <Plus class="mr-1.5 h-4 w-4" />
+                            {{ t('admin.settings.addUser') }}
                         </CaButton>
                     </div>
 
-                    <!-- Search Bar -->
-                    <div class="px-6 py-4 border-b border-divider">
-                        <div class="relative max-w-sm">
-                            <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-content-subtle pointer-events-none" />
-                            <input
+                    <div class="border-b border-divider px-6 py-4">
+                        <div class="max-w-sm">
+                            <CaInputSearch
                                 v-model="userSearch"
-                                type="text"
-                                placeholder="Cari nama atau email..."
-                                class="w-full bg-input rounded-xl pl-10 pr-4 py-2.5 text-sm text-content font-medium placeholder:text-content-subtle focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:shadow-glow-cyan transition-all"
-                                @keyup.enter="handleSearchUsers"
+                                :placeholder="t('admin.settings.searchUsers')"
                             />
                         </div>
                     </div>
 
                     <div v-if="usersLoading" class="flex justify-center py-12">
-                        <LoadingSpinner size="md" label="Memuat pengguna..." />
+                        <LoadingSpinner size="md" :label="t('admin.settings.usersLoading')" />
                     </div>
 
                     <template v-else>
                         <div class="overflow-x-auto">
-                            <table class="w-full text-left border-collapse min-w-175">
+                            <table class="min-w-[880px] w-full border-collapse text-left">
                                 <thead>
-                                    <tr class="bg-core-900/80 border-b border-divider">
-                                        <th class="p-4 text-xs font-black text-content-subtle uppercase tracking-widest pl-6">Nama</th>
-                                        <th class="p-4 text-xs font-black text-content-subtle uppercase tracking-widest">Email</th>
-                                        <th class="p-4 text-xs font-black text-content-subtle uppercase tracking-widest">Role</th>
-                                        <th class="p-4 text-xs font-black text-content-subtle uppercase tracking-widest">Status</th>
-                                        <th class="p-4 text-xs font-black text-content-subtle uppercase tracking-widest">Login Terakhir</th>
-                                        <th class="p-4 text-xs font-black text-content-subtle uppercase tracking-widest pr-6 text-right">Aksi</th>
+                                    <tr class="border-b border-divider bg-core-900/80">
+                                        <th class="p-4 pl-6 text-xs font-black uppercase tracking-widest text-content-subtle">{{ t('admin.settings.table.name') }}</th>
+                                        <th class="p-4 text-xs font-black uppercase tracking-widest text-content-subtle">{{ t('admin.settings.table.email') }}</th>
+                                        <th class="p-4 text-xs font-black uppercase tracking-widest text-content-subtle">{{ t('admin.settings.table.role') }}</th>
+                                        <th class="p-4 text-xs font-black uppercase tracking-widest text-content-subtle">{{ t('admin.settings.table.status') }}</th>
+                                        <th class="p-4 text-xs font-black uppercase tracking-widest text-content-subtle">{{ t('admin.settings.table.lastLogin') }}</th>
+                                        <th class="p-4 pr-6 text-right text-xs font-black uppercase tracking-widest text-content-subtle">{{ t('admin.settings.table.actions') }}</th>
                                     </tr>
                                 </thead>
+
                                 <tbody class="divide-y divide-divider">
                                     <tr v-if="users.length === 0">
                                         <td colspan="6" class="p-8 text-center text-sm text-content-subtle">
-                                            Belum ada pengguna terdaftar.
+                                            {{ t('admin.settings.table.empty') }}
                                         </td>
                                     </tr>
-                                    <tr v-for="u in users" :key="u.id" class="hover:bg-core-800 transition-colors">
+
+                                    <tr v-for="user in users" :key="user.id" class="transition-colors hover:bg-core-800/70">
                                         <td class="p-4 pl-6">
                                             <div class="flex items-center gap-3">
-                                                <div class="w-8 h-8 rounded-lg bg-brand/10 flex items-center justify-center text-brand font-bold text-sm shrink-0">
-                                                    {{ u.fullName.charAt(0) }}
+                                                <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand/10 text-sm font-bold text-brand">
+                                                    {{ user.fullName.charAt(0) }}
                                                 </div>
-                                                <span class="font-bold text-content text-sm">{{ u.fullName }}</span>
+                                                <span class="text-sm font-bold text-content">{{ user.fullName }}</span>
                                             </div>
                                         </td>
-                                        <td class="p-4 text-sm text-content-muted">{{ u.email }}</td>
+
+                                        <td class="p-4 text-sm text-content-muted">{{ user.email }}</td>
+
                                         <td class="p-4">
                                             <span
-                                                class="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-widest border"
-                                                :class="getRoleColor(u.role)"
+                                                class="rounded-md border px-2 py-0.5 text-[10px] font-black uppercase tracking-widest"
+                                                :class="getRoleColor(user.role)"
                                             >
-                                                {{ getRoleLabel(u.role) }}
+                                                {{ roleLabel(user.role) }}
                                             </span>
                                         </td>
+
                                         <td class="p-4">
                                             <span class="flex items-center gap-1.5 text-sm">
-                                                <span
-                                                    class="w-2 h-2 rounded-full"
-                                                    :class="u.isActive ? 'bg-emerald-500' : 'bg-red-500/50'"
-                                                />
-                                                <span :class="u.isActive ? 'text-emerald-400' : 'text-red-400'">
-                                                    {{ u.isActive ? 'Aktif' : 'Nonaktif' }}
+                                                <span class="h-2 w-2 rounded-full" :class="user.isActive ? 'bg-emerald-500' : 'bg-rose-500/60'" />
+                                                <span :class="user.isActive ? 'text-emerald-400' : 'text-rose-400'">
+                                                    {{ user.isActive ? t('common.active') : t('common.inactive') }}
                                                 </span>
                                             </span>
                                         </td>
-                                        <td class="p-4 text-sm text-content-muted whitespace-nowrap">
-                                            {{ formatDate(u.lastLoginAt) }}
-                                        </td>
+
+                                        <td class="whitespace-nowrap p-4 text-sm text-content-muted">{{ formatDate(user.lastLoginAt) }}</td>
+
                                         <td class="p-4 pr-6">
                                             <div class="flex items-center justify-end gap-2">
                                                 <button
-                                                    class="p-2 rounded-lg text-content-subtle hover:text-cyan-400 hover:bg-cyan-500/10 transition-all"
-                                                    title="Edit pengguna"
-                                                    @click="openEditModal(u)"
+                                                    class="rounded-lg p-2 text-content-subtle transition-all hover:bg-cyan-500/10 hover:text-cyan-400"
+                                                    :title="t('common.edit')"
+                                                    @click="openEditModal(user)"
                                                 >
-                                                    <Pencil class="w-4 h-4" />
+                                                    <Pencil class="h-4 w-4" />
                                                 </button>
+
                                                 <button
-                                                    v-if="deleteConfirmId !== u.id"
-                                                    class="p-2 rounded-lg text-content-subtle hover:text-rose-400 hover:bg-rose-500/10 transition-all"
-                                                    title="Hapus pengguna"
-                                                    @click="deleteConfirmId = u.id"
+                                                    class="rounded-lg p-2 text-content-subtle transition-all hover:bg-rose-500/10 hover:text-rose-400"
+                                                    :title="t('common.delete')"
+                                                    @click="deleteTarget = user"
                                                 >
-                                                    <Trash2 class="w-4 h-4" />
+                                                    <Trash2 class="h-4 w-4" />
                                                 </button>
-                                                <div v-else class="flex items-center gap-1">
-                                                    <button
-                                                        class="px-2 py-1 rounded-lg text-xs font-bold text-rose-400 bg-rose-500/10 hover:bg-rose-500/20 transition-all"
-                                                        :disabled="usersSaving"
-                                                        @click="handleDeleteUser(u.id)"
-                                                    >
-                                                        Hapus
-                                                    </button>
-                                                    <button
-                                                        class="px-2 py-1 rounded-lg text-xs font-bold text-content-subtle hover:text-content hover:bg-tint transition-all"
-                                                        @click="deleteConfirmId = null"
-                                                    >
-                                                        Batal
-                                                    </button>
-                                                </div>
                                             </div>
                                         </td>
                                     </tr>
@@ -487,27 +596,28 @@ const formatDate = (date: Date | null) => {
                             </table>
                         </div>
 
-                        <!-- Pagination -->
-                        <div v-if="totalPages > 1" class="p-4 border-t border-divider flex items-center justify-between">
+                        <div v-if="totalItems > 10" class="flex items-center justify-between border-t border-divider p-4">
                             <p class="text-xs text-content-subtle">
-                                Halaman {{ currentPage }} dari {{ totalPages }} ({{ totalItems }} pengguna)
+                                {{ t('admin.settings.pagination', { page: currentPage, totalPages, totalItems }) }}
                             </p>
+
                             <div class="flex gap-2">
                                 <CaButton
                                     variant="outline"
                                     size="sm"
                                     :disabled="currentPage <= 1"
-                                    @click="fetchUsers(currentPage - 1, userSearch)"
+                                    @click="fetchUsers(currentPage - 1, userSearch.trim())"
                                 >
-                                    Sebelumnya
+                                    {{ t('common.previous') }}
                                 </CaButton>
+
                                 <CaButton
                                     variant="outline"
                                     size="sm"
                                     :disabled="currentPage >= totalPages"
-                                    @click="fetchUsers(currentPage + 1, userSearch)"
+                                    @click="fetchUsers(currentPage + 1, userSearch.trim())"
                                 >
-                                    Berikutnya
+                                    {{ t('common.next') }}
                                 </CaButton>
                             </div>
                         </div>
@@ -516,146 +626,102 @@ const formatDate = (date: Date | null) => {
             </template>
         </div>
 
-        <!-- User Create/Edit Modal -->
-        <Teleport to="body">
-            <Transition name="modal">
-                <div
-                    v-if="showUserModal"
-                    class="fixed inset-0 z-50 flex items-center justify-center p-4"
-                >
-                    <!-- Backdrop -->
-                    <div
-                        class="absolute inset-0 bg-black/60 backdrop-blur-sm"
-                        @click="closeUserModal"
+        <Modal :open="showUserModal" max-width="xl" @close="closeUserModal">
+            <template #header>
+                <div>
+                    <h2 class="text-xl font-bold text-content">
+                        {{ editingUser ? t('admin.settings.editModalTitle') : t('admin.settings.createModalTitle') }}
+                    </h2>
+                    <p class="mt-1 text-sm text-content-subtle">
+                        {{ editingUser ? t('admin.settings.editModalSubtitle') : t('admin.settings.createModalSubtitle') }}
+                    </p>
+                </div>
+            </template>
+
+            <div class="space-y-5">
+                <ErrorAlert v-if="usersError" :message="usersError" @dismiss="usersError = null" />
+
+                <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+                    <BaseInput
+                        id="user-fullname"
+                        :label="t('admin.settings.fields.fullName')"
+                        v-model="userForm.full_name"
+                        :placeholder="t('admin.settings.placeholders.fullName')"
+                        required
                     />
 
-                    <!-- Modal Content -->
-                    <div class="relative w-full max-w-lg rounded-2xl border border-divider bg-core-900/95 backdrop-blur-xl shadow-2xl shadow-black/40">
-                        <!-- Header -->
-                        <div class="flex items-center justify-between p-6 border-b border-divider">
-                            <div>
-                                <h3 class="text-lg font-bold text-content">
-                                    {{ editingUser ? 'Edit Pengguna' : 'Tambah Pengguna Baru' }}
-                                </h3>
-                                <p class="text-sm text-content-subtle mt-0.5">
-                                    {{ editingUser ? 'Perbarui informasi pengguna.' : 'Buat akun pengguna baru di platform.' }}
-                                </p>
-                            </div>
-                            <button
-                                class="p-2 rounded-xl text-content-subtle hover:text-content hover:bg-tint transition-all"
-                                @click="closeUserModal"
-                            >
-                                <X class="w-5 h-5" />
-                            </button>
+                    <BaseInput
+                        id="user-email"
+                        :label="t('admin.settings.fields.email')"
+                        type="email"
+                        v-model="userForm.email"
+                        :placeholder="t('admin.settings.placeholders.userEmail')"
+                        required
+                    />
+                </div>
+
+                <BaseInput
+                    v-if="!editingUser"
+                    id="user-password"
+                    :label="t('admin.settings.fields.password')"
+                    type="password"
+                    v-model="userForm.password"
+                    :placeholder="t('admin.settings.placeholders.password')"
+                    required
+                />
+
+                <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+                    <BaseInput
+                        id="user-phone"
+                        :label="t('admin.settings.fields.phoneNumber')"
+                        v-model="userForm.phone_number"
+                        :placeholder="t('admin.settings.placeholders.phoneNumber')"
+                    />
+
+                    <CaSelect
+                        id="user-role"
+                        :label="t('admin.settings.fields.role')"
+                        :options="roleOptions"
+                        :model-value="userForm.role"
+                        @update:model-value="(value) => { userForm.role = String(value || 'assessee') }"
+                    />
+                </div>
+
+                <div v-if="editingUser" class="rounded-2xl border border-divider bg-tint-subtle p-4">
+                    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <p class="text-sm font-bold text-content">{{ t('admin.settings.activeStatusTitle') }}</p>
+                            <p class="mt-1 text-xs text-content-subtle">{{ t('admin.settings.activeStatusHelp') }}</p>
                         </div>
 
-                        <!-- Body -->
-                        <div class="p-6 space-y-5">
-                            <ErrorAlert v-if="usersError" :message="usersError" @dismiss="usersError = null" />
-
-                            <BaseInput
-                                id="user-fullname"
-                                label="Nama Lengkap"
-                                v-model="userForm.full_name"
-                                placeholder="Nama lengkap pengguna"
-                                required
-                            />
-
-                            <BaseInput
-                                id="user-email"
-                                label="Email"
-                                type="email"
-                                v-model="userForm.email"
-                                placeholder="user@example.com"
-                                required
-                            />
-
-                            <BaseInput
-                                v-if="!editingUser"
-                                id="user-password"
-                                label="Password"
-                                type="password"
-                                v-model="userForm.password"
-                                placeholder="Minimal 6 karakter"
-                                required
-                            />
-
-                            <BaseInput
-                                id="user-phone"
-                                label="Nomor Telepon"
-                                v-model="userForm.phone_number"
-                                placeholder="08xxxxxxxxxx"
-                            />
-
-                            <!-- Role Select -->
-                            <div class="w-full">
-                                <label for="user-role" class="block text-xs font-bold uppercase tracking-wider text-content-subtle mb-2">
-                                    Role <span class="text-rose-500 ml-1">*</span>
-                                </label>
-                                <select
-                                    id="user-role"
-                                    v-model="userForm.role"
-                                    class="w-full bg-input rounded-xl px-4 py-3.5 h-[52px] text-content font-bold transition-all focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:shadow-glow-cyan focus:bg-input hover:bg-input-hover shadow-inset-light appearance-none cursor-pointer"
-                                >
-                                    <option v-for="opt in roleOptions" :key="opt.value" :value="opt.value">
-                                        {{ opt.label }}
-                                    </option>
-                                </select>
-                            </div>
-
-                            <!-- Active Toggle (edit only) -->
-                            <div v-if="editingUser" class="flex items-center justify-between">
-                                <div>
-                                    <label class="block text-xs font-bold uppercase tracking-wider text-content-subtle">Status Aktif</label>
-                                    <p class="text-xs text-content-subtle mt-0.5">Nonaktifkan untuk menangguhkan akses pengguna.</p>
-                                </div>
-                                <button
-                                    type="button"
-                                    class="relative inline-flex h-7 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
-                                    :class="userForm.is_active ? 'bg-cyan-500' : 'bg-core-600'"
-                                    @click="userForm.is_active = !userForm.is_active"
-                                >
-                                    <span
-                                        class="pointer-events-none inline-block h-6 w-6 rounded-full bg-white shadow-lg transition-transform duration-200 ease-in-out"
-                                        :class="userForm.is_active ? 'translate-x-5' : 'translate-x-0'"
-                                    />
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Footer -->
-                        <div class="p-6 border-t border-divider flex items-center justify-end gap-3">
-                            <CaButton variant="ghost" size="sm" @click="closeUserModal">
-                                Batal
-                            </CaButton>
-                            <CaButton variant="primary" size="sm" :loading="usersSaving" @click="handleSaveUser">
-                                <Save class="w-4 h-4 mr-1.5" />
-                                {{ editingUser ? 'Simpan Perubahan' : 'Buat Pengguna' }}
-                            </CaButton>
-                        </div>
+                        <CaToggle id="user-active" v-model="userForm.is_active" :label="t('common.active')" />
                     </div>
                 </div>
-            </Transition>
-        </Teleport>
+            </div>
+
+            <template #footer>
+                <div class="flex items-center justify-end gap-3">
+                    <CaButton variant="outline" size="sm" @click="closeUserModal">
+                        {{ t('common.cancel') }}
+                    </CaButton>
+                    <CaButton variant="primary" size="sm" :loading="usersSaving" @click="handleSaveUser">
+                        <Save class="mr-1.5 h-4 w-4" />
+                        {{ editingUser ? t('admin.settings.saveUserEdit') : t('admin.settings.saveUser') }}
+                    </CaButton>
+                </div>
+            </template>
+        </Modal>
+
+        <ConfirmDialog
+            :open="!!deleteTarget"
+            variant="danger"
+            :title="t('admin.settings.deleteTitle')"
+            :message="t('admin.settings.deleteMessage', { name: deleteTarget?.fullName || deleteTarget?.email || '' })"
+            :confirm-label="t('admin.settings.confirmDelete')"
+            :cancel-label="t('common.cancel')"
+            :loading="usersSaving"
+            @confirm="confirmDeleteUser"
+            @cancel="deleteTarget = null"
+        />
     </DashboardLayout>
 </template>
-
-<style scoped>
-.modal-enter-active,
-.modal-leave-active {
-    transition: opacity 0.2s ease;
-}
-.modal-enter-active > div:last-child,
-.modal-leave-active > div:last-child {
-    transition: transform 0.2s ease, opacity 0.2s ease;
-}
-.modal-enter-from,
-.modal-leave-to {
-    opacity: 0;
-}
-.modal-enter-from > div:last-child,
-.modal-leave-to > div:last-child {
-    transform: scale(0.95);
-    opacity: 0;
-}
-</style>

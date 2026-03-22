@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-vue-next'
 import { onClickOutside } from '@vueuse/core'
 
@@ -16,6 +16,7 @@ const emit = defineEmits(['update:modelValue'])
 
 const isOpen = ref(false)
 const containerRef = ref(null)
+const { locale } = useI18n()
 
 // Current viewed month/year
 const currentViewDate = ref(props.modelValue ? new Date(props.modelValue) : new Date())
@@ -78,12 +79,29 @@ const calendarDays = computed(() => {
   return days
 })
 
-const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']
-const weekDays = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab']
+const monthNames = computed(() => locale.value === 'en'
+  ? ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+  : ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'])
+
+const weekDays = computed(() => locale.value === 'en'
+  ? ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+  : ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'])
+
+const placeholderText = computed(() => props.placeholder || (locale.value === 'en' ? 'Select date...' : 'Pilih tanggal...'))
 
 const formattedDate = computed(() => {
   if (!selectedDate.value) return ''
-  return `${selectedDate.value.getDate()} ${months[selectedDate.value.getMonth()]} ${selectedDate.value.getFullYear()}`
+  return selectedDate.value.toLocaleDateString(locale.value === 'en' ? 'en-US' : 'id-ID', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric'
+  })
+})
+
+watch(() => props.modelValue, (value) => {
+  if (value) {
+    currentViewDate.value = new Date(value)
+  }
 })
 
 const selectDate = (date: Date) => {
@@ -132,7 +150,7 @@ const isSameDay = (d1: Date, d2: Date | null) => {
         type="text"
         readonly
         :value="formattedDate"
-        :placeholder="placeholder || 'Pilih tanggal...'"
+        :placeholder="placeholderText"
         :disabled="disabled"
         class="w-full bg-input rounded-xl px-4 py-3.5 h-[52px] cursor-pointer text-content font-bold transition-all placeholder:text-content-subtle placeholder:font-medium focus:outline-none relative z-0 pl-11"
         :class="[
@@ -163,7 +181,7 @@ const isSameDay = (d1: Date, d2: Date | null) => {
             <ChevronLeft class="w-5 h-5" />
           </button>
           <div class="font-bold text-content">
-            {{ months[currentViewDate.getMonth()] }} {{ currentViewDate.getFullYear() }}
+            {{ monthNames[currentViewDate.getMonth()] }} {{ currentViewDate.getFullYear() }}
           </div>
           <button type="button" @click.stop="nextMonth" class="p-2 rounded-lg hover:bg-tint text-content-subtle hover:text-content transition-colors">
             <ChevronRight class="w-5 h-5" />

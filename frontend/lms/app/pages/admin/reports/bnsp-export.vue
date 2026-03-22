@@ -1,7 +1,11 @@
 <script setup lang="ts">
-import { reactive } from 'vue'
+import { reactive, computed } from 'vue'
 import DashboardLayout from '~/components/templates/DashboardLayout.vue'
+import Breadcrumb from '~/components/molecules/Breadcrumb.vue'
+import PageHeader from '~/components/molecules/PageHeader.vue'
 import CaButton from '~/components/atoms/CaButton.vue'
+import CaSelect from '~/components/molecules/CaSelect.vue'
+import CaDatePicker from '~/components/organisms/CaDatePicker.vue'
 import ErrorAlert from '~/components/atoms/ErrorAlert.vue'
 import { ArrowLeft, FileDown, Check, Download } from 'lucide-vue-next'
 import { useReports, type BnspExportParams } from '~/composables/useReports'
@@ -9,6 +13,7 @@ import { useSchemes } from '~/composables/useSchemes'
 
 const { exportResult, exporting, error, generateBnspExport } = useReports()
 const { schemes, fetchSchemes } = useSchemes()
+const { t, locale } = useI18n()
 
 onMounted(() => fetchSchemes(1, ''))
 
@@ -19,133 +24,172 @@ const form = reactive<BnspExportParams>({
     format: 'xlsx',
 })
 
+const schemeOptions = computed(() => [
+    { value: '', label: t('admin.reports.allSchemes') },
+    ...schemes.value.map((scheme) => ({
+        value: scheme.id,
+        label: scheme.name,
+    })),
+])
+
+const formatOptions = computed(() => [
+    { value: 'xlsx', label: `XLSX · ${t('admin.reports.xlsx')}` },
+    { value: 'csv', label: `CSV · ${t('admin.reports.csv')}` },
+    { value: 'pdf', label: `PDF · ${t('admin.reports.pdf')}` },
+])
+
 const handleExport = async () => {
-    if (!form.periodStart || !form.periodEnd) return
+    if (!form.periodStart || !form.periodEnd) {
+        return
+    }
+
     await generateBnspExport({ ...form })
+}
+
+const formatDateTime = (value: string) => {
+    return new Date(value).toLocaleString(locale.value === 'en' ? 'en-US' : 'id-ID', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+    })
 }
 </script>
 
 <template>
     <DashboardLayout>
         <template #header>
-            <div class="flex items-center gap-4 w-full">
-                <NuxtLink to="/admin/reports" class="w-10 h-10 rounded-xl bg-tint flex items-center justify-center text-content-subtle hover:text-content hover:bg-tint-hover transition-all shrink-0">
-                    <ArrowLeft class="w-5 h-5" />
-                </NuxtLink>
-                <div>
-                    <h1 class="text-xl md:text-3xl font-black tracking-tight text-content">Export Data BNSP</h1>
-                    <p class="text-sm text-content-subtle hidden md:block mt-1">Generate file export sesuai format standar BNSP.</p>
-                </div>
-            </div>
+            <h1 class="hidden text-lg font-bold text-content lg:block">{{ t('nav.reports') }}</h1>
         </template>
 
-        <div class="py-6 space-y-6">
+        <div class="space-y-6 py-6">
+            <div class="space-y-4">
+                <Breadcrumb
+                    :items="[
+                        { label: 'Admin', to: '/admin' },
+                        { label: t('admin.reports.breadcrumbReports'), to: '/admin/reports' },
+                        { label: t('admin.reports.breadcrumbCurrent') },
+                    ]"
+                />
+
+                <PageHeader
+                    :eyebrow="t('nav.reports')"
+                    :title="t('admin.reports.bnspExportTitle')"
+                    :subtitle="t('admin.reports.bnspExportSubtitle')"
+                >
+                    <template #actions>
+                        <NuxtLink to="/admin/reports">
+                            <CaButton variant="outline">
+                                <ArrowLeft class="mr-1.5 h-4 w-4" />
+                                {{ t('common.back') }}
+                            </CaButton>
+                        </NuxtLink>
+                    </template>
+                </PageHeader>
+            </div>
+
             <ErrorAlert v-if="error" :message="error" @dismiss="error = null" />
 
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Form -->
-                <div class="lg:col-span-2 ca-card p-0 overflow-hidden">
-                    <div class="p-6 border-b border-divider">
-                        <h2 class="text-lg font-bold text-content">Parameter Export</h2>
-                        <p class="text-sm text-content-subtle mt-1">Pilih skema dan periode data yang ingin diekspor.</p>
+            <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                <div class="ca-card overflow-hidden p-0 lg:col-span-2">
+                    <div class="border-b border-divider p-6">
+                        <h2 class="text-lg font-bold text-content">{{ t('admin.reports.parameterTitle') }}</h2>
+                        <p class="mt-1 text-sm text-content-subtle">{{ t('admin.reports.parameterSubtitle') }}</p>
                     </div>
-                    <div class="p-6 space-y-5">
-                        <!-- Scheme Select -->
-                        <div>
-                            <label class="block text-sm font-bold text-content-muted mb-2">Skema Sertifikasi</label>
-                            <select
-                                v-model="form.schemeId"
-                                class="w-full rounded-xl bg-tint border border-divider-strong px-4 py-3 text-sm text-content focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/30 transition-all"
-                            >
-                                <option value="">Semua Skema</option>
-                                <option v-for="s in schemes" :key="s.id" :value="s.id">{{ s.name }}</option>
-                            </select>
+
+                    <div class="space-y-5 p-6">
+                        <CaSelect
+                            id="bnsp-scheme"
+                            :label="t('admin.reports.schemeLabel')"
+                            :options="schemeOptions"
+                            :model-value="form.schemeId"
+                            :placeholder="t('admin.reports.schemePlaceholder')"
+                            @update:model-value="(value) => { form.schemeId = String(value || '') }"
+                        />
+
+                        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                            <CaDatePicker
+                                id="bnsp-period-start"
+                                :label="t('admin.reports.periodStart')"
+                                :model-value="form.periodStart"
+                                :placeholder="t('admin.reports.periodStart')"
+                                @update:model-value="(value) => { form.periodStart = String(value || '') }"
+                            />
+
+                            <CaDatePicker
+                                id="bnsp-period-end"
+                                :label="t('admin.reports.periodEnd')"
+                                :model-value="form.periodEnd"
+                                :placeholder="t('admin.reports.periodEnd')"
+                                @update:model-value="(value) => { form.periodEnd = String(value || '') }"
+                            />
                         </div>
 
-                        <!-- Period -->
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                            <div>
-                                <label class="block text-sm font-bold text-content-muted mb-2">Periode Mulai</label>
-                                <input
-                                    v-model="form.periodStart"
-                                    type="date"
-                                    class="w-full rounded-xl bg-tint border border-divider-strong px-4 py-3 text-sm text-content focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/30 transition-all"
-                                />
-                            </div>
-                            <div>
-                                <label class="block text-sm font-bold text-content-muted mb-2">Periode Akhir</label>
-                                <input
-                                    v-model="form.periodEnd"
-                                    type="date"
-                                    class="w-full rounded-xl bg-tint border border-divider-strong px-4 py-3 text-sm text-content focus:outline-none focus:border-brand/50 focus:ring-1 focus:ring-brand/30 transition-all"
-                                />
-                            </div>
-                        </div>
-
-                        <!-- Format -->
-                        <div>
-                            <label class="block text-sm font-bold text-content-muted mb-2">Format File</label>
-                            <div class="flex gap-3">
-                                <button
-                                    v-for="fmt in ['xlsx', 'csv', 'pdf'] as const"
-                                    :key="fmt"
-                                    class="flex-1 p-3 rounded-xl border text-sm font-bold uppercase tracking-widest transition-all"
-                                    :class="form.format === fmt
-                                        ? 'bg-brand/10 border-brand/30 text-brand'
-                                        : 'bg-tint border-divider-strong text-content-muted hover:border-divider-strong'"
-                                    @click="form.format = fmt"
-                                >
-                                    .{{ fmt }}
-                                </button>
-                            </div>
-                        </div>
+                        <CaSelect
+                            id="bnsp-format"
+                            :label="t('admin.reports.formatLabel')"
+                            :options="formatOptions"
+                            :model-value="form.format"
+                            @update:model-value="(value) => { form.format = value as BnspExportParams['format'] }"
+                        />
                     </div>
-                    <div class="p-6 border-t border-divider flex justify-end">
+
+                    <div class="flex justify-end border-t border-divider p-6">
                         <CaButton
                             variant="primary"
                             :loading="exporting"
                             :disabled="!form.periodStart || !form.periodEnd"
                             @click="handleExport"
                         >
-                            <FileDown class="w-4 h-4 mr-1.5" />
-                            Generate Export
+                            <FileDown class="mr-1.5 h-4 w-4" />
+                            {{ t('admin.reports.generate') }}
                         </CaButton>
                     </div>
                 </div>
 
-                <!-- Result -->
-                <div class="ca-card p-0 overflow-hidden">
-                    <div class="p-6 border-b border-divider">
-                        <h2 class="text-sm font-bold text-content-subtle uppercase tracking-widest">Hasil Export</h2>
+                <div class="ca-card overflow-hidden p-0">
+                    <div class="border-b border-divider p-6">
+                        <h2 class="text-sm font-bold uppercase tracking-widest text-content-subtle">
+                            {{ t('admin.reports.resultTitle') }}
+                        </h2>
                     </div>
+
                     <div class="p-6">
                         <template v-if="exportResult">
-                            <div class="text-center space-y-4">
-                                <div class="w-16 h-16 rounded-2xl bg-emerald-500/10 flex items-center justify-center mx-auto">
-                                    <Check class="w-8 h-8 text-emerald-500" />
+                            <div class="space-y-4 text-center">
+                                <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-500/10">
+                                    <Check class="h-8 w-8 text-emerald-500" />
                                 </div>
+
                                 <div>
-                                    <h3 class="font-bold text-content">Export Berhasil!</h3>
-                                    <p class="text-sm text-content-muted mt-1">{{ exportResult.recordCount }} record diekspor</p>
+                                    <h3 class="font-bold text-content">{{ t('admin.reports.successTitle') }}</h3>
+                                    <p class="mt-1 text-sm text-content-muted">
+                                        {{ t('admin.reports.successRecords', { count: exportResult.recordCount }) }}
+                                    </p>
                                 </div>
-                                <div class="p-3 rounded-xl bg-tint text-xs text-content-muted font-mono break-all">
+
+                                <div class="rounded-xl bg-tint p-3 font-mono text-xs text-content-muted break-all">
                                     {{ exportResult.fileName }}
                                 </div>
+
                                 <a :href="exportResult.downloadUrl" target="_blank" rel="noopener" class="block">
-                                    <CaButton variant="primary" class="w-full">
-                                        <Download class="w-4 h-4 mr-1.5" />
-                                        Unduh File
+                                    <CaButton variant="primary" class="w-full justify-center">
+                                        <Download class="mr-1.5 h-4 w-4" />
+                                        {{ t('admin.reports.downloadFile') }}
                                     </CaButton>
                                 </a>
+
                                 <p class="text-[10px] text-content-subtle">
-                                    Dibuat: {{ new Date(exportResult.generatedAt).toLocaleString('id-ID') }}
+                                    {{ t('admin.reports.generatedAt') }}: {{ formatDateTime(exportResult.generatedAt) }}
                                 </p>
                             </div>
                         </template>
+
                         <template v-else>
-                            <div class="text-center py-6">
-                                <FileDown class="w-10 h-10 text-content-subtle mx-auto mb-3 opacity-30" />
-                                <p class="text-sm text-content-subtle">Pilih parameter dan klik "Generate Export" untuk menghasilkan file.</p>
+                            <div class="py-6 text-center">
+                                <FileDown class="mx-auto mb-3 h-10 w-10 text-content-subtle opacity-30" />
+                                <p class="text-sm text-content-subtle">{{ t('admin.reports.emptyResult') }}</p>
                             </div>
                         </template>
                     </div>

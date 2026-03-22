@@ -131,7 +131,7 @@ func (s *Server) setupRoutes() {
 	certHandler.RegisterTemplateRoutes(admin)
 
 	// Reports (admin only)
-	reportHandler := handler.NewReportHandler(reportUC)
+	reportHandler := handler.NewReportHandler(reportUC, auditRepo)
 	reportHandler.RegisterRoutes(admin)
 
 	// Verification routes (admin + quality_manager)

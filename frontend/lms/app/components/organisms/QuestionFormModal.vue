@@ -1,8 +1,13 @@
 <script setup lang="ts">
 import { reactive, watch, computed } from 'vue'
-import { X, Plus, Trash2 } from 'lucide-vue-next'
+import { Plus, Trash2 } from 'lucide-vue-next'
 import CaButton from '~/components/atoms/CaButton.vue'
-import type { QuestionDomain, QuestionFormData, QuestionOptionDomain, QuestionTypeDomain, DifficultyLevel } from '~/types/question'
+import CaToggle from '~/components/atoms/CaToggle.vue'
+import BaseInput from '~/components/atoms/BaseInput.vue'
+import BaseTextarea from '~/components/atoms/BaseTextarea.vue'
+import CaSelect from '~/components/molecules/CaSelect.vue'
+import Modal from '~/components/organisms/Modal.vue'
+import type { QuestionDomain, QuestionFormData, QuestionTypeDomain, DifficultyLevel } from '~/types/question'
 import { useFormValidation, required, minLength } from '~/composables/useFormValidation'
 
 const props = defineProps<{
@@ -17,6 +22,15 @@ const emit = defineEmits<{
     (e: 'submit', data: QuestionFormData): void
 }>()
 
+const { t } = useI18n()
+
+const createDefaultOptions = () => [
+    { id: 'A', text: '', isCorrect: false },
+    { id: 'B', text: '', isCorrect: false },
+    { id: 'C', text: '', isCorrect: false },
+    { id: 'D', text: '', isCorrect: false },
+]
+
 const isEditing = computed(() => !!props.question)
 
 const form = reactive<QuestionFormData>({
@@ -28,12 +42,7 @@ const form = reactive<QuestionFormData>({
     isActive: true,
     rubric: '',
     instructions: '',
-    options: [
-        { id: 'A', text: '', isCorrect: false },
-        { id: 'B', text: '', isCorrect: false },
-        { id: 'C', text: '', isCorrect: false },
-        { id: 'D', text: '', isCorrect: false },
-    ],
+    options: createDefaultOptions(),
 })
 
 const { errors, validate, resetErrors, clearFieldError } = useFormValidation(form, {
@@ -42,252 +51,237 @@ const { errors, validate, resetErrors, clearFieldError } = useFormValidation(for
     points: [required('Poin')],
 })
 
-const typeOptions: { value: QuestionTypeDomain; label: string }[] = [
-    { value: 'multiple_choice', label: 'Pilihan Ganda' },
-    { value: 'essay', label: 'Esai' },
-    { value: 'upload', label: 'Upload Bukti' },
-    { value: 'observation', label: 'Observasi' },
-]
+const typeOptions = computed<{ value: QuestionTypeDomain; label: string }[]>(() => [
+    { value: 'multiple_choice', label: t('admin.questions.types.multiple_choice') },
+    { value: 'essay', label: t('admin.questions.types.essay') },
+    { value: 'upload', label: t('admin.questions.types.upload') },
+    { value: 'observation', label: t('admin.questions.types.observation') },
+])
 
-const difficultyOptions: { value: DifficultyLevel; label: string }[] = [
-    { value: 'easy', label: 'Mudah' },
-    { value: 'medium', label: 'Sedang' },
-    { value: 'hard', label: 'Sulit' },
-]
+const difficultyOptions = computed<{ value: DifficultyLevel; label: string }[]>(() => [
+    { value: 'easy', label: t('admin.questions.difficulty.easy') },
+    { value: 'medium', label: t('admin.questions.difficulty.medium') },
+    { value: 'hard', label: t('admin.questions.difficulty.hard') },
+])
 
 const showOptions = computed(() => form.type === 'multiple_choice')
 const showRubric = computed(() => form.type === 'essay')
 const showInstructions = computed(() => form.type === 'upload' || form.type === 'observation')
 
-watch(() => props.open, (val) => {
-    if (val && props.question) {
-        form.schemeId = props.question.schemeId
-        form.type = props.question.type
-        form.text = props.question.text
-        form.difficulty = props.question.difficulty
-        form.points = props.question.points
-        form.isActive = props.question.isActive
-        form.rubric = props.question.rubric || ''
-        form.instructions = props.question.instructions || ''
-        form.options = props.question.options.length > 0
-            ? props.question.options.map(o => ({ ...o }))
-            : [
-                { id: 'A', text: '', isCorrect: false },
-                { id: 'B', text: '', isCorrect: false },
-                { id: 'C', text: '', isCorrect: false },
-                { id: 'D', text: '', isCorrect: false },
-            ]
-    } else if (val) {
-        form.schemeId = ''
-        form.type = 'multiple_choice'
-        form.text = ''
-        form.difficulty = 'medium'
-        form.points = 10
-        form.isActive = true
-        form.rubric = ''
-        form.instructions = ''
-        form.options = [
-            { id: 'A', text: '', isCorrect: false },
-            { id: 'B', text: '', isCorrect: false },
-            { id: 'C', text: '', isCorrect: false },
-            { id: 'D', text: '', isCorrect: false },
-        ]
-    }
-    resetErrors()
-})
+watch(
+    () => props.open,
+    (isOpen) => {
+        if (!isOpen) {
+            return
+        }
+
+        if (props.question) {
+            form.schemeId = props.question.schemeId
+            form.type = props.question.type
+            form.text = props.question.text
+            form.difficulty = props.question.difficulty
+            form.points = props.question.points
+            form.isActive = props.question.isActive
+            form.rubric = props.question.rubric || ''
+            form.instructions = props.question.instructions || ''
+            form.options = props.question.options.length > 0
+                ? props.question.options.map((option) => ({ ...option }))
+                : createDefaultOptions()
+        } else {
+            form.schemeId = ''
+            form.type = 'multiple_choice'
+            form.text = ''
+            form.difficulty = 'medium'
+            form.points = 10
+            form.isActive = true
+            form.rubric = ''
+            form.instructions = ''
+            form.options = createDefaultOptions()
+        }
+
+        resetErrors()
+    },
+)
 
 const addOption = () => {
     const nextId = String.fromCharCode(65 + form.options.length)
     form.options.push({ id: nextId, text: '', isCorrect: false })
 }
 
-const removeOption = (idx: number) => {
-    if (form.options.length > 2) {
-        form.options.splice(idx, 1)
+const removeOption = (index: number) => {
+    if (form.options.length <= 2) {
+        return
     }
+
+    form.options.splice(index, 1)
 }
 
-const setCorrectAnswer = (idx: number) => {
-    form.options.forEach((opt, i) => {
-        opt.isCorrect = i === idx
+const setCorrectAnswer = (index: number) => {
+    form.options.forEach((option, optionIndex) => {
+        option.isCorrect = optionIndex === index
     })
 }
 
 const handleSubmit = () => {
-    if (!validate()) return
-    emit('submit', { ...form, options: form.options.map(o => ({ ...o })) })
+    if (!validate()) {
+        return
+    }
+
+    emit('submit', {
+        ...form,
+        points: Number(form.points),
+        options: form.options.map((option) => ({ ...option })),
+    })
 }
 </script>
 
 <template>
-    <Teleport to="body">
-        <Transition
-            enter-active-class="transition duration-200 ease-out"
-            enter-from-class="opacity-0"
-            enter-to-class="opacity-100"
-            leave-active-class="transition duration-150 ease-in"
-            leave-from-class="opacity-100"
-            leave-to-class="opacity-0"
-        >
-            <div v-if="open" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                <div class="absolute inset-0 backdrop-blur-sm" :style="{ background: 'var(--th-overlay)' }" @click="emit('close')" />
+    <Modal :open="open" max-width="2xl" @close="emit('close')">
+        <template #header>
+            <div>
+                <h2 class="text-xl font-bold text-content">
+                    {{ isEditing ? t('admin.questions.modalEditTitle') : t('admin.questions.modalCreateTitle') }}
+                </h2>
+            </div>
+        </template>
 
-                <div class="relative w-full max-w-3xl ca-card p-0 z-10 max-h-[90vh] flex flex-col">
-                    <!-- Header -->
-                    <div class="flex items-center justify-between p-6 border-b border-divider">
-                        <h2 class="text-xl font-bold text-content">
-                            {{ isEditing ? 'Edit Soal' : 'Buat Soal Baru' }}
-                        </h2>
-                        <button
-                            class="w-10 h-10 rounded-xl bg-tint flex items-center justify-center text-content-subtle hover:text-content hover:bg-tint-hover transition-all"
-                            @click="emit('close')"
-                        >
-                            <X class="w-5 h-5" />
-                        </button>
-                    </div>
+        <div class="space-y-5">
+            <div class="grid grid-cols-1 gap-5 md:grid-cols-2">
+                <div>
+                    <CaSelect
+                        id="q-scheme"
+                        :label="t('admin.questions.schemeLabel')"
+                        :options="schemeOptions || []"
+                        :model-value="form.schemeId"
+                        :placeholder="t('admin.questions.schemePlaceholder')"
+                        @update:model-value="(value) => { form.schemeId = String(value || ''); clearFieldError('schemeId') }"
+                    />
+                    <p v-if="errors.schemeId" class="mt-2 text-xs font-bold text-rose-500">{{ errors.schemeId }}</p>
+                </div>
 
-                    <!-- Body -->
-                    <div class="p-6 space-y-5 overflow-y-auto flex-1">
-                        <!-- Row 1: Scheme + Type -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                            <CaSelect
-                                id="q-scheme"
-                                label="Skema Sertifikasi"
-                                :options="schemeOptions || []"
-                                v-model="form.schemeId"
-                                placeholder="Pilih skema..."
-                            />
-                            <CaSelect
-                                id="q-type"
-                                label="Tipe Soal"
-                                :options="typeOptions"
-                                v-model="form.type"
-                            />
-                        </div>
+                <CaSelect
+                    id="q-type"
+                    :label="t('admin.questions.typeLabel')"
+                    :options="typeOptions"
+                    :model-value="form.type"
+                    @update:model-value="(value) => { form.type = value as QuestionTypeDomain }"
+                />
+            </div>
 
-                        <!-- Question Text -->
-                        <BaseTextarea
-                            id="q-text"
-                            label="Pertanyaan"
-                            v-model="form.text"
-                            placeholder="Tulis pertanyaan di sini..."
-                            required
-                            :error="errors.text"
-                            @update:model-value="clearFieldError('text')"
+            <BaseTextarea
+                id="q-text"
+                :label="t('admin.questions.questionLabel')"
+                v-model="form.text"
+                :placeholder="t('admin.questions.questionPlaceholder')"
+                required
+                :error="errors.text"
+                @update:model-value="clearFieldError('text')"
+            />
+
+            <div v-if="showOptions" class="space-y-3">
+                <div class="flex items-center justify-between">
+                    <label class="text-xs font-black uppercase tracking-wider text-content-subtle">
+                        {{ t('admin.questions.optionsLabel') }}
+                    </label>
+
+                    <button
+                        v-if="form.options.length < 6"
+                        type="button"
+                        class="flex items-center gap-1 text-xs font-bold text-brand transition-colors hover:text-brand/80"
+                        @click="addOption"
+                    >
+                        <Plus class="h-3.5 w-3.5" /> {{ t('admin.questions.addOption') }}
+                    </button>
+                </div>
+
+                <div
+                    v-for="(option, index) in form.options"
+                    :key="option.id"
+                    class="group flex items-start gap-3 rounded-2xl border border-divider bg-tint-subtle p-3"
+                >
+                    <button
+                        type="button"
+                        class="mt-2 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 text-xs font-black transition-all"
+                        :class="option.isCorrect ? 'border-brand bg-brand/20 text-brand' : 'border-divider-strong text-content-subtle hover:border-brand/40'"
+                        :title="option.isCorrect ? t('admin.questions.correctAnswer') : t('admin.questions.correctAnswerHint')"
+                        @click="setCorrectAnswer(index)"
+                    >
+                        {{ option.id }}
+                    </button>
+
+                    <BaseInput
+                        :id="`q-option-${option.id}`"
+                        v-model="option.text"
+                        :placeholder="t('admin.questions.optionPlaceholder', { id: option.id })"
+                    />
+
+                    <button
+                        v-if="form.options.length > 2"
+                        type="button"
+                        class="mt-2 flex h-8 w-8 items-center justify-center rounded-lg text-content-subtle opacity-0 transition-all hover:bg-red-500/10 hover:text-red-400 group-hover:opacity-100"
+                        @click="removeOption(index)"
+                    >
+                        <Trash2 class="h-4 w-4" />
+                    </button>
+                </div>
+            </div>
+
+            <BaseTextarea
+                v-if="showRubric"
+                id="q-rubric"
+                :label="t('admin.questions.rubricLabel')"
+                v-model="form.rubric"
+                :placeholder="t('admin.questions.rubricPlaceholder')"
+            />
+
+            <BaseTextarea
+                v-if="showInstructions"
+                id="q-instructions"
+                :label="t('admin.questions.instructionsLabel')"
+                v-model="form.instructions"
+                :placeholder="form.type === 'upload' ? t('admin.questions.uploadInstructionsPlaceholder') : t('admin.questions.observationInstructionsPlaceholder')"
+            />
+
+            <div class="grid grid-cols-1 gap-5 md:grid-cols-3">
+                <CaSelect
+                    id="q-difficulty"
+                    :label="t('admin.questions.difficultyLabel')"
+                    :options="difficultyOptions"
+                    :model-value="form.difficulty"
+                    @update:model-value="(value) => { form.difficulty = value as DifficultyLevel }"
+                />
+
+                <BaseInput
+                    id="q-points"
+                    :label="t('admin.questions.pointsLabel')"
+                    type="number"
+                    v-model="form.points"
+                    required
+                    :error="errors.points"
+                    @update:model-value="clearFieldError('points')"
+                />
+
+                <div class="flex items-end">
+                    <div class="w-full rounded-xl border border-divider bg-tint px-4 py-3.5">
+                        <CaToggle
+                            id="q-active"
+                            v-model="form.isActive"
+                            :label="t('admin.questions.activeLabel')"
                         />
-
-                        <!-- Multiple Choice Options -->
-                        <div v-if="showOptions" class="space-y-3">
-                            <div class="flex items-center justify-between">
-                                <label class="text-xs font-black uppercase tracking-wider text-content-subtle">Pilihan Jawaban</label>
-                                <button
-                                    v-if="form.options.length < 6"
-                                    type="button"
-                                    class="text-xs font-bold text-brand hover:text-brand/80 flex items-center gap-1 transition-colors"
-                                    @click="addOption"
-                                >
-                                    <Plus class="w-3.5 h-3.5" /> Tambah
-                                </button>
-                            </div>
-                            <div
-                                v-for="(opt, idx) in form.options"
-                                :key="idx"
-                                class="flex items-center gap-3 group"
-                            >
-                                <button
-                                    type="button"
-                                    class="w-8 h-8 rounded-full border-2 shrink-0 flex items-center justify-center text-xs font-black transition-all"
-                                    :class="opt.isCorrect
-                                        ? 'border-brand bg-brand/20 text-brand'
-                                        : 'border-divider-strong text-content-subtle hover:border-brand/40'"
-                                    @click="setCorrectAnswer(idx)"
-                                    :title="opt.isCorrect ? 'Jawaban benar' : 'Tandai sebagai jawaban benar'"
-                                >
-                                    {{ opt.id }}
-                                </button>
-                                <div class="flex-1">
-                                    <input
-                                        v-model="opt.text"
-                                        :placeholder="`Pilihan ${opt.id}`"
-                                        class="w-full bg-input rounded-xl px-4 py-3 text-sm text-content font-medium transition-all placeholder:text-content-subtle focus:outline-none focus:ring-2 focus:ring-brand/50 shadow-inset-light"
-                                    />
-                                </div>
-                                <button
-                                    v-if="form.options.length > 2"
-                                    type="button"
-                                    class="w-8 h-8 rounded-lg flex items-center justify-center text-content-subtle hover:text-red-400 hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-all"
-                                    @click="removeOption(idx)"
-                                >
-                                    <Trash2 class="w-4 h-4" />
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Essay Rubric -->
-                        <BaseTextarea
-                            v-if="showRubric"
-                            id="q-rubric"
-                            label="Rubrik Penilaian"
-                            v-model="form.rubric"
-                            placeholder="Panduan penilaian untuk asesor..."
-                        />
-
-                        <!-- Upload/Observation Instructions -->
-                        <BaseTextarea
-                            v-if="showInstructions"
-                            id="q-instructions"
-                            label="Instruksi"
-                            v-model="form.instructions"
-                            :placeholder="form.type === 'upload' ? 'Format file, ukuran maksimal, dll...' : 'Panduan observasi untuk asesor...'"
-                        />
-
-                        <!-- Row 2: Difficulty + Points -->
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-                            <CaSelect
-                                id="q-difficulty"
-                                label="Tingkat Kesulitan"
-                                :options="difficultyOptions"
-                                v-model="form.difficulty"
-                            />
-                            <BaseInput
-                                id="q-points"
-                                label="Poin"
-                                type="number"
-                                v-model="form.points"
-                                required
-                                :error="errors.points"
-                                @update:model-value="clearFieldError('points')"
-                            />
-                            <div class="flex items-end pb-1">
-                                <div class="flex items-center justify-between w-full p-3.5 rounded-xl bg-tint border border-divider">
-                                    <span class="text-sm font-bold text-content">Aktif</span>
-                                    <button
-                                        type="button"
-                                        class="relative w-10 h-6 rounded-full transition-colors duration-200"
-                                        :class="form.isActive ? 'bg-brand' : 'bg-tint-strong'"
-                                        @click="form.isActive = !form.isActive"
-                                    >
-                                        <span
-                                            class="absolute top-0.5 w-5 h-5 rounded-full bg-white transition-transform duration-200"
-                                            :class="form.isActive ? 'translate-x-[18px]' : 'translate-x-0.5'"
-                                        />
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Footer -->
-                    <div class="flex items-center justify-end gap-3 p-6 border-t border-divider">
-                        <CaButton variant="outline" :disabled="saving" @click="emit('close')">
-                            Batal
-                        </CaButton>
-                        <CaButton variant="primary" :loading="saving" @click="handleSubmit">
-                            {{ isEditing ? 'Simpan Perubahan' : 'Simpan Soal' }}
-                        </CaButton>
                     </div>
                 </div>
             </div>
-        </Transition>
-    </Teleport>
+        </div>
+
+        <template #footer>
+            <div class="flex items-center justify-end gap-3">
+                <CaButton variant="outline" :disabled="saving" @click="emit('close')">
+                    {{ t('common.cancel') }}
+                </CaButton>
+                <CaButton variant="primary" :loading="saving" @click="handleSubmit">
+                    {{ isEditing ? t('admin.questions.saveEdit') : t('admin.questions.save') }}
+                </CaButton>
+            </div>
+        </template>
+    </Modal>
 </template>

@@ -14,6 +14,8 @@ const props = defineProps<{
   placeholder?: string
   label?: string
   id?: string
+  searchPlaceholder?: string
+  emptyLabel?: string
 }>()
 
 const emit = defineEmits<{
@@ -23,6 +25,7 @@ const emit = defineEmits<{
 const isOpen = ref(false)
 const searchQuery = ref('')
 const containerRef = ref(null)
+const { t } = useI18n()
 
 onClickOutside(containerRef, () => {
   isOpen.value = false
@@ -37,6 +40,9 @@ const filteredOptions = computed(() => {
 const selectedOption = computed(() => {
   return props.options.find(opt => opt.value === props.modelValue)
 })
+
+const searchPlaceholderText = computed(() => props.searchPlaceholder || `${t('common.search')}...`)
+const emptyLabelText = computed(() => props.emptyLabel || t('common.noData'))
 
 const selectOption = (opt: Option) => {
   emit('update:modelValue', opt.value)
@@ -96,7 +102,7 @@ const toggleDropdown = () => {
               type="text"
               v-model="searchQuery"
               class="w-full h-10 bg-transparent text-xs font-bold text-content placeholder-content-subtle border-none outline-none pl-9 pr-3 focus:ring-0"
-              placeholder="Cari..."
+              :placeholder="searchPlaceholderText"
               @click.stop
             />
           </div>
@@ -120,7 +126,7 @@ const toggleDropdown = () => {
           </li>
           <!-- Empty State -->
           <li v-if="filteredOptions.length === 0" class="px-4 py-6 text-center text-content-subtle text-xs font-medium">
-            Hasil pencarian tidak ditemukan.
+            {{ emptyLabelText }}
           </li>
         </ul>
       </div>

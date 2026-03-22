@@ -33,10 +33,12 @@ export const useUsers = () => {
     const error = ref<string | null>(null)
     const totalItems = ref(0)
     const currentPage = ref(1)
+    const searchQuery = ref('')
 
     const fetchUsers = async (page = 1, search = '') => {
         loading.value = true
         error.value = null
+        searchQuery.value = search
         try {
             const response = await coreApi.get<UserListResponse>('/users', {
                 page,
@@ -59,7 +61,7 @@ export const useUsers = () => {
         error.value = null
         try {
             await coreApi.post('/users', data)
-            await fetchUsers(currentPage.value)
+            await fetchUsers(currentPage.value, searchQuery.value)
             return true
         } catch (e: any) {
             error.value = e?.data?.message || e?.message || 'Gagal membuat pengguna baru'
@@ -75,7 +77,7 @@ export const useUsers = () => {
         error.value = null
         try {
             await coreApi.put(`/users/${id}`, data)
-            await fetchUsers(currentPage.value)
+            await fetchUsers(currentPage.value, searchQuery.value)
             return true
         } catch (e: any) {
             error.value = e?.data?.message || e?.message || 'Gagal memperbarui pengguna'
@@ -91,7 +93,7 @@ export const useUsers = () => {
         error.value = null
         try {
             await coreApi.delete(`/users/${id}`)
-            await fetchUsers(currentPage.value)
+            await fetchUsers(currentPage.value, searchQuery.value)
             return true
         } catch (e: any) {
             error.value = e?.data?.message || e?.message || 'Gagal menghapus pengguna'
@@ -109,6 +111,7 @@ export const useUsers = () => {
         error,
         totalItems,
         currentPage,
+        searchQuery,
         fetchUsers,
         createUser,
         updateUser,

@@ -1,28 +1,40 @@
 <script setup lang="ts">
 import {
-    LayoutDashboard, Settings, LogOut, X, Box, BookOpen, Layers,
-    CheckCircle, Calendar, UserCheck, Award, BarChart3, ClipboardList,
-    FileBarChart, ShieldCheck
+    LayoutDashboard,
+    Settings,
+    LogOut,
+    X,
+    Box,
+    BookOpen,
+    Layers,
+    CheckCircle,
+    Calendar,
+    UserCheck,
+    Award,
+    BarChart3,
+    ClipboardList,
+    FileBarChart,
+    ShieldCheck,
 } from 'lucide-vue-next'
 import { computed } from 'vue'
 import { useAuth } from '~/composables/useAuth'
 
 interface MenuItem {
-    label: string
+    labelKey: string
     icon: any
     to: string
 }
 
 interface MenuSection {
-    title?: string
+    titleKey?: string
     items: MenuItem[]
 }
 
 defineProps({
     isOpen: {
         type: Boolean,
-        required: true
-    }
+        required: true,
+    },
 })
 
 const emit = defineEmits<{
@@ -30,6 +42,7 @@ const emit = defineEmits<{
 }>()
 
 const { user, logout } = useAuth()
+const { t } = useI18n()
 
 const menuSections = computed<MenuSection[]>(() => {
     const role = user.value?.role
@@ -37,34 +50,32 @@ const menuSections = computed<MenuSection[]>(() => {
     if (role === 'admin' || role === 'super_admin') {
         return [
             {
-                items: [
-                    { label: 'Dashboard', icon: LayoutDashboard, to: '/admin' },
-                ]
+                items: [{ labelKey: 'nav.dashboard', icon: LayoutDashboard, to: '/admin' }],
             },
             {
-                title: 'Sertifikasi',
+                titleKey: 'navGroups.certification',
                 items: [
-                    { label: 'Manajemen Skema', icon: Layers, to: '/admin/schemes' },
-                    { label: 'Bank Soal', icon: BookOpen, to: '/admin/questions' },
-                    { label: 'Penjadwalan', icon: Calendar, to: '/admin/schedules' },
-                    { label: 'Verifikasi Berkas', icon: CheckCircle, to: '/admin/verifications' },
-                ]
+                    { labelKey: 'nav.schemes', icon: Layers, to: '/admin/schemes' },
+                    { labelKey: 'nav.questions', icon: BookOpen, to: '/admin/questions' },
+                    { labelKey: 'nav.schedules', icon: Calendar, to: '/admin/schedules' },
+                    { labelKey: 'nav.verifications', icon: CheckCircle, to: '/admin/verifications' },
+                ],
             },
             {
-                title: 'Manajemen',
+                titleKey: 'navGroups.management',
                 items: [
-                    { label: 'Asesor', icon: UserCheck, to: '/admin/assessors' },
-                    { label: 'Template Sertifikat', icon: Award, to: '/admin/templates' },
-                    { label: 'Manajemen Mutu', icon: BarChart3, to: '/admin/quality' },
-                ]
+                    { labelKey: 'nav.assessors', icon: UserCheck, to: '/admin/assessors' },
+                    { labelKey: 'nav.templates', icon: Award, to: '/admin/templates' },
+                    { labelKey: 'nav.quality', icon: BarChart3, to: '/admin/quality' },
+                ],
             },
             {
-                title: 'Pelaporan',
+                titleKey: 'navGroups.reporting',
                 items: [
-                    { label: 'Laporan & Export', icon: FileBarChart, to: '/admin/reports' },
-                    { label: 'Log Aktivitas', icon: ClipboardList, to: '/admin/quality/audit-trail' },
-                    { label: 'Pengaturan', icon: Settings, to: '/admin/settings' },
-                ]
+                    { labelKey: 'nav.reports', icon: FileBarChart, to: '/admin/reports' },
+                    { labelKey: 'nav.auditTrail', icon: ClipboardList, to: '/admin/quality/audit-trail' },
+                    { labelKey: 'nav.settings', icon: Settings, to: '/admin/settings' },
+                ],
             },
         ]
     }
@@ -72,17 +83,15 @@ const menuSections = computed<MenuSection[]>(() => {
     if (role === 'quality_manager') {
         return [
             {
-                items: [
-                    { label: 'Dashboard Mutu', icon: BarChart3, to: '/admin/quality' },
-                ]
+                items: [{ labelKey: 'nav.qualityDashboard', icon: BarChart3, to: '/admin/quality' }],
             },
             {
-                title: 'Quality Control',
+                titleKey: 'navGroups.qualityControl',
                 items: [
-                    { label: 'Review Asesor', icon: UserCheck, to: '/admin/quality/reviews' },
-                    { label: 'Verifikasi Berkas', icon: CheckCircle, to: '/admin/verifications' },
-                    { label: 'Audit Trail', icon: ClipboardList, to: '/admin/quality/audit-trail' },
-                ]
+                    { labelKey: 'nav.reviews', icon: UserCheck, to: '/admin/quality/reviews' },
+                    { labelKey: 'nav.verifications', icon: CheckCircle, to: '/admin/verifications' },
+                    { labelKey: 'nav.auditTrail', icon: ClipboardList, to: '/admin/quality/audit-trail' },
+                ],
             },
         ]
     }
@@ -91,9 +100,9 @@ const menuSections = computed<MenuSection[]>(() => {
         return [
             {
                 items: [
-                    { label: 'Antrean Penilaian', icon: LayoutDashboard, to: '/assessor' },
-                    { label: 'Jadwal Saya', icon: Calendar, to: '/assessor/schedules' },
-                ]
+                    { labelKey: 'nav.assessmentQueue', icon: LayoutDashboard, to: '/assessor' },
+                    { labelKey: 'nav.mySchedules', icon: Calendar, to: '/assessor/schedules' },
+                ],
             },
         ]
     }
@@ -102,94 +111,114 @@ const menuSections = computed<MenuSection[]>(() => {
         return [
             {
                 items: [
-                    { label: 'Portal Asesi', icon: LayoutDashboard, to: '/assessee' },
-                    { label: 'Pendaftaran Ujian', icon: Box, to: '/registration' },
-                    { label: 'Sertifikat Saya', icon: ShieldCheck, to: '/assessee/certificates' },
-                    { label: 'Pengaturan Akun', icon: Settings, to: '/assessee/settings' },
-                ]
+                    { labelKey: 'nav.portal', icon: LayoutDashboard, to: '/assessee' },
+                    { labelKey: 'nav.registration', icon: Box, to: '/registration' },
+                    { labelKey: 'nav.certificates', icon: ShieldCheck, to: '/assessee/certificates' },
+                    { labelKey: 'nav.accountSettings', icon: Settings, to: '/assessee/settings' },
+                ],
             },
         ]
     }
 
-    return [{ items: [{ label: 'Beranda', icon: LayoutDashboard, to: '/' }] }]
+    return [{ items: [{ labelKey: 'nav.home', icon: LayoutDashboard, to: '/' }] }]
+})
+
+const userDisplayName = computed(() => user.value?.fullName || user.value?.email || 'CoreAsia User')
+
+const userDisplayRole = computed(() => {
+    switch (user.value?.role) {
+        case 'super_admin':
+            return t('role.superAdmin')
+        case 'admin':
+            return t('role.admin')
+        case 'quality_manager':
+            return t('role.qualityManager')
+        case 'assessor':
+            return t('role.assessor')
+        case 'assessee':
+            return t('role.assessee')
+        default:
+            return t('role.user')
+    }
 })
 </script>
 
 <template>
     <aside
         aria-label="Sidebar"
-        class="fixed inset-y-0 left-0 z-50 w-[272px] shrink-0 transform transition-transform duration-500 ease-out lg:translate-x-0 lg:relative h-screen flex flex-col"
+        class="fixed inset-y-0 left-0 z-50 flex h-screen w-[272px] shrink-0 transform flex-col transition-transform duration-500 ease-out lg:relative lg:translate-x-0"
         :class="isOpen ? 'translate-x-0' : '-translate-x-full'"
     >
-        <!-- Glass background (mobile) + solid (desktop) -->
-        <div class="absolute inset-0 bg-core-800/95 backdrop-blur-2xl lg:bg-core-800/40 lg:backdrop-blur-none border-r border-divider" />
+        <div class="absolute inset-0 border-r border-divider bg-core-800/95 backdrop-blur-2xl lg:bg-core-800/40 lg:backdrop-blur-none" />
 
-        <!-- Content -->
-        <div class="relative z-10 flex flex-col h-full">
-            <!-- Logo Area -->
-            <div class="h-16 lg:h-[72px] flex items-center justify-between px-6 shrink-0">
-                <NuxtLink to="/" class="flex items-center gap-3 group">
-                    <div class="w-9 h-9 rounded-xl bg-linear-to-br from-brand-400 to-brand-600 flex items-center justify-center font-black text-slate-950 text-lg shadow-glow-cyan-card group-hover:scale-105 transition-transform duration-300">
+        <div class="relative z-10 flex h-full flex-col">
+            <div class="flex h-16 shrink-0 items-center justify-between px-6 lg:h-[72px]">
+                <NuxtLink to="/" class="group flex items-center gap-3">
+                    <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-linear-to-br from-brand-400 to-brand-600 text-lg font-black text-slate-950 shadow-glow-cyan-card transition-transform duration-300 group-hover:scale-105">
                         C
                     </div>
                     <div>
-                        <span class="font-bold text-lg tracking-tight text-content block leading-none">CoreAsia</span>
-                        <span class="text-[9px] text-content-faint font-bold uppercase tracking-[0.2em]">LMS Platform</span>
+                        <span class="block leading-none font-bold tracking-tight text-content text-lg">CoreAsia</span>
+                        <span class="text-[9px] font-bold uppercase tracking-[0.2em] text-content-faint">LMS Platform</span>
                     </div>
                 </NuxtLink>
 
                 <button
+                    class="rounded-xl p-2 text-content-subtle transition-all hover:bg-tint hover:text-content lg:hidden"
+                    :aria-label="t('common.close')"
                     @click="emit('close')"
-                    aria-label="Tutup menu"
-                    class="lg:hidden p-2 rounded-xl text-content-subtle hover:bg-tint hover:text-content transition-all"
                 >
-                    <X class="w-5 h-5" />
+                    <X class="h-5 w-5" />
                 </button>
             </div>
 
-            <!-- Navigation -->
-            <nav aria-label="Menu utama" class="flex-1 px-3 py-4 space-y-1 overflow-y-auto custom-scrollbar">
-                <template v-for="(section, sIdx) in menuSections" :key="sIdx">
-                    <!-- Section divider + title -->
-                    <div v-if="section.title" class="pt-5 pb-2 px-3 first:pt-0">
-                        <div class="border-t border-divider mb-3" />
-                        <span class="text-[10px] font-black uppercase tracking-[0.15em] text-content-faint">{{ section.title }}</span>
+            <nav aria-label="Menu utama" class="custom-scrollbar flex-1 space-y-1 overflow-y-auto px-3 py-4">
+                <template v-for="(section, sectionIndex) in menuSections" :key="sectionIndex">
+                    <div v-if="section.titleKey" class="px-3 pb-2 pt-5 first:pt-0">
+                        <div class="mb-3 border-t border-divider" />
+                        <span class="text-[10px] font-black uppercase tracking-[0.15em] text-content-faint">
+                            {{ t(section.titleKey) }}
+                        </span>
                     </div>
 
-                    <!-- Menu items -->
                     <NuxtLink
                         v-for="item in section.items"
                         :key="item.to"
                         :to="item.to"
+                        class="group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-semibold text-content-subtle transition-all duration-200 hover:bg-tint-subtle hover:text-content"
+                        active-class="bg-brand/10 text-brand font-bold"
                         @click="emit('close')"
-                        class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] text-content-subtle font-semibold hover:text-content hover:bg-tint-subtle transition-all duration-200 group relative"
-                        active-class="!bg-brand/10 !text-brand-400 font-bold"
                     >
-                        <!-- Active indicator -->
-                        <div class="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-brand opacity-0 transition-all duration-200 shadow-glow-cyan-strong group-[.router-link-active]:opacity-100" />
+                        <div class="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-brand opacity-0 transition-all duration-200 shadow-glow-cyan-strong group-[.router-link-active]:opacity-100" />
 
                         <component
                             :is="item.icon"
-                            class="w-[18px] h-[18px] transition-colors duration-200 shrink-0 group-hover:text-content-muted group-[.router-link-active]:text-brand-400"
+                            class="h-[18px] w-[18px] shrink-0 transition-colors duration-200 group-hover:text-content-muted group-[.router-link-active]:text-brand"
                         />
-                        <span class="truncate">{{ item.label }}</span>
+
+                        <span class="truncate">{{ t(item.labelKey) }}</span>
                     </NuxtLink>
                 </template>
             </nav>
 
-            <!-- Footer -->
-            <div class="p-4 shrink-0">
-                <div class="border-t border-divider pt-4">
+            <div class="shrink-0 p-4">
+                <div class="rounded-2xl border border-divider bg-core-900/70 p-4">
+                    <p class="truncate text-sm font-bold text-content">{{ userDisplayName }}</p>
+                    <p class="truncate text-xs text-content-subtle">{{ user.value?.email || userDisplayRole }}</p>
+                    <p class="mt-2 text-[10px] font-black uppercase tracking-[0.18em] text-content-faint">{{ userDisplayRole }}</p>
+                </div>
+
+                <div class="border-t border-divider pt-4 mt-4">
                     <button
+                        class="group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-semibold text-content-subtle transition-all hover:bg-red-500/10 hover:text-red-400"
                         @click="logout"
-                        class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] text-content-subtle font-semibold hover:bg-red-500/10 hover:text-red-400 transition-all group"
                     >
-                        <LogOut class="w-[18px] h-[18px] text-content-faint group-hover:text-red-400 transition-colors" />
-                        <span>Keluar</span>
+                        <LogOut class="h-[18px] w-[18px] text-content-faint transition-colors group-hover:text-red-400" />
+                        <span>{{ t('auth.logout') }}</span>
                     </button>
                 </div>
 
-                <p class="text-[9px] text-content-faint text-center mt-3">v1.0.0 &copy; 2026 CoreAsia</p>
+                <p class="mt-3 text-center text-[9px] text-content-faint">v1.0.0 &copy; 2026 CoreAsia</p>
             </div>
         </div>
     </aside>

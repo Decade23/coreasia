@@ -55,7 +55,7 @@ export const useTenantSettings = () => {
         saving.value = true
         error.value = null
         try {
-            await coreApi.put('/tenant/settings', { section: 'general', ...data })
+            await coreApi.put('/tenant/settings', { general: data })
             if (settings.value) settings.value.general = data
             return true
         } catch (e: any) {
@@ -71,7 +71,7 @@ export const useTenantSettings = () => {
         saving.value = true
         error.value = null
         try {
-            await coreApi.put('/tenant/settings', { section: 'branding', ...data })
+            await coreApi.put('/tenant/settings', { branding: data })
             if (settings.value) settings.value.branding = data
             return true
         } catch (e: any) {

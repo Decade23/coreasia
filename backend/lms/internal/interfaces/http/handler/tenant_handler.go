@@ -1,13 +1,14 @@
 package handler
 
 import (
+	"log"
 	"strconv"
 
 	"github.com/coreasia/lms-api/internal/domain/entity"
+	infraRepo "github.com/coreasia/lms-api/internal/infrastructure/persistence/repository"
 	"github.com/coreasia/lms-api/internal/interfaces/http/middleware"
 	"github.com/coreasia/lms-api/internal/interfaces/http/response"
 	"github.com/coreasia/lms-api/pkg/apperr"
-	infraRepo "github.com/coreasia/lms-api/internal/infrastructure/persistence/repository"
 	"github.com/gofiber/fiber/v3"
 )
 
@@ -35,8 +36,37 @@ func (h *TenantHandler) UpdateSettings(c fiber.Ctx) error {
 		return response.Error(c, apperr.NewBadRequest("Format request tidak valid"))
 	}
 
+	claims := middleware.GetClaims(c)
+	if claims == nil {
+		return response.Error(c, apperr.NewUnauthorized("Token tidak valid"))
+	}
+
 	if err := h.settingsRepo.Update(c.Context(), body); err != nil {
 		return response.Error(c, apperr.NewInternal(err))
+	}
+
+	section := "tenant"
+	for key := range body {
+		section = key
+		break
+	}
+
+	userID := claims.UserID
+	userName := claims.FullName
+	userRole := claims.Role
+	ipAddress := c.IP()
+	description := "Memperbarui pengaturan tenant pada bagian " + section
+
+	if err := h.auditRepo.Create(c.Context(), &entity.AuditLog{
+		UserID:      &userID,
+		UserName:    &userName,
+		UserRole:    &userRole,
+		Action:      "update",
+		Resource:    "tenant_settings",
+		Description: &description,
+		IPAddress:   &ipAddress,
+	}); err != nil {
+		log.Printf("audit log create tenant settings: %v", err)
 	}
 
 	return response.OK(c, body)
