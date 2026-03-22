@@ -32,7 +32,8 @@ RUN bun run build
 
 FROM base AS production
 
-ENV NODE_ENV=production
+ENV NODE_ENV=production \
+    BUN_JSC_forceRAMSize=536870912
 COPY --from=deps /app/node_modules /app/node_modules
 COPY --from=deps /app/package.json /app/package.json
 COPY --from=build /app/.output /app/.output

@@ -34,6 +34,7 @@ COPY --from=builder /app/.output ./
 ENV NODE_ENV=production
 ENV HOST=0.0.0.0
 ENV PORT=3000
+ENV NODE_OPTIONS="--max-old-space-size=512"
 
 # Ekspose port 3000
 EXPOSE 3000

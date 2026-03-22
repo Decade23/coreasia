@@ -7,6 +7,10 @@ services:
       context: ./backend/lms
       dockerfile: deployments/Dockerfile.dev
     container_name: coreasia-api
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     ports:
       - "8083:8080"
     volumes:
@@ -27,8 +31,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      minio:
-        condition: service_started
     networks:
       - coreasia-net
     restart: unless-stopped
@@ -41,6 +43,10 @@ services:
       context: ./backend/gateway
       dockerfile: Dockerfile.dev
     container_name: coreasia-gateway
+    deploy:
+      resources:
+        limits:
+          memory: 768M
     ports:
       - "8084:8081"
     volumes:
@@ -85,6 +91,10 @@ services:
       context: ./frontend/lms
       dockerfile: Dockerfile.dev
     container_name: coreasia-lms
+    deploy:
+      resources:
+        limits:
+          memory: 1G
     ports:
       - "3002:3000"
       - "24678:24678"
@@ -110,6 +120,10 @@ services:
       dockerfile: Dockerfile
       target: development
     container_name: coreasia-landing
+    deploy:
+      resources:
+        limits:
+          memory: 768M
     ports:
       - "3001:3000"
     volumes:
@@ -135,6 +149,10 @@ services:
   postgres:
     image: postgres:17-alpine
     container_name: coreasia-postgres
+    deploy:
+      resources:
+        limits:
+          memory: 1G
     ports:
       - "5433:5432"
     environment:
@@ -158,6 +176,10 @@ services:
   redis:
     image: redis:7-alpine
     container_name: coreasia-redis
+    deploy:
+      resources:
+        limits:
+          memory: 256M
     ports:
       - "6380:6379"
     command: redis-server --appendonly yes --maxmemory 128mb --maxmemory-policy allkeys-lru
@@ -178,6 +200,10 @@ services:
   minio:
     image: minio/minio:latest
     container_name: coreasia-minio
+    deploy:
+      resources:
+        limits:
+          memory: 512M
     ports:
       - "9002:9000"
       - "9003:9001"
