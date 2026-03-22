@@ -46,6 +46,9 @@ const handleAIGenerate = async (params: any) => {
     form.value.content = result.content
     form.value.tags = result.tags.join(', ')
     form.value.read_time = result.read_time
+    form.value.seo_title = result.title
+    form.value.seo_description = result.description
+    form.value.category = params.category || form.value.category
     showAIModal.value = false
   }
 }
@@ -183,15 +186,23 @@ const applySuggestion = (s: typeof topicSuggestions[0]) => {
               <Icon name="lucide:lightbulb" class="mr-1 inline h-3.5 w-3.5 text-amber-400" />
               Saran Topik
             </p>
-            <div class="flex flex-wrap gap-1.5">
+            <div class="max-h-[180px] overflow-y-auto space-y-1.5 pr-1">
               <button
                 v-for="s in topicSuggestions"
                 :key="s.topic"
                 type="button"
-                class="rounded-full border border-[color:var(--ca-border)] px-2.5 py-1 text-[0.68rem] text-[var(--ca-muted)] transition hover:border-amber-300/40 hover:bg-[var(--ca-kicker-bg)] hover:text-brand-primary"
+                class="group flex w-full items-start gap-2.5 rounded-lg border border-[color:var(--ca-border)] px-3 py-2 text-left transition hover:border-amber-300/40 hover:bg-[var(--ca-kicker-bg)]"
+                :class="aiTopic === s.topic ? 'border-amber-400/50 bg-amber-500/5' : ''"
                 @click="applySuggestion(s)"
               >
-                {{ s.topic.length > 40 ? s.topic.slice(0, 40) + '...' : s.topic }}
+                <Icon name="lucide:file-text" class="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--ca-subtle)] group-hover:text-amber-400" :class="aiTopic === s.topic ? 'text-amber-400' : ''" />
+                <div class="min-w-0">
+                  <p class="text-[0.75rem] font-medium leading-snug text-[var(--ca-text)] group-hover:text-brand-primary">{{ s.topic }}</p>
+                  <div class="mt-0.5 flex items-center gap-1.5">
+                    <span class="rounded bg-[var(--ca-panel-bg-strong)] px-1.5 py-0.5 text-[0.6rem] font-medium text-[var(--ca-subtle)]">{{ s.category }}</span>
+                    <span class="text-[0.6rem] text-[var(--ca-subtle)] truncate">{{ s.keywords }}</span>
+                  </div>
+                </div>
               </button>
             </div>
           </div>
