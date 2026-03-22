@@ -56,14 +56,15 @@ func ClassifyBotError(err error) string {
 // ArticleBot generates articles automatically using AI.
 // Supports multiple providers: claude, openai, groq, gemini.
 type ArticleBot struct {
-	cfg         config.AIConfig
-	articleRepo *repository.ArticleRepo
-	auditRepo   *repository.AuditLogRepo
-	apiKeyRepo  *repository.APIKeyRepo
+	cfg          config.AIConfig
+	articleRepo  *repository.ArticleRepo
+	auditRepo    *repository.AuditLogRepo
+	apiKeyRepo   *repository.APIKeyRepo
+	settingsRepo *repository.AppSettingsRepo
 }
 
-func NewArticleBot(cfg config.AIConfig, articleRepo *repository.ArticleRepo, auditRepo *repository.AuditLogRepo, apiKeyRepo *repository.APIKeyRepo) *ArticleBot {
-	return &ArticleBot{cfg: cfg, articleRepo: articleRepo, auditRepo: auditRepo, apiKeyRepo: apiKeyRepo}
+func NewArticleBot(cfg config.AIConfig, articleRepo *repository.ArticleRepo, auditRepo *repository.AuditLogRepo, apiKeyRepo *repository.APIKeyRepo, settingsRepo *repository.AppSettingsRepo) *ArticleBot {
+	return &ArticleBot{cfg: cfg, articleRepo: articleRepo, auditRepo: auditRepo, apiKeyRepo: apiKeyRepo, settingsRepo: settingsRepo}
 }
 
 // topicPool contains potential article topics grouped by category.
@@ -127,9 +128,21 @@ func (b *ArticleBot) RunWithConfig(ctx context.Context, botConfig json.RawMessag
 		_ = json.Unmarshal(botConfig, &cfg)
 	}
 
-	// Defaults
+	// Priority: bot config > app_settings > env config
 	provider := b.cfg.Provider
 	aiModel := b.cfg.Model
+
+	// Try app_settings (global AI settings from admin panel)
+	if b.settingsRepo != nil {
+		if dbProvider, err := b.settingsRepo.Get(ctx, "ai_provider"); err == nil && dbProvider != "" {
+			provider = dbProvider
+		}
+		if dbModel, err := b.settingsRepo.Get(ctx, "ai_model"); err == nil && dbModel != "" {
+			aiModel = dbModel
+		}
+	}
+
+	// Bot-specific overrides take highest priority
 	if cfg.Provider != "" {
 		provider = cfg.Provider
 	}
@@ -315,13 +328,24 @@ Hanya berikan JSON, tanpa penjelasan tambahan.`, req.Topic, keywords, req.Catego
 
 func (b *ArticleBot) parseArticleJSON(raw []byte) (*model.AIGenerateResponse, error) {
 	text := string(raw)
+	text = strings.TrimSpace(text)
+
+	// Strip markdown code fences (```json ... ``` or ``` ... ```)
 	text = strings.TrimPrefix(text, "```json")
 	text = strings.TrimPrefix(text, "```")
 	text = strings.TrimSuffix(text, "```")
 	text = strings.TrimSpace(text)
 
+	// Extract JSON object between first { and last } as fallback
+	startIdx := strings.Index(text, "{")
+	endIdx := strings.LastIndex(text, "}")
+	if startIdx >= 0 && endIdx > startIdx {
+		text = text[startIdx : endIdx+1]
+	}
+
 	var result model.AIGenerateResponse
 	if err := json.Unmarshal([]byte(text), &result); err != nil {
+		slog.Error("parseArticleJSON: gagal parse", "error", err, "raw_length", len(raw), "snippet", text[:min(200, len(text))])
 		return nil, fmt.Errorf("parsing AI article JSON: %w", err)
 	}
 	return &result, nil

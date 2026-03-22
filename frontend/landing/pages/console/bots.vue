@@ -11,6 +11,9 @@ const deletingBot = ref<any>(null)
 const triggerSuccess = ref<string | null>(null)
 const triggeringBot = ref<string | null>(null)
 
+const useDefaultAI = ref(true)
+const initializingForm = ref(false)
+
 const formData = ref({
   name: '',
   bot_type: 'article_generator',
@@ -79,6 +82,7 @@ const languageOptions = [
 ]
 
 watch(() => formData.value.provider, (provider) => {
+  if (initializingForm.value) return
   formData.value.model = ''
   fetchModels(provider)
 })
@@ -87,18 +91,22 @@ onMounted(() => fetchBots())
 
 const openCreate = () => {
   editingBot.value = null
+  useDefaultAI.value = true
   formData.value = {
     name: '', bot_type: 'article_generator', schedule: '08:00', timezone: 'Asia/Jakarta',
     provider: 'claude', model: '',
     tone: 'professional', language: 'id', word_count: 1200,
   }
-  fetchModels('claude')
   showFormModal.value = true
 }
 
-const openEdit = (b: any) => {
+const openEdit = async (b: any) => {
   editingBot.value = b
   const cfg = typeof b.config === 'string' ? JSON.parse(b.config) : (b.config || {})
+  const hasOverride = !!(cfg.provider || cfg.model)
+  useDefaultAI.value = !hasOverride
+
+  initializingForm.value = true
   const provider = cfg.provider || 'claude'
   formData.value = {
     name: b.name,
@@ -111,17 +119,33 @@ const openEdit = (b: any) => {
     language: cfg.language || 'id',
     word_count: cfg.word_count || 1200,
   }
-  fetchModels(provider)
+
+  if (hasOverride) {
+    await fetchModels(provider)
+  }
+
+  await nextTick()
+  initializingForm.value = false
   showFormModal.value = true
 }
 
+const handleToggleDefaultAI = (val: boolean) => {
+  useDefaultAI.value = val
+  if (!val) {
+    fetchModels(formData.value.provider)
+  }
+}
+
 const handleSubmit = async () => {
-  const configParsed = {
-    provider: formData.value.provider,
-    model: formData.value.model,
+  const configParsed: Record<string, any> = {
     tone: formData.value.tone,
     language: formData.value.language,
     word_count: formData.value.word_count,
+  }
+
+  if (!useDefaultAI.value) {
+    configParsed.provider = formData.value.provider
+    configParsed.model = formData.value.model
   }
 
   let ok: boolean
@@ -219,6 +243,12 @@ const formatDate = (d: string | null) => {
   if (!d) return '-'
   return new Date(d).toLocaleString('id-ID', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
+
+const configLabel = (b: any) => {
+  const cfg = typeof b.config === 'string' ? JSON.parse(b.config) : (b.config || {})
+  if (!cfg.provider && !cfg.model) return null
+  return cfg
+}
 </script>
 
 <template>
@@ -264,11 +294,17 @@ const formatDate = (d: string | null) => {
               </div>
               <div class="flex flex-wrap items-center gap-2 text-xs text-[var(--ca-muted)]">
                 <span class="rounded bg-[var(--ca-panel-bg-strong)] px-1.5 py-0.5 font-mono text-[0.65rem]">{{ b.bot_type }}</span>
-                <span v-if="b.config?.provider" class="rounded bg-[var(--ca-panel-bg-strong)] px-1.5 py-0.5 text-[0.65rem]">
-                  {{ providerOptions.find(p => p.value === b.config.provider)?.label || b.config.provider }}
-                </span>
-                <span v-if="b.config?.model" class="rounded bg-[var(--ca-panel-bg-strong)] px-1.5 py-0.5 font-mono text-[0.65rem]">
-                  {{ b.config.model.split('/').pop() }}
+                <template v-if="configLabel(b)">
+                  <span class="rounded bg-[var(--ca-panel-bg-strong)] px-1.5 py-0.5 text-[0.65rem]">
+                    {{ providerOptions.find(p => p.value === configLabel(b).provider)?.label || configLabel(b).provider }}
+                  </span>
+                  <span v-if="configLabel(b).model" class="rounded bg-[var(--ca-panel-bg-strong)] px-1.5 py-0.5 font-mono text-[0.65rem]">
+                    {{ configLabel(b).model.split('/').pop() }}
+                  </span>
+                </template>
+                <span v-else class="rounded bg-blue-500/10 px-1.5 py-0.5 text-[0.65rem] text-blue-400">
+                  <Icon name="lucide:settings" class="mr-0.5 inline h-3 w-3" />
+                  Default AI Settings
                 </span>
                 <span>
                   <Icon name="lucide:clock" class="mr-0.5 inline h-3 w-3" />
@@ -353,7 +389,7 @@ const formatDate = (d: string | null) => {
     <!-- Form Modal -->
     <Teleport to="body">
       <div v-if="showFormModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" @click.self="showFormModal = false">
-        <div class="ca-card w-full max-w-lg p-6">
+        <div class="ca-card w-full max-w-lg max-h-[90vh] overflow-y-auto p-6">
           <h3 class="font-display text-lg font-bold text-[var(--ca-text)]">
             <Icon name="lucide:bot" class="mr-2 inline h-5 w-5 text-amber-400" />
             {{ editingBot ? 'Edit Bot' : 'Tambah Bot' }}
@@ -379,29 +415,51 @@ const formatDate = (d: string | null) => {
               />
             </div>
 
-            <!-- AI Provider & Model -->
-            <p class="text-[0.65rem] font-semibold uppercase tracking-widest text-[var(--ca-subtle)] pt-2">Konfigurasi AI</p>
-            <div class="grid gap-3 sm:grid-cols-2">
-              <SearchSelect
-                id="bot-provider"
-                v-model="formData.provider"
-                label="Provider"
-                :options="providerOptions"
-                required
-              />
-              <div>
+            <!-- AI Settings Toggle -->
+            <div class="rounded-lg border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-3 mt-1">
+              <label class="flex items-center gap-3 cursor-pointer select-none" @click.prevent="handleToggleDefaultAI(!useDefaultAI)">
+                <span
+                  class="relative inline-flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-colors"
+                  :class="useDefaultAI ? 'border-amber-400 bg-amber-400' : 'border-[var(--ca-border)] bg-transparent'"
+                >
+                  <Icon v-if="useDefaultAI" name="lucide:check" class="h-3.5 w-3.5 text-black" />
+                </span>
+                <div>
+                  <span class="text-sm font-medium text-[var(--ca-text)]">Gunakan pengaturan AI default</span>
+                  <p class="text-[0.68rem] text-[var(--ca-muted)] mt-0.5">
+                    Mengikuti konfigurasi dari menu
+                    <NuxtLink to="/console/ai-settings" class="text-amber-400 hover:underline" @click.stop>Pengaturan AI</NuxtLink>
+                  </p>
+                </div>
+              </label>
+            </div>
+
+            <!-- AI Provider & Model (only when override) -->
+            <template v-if="!useDefaultAI">
+              <p class="text-[0.65rem] font-semibold uppercase tracking-widest text-[var(--ca-subtle)] pt-1">Override Konfigurasi AI</p>
+              <div class="grid gap-3 sm:grid-cols-2">
                 <SearchSelect
-                  id="bot-model"
-                  v-model="formData.model"
-                  label="Model"
-                  :options="modelOptions"
-                  :disabled="modelsLoading"
-                  :placeholder="modelsLoading ? 'Memuat model...' : 'Pilih model'"
+                  id="bot-provider"
+                  v-model="formData.provider"
+                  label="Provider"
+                  :options="providerOptions"
                   required
                 />
-                <p v-if="modelsError" class="mt-1 text-[0.65rem] text-amber-400">{{ modelsError }}</p>
+                <div>
+                  <SearchSelect
+                    id="bot-model"
+                    v-model="formData.model"
+                    label="Model"
+                    :options="modelOptions"
+                    :disabled="modelsLoading"
+                    :placeholder="modelsLoading ? 'Memuat model...' : 'Pilih model'"
+                    required
+                  />
+                  <p v-if="modelsError" class="mt-1 text-[0.65rem] text-amber-400">{{ modelsError }}</p>
+                </div>
               </div>
-            </div>
+            </template>
+
             <div class="grid gap-3 sm:grid-cols-3">
               <SearchSelect
                 id="bot-tone"

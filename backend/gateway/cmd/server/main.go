@@ -73,7 +73,8 @@ func main() {
 		auditRepo := repository.NewAuditLogRepo(pool)
 		apiKeyRepo := repository.NewAPIKeyRepo(pool)
 		botScheduleRepo := repository.NewBotScheduleRepo(pool)
-		bot := service.NewArticleBot(cfg.AI, articleRepo, auditRepo, apiKeyRepo)
+		settingsRepo := repository.NewAppSettingsRepo(pool)
+		bot := service.NewArticleBot(cfg.AI, articleRepo, auditRepo, apiKeyRepo, settingsRepo)
 		go runBotScheduler(ctx, bot, botScheduleRepo)
 	}
 
