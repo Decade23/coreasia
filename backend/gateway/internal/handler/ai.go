@@ -58,6 +58,13 @@ func (h *AIHandler) Generate(c fiber.Ctx) error {
 		return errResponse(c, apperr.NewBadRequest("Model AI belum dikonfigurasi. Pilih model di halaman Pengaturan AI."))
 	}
 
+	// Check auto_image: request override > app_settings > default (false)
+	if !req.AutoImage {
+		if val, _ := h.settingsRepo.Get(c.Context(), "ai_auto_image"); val == "true" {
+			req.AutoImage = true
+		}
+	}
+
 	result, err := h.articleBot.GenerateFromRequest(c.Context(), req, provider, aiModel)
 	if err != nil {
 		slog.Error("gagal generate artikel AI",

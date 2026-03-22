@@ -78,9 +78,10 @@ func (r RedisConfig) Addr() string {
 }
 
 type AIConfig struct {
-	APIKey   string `yaml:"api_key" env:"AI_API_KEY"`
-	Provider string `yaml:"provider" env:"AI_PROVIDER" env-default:"claude"`
-	Model    string `yaml:"model" env:"AI_MODEL" env-default:"claude-sonnet-4-20250514"`
+	APIKey            string `yaml:"api_key" env:"AI_API_KEY"`
+	Provider          string `yaml:"provider" env:"AI_PROVIDER" env-default:"claude"`
+	Model             string `yaml:"model" env:"AI_MODEL" env-default:"claude-sonnet-4-20250514"`
+	UnsplashAccessKey string `yaml:"unsplash_access_key" env:"UNSPLASH_ACCESS_KEY"`
 }
 
 type R2Config struct {

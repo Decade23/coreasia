@@ -9,6 +9,7 @@ export interface AIGenerateParams {
   language: string
   word_count: number
   category: string
+  auto_image?: boolean
 }
 
 export interface AIGenerateResult {
@@ -18,6 +19,7 @@ export interface AIGenerateResult {
   content: string
   tags: string[]
   read_time: number
+  featured_image?: string
 }
 
 export const useAIGenerate = () => {

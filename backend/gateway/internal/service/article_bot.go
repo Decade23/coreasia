@@ -123,6 +123,7 @@ func (b *ArticleBot) RunWithConfig(ctx context.Context, botConfig json.RawMessag
 		Tone      string `json:"tone"`
 		Language  string `json:"language"`
 		WordCount int    `json:"word_count"`
+		AutoImage *bool  `json:"auto_image"`
 	}
 	if len(botConfig) > 0 {
 		_ = json.Unmarshal(botConfig, &cfg)
@@ -207,6 +208,25 @@ func (b *ArticleBot) RunWithConfig(ctx context.Context, botConfig json.RawMessag
 		return fmt.Errorf("gagal generate artikel via %s: %w", provider, err)
 	}
 
+	// Determine auto_image: bot config > app_settings > default (false)
+	autoImage := false
+	if b.settingsRepo != nil {
+		if val, err := b.settingsRepo.Get(ctx, "ai_auto_image"); err == nil && val == "true" {
+			autoImage = true
+		}
+	}
+	if cfg.AutoImage != nil {
+		autoImage = *cfg.AutoImage
+	}
+
+	// Auto-fetch featured image from Unsplash
+	var featuredImage *string
+	if autoImage && b.cfg.UnsplashAccessKey != "" {
+		if imgURL := b.searchUnsplashImage(req.Keywords, topic, category); imgURL != "" {
+			featuredImage = &imgURL
+		}
+	}
+
 	// Save as draft
 	article := model.Article{
 		Title:          result.Title,
@@ -220,6 +240,7 @@ func (b *ArticleBot) RunWithConfig(ctx context.Context, botConfig json.RawMessag
 		Status:         "draft",
 		SEOTitle:       &result.Title,
 		SEODescription: &result.Description,
+		FeaturedImage:  featuredImage,
 	}
 
 	if err := b.articleRepo.Create(ctx, &article); err != nil {
@@ -475,7 +496,85 @@ func (b *ArticleBot) GenerateFromRequest(ctx context.Context, req model.AIGenera
 	if err != nil {
 		return nil, fmt.Errorf("gagal generate artikel via %s: %w", provider, err)
 	}
+
+	// Auto-fetch featured image from Unsplash if enabled
+	if req.AutoImage {
+		if imgURL := b.searchUnsplashImage(req.Keywords, req.Topic, req.Category); imgURL != "" {
+			result.FeaturedImage = imgURL
+		}
+	}
+
 	return result, nil
+}
+
+// searchUnsplashImage finds a relevant image from Unsplash based on keywords.
+func (b *ArticleBot) searchUnsplashImage(keywords []string, topic, category string) string {
+	// Build search query from keywords, category, and topic
+	query := category
+	if len(keywords) > 0 {
+		query = strings.Join(keywords[:min(3, len(keywords))], " ")
+	}
+	if query == "" {
+		// Extract first few words from topic
+		words := strings.Fields(topic)
+		if len(words) > 3 {
+			words = words[:3]
+		}
+		query = strings.Join(words, " ")
+	}
+
+	searchURL := fmt.Sprintf("https://api.unsplash.com/search/photos?query=%s&per_page=5&orientation=landscape&content_filter=high",
+		strings.ReplaceAll(query, " ", "+"))
+
+	req, err := http.NewRequest("GET", searchURL, nil)
+	if err != nil {
+		slog.Error("unsplash: gagal buat request", "error", err)
+		return ""
+	}
+	// Unsplash requires client ID - use demo/free tier
+	req.Header.Set("Accept-Version", "v1")
+	req.Header.Set("Authorization", "Client-ID "+b.cfg.UnsplashAccessKey)
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		slog.Error("unsplash: request gagal", "error", err)
+		return ""
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		slog.Warn("unsplash: status bukan 200", "status", resp.StatusCode)
+		return ""
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return ""
+	}
+
+	var result struct {
+		Results []struct {
+			URLs struct {
+				Regular string `json:"regular"`
+			} `json:"urls"`
+			AltDescription string `json:"alt_description"`
+		} `json:"results"`
+	}
+	if err := json.Unmarshal(body, &result); err != nil {
+		slog.Error("unsplash: gagal parse response", "error", err)
+		return ""
+	}
+
+	if len(result.Results) == 0 {
+		slog.Info("unsplash: tidak ada hasil untuk query", "query", query)
+		return ""
+	}
+
+	// Pick first result - Unsplash returns most relevant first
+	imgURL := result.Results[0].URLs.Regular
+	slog.Info("unsplash: gambar ditemukan", "query", query, "url", imgURL)
+	return imgURL
 }
 
 func (b *ArticleBot) httpPost(url, _ string, body interface{}, headers map[string]string) ([]byte, error) {

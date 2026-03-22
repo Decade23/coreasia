@@ -61,6 +61,9 @@ const handleAIGenerate = async (params: any) => {
     form.value.seo_title = result.title
     form.value.seo_description = result.description
     form.value.category = params.category || form.value.category
+    if (result.featured_image && !form.value.featured_image) {
+      form.value.featured_image = result.featured_image
+    }
     showAIModal.value = false
   }
 }
@@ -103,6 +106,7 @@ const aiTone = ref('professional')
 const aiLanguage = ref('id')
 const aiWordCount = ref(1000)
 const aiCategory = ref('general')
+const aiAutoImage = ref(false)
 
 // Topic suggestions based on CoreAsia services
 const topicSuggestions = [
@@ -272,10 +276,26 @@ const applySuggestion = (s: typeof topicSuggestions[0]) => {
               <BaseInput id="ai-category" v-model="aiCategory" label="Kategori" placeholder="general" />
             </div>
 
-            <!-- Featured Image in AI Modal -->
-            <div>
-              <label class="ca-field-label">Featured Image</label>
-              <p class="mb-1.5 text-[0.68rem] text-[var(--ca-subtle)]">Upload gambar untuk artikel. AI hanya generate teks, gambar perlu diupload manual.</p>
+            <!-- Auto Image Toggle -->
+            <div class="rounded-lg border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-3">
+              <label class="flex items-center gap-3 cursor-pointer select-none" @click.prevent="aiAutoImage = !aiAutoImage">
+                <span
+                  class="relative inline-flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-colors"
+                  :class="aiAutoImage ? 'border-amber-400 bg-amber-400' : 'border-[var(--ca-border)] bg-transparent'"
+                >
+                  <Icon v-if="aiAutoImage" name="lucide:check" class="h-3.5 w-3.5 text-black" />
+                </span>
+                <div>
+                  <span class="text-sm font-medium text-[var(--ca-text)]">Sertakan gambar otomatis</span>
+                  <p class="text-[0.68rem] text-[var(--ca-muted)] mt-0.5">Ambil featured image dari Unsplash berdasarkan keywords</p>
+                </div>
+              </label>
+            </div>
+
+            <!-- Featured Image Manual Upload -->
+            <div v-if="!aiAutoImage">
+              <label class="ca-field-label">Featured Image (Manual)</label>
+              <p class="mb-1.5 text-[0.68rem] text-[var(--ca-subtle)]">Upload gambar untuk artikel secara manual.</p>
               <div class="flex items-center gap-3">
                 <input type="file" accept="image/jpeg,image/png,image/webp" class="ca-field-control border-[color:var(--ca-border)] text-sm" @change="handleAIImageUpload" />
                 <span v-if="aiImageUploading" class="text-xs text-[var(--ca-muted)]">Mengupload...</span>
@@ -299,6 +319,7 @@ const applySuggestion = (s: typeof topicSuggestions[0]) => {
                 language: aiLanguage,
                 word_count: aiWordCount,
                 category: aiCategory,
+                auto_image: aiAutoImage,
               })"
             >
               <Icon v-if="generating" name="lucide:loader-2" class="h-4 w-4 animate-spin" />

@@ -11,6 +11,7 @@ const settings = ref({
   ai_enabled: true,
   ai_provider: 'claude',
   ai_model: '',
+  ai_auto_image: false,
 })
 
 const providerOptions = [
@@ -35,6 +36,7 @@ const fetchSettings = async () => {
       settings.value.ai_enabled = res.data.ai_enabled !== 'false'
       settings.value.ai_provider = res.data.ai_provider || 'claude'
       settings.value.ai_model = res.data.ai_model || ''
+      settings.value.ai_auto_image = res.data.ai_auto_image === 'true'
     }
   } catch {
     // Use defaults
@@ -80,6 +82,7 @@ const saveSettings = async () => {
       ai_enabled: String(settings.value.ai_enabled),
       ai_provider: settings.value.ai_provider,
       ai_model: settings.value.ai_model,
+      ai_auto_image: String(settings.value.ai_auto_image),
     })
     toast.success('Pengaturan AI berhasil disimpan')
   } catch {
@@ -127,6 +130,27 @@ onMounted(async () => {
             <span
               class="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white transition-transform shadow"
               :class="settings.ai_enabled ? 'translate-x-5' : 'translate-x-0'"
+            />
+          </button>
+        </div>
+      </div>
+
+      <!-- Auto Image -->
+      <div class="ca-card p-5">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="font-display font-semibold text-[var(--ca-text)]">Gambar Otomatis (Unsplash)</h3>
+            <p class="mt-0.5 text-xs text-[var(--ca-muted)]">Sertakan featured image otomatis dari Unsplash saat generate artikel. Gambar dipilih berdasarkan keywords.</p>
+          </div>
+          <button
+            type="button"
+            class="relative h-6 w-11 rounded-full transition-colors"
+            :class="settings.ai_auto_image ? 'bg-emerald-500' : 'bg-slate-600'"
+            @click="settings.ai_auto_image = !settings.ai_auto_image"
+          >
+            <span
+              class="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white transition-transform shadow"
+              :class="settings.ai_auto_image ? 'translate-x-5' : 'translate-x-0'"
             />
           </button>
         </div>

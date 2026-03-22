@@ -24,6 +24,7 @@ const formData = ref({
   tone: 'professional',
   language: 'id',
   word_count: 1200,
+  auto_image: false,
 })
 
 const botTypeOptions = [
@@ -95,7 +96,7 @@ const openCreate = () => {
   formData.value = {
     name: '', bot_type: 'article_generator', schedule: '08:00', timezone: 'Asia/Jakarta',
     provider: 'claude', model: '',
-    tone: 'professional', language: 'id', word_count: 1200,
+    tone: 'professional', language: 'id', word_count: 1200, auto_image: false,
   }
   showFormModal.value = true
 }
@@ -118,6 +119,7 @@ const openEdit = async (b: any) => {
     tone: cfg.tone || 'professional',
     language: cfg.language || 'id',
     word_count: cfg.word_count || 1200,
+    auto_image: cfg.auto_image || false,
   }
 
   if (hasOverride) {
@@ -141,6 +143,7 @@ const handleSubmit = async () => {
     tone: formData.value.tone,
     language: formData.value.language,
     word_count: formData.value.word_count,
+    auto_image: formData.value.auto_image,
   }
 
   if (!useDefaultAI.value) {
@@ -474,6 +477,22 @@ const configLabel = (b: any) => {
                 :options="languageOptions"
               />
               <BaseInput id="bot-wordcount" v-model.number="formData.word_count" label="Jumlah Kata" type="number" placeholder="1200" autocomplete="off" />
+            </div>
+
+            <!-- Auto Image -->
+            <div class="rounded-lg border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-3">
+              <label class="flex items-center gap-3 cursor-pointer select-none" @click.prevent="formData.auto_image = !formData.auto_image">
+                <span
+                  class="relative inline-flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-colors"
+                  :class="formData.auto_image ? 'border-amber-400 bg-amber-400' : 'border-[var(--ca-border)] bg-transparent'"
+                >
+                  <Icon v-if="formData.auto_image" name="lucide:check" class="h-3.5 w-3.5 text-black" />
+                </span>
+                <div>
+                  <span class="text-sm font-medium text-[var(--ca-text)]">Sertakan gambar otomatis</span>
+                  <p class="text-[0.68rem] text-[var(--ca-muted)] mt-0.5">Ambil featured image dari Unsplash berdasarkan keywords artikel</p>
+                </div>
+              </label>
             </div>
 
             <p v-if="error" class="text-sm text-rose-400">{{ error }}</p>
