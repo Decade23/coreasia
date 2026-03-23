@@ -1267,6 +1267,8 @@ const ID_CONTENT = {
     kicker: 'Artikel',
     browseLabel: 'Jelajahi topik',
     browseDescription: 'Pilih kategori yang paling relevan agar daftar artikel terasa lebih terarah saat dibuka dari mobile maupun desktop.',
+    showMoreTopics: 'Lihat topik lainnya',
+    showLessTopics: 'Sembunyikan topik',
     hero: {
       title: 'Insight & panduan untuk <span class="ca-gradient-text">pertumbuhan digital</span>',
       subtitle: 'Tips, tutorial, dan insight dari tim CoreAsia untuk membantu Anda memahami teknologi dan membuat keputusan bisnis yang lebih baik.',
@@ -2802,6 +2804,8 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
     kicker: 'Article',
     browseLabel: 'Browse topics',
     browseDescription: 'Use a clearer category rail so the article list feels easier to scan on both mobile and desktop.',
+    showMoreTopics: 'Show more topics',
+    showLessTopics: 'Show fewer topics',
     hero: {
       title: 'Insights & guides for <span class="ca-gradient-text">digital growth</span>',
       subtitle: 'Tips, tutorials, and insights from the CoreAsia team to help you understand technology and make better business decisions.',

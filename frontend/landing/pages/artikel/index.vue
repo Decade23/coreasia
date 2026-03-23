@@ -14,6 +14,8 @@ useCoreSeo({
 })
 
 const activeCategory = ref('all')
+const categoriesExpanded = ref(false)
+const collapsedCategoryLimit = 6
 
 const categoryLabels = computed(() => (t('blog.categories') || {}) as Record<string, string>)
 const normalizeCategoryKey = (value: string | null | undefined) => {
@@ -21,15 +23,6 @@ const normalizeCategoryKey = (value: string | null | undefined) => {
   if (normalized === 'business') return 'bisnis'
   return normalized
 }
-
-const categories = computed(() => [
-  { key: 'all', label: categoryLabels.value.all || 'Semua' },
-  { key: 'bisnis', label: categoryLabels.value.bisnis || categoryLabels.value.business || 'Bisnis & Teknologi' },
-  { key: 'seo', label: categoryLabels.value.seo || 'SEO & Marketing' },
-  { key: 'teknologi', label: categoryLabels.value.teknologi || 'Teknologi' },
-  { key: 'marketing', label: categoryLabels.value.marketing || 'Marketing' },
-  { key: 'edukasi', label: categoryLabels.value.edukasi || 'Edukasi' },
-])
 
 interface PublicArticle {
   id: string
@@ -45,11 +38,11 @@ interface PublicArticle {
   created_at: string
 }
 
-const fetchPublicArticles = async () => {
+const fetchPublicArticles = async (categoryKey = 'all') => {
   try {
     const params: Record<string, string> = { per_page: '50' }
-    if (activeCategory.value !== 'all') {
-      params.category = activeCategory.value
+    if (categoryKey !== 'all') {
+      params.category = categoryKey
     }
     const query = new URLSearchParams(params).toString()
     const res = await $fetch<{ data: PublicArticle[] }>(`${baseURL}/articles?${query}`, {
@@ -61,9 +54,31 @@ const fetchPublicArticles = async () => {
   }
 }
 
-const apiArticles = ref<PublicArticle[]>(import.meta.server ? await fetchPublicArticles() : [])
+const initialArticles = import.meta.server ? await fetchPublicArticles('all') : []
+const apiArticles = ref<PublicArticle[]>(initialArticles)
+const allApiArticles = ref<PublicArticle[]>(initialArticles)
 const loadingArticles = ref(false)
 let activeRequestId = 0
+let catalogRequestId = 0
+
+const articleFallback = computed<PublicArticle[]>(() => ARTICLES.map((article) => ({
+  id: article.slug,
+  slug: article.slug,
+  title: article.title,
+  description: article.description,
+  category: article.category,
+  tags: article.tags || [],
+  author: article.author || (t('blog.defaultAuthor') as string) || 'Tim CoreAsia',
+  read_time: article.readTime || 5,
+  featured_image: null,
+  published_at: article.publishedAt,
+  created_at: article.publishedAt,
+})))
+
+const articleCatalog = computed(() => {
+  if ((allApiArticles.value || []).length > 0) return allApiArticles.value
+  return articleFallback.value
+})
 
 const loadArticles = async (showLoader = true) => {
   const requestId = ++activeRequestId
@@ -71,30 +86,98 @@ const loadArticles = async (showLoader = true) => {
     loadingArticles.value = true
   }
 
-  const nextArticles = await fetchPublicArticles()
+  const nextArticles = activeCategory.value === 'all'
+    ? ((allApiArticles.value || []).length > 0 ? allApiArticles.value : await fetchPublicArticles('all'))
+    : await fetchPublicArticles(activeCategory.value)
+
   if (requestId === activeRequestId) {
     apiArticles.value = nextArticles
     loadingArticles.value = false
   }
 }
 
+const loadArticleCatalog = async () => {
+  const requestId = ++catalogRequestId
+  const nextArticles = await fetchPublicArticles('all')
+  if (requestId !== catalogRequestId) return
+
+  allApiArticles.value = nextArticles
+  if (activeCategory.value === 'all') {
+    apiArticles.value = nextArticles
+  }
+}
+
 // Merge API articles with static fallback
 const articles = computed(() => {
   if ((apiArticles.value || []).length > 0) return apiArticles.value || []
-  // Fallback to static articles if API returns empty
-  return ARTICLES.map(a => ({
-    id: a.slug,
-    slug: a.slug,
-    title: a.title,
-    description: a.description,
-    category: a.category,
-    tags: a.tags || [],
-    author: a.author || (t('blog.defaultAuthor') as string) || 'Tim CoreAsia',
-    read_time: a.readTime || 5,
-    featured_image: null,
-    published_at: a.publishedAt,
-    created_at: a.publishedAt,
-  }))
+  return articleFallback.value
+})
+
+const prettifyCategoryKey = (value: string) => value
+  .split(/[-_]+/)
+  .filter(Boolean)
+  .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+  .join(' ')
+
+const resolveCategoryLabel = (value: string) => {
+  const normalized = normalizeCategoryKey(value)
+  const camelCaseKey = normalized.replace(/[-_]+([a-z])/g, (_, letter: string) => letter.toUpperCase())
+
+  return categoryLabels.value[normalized]
+    || categoryLabels.value[camelCaseKey]
+    || prettifyCategoryKey(normalized)
+}
+
+const categories = computed(() => {
+  const counts = new Map<string, number>()
+
+  for (const article of articleCatalog.value) {
+    const key = normalizeCategoryKey(article.category)
+    if (!key) continue
+    counts.set(key, (counts.get(key) || 0) + 1)
+  }
+
+  const dynamicCategories = Array.from(counts.entries())
+    .map(([key, count]) => ({
+      key,
+      label: resolveCategoryLabel(key),
+      count,
+    }))
+    .sort((left, right) => {
+      if (left.count !== right.count) {
+        return right.count - left.count
+      }
+
+      return left.label.localeCompare(right.label, locale.value === 'en' ? 'en' : 'id')
+    })
+    .map(({ count, ...category }) => category)
+
+  return [{ key: 'all', label: categoryLabels.value.all || 'Semua' }, ...dynamicCategories]
+})
+
+const hasExtraCategories = computed(() => categories.value.length > collapsedCategoryLimit)
+const hiddenCategoryCount = computed(() => Math.max(categories.value.length - collapsedCategoryLimit, 0))
+
+const visibleCategories = computed(() => {
+  if (categoriesExpanded.value || !hasExtraCategories.value) {
+    return categories.value
+  }
+
+  const baseCategories = categories.value.slice(0, collapsedCategoryLimit)
+  if (activeCategory.value === 'all') {
+    return baseCategories
+  }
+
+  if (baseCategories.some((category) => category.key === activeCategory.value)) {
+    return baseCategories
+  }
+
+  const activeCategoryItem = categories.value.find((category) => category.key === activeCategory.value)
+  if (!activeCategoryItem) {
+    return baseCategories
+  }
+
+  return [...baseCategories.slice(0, Math.max(1, collapsedCategoryLimit - 1)), activeCategoryItem]
 })
 
 const filteredArticles = computed(() => {
@@ -103,13 +186,27 @@ const filteredArticles = computed(() => {
 })
 
 onMounted(() => {
+  if (!allApiArticles.value.length) {
+    void loadArticleCatalog()
+  }
+
   if (!apiArticles.value.length) {
     void loadArticles(false)
   }
 })
 
 watch(activeCategory, () => {
+  if (activeCategory.value !== 'all' && !visibleCategories.value.some((category) => category.key === activeCategory.value)) {
+    categoriesExpanded.value = true
+  }
+
   void loadArticles(true)
+})
+
+watch(categories, (nextCategories) => {
+  if (!nextCategories.some((category) => category.key === activeCategory.value)) {
+    activeCategory.value = 'all'
+  }
 })
 
 const dateLocale = computed(() => (locale.value === 'en' ? 'en-US' : 'id-ID'))
@@ -125,7 +222,7 @@ const formatDate = (dateStr: string) => {
 }
 
 const categoryLabel = (key: string) => {
-  return categoryLabels.value[key] || categoryLabels.value.business || key
+  return resolveCategoryLabel(key)
 }
 </script>
 
@@ -152,10 +249,10 @@ const categoryLabel = (key: string) => {
           <p class="mt-2 max-w-2xl text-sm leading-relaxed text-[var(--ca-muted)]">{{ t('blog.browseDescription') }}</p>
         </div>
 
-        <div class="-mx-4 mb-8 overflow-x-auto px-4 pb-2 [scrollbar-width:none]">
-          <div class="inline-flex min-w-full gap-2 rounded-2xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)]/80 p-2 sm:min-w-0">
+        <div class="mb-8 rounded-2xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)]/80 p-2.5">
+          <div class="flex flex-wrap gap-2">
             <button
-              v-for="cat in categories"
+              v-for="cat in visibleCategories"
               :key="cat.key"
               type="button"
               class="inline-flex items-center whitespace-nowrap rounded-xl px-3.5 py-2 text-sm font-semibold transition-colors"
@@ -163,6 +260,20 @@ const categoryLabel = (key: string) => {
               @click="activeCategory = cat.key"
             >
               <span>{{ cat.label }}</span>
+            </button>
+          </div>
+
+          <div v-if="hasExtraCategories" class="mt-2 border-t border-[color:var(--ca-border)]/70 pt-2">
+            <button
+              type="button"
+              class="inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold text-[var(--ca-muted)] transition hover:bg-[var(--ca-panel-bg-strong)] hover:text-[var(--ca-text)]"
+              @click="categoriesExpanded = !categoriesExpanded"
+            >
+              <span>{{ categoriesExpanded ? t('blog.showLessTopics') : t('blog.showMoreTopics') }}</span>
+              <span v-if="!categoriesExpanded" class="rounded-full border border-[color:var(--ca-border)] px-2 py-0.5 text-[0.68rem] font-bold text-[var(--ca-subtle)]">
+                +{{ hiddenCategoryCount }}
+              </span>
+              <Icon :name="categoriesExpanded ? 'lucide:chevron-up' : 'lucide:chevron-down'" class="h-4 w-4" />
             </button>
           </div>
         </div>
