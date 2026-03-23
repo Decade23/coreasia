@@ -108,7 +108,7 @@ const formatDate = (d: string | null) => {
 
     <template v-else-if="currentItem">
       <!-- Status Bar -->
-      <div class="mx-auto max-w-4xl mb-4">
+      <div class="mx-auto mb-4 max-w-5xl">
         <div class="ca-card flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
           <div class="flex items-center gap-3">
             <span class="rounded-full border px-2.5 py-0.5 text-[0.7rem] font-bold uppercase" :class="statusColor(currentItem.status)">
@@ -143,8 +143,8 @@ const formatDate = (d: string | null) => {
         </div>
       </div>
 
-      <form class="mx-auto max-w-4xl" @submit.prevent="handleSubmit">
-        <div class="ca-card p-6">
+      <form class="mx-auto max-w-5xl" @submit.prevent="handleSubmit">
+        <div class="ca-card p-4 sm:p-6">
           <div class="space-y-4">
             <BaseInput id="title" v-model="form.title" :label="tc('articles.titleField')" placeholder="Judul artikel" required />
             <BaseInput id="slug" v-model="form.slug" :label="tc('articles.slugField')" placeholder="judul-artikel" required />

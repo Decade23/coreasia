@@ -507,7 +507,7 @@ const runToolbarAction = (action: ToolbarAction) => {
             <h3 class="mt-1 font-display text-lg font-bold text-[var(--ca-text)]">
               {{ tc('editor.workspaceTitle') }}
             </h3>
-            <p class="mt-1 max-w-2xl text-sm text-[var(--ca-muted)]">
+            <p class="mt-1 hidden max-w-2xl text-sm text-[var(--ca-muted)] sm:block">
               {{ tc('editor.workspaceDescription') }}
             </p>
           </div>
@@ -521,7 +521,7 @@ const runToolbarAction = (action: ToolbarAction) => {
               <Icon name="lucide:align-left" class="h-3.5 w-3.5" />
               {{ currentAlignmentLabel }}
             </span>
-            <span class="ca-badge">
+            <span class="ca-badge ca-badge-desktop-only">
               <Icon name="lucide:languages" class="h-3.5 w-3.5" />
               {{ tc('editor.keyboardHint') }}
             </span>
@@ -701,7 +701,7 @@ const runToolbarAction = (action: ToolbarAction) => {
       </div>
 
       <div class="ca-editor-status border-t border-[color:var(--ca-border)] px-4 py-3 sm:px-6">
-        <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-[var(--ca-muted)]">
+        <div class="ca-editor-status-grid flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-[var(--ca-muted)]">
           <span class="inline-flex items-center gap-1.5">
             <Icon name="lucide:type" class="h-3.5 w-3.5" />
             {{ tc('editor.wordCount', { count: wordCount }) }}
@@ -990,6 +990,10 @@ const runToolbarAction = (action: ToolbarAction) => {
   background: color-mix(in srgb, var(--ca-bg-soft) 68%, var(--ca-panel-bg));
 }
 
+.ca-editor-status-grid {
+  justify-content: space-between;
+}
+
 .ca-editor-bubble-btn {
   height: 1.9rem;
   width: 1.9rem;
@@ -1017,6 +1021,16 @@ const runToolbarAction = (action: ToolbarAction) => {
   border-color: var(--ca-gold-border);
   background: var(--ca-gold-bg);
   color: var(--ca-gold-text);
+}
+
+.ca-badge-desktop-only {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .ca-badge-desktop-only {
+    display: inline-flex;
+  }
 }
 
 .tiptap-doc {
@@ -1138,14 +1152,60 @@ const runToolbarAction = (action: ToolbarAction) => {
 }
 
 @media (max-width: 640px) {
+  .ca-editor-shell {
+    border-radius: 1.35rem;
+  }
+
+  .ca-editor-header,
+  .ca-editor-ribbon,
+  .ca-editor-status {
+    padding-left: 0.9rem;
+    padding-right: 0.9rem;
+  }
+
+  .ca-editor-stage {
+    padding: 0.85rem 0.65rem 1rem;
+  }
+
   .ca-editor-trigger {
     min-width: 0;
     width: 100%;
     max-width: none;
+    padding: 0.65rem 0.75rem;
+    font-size: 0.8rem;
   }
 
   .ca-editor-menu {
     width: min(100vw - 3rem, 20rem);
+  }
+
+  .ca-editor-btn {
+    height: 2.25rem;
+    width: 2.25rem;
+    border-radius: 0.85rem;
+  }
+
+  .ca-editor-ruler {
+    margin-bottom: 0.85rem;
+    padding: 0 0.35rem;
+  }
+
+  .ca-editor-sheet {
+    min-height: 320px !important;
+    border-radius: 1.2rem;
+  }
+
+  .ca-editor-sheet-meta {
+    padding: 0.8rem 0.95rem;
+    font-size: 0.68rem;
+  }
+
+  .ca-editor-status-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    gap: 0.55rem 0.85rem;
+    justify-content: initial;
   }
 
   .tiptap-doc {

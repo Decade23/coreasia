@@ -134,8 +134,8 @@ const applySuggestion = (s: typeof topicSuggestions[0]) => {
       back-to="/console/articles"
     />
 
-    <form class="mx-auto max-w-4xl" @submit.prevent="handleSubmit">
-      <div class="ca-card p-6">
+    <form class="mx-auto max-w-5xl" @submit.prevent="handleSubmit">
+      <div class="ca-card p-4 sm:p-6">
         <!-- Actions bar -->
         <div class="mb-6 flex flex-wrap gap-2">
           <button type="button" class="ca-btn-secondary text-sm" @click="showAIModal = true">
