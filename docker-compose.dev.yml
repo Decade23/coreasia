@@ -119,25 +119,24 @@ services:
     build:
       context: ./frontend/landing
       dockerfile: Dockerfile
-      target: development
+      target: production
     container_name: coreasia-landing
     deploy:
       resources:
         limits:
-          memory: 768M
+          memory: 1280M
     ports:
       - "3001:3000"
-    volumes:
-      - ./frontend/landing:/app
-      - /app/node_modules
-      - /app/.nuxt
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
       - PORT=3000
       - HOST=0.0.0.0
       - GATEWAY_URL=http://gateway:8081/api
       - GATEWAY_PUBLIC_URL=http://localhost:8084/api
+      - NUXT_PUBLIC_GATEWAY_URL=http://gateway:8081/api
+      - NUXT_PUBLIC_GATEWAY_PUBLIC_URL=http://localhost:8084/api
       - GTM_ID=${GTM_ID:-GTM-59R46GVZ}
+      - NUXT_PUBLIC_GTM_ID=${GTM_ID:-GTM-59R46GVZ}
     depends_on:
       - gateway
     networks:
