@@ -18,6 +18,7 @@ const props = defineProps<{
   required?: boolean
   error?: string
   minHeight?: string
+  maxHeight?: string
 }>()
 
 const emit = defineEmits<{
@@ -55,6 +56,7 @@ const linkBubble = ref<{ show: boolean; href: string; top: number; left: number 
 })
 
 const editorContainer = ref<HTMLElement | null>(null)
+const linkBubbleMaxWidth = 320
 
 const syncEditorState = () => {
   editorVersion.value += 1
@@ -72,6 +74,11 @@ const closeOverlays = () => {
   activeMenu.value = null
   linkBubble.value.show = false
 }
+
+const editorViewportStyle = computed(() => ({
+  '--editor-min-height': props.minHeight || '360px',
+  '--editor-max-height': props.maxHeight || '560px',
+}))
 
 const editor = useEditor({
   content: props.modelValue,
@@ -106,15 +113,23 @@ const editor = useEditor({
       closeToolbarMenus()
 
       if (linkEl && editorContainer.value) {
+        event.preventDefault()
+        event.stopPropagation()
+
         const containerRect = editorContainer.value.getBoundingClientRect()
         const linkRect = linkEl.getBoundingClientRect()
+        const preferredLeft = linkRect.left - containerRect.left - 8
+
         linkBubble.value = {
           show: true,
           href: linkEl.getAttribute('href') || '',
           top: linkRect.bottom - containerRect.top + 8,
-          left: Math.max(16, linkRect.left - containerRect.left - 8),
+          left: Math.min(
+            Math.max(16, preferredLeft),
+            Math.max(16, containerRect.width - linkBubbleMaxWidth - 16),
+          ),
         }
-        return false
+        return true
       }
 
       linkBubble.value.show = false
@@ -191,6 +206,12 @@ const editLinkFromBubble = () => {
   linkUrl.value = linkBubble.value.href
   linkBubble.value.show = false
   showLinkModal.value = true
+}
+
+const openLinkFromBubble = () => {
+  if (!import.meta.client || !linkBubble.value.href) return
+
+  window.open(linkBubble.value.href, '_blank', 'noopener,noreferrer')
 }
 
 const openImageModal = () => {
@@ -686,7 +707,7 @@ const runToolbarAction = (action: ToolbarAction) => {
         </div>
 
         <div class="ca-editor-sheet-wrap">
-          <div class="ca-editor-sheet" :style="{ minHeight: minHeight || '460px' }" @click="focusEditor">
+          <div class="ca-editor-sheet" :style="editorViewportStyle" @click="focusEditor">
             <div class="ca-editor-sheet-meta">
               <div class="flex items-center gap-2">
                 <Icon name="lucide:file-text" class="h-4 w-4 text-[var(--ca-gold-text)]" />
@@ -695,7 +716,9 @@ const runToolbarAction = (action: ToolbarAction) => {
               <span>{{ tc('editor.readingTime', { count: readingMinutes }) }}</span>
             </div>
 
-            <EditorContent :editor="editor" />
+            <div class="ca-editor-scroll-area">
+              <EditorContent :editor="editor" />
+            </div>
           </div>
         </div>
       </div>
@@ -723,20 +746,22 @@ const runToolbarAction = (action: ToolbarAction) => {
 
       <div
         v-if="linkBubble.show"
-        class="absolute z-20 flex max-w-[min(18rem,calc(100%-2rem))] items-center gap-1.5 rounded-xl border border-[color:var(--ca-border)] bg-[color:var(--ca-panel-bg-strong)] px-3 py-2 shadow-2xl backdrop-blur"
+        class="absolute z-20 flex max-w-[min(20rem,calc(100%-2rem))] items-start gap-2 rounded-xl border border-[color:var(--ca-border)] bg-[color:var(--ca-panel-bg-strong)] px-3 py-2 shadow-2xl backdrop-blur"
         :style="{ top: `${linkBubble.top}px`, left: `${linkBubble.left}px` }"
       >
         <Icon name="lucide:link" class="h-3.5 w-3.5 shrink-0 text-[var(--ca-subtle)]" />
-        <a
-          :href="linkBubble.href"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="max-w-[11rem] truncate text-xs text-amber-400 underline"
-          :title="linkBubble.href"
-        >
-          {{ linkBubble.href }}
-        </a>
+        <div class="min-w-0 flex-1">
+          <p class="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-[var(--ca-subtle)]">
+            {{ tc('editor.linkPreviewLabel') }}
+          </p>
+          <p class="max-w-[15rem] break-all text-[0.7rem] leading-5 text-amber-400" :title="linkBubble.href">
+            {{ linkBubble.href }}
+          </p>
+        </div>
         <div class="ml-1 flex items-center gap-1">
+          <button type="button" class="ca-editor-bubble-btn" :title="tc('editor.actions.openLink')" @click="openLinkFromBubble">
+            <Icon name="lucide:external-link" class="h-3.5 w-3.5" />
+          </button>
           <button type="button" class="ca-editor-bubble-btn" :title="tc('editor.actions.editLink')" @click="editLinkFromBubble">
             <Icon name="lucide:edit-3" class="h-3.5 w-3.5" />
           </button>
@@ -968,6 +993,30 @@ const runToolbarAction = (action: ToolbarAction) => {
   overflow: hidden;
 }
 
+.ca-editor-scroll-area {
+  min-height: var(--editor-min-height, 360px);
+  max-height: min(72vh, var(--editor-max-height, 560px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--ca-gold-border) 65%, var(--ca-border)) transparent;
+}
+
+.ca-editor-scroll-area::-webkit-scrollbar {
+  width: 10px;
+}
+
+.ca-editor-scroll-area::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 9999px;
+  background: color-mix(in srgb, var(--ca-gold-border) 65%, var(--ca-border));
+  background-clip: padding-box;
+}
+
+.ca-editor-scroll-area::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 .dark .ca-editor-sheet {
   box-shadow: 0 30px 70px rgba(2, 6, 23, 0.38);
 }
@@ -1034,7 +1083,7 @@ const runToolbarAction = (action: ToolbarAction) => {
 }
 
 .tiptap-doc {
-  min-height: inherit;
+  min-height: var(--editor-min-height, 360px);
   padding: 2rem clamp(1.1rem, 4vw, 3.75rem) 3rem;
   font-family: "Plus Jakarta Sans", "Inter", sans-serif;
   font-size: 1.03rem;
@@ -1191,8 +1240,12 @@ const runToolbarAction = (action: ToolbarAction) => {
   }
 
   .ca-editor-sheet {
-    min-height: 320px !important;
     border-radius: 1.2rem;
+  }
+
+  .ca-editor-scroll-area {
+    min-height: min(48vh, var(--editor-min-height, 360px));
+    max-height: min(58vh, var(--editor-max-height, 560px));
   }
 
   .ca-editor-sheet-meta {
