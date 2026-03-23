@@ -24,6 +24,7 @@ export interface ArticleDomain {
 export const useArticles = () => {
   const api = useAdminApi()
   const toast = useToast()
+  const { tc } = useConsoleI18n()
   const items = ref<ArticleDomain[]>([])
   const currentItem = ref<ArticleDomain | null>(null)
   const loading = ref(false)
@@ -41,7 +42,7 @@ export const useArticles = () => {
       totalItems.value = res.meta?.total || 0
       currentPage.value = page
     } catch (err: any) {
-      error.value = err?.data?.errors?.message || 'Gagal memuat artikel'
+      error.value = err?.data?.errors?.message || tc('feedback.articlesLoadFailed')
     } finally {
       loading.value = false
     }
@@ -54,7 +55,7 @@ export const useArticles = () => {
       const res = await api.get<ArticleDomain>(`/admin/articles/${id}`)
       currentItem.value = res.data
     } catch (err: any) {
-      error.value = err?.data?.errors?.message || 'Gagal memuat artikel'
+      error.value = err?.data?.errors?.message || tc('feedback.articlesLoadFailed')
     } finally {
       loading.value = false
     }
@@ -65,10 +66,10 @@ export const useArticles = () => {
     error.value = ''
     try {
       await api.post('/admin/articles', data)
-      toast.success('Artikel berhasil dibuat')
+      toast.success(tc('feedback.articleCreated'))
       return true
     } catch (err: any) {
-      error.value = err?.data?.errors?.message || 'Gagal membuat artikel'
+      error.value = err?.data?.errors?.message || tc('feedback.articleCreateFailed')
       toast.error(error.value)
       return false
     } finally {
@@ -81,10 +82,10 @@ export const useArticles = () => {
     error.value = ''
     try {
       await api.put(`/admin/articles/${id}`, data)
-      toast.success('Artikel berhasil diperbarui')
+      toast.success(tc('feedback.articleUpdated'))
       return true
     } catch (err: any) {
-      error.value = err?.data?.errors?.message || 'Gagal mengupdate artikel'
+      error.value = err?.data?.errors?.message || tc('feedback.articleUpdateFailed')
       toast.error(error.value)
       return false
     } finally {
@@ -97,10 +98,10 @@ export const useArticles = () => {
     error.value = ''
     try {
       await api.del(`/admin/articles/${id}`)
-      toast.success('Artikel berhasil dihapus')
+      toast.success(tc('feedback.articleDeleted'))
       return true
     } catch (err: any) {
-      error.value = err?.data?.errors?.message || 'Gagal menghapus artikel'
+      error.value = err?.data?.errors?.message || tc('feedback.articleDeleteFailed')
       toast.error(error.value)
       return false
     } finally {
@@ -112,10 +113,10 @@ export const useArticles = () => {
     saving.value = true
     try {
       await api.post(`/admin/articles/${id}/publish`)
-      toast.success('Artikel berhasil dipublish')
+      toast.success(tc('feedback.articlePublished'))
       return true
     } catch (err: any) {
-      error.value = err?.data?.errors?.message || 'Gagal mempublish artikel'
+      error.value = err?.data?.errors?.message || tc('feedback.articlePublishFailed')
       toast.error(error.value)
       return false
     } finally {
@@ -127,10 +128,10 @@ export const useArticles = () => {
     saving.value = true
     try {
       await api.post(`/admin/articles/${id}/unpublish`)
-      toast.info('Artikel di-unpublish')
+      toast.info(tc('feedback.articleUnpublished'))
       return true
     } catch (err: any) {
-      error.value = err?.data?.errors?.message || 'Gagal meng-unpublish artikel'
+      error.value = err?.data?.errors?.message || tc('feedback.articleUnpublishFailed')
       toast.error(error.value)
       return false
     } finally {

@@ -21,6 +21,7 @@ interface BotSchedule {
 export const useBotSchedules = () => {
   const api = useAdminApi()
   const toast = useToast()
+  const { tc } = useConsoleI18n()
   const items = ref<BotSchedule[]>([])
   const loading = ref(false)
   const saving = ref(false)
@@ -33,7 +34,7 @@ export const useBotSchedules = () => {
       const res = await api.get<BotSchedule[]>('/admin/bots')
       items.value = res.data || []
     } catch (err: any) {
-      error.value = err?.data?.errors?.message || 'Gagal memuat bot schedules'
+      error.value = err?.data?.errors?.message || tc('feedback.botsLoadFailed')
     } finally {
       loading.value = false
     }
@@ -44,10 +45,10 @@ export const useBotSchedules = () => {
     error.value = ''
     try {
       await api.post('/admin/bots', data)
-      toast.success('Bot berhasil dibuat')
+      toast.success(tc('feedback.botCreated'))
       return true
     } catch (err: any) {
-      error.value = err?.data?.errors?.message || 'Gagal membuat bot'
+      error.value = err?.data?.errors?.message || tc('feedback.botCreateFailed')
       toast.error(error.value)
       return false
     } finally {
@@ -60,10 +61,10 @@ export const useBotSchedules = () => {
     error.value = ''
     try {
       await api.put(`/admin/bots/${id}`, data)
-      toast.success('Bot berhasil diperbarui')
+      toast.success(tc('feedback.botUpdated'))
       return true
     } catch (err: any) {
-      error.value = err?.data?.errors?.message || 'Gagal update bot'
+      error.value = err?.data?.errors?.message || tc('feedback.botUpdateFailed')
       toast.error(error.value)
       return false
     } finally {
@@ -76,10 +77,10 @@ export const useBotSchedules = () => {
     error.value = ''
     try {
       await api.del(`/admin/bots/${id}`)
-      toast.success('Bot berhasil dihapus')
+      toast.success(tc('feedback.botDeleted'))
       return true
     } catch (err: any) {
-      error.value = err?.data?.errors?.message || 'Gagal hapus bot'
+      error.value = err?.data?.errors?.message || tc('feedback.botDeleteFailed')
       toast.error(error.value)
       return false
     } finally {
@@ -90,10 +91,10 @@ export const useBotSchedules = () => {
   const triggerBot = async (id: string): Promise<boolean> => {
     try {
       await api.post(`/admin/bots/${id}/trigger`)
-      toast.info('Bot sedang dijalankan...')
+      toast.info(tc('feedback.botTriggerQueued'))
       return true
     } catch {
-      toast.error('Gagal menjalankan bot')
+      toast.error(tc('feedback.botTriggerFailed'))
       return false
     }
   }

@@ -7,8 +7,8 @@ import {
 
 const { theme, setTheme } = useCoreTheme()
 const toggleTheme = () => setTheme(theme.value === 'dark' ? 'light' : 'dark')
-const { locale, setLocale } = useCoreI18n()
 const { user, logout } = useAdminAuth()
+const { tc } = useConsoleI18n()
 const route = useRoute()
 
 /* ── Theme bootstrap ── */
@@ -38,17 +38,15 @@ useHead(() => ({
   script: [{ innerHTML: themeBootstrapScript, tagPosition: 'head' }],
 }))
 
-const toggleLocale = () => setLocale(locale.value === 'id' ? 'en' : 'id')
-
-const menuItems = [
-  { label: 'Dashboard', icon: 'lucide:layout-dashboard', to: '/console' },
-  { label: 'Artikel', icon: 'lucide:file-text', to: '/console/articles' },
-  { label: 'Bots', icon: 'lucide:bot', to: '/console/bots' },
-  { label: 'AI Settings', icon: 'lucide:sparkles', to: '/console/ai-settings' },
-  { label: 'API Keys', icon: 'lucide:key-round', to: '/console/api-keys' },
-  { label: 'Users', icon: 'lucide:users', to: '/console/users' },
-  { label: 'Audit Log', icon: 'lucide:scroll-text', to: '/console/audit-log' },
-]
+const menuItems = computed(() => [
+  { label: tc('layout.dashboard'), icon: 'lucide:layout-dashboard', to: '/console' },
+  { label: tc('layout.articles'), icon: 'lucide:file-text', to: '/console/articles' },
+  { label: tc('layout.bots'), icon: 'lucide:bot', to: '/console/bots' },
+  { label: tc('layout.aiSettings'), icon: 'lucide:sparkles', to: '/console/ai-settings' },
+  { label: tc('layout.apiKeys'), icon: 'lucide:key-round', to: '/console/api-keys' },
+  { label: tc('layout.users'), icon: 'lucide:users', to: '/console/users' },
+  { label: tc('layout.auditLog'), icon: 'lucide:scroll-text', to: '/console/audit-log' },
+])
 
 const isActive = (path: string) => {
   if (path === '/console') return route.path === '/console'
@@ -60,20 +58,22 @@ const showUserMenu = ref(false)
 
 /* ── Breadcrumb ── */
 const breadcrumbs = computed(() => {
-  const crumbs: { label: string; to?: string }[] = [{ label: 'Console', to: '/console' }]
+  const crumbs: { label: string; to?: string }[] = [{ label: tc('layout.kicker'), to: '/console' }]
   const path = route.path
 
-  const matched = menuItems.find(m => m.to !== '/console' && path.startsWith(m.to))
+  const matched = menuItems.value.find(m => m.to !== '/console' && path.startsWith(m.to))
   if (matched) {
     crumbs.push({ label: matched.label, to: matched.to })
   }
 
   // Sub-pages
-  if (path.includes('/create')) crumbs.push({ label: 'Buat Baru' })
-  else if (path.match(/\/[0-9a-f-]{36}$/)) crumbs.push({ label: 'Edit' })
+  if (path.includes('/create')) crumbs.push({ label: tc('layout.create') })
+  else if (path.match(/\/[0-9a-f-]{36}$/)) crumbs.push({ label: tc('layout.edit') })
 
   return crumbs
 })
+
+const currentPageLabel = computed(() => breadcrumbs.value.at(-1)?.label || tc('layout.dashboard'))
 
 /* Close user menu on click outside */
 if (import.meta.client) {
@@ -95,42 +95,49 @@ const handleLogout = () => {
   <div class="min-h-screen bg-[var(--ca-bg)]">
     <!-- Sidebar -->
     <aside
-      class="fixed inset-y-0 left-0 z-40 w-56 border-r border-[color:var(--ca-border)] bg-[var(--ca-bg)] transition-transform lg:translate-x-0"
+      class="fixed inset-y-0 left-0 z-40 w-64 border-r border-[color:var(--ca-border)] bg-[color:color-mix(in_srgb,var(--ca-bg)_88%,transparent)] backdrop-blur-xl transition-transform lg:translate-x-0"
       :class="isSidebarOpen ? 'translate-x-0' : '-translate-x-full'"
     >
       <div class="flex h-full flex-col">
         <!-- Logo -->
-        <div class="flex h-14 items-center gap-2.5 border-b border-[color:var(--ca-border)] px-4">
+        <div class="flex h-16 items-center gap-3 border-b border-[color:var(--ca-border)] px-5">
           <NuxtImg src="/logo.svg" alt="CoreAsia" width="28" height="28" class="h-7 w-7" />
           <div>
             <span class="block font-display text-sm font-bold leading-tight text-[var(--ca-text)]">CoreAsia</span>
-            <span class="block text-[0.6rem] uppercase tracking-[0.14em] text-[var(--ca-muted)]">Console</span>
+            <span class="block text-[0.6rem] uppercase tracking-[0.14em] text-[var(--ca-muted)]">{{ tc('layout.kicker') }}</span>
           </div>
         </div>
 
         <!-- Nav -->
-        <nav class="flex-1 space-y-0.5 p-2.5">
+        <nav class="flex-1 space-y-1 px-3 py-4">
           <NuxtLink
             v-for="item in menuItems"
             :key="item.to"
             :to="item.to"
-            class="flex items-center gap-2.5 rounded-lg px-3 py-2 text-[0.8125rem] font-medium transition-colors"
-            :class="isActive(item.to) ? 'bg-[var(--ca-kicker-bg)] text-brand-primary' : 'text-[var(--ca-muted)] hover:bg-[var(--ca-panel-bg-strong)] hover:text-[var(--ca-text)]'"
+            class="flex items-center gap-3 rounded-2xl px-3.5 py-3 text-[0.83rem] font-medium transition-colors"
+            :class="isActive(item.to) ? 'bg-[var(--ca-kicker-bg)] text-brand-primary shadow-[inset_0_0_0_1px_rgba(252,211,77,0.1)]' : 'text-[var(--ca-muted)] hover:bg-[var(--ca-panel-bg-strong)] hover:text-[var(--ca-text)]'"
             @click="isSidebarOpen = false"
           >
-            <Icon :name="item.icon" class="h-4 w-4" />
+            <span class="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)]">
+              <Icon :name="item.icon" class="h-4 w-4" />
+            </span>
             {{ item.label }}
           </NuxtLink>
         </nav>
 
         <!-- Sidebar footer -->
-        <div class="border-t border-[color:var(--ca-border)] p-3">
+        <div class="border-t border-[color:var(--ca-border)] p-4">
+          <div class="ca-card-soft mb-3 rounded-2xl p-3">
+            <p class="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-[var(--ca-subtle)]">{{ tc('layout.kicker') }}</p>
+            <p class="mt-2 text-sm font-semibold text-[var(--ca-text)]">{{ currentPageLabel }}</p>
+            <p class="mt-1 text-xs leading-relaxed text-[var(--ca-muted)]">{{ user?.full_name || 'Admin' }}</p>
+          </div>
           <NuxtLink
             to="/"
             class="flex items-center gap-2 rounded-lg px-3 py-2 text-xs text-[var(--ca-subtle)] transition hover:bg-[var(--ca-panel-bg-strong)] hover:text-[var(--ca-muted)]"
           >
             <Icon name="lucide:arrow-left" class="h-3.5 w-3.5" />
-            Kembali ke website
+            {{ tc('common.backToWebsite') }}
           </NuxtLink>
         </div>
       </div>
@@ -140,15 +147,19 @@ const handleLogout = () => {
     <div v-if="isSidebarOpen" class="fixed inset-0 z-30 bg-black/50 lg:hidden" @click="isSidebarOpen = false" />
 
     <!-- Main -->
-    <div class="lg:pl-56">
+    <div class="lg:pl-64">
       <!-- Top header bar -->
-      <header class="sticky top-0 z-20 h-14 border-b border-[color:var(--ca-border)] bg-[var(--ca-bg)]/80 backdrop-blur-xl">
+      <header class="sticky top-0 z-20 h-16 border-b border-[color:var(--ca-border)] bg-[color:color-mix(in_srgb,var(--ca-bg)_86%,transparent)] backdrop-blur-xl">
         <div class="flex h-full items-center justify-between px-4 sm:px-6">
           <!-- Left: hamburger + breadcrumb -->
           <div class="flex items-center gap-3">
             <button type="button" class="lg:hidden text-[var(--ca-muted)]" @click="isSidebarOpen = !isSidebarOpen">
               <Icon name="lucide:menu" class="h-5 w-5" />
             </button>
+            <div class="sm:hidden">
+              <p class="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-[var(--ca-subtle)]">{{ tc('layout.kicker') }}</p>
+              <p class="text-sm font-semibold text-[var(--ca-text)]">{{ currentPageLabel }}</p>
+            </div>
             <nav class="hidden sm:flex items-center gap-1.5 text-xs">
               <template v-for="(crumb, i) in breadcrumbs" :key="i">
                 <span v-if="i > 0" class="text-[var(--ca-subtle)]">/</span>
@@ -167,16 +178,9 @@ const handleLogout = () => {
           <!-- Right: actions -->
           <div class="flex items-center gap-1">
             <!-- Theme -->
-            <CaTooltip :text="theme === 'dark' ? 'Mode terang' : 'Mode gelap'" position="bottom">
+            <CaTooltip :text="theme === 'dark' ? tc('layout.switchToLight') : tc('layout.switchToDark')" position="bottom">
               <button type="button" class="ca-header-btn" @click="toggleTheme">
                 <Icon :name="theme === 'dark' ? 'lucide:sun' : 'lucide:moon'" class="h-4 w-4" />
-              </button>
-            </CaTooltip>
-
-            <!-- Language -->
-            <CaTooltip :text="locale === 'id' ? 'Switch to English' : 'Ganti ke Indonesia'" position="bottom">
-              <button type="button" class="ca-header-btn" @click="toggleLocale">
-                <span class="text-[0.7rem] font-bold">{{ locale === 'id' ? 'EN' : 'ID' }}</span>
               </button>
             </CaTooltip>
 
@@ -235,11 +239,11 @@ const handleLogout = () => {
           <div class="mx-auto mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-rose-500/10">
             <Icon name="lucide:log-out" class="h-6 w-6 text-rose-400" />
           </div>
-          <h3 class="font-display text-lg font-bold text-[var(--ca-text)]">Keluar dari Console?</h3>
-          <p class="mt-2 text-sm text-[var(--ca-muted)]">Anda perlu login kembali untuk mengakses console.</p>
+          <h3 class="font-display text-lg font-bold text-[var(--ca-text)]">{{ tc('layout.logoutTitle') }}</h3>
+          <p class="mt-2 text-sm text-[var(--ca-muted)]">{{ tc('layout.logoutDescription') }}</p>
           <div class="mt-6 flex justify-center gap-3">
-            <button type="button" class="ca-btn-secondary" @click="showLogoutConfirm = false">Batal</button>
-            <button type="button" class="rounded-lg bg-rose-500 px-5 py-2 text-sm font-semibold text-white hover:bg-rose-600 transition" @click="handleLogout">Ya, Keluar</button>
+            <button type="button" class="ca-btn-secondary" @click="showLogoutConfirm = false">{{ tc('common.cancel') }}</button>
+            <button type="button" class="rounded-lg bg-rose-500 px-5 py-2 text-sm font-semibold text-white hover:bg-rose-600 transition" @click="handleLogout">{{ tc('layout.logoutConfirm') }}</button>
           </div>
         </div>
       </div>

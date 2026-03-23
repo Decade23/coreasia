@@ -6,6 +6,7 @@ const id = route.params.id as string
 const { currentItem, loading, saving, error, fetchArticle, updateArticle, publishArticle, unpublishArticle } = useArticles()
 const { uploadImage, uploading } = useImageUpload()
 const toast = useToast()
+const { tc, dateLocale } = useConsoleI18n()
 
 const form = ref({
   title: '',
@@ -43,9 +44,7 @@ onMounted(async () => {
   }
 })
 
-const handleImageUpload = async (e: Event) => {
-  const file = (e.target as HTMLInputElement).files?.[0]
-  if (!file) return
+const handleImageUpload = async (file: File) => {
   const url = await uploadImage(file)
   if (url) form.value.featured_image = url
 }
@@ -61,7 +60,7 @@ const handleSubmit = async () => {
   const ok = await updateArticle(id, data)
   if (ok) {
     await fetchArticle(id)
-    toast.success('Perubahan berhasil disimpan')
+    toast.success(tc('feedback.articleUpdated'))
   }
 }
 
@@ -83,27 +82,25 @@ const statusColor = (status: string) => {
 }
 
 const statusLabel = (status: string) => {
-  if (status === 'published') return 'Published'
-  return 'Draft'
+  if (status === 'published') return tc('articles.previewStatusPublished')
+  return tc('articles.previewStatusDraft')
 }
 
 const formatDate = (d: string | null) => {
   if (!d) return '-'
-  return new Date(d).toLocaleString('id-ID', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+  return new Date(d).toLocaleString(dateLocale.value, { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
 </script>
 
 <template>
   <div>
-    <div class="mb-6 flex items-center gap-3">
-      <NuxtLink to="/console/articles" class="rounded-lg p-1.5 text-[var(--ca-muted)] hover:bg-[var(--ca-panel-bg-strong)]">
-        <Icon name="lucide:arrow-left" class="h-5 w-5" />
-      </NuxtLink>
-      <div class="flex-1">
-        <h1 class="font-display text-2xl font-bold text-[var(--ca-text)]">Edit Artikel</h1>
-        <p v-if="currentItem" class="mt-1 text-sm text-[var(--ca-muted)]">{{ currentItem.title }}</p>
-      </div>
-    </div>
+    <ConsolePageHeader
+      :kicker="tc('articles.kicker')"
+      icon="lucide:file-pen-line"
+      :title="tc('articles.editTitle')"
+      :description="currentItem?.title || tc('articles.listDescription')"
+      back-to="/console/articles"
+    />
 
     <div v-if="loading" class="ca-card p-10 text-center">
       <Icon name="lucide:loader-2" class="mx-auto h-8 w-8 animate-spin text-[var(--ca-subtle)]" />
@@ -118,7 +115,7 @@ const formatDate = (d: string | null) => {
               {{ statusLabel(currentItem.status) }}
             </span>
             <span v-if="currentItem.published_at" class="text-xs text-[var(--ca-muted)]">
-              Dipublikasikan: {{ formatDate(currentItem.published_at) }}
+              {{ tc('articles.publishedAt', { date: formatDate(currentItem.published_at) }) }}
             </span>
           </div>
           <div class="flex items-center gap-2">
@@ -130,7 +127,7 @@ const formatDate = (d: string | null) => {
               @click="showPublishConfirm = true"
             >
               <Icon name="lucide:globe" class="h-3.5 w-3.5" />
-              Publish
+              {{ tc('common.publish') }}
             </button>
             <button
               v-if="currentItem.status === 'published'"
@@ -140,7 +137,7 @@ const formatDate = (d: string | null) => {
               @click="showUnpublishConfirm = true"
             >
               <Icon name="lucide:eye-off" class="h-3.5 w-3.5" />
-              Unpublish
+              {{ tc('common.unpublish') }}
             </button>
           </div>
         </div>
@@ -149,41 +146,44 @@ const formatDate = (d: string | null) => {
       <form class="mx-auto max-w-4xl" @submit.prevent="handleSubmit">
         <div class="ca-card p-6">
           <div class="space-y-4">
-            <BaseInput id="title" v-model="form.title" label="Judul" placeholder="Judul artikel" required />
-            <BaseInput id="slug" v-model="form.slug" label="Slug" placeholder="judul-artikel" required />
-            <BaseTextarea id="description" v-model="form.description" label="Deskripsi" rows="2" required />
+            <BaseInput id="title" v-model="form.title" :label="tc('articles.titleField')" placeholder="Judul artikel" required />
+            <BaseInput id="slug" v-model="form.slug" :label="tc('articles.slugField')" placeholder="judul-artikel" required />
+            <BaseTextarea id="description" v-model="form.description" :label="tc('articles.descriptionField')" rows="2" required />
 
             <!-- Content WYSIWYG editor -->
             <RichEditor
               id="content"
               v-model="form.content"
-              label="Konten"
+              :label="tc('articles.content')"
               placeholder="Tulis konten artikel di sini..."
               min-height="400px"
               required
             />
 
             <div class="grid gap-4 sm:grid-cols-2">
-              <BaseInput id="category" v-model="form.category" label="Kategori" required />
-              <BaseInput id="tags" v-model="form.tags" label="Tags" placeholder="seo, web, bisnis" />
+              <BaseInput id="category" v-model="form.category" :label="tc('articles.categoryField')" required />
+              <BaseInput id="tags" v-model="form.tags" :label="tc('articles.tagsField')" placeholder="seo, web, bisnis" />
             </div>
 
             <div class="grid gap-4 sm:grid-cols-2">
-              <BaseInput id="author" v-model="form.author" label="Penulis" />
-              <BaseInput id="read_time" v-model.number="form.read_time" label="Waktu Baca (menit)" type="number" />
+              <BaseInput id="author" v-model="form.author" :label="tc('articles.authorField')" />
+              <BaseInput id="read_time" v-model.number="form.read_time" :label="tc('articles.readTimeField')" type="number" />
             </div>
 
-            <div>
-              <label class="ca-field-label">Featured Image</label>
-              <div class="flex items-center gap-3">
-                <input type="file" accept="image/jpeg,image/png,image/webp" class="ca-field-control border-[color:var(--ca-border)] text-sm" @change="handleImageUpload" />
-                <span v-if="uploading" class="text-xs text-[var(--ca-muted)]">Mengupload...</span>
-              </div>
-              <img v-if="form.featured_image" :src="form.featured_image" class="mt-2 h-32 rounded-lg object-cover" />
-            </div>
+            <BaseFileInput
+              id="featured-image-edit"
+              :label="tc('articles.featuredImage')"
+              accept="image/jpeg,image/png,image/webp"
+              :helper-text="tc('articles.featuredImageHelp')"
+              :button-text="tc('common.chooseFile')"
+              :loading="uploading"
+              :preview-url="form.featured_image || null"
+              preview-alt="Featured image preview"
+              @select="handleImageUpload"
+            />
 
             <details class="rounded-xl border border-[color:var(--ca-border)] p-4">
-              <summary class="cursor-pointer text-sm font-semibold text-[var(--ca-muted)]">SEO Settings</summary>
+              <summary class="cursor-pointer text-sm font-semibold text-[var(--ca-muted)]">{{ tc('articles.seoTitle') }}</summary>
               <div class="mt-3 space-y-3">
                 <BaseInput id="seo_title" v-model="form.seo_title" label="SEO Title" />
                 <BaseTextarea id="seo_description" v-model="form.seo_description" label="SEO Description" rows="2" />
@@ -194,9 +194,9 @@ const formatDate = (d: string | null) => {
           <p v-if="error" class="mt-3 text-sm text-rose-400">{{ error }}</p>
 
           <div class="mt-6 flex justify-end gap-3">
-            <NuxtLink to="/console/articles" class="ca-btn-secondary">Batal</NuxtLink>
+            <NuxtLink to="/console/articles" class="ca-btn-secondary">{{ tc('common.cancel') }}</NuxtLink>
             <button type="submit" class="ca-btn-primary" :disabled="saving">
-              {{ saving ? 'Menyimpan...' : 'Simpan Perubahan' }}
+              {{ saving ? tc('common.processing') : tc('common.saveChanges') }}
             </button>
           </div>
         </div>
@@ -209,15 +209,15 @@ const formatDate = (d: string | null) => {
         <div class="ca-card w-full max-w-md p-6">
           <h3 class="font-display text-lg font-bold text-[var(--ca-text)]">
             <Icon name="lucide:globe" class="mr-2 inline h-5 w-5 text-emerald-400" />
-            Publish Artikel?
+            {{ tc('articles.publishTitle') }}
           </h3>
           <p class="mt-2 text-sm text-[var(--ca-muted)]">
-            Artikel <strong>{{ currentItem?.title }}</strong> akan ditampilkan di halaman publik dan bisa diakses oleh pengunjung.
+            {{ tc('articles.publishDescription', { title: currentItem?.title || '-' }) }}
           </p>
           <div class="mt-6 flex justify-end gap-3">
-            <button type="button" class="ca-btn-secondary" @click="showPublishConfirm = false">Batal</button>
+            <button type="button" class="ca-btn-secondary" @click="showPublishConfirm = false">{{ tc('common.cancel') }}</button>
             <button type="button" class="rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-600" :disabled="saving" @click="handlePublish">
-              {{ saving ? 'Publishing...' : 'Publish' }}
+              {{ saving ? tc('articles.publishing') : tc('common.publish') }}
             </button>
           </div>
         </div>
@@ -230,15 +230,15 @@ const formatDate = (d: string | null) => {
         <div class="ca-card w-full max-w-md p-6">
           <h3 class="font-display text-lg font-bold text-[var(--ca-text)]">
             <Icon name="lucide:eye-off" class="mr-2 inline h-5 w-5 text-amber-400" />
-            Unpublish Artikel?
+            {{ tc('articles.unpublishTitle') }}
           </h3>
           <p class="mt-2 text-sm text-[var(--ca-muted)]">
-            Artikel <strong>{{ currentItem?.title }}</strong> akan dikembalikan ke draft dan tidak tampil di halaman publik.
+            {{ tc('articles.unpublishDescription', { title: currentItem?.title || '-' }) }}
           </p>
           <div class="mt-6 flex justify-end gap-3">
-            <button type="button" class="ca-btn-secondary" @click="showUnpublishConfirm = false">Batal</button>
+            <button type="button" class="ca-btn-secondary" @click="showUnpublishConfirm = false">{{ tc('common.cancel') }}</button>
             <button type="button" class="ca-btn-primary" :disabled="saving" @click="handleUnpublish">
-              {{ saving ? 'Processing...' : 'Unpublish' }}
+              {{ saving ? tc('common.processing') : tc('common.unpublish') }}
             </button>
           </div>
         </div>

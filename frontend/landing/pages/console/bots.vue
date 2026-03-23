@@ -3,6 +3,7 @@ definePageMeta({ layout: 'console', middleware: 'console' })
 
 const { items, loading, saving, error, fetchBots, createBot, updateBot, deleteBot, triggerBot } = useBotSchedules()
 const toast = useToast()
+const { tc, dateLocale } = useConsoleI18n()
 
 const showFormModal = ref(false)
 const showDeleteConfirm = ref(false)
@@ -27,9 +28,9 @@ const formData = ref({
   auto_image: false,
 })
 
-const botTypeOptions = [
+const botTypeOptions = computed(() => [
   { label: 'Article Generator', value: 'article_generator' },
-]
+])
 
 const timezoneOptions = [
   { label: 'WIB (Asia/Jakarta)', value: 'Asia/Jakarta' },
@@ -40,12 +41,12 @@ const timezoneOptions = [
 
 const api = useAdminApi()
 
-const providerOptions = [
-  { label: 'Claude (Anthropic)', value: 'claude' },
-  { label: 'OpenAI', value: 'openai' },
-  { label: 'Groq', value: 'groq' },
-  { label: 'Google Gemini', value: 'gemini' },
-]
+const providerOptions = computed(() => [
+  { label: tc('providers.claude'), value: 'claude' },
+  { label: tc('providers.openai'), value: 'openai' },
+  { label: tc('providers.groq'), value: 'groq' },
+  { label: tc('providers.gemini'), value: 'gemini' },
+])
 
 // Dynamic model list fetched from provider API
 const modelOptions = ref<{ label: string; value: string }[]>([])
@@ -61,26 +62,26 @@ const fetchModels = async (provider: string) => {
       modelOptions.value = res.data.map(m => ({ label: m.name, value: m.id }))
     } else {
       modelOptions.value = []
-      modelsError.value = 'Tidak ada model tersedia. Pastikan API key sudah dikonfigurasi.'
+      modelsError.value = tc('apiKeys.modelsError')
     }
   } catch {
     modelOptions.value = []
-    modelsError.value = 'Gagal mengambil daftar model. Pastikan API key untuk provider ini sudah ditambahkan.'
+    modelsError.value = tc('apiKeys.modelsError')
   } finally {
     modelsLoading.value = false
   }
 }
 
-const toneOptions = [
-  { label: 'Profesional', value: 'professional' },
-  { label: 'Kasual', value: 'casual' },
-  { label: 'Informatif', value: 'informative' },
-]
+const toneOptions = computed(() => [
+  { label: tc('tones.professional'), value: 'professional' },
+  { label: tc('tones.casual'), value: 'casual' },
+  { label: tc('tones.informative'), value: 'informative' },
+])
 
-const languageOptions = [
-  { label: 'Bahasa Indonesia', value: 'id' },
-  { label: 'English', value: 'en' },
-]
+const languageOptions = computed(() => [
+  { label: tc('languages.id'), value: 'id' },
+  { label: tc('languages.en'), value: 'en' },
+])
 
 watch(() => formData.value.provider, (provider) => {
   if (initializingForm.value) return
@@ -195,9 +196,9 @@ const handleTrigger = async (b: any) => {
       if (bot && bot.last_status !== 'running') {
         triggeringBot.value = null
         if (bot.last_status === 'error') {
-          toast.error(bot.last_error || 'Bot gagal menjalankan tugas')
+          toast.error(bot.last_error || tc('feedback.botRunFailed'))
         } else if (bot.last_status === 'success') {
-          toast.success('Bot berhasil menyelesaikan tugas')
+          toast.success(tc('bots.triggered'))
           triggerSuccess.value = b.id
           setTimeout(() => { triggerSuccess.value = null }, 3000)
         }
@@ -234,17 +235,17 @@ const statusColor = (status: string) => {
 
 const statusLabel = (status: string) => {
   const map: Record<string, string> = {
-    idle: 'Menunggu',
-    running: 'Berjalan',
-    success: 'Berhasil',
-    error: 'Gagal',
+    idle: tc('bots.statuses.idle'),
+    running: tc('bots.statuses.running'),
+    success: tc('bots.statuses.success'),
+    error: tc('bots.statuses.error'),
   }
   return map[status] || status
 }
 
 const formatDate = (d: string | null) => {
   if (!d) return '-'
-  return new Date(d).toLocaleString('id-ID', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+  return new Date(d).toLocaleString(dateLocale.value, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
 }
 
 const configLabel = (b: any) => {
@@ -256,16 +257,19 @@ const configLabel = (b: any) => {
 
 <template>
   <div>
-    <div class="mb-6 flex items-center justify-between">
-      <div>
-        <h1 class="font-display text-2xl font-bold text-[var(--ca-text)]">Bot Scheduler</h1>
-        <p class="mt-1 text-sm text-[var(--ca-muted)]">Kelola bot otomatis untuk generate konten</p>
-      </div>
-      <button type="button" class="ca-btn-primary" @click="openCreate">
-        <Icon name="lucide:plus" class="h-4 w-4" />
-        Tambah Bot
-      </button>
-    </div>
+    <ConsolePageHeader
+      :kicker="tc('bots.kicker')"
+      icon="lucide:bot"
+      :title="tc('bots.title')"
+      :description="tc('bots.description')"
+    >
+      <template #actions>
+        <button type="button" class="ca-btn-primary" @click="openCreate">
+          <Icon name="lucide:plus" class="h-4 w-4" />
+          {{ tc('bots.add') }}
+        </button>
+      </template>
+    </ConsolePageHeader>
 
     <div v-if="loading" class="ca-card p-10 text-center">
       <Icon name="lucide:loader-2" class="mx-auto h-8 w-8 animate-spin text-[var(--ca-subtle)]" />
@@ -273,8 +277,8 @@ const configLabel = (b: any) => {
 
     <div v-else-if="!items.length" class="ca-card p-10 text-center">
       <Icon name="lucide:bot" class="mx-auto h-12 w-12 text-[var(--ca-subtle)]" />
-      <p class="mt-3 text-sm text-[var(--ca-muted)]">Belum ada bot scheduler</p>
-      <button type="button" class="ca-btn-primary mt-4" @click="openCreate">Tambah Bot Pertama</button>
+      <p class="mt-3 text-sm text-[var(--ca-muted)]">{{ tc('bots.empty') }}</p>
+      <button type="button" class="ca-btn-primary mt-4" @click="openCreate">{{ tc('bots.emptyAction') }}</button>
     </div>
 
     <div v-else class="space-y-4">
@@ -305,10 +309,10 @@ const configLabel = (b: any) => {
                     {{ configLabel(b).model.split('/').pop() }}
                   </span>
                 </template>
-                <span v-else class="rounded bg-blue-500/10 px-1.5 py-0.5 text-[0.65rem] text-blue-400">
-                  <Icon name="lucide:settings" class="mr-0.5 inline h-3 w-3" />
-                  Default AI Settings
-                </span>
+                  <span v-else class="rounded bg-blue-500/10 px-1.5 py-0.5 text-[0.65rem] text-blue-400">
+                    <Icon name="lucide:settings" class="mr-0.5 inline h-3 w-3" />
+                    {{ tc('bots.useDefault') }}
+                  </span>
                 <span>
                   <Icon name="lucide:clock" class="mr-0.5 inline h-3 w-3" />
                   {{ b.schedule }} {{ b.timezone === 'Asia/Jakarta' ? 'WIB' : b.timezone }}
@@ -316,9 +320,9 @@ const configLabel = (b: any) => {
               </div>
             </div>
           </div>
-          <div class="flex items-center gap-1">
+        <div class="flex items-center gap-1">
             <!-- Trigger -->
-            <CaTooltip :text="triggeringBot === b.id ? 'Sedang berjalan...' : triggerSuccess === b.id ? 'Berhasil dipicu!' : 'Jalankan sekarang'" position="bottom">
+            <CaTooltip :text="triggeringBot === b.id ? tc('bots.running') : triggerSuccess === b.id ? tc('bots.triggered') : tc('bots.runNow')" position="bottom">
               <button
                 type="button"
                 class="rounded-lg p-1.5 transition"
@@ -334,7 +338,7 @@ const configLabel = (b: any) => {
               </button>
             </CaTooltip>
             <!-- Toggle active/inactive -->
-            <CaTooltip :text="b.is_active ? 'Nonaktifkan jadwal' : 'Aktifkan jadwal'" position="bottom">
+            <CaTooltip :text="b.is_active ? tc('common.disabled') : tc('common.enabled')" position="bottom">
               <button
                 type="button"
                 class="rounded-lg p-1.5 transition"
@@ -345,13 +349,13 @@ const configLabel = (b: any) => {
               </button>
             </CaTooltip>
             <!-- Edit -->
-            <CaTooltip text="Edit konfigurasi" position="bottom">
+            <CaTooltip :text="tc('bots.editConfig')" position="bottom">
               <button type="button" class="rounded-lg p-1.5 text-[var(--ca-muted)] hover:bg-[var(--ca-panel-bg-strong)]" @click="openEdit(b)">
                 <Icon name="lucide:edit-3" class="h-4 w-4" />
               </button>
             </CaTooltip>
             <!-- Delete -->
-            <CaTooltip text="Hapus bot" position="bottom">
+            <CaTooltip :text="tc('common.delete')" position="bottom">
               <button type="button" class="rounded-lg p-1.5 text-rose-400 hover:bg-rose-500/10" @click="handleDelete(b)">
                 <Icon name="lucide:trash-2" class="h-4 w-4" />
               </button>
@@ -362,26 +366,26 @@ const configLabel = (b: any) => {
         <!-- Status bar -->
         <div class="mt-4 flex flex-wrap items-center gap-4 rounded-lg border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] px-4 py-2.5">
           <div class="flex items-center gap-2">
-            <span class="text-[0.65rem] font-semibold uppercase tracking-wider text-[var(--ca-subtle)]">Terakhir</span>
+            <span class="text-[0.65rem] font-semibold uppercase tracking-wider text-[var(--ca-subtle)]">{{ tc('bots.statusLast') }}</span>
             <span v-if="triggeringBot === b.id" class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[0.6rem] font-bold uppercase bg-blue-500/10 text-blue-400">
               <Icon name="lucide:loader-2" class="h-3 w-3 animate-spin" />
-              Menjalankan...
+              {{ tc('bots.running') }}
             </span>
             <span v-else class="rounded-full px-2 py-0.5 text-[0.6rem] font-bold uppercase" :class="statusColor(b.last_status)">
               {{ statusLabel(b.last_status) }}
             </span>
           </div>
           <div class="flex items-center gap-2">
-            <span class="text-[0.65rem] font-semibold uppercase tracking-wider text-[var(--ca-subtle)]">Waktu</span>
+            <span class="text-[0.65rem] font-semibold uppercase tracking-wider text-[var(--ca-subtle)]">{{ tc('bots.statusTime') }}</span>
             <span class="text-xs text-[var(--ca-muted)]">{{ formatDate(b.last_run_at) }}</span>
           </div>
           <div class="flex items-center gap-2">
-            <span class="text-[0.65rem] font-semibold uppercase tracking-wider text-[var(--ca-subtle)]">Total Run</span>
+            <span class="text-[0.65rem] font-semibold uppercase tracking-wider text-[var(--ca-subtle)]">{{ tc('bots.statusRuns') }}</span>
             <span class="text-xs font-semibold text-[var(--ca-text)]">{{ b.run_count }}</span>
           </div>
           <CaTooltip v-if="b.last_error" :text="b.last_error" position="bottom">
             <div class="flex items-center gap-2">
-              <span class="text-[0.65rem] font-semibold uppercase tracking-wider text-[var(--ca-subtle)]">Error</span>
+              <span class="text-[0.65rem] font-semibold uppercase tracking-wider text-[var(--ca-subtle)]">{{ tc('bots.statusError') }}</span>
               <span class="text-xs text-rose-400 truncate max-w-[200px]">{{ b.last_error }}</span>
             </div>
           </CaTooltip>
@@ -395,56 +399,46 @@ const configLabel = (b: any) => {
         <div class="ca-card w-full max-w-lg max-h-[90vh] overflow-y-auto p-6">
           <h3 class="font-display text-lg font-bold text-[var(--ca-text)]">
             <Icon name="lucide:bot" class="mr-2 inline h-5 w-5 text-amber-400" />
-            {{ editingBot ? 'Edit Bot' : 'Tambah Bot' }}
+            {{ editingBot ? tc('bots.formEdit') : tc('bots.formCreate') }}
           </h3>
           <form class="mt-4 space-y-3" autocomplete="off" @submit.prevent="handleSubmit">
-            <BaseInput id="bot-name" v-model="formData.name" label="Nama Bot" placeholder="Article Generator Harian" required autocomplete="off" />
+            <BaseInput id="bot-name" v-model="formData.name" :label="tc('bots.name')" placeholder="Article Generator Harian" required autocomplete="off" />
             <SearchSelect
               v-if="!editingBot"
               id="bot-type"
               v-model="formData.bot_type"
-              label="Tipe Bot"
+              :label="tc('bots.type')"
               :options="botTypeOptions"
               required
             />
             <div class="grid gap-3 sm:grid-cols-2">
-              <BaseInput id="bot-schedule" v-model="formData.schedule" label="Jadwal (HH:MM)" placeholder="08:00" required autocomplete="off" />
+              <BaseInput id="bot-schedule" v-model="formData.schedule" :label="tc('bots.schedule')" placeholder="08:00" required autocomplete="off" />
               <SearchSelect
                 id="bot-timezone"
                 v-model="formData.timezone"
-                label="Timezone"
+                :label="tc('bots.timezone')"
                 :options="timezoneOptions"
                 required
               />
             </div>
 
             <!-- AI Settings Toggle -->
-            <div class="rounded-lg border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-3 mt-1">
-              <label class="flex items-center gap-3 cursor-pointer select-none" @click.prevent="handleToggleDefaultAI(!useDefaultAI)">
-                <span
-                  class="relative inline-flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-colors"
-                  :class="useDefaultAI ? 'border-amber-400 bg-amber-400' : 'border-[var(--ca-border)] bg-transparent'"
-                >
-                  <Icon v-if="useDefaultAI" name="lucide:check" class="h-3.5 w-3.5 text-black" />
-                </span>
-                <div>
-                  <span class="text-sm font-medium text-[var(--ca-text)]">Gunakan pengaturan AI default</span>
-                  <p class="text-[0.68rem] text-[var(--ca-muted)] mt-0.5">
-                    Mengikuti konfigurasi dari menu
-                    <NuxtLink to="/console/ai-settings" class="text-amber-400 hover:underline" @click.stop>Pengaturan AI</NuxtLink>
-                  </p>
-                </div>
-              </label>
-            </div>
+            <BaseSwitch
+              id="bot-default-ai"
+              :model-value="useDefaultAI"
+              :label="tc('bots.defaultAiTitle')"
+              :description="tc('bots.defaultAiDesc')"
+              @update:model-value="handleToggleDefaultAI"
+            />
 
             <!-- AI Provider & Model (only when override) -->
             <template v-if="!useDefaultAI">
-              <p class="text-[0.65rem] font-semibold uppercase tracking-widest text-[var(--ca-subtle)] pt-1">Override Konfigurasi AI</p>
+              <p class="text-[0.65rem] font-semibold uppercase tracking-widest text-[var(--ca-subtle)] pt-1">{{ tc('bots.overrideTitle') }}</p>
               <div class="grid gap-3 sm:grid-cols-2">
                 <SearchSelect
                   id="bot-provider"
                   v-model="formData.provider"
-                  label="Provider"
+                  :label="tc('apiKeys.provider')"
                   :options="providerOptions"
                   required
                 />
@@ -452,10 +446,10 @@ const configLabel = (b: any) => {
                   <SearchSelect
                     id="bot-model"
                     v-model="formData.model"
-                    label="Model"
+                    :label="tc('aiSettings.modelLabel')"
                     :options="modelOptions"
                     :disabled="modelsLoading"
-                    :placeholder="modelsLoading ? 'Memuat model...' : 'Pilih model'"
+                    :placeholder="modelsLoading ? tc('aiSettings.loadingModels') : tc('aiSettings.modelPlaceholder')"
                     required
                   />
                   <p v-if="modelsError" class="mt-1 text-[0.65rem] text-amber-400">{{ modelsError }}</p>
@@ -467,39 +461,31 @@ const configLabel = (b: any) => {
               <SearchSelect
                 id="bot-tone"
                 v-model="formData.tone"
-                label="Tone"
+                :label="tc('bots.tone')"
                 :options="toneOptions"
               />
               <SearchSelect
                 id="bot-language"
                 v-model="formData.language"
-                label="Bahasa"
+                :label="tc('bots.language')"
                 :options="languageOptions"
               />
-              <BaseInput id="bot-wordcount" v-model.number="formData.word_count" label="Jumlah Kata" type="number" placeholder="1200" autocomplete="off" />
+              <BaseInput id="bot-wordcount" v-model.number="formData.word_count" :label="tc('bots.wordCount')" type="number" placeholder="1200" autocomplete="off" />
             </div>
 
             <!-- Auto Image -->
-            <div class="rounded-lg border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-3">
-              <label class="flex items-center gap-3 cursor-pointer select-none" @click.prevent="formData.auto_image = !formData.auto_image">
-                <span
-                  class="relative inline-flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-colors"
-                  :class="formData.auto_image ? 'border-amber-400 bg-amber-400' : 'border-[var(--ca-border)] bg-transparent'"
-                >
-                  <Icon v-if="formData.auto_image" name="lucide:check" class="h-3.5 w-3.5 text-black" />
-                </span>
-                <div>
-                  <span class="text-sm font-medium text-[var(--ca-text)]">Sertakan gambar otomatis</span>
-                  <p class="text-[0.68rem] text-[var(--ca-muted)] mt-0.5">Ambil featured image dari Unsplash berdasarkan keywords artikel</p>
-                </div>
-              </label>
-            </div>
+            <BaseSwitch
+              id="bot-auto-image"
+              v-model="formData.auto_image"
+              :label="tc('bots.autoImageTitle')"
+              :description="tc('bots.autoImageDesc')"
+            />
 
             <p v-if="error" class="text-sm text-rose-400">{{ error }}</p>
 
             <div class="flex justify-end gap-3 pt-2">
-              <button type="button" class="ca-btn-secondary" @click="showFormModal = false">Batal</button>
-              <button type="submit" class="ca-btn-primary" :disabled="saving">{{ saving ? 'Menyimpan...' : 'Simpan' }}</button>
+              <button type="button" class="ca-btn-secondary" @click="showFormModal = false">{{ tc('common.cancel') }}</button>
+              <button type="submit" class="ca-btn-primary" :disabled="saving">{{ saving ? tc('common.processing') : tc('common.save') }}</button>
             </div>
           </form>
         </div>
@@ -510,11 +496,11 @@ const configLabel = (b: any) => {
     <Teleport to="body">
       <div v-if="showDeleteConfirm" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" @click.self="showDeleteConfirm = false">
         <div class="ca-card w-full max-w-md p-6">
-          <h3 class="font-display text-lg font-bold text-[var(--ca-text)]">Hapus Bot?</h3>
-          <p class="mt-2 text-sm text-[var(--ca-muted)]">Apakah yakin menghapus <strong>{{ deletingBot?.name }}</strong>? Bot akan berhenti berjalan.</p>
+          <h3 class="font-display text-lg font-bold text-[var(--ca-text)]">{{ tc('bots.deleteTitle') }}</h3>
+          <p class="mt-2 text-sm text-[var(--ca-muted)]">{{ tc('bots.deleteDescription', { name: deletingBot?.name || '-' }) }}</p>
           <div class="mt-6 flex justify-end gap-3">
-            <button type="button" class="ca-btn-secondary" @click="showDeleteConfirm = false">Batal</button>
-            <button type="button" class="rounded-lg bg-rose-500 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-600" @click="confirmDelete">Hapus</button>
+            <button type="button" class="ca-btn-secondary" @click="showDeleteConfirm = false">{{ tc('common.cancel') }}</button>
+            <button type="button" class="rounded-lg bg-rose-500 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-600" @click="confirmDelete">{{ tc('common.delete') }}</button>
           </div>
         </div>
       </div>

@@ -5,6 +5,7 @@ const { createArticle, publishArticle, saving, error } = useArticles()
 const { generateArticle, generating, error: aiError } = useAIGenerate()
 const { uploadImage, uploading } = useImageUpload()
 const toast = useToast()
+const { tc } = useConsoleI18n()
 
 const form = ref({
   title: '',
@@ -31,18 +32,14 @@ watch(() => form.value.title, (val) => {
   }
 })
 
-const handleImageUpload = async (e: Event) => {
-  const file = (e.target as HTMLInputElement).files?.[0]
-  if (!file) return
+const handleImageUpload = async (file: File) => {
   const url = await uploadImage(file)
   if (url) form.value.featured_image = url
 }
 
 // AI modal featured image
 const aiImageUploading = ref(false)
-const handleAIImageUpload = async (e: Event) => {
-  const file = (e.target as HTMLInputElement).files?.[0]
-  if (!file) return
+const handleAIImageUpload = async (file: File) => {
   aiImageUploading.value = true
   const url = await uploadImage(file)
   if (url) form.value.featured_image = url
@@ -89,11 +86,11 @@ const handleSaveAndPublish = async () => {
     const res = await api.post<{ id: string }>('/admin/articles', data)
     if (res.data?.id) {
       await publishArticle(res.data.id)
-      toast.success('Artikel berhasil dibuat dan dipublish')
+      toast.success(tc('feedback.articleCreatedAndPublished'))
       navigateTo('/console/articles')
     }
   } catch (err: any) {
-    toast.error(err?.data?.errors?.message || 'Gagal membuat artikel')
+    toast.error(err?.data?.errors?.message || tc('feedback.articleCreateFailed'))
   } finally {
     saving.value = false
   }
@@ -129,15 +126,13 @@ const applySuggestion = (s: typeof topicSuggestions[0]) => {
 
 <template>
   <div>
-    <div class="mb-6 flex items-center gap-3">
-      <NuxtLink to="/console/articles" class="rounded-lg p-1.5 text-[var(--ca-muted)] hover:bg-[var(--ca-panel-bg-strong)]">
-        <Icon name="lucide:arrow-left" class="h-5 w-5" />
-      </NuxtLink>
-      <div>
-        <h1 class="font-display text-2xl font-bold text-[var(--ca-text)]">Buat Artikel</h1>
-        <p class="mt-1 text-sm text-[var(--ca-muted)]">Tulis artikel baru atau generate dengan AI</p>
-      </div>
-    </div>
+    <ConsolePageHeader
+      :kicker="tc('articles.kicker')"
+      icon="lucide:file-pen-line"
+      :title="tc('articles.createTitle')"
+      :description="tc('articles.createDescription')"
+      back-to="/console/articles"
+    />
 
     <form class="mx-auto max-w-4xl" @submit.prevent="handleSubmit">
       <div class="ca-card p-6">
@@ -145,49 +140,52 @@ const applySuggestion = (s: typeof topicSuggestions[0]) => {
         <div class="mb-6 flex flex-wrap gap-2">
           <button type="button" class="ca-btn-secondary text-sm" @click="showAIModal = true">
             <Icon name="lucide:sparkles" class="h-4 w-4" />
-            Generate AI
+            {{ tc('articles.generateAI') }}
           </button>
         </div>
 
         <div class="space-y-4">
-          <BaseInput id="title" v-model="form.title" label="Judul" placeholder="Judul artikel" required />
-          <BaseInput id="slug" v-model="form.slug" label="Slug" placeholder="judul-artikel" required />
+          <BaseInput id="title" v-model="form.title" :label="tc('articles.titleField')" placeholder="Judul artikel" required />
+          <BaseInput id="slug" v-model="form.slug" :label="tc('articles.slugField')" placeholder="judul-artikel" required />
 
-          <BaseTextarea id="description" v-model="form.description" label="Deskripsi" placeholder="Ringkasan singkat untuk meta description" rows="2" required />
+          <BaseTextarea id="description" v-model="form.description" :label="tc('articles.descriptionField')" placeholder="Ringkasan singkat untuk meta description" rows="2" required />
 
           <!-- Content WYSIWYG editor -->
           <RichEditor
             id="content"
             v-model="form.content"
-            label="Konten"
+            :label="tc('articles.content')"
             placeholder="Tulis konten artikel di sini..."
             min-height="400px"
             required
           />
 
           <div class="grid gap-4 sm:grid-cols-2">
-            <BaseInput id="category" v-model="form.category" label="Kategori" placeholder="general" required />
-            <BaseInput id="tags" v-model="form.tags" label="Tags" placeholder="seo, web, bisnis" />
+            <BaseInput id="category" v-model="form.category" :label="tc('articles.categoryField')" placeholder="general" required />
+            <BaseInput id="tags" v-model="form.tags" :label="tc('articles.tagsField')" placeholder="seo, web, bisnis" />
           </div>
 
           <div class="grid gap-4 sm:grid-cols-2">
-            <BaseInput id="author" v-model="form.author" label="Penulis" placeholder="Tim CoreAsia" />
-            <BaseInput id="read_time" v-model.number="form.read_time" label="Waktu Baca (menit)" type="number" />
+            <BaseInput id="author" v-model="form.author" :label="tc('articles.authorField')" placeholder="Tim CoreAsia" />
+            <BaseInput id="read_time" v-model.number="form.read_time" :label="tc('articles.readTimeField')" type="number" />
           </div>
 
           <!-- Featured Image -->
-          <div>
-            <label class="ca-field-label">Featured Image</label>
-            <div class="flex items-center gap-3">
-              <input type="file" accept="image/jpeg,image/png,image/webp" class="ca-field-control border-[color:var(--ca-border)] text-sm" @change="handleImageUpload" />
-              <span v-if="uploading" class="text-xs text-[var(--ca-muted)]">Mengupload...</span>
-            </div>
-            <img v-if="form.featured_image" :src="form.featured_image" class="mt-2 h-32 rounded-lg object-cover" />
-          </div>
+          <BaseFileInput
+            id="featured-image"
+            :label="tc('articles.featuredImage')"
+            accept="image/jpeg,image/png,image/webp"
+            :helper-text="tc('articles.featuredImageHelp')"
+            :button-text="tc('common.chooseFile')"
+            :loading="uploading"
+            :preview-url="form.featured_image || null"
+            preview-alt="Featured image preview"
+            @select="handleImageUpload"
+          />
 
           <!-- SEO -->
           <details class="rounded-xl border border-[color:var(--ca-border)] p-4">
-            <summary class="cursor-pointer text-sm font-semibold text-[var(--ca-muted)]">SEO Settings (opsional)</summary>
+            <summary class="cursor-pointer text-sm font-semibold text-[var(--ca-muted)]">{{ tc('articles.seoOptional') }}</summary>
             <div class="mt-3 space-y-3">
               <BaseInput id="seo_title" v-model="form.seo_title" label="SEO Title" placeholder="Override title untuk search engine" />
               <BaseTextarea id="seo_description" v-model="form.seo_description" label="SEO Description" placeholder="Override meta description" rows="2" />
@@ -198,14 +196,14 @@ const applySuggestion = (s: typeof topicSuggestions[0]) => {
         <p v-if="error" class="mt-3 text-sm text-rose-400">{{ error }}</p>
 
         <div class="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
-          <NuxtLink to="/console/articles" class="ca-btn-secondary">Batal</NuxtLink>
+          <NuxtLink to="/console/articles" class="ca-btn-secondary">{{ tc('common.cancel') }}</NuxtLink>
           <button type="submit" class="ca-btn-secondary" :disabled="saving">
             <Icon name="lucide:save" class="h-4 w-4" />
-            {{ saving ? 'Menyimpan...' : 'Simpan Draft' }}
+            {{ saving ? tc('articles.savingDraft') : tc('articles.saveDraft') }}
           </button>
           <button type="button" class="inline-flex items-center justify-center gap-1.5 rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-600" :disabled="saving" @click="handleSaveAndPublish">
             <Icon name="lucide:globe" class="h-4 w-4" />
-            {{ saving ? 'Publishing...' : 'Simpan & Publish' }}
+            {{ saving ? tc('articles.publishing') : tc('articles.saveAndPublish') }}
           </button>
         </div>
       </div>
@@ -217,14 +215,14 @@ const applySuggestion = (s: typeof topicSuggestions[0]) => {
         <div class="ca-card w-full max-w-lg max-h-[90vh] overflow-y-auto p-6">
           <h3 class="font-display text-lg font-bold text-[var(--ca-text)]">
             <Icon name="lucide:sparkles" class="mr-2 inline h-5 w-5 ca-tone-gold" />
-            Generate Artikel dengan AI
+            {{ tc('articles.aiTitle') }}
           </h3>
 
           <!-- Topic Suggestions -->
           <div class="mt-3">
             <p class="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--ca-muted)]">
               <Icon name="lucide:lightbulb" class="mr-1 inline h-3.5 w-3.5 text-amber-400" />
-              Saran Topik
+              {{ tc('articles.topicSuggestions') }}
             </p>
             <div class="max-h-[180px] overflow-y-auto space-y-1.5 pr-1">
               <button
@@ -248,66 +246,62 @@ const applySuggestion = (s: typeof topicSuggestions[0]) => {
           </div>
 
           <div class="mt-4 space-y-3">
-            <BaseInput id="ai-topic" v-model="aiTopic" label="Topik" placeholder="Apa topik artikel yang ingin digenerate?" required />
-            <BaseInput id="ai-keywords" v-model="aiKeywords" label="Keywords" placeholder="seo, web monitoring, bisnis digital" />
+            <BaseInput id="ai-topic" v-model="aiTopic" :label="tc('articles.topic')" placeholder="Apa topik artikel yang ingin digenerate?" required />
+            <BaseInput id="ai-keywords" v-model="aiKeywords" :label="tc('articles.keywords')" placeholder="seo, web monitoring, bisnis digital" />
             <div class="grid gap-3 sm:grid-cols-2">
               <SearchSelect
                 id="ai-tone"
                 v-model="aiTone"
-                label="Gaya Penulisan"
+                :label="tc('articles.tone')"
                 :options="[
-                  { label: 'Profesional', value: 'professional' },
-                  { label: 'Kasual', value: 'casual' },
-                  { label: 'Informatif', value: 'informative' },
+                  { label: tc('tones.professional'), value: 'professional' },
+                  { label: tc('tones.casual'), value: 'casual' },
+                  { label: tc('tones.informative'), value: 'informative' },
                 ]"
               />
               <SearchSelect
                 id="ai-language"
                 v-model="aiLanguage"
-                label="Bahasa"
+                :label="tc('articles.language')"
                 :options="[
-                  { label: 'Indonesia', value: 'id' },
-                  { label: 'English', value: 'en' },
+                  { label: tc('languages.id'), value: 'id' },
+                  { label: tc('languages.en'), value: 'en' },
                 ]"
               />
             </div>
             <div class="grid gap-3 sm:grid-cols-2">
-              <BaseInput id="ai-wordcount" v-model.number="aiWordCount" label="Jumlah Kata" type="number" />
-              <BaseInput id="ai-category" v-model="aiCategory" label="Kategori" placeholder="general" />
+              <BaseInput id="ai-wordcount" v-model.number="aiWordCount" :label="tc('articles.wordCount')" type="number" />
+              <BaseInput id="ai-category" v-model="aiCategory" :label="tc('articles.categoryField')" placeholder="general" />
             </div>
 
             <!-- Auto Image Toggle -->
-            <div class="rounded-lg border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-3">
-              <label class="flex items-center gap-3 cursor-pointer select-none" @click.prevent="aiAutoImage = !aiAutoImage">
-                <span
-                  class="relative inline-flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-colors"
-                  :class="aiAutoImage ? 'border-amber-400 bg-amber-400' : 'border-[var(--ca-border)] bg-transparent'"
-                >
-                  <Icon v-if="aiAutoImage" name="lucide:check" class="h-3.5 w-3.5 text-black" />
-                </span>
-                <div>
-                  <span class="text-sm font-medium text-[var(--ca-text)]">Sertakan gambar otomatis</span>
-                  <p class="text-[0.68rem] text-[var(--ca-muted)] mt-0.5">Ambil featured image dari Unsplash berdasarkan keywords</p>
-                </div>
-              </label>
-            </div>
+            <BaseSwitch
+              id="ai-auto-image"
+              v-model="aiAutoImage"
+              :label="tc('articles.autoImageTitle')"
+              :description="tc('articles.autoImageDesc')"
+            />
 
             <!-- Featured Image Manual Upload -->
             <div v-if="!aiAutoImage">
-              <label class="ca-field-label">Featured Image (Manual)</label>
-              <p class="mb-1.5 text-[0.68rem] text-[var(--ca-subtle)]">Upload gambar untuk artikel secara manual.</p>
-              <div class="flex items-center gap-3">
-                <input type="file" accept="image/jpeg,image/png,image/webp" class="ca-field-control border-[color:var(--ca-border)] text-sm" @change="handleAIImageUpload" />
-                <span v-if="aiImageUploading" class="text-xs text-[var(--ca-muted)]">Mengupload...</span>
-              </div>
-              <img v-if="form.featured_image" :src="form.featured_image" class="mt-2 h-24 rounded-lg object-cover" />
+              <BaseFileInput
+                id="ai-featured-image"
+                :label="tc('articles.manualImage')"
+                :helper-text="tc('articles.manualImageDesc')"
+                accept="image/jpeg,image/png,image/webp"
+                :button-text="tc('common.chooseFile')"
+                :loading="aiImageUploading"
+                :preview-url="form.featured_image || null"
+                preview-alt="AI image preview"
+                @select="handleAIImageUpload"
+              />
             </div>
           </div>
 
           <p v-if="aiError" class="mt-3 text-sm text-rose-400">{{ aiError }}</p>
 
           <div class="mt-6 flex justify-end gap-3">
-            <button type="button" class="ca-btn-secondary" @click="showAIModal = false">Batal</button>
+            <button type="button" class="ca-btn-secondary" @click="showAIModal = false">{{ tc('common.cancel') }}</button>
             <button
               type="button"
               class="ca-btn-primary"
@@ -323,7 +317,7 @@ const applySuggestion = (s: typeof topicSuggestions[0]) => {
               })"
             >
               <Icon v-if="generating" name="lucide:loader-2" class="h-4 w-4 animate-spin" />
-              {{ generating ? 'Generating...' : 'Generate' }}
+              {{ generating ? tc('articles.generating') : tc('articles.generateAI') }}
             </button>
           </div>
         </div>

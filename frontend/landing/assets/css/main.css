@@ -307,6 +307,86 @@ summary {
         box-shadow: var(--ca-card-soft-shadow);
     }
 
+    .ca-console-header-card {
+        position: relative;
+        border: 1px solid color-mix(in srgb, var(--ca-border) 86%, transparent);
+        background:
+            linear-gradient(135deg, color-mix(in srgb, var(--ca-panel-bg-strong) 94%, transparent) 0%, color-mix(in srgb, var(--ca-panel-bg) 92%, transparent) 100%);
+        box-shadow: var(--ca-card-soft-shadow);
+        isolation: isolate;
+    }
+
+    .ca-console-header-orb {
+        position: absolute;
+        inset: auto;
+        border-radius: 999px;
+        filter: blur(28px);
+        pointer-events: none;
+        opacity: 0.9;
+    }
+
+    .ca-console-header-orb-primary {
+        top: -2rem;
+        right: -1rem;
+        width: 12rem;
+        height: 12rem;
+        background: var(--ca-orb-primary);
+    }
+
+    .ca-console-header-orb-secondary {
+        right: 25%;
+        bottom: -3.5rem;
+        width: 9rem;
+        height: 9rem;
+        background: var(--ca-orb-secondary);
+    }
+
+    .ca-console-stat {
+        @apply rounded-[1.5rem] p-5;
+        border: 1px solid color-mix(in srgb, var(--ca-border) 84%, transparent);
+        background:
+            linear-gradient(180deg, color-mix(in srgb, var(--ca-card-from) 96%, transparent) 0%, color-mix(in srgb, var(--ca-card-to) 98%, transparent) 100%);
+        box-shadow: var(--ca-card-soft-shadow);
+    }
+
+    .ca-console-table-wrap {
+        @apply overflow-x-auto overflow-y-auto rounded-[1.5rem];
+        max-height: 60vh;
+        border: 1px solid color-mix(in srgb, var(--ca-border) 84%, transparent);
+        background: color-mix(in srgb, var(--ca-panel-bg) 96%, transparent);
+        box-shadow: var(--ca-card-soft-shadow);
+    }
+
+    .ca-console-table {
+        @apply w-full;
+    }
+
+    .ca-console-table thead {
+        background: color-mix(in srgb, var(--ca-bg) 92%, transparent);
+    }
+
+    .ca-console-table th {
+        @apply px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider;
+        color: var(--ca-muted);
+    }
+
+    .ca-console-table td {
+        @apply px-4 py-3 text-sm;
+    }
+
+    .ca-console-table tbody tr {
+        border-top: 1px solid color-mix(in srgb, var(--ca-border) 92%, transparent);
+        transition: background-color 160ms ease;
+    }
+
+    .ca-console-table tbody tr:hover {
+        background: color-mix(in srgb, var(--ca-panel-bg-strong) 96%, transparent);
+    }
+
+    .ca-console-toolbar {
+        @apply mb-4 flex flex-col gap-3 sm:flex-row sm:items-center;
+    }
+
     .ca-gradient-text {
         @apply bg-gradient-to-r from-amber-200 via-amber-400 to-amber-600 bg-clip-text text-transparent;
     }

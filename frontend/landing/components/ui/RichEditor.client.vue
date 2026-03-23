@@ -6,6 +6,7 @@ import Link from '@tiptap/extension-link'
 import Placeholder from '@tiptap/extension-placeholder'
 import TextAlign from '@tiptap/extension-text-align'
 import Underline from '@tiptap/extension-underline'
+const { tc } = useConsoleI18n()
 
 const props = defineProps<{
   modelValue: string
@@ -242,19 +243,19 @@ const toolbarGroups = computed<BtnDef[][]>(() => {
             {{ linkUrl ? 'Edit Link' : 'Tambah Link' }}
           </h3>
           <div class="mt-4">
-            <label class="ca-field-label">URL</label>
-            <input
+            <BaseInput
+              id="editor-link-url"
               v-model="linkUrl"
               type="url"
-              class="ca-field-control w-full border-[color:var(--ca-border)]"
+              label="URL"
               placeholder="https://example.com"
               @keydown.enter.prevent="confirmLink"
             />
             <p class="mt-1 text-[0.65rem] text-[var(--ca-subtle)]">Kosongkan untuk menghapus link</p>
           </div>
           <div class="mt-5 flex justify-end gap-3">
-            <button type="button" class="ca-btn-secondary" @click="showLinkModal = false">Batal</button>
-            <button type="button" class="ca-btn-primary" @click="confirmLink">Simpan</button>
+            <button type="button" class="ca-btn-secondary" @click="showLinkModal = false">{{ tc('common.cancel') }}</button>
+            <button type="button" class="ca-btn-primary" @click="confirmLink">{{ tc('common.save') }}</button>
           </div>
         </div>
       </div>
@@ -269,11 +270,11 @@ const toolbarGroups = computed<BtnDef[][]>(() => {
             Tambah Gambar
           </h3>
           <div class="mt-4">
-            <label class="ca-field-label">URL Gambar</label>
-            <input
+            <BaseInput
+              id="editor-image-url"
               v-model="imageUrl"
               type="url"
-              class="ca-field-control w-full border-[color:var(--ca-border)]"
+              label="URL Gambar"
               placeholder="https://example.com/image.jpg"
               @keydown.enter.prevent="confirmImage"
             />
@@ -282,7 +283,7 @@ const toolbarGroups = computed<BtnDef[][]>(() => {
             <img :src="imageUrl" class="h-32 rounded-lg object-cover" @error="($event.target as HTMLImageElement).style.display = 'none'" />
           </div>
           <div class="mt-5 flex justify-end gap-3">
-            <button type="button" class="ca-btn-secondary" @click="showImageModal = false">Batal</button>
+            <button type="button" class="ca-btn-secondary" @click="showImageModal = false">{{ tc('common.cancel') }}</button>
             <button type="button" class="ca-btn-primary" :disabled="!imageUrl" @click="confirmImage">Sisipkan</button>
           </div>
         </div>

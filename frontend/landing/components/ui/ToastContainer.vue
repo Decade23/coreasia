@@ -1,5 +1,6 @@
 <script setup lang="ts">
 const { toasts, removeToast } = useToast()
+const { tc } = useConsoleI18n()
 
 const iconMap: Record<string, string> = {
   success: 'lucide:circle-check-big',
@@ -15,12 +16,12 @@ const styleMap: Record<string, { accent: string; bg: string; icon: string }> = {
   warning: { accent: '#f59e0b', bg: 'border-amber-500/25', icon: 'text-amber-400' },
 }
 
-const titleMap: Record<string, string> = {
-  success: 'Berhasil',
-  error: 'Gagal',
-  info: 'Info',
-  warning: 'Perhatian',
-}
+const titleMap = computed<Record<string, string>>(() => ({
+  success: tc('common.success'),
+  error: tc('common.failure'),
+  info: tc('common.info'),
+  warning: tc('common.warning'),
+}))
 </script>
 
 <template>

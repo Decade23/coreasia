@@ -25,6 +25,7 @@ export interface AIGenerateResult {
 export const useAIGenerate = () => {
   const api = useAdminApi()
   const toast = useToast()
+  const { tc } = useConsoleI18n()
   const generating = ref(false)
   const result = ref<AIGenerateResult | null>(null)
   const error = ref('')
@@ -41,16 +42,16 @@ export const useAIGenerate = () => {
         return null
       }
       result.value = res.data
-      toast.success('Artikel berhasil di-generate')
+      toast.success(tc('feedback.aiGenerated'))
       return res.data
     } catch (err: any) {
       const msg = err?.data?.errors?.message
       if (msg) {
         error.value = msg
       } else if (err?.status === 429 || err?.statusCode === 429) {
-        error.value = 'Rate limit tercapai. Coba lagi dalam beberapa menit.'
+        error.value = tc('feedback.aiRateLimited')
       } else {
-        error.value = 'Gagal generate artikel. Periksa koneksi dan coba lagi.'
+        error.value = tc('feedback.aiGenerateFailed')
       }
       toast.error(error.value)
       return null

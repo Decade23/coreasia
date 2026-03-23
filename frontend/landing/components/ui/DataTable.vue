@@ -31,6 +31,7 @@ const props = withDefaults(defineProps<Props>(), {
   emptyIcon: 'lucide:inbox',
   emptyText: 'Tidak ada data',
 })
+const { tc } = useConsoleI18n()
 
 const emit = defineEmits<{
   'row-click': [row: any]
@@ -117,7 +118,7 @@ const formatDate = (d: string) => {
         class="text-xs text-rose-400 hover:text-rose-300 transition"
         @click="columnFilters = {}"
       >
-        Hapus semua
+        {{ tc('common.clearAll') }}
       </button>
     </div>
 
@@ -171,10 +172,11 @@ const formatDate = (d: string) => {
 
                 <!-- Text/date filter -->
                 <template v-if="!col.type || col.type === 'text' || col.type === 'date'">
-                  <input
+                  <BaseInput
+                    :id="`filter-${col.key}`"
                     v-model="columnFilters[col.key]"
                     type="text"
-                    class="ca-field-control w-full border-[color:var(--ca-border)] text-xs"
+                    input-class="text-xs"
                     :placeholder="col.type === 'date' ? 'Mar 2026, dll' : `Cari ${col.label.toLowerCase()}...`"
                   />
                 </template>
@@ -188,7 +190,7 @@ const formatDate = (d: string) => {
                       :class="!columnFilters[col.key] ? 'bg-[var(--ca-kicker-bg)] text-brand-primary' : 'text-[var(--ca-muted)] hover:bg-[var(--ca-panel-bg-strong)]'"
                       @click="clearFilter(col.key)"
                     >
-                      Semua
+                      {{ tc('common.all') }}
                     </button>
                     <button
                       v-for="opt in getDistinctValues(col.key, col)"
@@ -209,7 +211,7 @@ const formatDate = (d: string) => {
                     class="text-[0.65rem] text-rose-400 hover:text-rose-300"
                     @click="clearFilter(col.key)"
                   >
-                    Reset
+                    {{ tc('common.reset') }}
                   </button>
                 </div>
               </div>

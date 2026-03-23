@@ -13,6 +13,7 @@ interface AdminUser {
 
 export const useAdminAuth = () => {
   const api = useAdminApi()
+  const { tc } = useConsoleI18n()
   const token = useCookie('auth_admin_token', { path: '/' })
   const refreshToken = useCookie('refresh_admin_token', { path: '/' })
 
@@ -43,7 +44,7 @@ export const useAdminAuth = () => {
       user.value = res.data.user
       return true
     } catch (err: any) {
-      loginError.value = err?.data?.errors?.message || 'Login gagal. Periksa email dan password.'
+      loginError.value = err?.data?.errors?.message || tc('feedback.loginFailed')
       return false
     } finally {
       pending.value = false

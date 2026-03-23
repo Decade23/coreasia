@@ -17,6 +17,7 @@ interface APIKeyDomain {
 export const useApiKeys = () => {
   const api = useAdminApi()
   const toast = useToast()
+  const { tc } = useConsoleI18n()
   const items = ref<APIKeyDomain[]>([])
   const loading = ref(false)
   const saving = ref(false)
@@ -29,7 +30,7 @@ export const useApiKeys = () => {
       const res = await api.get<APIKeyDomain[]>('/admin/api-keys')
       items.value = res.data || []
     } catch (err: any) {
-      error.value = err?.data?.errors?.message || 'Gagal memuat API keys'
+      error.value = err?.data?.errors?.message || tc('feedback.apiKeysLoadFailed')
     } finally {
       loading.value = false
     }
@@ -40,10 +41,10 @@ export const useApiKeys = () => {
     error.value = ''
     try {
       await api.post('/admin/api-keys', data)
-      toast.success('API key berhasil ditambahkan')
+      toast.success(tc('feedback.apiKeyCreated'))
       return true
     } catch (err: any) {
-      error.value = err?.data?.errors?.message || 'Gagal membuat API key'
+      error.value = err?.data?.errors?.message || tc('feedback.apiKeyCreateFailed')
       toast.error(error.value)
       return false
     } finally {
@@ -56,10 +57,10 @@ export const useApiKeys = () => {
     error.value = ''
     try {
       await api.put(`/admin/api-keys/${id}`, data)
-      toast.success('API key berhasil diperbarui')
+      toast.success(tc('feedback.apiKeyUpdated'))
       return true
     } catch (err: any) {
-      error.value = err?.data?.errors?.message || 'Gagal update API key'
+      error.value = err?.data?.errors?.message || tc('feedback.apiKeyUpdateFailed')
       toast.error(error.value)
       return false
     } finally {
@@ -72,10 +73,10 @@ export const useApiKeys = () => {
     error.value = ''
     try {
       await api.del(`/admin/api-keys/${id}`)
-      toast.success('API key berhasil dihapus')
+      toast.success(tc('feedback.apiKeyDeleted'))
       return true
     } catch (err: any) {
-      error.value = err?.data?.errors?.message || 'Gagal hapus API key'
+      error.value = err?.data?.errors?.message || tc('feedback.apiKeyDeleteFailed')
       toast.error(error.value)
       return false
     } finally {
@@ -88,11 +89,11 @@ export const useApiKeys = () => {
       const res = await api.get<{ key_value: string }>(`/admin/api-keys/${id}/copy`)
       if (res.data?.key_value) {
         await navigator.clipboard.writeText(res.data.key_value)
-        toast.success('API key berhasil disalin ke clipboard')
+        toast.success(tc('feedback.apiKeyCopied'))
       }
       return res.data?.key_value || null
     } catch {
-      toast.error('Gagal menyalin API key')
+      toast.error(tc('feedback.apiKeyCopyFailed'))
       return null
     }
   }

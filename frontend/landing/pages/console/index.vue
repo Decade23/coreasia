@@ -3,6 +3,7 @@ definePageMeta({ layout: 'console', middleware: 'console' })
 
 const { fetchStats } = useArticles()
 const { items: bots, fetchBots } = useBotSchedules()
+const { tc, dateLocale } = useConsoleI18n()
 const stats = ref<Record<string, number>>({})
 
 onMounted(async () => {
@@ -15,64 +16,73 @@ const botStatusColor = (s: string) => {
   const m: Record<string, string> = { idle: 'text-[var(--ca-muted)]', running: 'text-blue-400', success: 'text-emerald-400', error: 'text-rose-400' }
   return m[s] || m.idle
 }
-const formatBotDate = (d: string | null) => d ? new Date(d).toLocaleString('id-ID', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'
+const formatBotDate = (d: string | null) => d ? new Date(d).toLocaleString(dateLocale.value, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'
 
 const totalArticles = computed(() => Object.values(stats.value).reduce((a, b) => a + b, 0))
 </script>
 
 <template>
   <div>
-    <div class="mb-6">
-      <h1 class="font-display text-2xl font-bold text-[var(--ca-text)]">Dashboard</h1>
-      <p class="mt-1 text-sm text-[var(--ca-muted)]">Ringkasan konten dan aktivitas admin</p>
-    </div>
+    <ConsolePageHeader
+      :kicker="tc('dashboard.kicker')"
+      icon="lucide:layout-dashboard"
+      :title="tc('dashboard.title')"
+      :description="tc('dashboard.description')"
+    >
+      <template #meta>
+        <span class="ca-pill-emerald">
+          <Icon name="lucide:bot" class="h-3.5 w-3.5" />
+          {{ activeBots }} bots {{ tc('common.active') }}
+        </span>
+      </template>
+    </ConsolePageHeader>
 
     <!-- Stats Cards -->
     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      <div class="ca-card p-5">
+      <div class="ca-console-stat">
         <div class="flex items-center gap-3">
           <div class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10">
             <Icon name="lucide:file-text" class="h-5 w-5 ca-tone-gold" />
           </div>
           <div>
             <p class="text-2xl font-bold text-[var(--ca-text)]">{{ totalArticles }}</p>
-            <p class="text-xs text-[var(--ca-muted)]">Total Artikel</p>
+            <p class="text-xs text-[var(--ca-muted)]">{{ tc('dashboard.totalArticles') }}</p>
           </div>
         </div>
       </div>
 
-      <div class="ca-card p-5">
+      <div class="ca-console-stat">
         <div class="flex items-center gap-3">
           <div class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10">
             <Icon name="lucide:check-circle" class="h-5 w-5 ca-tone-emerald" />
           </div>
           <div>
             <p class="text-2xl font-bold text-[var(--ca-text)]">{{ stats.published || 0 }}</p>
-            <p class="text-xs text-[var(--ca-muted)]">Published</p>
+            <p class="text-xs text-[var(--ca-muted)]">{{ tc('dashboard.published') }}</p>
           </div>
         </div>
       </div>
 
-      <div class="ca-card p-5">
+      <div class="ca-console-stat">
         <div class="flex items-center gap-3">
           <div class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-slate-500/10">
             <Icon name="lucide:edit-3" class="h-5 w-5 text-[var(--ca-muted)]" />
           </div>
           <div>
             <p class="text-2xl font-bold text-[var(--ca-text)]">{{ stats.draft || 0 }}</p>
-            <p class="text-xs text-[var(--ca-muted)]">Draft</p>
+            <p class="text-xs text-[var(--ca-muted)]">{{ tc('dashboard.draft') }}</p>
           </div>
         </div>
       </div>
 
-      <div class="ca-card p-5">
+      <div class="ca-console-stat">
         <div class="flex items-center gap-3">
           <div class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-rose-500/10">
             <Icon name="lucide:archive" class="h-5 w-5 text-rose-400" />
           </div>
           <div>
             <p class="text-2xl font-bold text-[var(--ca-text)]">{{ stats.archived || 0 }}</p>
-            <p class="text-xs text-[var(--ca-muted)]">Archived</p>
+            <p class="text-xs text-[var(--ca-muted)]">{{ tc('dashboard.archived') }}</p>
           </div>
         </div>
       </div>
@@ -83,16 +93,16 @@ const totalArticles = computed(() => Object.values(stats.value).reduce((a, b) =>
       <div class="mb-3 flex items-center justify-between">
         <h2 class="font-display text-sm font-semibold text-[var(--ca-text)]">
           <Icon name="lucide:bot" class="mr-1.5 inline h-4 w-4 text-amber-400" />
-          Bot Scheduler
+          {{ tc('dashboard.botSection') }}
         </h2>
-        <NuxtLink to="/console/bots" class="text-xs ca-tone-gold hover:underline">Kelola &rarr;</NuxtLink>
+        <NuxtLink to="/console/bots" class="text-xs ca-tone-gold hover:underline">{{ tc('dashboard.botManage') }} &rarr;</NuxtLink>
       </div>
       <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <NuxtLink
           v-for="b in bots"
           :key="b.id"
           to="/console/bots"
-          class="ca-card flex items-center gap-3 p-4 transition hover:-translate-y-0.5"
+          class="ca-card-soft flex items-center gap-3 rounded-[1.5rem] p-4 transition hover:-translate-y-0.5"
         >
           <div class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg" :class="b.is_active ? 'bg-emerald-500/10' : 'bg-slate-500/10'">
             <Icon name="lucide:bot" class="h-4 w-4" :class="b.is_active ? 'text-emerald-400' : 'text-[var(--ca-subtle)]'" />
@@ -115,8 +125,8 @@ const totalArticles = computed(() => Object.values(stats.value).reduce((a, b) =>
           <Icon name="lucide:plus" class="h-5 w-5 ca-tone-gold" />
         </div>
         <div>
-          <h3 class="font-display font-semibold text-[var(--ca-text)]">Buat Artikel Baru</h3>
-          <p class="text-sm text-[var(--ca-muted)]">Tulis atau generate artikel dengan AI</p>
+          <h3 class="font-display font-semibold text-[var(--ca-text)]">{{ tc('dashboard.createArticle') }}</h3>
+          <p class="text-sm text-[var(--ca-muted)]">{{ tc('dashboard.createArticleDesc') }}</p>
         </div>
       </NuxtLink>
 
@@ -125,8 +135,8 @@ const totalArticles = computed(() => Object.values(stats.value).reduce((a, b) =>
           <Icon name="lucide:list" class="h-5 w-5 ca-tone-emerald" />
         </div>
         <div>
-          <h3 class="font-display font-semibold text-[var(--ca-text)]">Kelola Artikel</h3>
-          <p class="text-sm text-[var(--ca-muted)]">Edit, publish, atau hapus artikel</p>
+          <h3 class="font-display font-semibold text-[var(--ca-text)]">{{ tc('dashboard.manageArticles') }}</h3>
+          <p class="text-sm text-[var(--ca-muted)]">{{ tc('dashboard.manageArticlesDesc') }}</p>
         </div>
       </NuxtLink>
     </div>

@@ -9,6 +9,7 @@ definePageMeta({ layout: false })
 
 const { theme } = useCoreTheme()
 const { login, loginError, pending, isAuthenticated } = useAdminAuth()
+const { tc } = useConsoleI18n()
 const toast = useToast()
 
 const email = ref('')
@@ -44,10 +45,10 @@ useHead(() => ({
 const handleSubmit = async () => {
   const success = await login(email.value, password.value)
   if (success) {
-    toast.success('Login berhasil')
+    toast.success(tc('login.success'))
     navigateTo('/console')
   } else {
-    toast.error('Login gagal. Periksa email dan password.')
+    toast.error(tc('login.failed'))
   }
 }
 
@@ -57,20 +58,27 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="flex min-h-screen items-center justify-center bg-[var(--ca-bg)] px-4">
-    <div class="w-full max-w-md">
+  <div class="relative flex min-h-screen items-center justify-center overflow-hidden bg-[var(--ca-bg)] px-4 py-12">
+    <div class="pointer-events-none absolute inset-0">
+      <div class="ca-console-header-orb ca-console-header-orb-primary left-[8%] top-[8%]" />
+      <div class="ca-console-header-orb ca-console-header-orb-secondary bottom-[8%] right-[12%]" />
+    </div>
+
+    <div class="relative z-[1] w-full max-w-md">
       <div class="mb-8 text-center">
-        <NuxtImg src="/logo.svg" alt="CoreAsia" width="48" height="48" class="mx-auto h-12 w-12" />
-        <h1 class="mt-4 font-display text-2xl font-bold text-[var(--ca-text)]">Admin Login</h1>
-        <p class="mt-1 text-sm text-[var(--ca-muted)]">Masuk ke panel admin CoreAsia</p>
+        <div class="mx-auto inline-flex h-16 w-16 items-center justify-center rounded-[1.75rem] border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] shadow-[var(--ca-card-soft-shadow)]">
+          <NuxtImg src="/logo.svg" alt="CoreAsia" width="48" height="48" class="h-10 w-10" />
+        </div>
+        <h1 class="mt-5 font-display text-3xl font-bold text-[var(--ca-text)]">{{ tc('login.title') }}</h1>
+        <p class="mt-2 text-sm leading-relaxed text-[var(--ca-muted)]">{{ tc('login.description') }}</p>
       </div>
 
-      <form class="ca-card p-6 sm:p-8" @submit.prevent="handleSubmit">
+      <form class="ca-console-header-card rounded-[1.75rem] p-6 sm:p-8" @submit.prevent="handleSubmit">
         <div class="space-y-4">
           <BaseInput
             id="email"
             v-model="email"
-            label="Email"
+            :label="tc('login.email')"
             type="email"
             placeholder="admin@coreasia.id"
             required
@@ -79,8 +87,8 @@ onMounted(() => {
           <BasePasswordInput
             id="password"
             v-model="password"
-            label="Password"
-            placeholder="Masukkan password"
+            :label="tc('login.password')"
+            :placeholder="tc('login.passwordPlaceholder')"
             required
           />
         </div>
@@ -92,14 +100,14 @@ onMounted(() => {
           class="ca-btn-primary mt-6 w-full"
           :disabled="pending || !email || !password"
         >
-          <span v-if="pending">Memproses...</span>
-          <span v-else>Masuk</span>
+          <span v-if="pending">{{ tc('login.submitting') }}</span>
+          <span v-else>{{ tc('login.submit') }}</span>
         </button>
       </form>
 
       <p class="mt-6 text-center text-xs text-[var(--ca-subtle)]">
         <NuxtLink to="/" class="transition hover:text-[var(--ca-muted)]">
-          &larr; Kembali ke website
+          &larr; {{ tc('common.backToWebsite') }}
         </NuxtLink>
       </p>
     </div>

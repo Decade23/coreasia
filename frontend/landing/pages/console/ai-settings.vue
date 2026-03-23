@@ -3,6 +3,7 @@ definePageMeta({ layout: 'console', middleware: 'console' })
 
 const api = useAdminApi()
 const toast = useToast()
+const { tc } = useConsoleI18n()
 
 const loading = ref(true)
 const saving = ref(false)
@@ -14,12 +15,12 @@ const settings = ref({
   ai_auto_image: false,
 })
 
-const providerOptions = [
-  { label: 'Claude (Anthropic)', value: 'claude' },
-  { label: 'OpenAI', value: 'openai' },
-  { label: 'Groq', value: 'groq' },
-  { label: 'Google Gemini', value: 'gemini' },
-]
+const providerOptions = computed(() => [
+  { label: tc('providers.claude'), value: 'claude' },
+  { label: tc('providers.openai'), value: 'openai' },
+  { label: tc('providers.groq'), value: 'groq' },
+  { label: tc('providers.gemini'), value: 'gemini' },
+])
 
 const modelOptions = ref<{ label: string; value: string }[]>([])
 const modelsLoading = ref(false)
@@ -60,7 +61,7 @@ const fetchModels = async (provider: string) => {
     modelOptions.value = (res.data || []).map(m => ({ label: m.name || m.id, value: m.id }))
   } catch {
     modelOptions.value = []
-    modelsError.value = 'Tidak bisa memuat model. Pastikan API key tersimpan untuk provider ini.'
+    modelsError.value = tc('aiSettings.modelsMissing')
   } finally {
     modelsLoading.value = false
   }
@@ -84,9 +85,9 @@ const saveSettings = async () => {
       ai_model: settings.value.ai_model,
       ai_auto_image: String(settings.value.ai_auto_image),
     })
-    toast.success('Pengaturan AI berhasil disimpan')
+    toast.success(tc('feedback.aiSettingsSaved'))
   } catch {
-    toast.error('Gagal menyimpan pengaturan AI')
+    toast.error(tc('feedback.aiSettingsSaveFailed'))
   } finally {
     saving.value = false
   }
@@ -104,10 +105,12 @@ onMounted(async () => {
 
 <template>
   <div>
-    <div class="mb-6">
-      <h1 class="font-display text-2xl font-bold text-[var(--ca-text)]">Pengaturan AI</h1>
-      <p class="mt-1 text-sm text-[var(--ca-muted)]">Konfigurasi provider dan model untuk fitur AI</p>
-    </div>
+    <ConsolePageHeader
+      :kicker="tc('aiSettings.kicker')"
+      icon="lucide:sparkles"
+      :title="tc('aiSettings.title')"
+      :description="tc('aiSettings.description')"
+    />
 
     <div v-if="loading" class="ca-card p-10 text-center">
       <Icon name="lucide:loader-2" class="mx-auto h-8 w-8 animate-spin text-[var(--ca-subtle)]" />
@@ -115,73 +118,48 @@ onMounted(async () => {
 
     <div v-else class="space-y-6 max-w-2xl">
       <!-- Enable/Disable -->
-      <div class="ca-card p-5">
-        <div class="flex items-center justify-between">
-          <div>
-            <h3 class="font-display font-semibold text-[var(--ca-text)]">Fitur AI</h3>
-            <p class="mt-0.5 text-xs text-[var(--ca-muted)]">Aktifkan atau nonaktifkan fitur AI untuk generate artikel dan bot</p>
-          </div>
-          <button
-            type="button"
-            class="relative h-6 w-11 rounded-full transition-colors"
-            :class="settings.ai_enabled ? 'bg-emerald-500' : 'bg-slate-600'"
-            @click="settings.ai_enabled = !settings.ai_enabled"
-          >
-            <span
-              class="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white transition-transform shadow"
-              :class="settings.ai_enabled ? 'translate-x-5' : 'translate-x-0'"
-            />
-          </button>
-        </div>
-      </div>
+      <BaseSwitch
+        id="ai-enabled"
+        v-model="settings.ai_enabled"
+        :label="tc('aiSettings.featureTitle')"
+        :description="tc('aiSettings.featureDesc')"
+      />
 
       <!-- Auto Image -->
-      <div class="ca-card p-5">
-        <div class="flex items-center justify-between">
-          <div>
-            <h3 class="font-display font-semibold text-[var(--ca-text)]">Gambar Otomatis (Unsplash)</h3>
-            <p class="mt-0.5 text-xs text-[var(--ca-muted)]">Sertakan featured image otomatis dari Unsplash saat generate artikel. Gambar dipilih berdasarkan keywords.</p>
-          </div>
-          <button
-            type="button"
-            class="relative h-6 w-11 rounded-full transition-colors"
-            :class="settings.ai_auto_image ? 'bg-emerald-500' : 'bg-slate-600'"
-            @click="settings.ai_auto_image = !settings.ai_auto_image"
-          >
-            <span
-              class="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white transition-transform shadow"
-              :class="settings.ai_auto_image ? 'translate-x-5' : 'translate-x-0'"
-            />
-          </button>
-        </div>
-      </div>
+      <BaseSwitch
+        id="ai-auto-image"
+        v-model="settings.ai_auto_image"
+        :label="tc('aiSettings.autoImageTitle')"
+        :description="tc('aiSettings.autoImageDesc')"
+      />
 
       <!-- Provider & Model -->
       <div class="ca-card p-5 space-y-4 relative z-10">
-        <h3 class="font-display font-semibold text-[var(--ca-text)]">Provider & Model</h3>
+        <h3 class="font-display font-semibold text-[var(--ca-text)]">{{ tc('aiSettings.providerTitle') }}</h3>
 
         <SearchSelect
           id="ai-provider"
           v-model="settings.ai_provider"
-          label="Provider AI Aktif"
+          :label="tc('aiSettings.providerLabel')"
           :options="providerOptions"
+          :placeholder="tc('aiSettings.providerPlaceholder')"
         />
 
         <!-- API Key status -->
         <div v-if="!hasActiveKey" class="rounded-lg border border-amber-400/20 bg-amber-500/5 p-3 flex items-start gap-2.5">
           <Icon name="lucide:alert-triangle" class="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
           <div class="text-xs">
-            <p class="font-semibold text-amber-400">API key belum dikonfigurasi</p>
+            <p class="font-semibold text-amber-400">{{ tc('aiSettings.keyMissingTitle') }}</p>
             <p class="mt-0.5 text-[var(--ca-muted)]">
-              Tambahkan API key untuk <strong>{{ providerOptions.find(p => p.value === settings.ai_provider)?.label }}</strong> di
-              <NuxtLink to="/console/api-keys" class="text-amber-400 underline">halaman API Keys</NuxtLink>.
+              {{ tc('aiSettings.keyMissingDesc', { provider: providerOptions.find(p => p.value === settings.ai_provider)?.label || settings.ai_provider }) }}
+              <NuxtLink to="/console/api-keys" class="text-amber-400 underline">{{ tc('layout.apiKeys') }}</NuxtLink>.
             </p>
           </div>
         </div>
         <div v-else class="rounded-lg border border-emerald-400/20 bg-emerald-500/5 p-3 flex items-center gap-2.5">
           <Icon name="lucide:shield-check" class="h-4 w-4 text-emerald-400 shrink-0" />
           <p class="text-xs text-[var(--ca-muted)]">
-            Menggunakan key <strong class="text-emerald-400">{{ activeKeyInfo?.name }}</strong> untuk {{ providerOptions.find(p => p.value === settings.ai_provider)?.label }}
+            {{ tc('aiSettings.keyActiveDesc', { name: activeKeyInfo?.name || '-', provider: providerOptions.find(p => p.value === settings.ai_provider)?.label || settings.ai_provider }) }}
           </p>
         </div>
 
@@ -189,10 +167,10 @@ onMounted(async () => {
           <SearchSelect
             id="ai-model"
             v-model="settings.ai_model"
-            label="Model AI"
+            :label="tc('aiSettings.modelLabel')"
             :options="modelOptions"
             :disabled="modelsLoading"
-            :placeholder="modelsLoading ? 'Memuat model...' : 'Pilih model'"
+            :placeholder="modelsLoading ? tc('aiSettings.loadingModels') : tc('aiSettings.modelPlaceholder')"
           />
           <p v-if="modelsError" class="mt-1 text-[0.65rem] text-amber-400">{{ modelsError }}</p>
         </div>
@@ -200,19 +178,19 @@ onMounted(async () => {
 
       <!-- Info -->
       <div class="ca-card p-5">
-        <h3 class="font-display font-semibold text-[var(--ca-text)] mb-3">Cara Kerja</h3>
+        <h3 class="font-display font-semibold text-[var(--ca-text)] mb-3">{{ tc('aiSettings.howItWorks') }}</h3>
         <div class="space-y-2 text-xs text-[var(--ca-muted)]">
           <div class="flex items-start gap-2">
             <span class="mt-0.5 h-4 w-4 shrink-0 rounded-full bg-amber-500/10 text-amber-400 flex items-center justify-center text-[0.6rem] font-bold">1</span>
-            <p>Provider dan model yang dipilih di sini akan digunakan oleh <strong>AI Generate</strong> di halaman artikel dan <strong>Bot Scheduler</strong>.</p>
+            <p>{{ tc('aiSettings.howStep1') }}</p>
           </div>
           <div class="flex items-start gap-2">
             <span class="mt-0.5 h-4 w-4 shrink-0 rounded-full bg-amber-500/10 text-amber-400 flex items-center justify-center text-[0.6rem] font-bold">2</span>
-            <p>Bot bisa override provider/model di konfigurasi masing-masing. Pengaturan ini adalah <strong>default</strong>.</p>
+            <p>{{ tc('aiSettings.howStep2') }}</p>
           </div>
           <div class="flex items-start gap-2">
             <span class="mt-0.5 h-4 w-4 shrink-0 rounded-full bg-amber-500/10 text-amber-400 flex items-center justify-center text-[0.6rem] font-bold">3</span>
-            <p>Pastikan API key sudah ditambahkan di <NuxtLink to="/console/api-keys" class="text-amber-400 underline">API Keys</NuxtLink> untuk provider yang dipilih.</p>
+            <p>{{ tc('aiSettings.howStep3') }} <NuxtLink to="/console/api-keys" class="text-amber-400 underline">{{ tc('layout.apiKeys') }}</NuxtLink>.</p>
           </div>
         </div>
       </div>
@@ -221,7 +199,7 @@ onMounted(async () => {
       <div class="flex justify-end">
         <button type="button" class="ca-btn-primary" :disabled="saving" @click="saveSettings">
           <Icon v-if="saving" name="lucide:loader-2" class="h-4 w-4 animate-spin" />
-          {{ saving ? 'Menyimpan...' : 'Simpan Pengaturan' }}
+          {{ saving ? tc('aiSettings.saving') : tc('aiSettings.save') }}
         </button>
       </div>
     </div>

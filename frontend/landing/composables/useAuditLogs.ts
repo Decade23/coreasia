@@ -16,6 +16,7 @@ export interface AuditLogDomain {
 
 export const useAuditLogs = () => {
   const api = useAdminApi()
+  const { tc } = useConsoleI18n()
   const logs = ref<AuditLogDomain[]>([])
   const loading = ref(false)
   const error = ref('')
@@ -31,7 +32,7 @@ export const useAuditLogs = () => {
       logs.value = res.data || []
       totalItems.value = res.meta?.total || 0
     } catch (err: any) {
-      error.value = err?.data?.errors?.message || 'Gagal memuat audit log'
+      error.value = err?.data?.errors?.message || tc('feedback.auditLoadFailed')
     } finally {
       loading.value = false
     }

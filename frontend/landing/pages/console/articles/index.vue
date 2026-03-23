@@ -2,6 +2,7 @@
 definePageMeta({ layout: 'console', middleware: 'console' })
 
 const { items, loading, error, totalItems, currentPage, fetchArticles, deleteArticle, publishArticle, unpublishArticle } = useArticles()
+const { tc, dateLocale } = useConsoleI18n()
 
 const searchQuery = ref('')
 const statusFilter = ref('')
@@ -50,29 +51,45 @@ const statusColor = (status: string) => {
   return 'bg-slate-500/10 text-[var(--ca-muted)]'
 }
 
-const formatDate = (d: string) => new Date(d).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' })
+const statusLabel = (status: string) => {
+  if (status === 'published') return tc('common.published')
+  if (status === 'archived') return tc('common.archived')
+  return tc('common.draft')
+}
+
+const formatDate = (d: string) => new Date(d).toLocaleDateString(dateLocale.value, { year: 'numeric', month: 'short', day: 'numeric' })
+
+const statusOptions = computed(() => [
+  { label: tc('articles.allStatuses'), value: '' },
+  { label: tc('common.draft'), value: 'draft' },
+  { label: tc('common.published'), value: 'published' },
+  { label: tc('common.archived'), value: 'archived' },
+])
 </script>
 
 <template>
   <div>
-    <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <div>
-        <h1 class="font-display text-2xl font-bold text-[var(--ca-text)]">Artikel</h1>
-        <p class="mt-1 text-sm text-[var(--ca-muted)]">Kelola semua artikel blog</p>
-      </div>
-      <NuxtLink to="/console/articles/create" class="ca-btn-primary">
-        <Icon name="lucide:plus" class="h-4 w-4" />
-        Buat Artikel
-      </NuxtLink>
-    </div>
+    <ConsolePageHeader
+      :kicker="tc('articles.kicker')"
+      icon="lucide:file-text"
+      :title="tc('articles.listTitle')"
+      :description="tc('articles.listDescription')"
+    >
+      <template #actions>
+        <NuxtLink to="/console/articles/create" class="ca-btn-primary">
+          <Icon name="lucide:plus" class="h-4 w-4" />
+          {{ tc('articles.createAction') }}
+        </NuxtLink>
+      </template>
+    </ConsolePageHeader>
 
     <!-- Filters -->
-    <div class="mb-4 flex flex-col gap-3 sm:flex-row">
+    <div class="ca-console-toolbar">
       <div class="flex-1">
         <BaseInput
           id="search"
           v-model="searchQuery"
-          placeholder="Cari artikel..."
+          :placeholder="tc('articles.searchPlaceholder')"
           icon="lucide:search"
         />
       </div>
@@ -80,13 +97,8 @@ const formatDate = (d: string) => new Date(d).toLocaleDateString('id-ID', { year
         <SearchSelect
           id="status-filter"
           v-model="statusFilter"
-          placeholder="Semua Status"
-          :options="[
-            { label: 'Semua Status', value: '' },
-            { label: 'Draft', value: 'draft' },
-            { label: 'Published', value: 'published' },
-            { label: 'Archived', value: 'archived' },
-          ]"
+          :placeholder="tc('articles.allStatuses')"
+          :options="statusOptions"
         />
       </div>
     </div>
@@ -105,49 +117,45 @@ const formatDate = (d: string) => new Date(d).toLocaleDateString('id-ID', { year
     <!-- Empty -->
     <div v-else-if="!items.length" class="ca-card p-10 text-center">
       <Icon name="lucide:file-text" class="mx-auto h-12 w-12 text-[var(--ca-subtle)]" />
-      <p class="mt-3 text-sm text-[var(--ca-muted)]">Belum ada artikel</p>
-      <NuxtLink to="/console/articles/create" class="ca-btn-primary mt-4">Buat Artikel Pertama</NuxtLink>
+      <p class="mt-3 text-sm text-[var(--ca-muted)]">{{ tc('articles.empty') }}</p>
+      <NuxtLink to="/console/articles/create" class="ca-btn-primary mt-4">{{ tc('articles.createFirst') }}</NuxtLink>
     </div>
 
     <!-- Table -->
-    <div v-else class="overflow-x-auto overflow-y-auto max-h-[60vh] ca-scrollbar">
-      <table class="w-full">
-        <thead class="sticky top-0 z-10 bg-[var(--ca-bg)]">
-          <tr class="border-b border-[color:var(--ca-border)]">
-            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[var(--ca-muted)]">Judul</th>
-            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[var(--ca-muted)]">Kategori</th>
-            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[var(--ca-muted)]">Status</th>
-            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[var(--ca-muted)]">Tanggal</th>
-            <th class="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-[var(--ca-muted)]">Aksi</th>
+    <div v-else class="ca-console-table-wrap">
+      <table class="ca-console-table">
+        <thead class="sticky top-0 z-10">
+          <tr>
+            <th>{{ tc('articles.titleField') }}</th>
+            <th>{{ tc('common.category') }}</th>
+            <th>{{ tc('common.status') }}</th>
+            <th>{{ tc('common.date') }}</th>
+            <th class="text-right">{{ tc('common.actions') }}</th>
           </tr>
         </thead>
         <tbody>
-          <tr
-            v-for="article in items"
-            :key="article.id"
-            class="border-b border-[color:var(--ca-border)] transition hover:bg-[var(--ca-panel-bg)]"
-          >
-            <td class="px-4 py-3">
+          <tr v-for="article in items" :key="article.id">
+            <td>
               <NuxtLink :to="`/console/articles/${article.id}`" class="text-sm font-medium text-[var(--ca-text)] hover:ca-tone-gold transition">
                 {{ article.title }}
               </NuxtLink>
               <p class="mt-0.5 text-xs text-[var(--ca-subtle)]">/artikel/{{ article.slug }}</p>
             </td>
-            <td class="px-4 py-3 text-sm text-[var(--ca-muted)]">{{ article.category }}</td>
-            <td class="px-4 py-3">
+            <td class="text-[var(--ca-muted)]">{{ article.category }}</td>
+            <td>
               <span class="rounded-full px-2 py-0.5 text-[0.68rem] font-bold uppercase" :class="statusColor(article.status)">
-                {{ article.status }}
+                {{ statusLabel(article.status) }}
               </span>
             </td>
-            <td class="px-4 py-3 text-sm text-[var(--ca-muted)]">{{ formatDate(article.created_at) }}</td>
-            <td class="px-4 py-3 text-right">
+            <td class="text-[var(--ca-muted)]">{{ formatDate(article.created_at) }}</td>
+            <td class="text-right">
               <div class="flex items-center justify-end gap-1">
-                <CaTooltip text="Edit" position="bottom">
+                <CaTooltip :text="tc('common.edit')" position="bottom">
                   <NuxtLink :to="`/console/articles/${article.id}`" class="rounded-lg p-1.5 text-[var(--ca-muted)] hover:bg-[var(--ca-panel-bg-strong)] hover:text-[var(--ca-text)]">
                     <Icon name="lucide:edit-3" class="h-4 w-4" />
                   </NuxtLink>
                 </CaTooltip>
-                <CaTooltip v-if="article.status === 'draft'" text="Publish" position="bottom">
+                <CaTooltip v-if="article.status === 'draft'" :text="tc('common.publish')" position="bottom">
                   <button
                     type="button"
                     class="rounded-lg p-1.5 text-emerald-400 hover:bg-emerald-500/10"
@@ -156,7 +164,7 @@ const formatDate = (d: string) => new Date(d).toLocaleDateString('id-ID', { year
                     <Icon name="lucide:upload" class="h-4 w-4" />
                   </button>
                 </CaTooltip>
-                <CaTooltip v-if="article.status === 'published'" text="Unpublish" position="bottom">
+                <CaTooltip v-if="article.status === 'published'" :text="tc('common.unpublish')" position="bottom">
                   <button
                     type="button"
                     class="rounded-lg p-1.5 text-amber-400 hover:bg-amber-500/10"
@@ -165,7 +173,7 @@ const formatDate = (d: string) => new Date(d).toLocaleDateString('id-ID', { year
                     <Icon name="lucide:download" class="h-4 w-4" />
                   </button>
                 </CaTooltip>
-                <CaTooltip text="Hapus" position="bottom">
+                <CaTooltip :text="tc('common.delete')" position="bottom">
                   <button
                     type="button"
                     class="rounded-lg p-1.5 text-rose-400 hover:bg-rose-500/10"
@@ -182,20 +190,20 @@ const formatDate = (d: string) => new Date(d).toLocaleDateString('id-ID', { year
 
       <!-- Pagination -->
       <div v-if="totalItems > 10" class="mt-4 flex items-center justify-between">
-        <p class="text-xs text-[var(--ca-muted)]">{{ totalItems }} artikel</p>
+        <p class="text-xs text-[var(--ca-muted)]">{{ tc('common.totalArticles', { count: totalItems }) }}</p>
         <div class="flex gap-2">
           <button
             type="button"
             class="ca-btn-secondary !px-3 !py-1.5 text-xs"
             :disabled="currentPage <= 1"
             @click="fetchArticles(currentPage - 1, { search: searchQuery, status: statusFilter })"
-          >Prev</button>
+          >{{ tc('audit.previous') }}</button>
           <button
             type="button"
             class="ca-btn-secondary !px-3 !py-1.5 text-xs"
             :disabled="currentPage * 10 >= totalItems"
             @click="fetchArticles(currentPage + 1, { search: searchQuery, status: statusFilter })"
-          >Next</button>
+          >{{ tc('audit.next') }}</button>
         </div>
       </div>
     </div>
@@ -204,11 +212,11 @@ const formatDate = (d: string) => new Date(d).toLocaleDateString('id-ID', { year
     <Teleport to="body">
       <div v-if="showDeleteConfirm" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" @click.self="showDeleteConfirm = false">
         <div class="ca-card w-full max-w-md p-6">
-          <h3 class="font-display text-lg font-bold text-[var(--ca-text)]">Hapus Artikel?</h3>
-          <p class="mt-2 text-sm text-[var(--ca-muted)]">Apakah Anda yakin ingin menghapus "{{ deletingTitle }}"? Tindakan ini tidak dapat dibatalkan.</p>
+          <h3 class="font-display text-lg font-bold text-[var(--ca-text)]">{{ tc('articles.deleteTitle') }}</h3>
+          <p class="mt-2 text-sm text-[var(--ca-muted)]">{{ tc('articles.deleteDescription', { title: deletingTitle }) }}</p>
           <div class="mt-6 flex justify-end gap-3">
-            <button type="button" class="ca-btn-secondary" @click="showDeleteConfirm = false">Batal</button>
-            <button type="button" class="rounded-lg bg-rose-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-600" @click="confirmDelete">Hapus</button>
+            <button type="button" class="ca-btn-secondary" @click="showDeleteConfirm = false">{{ tc('common.cancel') }}</button>
+            <button type="button" class="rounded-lg bg-rose-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-600" @click="confirmDelete">{{ tc('common.delete') }}</button>
           </div>
         </div>
       </div>

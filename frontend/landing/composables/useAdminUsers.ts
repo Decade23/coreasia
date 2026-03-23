@@ -15,6 +15,7 @@ export interface AdminUserDomain {
 export const useAdminUsers = () => {
   const api = useAdminApi()
   const toast = useToast()
+  const { tc } = useConsoleI18n()
   const items = ref<AdminUserDomain[]>([])
   const loading = ref(false)
   const saving = ref(false)
@@ -29,7 +30,7 @@ export const useAdminUsers = () => {
       items.value = res.data || []
       totalItems.value = res.meta?.total || 0
     } catch (err: any) {
-      error.value = err?.data?.errors?.message || 'Gagal memuat users'
+      error.value = err?.data?.errors?.message || tc('feedback.usersLoadFailed')
     } finally {
       loading.value = false
     }
@@ -40,10 +41,10 @@ export const useAdminUsers = () => {
     error.value = ''
     try {
       await api.post('/admin/users', data)
-      toast.success('User berhasil dibuat')
+      toast.success(tc('feedback.userCreated'))
       return true
     } catch (err: any) {
-      error.value = err?.data?.errors?.message || 'Gagal membuat user'
+      error.value = err?.data?.errors?.message || tc('feedback.userCreateFailed')
       toast.error(error.value)
       return false
     } finally {
@@ -56,10 +57,10 @@ export const useAdminUsers = () => {
     error.value = ''
     try {
       await api.put(`/admin/users/${id}`, data)
-      toast.success('User berhasil diperbarui')
+      toast.success(tc('feedback.userUpdated'))
       return true
     } catch (err: any) {
-      error.value = err?.data?.errors?.message || 'Gagal mengupdate user'
+      error.value = err?.data?.errors?.message || tc('feedback.userUpdateFailed')
       toast.error(error.value)
       return false
     } finally {
@@ -72,10 +73,10 @@ export const useAdminUsers = () => {
     error.value = ''
     try {
       await api.del(`/admin/users/${id}`)
-      toast.success('User berhasil dihapus')
+      toast.success(tc('feedback.userDeleted'))
       return true
     } catch (err: any) {
-      error.value = err?.data?.errors?.message || 'Gagal menghapus user'
+      error.value = err?.data?.errors?.message || tc('feedback.userDeleteFailed')
       toast.error(error.value)
       return false
     } finally {

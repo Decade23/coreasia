@@ -4,6 +4,7 @@ definePageMeta({ layout: 'console', middleware: 'console' })
 const { items, loading, saving, error, fetchKeys, createKey, updateKey, deleteKey, copyKey } = useApiKeys()
 const { user: currentAdmin } = useAdminAuth()
 const api = useAdminApi()
+const { tc, dateLocale } = useConsoleI18n()
 
 // Track which provider's key is currently in use by AI
 const aiProvider = ref('')
@@ -33,16 +34,15 @@ const formData = ref({
   description: '',
 })
 
-const showKeyValue = ref(false)
 const changingKey = ref(false)
 
-const providerOptions = [
-  { label: 'Claude (Anthropic)', value: 'claude' },
-  { label: 'OpenAI', value: 'openai' },
-  { label: 'Groq', value: 'groq' },
-  { label: 'Google Gemini', value: 'gemini' },
-  { label: 'Lainnya', value: 'other' },
-]
+const providerOptions = computed(() => [
+  { label: tc('providers.claude'), value: 'claude' },
+  { label: tc('providers.openai'), value: 'openai' },
+  { label: tc('providers.groq'), value: 'groq' },
+  { label: tc('providers.gemini'), value: 'gemini' },
+  { label: tc('providers.other'), value: 'other' },
+])
 
 const availableModels = ref<{ id: string; name: string }[]>([])
 const modelsLoading = ref(false)
@@ -69,7 +69,6 @@ onMounted(() => { fetchKeys(); fetchAIContext() })
 const openCreate = () => {
   editingKey.value = null
   changingKey.value = false
-  showKeyValue.value = false
   formData.value = { name: '', provider: 'claude', key_value: '', description: '' }
   showFormModal.value = true
   fetchModelsForProvider('claude')
@@ -78,7 +77,6 @@ const openCreate = () => {
 const openEdit = (k: any) => {
   editingKey.value = k
   changingKey.value = false
-  showKeyValue.value = false
   formData.value = {
     name: k.name,
     provider: k.provider,
@@ -134,29 +132,35 @@ const handleCopy = async (k: any) => {
   }
 }
 
-const formatDate = (d: string) => new Date(d).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' })
+const formatDate = (d: string) => new Date(d).toLocaleDateString(dateLocale.value, { year: 'numeric', month: 'short', day: 'numeric' })
 </script>
 
 <template>
   <div>
-    <div class="mb-6 flex items-center justify-between">
-      <div>
-        <h1 class="font-display text-2xl font-bold text-[var(--ca-text)]">API Keys</h1>
-        <p class="mt-1 text-sm text-[var(--ca-muted)]">Kelola API key untuk integrasi layanan</p>
-      </div>
-      <button v-if="currentAdmin?.role === 'super_admin'" type="button" class="ca-btn-primary" @click="openCreate">
-        <Icon name="lucide:plus" class="h-4 w-4" />
-        Tambah Key
-      </button>
-    </div>
+    <ConsolePageHeader
+      :kicker="tc('apiKeys.kicker')"
+      icon="lucide:key-round"
+      :title="tc('apiKeys.title')"
+      :description="tc('apiKeys.description')"
+    >
+      <template #actions>
+        <button v-if="currentAdmin?.role === 'super_admin'" type="button" class="ca-btn-primary" @click="openCreate">
+          <Icon name="lucide:plus" class="h-4 w-4" />
+          {{ tc('apiKeys.add') }}
+        </button>
+      </template>
+    </ConsolePageHeader>
 
     <!-- Info box -->
-    <div class="mb-4 rounded-xl border border-amber-300/20 bg-amber-500/5 p-4">
+    <div class="mb-4 rounded-[1.5rem] border border-amber-300/20 bg-amber-500/5 p-4">
       <div class="flex gap-3">
         <Icon name="lucide:info" class="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
         <div class="text-xs text-[var(--ca-muted)]">
-          <p>API key digunakan oleh sistem untuk integrasi AI article generator dan fitur lainnya.</p>
-          <p class="mt-1">Key yang aktif untuk provider <strong>{{ aiProvider || 'claude' }}</strong> (sesuai <NuxtLink to="/console/ai-settings" class="text-amber-400 underline">Pengaturan AI</NuxtLink>) akan digunakan untuk generate artikel. Jika ada lebih dari satu key aktif per provider, yang terakhir diperbarui akan digunakan.</p>
+          <p>{{ tc('apiKeys.infoTitle') }}</p>
+          <p class="mt-1">
+            {{ tc('apiKeys.infoBody', { provider: aiProvider || 'claude' }) }}
+            <NuxtLink to="/console/ai-settings" class="text-amber-400 underline">{{ tc('layout.aiSettings') }}</NuxtLink>.
+          </p>
         </div>
       </div>
     </div>
@@ -167,8 +171,8 @@ const formatDate = (d: string) => new Date(d).toLocaleDateString('id-ID', { year
 
     <div v-else-if="!items.length" class="ca-card p-10 text-center">
       <Icon name="lucide:key-round" class="mx-auto h-12 w-12 text-[var(--ca-subtle)]" />
-      <p class="mt-3 text-sm text-[var(--ca-muted)]">Belum ada API key</p>
-      <button type="button" class="ca-btn-primary mt-4" @click="openCreate">Tambah Key Pertama</button>
+      <p class="mt-3 text-sm text-[var(--ca-muted)]">{{ tc('apiKeys.empty') }}</p>
+      <button type="button" class="ca-btn-primary mt-4" @click="openCreate">{{ tc('apiKeys.emptyAction') }}</button>
     </div>
 
     <div v-else class="space-y-3">
@@ -191,7 +195,7 @@ const formatDate = (d: string) => new Date(d).toLocaleDateString('id-ID', { year
               v-if="activeKeyId === k.id"
               class="rounded-full bg-amber-500/10 px-2 py-0.5 text-[0.6rem] font-bold uppercase text-amber-400"
             >
-              Digunakan AI
+              {{ tc('apiKeys.usedByAI') }}
             </span>
           </div>
           <div class="mt-1 flex flex-wrap items-center gap-3 text-xs text-[var(--ca-muted)]">
@@ -199,12 +203,12 @@ const formatDate = (d: string) => new Date(d).toLocaleDateString('id-ID', { year
             <span class="font-mono tracking-wider text-[var(--ca-subtle)]">{{ k.key_masked }}</span>
             <span v-if="k.description" class="hidden sm:inline">· {{ k.description }}</span>
           </div>
-          <p class="mt-1 text-[0.65rem] text-[var(--ca-subtle)]">Dibuat {{ formatDate(k.created_at) }}</p>
+          <p class="mt-1 text-[0.65rem] text-[var(--ca-subtle)]">{{ tc('apiKeys.createdAt', { date: formatDate(k.created_at) }) }}</p>
         </div>
 
         <div class="flex items-center gap-1 shrink-0">
           <!-- Copy -->
-          <CaTooltip :text="copySuccess === k.id ? 'Tersalin!' : 'Salin key'" position="bottom">
+          <CaTooltip :text="copySuccess === k.id ? tc('common.copied') : tc('apiKeys.copy')" position="bottom">
             <button
               type="button"
               class="rounded-lg p-1.5 transition"
@@ -215,7 +219,7 @@ const formatDate = (d: string) => new Date(d).toLocaleDateString('id-ID', { year
             </button>
           </CaTooltip>
           <!-- Toggle active -->
-          <CaTooltip :text="k.is_active ? 'Nonaktifkan' : 'Aktifkan'" position="bottom">
+          <CaTooltip :text="k.is_active ? tc('apiKeys.deactivate') : tc('apiKeys.activate')" position="bottom">
             <button
               type="button"
               class="rounded-lg p-1.5 transition"
@@ -226,7 +230,7 @@ const formatDate = (d: string) => new Date(d).toLocaleDateString('id-ID', { year
             </button>
           </CaTooltip>
           <!-- Edit -->
-          <CaTooltip text="Edit" position="bottom">
+          <CaTooltip :text="tc('common.edit')" position="bottom">
             <button
               type="button"
               class="rounded-lg p-1.5 text-[var(--ca-muted)] hover:bg-[var(--ca-panel-bg-strong)]"
@@ -236,7 +240,7 @@ const formatDate = (d: string) => new Date(d).toLocaleDateString('id-ID', { year
             </button>
           </CaTooltip>
           <!-- Delete -->
-          <CaTooltip text="Hapus" position="bottom">
+          <CaTooltip :text="tc('common.delete')" position="bottom">
             <button
               type="button"
               class="rounded-lg p-1.5 text-rose-400 hover:bg-rose-500/10"
@@ -255,20 +259,20 @@ const formatDate = (d: string) => new Date(d).toLocaleDateString('id-ID', { year
         <div class="ca-card w-full max-w-lg p-6">
           <h3 class="font-display text-lg font-bold text-[var(--ca-text)]">
             <Icon name="lucide:key-round" class="mr-2 inline h-5 w-5 text-amber-400" />
-            {{ editingKey ? 'Edit API Key' : 'Tambah API Key' }}
+            {{ editingKey ? tc('apiKeys.formEditTitle') : tc('apiKeys.formCreateTitle') }}
           </h3>
           <form class="mt-4 space-y-3" autocomplete="off" data-form-type="other" @submit.prevent="handleSubmit">
-            <BaseInput id="apikey-name" v-model="formData.name" label="Nama" placeholder="Claude AI Production" required autocomplete="off" />
+            <BaseInput id="apikey-name" v-model="formData.name" :label="tc('apiKeys.name')" placeholder="Claude AI Production" required autocomplete="off" />
             <SearchSelect
               id="apikey-provider"
               v-model="formData.provider"
-              label="Provider"
+              :label="tc('apiKeys.provider')"
               :options="providerOptions"
               required
             />
             <div>
               <label class="ca-field-label">
-                API Key
+                {{ tc('apiKeys.keyLabel') }}
                 <span v-if="!editingKey" class="ca-required">*</span>
               </label>
 
@@ -283,46 +287,39 @@ const formatDate = (d: string) => new Date(d).toLocaleDateString('id-ID', { year
                   class="shrink-0 rounded-lg border border-amber-400/30 px-3 py-2.5 text-xs font-semibold text-amber-400 hover:bg-amber-500/10 transition"
                   @click="changingKey = true"
                 >
-                  Ganti Key
+                  {{ tc('apiKeys.replaceKey') }}
                 </button>
               </div>
 
               <!-- Create mode or changing key: show input -->
-              <div v-else class="relative">
-                <input
+              <div v-else>
+                <BasePasswordInput
                   id="apikey-value"
                   v-model="formData.key_value"
-                  type="text"
-                  :class="['ca-field-control font-mono tracking-wider border-[color:var(--ca-border)] focus:border-amber-300/40 pr-10', !showKeyValue ? 'ca-text-masked' : '']"
-                  :placeholder="editingKey ? 'Masukkan key baru...' : 'sk-ant-api03-...'"
+                  input-class="font-mono tracking-wider"
+                  :placeholder="editingKey ? tc('apiKeys.replaceKey') : tc('apiKeys.keyPlaceholder')"
                   :required="!editingKey"
                   autocomplete="off"
-                  spellcheck="false"
+                  show-label="Show API key"
+                  hide-label="Hide API key"
                 />
-                <button
-                  type="button"
-                  class="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--ca-subtle)] hover:text-[var(--ca-muted)] transition"
-                  @click="showKeyValue = !showKeyValue"
-                >
-                  <Icon :name="showKeyValue ? 'lucide:eye-off' : 'lucide:eye'" class="h-4 w-4" />
-                </button>
               </div>
 
               <p class="mt-1 text-[0.65rem] text-[var(--ca-subtle)]">
-                {{ editingKey && !changingKey ? 'Key tersimpan aman. Klik "Ganti Key" untuk mengubah.' : 'Key disimpan terenkripsi dan tidak bisa dilihat setelah disimpan' }}
+                {{ editingKey && !changingKey ? tc('apiKeys.keyHelperEdit') : tc('apiKeys.keyHelperCreate') }}
               </p>
             </div>
-            <BaseInput id="apikey-desc" v-model="formData.description" label="Deskripsi (opsional)" placeholder="Untuk generate artikel harian" autocomplete="off" />
+            <BaseInput id="apikey-desc" v-model="formData.description" :label="tc('apiKeys.descriptionField')" placeholder="Untuk generate artikel harian" autocomplete="off" />
 
             <!-- Available models info -->
             <div v-if="formData.provider !== 'other'" class="rounded-lg border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-3">
               <p class="text-[0.65rem] font-semibold uppercase tracking-widest text-[var(--ca-subtle)] mb-2">
                 <Icon name="lucide:cpu" class="mr-1 inline h-3 w-3" />
-                Model tersedia untuk {{ providerOptions.find(p => p.value === formData.provider)?.label }}
+                {{ tc('apiKeys.modelsTitle') }} · {{ providerOptions.find(p => p.value === formData.provider)?.label }}
               </p>
               <div v-if="modelsLoading" class="flex items-center gap-2 text-xs text-[var(--ca-muted)]">
                 <Icon name="lucide:loader-2" class="h-3 w-3 animate-spin" />
-                Memuat model...
+                {{ tc('apiKeys.modelsLoading') }}
               </div>
               <div v-else-if="availableModels.length" class="flex flex-wrap gap-1.5">
                 <span
@@ -338,15 +335,15 @@ const formatDate = (d: string) => new Date(d).toLocaleDateString('id-ID', { year
               </div>
               <p v-else class="text-[0.6rem] text-amber-400">
                 <Icon name="lucide:alert-triangle" class="mr-1 inline h-3 w-3" />
-                Tidak bisa memuat model. Pastikan API key sudah tersimpan untuk provider ini.
+                {{ tc('apiKeys.modelsError') }}
               </p>
             </div>
 
             <p v-if="error" class="text-sm text-rose-400">{{ error }}</p>
 
             <div class="flex justify-end gap-3 pt-2">
-              <button type="button" class="ca-btn-secondary" @click="showFormModal = false">Batal</button>
-              <button type="submit" class="ca-btn-primary" :disabled="saving">{{ saving ? 'Menyimpan...' : 'Simpan' }}</button>
+              <button type="button" class="ca-btn-secondary" @click="showFormModal = false">{{ tc('common.cancel') }}</button>
+              <button type="submit" class="ca-btn-primary" :disabled="saving">{{ saving ? tc('common.processing') : tc('common.save') }}</button>
             </div>
           </form>
         </div>
@@ -357,14 +354,13 @@ const formatDate = (d: string) => new Date(d).toLocaleDateString('id-ID', { year
     <Teleport to="body">
       <div v-if="showDeleteConfirm" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" @click.self="showDeleteConfirm = false">
         <div class="ca-card w-full max-w-md p-6">
-          <h3 class="font-display text-lg font-bold text-[var(--ca-text)]">Hapus API Key?</h3>
+          <h3 class="font-display text-lg font-bold text-[var(--ca-text)]">{{ tc('apiKeys.deleteTitle') }}</h3>
           <p class="mt-2 text-sm text-[var(--ca-muted)]">
-            Apakah yakin menghapus <strong>{{ deletingKey?.name }}</strong> ({{ deletingKey?.provider }})?
-            Layanan yang menggunakan key ini akan berhenti berfungsi.
+            {{ tc('apiKeys.deleteDescription', { name: deletingKey?.name || '-' }) }}
           </p>
           <div class="mt-6 flex justify-end gap-3">
-            <button type="button" class="ca-btn-secondary" @click="showDeleteConfirm = false">Batal</button>
-            <button type="button" class="rounded-lg bg-rose-500 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-600" @click="confirmDelete">Hapus</button>
+            <button type="button" class="ca-btn-secondary" @click="showDeleteConfirm = false">{{ tc('common.cancel') }}</button>
+            <button type="button" class="rounded-lg bg-rose-500 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-600" @click="confirmDelete">{{ tc('common.delete') }}</button>
           </div>
         </div>
       </div>

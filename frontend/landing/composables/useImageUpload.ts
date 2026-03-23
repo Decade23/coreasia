@@ -4,6 +4,7 @@
 
 export const useImageUpload = () => {
   const api = useAdminApi()
+  const { tc } = useConsoleI18n()
   const uploading = ref(false)
   const imageUrl = ref('')
   const error = ref('')
@@ -20,7 +21,7 @@ export const useImageUpload = () => {
       imageUrl.value = res.data.url
       return res.data.url
     } catch (err: any) {
-      error.value = err?.data?.errors?.message || 'Gagal upload gambar'
+      error.value = err?.data?.errors?.message || tc('feedback.uploadFailed')
       return null
     } finally {
       uploading.value = false
