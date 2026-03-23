@@ -23,6 +23,16 @@ interface ProductSpotlight {
   description: string
   to: string
   icon: string
+  badge: string
+  ctaLabel: string
+  features: string[]
+}
+
+interface ProductRoadmapItem {
+  name: string
+  tagline: string
+  description: string
+  badge: string
 }
 
 const { locale, t } = useCoreI18n()
@@ -177,6 +187,9 @@ const relatedArticles = computed(() => {
     .slice(0, 3)
 })
 
+const featuredRelatedArticle = computed(() => relatedArticles.value[0] || null)
+const secondaryRelatedArticles = computed(() => relatedArticles.value.slice(1, 3))
+
 const productSpotlights = computed<ProductSpotlight[]>(() => {
   const products = ((t('home.products.items') as Array<Record<string, any>>) || []).slice(0, 3)
 
@@ -190,6 +203,20 @@ const productSpotlights = computed<ProductSpotlight[]>(() => {
       : index === 1
         ? 'lucide:code-2'
         : 'lucide:boxes',
+    badge: product.badge || '',
+    ctaLabel: product.ctaLabel || (t('blog.readMore') as string),
+    features: (product.features || []).slice(0, 3),
+  }))
+})
+
+const productRoadmap = computed<ProductRoadmapItem[]>(() => {
+  const nextProducts = ((t('home.products.comingSoon') as Array<Record<string, any>>) || []).slice(0, 2)
+
+  return nextProducts.map((product) => ({
+    name: product.name,
+    tagline: product.tagline,
+    description: product.description,
+    badge: product.badge || '',
   }))
 })
 
@@ -262,83 +289,188 @@ const goToArticles = async () => {
 
     <section class="ca-section pt-0">
       <div class="ca-container">
-        <div class="grid gap-6 lg:grid-cols-[1.35fr_0.95fr]">
-          <div class="ca-card p-5 sm:p-6">
-            <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-[var(--ca-subtle)]">{{ t('blog.relatedTitle') }}</p>
-                <h2 class="mt-2 font-display text-2xl font-bold text-[var(--ca-text)] sm:text-[2rem]">{{ t('blog.relatedTitle') }}</h2>
-                <p class="mt-2 max-w-2xl text-sm text-[var(--ca-muted)]">{{ t('blog.relatedDescription') }}</p>
-              </div>
-            </div>
-
-            <div v-if="relatedArticles.length" class="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-1">
-              <NuxtLink
-                v-for="item in relatedArticles"
-                :key="item.slug"
-                :to="`/artikel/${item.slug}`"
-                class="ca-card-soft group overflow-hidden transition hover:-translate-y-1 hover:border-[color:var(--ca-gold-border)] hover:shadow-lg"
-              >
-                <img
-                  v-if="item.featured_image"
-                  :src="item.featured_image"
-                  :alt="item.title"
-                  class="aspect-[16/9] w-full object-cover transition group-hover:scale-[1.02]"
-                >
-                <ArticleCoverPlaceholder
-                  v-else
-                  :title="item.title"
-                  :category="categoryLabel(item.category)"
-                />
-                <div class="p-4 sm:p-5">
-                  <div class="flex flex-wrap items-center gap-2 text-[0.72rem]">
-                    <span class="rounded-full bg-[var(--ca-kicker-bg)] px-2 py-0.5 font-bold uppercase tracking-[0.12em] text-brand-primary">
-                      {{ categoryLabel(item.category) }}
-                    </span>
-                    <span class="text-[var(--ca-subtle)]">{{ getReadTime(item) }} {{ t('blog.readTime') }}</span>
-                  </div>
-                  <h3 class="mt-3 font-display text-xl font-bold leading-snug text-[var(--ca-text)]">{{ item.title }}</h3>
-                  <p class="mt-2 text-sm leading-relaxed text-[var(--ca-muted)] line-clamp-3">{{ item.description }}</p>
-                  <div class="mt-4 flex items-center justify-between text-xs text-[var(--ca-subtle)]">
-                    <span>{{ formatDate(item.published_at || item.created_at) }}</span>
-                    <span class="inline-flex items-center gap-1 font-semibold ca-tone-gold">
-                      {{ t('blog.readMore') }}
-                      <Icon name="lucide:arrow-right" class="h-3.5 w-3.5" />
-                    </span>
-                  </div>
+        <div class="grid gap-6 xl:grid-cols-[minmax(0,1.24fr)_minmax(320px,0.92fr)]">
+          <div class="ca-card relative overflow-hidden p-5 sm:p-6 lg:p-7">
+            <div class="pointer-events-none absolute inset-x-0 top-0 h-40 bg-[radial-gradient(560px_220px_at_0%_0%,rgba(245,158,11,0.14),transparent_72%)]" />
+            <div class="relative">
+              <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-[var(--ca-subtle)]">{{ t('blog.relatedTitle') }}</p>
+                  <h2 class="mt-2 font-display text-2xl font-bold text-[var(--ca-text)] sm:text-[2rem]">{{ t('blog.relatedTitle') }}</h2>
+                  <p class="mt-2 max-w-2xl text-sm leading-relaxed text-[var(--ca-muted)]">{{ t('blog.relatedDescription') }}</p>
                 </div>
-              </NuxtLink>
-            </div>
+              </div>
 
-            <div v-else class="mt-6 rounded-2xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-4 text-sm text-[var(--ca-muted)]">
-              {{ t('blog.noRelatedArticles') }}
+              <div v-if="featuredRelatedArticle" class="mt-6 grid gap-4 xl:grid-cols-[minmax(0,1.08fr)_minmax(260px,0.92fr)]">
+                <NuxtLink
+                  :to="`/artikel/${featuredRelatedArticle.slug}`"
+                  class="group flex h-full flex-col overflow-hidden rounded-[1.6rem] border border-[color:var(--ca-border)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--ca-panel-bg)_96%,transparent),color-mix(in_srgb,var(--ca-panel-bg-strong)_94%,transparent))] transition duration-200 hover:-translate-y-1 hover:border-[color:var(--ca-gold-border)] hover:shadow-[0_28px_80px_rgba(15,23,42,0.18)]"
+                >
+                  <div class="relative overflow-hidden">
+                    <img
+                      v-if="featuredRelatedArticle.featured_image"
+                      :src="featuredRelatedArticle.featured_image"
+                      :alt="featuredRelatedArticle.title"
+                      class="aspect-[16/10] w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+                    >
+                    <ArticleCoverPlaceholder
+                      v-else
+                      :title="featuredRelatedArticle.title"
+                      :category="categoryLabel(featuredRelatedArticle.category)"
+                      class="aspect-[16/10] w-full"
+                    />
+                    <div class="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-[rgba(4,7,14,0.82)] via-[rgba(4,7,14,0.34)] to-transparent" />
+                    <div class="absolute left-4 top-4 flex flex-wrap items-center gap-2 text-[0.72rem]">
+                      <span class="rounded-full bg-[rgba(8,12,22,0.78)] px-2.5 py-1 font-bold uppercase tracking-[0.12em] text-[var(--ca-gold-text)] backdrop-blur-sm">
+                        {{ categoryLabel(featuredRelatedArticle.category) }}
+                      </span>
+                      <span class="rounded-full bg-[rgba(8,12,22,0.62)] px-2.5 py-1 font-semibold text-white/80 backdrop-blur-sm">
+                        {{ getReadTime(featuredRelatedArticle) }} {{ t('blog.readTime') }}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="flex flex-1 flex-col p-5 sm:p-6">
+                    <p class="text-xs font-medium text-[var(--ca-subtle)]">{{ formatDate(getPublishDate(featuredRelatedArticle)) }}</p>
+                    <h3 class="mt-3 text-balance font-display text-2xl font-bold leading-tight text-[var(--ca-text)]">{{ featuredRelatedArticle.title }}</h3>
+                    <p class="mt-3 text-sm leading-relaxed text-[var(--ca-muted)] line-clamp-3">{{ featuredRelatedArticle.description }}</p>
+
+                    <div v-if="getTags(featuredRelatedArticle).length" class="mt-4 flex flex-wrap gap-2">
+                      <span
+                        v-for="tag in getTags(featuredRelatedArticle).slice(0, 3)"
+                        :key="tag"
+                        class="rounded-full border border-[color:var(--ca-border)] bg-[color-mix(in_srgb,var(--ca-panel-bg)_78%,transparent)] px-2.5 py-1 text-[0.72rem] font-medium text-[var(--ca-muted)]"
+                      >
+                        {{ tag }}
+                      </span>
+                    </div>
+
+                    <div class="mt-auto pt-5 inline-flex items-center gap-2 text-sm font-semibold ca-tone-gold">
+                      {{ t('blog.readMore') }}
+                      <Icon name="lucide:arrow-up-right" class="h-4 w-4 transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                    </div>
+                  </div>
+                </NuxtLink>
+
+                <div v-if="secondaryRelatedArticles.length" class="grid gap-4">
+                  <NuxtLink
+                    v-for="item in secondaryRelatedArticles"
+                    :key="item.slug"
+                    :to="`/artikel/${item.slug}`"
+                    class="group flex h-full flex-col overflow-hidden rounded-[1.35rem] border border-[color:var(--ca-border)] bg-[color-mix(in_srgb,var(--ca-panel-bg)_82%,transparent)] p-4 transition duration-200 hover:-translate-y-0.5 hover:border-[color:var(--ca-gold-border)] hover:shadow-[0_22px_60px_rgba(15,23,42,0.14)] sm:flex-row sm:items-stretch sm:gap-4"
+                  >
+                    <div class="relative overflow-hidden rounded-[1.1rem] sm:w-32 sm:flex-shrink-0">
+                      <img
+                        v-if="item.featured_image"
+                        :src="item.featured_image"
+                        :alt="item.title"
+                        class="aspect-[4/3] h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+                      >
+                      <ArticleCoverPlaceholder
+                        v-else
+                        :title="item.title"
+                        :category="categoryLabel(item.category)"
+                        class="aspect-[4/3] h-full w-full"
+                      />
+                    </div>
+
+                    <div class="min-w-0 flex flex-1 flex-col pt-4 sm:pt-0">
+                      <div class="flex flex-wrap items-center gap-2 text-[0.72rem]">
+                        <span class="rounded-full bg-[var(--ca-kicker-bg)] px-2 py-0.5 font-bold uppercase tracking-[0.12em] text-brand-primary">
+                          {{ categoryLabel(item.category) }}
+                        </span>
+                        <span class="text-[var(--ca-subtle)]">{{ formatDate(getPublishDate(item)) }}</span>
+                      </div>
+                      <h3 class="mt-3 text-balance font-display text-lg font-bold leading-snug text-[var(--ca-text)] line-clamp-2">{{ item.title }}</h3>
+                      <p class="mt-2 text-sm leading-relaxed text-[var(--ca-muted)] line-clamp-2">{{ item.description }}</p>
+                      <div class="mt-auto pt-4 inline-flex items-center gap-2 text-sm font-semibold ca-tone-gold">
+                        {{ t('blog.readMore') }}
+                        <Icon name="lucide:arrow-right" class="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" />
+                      </div>
+                    </div>
+                  </NuxtLink>
+                </div>
+              </div>
+
+              <div v-else class="mt-6 rounded-[1.35rem] border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-5 text-sm leading-relaxed text-[var(--ca-muted)]">
+                {{ t('blog.noRelatedArticles') }}
+              </div>
             </div>
           </div>
 
-          <div class="ca-card p-5 sm:p-6">
-            <p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-[var(--ca-subtle)]">{{ t('home.products.kicker') }}</p>
-            <h2 class="mt-2 font-display text-2xl font-bold text-[var(--ca-text)] sm:text-[2rem]">{{ t('blog.productsTitle') }}</h2>
-            <p class="mt-2 text-sm text-[var(--ca-muted)]">{{ t('blog.productsDescription') }}</p>
+          <div class="ca-card relative overflow-hidden p-5 sm:p-6 lg:p-7">
+            <div class="pointer-events-none absolute -right-10 top-0 h-40 w-40 rounded-full bg-[radial-gradient(circle,rgba(245,158,11,0.16),transparent_70%)] blur-3xl" />
+            <div class="relative">
+              <p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-[var(--ca-subtle)]">{{ t('home.products.kicker') }}</p>
+              <h2 class="mt-2 font-display text-2xl font-bold text-[var(--ca-text)] sm:text-[2rem]">{{ t('blog.productsTitle') }}</h2>
+              <p class="mt-2 text-sm leading-relaxed text-[var(--ca-muted)]">{{ t('blog.productsDescription') }}</p>
 
-            <div class="mt-6 space-y-3">
-              <NuxtLink
-                v-for="product in productSpotlights"
-                :key="product.to"
-                :to="product.to"
-                class="ca-card-soft group block p-4 transition hover:-translate-y-0.5 hover:border-[color:var(--ca-gold-border)]"
-              >
-                <div class="flex items-start gap-3">
-                  <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg-strong)]">
-                    <Icon :name="product.icon" class="h-4 w-4 ca-tone-gold" />
-                  </span>
-                  <div class="min-w-0 flex-1">
-                    <p class="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-[var(--ca-subtle)]">{{ product.tagline }}</p>
-                    <h3 class="mt-1 font-display text-lg font-bold text-[var(--ca-text)]">{{ product.name }}</h3>
-                    <p class="mt-2 text-sm leading-relaxed text-[var(--ca-muted)]">{{ product.description }}</p>
+              <div class="mt-6 space-y-4">
+                <NuxtLink
+                  v-for="product in productSpotlights"
+                  :key="product.to"
+                  :to="product.to"
+                  class="group relative block overflow-hidden rounded-[1.5rem] border border-[color:var(--ca-border)] bg-[linear-gradient(180deg,color-mix(in_srgb,var(--ca-panel-bg)_94%,transparent),color-mix(in_srgb,var(--ca-panel-bg-strong)_90%,transparent))] p-5 transition duration-200 hover:-translate-y-0.5 hover:border-[color:var(--ca-gold-border)] hover:shadow-[0_22px_60px_rgba(15,23,42,0.14)]"
+                >
+                  <div class="absolute inset-x-0 top-0 h-px bg-[linear-gradient(90deg,transparent,color-mix(in_srgb,var(--ca-gold-border)_76%,transparent),transparent)]" />
+                  <div class="flex items-start gap-4">
+                    <span class="inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-2xl border border-[color:var(--ca-border)] bg-[color-mix(in_srgb,var(--ca-panel-bg-strong)_84%,transparent)] shadow-[inset_0_1px_0_rgba(255,255,255,0.06)]">
+                      <Icon :name="product.icon" class="h-4 w-4 ca-tone-gold" />
+                    </span>
+
+                    <div class="min-w-0 flex-1">
+                      <div class="flex flex-wrap items-center gap-2">
+                        <span v-if="product.badge" class="rounded-full border border-[color:var(--ca-gold-border)]/50 bg-[rgba(245,158,11,0.08)] px-2.5 py-1 text-[0.68rem] font-bold uppercase tracking-[0.12em] text-[var(--ca-gold-text)]">
+                          {{ product.badge }}
+                        </span>
+                        <span class="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-[var(--ca-subtle)]">{{ product.tagline }}</span>
+                      </div>
+                      <h3 class="mt-3 text-balance font-display text-xl font-bold leading-tight text-[var(--ca-text)]">{{ product.name }}</h3>
+                      <p class="mt-2 text-sm leading-relaxed text-[var(--ca-muted)]">{{ product.description }}</p>
+
+                      <div v-if="product.features.length" class="mt-4 flex flex-wrap gap-2">
+                        <span
+                          v-for="feature in product.features"
+                          :key="feature"
+                          class="rounded-full border border-[color:var(--ca-border)] bg-[color-mix(in_srgb,var(--ca-panel-bg)_80%,transparent)] px-2.5 py-1 text-[0.72rem] font-medium leading-relaxed text-[var(--ca-muted)]"
+                        >
+                          {{ feature }}
+                        </span>
+                      </div>
+
+                      <div class="mt-5 inline-flex items-center gap-2 text-sm font-semibold ca-tone-gold">
+                        {{ product.ctaLabel }}
+                        <Icon name="lucide:arrow-up-right" class="h-4 w-4 transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                      </div>
+                    </div>
                   </div>
-                  <Icon name="lucide:arrow-right" class="mt-1 h-4 w-4 flex-shrink-0 text-[var(--ca-subtle)] transition group-hover:translate-x-0.5 group-hover:text-[var(--ca-gold-text)]" />
+                </NuxtLink>
+              </div>
+
+              <div v-if="productRoadmap.length" class="mt-5 rounded-[1.35rem] border border-[color:var(--ca-border)] bg-[color-mix(in_srgb,var(--ca-panel-bg)_78%,transparent)] p-4 sm:p-5">
+                <p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-[var(--ca-subtle)]">{{ t('blog.productsRoadmapTitle') }}</p>
+                <div class="mt-3 space-y-3">
+                  <div
+                    v-for="product in productRoadmap"
+                    :key="product.name"
+                    class="rounded-[1.1rem] border border-[color:var(--ca-border)] bg-[color-mix(in_srgb,var(--ca-panel-bg-strong)_76%,transparent)] p-3.5"
+                  >
+                    <div class="flex items-start justify-between gap-3">
+                      <div class="min-w-0">
+                        <div class="flex flex-wrap items-center gap-2">
+                          <span class="text-[0.68rem] font-semibold uppercase tracking-[0.14em] text-[var(--ca-subtle)]">{{ product.tagline }}</span>
+                          <span v-if="product.badge" class="rounded-full border border-[color:var(--ca-border)] px-2 py-0.5 text-[0.68rem] font-bold uppercase tracking-[0.12em] text-[var(--ca-subtle)]">
+                            {{ product.badge }}
+                          </span>
+                        </div>
+                        <h3 class="mt-2 font-display text-base font-bold text-[var(--ca-text)]">{{ product.name }}</h3>
+                        <p class="mt-1.5 text-sm leading-relaxed text-[var(--ca-muted)]">{{ product.description }}</p>
+                      </div>
+                      <Icon name="lucide:sparkles" class="mt-0.5 h-4 w-4 flex-shrink-0 text-[var(--ca-gold-text)]" />
+                    </div>
+                  </div>
                 </div>
-              </NuxtLink>
+              </div>
             </div>
           </div>
         </div>

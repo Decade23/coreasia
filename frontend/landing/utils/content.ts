@@ -1283,6 +1283,7 @@ const ID_CONTENT = {
     relatedDescription: 'Lanjutkan membaca topik serupa yang masih relevan dengan artikel ini.',
     productsTitle: 'Produk CoreAsia',
     productsDescription: 'Jika topik ini terkait kebutuhan bisnis Anda, eksplor produk CoreAsia yang paling dekat dengan use case tersebut.',
+    productsRoadmapTitle: 'Produk lain yang sedang disiapkan',
     noRelatedArticles: 'Belum ada artikel terkait lain untuk ditampilkan.',
     categories: {
       all: 'Semua',
@@ -2820,6 +2821,7 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
     relatedDescription: 'Keep exploring similar topics that connect naturally with this article.',
     productsTitle: 'CoreAsia products',
     productsDescription: 'If this topic matches your business needs, explore the CoreAsia products closest to that use case.',
+    productsRoadmapTitle: 'More products in the pipeline',
     noRelatedArticles: 'No related articles are available yet.',
     categories: {
       all: 'All',
