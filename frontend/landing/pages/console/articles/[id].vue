@@ -140,7 +140,7 @@ const articleTimeline = computed(() => {
     <template v-else-if="currentItem">
       <!-- Status Bar -->
       <div class="mx-auto mb-4 max-w-5xl">
-        <div class="ca-card flex flex-col gap-4 p-4">
+        <div class="ca-card-soft flex flex-col gap-4 p-4">
           <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div class="flex items-center gap-3">
               <span class="rounded-full border px-2.5 py-0.5 text-[0.7rem] font-bold uppercase" :class="statusColor(currentItem.status)">
@@ -154,7 +154,7 @@ const articleTimeline = computed(() => {
               <button
                 v-if="currentItem.status === 'draft'"
                 type="button"
-                class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-emerald-600"
+                class="ca-btn-success !px-3.5 !py-2"
                 :disabled="saving"
                 @click="showPublishConfirm = true"
               >
@@ -188,10 +188,10 @@ const articleTimeline = computed(() => {
       </div>
 
       <form class="mx-auto max-w-5xl" @submit.prevent="handleSubmit">
-        <div class="ca-card p-4 sm:p-6">
+        <div class="ca-card-soft p-4 sm:p-6">
           <div class="space-y-4">
-            <BaseInput id="title" v-model="form.title" :label="tc('articles.titleField')" placeholder="Judul artikel" required />
-            <BaseInput id="slug" v-model="form.slug" :label="tc('articles.slugField')" placeholder="judul-artikel" required />
+            <BaseInput id="title" v-model="form.title" :label="tc('articles.titleField')" :placeholder="tc('articles.titlePlaceholder')" required />
+            <BaseInput id="slug" v-model="form.slug" :label="tc('articles.slugField')" :placeholder="tc('articles.slugPlaceholder')" required />
             <BaseTextarea id="description" v-model="form.description" :label="tc('articles.descriptionField')" rows="2" required />
 
             <!-- Content WYSIWYG editor -->
@@ -199,18 +199,18 @@ const articleTimeline = computed(() => {
               id="content"
               v-model="form.content"
               :label="tc('articles.content')"
-              placeholder="Tulis konten artikel di sini..."
+              :placeholder="tc('editor.placeholder')"
               min-height="400px"
               required
             />
 
             <div class="grid gap-4 sm:grid-cols-2">
-              <BaseInput id="category" v-model="form.category" :label="tc('articles.categoryField')" required />
-              <BaseInput id="tags" v-model="form.tags" :label="tc('articles.tagsField')" placeholder="seo, web, bisnis" />
+              <BaseInput id="category" v-model="form.category" :label="tc('articles.categoryField')" :placeholder="tc('articles.categoryPlaceholder')" required />
+              <BaseInput id="tags" v-model="form.tags" :label="tc('articles.tagsField')" :placeholder="tc('articles.tagsPlaceholder')" />
             </div>
 
             <div class="grid gap-4 sm:grid-cols-2">
-              <BaseInput id="author" v-model="form.author" :label="tc('articles.authorField')" />
+              <BaseInput id="author" v-model="form.author" :label="tc('articles.authorField')" :placeholder="tc('articles.authorPlaceholder')" />
               <BaseInput id="read_time" v-model.number="form.read_time" :label="tc('articles.readTimeField')" type="number" />
             </div>
 
@@ -250,7 +250,7 @@ const articleTimeline = computed(() => {
     <!-- Publish Confirm Modal -->
     <Teleport to="body">
       <div v-if="showPublishConfirm" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" @click.self="showPublishConfirm = false">
-        <div class="ca-card w-full max-w-md p-6">
+        <div class="ca-console-dialog w-full max-w-md p-6">
           <h3 class="font-display text-lg font-bold text-[var(--ca-text)]">
             <Icon name="lucide:globe" class="mr-2 inline h-5 w-5 text-emerald-400" />
             {{ tc('articles.publishTitle') }}
@@ -260,7 +260,7 @@ const articleTimeline = computed(() => {
           </p>
           <div class="mt-6 flex justify-end gap-3">
             <button type="button" class="ca-btn-secondary" @click="showPublishConfirm = false">{{ tc('common.cancel') }}</button>
-            <button type="button" class="rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-600" :disabled="saving" @click="handlePublish">
+            <button type="button" class="ca-btn-success !px-4 !py-2.5" :disabled="saving" @click="handlePublish">
               {{ saving ? tc('articles.publishing') : tc('common.publish') }}
             </button>
           </div>
@@ -271,7 +271,7 @@ const articleTimeline = computed(() => {
     <!-- Unpublish Confirm Modal -->
     <Teleport to="body">
       <div v-if="showUnpublishConfirm" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" @click.self="showUnpublishConfirm = false">
-        <div class="ca-card w-full max-w-md p-6">
+        <div class="ca-console-dialog w-full max-w-md p-6">
           <h3 class="font-display text-lg font-bold text-[var(--ca-text)]">
             <Icon name="lucide:eye-off" class="mr-2 inline h-5 w-5 text-amber-400" />
             {{ tc('articles.unpublishTitle') }}

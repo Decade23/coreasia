@@ -159,7 +159,7 @@ const formatDate = (d: string) => formatDateTime(d)
               <div
                 v-if="activeFilter === col.key"
                 ref="filterRef"
-                class="absolute left-0 top-full z-20 mt-1 w-56 rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-bg)] p-3 shadow-xl"
+                class="ca-console-dialog absolute left-0 top-full z-20 mt-2 w-56 p-3"
                 @click.stop
               >
                 <p class="mb-2 text-[0.65rem] font-bold uppercase tracking-widest text-[var(--ca-subtle)]">

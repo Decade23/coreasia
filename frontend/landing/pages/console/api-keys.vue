@@ -153,7 +153,7 @@ const formatDate = (d: string) => formatDateTime(d)
     </ConsolePageHeader>
 
     <!-- Info box -->
-    <div class="mb-4 rounded-[1.5rem] border border-amber-300/20 bg-amber-500/5 p-4">
+    <div class="ca-console-note ca-console-note-warning mb-4">
       <div class="flex gap-3">
         <Icon name="lucide:info" class="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
         <div class="text-xs text-[var(--ca-muted)]">
@@ -180,7 +180,7 @@ const formatDate = (d: string) => formatDateTime(d)
       <div
         v-for="k in items"
         :key="k.id"
-        class="ca-card flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
+        class="ca-card-soft flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
       >
         <div class="min-w-0 flex-1">
           <div class="flex items-center gap-2">
@@ -257,7 +257,7 @@ const formatDate = (d: string) => formatDateTime(d)
     <!-- Form Modal -->
     <Teleport to="body">
       <div v-if="showFormModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" @click.self="showFormModal = false">
-        <div class="ca-card w-full max-w-lg p-6">
+        <div class="ca-console-dialog w-full max-w-lg p-6">
           <h3 class="font-display text-lg font-bold text-[var(--ca-text)]">
             <Icon name="lucide:key-round" class="mr-2 inline h-5 w-5 text-amber-400" />
             {{ editingKey ? tc('apiKeys.formEditTitle') : tc('apiKeys.formCreateTitle') }}
@@ -354,14 +354,14 @@ const formatDate = (d: string) => formatDateTime(d)
     <!-- Delete Confirm -->
     <Teleport to="body">
       <div v-if="showDeleteConfirm" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" @click.self="showDeleteConfirm = false">
-        <div class="ca-card w-full max-w-md p-6">
+        <div class="ca-console-dialog w-full max-w-md p-6">
           <h3 class="font-display text-lg font-bold text-[var(--ca-text)]">{{ tc('apiKeys.deleteTitle') }}</h3>
           <p class="mt-2 text-sm text-[var(--ca-muted)]">
             {{ tc('apiKeys.deleteDescription', { name: deletingKey?.name || '-' }) }}
           </p>
           <div class="mt-6 flex justify-end gap-3">
             <button type="button" class="ca-btn-secondary" @click="showDeleteConfirm = false">{{ tc('common.cancel') }}</button>
-            <button type="button" class="rounded-lg bg-rose-500 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-600" @click="confirmDelete">{{ tc('common.delete') }}</button>
+            <button type="button" class="ca-btn-danger !px-4 !py-2.5" @click="confirmDelete">{{ tc('common.delete') }}</button>
           </div>
         </div>
       </div>

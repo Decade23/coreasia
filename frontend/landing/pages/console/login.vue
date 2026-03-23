@@ -58,22 +58,28 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="relative flex min-h-screen items-center justify-center overflow-hidden bg-[var(--ca-bg)] px-4 py-12">
+  <div class="ca-console-shell relative flex min-h-screen items-center justify-center overflow-hidden bg-[var(--ca-bg)] px-4 py-12">
     <div class="pointer-events-none absolute inset-0">
       <div class="ca-console-header-orb ca-console-header-orb-primary left-[8%] top-[8%]" />
       <div class="ca-console-header-orb ca-console-header-orb-secondary bottom-[8%] right-[12%]" />
     </div>
 
-    <div class="relative z-[1] w-full max-w-md">
+    <div class="relative z-[1] w-full max-w-lg">
       <div class="mb-8 text-center">
         <div class="mx-auto inline-flex h-16 w-16 items-center justify-center rounded-[1.75rem] border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] shadow-[var(--ca-card-soft-shadow)]">
           <NuxtImg src="/logo.svg" alt="CoreAsia" width="48" height="48" class="h-10 w-10" />
+        </div>
+        <div class="mt-5">
+          <span class="ca-kicker">
+            <Icon name="lucide:shield-check" class="h-3.5 w-3.5" />
+            {{ tc('layout.kicker') }}
+          </span>
         </div>
         <h1 class="mt-5 font-display text-3xl font-bold text-[var(--ca-text)]">{{ tc('login.title') }}</h1>
         <p class="mt-2 text-sm leading-relaxed text-[var(--ca-muted)]">{{ tc('login.description') }}</p>
       </div>
 
-      <form class="ca-console-header-card rounded-[1.75rem] p-6 sm:p-8" @submit.prevent="handleSubmit">
+      <form class="ca-console-dialog p-6 sm:p-8" @submit.prevent="handleSubmit">
         <div class="space-y-4">
           <BaseInput
             id="email"

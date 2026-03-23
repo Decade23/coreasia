@@ -283,12 +283,12 @@ const statusOptions = computed(() => [
     <!-- Delete Confirmation Modal -->
     <Teleport to="body">
       <div v-if="showDeleteConfirm" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" @click.self="showDeleteConfirm = false">
-        <div class="ca-card w-full max-w-md p-6">
+        <div class="ca-console-dialog w-full max-w-md p-6">
           <h3 class="font-display text-lg font-bold text-[var(--ca-text)]">{{ tc('articles.deleteTitle') }}</h3>
           <p class="mt-2 text-sm text-[var(--ca-muted)]">{{ tc('articles.deleteDescription', { title: deletingTitle }) }}</p>
           <div class="mt-6 flex justify-end gap-3">
             <button type="button" class="ca-btn-secondary" @click="showDeleteConfirm = false">{{ tc('common.cancel') }}</button>
-            <button type="button" class="rounded-lg bg-rose-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-600" @click="confirmDelete">{{ tc('common.delete') }}</button>
+            <button type="button" class="ca-btn-danger !px-4 !py-2.5" @click="confirmDelete">{{ tc('common.delete') }}</button>
           </div>
         </div>
       </div>

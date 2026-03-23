@@ -92,16 +92,18 @@ const handleLogout = () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-[var(--ca-bg)]">
+  <div class="ca-console-shell min-h-screen bg-[var(--ca-bg)]">
     <!-- Sidebar -->
     <aside
-      class="fixed inset-y-0 left-0 z-40 w-64 border-r border-[color:var(--ca-border)] bg-[color:color-mix(in_srgb,var(--ca-bg)_88%,transparent)] backdrop-blur-xl transition-transform lg:translate-x-0"
+      class="ca-console-sidebar fixed inset-y-0 left-0 z-40 w-72 transition-transform lg:translate-x-0"
       :class="isSidebarOpen ? 'translate-x-0' : '-translate-x-full'"
     >
       <div class="flex h-full flex-col">
         <!-- Logo -->
-        <div class="flex h-16 items-center gap-3 border-b border-[color:var(--ca-border)] px-5">
-          <NuxtImg src="/logo.svg" alt="CoreAsia" width="28" height="28" class="h-7 w-7" />
+        <div class="flex h-[4.5rem] items-center gap-3 border-b border-[color:var(--ca-border)] px-5">
+          <div class="flex h-11 w-11 items-center justify-center rounded-[1.2rem] border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg-strong)] shadow-[var(--ca-card-soft-shadow)]">
+            <NuxtImg src="/logo.svg" alt="CoreAsia" width="28" height="28" class="h-7 w-7" />
+          </div>
           <div>
             <span class="block font-display text-sm font-bold leading-tight text-[var(--ca-text)]">CoreAsia</span>
             <span class="block text-[0.6rem] uppercase tracking-[0.14em] text-[var(--ca-muted)]">{{ tc('layout.kicker') }}</span>
@@ -109,32 +111,36 @@ const handleLogout = () => {
         </div>
 
         <!-- Nav -->
-        <nav class="flex-1 space-y-1 px-3 py-4">
+        <nav class="flex-1 space-y-1.5 px-3 py-5">
           <NuxtLink
             v-for="item in menuItems"
             :key="item.to"
             :to="item.to"
-            class="flex items-center gap-3 rounded-2xl px-3.5 py-3 text-[0.83rem] font-medium transition-colors"
-            :class="isActive(item.to) ? 'bg-[var(--ca-kicker-bg)] text-brand-primary shadow-[inset_0_0_0_1px_rgba(252,211,77,0.1)]' : 'text-[var(--ca-muted)] hover:bg-[var(--ca-panel-bg-strong)] hover:text-[var(--ca-text)]'"
+            class="ca-console-nav-item"
+            :data-active="isActive(item.to)"
             @click="isSidebarOpen = false"
           >
-            <span class="inline-flex h-8 w-8 items-center justify-center rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)]">
+            <span class="ca-console-nav-item-icon">
               <Icon :name="item.icon" class="h-4 w-4" />
             </span>
-            {{ item.label }}
+            <span class="truncate">{{ item.label }}</span>
           </NuxtLink>
         </nav>
 
         <!-- Sidebar footer -->
-        <div class="border-t border-[color:var(--ca-border)] p-4">
-          <div class="ca-card-soft mb-3 rounded-2xl p-3">
+        <div class="ca-console-sidebar-footer p-4">
+          <div class="ca-card-soft mb-3 rounded-[1.5rem] p-4">
             <p class="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-[var(--ca-subtle)]">{{ tc('layout.kicker') }}</p>
             <p class="mt-2 text-sm font-semibold text-[var(--ca-text)]">{{ currentPageLabel }}</p>
             <p class="mt-1 text-xs leading-relaxed text-[var(--ca-muted)]">{{ user?.full_name || 'Admin' }}</p>
+            <div class="mt-3 inline-flex items-center gap-2 rounded-full border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg-strong)] px-2.5 py-1 text-[0.65rem] font-semibold text-[var(--ca-muted)]">
+              <span class="h-1.5 w-1.5 rounded-full bg-[var(--ca-accent)]" />
+              {{ user?.role || 'admin' }}
+            </div>
           </div>
           <NuxtLink
             to="/"
-            class="flex items-center gap-2 rounded-lg px-3 py-2 text-xs text-[var(--ca-subtle)] transition hover:bg-[var(--ca-panel-bg-strong)] hover:text-[var(--ca-muted)]"
+            class="flex items-center gap-2 rounded-xl px-3 py-2.5 text-xs text-[var(--ca-subtle)] transition hover:bg-[var(--ca-panel-bg-strong)] hover:text-[var(--ca-muted)]"
           >
             <Icon name="lucide:arrow-left" class="h-3.5 w-3.5" />
             {{ tc('common.backToWebsite') }}
@@ -147,20 +153,20 @@ const handleLogout = () => {
     <div v-if="isSidebarOpen" class="fixed inset-0 z-30 bg-black/50 lg:hidden" @click="isSidebarOpen = false" />
 
     <!-- Main -->
-    <div class="lg:pl-64">
+    <div class="lg:pl-72">
       <!-- Top header bar -->
-      <header class="sticky top-0 z-20 h-16 border-b border-[color:var(--ca-border)] bg-[color:color-mix(in_srgb,var(--ca-bg)_86%,transparent)] backdrop-blur-xl">
-        <div class="flex h-full items-center justify-between px-4 sm:px-6">
+      <header class="ca-console-topbar sticky top-0 z-20 h-[4.5rem]">
+        <div class="ca-console-content flex h-full items-center justify-between px-4 sm:px-6 lg:px-8">
           <!-- Left: hamburger + breadcrumb -->
           <div class="flex items-center gap-3">
-            <button type="button" class="lg:hidden text-[var(--ca-muted)]" @click="isSidebarOpen = !isSidebarOpen">
+            <button type="button" class="ca-header-btn lg:hidden" @click="isSidebarOpen = !isSidebarOpen">
               <Icon name="lucide:menu" class="h-5 w-5" />
             </button>
             <div class="sm:hidden">
               <p class="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-[var(--ca-subtle)]">{{ tc('layout.kicker') }}</p>
               <p class="text-sm font-semibold text-[var(--ca-text)]">{{ currentPageLabel }}</p>
             </div>
-            <nav class="hidden sm:flex items-center gap-1.5 text-xs">
+            <nav class="hidden rounded-full border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] px-3 py-2 sm:flex items-center gap-1.5 text-xs shadow-[var(--ca-card-soft-shadow)]">
               <template v-for="(crumb, i) in breadcrumbs" :key="i">
                 <span v-if="i > 0" class="text-[var(--ca-subtle)]">/</span>
                 <NuxtLink
@@ -176,7 +182,7 @@ const handleLogout = () => {
           </div>
 
           <!-- Right: actions -->
-          <div class="flex items-center gap-1">
+          <div class="flex items-center gap-1.5">
             <!-- Theme -->
             <CaTooltip :text="theme === 'dark' ? tc('layout.switchToLight') : tc('layout.switchToDark')" position="bottom">
               <button type="button" class="ca-header-btn" @click="toggleTheme">
@@ -190,7 +196,7 @@ const handleLogout = () => {
             <!-- User menu -->
             <div class="relative" @click.stop>
               <button type="button" class="ca-header-btn gap-2 pl-2 pr-2.5" @click="showUserMenu = !showUserMenu">
-                <div class="flex h-6 w-6 items-center justify-center rounded-full bg-amber-500/15 text-amber-400">
+                <div class="flex h-7 w-7 items-center justify-center rounded-full bg-amber-500/15 text-amber-400">
                   <Icon name="lucide:user" class="h-3.5 w-3.5" />
                 </div>
                 <span class="hidden sm:inline text-xs font-medium text-[var(--ca-text)] max-w-[100px] truncate">{{ user?.full_name || 'Admin' }}</span>
@@ -204,7 +210,7 @@ const handleLogout = () => {
                 leave-active-class="transition duration-100 ease-in"
                 leave-to-class="opacity-0 scale-95 -translate-y-1"
               >
-                <div v-if="showUserMenu" class="absolute right-0 top-full mt-1.5 w-56 rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg-strong)] p-1.5 shadow-xl">
+                <div v-if="showUserMenu" class="ca-console-dialog absolute right-0 top-full mt-2 w-56 p-1.5">
                   <div class="px-3 py-2 mb-1">
                     <p class="text-xs font-semibold text-[var(--ca-text)] truncate">{{ user?.full_name }}</p>
                     <p class="text-[0.65rem] text-[var(--ca-muted)] truncate">{{ user?.email }}</p>
@@ -217,7 +223,7 @@ const handleLogout = () => {
                     @click="showUserMenu = false; showLogoutConfirm = true"
                   >
                     <Icon name="lucide:log-out" class="h-3.5 w-3.5" />
-                    Keluar
+                    {{ tc('common.logout') }}
                   </button>
                 </div>
               </Transition>
@@ -227,15 +233,17 @@ const handleLogout = () => {
       </header>
 
       <!-- Page content -->
-      <main class="min-h-[calc(100vh-3.5rem)] p-4 sm:p-6 lg:p-8">
-        <slot />
+      <main class="ca-console-main min-h-[calc(100vh-4.5rem)] p-4 sm:p-6 lg:p-8">
+        <div class="ca-console-content">
+          <slot />
+        </div>
       </main>
     </div>
 
     <!-- Logout confirm modal -->
     <Teleport to="body">
       <div v-if="showLogoutConfirm" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" @click.self="showLogoutConfirm = false">
-        <div class="ca-card w-full max-w-sm p-6 text-center">
+        <div class="ca-console-dialog w-full max-w-sm p-6 text-center">
           <div class="mx-auto mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-rose-500/10">
             <Icon name="lucide:log-out" class="h-6 w-6 text-rose-400" />
           </div>
@@ -243,7 +251,7 @@ const handleLogout = () => {
           <p class="mt-2 text-sm text-[var(--ca-muted)]">{{ tc('layout.logoutDescription') }}</p>
           <div class="mt-6 flex justify-center gap-3">
             <button type="button" class="ca-btn-secondary" @click="showLogoutConfirm = false">{{ tc('common.cancel') }}</button>
-            <button type="button" class="rounded-lg bg-rose-500 px-5 py-2 text-sm font-semibold text-white hover:bg-rose-600 transition" @click="handleLogout">{{ tc('layout.logoutConfirm') }}</button>
+            <button type="button" class="ca-btn-danger !px-4 !py-2.5" @click="handleLogout">{{ tc('layout.logoutConfirm') }}</button>
           </div>
         </div>
       </div>
@@ -257,14 +265,18 @@ const handleLogout = () => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 2rem;
-  height: 2rem;
-  border-radius: 0.5rem;
+  min-width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.85rem;
+  border: 1px solid color-mix(in srgb, var(--ca-border) 86%, transparent);
+  background: color-mix(in srgb, var(--ca-panel-bg) 88%, transparent);
+  box-shadow: var(--ca-card-soft-shadow);
   color: var(--ca-muted);
   transition: all 0.15s;
 }
 .ca-header-btn:hover {
   background: var(--ca-panel-bg-strong);
   color: var(--ca-text);
+  transform: translateY(-1px);
 }
 </style>

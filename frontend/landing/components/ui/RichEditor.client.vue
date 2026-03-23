@@ -776,7 +776,7 @@ const runToolbarAction = (action: ToolbarAction) => {
 
     <Teleport to="body">
       <div v-if="showLinkModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" @click.self="showLinkModal = false">
-        <div class="ca-card w-full max-w-md p-6">
+        <div class="ca-console-dialog w-full max-w-md p-6">
           <h3 class="font-display text-lg font-bold text-[var(--ca-text)]">
             <Icon name="lucide:link" class="mr-2 inline h-5 w-5 text-amber-400" />
             {{ linkUrl ? tc('editor.editLinkTitle') : tc('editor.insertLinkTitle') }}
@@ -802,7 +802,7 @@ const runToolbarAction = (action: ToolbarAction) => {
 
     <Teleport to="body">
       <div v-if="showImageModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" @click.self="showImageModal = false">
-        <div class="ca-card w-full max-w-md p-6">
+        <div class="ca-console-dialog w-full max-w-md p-6">
           <h3 class="font-display text-lg font-bold text-[var(--ca-text)]">
             <Icon name="lucide:image" class="mr-2 inline h-5 w-5 text-amber-400" />
             {{ tc('editor.insertImageTitle') }}

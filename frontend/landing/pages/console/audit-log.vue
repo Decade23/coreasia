@@ -119,7 +119,7 @@ const handleRowClick = (row: any) => {
     <!-- Detail Modal -->
     <Teleport to="body">
       <div v-if="selectedLog" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" @click.self="selectedLog = null">
-        <div class="ca-card w-full max-w-lg p-6">
+        <div class="ca-console-dialog w-full max-w-lg p-6">
           <div class="flex items-start justify-between mb-5">
             <div class="flex items-center gap-3">
               <div class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--ca-panel-bg-strong)]">

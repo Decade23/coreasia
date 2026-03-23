@@ -282,7 +282,7 @@ const configLabel = (b: any) => {
     </div>
 
     <div v-else class="space-y-4">
-      <div v-for="b in items" :key="b.id" class="ca-card p-5">
+      <div v-for="b in items" :key="b.id" class="ca-card-soft p-5">
         <!-- Header -->
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div class="flex items-center gap-3">
@@ -396,7 +396,7 @@ const configLabel = (b: any) => {
     <!-- Form Modal -->
     <Teleport to="body">
       <div v-if="showFormModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" @click.self="showFormModal = false">
-        <div class="ca-card w-full max-w-lg max-h-[90vh] overflow-y-auto p-6">
+        <div class="ca-console-dialog w-full max-w-lg max-h-[90vh] overflow-y-auto p-6">
           <h3 class="font-display text-lg font-bold text-[var(--ca-text)]">
             <Icon name="lucide:bot" class="mr-2 inline h-5 w-5 text-amber-400" />
             {{ editingBot ? tc('bots.formEdit') : tc('bots.formCreate') }}
@@ -495,12 +495,12 @@ const configLabel = (b: any) => {
     <!-- Delete Confirm -->
     <Teleport to="body">
       <div v-if="showDeleteConfirm" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" @click.self="showDeleteConfirm = false">
-        <div class="ca-card w-full max-w-md p-6">
+        <div class="ca-console-dialog w-full max-w-md p-6">
           <h3 class="font-display text-lg font-bold text-[var(--ca-text)]">{{ tc('bots.deleteTitle') }}</h3>
           <p class="mt-2 text-sm text-[var(--ca-muted)]">{{ tc('bots.deleteDescription', { name: deletingBot?.name || '-' }) }}</p>
           <div class="mt-6 flex justify-end gap-3">
             <button type="button" class="ca-btn-secondary" @click="showDeleteConfirm = false">{{ tc('common.cancel') }}</button>
-            <button type="button" class="rounded-lg bg-rose-500 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-600" @click="confirmDelete">{{ tc('common.delete') }}</button>
+            <button type="button" class="ca-btn-danger !px-4 !py-2.5" @click="confirmDelete">{{ tc('common.delete') }}</button>
           </div>
         </div>
       </div>

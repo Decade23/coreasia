@@ -158,7 +158,7 @@ const confirmDelete = async () => {
     <!-- Form Modal -->
     <Teleport to="body">
       <div v-if="showFormModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" @click.self="showFormModal = false">
-        <div class="ca-card w-full max-w-md p-6">
+        <div class="ca-console-dialog w-full max-w-md p-6">
           <h3 class="font-display text-lg font-bold text-[var(--ca-text)]">{{ editingUser ? tc('users.formEditTitle') : tc('users.formCreateTitle') }}</h3>
           <form class="mt-4 space-y-3" @submit.prevent="handleSubmit">
             <BaseInput id="u-name" v-model="formData.full_name" :label="tc('users.fullName')" required />
@@ -182,12 +182,12 @@ const confirmDelete = async () => {
     <!-- Delete Confirm -->
     <Teleport to="body">
       <div v-if="showDeleteConfirm" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" @click.self="showDeleteConfirm = false">
-        <div class="ca-card w-full max-w-md p-6">
+        <div class="ca-console-dialog w-full max-w-md p-6">
           <h3 class="font-display text-lg font-bold text-[var(--ca-text)]">{{ tc('users.deleteTitle') }}</h3>
           <p class="mt-2 text-sm text-[var(--ca-muted)]">{{ tc('users.deleteDescription', { name: deletingUser?.full_name || '-' }) }}</p>
           <div class="mt-6 flex justify-end gap-3">
             <button type="button" class="ca-btn-secondary" @click="showDeleteConfirm = false">{{ tc('common.cancel') }}</button>
-            <button type="button" class="rounded-lg bg-rose-500 px-4 py-2 text-sm font-semibold text-white hover:bg-rose-600" @click="confirmDelete">{{ tc('common.delete') }}</button>
+            <button type="button" class="ca-btn-danger !px-4 !py-2.5" @click="confirmDelete">{{ tc('common.delete') }}</button>
           </div>
         </div>
       </div>
@@ -196,7 +196,7 @@ const confirmDelete = async () => {
     <!-- Change Password Modal -->
     <Teleport to="body">
       <div v-if="showPasswordModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" @click.self="showPasswordModal = false">
-        <div class="ca-card w-full max-w-md p-6">
+        <div class="ca-console-dialog w-full max-w-md p-6">
           <h3 class="font-display text-lg font-bold text-[var(--ca-text)]">
             <Icon name="lucide:key-round" class="mr-2 inline h-5 w-5 text-amber-400" />
             {{ tc('users.passwordTitle') }}

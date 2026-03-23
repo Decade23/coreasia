@@ -14,7 +14,7 @@ const form = ref({
   content: '',
   category: 'general',
   tags: '',
-  author: 'Tim CoreAsia',
+  author: tc('articles.authorPlaceholder'),
   read_time: 5,
   status: 'draft',
   featured_image: '',
@@ -135,7 +135,7 @@ const applySuggestion = (s: typeof topicSuggestions[0]) => {
     />
 
     <form class="mx-auto max-w-5xl" @submit.prevent="handleSubmit">
-      <div class="ca-card p-4 sm:p-6">
+      <div class="ca-card-soft p-4 sm:p-6">
         <!-- Actions bar -->
         <div class="mb-6 flex flex-wrap gap-2">
           <button type="button" class="ca-btn-secondary text-sm" @click="showAIModal = true">
@@ -145,28 +145,28 @@ const applySuggestion = (s: typeof topicSuggestions[0]) => {
         </div>
 
         <div class="space-y-4">
-          <BaseInput id="title" v-model="form.title" :label="tc('articles.titleField')" placeholder="Judul artikel" required />
-          <BaseInput id="slug" v-model="form.slug" :label="tc('articles.slugField')" placeholder="judul-artikel" required />
+          <BaseInput id="title" v-model="form.title" :label="tc('articles.titleField')" :placeholder="tc('articles.titlePlaceholder')" required />
+          <BaseInput id="slug" v-model="form.slug" :label="tc('articles.slugField')" :placeholder="tc('articles.slugPlaceholder')" required />
 
-          <BaseTextarea id="description" v-model="form.description" :label="tc('articles.descriptionField')" placeholder="Ringkasan singkat untuk meta description" rows="2" required />
+          <BaseTextarea id="description" v-model="form.description" :label="tc('articles.descriptionField')" :placeholder="tc('articles.descriptionPlaceholder')" rows="2" required />
 
           <!-- Content WYSIWYG editor -->
           <RichEditor
             id="content"
             v-model="form.content"
             :label="tc('articles.content')"
-            placeholder="Tulis konten artikel di sini..."
+            :placeholder="tc('editor.placeholder')"
             min-height="400px"
             required
           />
 
           <div class="grid gap-4 sm:grid-cols-2">
-            <BaseInput id="category" v-model="form.category" :label="tc('articles.categoryField')" placeholder="general" required />
-            <BaseInput id="tags" v-model="form.tags" :label="tc('articles.tagsField')" placeholder="seo, web, bisnis" />
+            <BaseInput id="category" v-model="form.category" :label="tc('articles.categoryField')" :placeholder="tc('articles.categoryPlaceholder')" required />
+            <BaseInput id="tags" v-model="form.tags" :label="tc('articles.tagsField')" :placeholder="tc('articles.tagsPlaceholder')" />
           </div>
 
           <div class="grid gap-4 sm:grid-cols-2">
-            <BaseInput id="author" v-model="form.author" :label="tc('articles.authorField')" placeholder="Tim CoreAsia" />
+            <BaseInput id="author" v-model="form.author" :label="tc('articles.authorField')" :placeholder="tc('articles.authorPlaceholder')" />
             <BaseInput id="read_time" v-model.number="form.read_time" :label="tc('articles.readTimeField')" type="number" />
           </div>
 
@@ -201,7 +201,7 @@ const applySuggestion = (s: typeof topicSuggestions[0]) => {
             <Icon name="lucide:save" class="h-4 w-4" />
             {{ saving ? tc('articles.savingDraft') : tc('articles.saveDraft') }}
           </button>
-          <button type="button" class="inline-flex items-center justify-center gap-1.5 rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-600" :disabled="saving" @click="handleSaveAndPublish">
+          <button type="button" class="ca-btn-success !px-4 !py-2.5" :disabled="saving" @click="handleSaveAndPublish">
             <Icon name="lucide:globe" class="h-4 w-4" />
             {{ saving ? tc('articles.publishing') : tc('articles.saveAndPublish') }}
           </button>
@@ -212,7 +212,7 @@ const applySuggestion = (s: typeof topicSuggestions[0]) => {
     <!-- AI Generate Modal -->
     <Teleport to="body">
       <div v-if="showAIModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" @click.self="showAIModal = false">
-        <div class="ca-card w-full max-w-lg max-h-[90vh] overflow-y-auto p-6">
+        <div class="ca-console-dialog w-full max-w-lg max-h-[90vh] overflow-y-auto p-6">
           <h3 class="font-display text-lg font-bold text-[var(--ca-text)]">
             <Icon name="lucide:sparkles" class="mr-2 inline h-5 w-5 ca-tone-gold" />
             {{ tc('articles.aiTitle') }}

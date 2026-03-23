@@ -134,7 +134,7 @@ onMounted(async () => {
       />
 
       <!-- Provider & Model -->
-      <div class="ca-card p-5 space-y-4 relative z-10">
+      <div class="ca-card-soft relative z-10 space-y-4 p-5 sm:p-6">
         <h3 class="font-display font-semibold text-[var(--ca-text)]">{{ tc('aiSettings.providerTitle') }}</h3>
 
         <SearchSelect
@@ -146,7 +146,7 @@ onMounted(async () => {
         />
 
         <!-- API Key status -->
-        <div v-if="!hasActiveKey" class="rounded-lg border border-amber-400/20 bg-amber-500/5 p-3 flex items-start gap-2.5">
+        <div v-if="!hasActiveKey" class="ca-console-note ca-console-note-warning flex items-start gap-2.5">
           <Icon name="lucide:alert-triangle" class="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
           <div class="text-xs">
             <p class="font-semibold text-amber-400">{{ tc('aiSettings.keyMissingTitle') }}</p>
@@ -156,7 +156,7 @@ onMounted(async () => {
             </p>
           </div>
         </div>
-        <div v-else class="rounded-lg border border-emerald-400/20 bg-emerald-500/5 p-3 flex items-center gap-2.5">
+        <div v-else class="ca-console-note ca-console-note-success flex items-center gap-2.5">
           <Icon name="lucide:shield-check" class="h-4 w-4 text-emerald-400 shrink-0" />
           <p class="text-xs text-[var(--ca-muted)]">
             {{ tc('aiSettings.keyActiveDesc', { name: activeKeyInfo?.name || '-', provider: providerOptions.find(p => p.value === settings.ai_provider)?.label || settings.ai_provider }) }}
@@ -177,7 +177,7 @@ onMounted(async () => {
       </div>
 
       <!-- Info -->
-      <div class="ca-card p-5">
+      <div class="ca-card-soft p-5 sm:p-6">
         <h3 class="font-display font-semibold text-[var(--ca-text)] mb-3">{{ tc('aiSettings.howItWorks') }}</h3>
         <div class="space-y-2 text-xs text-[var(--ca-muted)]">
           <div class="flex items-start gap-2">
