@@ -58,18 +58,44 @@ const statusLabel = (status: string) => {
   return tc('common.draft')
 }
 
-const timestampItems = (article: any) => ([
-  {
-    label: tc('articles.createdLabel'),
-    value: formatDateTime(article.created_at),
-    actor: article.created_by_name,
-  },
-  {
-    label: tc('articles.updatedLabel'),
-    value: formatDateTime(article.updated_at),
-    actor: article.updated_by_name,
-  },
-])
+const aiSourceLabel = (article: any) => {
+  if (article.ai_provider && article.ai_model) {
+    return tc('articles.generatedWith', {
+      provider: article.ai_provider,
+      model: article.ai_model,
+    })
+  }
+
+  return tc('articles.generatedWithUnknown')
+}
+
+const timestampItems = (article: any) => {
+  const rows = [
+    {
+      label: tc('articles.createdLabel'),
+      value: formatDateTime(article.created_at),
+      actor: article.created_by_name,
+      meta: '',
+    },
+    {
+      label: tc('articles.updatedLabel'),
+      value: formatDateTime(article.updated_at),
+      actor: article.updated_by_name,
+      meta: '',
+    },
+  ]
+
+  if (article.ai_generated_at) {
+    rows.push({
+      label: tc('articles.generatedLabel'),
+      value: formatDateTime(article.ai_generated_at),
+      actor: article.ai_generated_by_name,
+      meta: aiSourceLabel(article),
+    })
+  }
+
+  return rows
+}
 
 const publishActivityItems = (article: any) => {
   const rows: Array<{ label: string; value: string; actor: string | null }> = []
@@ -187,6 +213,13 @@ const statusOptions = computed(() => [
                   {{ article.category }}
                 </span>
                 <span class="text-[var(--ca-subtle)]">{{ article.author }}</span>
+                <span
+                  v-if="article.ai_generated_at"
+                  class="rounded-full bg-[var(--ca-kicker-bg)] px-2 py-0.5 font-semibold uppercase tracking-[0.08em] text-brand-primary"
+                >
+                  {{ tc('articles.aiDraft') }}
+                </span>
+                <span v-if="article.ai_generated_at" class="text-[var(--ca-subtle)]">{{ aiSourceLabel(article) }}</span>
               </div>
             </td>
             <td class="align-top">
@@ -203,6 +236,7 @@ const statusOptions = computed(() => [
                 >
                   <p class="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-[var(--ca-subtle)]">{{ item.label }}</p>
                   <p class="mt-1 text-xs text-[var(--ca-text)]">{{ item.value }}</p>
+                  <p v-if="item.meta" class="mt-1 text-[0.68rem] text-[var(--ca-muted)]">{{ item.meta }}</p>
                   <p v-if="item.actor" class="mt-1 text-[0.68rem] text-[var(--ca-muted)]">{{ tc('articles.byUser', { name: item.actor }) }}</p>
                 </div>
               </div>

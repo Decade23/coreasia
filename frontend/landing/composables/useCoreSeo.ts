@@ -11,7 +11,6 @@ interface CoreSeoOptions {
     ogType?: "website" | "article";
 }
 
-const SITE_URL = "https://coreasia.id";
 const SITE_NAME = "CoreAsia Teknologi";
 const DEFAULT_OG_IMAGE = "/social/og-image.png";
 const DEFAULT_TWITTER_IMAGE = "/social/twitter-card.webp";
@@ -34,13 +33,14 @@ const normalizePath = (path: string): string => {
     return path.startsWith("/") ? path : `/${path}`;
 };
 
-const toAbsoluteUrl = (path: string): string => {
-    return new URL(normalizePath(path), SITE_URL).toString();
+const toAbsoluteUrl = (path: string, siteOrigin: string): string => {
+    return new URL(normalizePath(path), siteOrigin).toString();
 };
 
 export const useCoreSeo = (options: CoreSeoOptions): void => {
     const route = useRoute();
     const { locale } = useCoreI18n();
+    const siteOrigin = useSiteOrigin();
     const routePath = normalizePath(options.path || route.path || "/");
     const localeMeta = LOCALE_META[locale.value as keyof typeof LOCALE_META] || LOCALE_META.id;
     const query = new URLSearchParams();
@@ -50,15 +50,15 @@ export const useCoreSeo = (options: CoreSeoOptions): void => {
     }
 
     const canonicalPath = query.size > 0 ? `${routePath}?${query.toString()}` : routePath;
-    const canonicalUrl = toAbsoluteUrl(canonicalPath);
+    const canonicalUrl = toAbsoluteUrl(canonicalPath, siteOrigin.value);
     const imagePath = options.image || DEFAULT_OG_IMAGE;
     const socialImage = imagePath.startsWith("http")
         ? imagePath
-        : toAbsoluteUrl(imagePath);
+        : toAbsoluteUrl(imagePath, siteOrigin.value);
     const twitterImagePath = options.twitterImage || DEFAULT_TWITTER_IMAGE;
     const socialTwitterImage = twitterImagePath.startsWith("http")
         ? twitterImagePath
-        : toAbsoluteUrl(twitterImagePath);
+        : toAbsoluteUrl(twitterImagePath, siteOrigin.value);
 
     const robots = options.noindex
         ? "noindex, nofollow"
@@ -67,9 +67,9 @@ export const useCoreSeo = (options: CoreSeoOptions): void => {
     useHead({
         link: [
             { rel: "canonical", href: canonicalUrl },
-            { rel: "alternate", hreflang: LOCALE_META.id.hreflang, href: toAbsoluteUrl(routePath) },
-            { rel: "alternate", hreflang: LOCALE_META.en.hreflang, href: toAbsoluteUrl(`${routePath}?lang=en`) },
-            { rel: "alternate", hreflang: "x-default", href: toAbsoluteUrl(routePath) },
+            { rel: "alternate", hreflang: LOCALE_META.id.hreflang, href: toAbsoluteUrl(routePath, siteOrigin.value) },
+            { rel: "alternate", hreflang: LOCALE_META.en.hreflang, href: toAbsoluteUrl(`${routePath}?lang=en`, siteOrigin.value) },
+            { rel: "alternate", hreflang: "x-default", href: toAbsoluteUrl(routePath, siteOrigin.value) },
         ],
     });
 

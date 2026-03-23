@@ -25,6 +25,8 @@ const articleSelectColumns = `a.id, a.slug, a.title, a.description, a.content, a
 	a.published_at, a.created_by, creator.full_name AS created_by_name,
 	a.updated_by, updater.full_name AS updated_by_name,
 	publish_log.user_name AS published_by_name,
+	ai_generate_log.created_at AS ai_generated_at, ai_generate_log.user_name AS ai_generated_by_name,
+	ai_generate_log.description AS ai_generation_note,
 	unpublish_log.created_at AS unpublished_at, unpublish_log.user_name AS unpublished_by_name,
 	a.created_at, a.updated_at`
 
@@ -40,6 +42,15 @@ const articleFromClause = `FROM public.articles a
 		ORDER BY gal.created_at DESC
 		LIMIT 1
 	) publish_log ON true
+	LEFT JOIN LATERAL (
+		SELECT gal.user_name, gal.created_at, gal.description
+		FROM public.gateway_audit_logs gal
+		WHERE gal.resource = 'articles'
+			AND gal.resource_id = a.id::text
+			AND gal.action = 'ai_generate'
+		ORDER BY gal.created_at DESC
+		LIMIT 1
+	) ai_generate_log ON true
 	LEFT JOIN LATERAL (
 		SELECT gal.user_name, gal.created_at
 		FROM public.gateway_audit_logs gal
@@ -57,12 +68,14 @@ func scanArticle(row pgx.Row) (*model.Article, error) {
 		&a.Tags, &a.Author, &a.ReadTime, &a.Status, &a.FeaturedImage,
 		&a.SEOTitle, &a.SEODescription, &a.PublishedAt,
 		&a.CreatedBy, &a.CreatedByName, &a.UpdatedBy, &a.UpdatedByName,
-		&a.PublishedByName, &a.UnpublishedAt, &a.UnpublishedByName,
+		&a.PublishedByName, &a.AIGeneratedAt, &a.AIGeneratedByName, &a.AIGenerationNote,
+		&a.UnpublishedAt, &a.UnpublishedByName,
 		&a.CreatedAt, &a.UpdatedAt,
 	)
 	if err != nil {
 		return nil, err
 	}
+	applyAIGenerationMeta(&a)
 	return &a, nil
 }
 
@@ -75,14 +88,51 @@ func scanArticles(rows pgx.Rows) ([]model.Article, error) {
 			&a.Tags, &a.Author, &a.ReadTime, &a.Status, &a.FeaturedImage,
 			&a.SEOTitle, &a.SEODescription, &a.PublishedAt,
 			&a.CreatedBy, &a.CreatedByName, &a.UpdatedBy, &a.UpdatedByName,
-			&a.PublishedByName, &a.UnpublishedAt, &a.UnpublishedByName,
+			&a.PublishedByName, &a.AIGeneratedAt, &a.AIGeneratedByName, &a.AIGenerationNote,
+			&a.UnpublishedAt, &a.UnpublishedByName,
 			&a.CreatedAt, &a.UpdatedAt,
 		); err != nil {
 			return nil, fmt.Errorf("scanning article: %w", err)
 		}
+		applyAIGenerationMeta(&a)
 		articles = append(articles, a)
 	}
 	return articles, rows.Err()
+}
+
+func applyAIGenerationMeta(article *model.Article) {
+	if article == nil || article.AIGenerationNote == nil {
+		return
+	}
+
+	provider, aiModel := parseAIGenerationSource(*article.AIGenerationNote)
+	if provider != "" {
+		article.AIProvider = &provider
+	}
+	if aiModel != "" {
+		article.AIModel = &aiModel
+	}
+}
+
+func parseAIGenerationSource(note string) (string, string) {
+	const prefix = "Bot auto-generated artikel via "
+
+	if !strings.HasPrefix(note, prefix) {
+		return "", ""
+	}
+
+	sourcePart := strings.TrimSpace(strings.TrimPrefix(note, prefix))
+	sourceParts := strings.SplitN(sourcePart, ":", 2)
+	if len(sourceParts) == 0 {
+		return "", ""
+	}
+
+	providerModel := strings.SplitN(strings.TrimSpace(sourceParts[0]), "/", 2)
+	if len(providerModel) != 2 {
+		return "", ""
+	}
+
+	return strings.TrimSpace(providerModel[0]), strings.TrimSpace(providerModel[1])
 }
 
 func (r *ArticleRepo) FindAll(ctx context.Context, filter model.ArticleListFilter) ([]model.Article, int, error) {

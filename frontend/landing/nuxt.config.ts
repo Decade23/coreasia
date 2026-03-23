@@ -1,6 +1,8 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 const ASSET_VERSION = "20260210-2";
+const SITE_URL = process.env.NUXT_PUBLIC_SITE_URL || process.env.SITE_URL || "https://coreasia.id";
 const asset = (path: string): string => `${path}?v=${ASSET_VERSION}`;
+const absoluteSiteAsset = (path: string): string => new URL(path, SITE_URL).toString();
 
 export default defineNuxtConfig({
     compatibilityDate: "2025-02-04",
@@ -55,7 +57,7 @@ export default defineNuxtConfig({
         },
     ],
     site: {
-        url: "https://coreasia.id",
+        url: SITE_URL,
         name: "CoreAsia Teknologi",
         description:
             "Mitra teknologi strategis dengan ekosistem produk digital untuk sertifikasi, monitoring web, CRM, dan kemitraan pertumbuhan.",
@@ -188,11 +190,11 @@ export default defineNuxtConfig({
                 { property: "og:type", content: "website" },
                 {
                     property: "og:image",
-                    content: "https://coreasia.id/social/og-image.png",
+                    content: absoluteSiteAsset("/social/og-image.png"),
                 },
                 {
                     property: "og:image:secure_url",
-                    content: "https://coreasia.id/social/og-image.png",
+                    content: absoluteSiteAsset("/social/og-image.png"),
                 },
                 { property: "og:image:type", content: "image/png" },
                 { property: "og:image:width", content: "1200" },
@@ -203,14 +205,14 @@ export default defineNuxtConfig({
                 },
                 {
                     property: "og:image",
-                    content: "https://coreasia.id/social/linkedin-share.webp",
+                    content: absoluteSiteAsset("/social/linkedin-share.webp"),
                 },
                 { property: "og:image:type", content: "image/webp" },
                 { property: "og:image:width", content: "1200" },
                 { property: "og:image:height", content: "627" },
                 {
                     property: "og:image",
-                    content: "https://coreasia.id/social/square-preview.webp",
+                    content: absoluteSiteAsset("/social/square-preview.webp"),
                 },
                 { property: "og:image:type", content: "image/webp" },
                 { property: "og:image:width", content: "500" },
@@ -218,7 +220,7 @@ export default defineNuxtConfig({
                 { name: "twitter:card", content: "summary_large_image" },
                 {
                     name: "twitter:image",
-                    content: "https://coreasia.id/social/twitter-card.webp",
+                    content: absoluteSiteAsset("/social/twitter-card.webp"),
                 },
                 {
                     name: "twitter:image:alt",
@@ -249,6 +251,7 @@ export default defineNuxtConfig({
         public: {
             gatewayUrl: process.env.GATEWAY_URL || 'http://localhost:8081/api',
             gatewayPublicUrl: process.env.GATEWAY_PUBLIC_URL || process.env.GATEWAY_URL || 'http://localhost:8084/api',
+            siteUrl: process.env.NUXT_PUBLIC_SITE_URL || process.env.SITE_URL || 'https://coreasia.id',
             gtmId: process.env.GTM_ID || '',
         },
     },

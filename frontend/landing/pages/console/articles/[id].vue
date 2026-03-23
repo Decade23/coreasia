@@ -87,6 +87,23 @@ const statusLabel = (status: string) => {
   return tc('articles.previewStatusDraft')
 }
 
+const aiSourceLabel = computed(() => {
+  if (!currentItem.value) return ''
+
+  if (currentItem.value.ai_provider && currentItem.value.ai_model) {
+    return tc('articles.generatedWith', {
+      provider: currentItem.value.ai_provider,
+      model: currentItem.value.ai_model,
+    })
+  }
+
+  if (currentItem.value.ai_generated_at) {
+    return tc('articles.generatedWithUnknown')
+  }
+
+  return ''
+})
+
 const articleTimeline = computed(() => {
   if (!currentItem.value) return []
 
@@ -95,19 +112,31 @@ const articleTimeline = computed(() => {
       label: tc('articles.createdLabel'),
       value: formatDateTime(currentItem.value.created_at),
       actor: currentItem.value.created_by_name,
+      meta: '',
     },
     {
       label: tc('articles.updatedLabel'),
       value: formatDateTime(currentItem.value.updated_at),
       actor: currentItem.value.updated_by_name,
+      meta: '',
     },
   ]
+
+  if (currentItem.value.ai_generated_at) {
+    rows.push({
+      label: tc('articles.generatedLabel'),
+      value: formatDateTime(currentItem.value.ai_generated_at),
+      actor: currentItem.value.ai_generated_by_name,
+      meta: aiSourceLabel.value,
+    })
+  }
 
   if (currentItem.value.published_at) {
     rows.push({
       label: tc('articles.publishedLabel'),
       value: formatDateTime(currentItem.value.published_at),
       actor: currentItem.value.published_by_name,
+      meta: '',
     })
   }
 
@@ -116,6 +145,7 @@ const articleTimeline = computed(() => {
       label: tc('articles.unpublishedLabel'),
       value: formatDateTime(currentItem.value.unpublished_at),
       actor: currentItem.value.unpublished_by_name,
+      meta: '',
     })
   }
 
@@ -146,6 +176,12 @@ const articleTimeline = computed(() => {
               <span class="rounded-full border px-2.5 py-0.5 text-[0.7rem] font-bold uppercase" :class="statusColor(currentItem.status)">
                 {{ statusLabel(currentItem.status) }}
               </span>
+              <span
+                v-if="currentItem.ai_generated_at"
+                class="rounded-full bg-[var(--ca-kicker-bg)] px-2.5 py-0.5 text-[0.68rem] font-bold uppercase tracking-[0.1em] text-brand-primary"
+              >
+                {{ tc('articles.aiDraft') }}
+              </span>
               <span v-if="currentItem.published_at" class="text-xs text-[var(--ca-muted)]">
                 {{ tc('articles.publishedAt', { date: formatDateTime(currentItem.published_at) }) }}
               </span>
@@ -173,6 +209,10 @@ const articleTimeline = computed(() => {
               </button>
             </div>
           </div>
+          <div v-if="currentItem.ai_generated_at && aiSourceLabel" class="rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] px-3 py-2 text-xs text-[var(--ca-muted)]">
+            <span class="font-semibold text-[var(--ca-text)]">{{ tc('articles.generatedLabel') }}:</span>
+            {{ aiSourceLabel }}
+          </div>
           <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <div
               v-for="item in articleTimeline"
@@ -181,6 +221,7 @@ const articleTimeline = computed(() => {
             >
               <p class="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-[var(--ca-subtle)]">{{ item.label }}</p>
               <p class="mt-1 text-xs text-[var(--ca-text)]">{{ item.value }}</p>
+              <p v-if="item.meta" class="mt-1 text-[0.68rem] text-[var(--ca-muted)]">{{ item.meta }}</p>
               <p v-if="item.actor" class="mt-1 text-[0.68rem] text-[var(--ca-muted)]">{{ tc('articles.byUser', { name: item.actor }) }}</p>
             </div>
           </div>

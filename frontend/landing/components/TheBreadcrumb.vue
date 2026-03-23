@@ -1,7 +1,7 @@
 <script setup lang="ts">
 const { t } = useCoreI18n()
 const route = useRoute()
-const siteUrl = 'https://coreasia.id'
+const siteUrl = useSiteOrigin()
 
 interface BreadcrumbItem {
   label: string
@@ -56,7 +56,7 @@ const breadcrumbSchema = computed(() => {
   return {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
-    '@id': `${siteUrl}${route.path}#breadcrumb`,
+    '@id': `${siteUrl.value}${route.path}#breadcrumb`,
     itemListElement: breadcrumbs.value.map((item, index) => {
       const itemPath = item.to || route.path
 
@@ -64,7 +64,7 @@ const breadcrumbSchema = computed(() => {
         '@type': 'ListItem',
         position: index + 1,
         name: item.label,
-        item: `${siteUrl}${itemPath}`,
+        item: `${siteUrl.value}${itemPath}`,
       }
     }),
   }

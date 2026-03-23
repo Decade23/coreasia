@@ -18,6 +18,11 @@ export interface ArticleDomain {
   seo_description: string | null
   published_at: string | null
   published_by_name: string | null
+  ai_generated_at: string | null
+  ai_generated_by_name: string | null
+  ai_generation_note: string | null
+  ai_provider: string | null
+  ai_model: string | null
   unpublished_at: string | null
   unpublished_by_name: string | null
   created_by_name: string | null

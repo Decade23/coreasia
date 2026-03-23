@@ -120,6 +120,9 @@ services:
       context: ./frontend/landing
       dockerfile: Dockerfile
       target: production
+      args:
+        SITE_URL: http://localhost:3001
+        NUXT_PUBLIC_SITE_URL: http://localhost:3001
     container_name: coreasia-landing
     deploy:
       resources:
@@ -135,6 +138,8 @@ services:
       - GATEWAY_PUBLIC_URL=http://localhost:8084/api
       - NUXT_PUBLIC_GATEWAY_URL=http://gateway:8081/api
       - NUXT_PUBLIC_GATEWAY_PUBLIC_URL=http://localhost:8084/api
+      - SITE_URL=http://localhost:3001
+      - NUXT_PUBLIC_SITE_URL=http://localhost:3001
       - GTM_ID=${GTM_ID:-GTM-59R46GVZ}
       - NUXT_PUBLIC_GTM_ID=${GTM_ID:-GTM-59R46GVZ}
     depends_on:

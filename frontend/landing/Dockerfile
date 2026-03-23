@@ -26,8 +26,12 @@ CMD ["bun", "run", "dev", "--host", "0.0.0.0", "--port", "3000"]
 FROM deps AS build
 
 COPY . .
+ARG SITE_URL=https://coreasia.id
+ARG NUXT_PUBLIC_SITE_URL=https://coreasia.id
 ENV NODE_ENV=production \
-    NUXT_DISABLE_TYPECHECK=true
+    NUXT_DISABLE_TYPECHECK=true \
+    SITE_URL=${SITE_URL} \
+    NUXT_PUBLIC_SITE_URL=${NUXT_PUBLIC_SITE_URL}
 RUN bun run build
 
 FROM base AS production

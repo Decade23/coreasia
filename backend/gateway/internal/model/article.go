@@ -26,6 +26,11 @@ type Article struct {
 	UpdatedBy         *uuid.UUID `json:"updated_by"`
 	UpdatedByName     *string    `json:"updated_by_name,omitempty"`
 	PublishedByName   *string    `json:"published_by_name,omitempty"`
+	AIGeneratedAt     *time.Time `json:"ai_generated_at,omitempty"`
+	AIGeneratedByName *string    `json:"ai_generated_by_name,omitempty"`
+	AIGenerationNote  *string    `json:"ai_generation_note,omitempty"`
+	AIProvider        *string    `json:"ai_provider,omitempty"`
+	AIModel           *string    `json:"ai_model,omitempty"`
 	UnpublishedAt     *time.Time `json:"unpublished_at,omitempty"`
 	UnpublishedByName *string    `json:"unpublished_by_name,omitempty"`
 	CreatedAt         time.Time  `json:"created_at"`

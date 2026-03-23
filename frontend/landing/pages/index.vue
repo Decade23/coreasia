@@ -6,12 +6,15 @@ import { useAnalytics } from '~/composables/useAnalytics'
 const { t } = useCoreI18n()
 const { trackWhatsAppClick, trackCTAClick } = useAnalytics()
 const { useReveal } = useScrollReveal()
+const siteOrigin = useSiteOrigin()
 
 const ctaSection = useReveal('scaleUp')
 const featuredProducts = computed(() => ((t('home.products.items') as Array<Record<string, any>>) || []).slice(0, 3))
+const showHeroScene = ref(false)
 
 const heroCardRefs = ref<HTMLElement[]>([])
 const heroMousePositions = ref(Array.from({ length: 3 }, () => ({ x: 0, y: 0 })))
+const siteAsset = (path: string) => new URL(path, siteOrigin.value).toString()
 
 const updateHeroSpotlight = (index: number, event: MouseEvent) => {
     const card = heroCardRefs.value[index]
@@ -27,6 +30,20 @@ const resetHeroSpotlight = (index: number) => {
     heroMousePositions.value[index] = { x: 0, y: 0 }
 }
 
+onMounted(() => {
+    const connection = (navigator as Navigator & {
+        connection?: {
+            saveData?: boolean
+        }
+    }).connection
+
+    const prefersLiteHero = window.innerWidth < 768
+        || window.matchMedia('(prefers-reduced-motion: reduce)').matches
+        || connection?.saveData
+
+    showHeroScene.value = !prefersLiteHero
+})
+
 useCoreSeo({
     title: t('home.title') as string,
     description: t('home.description') as string,
@@ -39,8 +56,8 @@ useSchemaOrg([
     }),
     defineOrganization({
         name: 'CoreAsia Teknologi',
-        url: 'https://coreasia.id',
-        logo: 'https://coreasia.id/logos/logo-512.webp',
+        url: siteOrigin.value,
+        logo: siteAsset('/logos/logo-512.webp'),
         sameAs: [
             'https://www.linkedin.com/company/coreasia',
             'https://www.instagram.com/coreasia',
@@ -57,9 +74,9 @@ useHead({
                 '@context': 'https://schema.org',
                 '@type': 'ProfessionalService',
                 name: 'CoreAsia Teknologi',
-                url: 'https://coreasia.id',
-                logo: 'https://coreasia.id/logos/logo-512.webp',
-                image: 'https://coreasia.id/social/og-image.png',
+                url: siteOrigin.value,
+                logo: siteAsset('/logos/logo-512.webp'),
+                image: siteAsset('/social/og-image.png'),
                 description: t('home.description') as string,
                 address: {
                     '@type': 'PostalAddress',
@@ -93,7 +110,7 @@ useHead({
             <div class="pointer-events-none absolute inset-0">
                 <!-- Ambient glow handled by --ca-page-background -->
                 <ClientOnly>
-                    <ThreeHeroScene />
+                    <LazyThreeHeroScene v-if="showHeroScene" />
                     <template #fallback>
                         <div class="absolute inset-0 z-0">
                             <div class="ca-scene-grid absolute inset-0"></div>
