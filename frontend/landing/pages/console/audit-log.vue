@@ -2,7 +2,8 @@
 definePageMeta({ layout: 'console', middleware: 'console' })
 
 const { logs, loading, error, totalItems, fetchLogs } = useAuditLogs()
-const { tc, dateLocale } = useConsoleI18n()
+const { tc } = useConsoleI18n()
+const { formatDateTime } = useConsoleDateTime()
 const currentPage = ref(1)
 const resourceFilter = ref('')
 const selectedLog = ref<any>(null)
@@ -57,14 +58,6 @@ const actionLabel = (action: string) => {
 
 const actionColor = (action: string) => {
   return actionOptions.value.find(o => o.value === action)?.class || 'bg-slate-500/10 text-[var(--ca-muted)]'
-}
-
-const formatDateTime = (d: string) => {
-  if (!d) return '-'
-  return new Date(d).toLocaleString(dateLocale.value, {
-    year: 'numeric', month: 'long', day: 'numeric',
-    hour: '2-digit', minute: '2-digit', second: '2-digit',
-  })
 }
 
 const handleRowClick = (row: any) => {

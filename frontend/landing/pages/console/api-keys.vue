@@ -4,7 +4,8 @@ definePageMeta({ layout: 'console', middleware: 'console' })
 const { items, loading, saving, error, fetchKeys, createKey, updateKey, deleteKey, copyKey } = useApiKeys()
 const { user: currentAdmin } = useAdminAuth()
 const api = useAdminApi()
-const { tc, dateLocale } = useConsoleI18n()
+const { tc } = useConsoleI18n()
+const { formatDateTime } = useConsoleDateTime()
 
 // Track which provider's key is currently in use by AI
 const aiProvider = ref('')
@@ -132,7 +133,7 @@ const handleCopy = async (k: any) => {
   }
 }
 
-const formatDate = (d: string) => new Date(d).toLocaleDateString(dateLocale.value, { year: 'numeric', month: 'short', day: 'numeric' })
+const formatDate = (d: string) => formatDateTime(d)
 </script>
 
 <template>

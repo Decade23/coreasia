@@ -3,7 +3,8 @@ definePageMeta({ layout: 'console', middleware: 'console' })
 
 const { items, loading, saving, error, fetchBots, createBot, updateBot, deleteBot, triggerBot } = useBotSchedules()
 const toast = useToast()
-const { tc, dateLocale } = useConsoleI18n()
+const { tc } = useConsoleI18n()
+const { formatDateTime } = useConsoleDateTime()
 
 const showFormModal = ref(false)
 const showDeleteConfirm = ref(false)
@@ -244,8 +245,7 @@ const statusLabel = (status: string) => {
 }
 
 const formatDate = (d: string | null) => {
-  if (!d) return '-'
-  return new Date(d).toLocaleString(dateLocale.value, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+  return formatDateTime(d)
 }
 
 const configLabel = (b: any) => {

@@ -6,7 +6,9 @@ const { t } = useCoreI18n()
 const route = useRoute()
 const slug = route.params.slug as string
 const config = useRuntimeConfig()
-const baseURL = config.public?.gatewayUrl || 'http://localhost:8081/api'
+const baseURL = import.meta.client
+  ? (config.public?.gatewayPublicUrl || 'http://localhost:8084/api')
+  : (config.public?.gatewayUrl || 'http://localhost:8081/api')
 
 // Fetch from API with static fallback
 const { data: article } = await useAsyncData(`article-${slug}`, async () => {

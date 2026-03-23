@@ -203,7 +203,9 @@ function adaptPlanToUI(dto: PlanDTO, allPlans: PlanDTO[]): PricingPlan {
 
 export const useGatewayApi = () => {
     const config = useRuntimeConfig()
-    const baseURL = config.public?.gatewayUrl || 'http://localhost:8081/api'
+    const baseURL = import.meta.client
+        ? (config.public?.gatewayPublicUrl || 'http://localhost:8084/api')
+        : (config.public?.gatewayUrl || 'http://localhost:8081/api')
 
     /**
      * Fetch available pricing plans from the gateway API.

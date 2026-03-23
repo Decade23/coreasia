@@ -7,24 +7,29 @@ import (
 )
 
 type Article struct {
-	ID             uuid.UUID  `json:"id"`
-	Slug           string     `json:"slug"`
-	Title          string     `json:"title"`
-	Description    string     `json:"description"`
-	Content        string     `json:"content"`
-	Category       string     `json:"category"`
-	Tags           []string   `json:"tags"`
-	Author         string     `json:"author"`
-	ReadTime       int        `json:"read_time"`
-	Status         string     `json:"status"`
-	FeaturedImage  *string    `json:"featured_image"`
-	SEOTitle       *string    `json:"seo_title"`
-	SEODescription *string    `json:"seo_description"`
-	PublishedAt    *time.Time `json:"published_at"`
-	CreatedBy      *uuid.UUID `json:"created_by"`
-	UpdatedBy      *uuid.UUID `json:"updated_by"`
-	CreatedAt      time.Time  `json:"created_at"`
-	UpdatedAt      time.Time  `json:"updated_at"`
+	ID                uuid.UUID  `json:"id"`
+	Slug              string     `json:"slug"`
+	Title             string     `json:"title"`
+	Description       string     `json:"description"`
+	Content           string     `json:"content"`
+	Category          string     `json:"category"`
+	Tags              []string   `json:"tags"`
+	Author            string     `json:"author"`
+	ReadTime          int        `json:"read_time"`
+	Status            string     `json:"status"`
+	FeaturedImage     *string    `json:"featured_image"`
+	SEOTitle          *string    `json:"seo_title"`
+	SEODescription    *string    `json:"seo_description"`
+	PublishedAt       *time.Time `json:"published_at"`
+	CreatedBy         *uuid.UUID `json:"created_by"`
+	CreatedByName     *string    `json:"created_by_name,omitempty"`
+	UpdatedBy         *uuid.UUID `json:"updated_by"`
+	UpdatedByName     *string    `json:"updated_by_name,omitempty"`
+	PublishedByName   *string    `json:"published_by_name,omitempty"`
+	UnpublishedAt     *time.Time `json:"unpublished_at,omitempty"`
+	UnpublishedByName *string    `json:"unpublished_by_name,omitempty"`
+	CreatedAt         time.Time  `json:"created_at"`
+	UpdatedAt         time.Time  `json:"updated_at"`
 }
 
 type CreateArticleRequest struct {

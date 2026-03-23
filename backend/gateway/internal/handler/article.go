@@ -3,6 +3,7 @@ package handler
 import (
 	"log/slog"
 	"strconv"
+	"time"
 
 	"github.com/coreasia/gateway/internal/middleware"
 	"github.com/coreasia/gateway/internal/model"
@@ -114,6 +115,12 @@ func (h *ArticleHandler) Create(c fiber.Ctx) error {
 		req.Status = "draft"
 	}
 
+	var publishedAt *time.Time
+	if req.Status == "published" {
+		now := time.Now()
+		publishedAt = &now
+	}
+
 	article := &model.Article{
 		Slug:           req.Slug,
 		Title:          req.Title,
@@ -127,6 +134,7 @@ func (h *ArticleHandler) Create(c fiber.Ctx) error {
 		FeaturedImage:  req.FeaturedImage,
 		SEOTitle:       req.SEOTitle,
 		SEODescription: req.SEODescription,
+		PublishedAt:    publishedAt,
 		CreatedBy:      &claims.UserID,
 		UpdatedBy:      &claims.UserID,
 	}
@@ -253,17 +261,25 @@ func (h *ArticleHandler) Publish(c fiber.Ctx) error {
 		return errResponse(c, apperr.NewBadRequest("ID tidak valid"))
 	}
 
+	article, err := h.articleRepo.FindByID(c.Context(), id)
+	if err != nil {
+		return errResponse(c, apperr.NewInternal(err))
+	}
+	if article == nil {
+		return errResponse(c, apperr.NewNotFound("Artikel"))
+	}
+
 	if err := h.articleRepo.SetStatus(c.Context(), id, "published", claims.UserID); err != nil {
 		slog.Error("gagal publish artikel", "error", err)
 		return errResponse(c, apperr.NewInternal(err))
 	}
 
 	resID := id.String()
-	desc := "Mempublish artikel"
+	desc := "Mempublish artikel: " + article.Title
 	h.auditLog.LogAction(c.Context(), &claims.UserID, &claims.FullName, "publish", "articles", &resID, &desc, c.IP())
 
-	article, _ := h.articleRepo.FindByID(c.Context(), id)
-	return ok(c, article)
+	updatedArticle, _ := h.articleRepo.FindByID(c.Context(), id)
+	return ok(c, updatedArticle)
 }
 
 // Unpublish sets an article back to draft
@@ -275,17 +291,25 @@ func (h *ArticleHandler) Unpublish(c fiber.Ctx) error {
 		return errResponse(c, apperr.NewBadRequest("ID tidak valid"))
 	}
 
+	article, err := h.articleRepo.FindByID(c.Context(), id)
+	if err != nil {
+		return errResponse(c, apperr.NewInternal(err))
+	}
+	if article == nil {
+		return errResponse(c, apperr.NewNotFound("Artikel"))
+	}
+
 	if err := h.articleRepo.SetStatus(c.Context(), id, "draft", claims.UserID); err != nil {
 		slog.Error("gagal unpublish artikel", "error", err)
 		return errResponse(c, apperr.NewInternal(err))
 	}
 
 	resID := id.String()
-	desc := "Meng-unpublish artikel"
+	desc := "Meng-unpublish artikel: " + article.Title
 	h.auditLog.LogAction(c.Context(), &claims.UserID, &claims.FullName, "unpublish", "articles", &resID, &desc, c.IP())
 
-	article, _ := h.articleRepo.FindByID(c.Context(), id)
-	return ok(c, article)
+	updatedArticle, _ := h.articleRepo.FindByID(c.Context(), id)
+	return ok(c, updatedArticle)
 }
 
 // Stats returns article counts by status (for dashboard)

@@ -3,7 +3,8 @@ definePageMeta({ layout: 'console', middleware: 'console' })
 
 const { fetchStats } = useArticles()
 const { items: bots, fetchBots } = useBotSchedules()
-const { tc, dateLocale } = useConsoleI18n()
+const { tc } = useConsoleI18n()
+const { formatDateTime } = useConsoleDateTime()
 const stats = ref<Record<string, number>>({})
 
 onMounted(async () => {
@@ -16,7 +17,7 @@ const botStatusColor = (s: string) => {
   const m: Record<string, string> = { idle: 'text-[var(--ca-muted)]', running: 'text-blue-400', success: 'text-emerald-400', error: 'text-rose-400' }
   return m[s] || m.idle
 }
-const formatBotDate = (d: string | null) => d ? new Date(d).toLocaleString(dateLocale.value, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'
+const formatBotDate = (d: string | null) => formatDateTime(d)
 
 const totalArticles = computed(() => Object.values(stats.value).reduce((a, b) => a + b, 0))
 </script>

@@ -6,7 +6,8 @@ const id = route.params.id as string
 const { currentItem, loading, saving, error, fetchArticle, updateArticle, publishArticle, unpublishArticle } = useArticles()
 const { uploadImage, uploading } = useImageUpload()
 const toast = useToast()
-const { tc, dateLocale } = useConsoleI18n()
+const { tc } = useConsoleI18n()
+const { formatDateTime } = useConsoleDateTime()
 
 const form = ref({
   title: '',
@@ -86,10 +87,40 @@ const statusLabel = (status: string) => {
   return tc('articles.previewStatusDraft')
 }
 
-const formatDate = (d: string | null) => {
-  if (!d) return '-'
-  return new Date(d).toLocaleString(dateLocale.value, { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })
-}
+const articleTimeline = computed(() => {
+  if (!currentItem.value) return []
+
+  const rows = [
+    {
+      label: tc('articles.createdLabel'),
+      value: formatDateTime(currentItem.value.created_at),
+      actor: currentItem.value.created_by_name,
+    },
+    {
+      label: tc('articles.updatedLabel'),
+      value: formatDateTime(currentItem.value.updated_at),
+      actor: currentItem.value.updated_by_name,
+    },
+  ]
+
+  if (currentItem.value.published_at) {
+    rows.push({
+      label: tc('articles.publishedLabel'),
+      value: formatDateTime(currentItem.value.published_at),
+      actor: currentItem.value.published_by_name,
+    })
+  }
+
+  if (currentItem.value.unpublished_at && currentItem.value.status !== 'published') {
+    rows.push({
+      label: tc('articles.unpublishedLabel'),
+      value: formatDateTime(currentItem.value.unpublished_at),
+      actor: currentItem.value.unpublished_by_name,
+    })
+  }
+
+  return rows
+})
 </script>
 
 <template>
@@ -109,36 +140,49 @@ const formatDate = (d: string | null) => {
     <template v-else-if="currentItem">
       <!-- Status Bar -->
       <div class="mx-auto mb-4 max-w-5xl">
-        <div class="ca-card flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
-          <div class="flex items-center gap-3">
-            <span class="rounded-full border px-2.5 py-0.5 text-[0.7rem] font-bold uppercase" :class="statusColor(currentItem.status)">
-              {{ statusLabel(currentItem.status) }}
-            </span>
-            <span v-if="currentItem.published_at" class="text-xs text-[var(--ca-muted)]">
-              {{ tc('articles.publishedAt', { date: formatDate(currentItem.published_at) }) }}
-            </span>
+        <div class="ca-card flex flex-col gap-4 p-4">
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div class="flex items-center gap-3">
+              <span class="rounded-full border px-2.5 py-0.5 text-[0.7rem] font-bold uppercase" :class="statusColor(currentItem.status)">
+                {{ statusLabel(currentItem.status) }}
+              </span>
+              <span v-if="currentItem.published_at" class="text-xs text-[var(--ca-muted)]">
+                {{ tc('articles.publishedAt', { date: formatDateTime(currentItem.published_at) }) }}
+              </span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button
+                v-if="currentItem.status === 'draft'"
+                type="button"
+                class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-emerald-600"
+                :disabled="saving"
+                @click="showPublishConfirm = true"
+              >
+                <Icon name="lucide:globe" class="h-3.5 w-3.5" />
+                {{ tc('common.publish') }}
+              </button>
+              <button
+                v-if="currentItem.status === 'published'"
+                type="button"
+                class="inline-flex items-center gap-1.5 rounded-lg border border-[color:var(--ca-border)] px-3 py-1.5 text-sm font-semibold text-[var(--ca-muted)] transition hover:bg-[var(--ca-panel-bg-strong)]"
+                :disabled="saving"
+                @click="showUnpublishConfirm = true"
+              >
+                <Icon name="lucide:eye-off" class="h-3.5 w-3.5" />
+                {{ tc('common.unpublish') }}
+              </button>
+            </div>
           </div>
-          <div class="flex items-center gap-2">
-            <button
-              v-if="currentItem.status === 'draft'"
-              type="button"
-              class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-emerald-600"
-              :disabled="saving"
-              @click="showPublishConfirm = true"
+          <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div
+              v-for="item in articleTimeline"
+              :key="`${item.label}-${item.value}`"
+              class="rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] px-3 py-2"
             >
-              <Icon name="lucide:globe" class="h-3.5 w-3.5" />
-              {{ tc('common.publish') }}
-            </button>
-            <button
-              v-if="currentItem.status === 'published'"
-              type="button"
-              class="inline-flex items-center gap-1.5 rounded-lg border border-[color:var(--ca-border)] px-3 py-1.5 text-sm font-semibold text-[var(--ca-muted)] transition hover:bg-[var(--ca-panel-bg-strong)]"
-              :disabled="saving"
-              @click="showUnpublishConfirm = true"
-            >
-              <Icon name="lucide:eye-off" class="h-3.5 w-3.5" />
-              {{ tc('common.unpublish') }}
-            </button>
+              <p class="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-[var(--ca-subtle)]">{{ item.label }}</p>
+              <p class="mt-1 text-xs text-[var(--ca-text)]">{{ item.value }}</p>
+              <p v-if="item.actor" class="mt-1 text-[0.68rem] text-[var(--ca-muted)]">{{ tc('articles.byUser', { name: item.actor }) }}</p>
+            </div>
           </div>
         </div>
       </div>

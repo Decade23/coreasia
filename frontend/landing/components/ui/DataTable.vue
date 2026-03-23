@@ -32,6 +32,7 @@ const props = withDefaults(defineProps<Props>(), {
   emptyText: 'Tidak ada data',
 })
 const { tc } = useConsoleI18n()
+const { formatDateTime } = useConsoleDateTime()
 
 const emit = defineEmits<{
   'row-click': [row: any]
@@ -74,7 +75,7 @@ const filteredData = computed(() => {
       result = result.filter(row => {
         const d = row[key]
         if (!d) return false
-        return new Date(d).toLocaleDateString('id-ID', { year: 'numeric', month: 'short', day: 'numeric' }).toLowerCase().includes(value.toLowerCase())
+        return formatDateTime(d).toLowerCase().includes(value.toLowerCase())
       })
     } else if (col.type === 'status' || col.type === 'badge') {
       result = result.filter(row => String(row[key]).toLowerCase() === value.toLowerCase())
@@ -100,12 +101,7 @@ const activeFilterCount = computed(() =>
   Object.values(columnFilters.value).filter(Boolean).length
 )
 
-const formatDate = (d: string) => {
-  if (!d) return '-'
-  return new Date(d).toLocaleString('id-ID', {
-    year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
-  })
-}
+const formatDate = (d: string) => formatDateTime(d)
 </script>
 
 <template>

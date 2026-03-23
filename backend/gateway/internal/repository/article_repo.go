@@ -20,9 +20,35 @@ func NewArticleRepo(pool *pgxpool.Pool) *ArticleRepo {
 	return &ArticleRepo{pool: pool}
 }
 
-const articleColumns = `id, slug, title, description, content, category, tags, author,
-	read_time, status, featured_image, seo_title, seo_description,
-	published_at, created_by, updated_by, created_at, updated_at`
+const articleSelectColumns = `a.id, a.slug, a.title, a.description, a.content, a.category, a.tags, a.author,
+	a.read_time, a.status, a.featured_image, a.seo_title, a.seo_description,
+	a.published_at, a.created_by, creator.full_name AS created_by_name,
+	a.updated_by, updater.full_name AS updated_by_name,
+	publish_log.user_name AS published_by_name,
+	unpublish_log.created_at AS unpublished_at, unpublish_log.user_name AS unpublished_by_name,
+	a.created_at, a.updated_at`
+
+const articleFromClause = `FROM public.articles a
+	LEFT JOIN public.admin_users creator ON creator.id = a.created_by
+	LEFT JOIN public.admin_users updater ON updater.id = a.updated_by
+	LEFT JOIN LATERAL (
+		SELECT gal.user_name, gal.created_at
+		FROM public.gateway_audit_logs gal
+		WHERE gal.resource = 'articles'
+			AND gal.resource_id = a.id::text
+			AND gal.action = 'publish'
+		ORDER BY gal.created_at DESC
+		LIMIT 1
+	) publish_log ON true
+	LEFT JOIN LATERAL (
+		SELECT gal.user_name, gal.created_at
+		FROM public.gateway_audit_logs gal
+		WHERE gal.resource = 'articles'
+			AND gal.resource_id = a.id::text
+			AND gal.action = 'unpublish'
+		ORDER BY gal.created_at DESC
+		LIMIT 1
+	) unpublish_log ON true`
 
 func scanArticle(row pgx.Row) (*model.Article, error) {
 	var a model.Article
@@ -30,7 +56,9 @@ func scanArticle(row pgx.Row) (*model.Article, error) {
 		&a.ID, &a.Slug, &a.Title, &a.Description, &a.Content, &a.Category,
 		&a.Tags, &a.Author, &a.ReadTime, &a.Status, &a.FeaturedImage,
 		&a.SEOTitle, &a.SEODescription, &a.PublishedAt,
-		&a.CreatedBy, &a.UpdatedBy, &a.CreatedAt, &a.UpdatedAt,
+		&a.CreatedBy, &a.CreatedByName, &a.UpdatedBy, &a.UpdatedByName,
+		&a.PublishedByName, &a.UnpublishedAt, &a.UnpublishedByName,
+		&a.CreatedAt, &a.UpdatedAt,
 	)
 	if err != nil {
 		return nil, err
@@ -46,7 +74,9 @@ func scanArticles(rows pgx.Rows) ([]model.Article, error) {
 			&a.ID, &a.Slug, &a.Title, &a.Description, &a.Content, &a.Category,
 			&a.Tags, &a.Author, &a.ReadTime, &a.Status, &a.FeaturedImage,
 			&a.SEOTitle, &a.SEODescription, &a.PublishedAt,
-			&a.CreatedBy, &a.UpdatedBy, &a.CreatedAt, &a.UpdatedAt,
+			&a.CreatedBy, &a.CreatedByName, &a.UpdatedBy, &a.UpdatedByName,
+			&a.PublishedByName, &a.UnpublishedAt, &a.UnpublishedByName,
+			&a.CreatedAt, &a.UpdatedAt,
 		); err != nil {
 			return nil, fmt.Errorf("scanning article: %w", err)
 		}
@@ -62,17 +92,17 @@ func (r *ArticleRepo) FindAll(ctx context.Context, filter model.ArticleListFilte
 	argIdx := 1
 
 	if filter.Status != "" {
-		where = append(where, fmt.Sprintf("status = $%d", argIdx))
+		where = append(where, fmt.Sprintf("a.status = $%d", argIdx))
 		args = append(args, filter.Status)
 		argIdx++
 	}
 	if filter.Category != "" {
-		where = append(where, fmt.Sprintf("category = $%d", argIdx))
+		where = append(where, fmt.Sprintf("a.category = $%d", argIdx))
 		args = append(args, filter.Category)
 		argIdx++
 	}
 	if filter.Search != "" {
-		where = append(where, fmt.Sprintf("(title ILIKE $%d OR description ILIKE $%d)", argIdx, argIdx))
+		where = append(where, fmt.Sprintf("(a.title ILIKE $%d OR a.description ILIKE $%d)", argIdx, argIdx))
 		args = append(args, "%"+filter.Search+"%")
 		argIdx++
 	}
@@ -80,14 +110,14 @@ func (r *ArticleRepo) FindAll(ctx context.Context, filter model.ArticleListFilte
 	whereClause := strings.Join(where, " AND ")
 
 	var total int
-	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM public.articles WHERE %s", whereClause)
+	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM public.articles a WHERE %s", whereClause)
 	err := r.pool.QueryRow(ctx, countQuery, args...).Scan(&total)
 	if err != nil {
 		return nil, 0, fmt.Errorf("counting articles: %w", err)
 	}
 
-	query := fmt.Sprintf(`SELECT %s FROM public.articles WHERE %s ORDER BY created_at DESC LIMIT $%d OFFSET $%d`,
-		articleColumns, whereClause, argIdx, argIdx+1)
+	query := fmt.Sprintf(`SELECT %s %s WHERE %s ORDER BY a.created_at DESC LIMIT $%d OFFSET $%d`,
+		articleSelectColumns, articleFromClause, whereClause, argIdx, argIdx+1)
 	args = append(args, filter.PerPage, offset)
 
 	rows, err := r.pool.Query(ctx, query, args...)
@@ -101,17 +131,46 @@ func (r *ArticleRepo) FindAll(ctx context.Context, filter model.ArticleListFilte
 }
 
 func (r *ArticleRepo) FindPublished(ctx context.Context, page, perPage int, category, search string) ([]model.Article, int, error) {
-	return r.FindAll(ctx, model.ArticleListFilter{
-		Page:     page,
-		PerPage:  perPage,
-		Status:   "published",
-		Category: category,
-		Search:   search,
-	})
+	offset := (page - 1) * perPage
+	where := []string{"a.status = 'published'"}
+	args := []interface{}{}
+	argIdx := 1
+
+	if category != "" {
+		where = append(where, fmt.Sprintf("a.category = $%d", argIdx))
+		args = append(args, category)
+		argIdx++
+	}
+	if search != "" {
+		where = append(where, fmt.Sprintf("(a.title ILIKE $%d OR a.description ILIKE $%d)", argIdx, argIdx))
+		args = append(args, "%"+search+"%")
+		argIdx++
+	}
+
+	whereClause := strings.Join(where, " AND ")
+
+	var total int
+	countQuery := fmt.Sprintf("SELECT COUNT(*) FROM public.articles a WHERE %s", whereClause)
+	if err := r.pool.QueryRow(ctx, countQuery, args...).Scan(&total); err != nil {
+		return nil, 0, fmt.Errorf("counting published articles: %w", err)
+	}
+
+	query := fmt.Sprintf(`SELECT %s %s WHERE %s ORDER BY COALESCE(a.published_at, a.created_at) DESC LIMIT $%d OFFSET $%d`,
+		articleSelectColumns, articleFromClause, whereClause, argIdx, argIdx+1)
+	args = append(args, perPage, offset)
+
+	rows, err := r.pool.Query(ctx, query, args...)
+	if err != nil {
+		return nil, 0, fmt.Errorf("listing published articles: %w", err)
+	}
+	defer rows.Close()
+
+	articles, err := scanArticles(rows)
+	return articles, total, err
 }
 
 func (r *ArticleRepo) FindByID(ctx context.Context, id uuid.UUID) (*model.Article, error) {
-	query := fmt.Sprintf("SELECT %s FROM public.articles WHERE id = $1", articleColumns)
+	query := fmt.Sprintf("SELECT %s %s WHERE a.id = $1", articleSelectColumns, articleFromClause)
 	a, err := scanArticle(r.pool.QueryRow(ctx, query, id))
 	if err != nil {
 		if err == pgx.ErrNoRows {
@@ -123,7 +182,7 @@ func (r *ArticleRepo) FindByID(ctx context.Context, id uuid.UUID) (*model.Articl
 }
 
 func (r *ArticleRepo) FindBySlug(ctx context.Context, slug string) (*model.Article, error) {
-	query := fmt.Sprintf("SELECT %s FROM public.articles WHERE slug = $1 AND status = 'published'", articleColumns)
+	query := fmt.Sprintf("SELECT %s %s WHERE a.slug = $1 AND a.status = 'published'", articleSelectColumns, articleFromClause)
 	a, err := scanArticle(r.pool.QueryRow(ctx, query, slug))
 	if err != nil {
 		if err == pgx.ErrNoRows {

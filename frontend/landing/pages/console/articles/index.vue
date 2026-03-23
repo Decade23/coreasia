@@ -2,7 +2,8 @@
 definePageMeta({ layout: 'console', middleware: 'console' })
 
 const { items, loading, error, totalItems, currentPage, fetchArticles, deleteArticle, publishArticle, unpublishArticle } = useArticles()
-const { tc, dateLocale } = useConsoleI18n()
+const { tc } = useConsoleI18n()
+const { formatDateTime } = useConsoleDateTime()
 
 const searchQuery = ref('')
 const statusFilter = ref('')
@@ -57,7 +58,48 @@ const statusLabel = (status: string) => {
   return tc('common.draft')
 }
 
-const formatDate = (d: string) => new Date(d).toLocaleDateString(dateLocale.value, { year: 'numeric', month: 'short', day: 'numeric' })
+const timestampItems = (article: any) => ([
+  {
+    label: tc('articles.createdLabel'),
+    value: formatDateTime(article.created_at),
+    actor: article.created_by_name,
+  },
+  {
+    label: tc('articles.updatedLabel'),
+    value: formatDateTime(article.updated_at),
+    actor: article.updated_by_name,
+  },
+])
+
+const publishActivityItems = (article: any) => {
+  const rows: Array<{ label: string; value: string; actor: string | null }> = []
+
+  if (article.published_at) {
+    rows.push({
+      label: tc('articles.publishedLabel'),
+      value: formatDateTime(article.published_at),
+      actor: article.published_by_name,
+    })
+  }
+
+  if (article.unpublished_at && article.status !== 'published') {
+    rows.push({
+      label: tc('articles.unpublishedLabel'),
+      value: formatDateTime(article.unpublished_at),
+      actor: article.unpublished_by_name,
+    })
+  }
+
+  if (!rows.length) {
+    rows.push({
+      label: tc('articles.publishedLabel'),
+      value: tc('articles.neverPublished'),
+      actor: null,
+    })
+  }
+
+  return rows
+}
 
 const statusOptions = computed(() => [
   { label: tc('articles.allStatuses'), value: '' },
@@ -127,28 +169,58 @@ const statusOptions = computed(() => [
         <thead class="sticky top-0 z-10">
           <tr>
             <th>{{ tc('articles.titleField') }}</th>
-            <th>{{ tc('common.category') }}</th>
             <th>{{ tc('common.status') }}</th>
-            <th>{{ tc('common.date') }}</th>
+            <th>{{ tc('articles.timestampsLabel') }}</th>
+            <th>{{ tc('articles.publishActivityLabel') }}</th>
             <th class="text-right">{{ tc('common.actions') }}</th>
           </tr>
         </thead>
         <tbody>
           <tr v-for="article in items" :key="article.id">
-            <td>
+            <td class="align-top">
               <NuxtLink :to="`/console/articles/${article.id}`" class="text-sm font-medium text-[var(--ca-text)] hover:ca-tone-gold transition">
                 {{ article.title }}
               </NuxtLink>
               <p class="mt-0.5 text-xs text-[var(--ca-subtle)]">/artikel/{{ article.slug }}</p>
+              <div class="mt-2 flex flex-wrap items-center gap-2 text-[0.7rem]">
+                <span class="rounded-full bg-[var(--ca-panel-bg-strong)] px-2 py-0.5 font-semibold uppercase tracking-[0.08em] text-[var(--ca-muted)]">
+                  {{ article.category }}
+                </span>
+                <span class="text-[var(--ca-subtle)]">{{ article.author }}</span>
+              </div>
             </td>
-            <td class="text-[var(--ca-muted)]">{{ article.category }}</td>
-            <td>
+            <td class="align-top">
               <span class="rounded-full px-2 py-0.5 text-[0.68rem] font-bold uppercase" :class="statusColor(article.status)">
                 {{ statusLabel(article.status) }}
               </span>
             </td>
-            <td class="text-[var(--ca-muted)]">{{ formatDate(article.created_at) }}</td>
-            <td class="text-right">
+            <td class="align-top">
+              <div class="space-y-2">
+                <div
+                  v-for="item in timestampItems(article)"
+                  :key="`${article.id}-${item.label}`"
+                  class="rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] px-3 py-2"
+                >
+                  <p class="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-[var(--ca-subtle)]">{{ item.label }}</p>
+                  <p class="mt-1 text-xs text-[var(--ca-text)]">{{ item.value }}</p>
+                  <p v-if="item.actor" class="mt-1 text-[0.68rem] text-[var(--ca-muted)]">{{ tc('articles.byUser', { name: item.actor }) }}</p>
+                </div>
+              </div>
+            </td>
+            <td class="align-top">
+              <div class="space-y-2">
+                <div
+                  v-for="item in publishActivityItems(article)"
+                  :key="`${article.id}-${item.label}-${item.value}`"
+                  class="rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] px-3 py-2"
+                >
+                  <p class="text-[0.65rem] font-semibold uppercase tracking-[0.14em] text-[var(--ca-subtle)]">{{ item.label }}</p>
+                  <p class="mt-1 text-xs text-[var(--ca-text)]">{{ item.value }}</p>
+                  <p v-if="item.actor" class="mt-1 text-[0.68rem] text-[var(--ca-muted)]">{{ tc('articles.byUser', { name: item.actor }) }}</p>
+                </div>
+              </div>
+            </td>
+            <td class="align-top text-right">
               <div class="flex items-center justify-end gap-1">
                 <CaTooltip :text="tc('common.edit')" position="bottom">
                   <NuxtLink :to="`/console/articles/${article.id}`" class="rounded-lg p-1.5 text-[var(--ca-muted)] hover:bg-[var(--ca-panel-bg-strong)] hover:text-[var(--ca-text)]">

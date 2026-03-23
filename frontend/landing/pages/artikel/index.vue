@@ -3,7 +3,9 @@ import { ARTICLES } from '~/utils/articles'
 
 const { t } = useCoreI18n()
 const config = useRuntimeConfig()
-const baseURL = config.public?.gatewayUrl || 'http://localhost:8081/api'
+const baseURL = import.meta.client
+  ? (config.public?.gatewayPublicUrl || 'http://localhost:8084/api')
+  : (config.public?.gatewayUrl || 'http://localhost:8081/api')
 
 useCoreSeo({
   title: (t('blog.title') || 'Blog & Insight') as string,
@@ -12,7 +14,6 @@ useCoreSeo({
 })
 
 const activeCategory = ref('all')
-const loadingArticles = ref(true)
 
 const categories = [
   { key: 'all', label: 'Semua' },
@@ -37,10 +38,7 @@ interface PublicArticle {
   created_at: string
 }
 
-const apiArticles = ref<PublicArticle[]>([])
-
 const fetchPublicArticles = async () => {
-  loadingArticles.value = true
   try {
     const params: Record<string, string> = { per_page: '50' }
     if (activeCategory.value !== 'all') {
@@ -48,17 +46,18 @@ const fetchPublicArticles = async () => {
     }
     const query = new URLSearchParams(params).toString()
     const res = await $fetch<{ data: PublicArticle[] }>(`${baseURL}/articles?${query}`)
-    apiArticles.value = res?.data || []
+    return res?.data || []
   } catch {
-    apiArticles.value = []
-  } finally {
-    loadingArticles.value = false
+    return []
   }
 }
 
+const apiArticles = ref<PublicArticle[]>(await fetchPublicArticles())
+const loadingArticles = ref(false)
+
 // Merge API articles with static fallback
 const articles = computed(() => {
-  if (apiArticles.value.length > 0) return apiArticles.value
+  if ((apiArticles.value || []).length > 0) return apiArticles.value || []
   // Fallback to static articles if API returns empty
   return ARTICLES.map(a => ({
     id: a.slug,
@@ -80,13 +79,11 @@ const filteredArticles = computed(() => {
   return articles.value.filter((a) => a.category === activeCategory.value)
 })
 
-watch(activeCategory, () => {
-  if (apiArticles.value.length > 0) {
-    fetchPublicArticles()
-  }
+watch(activeCategory, async () => {
+  loadingArticles.value = true
+  apiArticles.value = await fetchPublicArticles()
+  loadingArticles.value = false
 })
-
-onMounted(() => fetchPublicArticles())
 
 const formatDate = (dateStr: string) => {
   try {

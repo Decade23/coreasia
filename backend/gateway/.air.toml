@@ -1,5 +1,5 @@
 [build]
-  cmd = "go build -o ./tmp/main ./cmd/server"
+  cmd = "GOMAXPROCS=1 GOGC=10 GOMEMLIMIT=512MiB go build -p=1 -o ./tmp/main ./cmd/server"
   bin = "./tmp/main -config configs/config.yaml"
   delay = 1000
   exclude_dir = ["tmp", "vendor", "pkg"]
