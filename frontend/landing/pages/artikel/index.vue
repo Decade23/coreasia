@@ -97,13 +97,6 @@ const articles = computed(() => {
   }))
 })
 
-const categoryPills = computed(() => categories.value.map((category) => ({
-  ...category,
-  count: category.key === 'all'
-    ? articles.value.length
-    : articles.value.filter(item => normalizeCategoryKey(item.category) === category.key).length,
-})))
-
 const filteredArticles = computed(() => {
   if (activeCategory.value === 'all') return articles.value
   return articles.value.filter((article) => normalizeCategoryKey(article.category) === activeCategory.value)
@@ -162,17 +155,14 @@ const categoryLabel = (key: string) => {
         <div class="-mx-4 mb-8 overflow-x-auto px-4 pb-2 [scrollbar-width:none]">
           <div class="inline-flex min-w-full gap-2 rounded-2xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)]/80 p-2 sm:min-w-0">
             <button
-              v-for="cat in categoryPills"
+              v-for="cat in categories"
               :key="cat.key"
               type="button"
-              class="inline-flex items-center gap-2 whitespace-nowrap rounded-xl px-3.5 py-2 text-sm font-semibold transition-colors"
+              class="inline-flex items-center whitespace-nowrap rounded-xl px-3.5 py-2 text-sm font-semibold transition-colors"
               :class="activeCategory === cat.key ? 'bg-[var(--ca-kicker-bg)] text-brand-primary shadow-[0_8px_24px_rgba(245,158,11,0.12)]' : 'text-[var(--ca-muted)] hover:bg-[var(--ca-panel-bg-strong)]'"
               @click="activeCategory = cat.key"
             >
               <span>{{ cat.label }}</span>
-              <span class="rounded-full border border-[color:var(--ca-border)] px-1.5 py-0.5 text-[0.66rem] font-bold text-[var(--ca-subtle)]">
-                {{ cat.count }}
-              </span>
             </button>
           </div>
         </div>
