@@ -2,8 +2,9 @@
 import { LINKS } from '~/utils/constants'
 import { getArticleBySlug, ARTICLES } from '~/utils/articles'
 
-const { t } = useCoreI18n()
+const { locale, t } = useCoreI18n()
 const route = useRoute()
+const router = useRouter()
 const slug = route.params.slug as string
 const config = useRuntimeConfig()
 const baseURL = import.meta.client
@@ -13,7 +14,9 @@ const baseURL = import.meta.client
 // Fetch from API with static fallback
 const { data: article } = await useAsyncData(`article-${slug}`, async () => {
   try {
-    const res = await $fetch<{ data: any }>(`${baseURL}/articles/${slug}`)
+    const res = await $fetch<{ data: any }>(`${baseURL}/articles/${slug}`, {
+      timeout: 3500,
+    })
     return res?.data || null
   } catch {
     return getArticleBySlug(slug) || null
@@ -51,11 +54,34 @@ useHead({
   }],
 })
 
-const formatDate = (d: string) => new Date(d).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })
+const dateLocale = computed(() => (locale.value === 'en' ? 'en-US' : 'id-ID'))
+const formatDate = (d: string) =>
+  new Date(d).toLocaleDateString(dateLocale.value, {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })
 const categoryLabel = (key: string) => { const cats = t('blog.categories') as Record<string, string>; return cats[key] || key }
 const getPublishDate = (a: any) => a.published_at || a.publishedAt || a.created_at
 const getReadTime = (a: any) => a.read_time || a.readTime || 5
 const getTags = (a: any) => a.tags || []
+
+const goToArticles = async () => {
+  if (import.meta.server) {
+    await navigateTo('/artikel')
+    return
+  }
+
+  try {
+    await router.push('/artikel')
+  } catch {
+    // Fall through to a hard navigation if the client router gets stuck.
+  }
+
+  if (window.location.pathname !== '/artikel') {
+    window.location.assign('/artikel')
+  }
+}
 
 const renderedContent = computed(() => {
   if (!article.value) return ''
@@ -67,6 +93,12 @@ const renderedContent = computed(() => {
     .replace(/^- (.+)$/gm, '<li class="ml-4 flex items-start gap-2 text-sm text-[var(--ca-muted)]"><span class="mt-1.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-[var(--ca-subtle)]"></span><span>$1</span></li>')
     .replace(/\n\n/g, '</p><p class="mt-3 text-sm leading-relaxed text-[var(--ca-muted)]">')
 })
+
+const articleMarkup = computed(() => (
+  renderedContent.value
+    ? `<p class="text-sm leading-relaxed text-[var(--ca-muted)]">${renderedContent.value}</p>`
+    : ''
+))
 </script>
 
 <template>
@@ -77,9 +109,13 @@ const renderedContent = computed(() => {
       </div>
       <div class="ca-container relative ca-section pt-6 sm:pt-8 pb-10 sm:pb-12 lg:pb-16">
         <div class="mx-auto max-w-3xl">
-          <NuxtLink to="/artikel" class="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--ca-muted)] hover:text-[var(--ca-text)]">
+          <button
+            type="button"
+            class="inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--ca-muted)] transition hover:text-[var(--ca-text)]"
+            @click="goToArticles"
+          >
             <Icon name="lucide:arrow-left" class="h-4 w-4" /> {{ t('blog.kicker') }}
-          </NuxtLink>
+          </button>
           <div class="mt-5 flex items-center gap-3">
             <span class="rounded-md bg-[var(--ca-kicker-bg)] px-2.5 py-1 text-[0.68rem] font-bold uppercase tracking-[0.12em] text-brand-primary">{{ categoryLabel(article.category) }}</span>
             <span class="text-xs text-[var(--ca-subtle)]">{{ getReadTime(article) }} {{ t('blog.readTime') }}</span>
@@ -98,7 +134,7 @@ const renderedContent = computed(() => {
       <div class="ca-container">
         <article class="mx-auto max-w-3xl">
           <img v-if="article.featured_image" :src="article.featured_image" :alt="article.title" class="mb-8 w-full rounded-2xl object-cover" />
-          <div v-html="'<p class=&quot;text-sm leading-relaxed text-[var(--ca-muted)]&quot;>' + renderedContent + '</p>'" />
+          <div v-html="articleMarkup" />
         </article>
       </div>
     </section>

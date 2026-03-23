@@ -1,28 +1,30 @@
 <script setup lang="ts">
 import { ARTICLES } from '~/utils/articles'
 
-const { t } = useCoreI18n()
+const { locale, t } = useCoreI18n()
 const config = useRuntimeConfig()
 const baseURL = import.meta.client
   ? (config.public?.gatewayPublicUrl || 'http://localhost:8084/api')
   : (config.public?.gatewayUrl || 'http://localhost:8081/api')
 
 useCoreSeo({
-  title: (t('blog.title') || 'Blog & Insight') as string,
+  title: (t('blog.title') || 'Artikel & Insight') as string,
   description: (t('blog.description') || 'Artikel seputar teknologi digital') as string,
   path: '/artikel',
 })
 
 const activeCategory = ref('all')
 
-const categories = [
-  { key: 'all', label: 'Semua' },
-  { key: 'bisnis', label: 'Bisnis & Teknologi' },
-  { key: 'seo', label: 'SEO & Marketing' },
-  { key: 'teknologi', label: 'Teknologi' },
-  { key: 'marketing', label: 'Marketing' },
-  { key: 'edukasi', label: 'Edukasi' },
-]
+const categoryLabels = computed(() => (t('blog.categories') || {}) as Record<string, string>)
+
+const categories = computed(() => [
+  { key: 'all', label: categoryLabels.value.all || 'Semua' },
+  { key: 'bisnis', label: categoryLabels.value.bisnis || categoryLabels.value.business || 'Bisnis & Teknologi' },
+  { key: 'seo', label: categoryLabels.value.seo || 'SEO & Marketing' },
+  { key: 'teknologi', label: categoryLabels.value.teknologi || 'Teknologi' },
+  { key: 'marketing', label: categoryLabels.value.marketing || 'Marketing' },
+  { key: 'edukasi', label: categoryLabels.value.edukasi || 'Edukasi' },
+])
 
 interface PublicArticle {
   id: string
@@ -45,15 +47,31 @@ const fetchPublicArticles = async () => {
       params.category = activeCategory.value
     }
     const query = new URLSearchParams(params).toString()
-    const res = await $fetch<{ data: PublicArticle[] }>(`${baseURL}/articles?${query}`)
+    const res = await $fetch<{ data: PublicArticle[] }>(`${baseURL}/articles?${query}`, {
+      timeout: 3500,
+    })
     return res?.data || []
   } catch {
     return []
   }
 }
 
-const apiArticles = ref<PublicArticle[]>(await fetchPublicArticles())
+const apiArticles = ref<PublicArticle[]>(import.meta.server ? await fetchPublicArticles() : [])
 const loadingArticles = ref(false)
+let activeRequestId = 0
+
+const loadArticles = async (showLoader = true) => {
+  const requestId = ++activeRequestId
+  if (showLoader) {
+    loadingArticles.value = true
+  }
+
+  const nextArticles = await fetchPublicArticles()
+  if (requestId === activeRequestId) {
+    apiArticles.value = nextArticles
+    loadingArticles.value = false
+  }
+}
 
 // Merge API articles with static fallback
 const articles = computed(() => {
@@ -66,7 +84,7 @@ const articles = computed(() => {
     description: a.description,
     category: a.category,
     tags: a.tags || [],
-    author: a.author || 'Tim CoreAsia',
+    author: a.author || (t('blog.defaultAuthor') as string) || 'Tim CoreAsia',
     read_time: a.readTime || 5,
     featured_image: null,
     published_at: a.publishedAt,
@@ -79,21 +97,30 @@ const filteredArticles = computed(() => {
   return articles.value.filter((a) => a.category === activeCategory.value)
 })
 
-watch(activeCategory, async () => {
-  loadingArticles.value = true
-  apiArticles.value = await fetchPublicArticles()
-  loadingArticles.value = false
+onMounted(() => {
+  if (!apiArticles.value.length) {
+    void loadArticles(false)
+  }
 })
+
+watch(activeCategory, () => {
+  void loadArticles(true)
+})
+
+const dateLocale = computed(() => (locale.value === 'en' ? 'en-US' : 'id-ID'))
 
 const formatDate = (dateStr: string) => {
   try {
-    return new Date(dateStr).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })
+    return new Date(dateStr).toLocaleDateString(dateLocale.value, {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    })
   } catch { return dateStr }
 }
 
 const categoryLabel = (key: string) => {
-  const found = categories.find(c => c.key === key)
-  return found?.label || key
+  return categoryLabels.value[key] || categoryLabels.value.business || key
 }
 </script>
 
@@ -106,14 +133,10 @@ const categoryLabel = (key: string) => {
       <div class="ca-container relative ca-section pt-6 sm:pt-8 pb-10 text-center sm:pb-12 lg:pb-16">
         <span class="ca-kicker">
           <Icon name="lucide:pen-tool" class="h-3.5 w-3.5 ca-tone-gold" />
-          Artikel
+          {{ t('blog.kicker') }}
         </span>
-        <h1 class="mx-auto mt-5 max-w-3xl text-balance font-display text-4xl font-bold leading-[1.08] text-[var(--ca-text)] sm:text-5xl lg:text-[3.4rem]">
-          Insight &amp; panduan untuk <span class="ca-gradient-text">pertumbuhan digital</span>
-        </h1>
-        <p class="ca-copy mx-auto mt-5 max-w-2xl">
-          Tips, tutorial, dan insight dari tim CoreAsia untuk membantu Anda memahami teknologi dan membuat keputusan bisnis yang lebih baik.
-        </p>
+        <h1 class="mx-auto mt-5 max-w-3xl text-balance font-display text-4xl font-bold leading-[1.08] text-[var(--ca-text)] sm:text-5xl lg:text-[3.4rem]" v-html="t('blog.hero.title')" />
+        <p class="ca-copy mx-auto mt-5 max-w-2xl">{{ t('blog.hero.subtitle') }}</p>
       </div>
     </section>
 
@@ -148,14 +171,14 @@ const categoryLabel = (key: string) => {
                 <span class="rounded-md bg-[var(--ca-kicker-bg)] px-2 py-0.5 text-[0.68rem] font-bold uppercase tracking-[0.12em] text-brand-primary">
                   {{ categoryLabel(article.category) }}
                 </span>
-                <span class="text-xs text-[var(--ca-subtle)]">{{ article.read_time }} menit baca</span>
+                <span class="text-xs text-[var(--ca-subtle)]">{{ article.read_time }} {{ t('blog.readTime') }}</span>
               </div>
               <h2 class="mt-3 text-lg font-display font-bold leading-snug text-[var(--ca-text)]">{{ article.title }}</h2>
               <p class="mt-2 flex-1 text-sm leading-relaxed text-[var(--ca-muted)] line-clamp-3">{{ article.description }}</p>
               <div class="mt-4 flex items-center justify-between">
                 <span class="text-xs text-[var(--ca-subtle)]">{{ formatDate(article.published_at || article.created_at) }}</span>
                 <span class="inline-flex items-center gap-1 text-sm font-semibold ca-tone-gold">
-                  Baca selengkapnya
+                  {{ t('blog.readMore') }}
                   <Icon name="lucide:arrow-right" class="h-3.5 w-3.5" />
                 </span>
               </div>
@@ -165,7 +188,7 @@ const categoryLabel = (key: string) => {
 
         <div v-else class="ca-card p-10 text-center">
           <Icon name="lucide:file-text" class="mx-auto h-12 w-12 text-[var(--ca-subtle)]" />
-          <p class="mt-4 text-sm text-[var(--ca-muted)]">Belum ada artikel.</p>
+          <p class="mt-4 text-sm text-[var(--ca-muted)]">{{ t('blog.noArticles') }}</p>
         </div>
       </div>
     </section>
@@ -173,10 +196,10 @@ const categoryLabel = (key: string) => {
     <section class="ca-section pt-0">
       <div class="ca-container">
         <div class="ca-card p-6 text-center sm:p-10">
-          <h2 class="text-balance font-display text-3xl font-bold text-[var(--ca-text)] sm:text-4xl">Butuh solusi digital?</h2>
-          <p class="mx-auto mt-3 max-w-2xl text-sm text-[var(--ca-muted)] sm:text-base">Hubungi tim CoreAsia untuk konsultasi tentang kebutuhan teknologi bisnis Anda.</p>
+          <h2 class="text-balance font-display text-3xl font-bold text-[var(--ca-text)] sm:text-4xl">{{ t('blog.cta.title') }}</h2>
+          <p class="mx-auto mt-3 max-w-2xl text-sm text-[var(--ca-muted)] sm:text-base">{{ t('blog.cta.subtitle') }}</p>
           <div class="mt-6">
-            <NuxtLink to="/contact" class="ca-btn-primary">Hubungi Kami <Icon name="lucide:arrow-right" class="h-4 w-4" /></NuxtLink>
+            <NuxtLink to="/contact" class="ca-btn-primary">{{ t('blog.cta.button') }} <Icon name="lucide:arrow-right" class="h-4 w-4" /></NuxtLink>
           </div>
         </div>
       </div>

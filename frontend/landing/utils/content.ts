@@ -1260,11 +1260,11 @@ const ID_CONTENT = {
       },
     },
   },
-  // Blog
+  // Articles
   blog: {
-    title: 'Blog & Insight',
+    title: 'Artikel & Insight',
     description: 'Artikel, panduan, dan insight seputar teknologi digital, web development, dan strategi pertumbuhan bisnis.',
-    kicker: 'Blog',
+    kicker: 'Artikel',
     hero: {
       title: 'Insight & panduan untuk <span class="ca-gradient-text">pertumbuhan digital</span>',
       subtitle: 'Tips, tutorial, dan insight dari tim CoreAsia untuk membantu Anda memahami teknologi dan membuat keputusan bisnis yang lebih baik.',
@@ -1272,10 +1272,16 @@ const ID_CONTENT = {
     readMore: 'Baca selengkapnya',
     readTime: 'menit baca',
     noArticles: 'Belum ada artikel. Nantikan konten terbaru dari kami.',
+    defaultAuthor: 'Tim CoreAsia',
     categories: {
       all: 'Semua',
-      webDevelopment: 'Web Development',
+      general: 'Umum',
+      bisnis: 'Bisnis & Teknologi',
       seo: 'SEO & Marketing',
+      teknologi: 'Teknologi',
+      marketing: 'Marketing',
+      edukasi: 'Edukasi',
+      webDevelopment: 'Web Development',
       business: 'Bisnis & Teknologi',
       tutorial: 'Tutorial',
     },
@@ -1505,7 +1511,7 @@ const ID_CONTENT = {
       productLinks: [
         { label: 'Pantau', to: '/products/pantau' },
         { label: 'Build by CoreAsia', to: '/products/build' },
-        { label: 'Blog & Insight', to: '/artikel' },
+        { label: 'Artikel & Insight', to: '/artikel' },
       ],
       partnershipLinks: [
         { label: 'SaaS Subscription', to: '/pricing' },
@@ -2782,9 +2788,9 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
     },
   },
   blog: {
-    title: 'Blog & Insights',
+    title: 'Articles & Insights',
     description: 'Articles, guides, and insights about digital technology, web development, and business growth strategies.',
-    kicker: 'Blog',
+    kicker: 'Article',
     hero: {
       title: 'Insights & guides for <span class="ca-gradient-text">digital growth</span>',
       subtitle: 'Tips, tutorials, and insights from the CoreAsia team to help you understand technology and make better business decisions.',
@@ -2792,10 +2798,16 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
     readMore: 'Read more',
     readTime: 'min read',
     noArticles: 'No articles yet. Stay tuned for our latest content.',
+    defaultAuthor: 'CoreAsia Team',
     categories: {
       all: 'All',
-      webDevelopment: 'Web Development',
+      general: 'General',
+      bisnis: 'Business & Technology',
       seo: 'SEO & Marketing',
+      teknologi: 'Technology',
+      marketing: 'Marketing',
+      edukasi: 'Education',
+      webDevelopment: 'Web Development',
       business: 'Business & Technology',
       tutorial: 'Tutorial',
     },
@@ -3006,7 +3018,7 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
       productLinks: [
         { label: 'Pantau', to: '/products/pantau' },
         { label: 'Build by CoreAsia', to: '/products/build' },
-        { label: 'Blog & Insights', to: '/artikel' },
+        { label: 'Articles & Insights', to: '/artikel' },
       ],
       partnershipLinks: [
         { label: 'SaaS Subscription', to: '/pricing' },

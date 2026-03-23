@@ -1,6 +1,7 @@
 <script setup lang="ts">
 const { t } = useCoreI18n()
 const route = useRoute()
+const siteUrl = 'https://coreasia.id'
 
 interface BreadcrumbItem {
   label: string
@@ -22,6 +23,7 @@ const breadcrumbs = computed<BreadcrumbItem[]>(() => {
     pricing: () => t('nav.pricing') as string,
     about: () => t('nav.about') as string,
     contact: () => t('nav.contact') as string,
+    artikel: () => t('nav.articles') as string,
     pantau: () => 'Pantau',
     build: () => 'Build',
     lms: () => 'LMS',
@@ -46,16 +48,39 @@ const breadcrumbs = computed<BreadcrumbItem[]>(() => {
   return items
 })
 
-useSchemaOrg([
-  defineBreadcrumb({
-    itemListElement: breadcrumbs.value.map((item, index) => ({
-      '@type': 'ListItem',
-      position: index + 1,
-      name: item.label,
-      item: item.to ? `https://coreasia.id${item.to}` : undefined,
-    })),
-  }),
-])
+const breadcrumbSchema = computed(() => {
+  if (breadcrumbs.value.length < 2) {
+    return null
+  }
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    '@id': `${siteUrl}${route.path}#breadcrumb`,
+    itemListElement: breadcrumbs.value.map((item, index) => {
+      const itemPath = item.to || route.path
+
+      return {
+        '@type': 'ListItem',
+        position: index + 1,
+        name: item.label,
+        item: `${siteUrl}${itemPath}`,
+      }
+    }),
+  }
+})
+
+useHead(() => ({
+  script: breadcrumbSchema.value
+    ? [
+        {
+          key: 'breadcrumb-schema',
+          type: 'application/ld+json',
+          innerHTML: JSON.stringify(breadcrumbSchema.value),
+        },
+      ]
+    : [],
+}))
 </script>
 
 <template>
