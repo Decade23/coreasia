@@ -156,6 +156,16 @@ const ID_CONTENT = {
         },
       ],
     },
+    services: {
+      kicker: 'Layanan Kami',
+      title: 'Butuh website atau aplikasi web?',
+      subtitle: 'Selain produk digital, kami juga menyediakan jasa pembuatan web profesional untuk berbagai kebutuhan bisnis.',
+      items: [
+        { label: 'Jasa Pembuatan Website', description: 'Company profile, toko online, landing page — custom & SEO-ready.', to: '/layanan/jasa-pembuatan-website' },
+        { label: 'Jasa Pembuatan Aplikasi Web', description: 'Dashboard, portal, sistem manajemen — sesuai kebutuhan bisnis.', to: '/layanan/jasa-pembuatan-aplikasi-web' },
+        { label: 'Web Monitoring Dashboard', description: 'Pantau performa website dari satu dashboard yang mudah dipahami.', to: '/layanan/web-monitoring-dashboard' },
+      ],
+    },
     readyCTA: {
       title: 'Siap memilih produk atau model kerja sama yang tepat?',
       subtitle:
@@ -1080,18 +1090,18 @@ const ID_CONTENT = {
   // Keyword-targeted SEO pages
   services: {
     jasaPembuatanWebsite: {
-      title: 'Jasa Pembuatan Website Profesional',
-      description: 'CoreAsia menyediakan jasa pembuatan website profesional untuk bisnis, UMKM, dan korporasi di Indonesia. Custom design, performa tinggi, dan SEO-ready.',
-      kicker: 'Jasa Website',
+      title: 'Jasa Pembuatan Website & Web Profesional',
+      description: 'Jasa pembuatan web profesional untuk bisnis, UMKM, dan korporasi di seluruh Indonesia. Company profile, toko online, landing page, dan web app custom dengan harga terjangkau.',
+      kicker: 'Jasa Pembuatan Web',
       hero: {
-        title: 'Website profesional yang <span class="ca-gradient-text">membangun kredibilitas</span> bisnis Anda',
-        subtitle: 'CoreAsia membantu Anda memiliki website yang bukan sekadar ada, tapi benar-benar bekerja — cepat, SEO-ready, dan dirancang untuk konversi.',
+        title: 'Jasa pembuatan web profesional yang <span class="ca-gradient-text">membangun kredibilitas</span> bisnis Anda',
+        subtitle: 'CoreAsia adalah mitra pembuatan website terpercaya di Indonesia. Website cepat, SEO-ready, dan dirancang untuk menghasilkan konversi — mulai dari company profile hingga web app custom.',
         ctaPrimary: 'Konsultasi Gratis',
         ctaSecondary: 'Lihat Portofolio',
       },
       whyUs: {
-        title: 'Mengapa Pilih CoreAsia?',
-        subtitle: 'Bukan sekadar jasa pembuatan website — kami adalah mitra teknologi untuk pertumbuhan bisnis Anda.',
+        title: 'Mengapa Pilih CoreAsia untuk Pembuatan Web Anda?',
+        subtitle: 'Bukan sekadar jasa pembuatan website murah — kami adalah mitra teknologi untuk pertumbuhan bisnis Anda di seluruh Indonesia.',
         items: [
           {
             icon: 'lucide:palette',
@@ -1125,8 +1135,55 @@ const ID_CONTENT = {
           },
         ],
       },
+      serviceTypes: {
+        title: 'Jenis Website yang Kami Buat',
+        subtitle: 'Solusi pembuatan web untuk berbagai kebutuhan bisnis Anda.',
+        items: [
+          {
+            icon: 'lucide:building-2',
+            title: 'Website Company Profile',
+            description: 'Tampilkan profil perusahaan secara profesional. Cocok untuk UMKM, startup, hingga korporasi yang ingin membangun kehadiran digital.',
+            keywords: 'jasa pembuatan web company profile',
+          },
+          {
+            icon: 'lucide:shopping-cart',
+            title: 'Toko Online & E-Commerce',
+            description: 'Website toko online dengan sistem pembayaran, manajemen produk, dan integrasi pengiriman. Siap jualan dari hari pertama.',
+            keywords: 'jasa pembuatan web toko online',
+          },
+          {
+            icon: 'lucide:rocket',
+            title: 'Landing Page & Promosi',
+            description: 'Halaman khusus untuk kampanye marketing, peluncuran produk, atau promosi bisnis. Dioptimasi untuk konversi tinggi.',
+            keywords: 'jasa pembuatan landing page',
+          },
+          {
+            icon: 'lucide:layout-dashboard',
+            title: 'Web Application Custom',
+            description: 'Aplikasi web sesuai kebutuhan spesifik bisnis Anda — dashboard, sistem manajemen, portal, dan lainnya.',
+            keywords: 'jasa pembuatan web app custom',
+          },
+        ],
+      },
+      serviceAreas: {
+        title: 'Melayani Seluruh Indonesia',
+        subtitle: 'Tim kami bekerja secara remote dan melayani klien dari berbagai kota di Indonesia.',
+        cities: ['Jakarta', 'Surabaya', 'Bandung', 'Tangerang', 'Bekasi', 'Makassar', 'Semarang', 'Yogyakarta', 'Medan', 'Bali'],
+        description: 'Tidak terbatas lokasi — konsultasi dan pengerjaan dilakukan secara online. Anda bisa mendapatkan jasa pembuatan web profesional dari mana saja di Indonesia.',
+      },
+      pricing: {
+        title: 'Estimasi Biaya Pembuatan Website',
+        subtitle: 'Biaya pembuatan web bervariasi tergantung jenis, fitur, dan kompleksitas. Berikut gambaran umum:',
+        items: [
+          { type: 'Landing Page', range: 'Mulai Rp 3 juta', description: 'Satu halaman promosi, responsif, SEO-ready.' },
+          { type: 'Company Profile', range: 'Mulai Rp 5 juta', description: '3-7 halaman, design custom, konten manajemen dasar.' },
+          { type: 'Toko Online', range: 'Mulai Rp 10 juta', description: 'Katalog produk, keranjang, pembayaran, integrasi pengiriman.' },
+          { type: 'Web App Custom', range: 'Mulai Rp 25 juta', description: 'Dashboard, sistem manajemen, fitur khusus sesuai kebutuhan.' },
+        ],
+        note: 'Harga di atas adalah estimasi. Hubungi kami untuk penawaran sesuai kebutuhan spesifik Anda.',
+      },
       process: {
-        title: 'Proses Kerja',
+        title: 'Proses Kerja Pembuatan Web',
         subtitle: 'Langkah-langkah pembuatan website yang transparan dan terstruktur.',
         items: [
           { step: '01', title: 'Konsultasi & Brief', description: 'Diskusi kebutuhan, target audiens, dan tujuan website Anda.' },
@@ -1139,15 +1196,18 @@ const ID_CONTENT = {
         title: 'FAQ — Jasa Pembuatan Website',
         items: [
           { question: 'Berapa lama proses pembuatan website?', answer: 'Tergantung kompleksitas, umumnya 2-6 minggu untuk website company profile, dan 4-12 minggu untuk web app custom.' },
+          { question: 'Berapa biaya pembuatan web company profile?', answer: 'Biaya pembuatan web company profile mulai dari Rp 5 juta, tergantung jumlah halaman, fitur, dan kompleksitas design. Hubungi kami untuk penawaran yang sesuai.' },
+          { question: 'Apakah jasa pembuatan web CoreAsia melayani di luar Jakarta?', answer: 'Ya, kami melayani klien dari seluruh Indonesia — Jakarta, Surabaya, Bandung, Tangerang, Bekasi, Makassar, dan kota lainnya. Semua proses dilakukan secara online.' },
           { question: 'Apakah bisa request revisi design?', answer: 'Ya, revisi design termasuk dalam paket. Kami memastikan hasil akhir sesuai dengan kebutuhan Anda.' },
           { question: 'Apakah website sudah termasuk hosting dan domain?', answer: 'Kami membantu setup hosting dan domain. Biaya hosting dan domain terpisah dan bisa disesuaikan.' },
           { question: 'Apakah website mobile-friendly?', answer: 'Ya, semua website yang kami buat responsif dan tampil optimal di desktop, tablet, dan smartphone.' },
+          { question: 'Apakah ada jasa pembuatan web murah untuk UMKM?', answer: 'Kami menyediakan paket landing page mulai dari Rp 3 juta yang cocok untuk UMKM dan bisnis kecil. Tetap profesional dan SEO-ready.' },
           { question: 'Bagaimana dengan maintenance setelah launch?', answer: 'Kami menyediakan paket maintenance bulanan yang mencakup update, backup, dan support teknis.' },
         ],
       },
       cta: {
         title: 'Siap punya website profesional?',
-        subtitle: 'Konsultasikan kebutuhan website Anda dengan tim CoreAsia. Gratis, tanpa komitmen.',
+        subtitle: 'Konsultasikan kebutuhan pembuatan web Anda dengan tim CoreAsia. Gratis, tanpa komitmen.',
         button: 'Hubungi Kami Sekarang',
       },
     },
@@ -1777,6 +1837,16 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
           ctaLabel: 'Discuss Enterprise',
           to: '/contact?subject=enterprise',
         },
+      ],
+    },
+    services: {
+      kicker: 'Our Services',
+      title: 'Need a website or web application?',
+      subtitle: 'Beyond digital products, we also provide professional web development services for various business needs.',
+      items: [
+        { label: 'Website Development', description: 'Company profile, online store, landing page — custom & SEO-ready.', to: '/layanan/jasa-pembuatan-website' },
+        { label: 'Web App Development', description: 'Dashboards, portals, management systems — tailored to your needs.', to: '/layanan/jasa-pembuatan-aplikasi-web' },
+        { label: 'Web Monitoring Dashboard', description: 'Monitor website performance from one easy-to-understand dashboard.', to: '/layanan/web-monitoring-dashboard' },
       ],
     },
     readyCTA: {
@@ -2667,18 +2737,18 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
   },
   services: {
     jasaPembuatanWebsite: {
-      title: 'Professional Website Development Services',
-      description: 'CoreAsia provides professional website development services for businesses, SMEs, and corporations in Indonesia. Custom design, high performance, and SEO-ready.',
-      kicker: 'Web Services',
+      title: 'Professional Website & Web Development Services',
+      description: 'Professional web development services for businesses, SMEs, and corporations across Indonesia. Company profile, e-commerce, landing page, and custom web apps at affordable prices.',
+      kicker: 'Web Development',
       hero: {
-        title: 'Professional websites that <span class="ca-gradient-text">build credibility</span> for your business',
-        subtitle: 'CoreAsia helps you build a website that truly works — fast, SEO-ready, and designed for conversion.',
+        title: 'Professional web development that <span class="ca-gradient-text">builds credibility</span> for your business',
+        subtitle: 'CoreAsia is your trusted web development partner in Indonesia. Fast, SEO-ready websites designed for conversions — from company profiles to custom web applications.',
         ctaPrimary: 'Free Consultation',
         ctaSecondary: 'View Portfolio',
       },
       whyUs: {
-        title: 'Why Choose CoreAsia?',
-        subtitle: 'Not just website development — we are your technology partner for business growth.',
+        title: 'Why Choose CoreAsia for Your Web Development?',
+        subtitle: 'Not just affordable website development — we are your technology partner for business growth across Indonesia.',
         items: [
           { icon: 'lucide:palette', title: 'Custom & Responsive Design', description: 'Every website is designed specifically for your brand and business needs. Looks perfect on all devices.' },
           { icon: 'lucide:zap', title: 'High Performance & Speed', description: 'Built with modern technology for optimal loading speed and smooth user experience.' },
@@ -2688,9 +2758,36 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
           { icon: 'lucide:headphones', title: 'Ongoing Support', description: 'Our technical team is ready to help after launch. You won\'t be left alone after handover.' },
         ],
       },
+      serviceTypes: {
+        title: 'Types of Websites We Build',
+        subtitle: 'Web development solutions for every business need.',
+        items: [
+          { icon: 'lucide:building-2', title: 'Company Profile Website', description: 'Showcase your company professionally. Perfect for SMEs, startups, and corporations building their digital presence.', keywords: 'company profile website development' },
+          { icon: 'lucide:shopping-cart', title: 'Online Store & E-Commerce', description: 'E-commerce website with payment system, product management, and shipping integration. Ready to sell from day one.', keywords: 'e-commerce website development' },
+          { icon: 'lucide:rocket', title: 'Landing Page & Promotions', description: 'Dedicated pages for marketing campaigns, product launches, or business promotions. Optimized for high conversion.', keywords: 'landing page development' },
+          { icon: 'lucide:layout-dashboard', title: 'Custom Web Application', description: 'Web apps tailored to your specific business needs — dashboards, management systems, portals, and more.', keywords: 'custom web app development' },
+        ],
+      },
+      serviceAreas: {
+        title: 'Serving All of Indonesia',
+        subtitle: 'Our team works remotely and serves clients from various cities across Indonesia.',
+        cities: ['Jakarta', 'Surabaya', 'Bandung', 'Tangerang', 'Bekasi', 'Makassar', 'Semarang', 'Yogyakarta', 'Medan', 'Bali'],
+        description: 'No location restrictions — consultation and development are done online. Get professional web development services from anywhere in Indonesia.',
+      },
+      pricing: {
+        title: 'Website Development Cost Estimates',
+        subtitle: 'Web development costs vary by type, features, and complexity. Here is a general overview:',
+        items: [
+          { type: 'Landing Page', range: 'From IDR 3M', description: 'Single-page promotion, responsive, SEO-ready.' },
+          { type: 'Company Profile', range: 'From IDR 5M', description: '3-7 pages, custom design, basic content management.' },
+          { type: 'Online Store', range: 'From IDR 10M', description: 'Product catalog, cart, payment, shipping integration.' },
+          { type: 'Custom Web App', range: 'From IDR 25M', description: 'Dashboard, management system, custom features as needed.' },
+        ],
+        note: 'Prices above are estimates. Contact us for a quote tailored to your specific needs.',
+      },
       process: {
-        title: 'Our Process',
-        subtitle: 'Transparent and structured website development workflow.',
+        title: 'Our Development Process',
+        subtitle: 'Transparent and structured web development workflow.',
         items: [
           { step: '01', title: 'Consultation & Brief', description: 'Discuss your needs, target audience, and website goals.' },
           { step: '02', title: 'Design & Wireframe', description: 'Create visual concepts and page structure before development.' },
@@ -2699,18 +2796,21 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
         ],
       },
       faq: {
-        title: 'FAQ — Website Development Services',
+        title: 'FAQ — Web Development Services',
         items: [
           { question: 'How long does it take to build a website?', answer: 'Depending on complexity, typically 2-6 weeks for company profile websites, and 4-12 weeks for custom web apps.' },
+          { question: 'How much does a company profile website cost?', answer: 'Company profile web development starts from IDR 5 million, depending on the number of pages, features, and design complexity. Contact us for a tailored quote.' },
+          { question: 'Does CoreAsia serve clients outside Jakarta?', answer: 'Yes, we serve clients across Indonesia — Jakarta, Surabaya, Bandung, Tangerang, Bekasi, Makassar, and more. Everything is done online.' },
           { question: 'Can I request design revisions?', answer: 'Yes, design revisions are included in the package. We ensure the final result meets your needs.' },
           { question: 'Does it include hosting and domain?', answer: 'We help set up hosting and domain. Hosting and domain costs are separate and customizable.' },
           { question: 'Is the website mobile-friendly?', answer: 'Yes, all websites we build are responsive and look optimal on desktop, tablet, and smartphone.' },
+          { question: 'Are there affordable web development packages for SMEs?', answer: 'We offer landing page packages starting from IDR 3 million, perfect for SMEs and small businesses. Still professional and SEO-ready.' },
           { question: 'What about maintenance after launch?', answer: 'We provide monthly maintenance packages covering updates, backups, and technical support.' },
         ],
       },
       cta: {
         title: 'Ready for a professional website?',
-        subtitle: 'Discuss your website needs with the CoreAsia team. Free, no commitment.',
+        subtitle: 'Discuss your web development needs with the CoreAsia team. Free, no commitment.',
         button: 'Contact Us Now',
       },
     },

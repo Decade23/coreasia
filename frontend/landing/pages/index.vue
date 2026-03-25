@@ -223,6 +223,34 @@ useHead({
 
         <HomeEcosystem />
 
+        <!-- Services / Layanan -->
+        <section class="ca-section pt-0">
+            <div class="ca-container">
+                <div class="mb-8 text-center">
+                    <span class="ca-kicker">{{ t('home.services.kicker') }}</span>
+                    <h2 class="ca-title mt-4">{{ t('home.services.title') }}</h2>
+                    <p class="ca-copy mx-auto mt-3 max-w-2xl">{{ t('home.services.subtitle') }}</p>
+                </div>
+                <div class="grid gap-4 md:grid-cols-3">
+                    <NuxtLink
+                        v-for="item in (t('home.services.items') as Array<Record<string, string>>)"
+                        :key="item.to"
+                        :to="item.to"
+                        class="ca-card-soft group p-5 transition hover:-translate-y-0.5 hover:border-[color:var(--ca-gold-border)]"
+                    >
+                        <h3 class="text-base font-display font-semibold text-[var(--ca-text)] group-hover:text-[var(--ca-gold-text)]">
+                            {{ item.label }}
+                        </h3>
+                        <p class="mt-2 text-sm leading-relaxed text-[var(--ca-muted)]">{{ item.description }}</p>
+                        <span class="mt-3 inline-flex items-center gap-1 text-sm font-semibold ca-tone-gold">
+                            Pelajari
+                            <Icon name="lucide:arrow-right" class="h-4 w-4 transition group-hover:translate-x-0.5" />
+                        </span>
+                    </NuxtLink>
+                </div>
+            </div>
+        </section>
+
         <section class="ca-section pt-0">
             <div class="ca-container">
                 <div

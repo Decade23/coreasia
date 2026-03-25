@@ -16,7 +16,8 @@ useSchemaOrg([
   }),
 ])
 
-// Service + FAQ schema
+// Service + FAQ schema with city-level areaServed
+const serviceCities = ['Jakarta', 'Surabaya', 'Bandung', 'Tangerang', 'Bekasi', 'Makassar', 'Semarang', 'Yogyakarta', 'Medan', 'Bali']
 const faqItems = computed(() => (t('services.jasaPembuatanWebsite.faq.items') as Array<{ question: string; answer: string }>) || [])
 
 useHead({
@@ -35,7 +36,20 @@ useHead({
           name: 'CoreAsia Teknologi',
           url: 'https://coreasia.id',
         },
-        areaServed: { '@type': 'Country', name: 'Indonesia' },
+        areaServed: [
+          { '@type': 'Country', name: 'Indonesia' },
+          ...serviceCities.map((city) => ({ '@type': 'City', name: city })),
+        ],
+        hasOfferCatalog: {
+          '@type': 'OfferCatalog',
+          name: 'Paket Jasa Pembuatan Website',
+          itemListElement: [
+            { '@type': 'Offer', name: 'Landing Page', price: '3000000', priceCurrency: 'IDR', description: 'Satu halaman promosi, responsif, SEO-ready' },
+            { '@type': 'Offer', name: 'Company Profile', price: '5000000', priceCurrency: 'IDR', description: '3-7 halaman, design custom, konten manajemen dasar' },
+            { '@type': 'Offer', name: 'Toko Online', price: '10000000', priceCurrency: 'IDR', description: 'Katalog produk, keranjang, pembayaran, integrasi pengiriman' },
+            { '@type': 'Offer', name: 'Web App Custom', price: '25000000', priceCurrency: 'IDR', description: 'Dashboard, sistem manajemen, fitur khusus sesuai kebutuhan' },
+          ],
+        },
       }),
     },
     {
@@ -54,6 +68,9 @@ useHead({
 })
 
 const whyUsItems = computed(() => (t('services.jasaPembuatanWebsite.whyUs.items') as Array<Record<string, string>>) || [])
+const serviceTypeItems = computed(() => (t('services.jasaPembuatanWebsite.serviceTypes.items') as Array<Record<string, string>>) || [])
+const pricingItems = computed(() => (t('services.jasaPembuatanWebsite.pricing.items') as Array<Record<string, string>>) || [])
+const serviceAreaCities = computed(() => (t('services.jasaPembuatanWebsite.serviceAreas.cities') as string[]) || [])
 const processItems = computed(() => (t('services.jasaPembuatanWebsite.process.items') as Array<Record<string, string>>) || [])
 </script>
 
@@ -107,6 +124,64 @@ const processItems = computed(() => (t('services.jasaPembuatanWebsite.process.it
             <h3 class="mt-4 text-lg font-display font-semibold text-[var(--ca-text)]">{{ item.title }}</h3>
             <p class="mt-2 text-sm leading-relaxed text-[var(--ca-muted)]">{{ item.description }}</p>
           </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Service Types -->
+    <section class="ca-section pt-0">
+      <div class="ca-container">
+        <div class="mb-8 text-center">
+          <h2 class="ca-title">{{ t('services.jasaPembuatanWebsite.serviceTypes.title') }}</h2>
+          <p class="ca-copy mx-auto mt-3 max-w-2xl">{{ t('services.jasaPembuatanWebsite.serviceTypes.subtitle') }}</p>
+        </div>
+        <div class="grid gap-4 md:grid-cols-2">
+          <article v-for="item in serviceTypeItems" :key="item.title" class="ca-card-soft p-5">
+            <div class="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg-strong)]">
+              <Icon :name="item.icon" class="h-5 w-5 ca-tone-gold" />
+            </div>
+            <h3 class="mt-4 text-lg font-display font-semibold text-[var(--ca-text)]">{{ item.title }}</h3>
+            <p class="mt-2 text-sm leading-relaxed text-[var(--ca-muted)]">{{ item.description }}</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pricing Estimate -->
+    <section class="ca-section pt-0">
+      <div class="ca-container">
+        <div class="mb-8 text-center">
+          <h2 class="ca-title">{{ t('services.jasaPembuatanWebsite.pricing.title') }}</h2>
+          <p class="ca-copy mx-auto mt-3 max-w-2xl">{{ t('services.jasaPembuatanWebsite.pricing.subtitle') }}</p>
+        </div>
+        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <article v-for="item in pricingItems" :key="item.type" class="ca-card p-5 text-center">
+            <h3 class="text-base font-display font-semibold text-[var(--ca-text)]">{{ item.type }}</h3>
+            <p class="mt-2 text-xl font-display font-bold ca-tone-gold">{{ item.range }}</p>
+            <p class="mt-2 text-sm leading-relaxed text-[var(--ca-muted)]">{{ item.description }}</p>
+          </article>
+        </div>
+        <p class="mt-4 text-center text-xs text-[var(--ca-subtle)]">{{ t('services.jasaPembuatanWebsite.pricing.note') }}</p>
+      </div>
+    </section>
+
+    <!-- Service Areas -->
+    <section class="ca-section pt-0">
+      <div class="ca-container">
+        <div class="ca-card p-6 text-center sm:p-8">
+          <h2 class="ca-title">{{ t('services.jasaPembuatanWebsite.serviceAreas.title') }}</h2>
+          <p class="ca-copy mx-auto mt-3 max-w-2xl">{{ t('services.jasaPembuatanWebsite.serviceAreas.subtitle') }}</p>
+          <div class="mt-6 flex flex-wrap items-center justify-center gap-2">
+            <span
+              v-for="city in serviceAreaCities"
+              :key="city"
+              class="ca-chip"
+            >
+              <Icon name="lucide:map-pin" class="h-3 w-3" />
+              {{ city }}
+            </span>
+          </div>
+          <p class="ca-copy mx-auto mt-4 max-w-xl text-sm">{{ t('services.jasaPembuatanWebsite.serviceAreas.description') }}</p>
         </div>
       </div>
     </section>
