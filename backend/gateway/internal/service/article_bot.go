@@ -61,10 +61,11 @@ type ArticleBot struct {
 	auditRepo    *repository.AuditLogRepo
 	apiKeyRepo   *repository.APIKeyRepo
 	settingsRepo *repository.AppSettingsRepo
+	keywordRepo  *repository.KeywordRepo
 }
 
-func NewArticleBot(cfg config.AIConfig, articleRepo *repository.ArticleRepo, auditRepo *repository.AuditLogRepo, apiKeyRepo *repository.APIKeyRepo, settingsRepo *repository.AppSettingsRepo) *ArticleBot {
-	return &ArticleBot{cfg: cfg, articleRepo: articleRepo, auditRepo: auditRepo, apiKeyRepo: apiKeyRepo, settingsRepo: settingsRepo}
+func NewArticleBot(cfg config.AIConfig, articleRepo *repository.ArticleRepo, auditRepo *repository.AuditLogRepo, apiKeyRepo *repository.APIKeyRepo, settingsRepo *repository.AppSettingsRepo, keywordRepo *repository.KeywordRepo) *ArticleBot {
+	return &ArticleBot{cfg: cfg, articleRepo: articleRepo, auditRepo: auditRepo, apiKeyRepo: apiKeyRepo, settingsRepo: settingsRepo, keywordRepo: keywordRepo}
 }
 
 // topicPool contains potential article topics grouped by category.
@@ -118,12 +119,15 @@ var topicPool = []struct {
 func (b *ArticleBot) RunWithConfig(ctx context.Context, botConfig json.RawMessage) error {
 	// Parse bot config for provider/model overrides
 	var cfg struct {
-		Provider  string `json:"provider"`
-		Model     string `json:"model"`
-		Tone      string `json:"tone"`
-		Language  string `json:"language"`
-		WordCount int    `json:"word_count"`
-		AutoImage *bool  `json:"auto_image"`
+		Provider       string `json:"provider"`
+		Model          string `json:"model"`
+		Tone           string `json:"tone"`
+		Language       string `json:"language"`
+		WordCount      int    `json:"word_count"`
+		AutoImage      *bool  `json:"auto_image"`
+		UseKeywordPool *bool  `json:"use_keyword_pool"`
+		TargetCategory string `json:"target_category"`
+		MinPriority    int    `json:"min_priority"`
 	}
 	if len(botConfig) > 0 {
 		_ = json.Unmarshal(botConfig, &cfg)
@@ -175,28 +179,54 @@ func (b *ArticleBot) RunWithConfig(ctx context.Context, botConfig json.RawMessag
 		return fmt.Errorf("API key belum dikonfigurasi untuk provider %q (env atau DB)", provider)
 	}
 
-	// Fetch existing article titles to avoid duplicates
-	existing, _, err := b.articleRepo.FindAll(ctx, model.ArticleListFilter{Page: 1, PerPage: 500})
-	if err != nil {
-		return fmt.Errorf("gagal fetch existing articles: %w", err)
+	// Try keyword pool first if enabled (default: true when keywordRepo is available)
+	useKeywordPool := b.keywordRepo != nil
+	if cfg.UseKeywordPool != nil {
+		useKeywordPool = *cfg.UseKeywordPool && b.keywordRepo != nil
 	}
 
-	existingTitles := make(map[string]bool)
-	for _, a := range existing {
-		existingTitles[strings.ToLower(a.Title)] = true
+	var topic, category string
+	var pickedKeyword *model.Keyword
+
+	if useKeywordPool {
+		keywords, kwErr := b.keywordRepo.FindNextForBot(ctx, cfg.TargetCategory, cfg.MinPriority, 1)
+		if kwErr != nil {
+			slog.Warn("article-bot: gagal ambil keyword dari pool, fallback ke topik", "error", kwErr)
+		} else if len(keywords) > 0 {
+			pickedKeyword = &keywords[0]
+			topic = pickedKeyword.Keyword
+			category = pickedKeyword.Category
+			slog.Info("article-bot: menggunakan keyword dari pool", "keyword", topic, "category", category)
+		}
 	}
 
-	topic, category := b.pickTopic(existingTitles)
+	// Fallback to hardcoded topic pool
 	if topic == "" {
-		slog.Info("article-bot: semua topik sudah ditulis, skip")
-		return nil
+		existing, _, err := b.articleRepo.FindAll(ctx, model.ArticleListFilter{Page: 1, PerPage: 500})
+		if err != nil {
+			return fmt.Errorf("gagal fetch existing articles: %w", err)
+		}
+		existingTitles := make(map[string]bool)
+		for _, a := range existing {
+			existingTitles[strings.ToLower(a.Title)] = true
+		}
+		topic, category = b.pickTopic(existingTitles)
+		if topic == "" {
+			slog.Info("article-bot: semua topik dan keyword sudah ditulis, skip")
+			return nil
+		}
 	}
 
 	slog.Info("article-bot: generating article", "topic", topic, "category", category, "provider", provider, "model", aiModel)
 
+	keywords := []string{category, "coreasia", "bisnis digital"}
+	if pickedKeyword != nil {
+		keywords = []string{pickedKeyword.Keyword, category, "coreasia"}
+	}
+
 	req := model.AIGenerateRequest{
 		Topic:     topic,
-		Keywords:  []string{category, "coreasia", "bisnis digital"},
+		Keywords:  keywords,
 		Tone:      tone,
 		Language:  language,
 		WordCount: wordCount,
@@ -245,6 +275,16 @@ func (b *ArticleBot) RunWithConfig(ctx context.Context, botConfig json.RawMessag
 
 	if err := b.articleRepo.Create(ctx, &article); err != nil {
 		return fmt.Errorf("gagal simpan artikel: %w", err)
+	}
+
+	// Link keyword and increment usage if generated from keyword pool
+	if pickedKeyword != nil && b.keywordRepo != nil {
+		if err := b.keywordRepo.LinkArticle(ctx, article.ID, pickedKeyword.ID); err != nil {
+			slog.Warn("article-bot: gagal link keyword ke artikel", "error", err)
+		}
+		if err := b.keywordRepo.IncrementUsage(ctx, pickedKeyword.ID); err != nil {
+			slog.Warn("article-bot: gagal increment keyword usage", "error", err)
+		}
 	}
 
 	desc := fmt.Sprintf("Bot auto-generated artikel via %s/%s: %s", provider, aiModel, article.Title)

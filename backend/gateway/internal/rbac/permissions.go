@@ -60,6 +60,16 @@ const (
 	UploadCreate Permission = "upload:create"
 )
 
+// Keywords
+const (
+	KeywordsList      Permission = "keywords:list"
+	KeywordsView      Permission = "keywords:view"
+	KeywordsCreate    Permission = "keywords:create"
+	KeywordsUpdate    Permission = "keywords:update"
+	KeywordsDelete    Permission = "keywords:delete"
+	KeywordsAISuggest Permission = "keywords:ai_suggest"
+)
+
 // Audit
 const (
 	AuditList Permission = "audit:list"
@@ -98,8 +108,14 @@ var RolePermissions = map[string]map[Permission]bool{
 		APIKeysUpdate:   true,
 		APIKeysDelete:   true,
 		APIKeysCopy:     true,
-		UploadCreate:    true,
-		AuditList:       true,
+		KeywordsList:      true,
+		KeywordsView:      true,
+		KeywordsCreate:    true,
+		KeywordsUpdate:    true,
+		KeywordsDelete:    true,
+		KeywordsAISuggest: true,
+		UploadCreate:      true,
+		AuditList:         true,
 	},
 	"admin": {
 		DashboardView:  true,
@@ -114,10 +130,13 @@ var RolePermissions = map[string]map[Permission]bool{
 		AIGenerate:     true,
 		AIModels:       true,
 		AISettingsView: true,
-		APIKeysList:    true,
-		APIKeysView:    true,
-		UploadCreate:   true,
-		AuditList:      true,
+		KeywordsList:      true,
+		KeywordsView:      true,
+		KeywordsAISuggest: true,
+		APIKeysList:       true,
+		APIKeysView:       true,
+		UploadCreate:      true,
+		AuditList:         true,
 	},
 }
 

@@ -103,7 +103,9 @@ func (s *Server) setupRoutes() {
 	uploadHandler := NewUploadHandler(r2Service, auditLogRepo)
 	apiKeyRepo := repository.NewAPIKeyRepo(s.pool)
 	appSettingsRepo := repository.NewAppSettingsRepo(s.pool)
-	articleBot := service.NewArticleBot(s.cfg.AI, articleRepo, auditLogRepo, apiKeyRepo, appSettingsRepo)
+	keywordRepo := repository.NewKeywordRepo(s.pool)
+	keywordHandler := NewKeywordHandler(keywordRepo, auditLogRepo, apiKeyRepo, appSettingsRepo)
+	articleBot := service.NewArticleBot(s.cfg.AI, articleRepo, auditLogRepo, apiKeyRepo, appSettingsRepo, keywordRepo)
 	aiHandler := NewAIHandler(articleBot, auditLogRepo, apiKeyRepo, appSettingsRepo, s.rdb)
 	auditHandler := NewAuditHandler(auditLogRepo)
 	apiKeyHandler := NewAPIKeyHandler(apiKeyRepo, auditLogRepo, s.rdb)
@@ -172,6 +174,16 @@ func (s *Server) setupRoutes() {
 	admin.Post("/api-keys", mw.RequirePermission(rbac.APIKeysCreate), apiKeyHandler.Create)
 	admin.Put("/api-keys/:id", mw.RequirePermission(rbac.APIKeysUpdate), apiKeyHandler.Update)
 	admin.Delete("/api-keys/:id", mw.RequirePermission(rbac.APIKeysDelete), apiKeyHandler.Delete)
+
+	// Keywords
+	admin.Get("/keywords", mw.RequirePermission(rbac.KeywordsList), keywordHandler.List)
+	admin.Get("/keywords/stats", mw.RequirePermission(rbac.KeywordsList), keywordHandler.Stats)
+	admin.Get("/keywords/:id", mw.RequirePermission(rbac.KeywordsView), keywordHandler.GetByID)
+	admin.Post("/keywords", mw.RequirePermission(rbac.KeywordsCreate), keywordHandler.Create)
+	admin.Post("/keywords/batch", mw.RequirePermission(rbac.KeywordsCreate), keywordHandler.CreateBatch)
+	admin.Put("/keywords/:id", mw.RequirePermission(rbac.KeywordsUpdate), keywordHandler.Update)
+	admin.Delete("/keywords/:id", mw.RequirePermission(rbac.KeywordsDelete), keywordHandler.Delete)
+	admin.Post("/keywords/ai-suggest", mw.RequirePermission(rbac.KeywordsAISuggest), keywordHandler.AISuggest)
 
 	// Bot schedules
 	admin.Get("/bots", mw.RequirePermission(rbac.BotsList), botScheduleHandler.List)
