@@ -2,7 +2,7 @@
 definePageMeta({ layout: 'console', middleware: 'console' })
 
 const { items, loading, saving, error, fetchKeys, createKey, updateKey, deleteKey, copyKey } = useApiKeys()
-const { user: currentAdmin } = useAdminAuth()
+const { can } = usePermissions()
 const api = useAdminApi()
 const { tc } = useConsoleI18n()
 const { formatDateTime } = useConsoleDateTime()
@@ -145,7 +145,7 @@ const formatDate = (d: string) => formatDateTime(d)
       :description="tc('apiKeys.description')"
     >
       <template #actions>
-        <button v-if="currentAdmin?.role === 'super_admin'" type="button" class="ca-btn-primary" @click="openCreate">
+        <button v-if="can('apikeys:create')" type="button" class="ca-btn-primary" @click="openCreate">
           <Icon name="lucide:plus" class="h-4 w-4" />
           {{ tc('apiKeys.add') }}
         </button>
@@ -209,7 +209,7 @@ const formatDate = (d: string) => formatDateTime(d)
 
         <div class="flex items-center gap-1 shrink-0">
           <!-- Copy -->
-          <CaTooltip :text="copySuccess === k.id ? tc('common.copied') : tc('apiKeys.copy')" position="bottom">
+          <CaTooltip v-if="can('apikeys:copy')" :text="copySuccess === k.id ? tc('common.copied') : tc('apiKeys.copy')" position="bottom">
             <button
               type="button"
               class="rounded-lg p-1.5 transition"
@@ -220,7 +220,7 @@ const formatDate = (d: string) => formatDateTime(d)
             </button>
           </CaTooltip>
           <!-- Toggle active -->
-          <CaTooltip :text="k.is_active ? tc('apiKeys.deactivate') : tc('apiKeys.activate')" position="bottom">
+          <CaTooltip v-if="can('apikeys:update')" :text="k.is_active ? tc('apiKeys.deactivate') : tc('apiKeys.activate')" position="bottom">
             <button
               type="button"
               class="rounded-lg p-1.5 transition"
@@ -231,7 +231,7 @@ const formatDate = (d: string) => formatDateTime(d)
             </button>
           </CaTooltip>
           <!-- Edit -->
-          <CaTooltip :text="tc('common.edit')" position="bottom">
+          <CaTooltip v-if="can('apikeys:update')" :text="tc('common.edit')" position="bottom">
             <button
               type="button"
               class="rounded-lg p-1.5 text-[var(--ca-muted)] hover:bg-[var(--ca-panel-bg-strong)]"
@@ -241,7 +241,7 @@ const formatDate = (d: string) => formatDateTime(d)
             </button>
           </CaTooltip>
           <!-- Delete -->
-          <CaTooltip :text="tc('common.delete')" position="bottom">
+          <CaTooltip v-if="can('apikeys:delete')" :text="tc('common.delete')" position="bottom">
             <button
               type="button"
               class="rounded-lg p-1.5 text-rose-400 hover:bg-rose-500/10"

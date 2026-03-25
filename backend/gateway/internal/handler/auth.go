@@ -7,6 +7,7 @@ import (
 	"github.com/coreasia/gateway/internal/auth"
 	"github.com/coreasia/gateway/internal/middleware"
 	"github.com/coreasia/gateway/internal/model"
+	"github.com/coreasia/gateway/internal/rbac"
 	"github.com/coreasia/gateway/internal/repository"
 	"github.com/coreasia/gateway/pkg/apperr"
 	"github.com/coreasia/gateway/pkg/validate"
@@ -145,6 +146,19 @@ func (h *AuthHandler) Refresh(c fiber.Ctx) error {
 		RefreshToken: tokens.RefreshToken,
 		ExpiresAt:    tokens.ExpiresAt,
 		User:         user.ToResponse(),
+	})
+}
+
+func (h *AuthHandler) Permissions(c fiber.Ctx) error {
+	claims := middleware.GetClaims(c)
+	if claims == nil {
+		return errResponse(c, apperr.NewUnauthorized("Autentikasi diperlukan"))
+	}
+
+	perms := rbac.PermissionsForRole(claims.Role)
+	return ok(c, fiber.Map{
+		"role":        claims.Role,
+		"permissions": perms,
 	})
 }
 

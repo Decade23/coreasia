@@ -2,6 +2,7 @@
 definePageMeta({ layout: 'console', middleware: 'console' })
 
 const { items, loading, saving, error, fetchBots, createBot, updateBot, deleteBot, triggerBot } = useBotSchedules()
+const { can } = usePermissions()
 const toast = useToast()
 const { tc } = useConsoleI18n()
 const { formatDateTime } = useConsoleDateTime()
@@ -264,7 +265,7 @@ const configLabel = (b: any) => {
       :description="tc('bots.description')"
     >
       <template #actions>
-        <button type="button" class="ca-btn-primary" @click="openCreate">
+        <button v-if="can('bots:create')" type="button" class="ca-btn-primary" @click="openCreate">
           <Icon name="lucide:plus" class="h-4 w-4" />
           {{ tc('bots.add') }}
         </button>
@@ -278,7 +279,7 @@ const configLabel = (b: any) => {
     <div v-else-if="!items.length" class="ca-card p-10 text-center">
       <Icon name="lucide:bot" class="mx-auto h-12 w-12 text-[var(--ca-subtle)]" />
       <p class="mt-3 text-sm text-[var(--ca-muted)]">{{ tc('bots.empty') }}</p>
-      <button type="button" class="ca-btn-primary mt-4" @click="openCreate">{{ tc('bots.emptyAction') }}</button>
+      <button v-if="can('bots:create')" type="button" class="ca-btn-primary mt-4" @click="openCreate">{{ tc('bots.emptyAction') }}</button>
     </div>
 
     <div v-else class="space-y-4">
@@ -322,7 +323,7 @@ const configLabel = (b: any) => {
           </div>
         <div class="flex items-center gap-1">
             <!-- Trigger -->
-            <CaTooltip :text="triggeringBot === b.id ? tc('bots.running') : triggerSuccess === b.id ? tc('bots.triggered') : tc('bots.runNow')" position="bottom">
+            <CaTooltip v-if="can('bots:trigger')" :text="triggeringBot === b.id ? tc('bots.running') : triggerSuccess === b.id ? tc('bots.triggered') : tc('bots.runNow')" position="bottom">
               <button
                 type="button"
                 class="rounded-lg p-1.5 transition"
@@ -338,7 +339,7 @@ const configLabel = (b: any) => {
               </button>
             </CaTooltip>
             <!-- Toggle active/inactive -->
-            <CaTooltip :text="b.is_active ? tc('common.disabled') : tc('common.enabled')" position="bottom">
+            <CaTooltip v-if="can('bots:update')" :text="b.is_active ? tc('common.disabled') : tc('common.enabled')" position="bottom">
               <button
                 type="button"
                 class="rounded-lg p-1.5 transition"
@@ -349,13 +350,13 @@ const configLabel = (b: any) => {
               </button>
             </CaTooltip>
             <!-- Edit -->
-            <CaTooltip :text="tc('bots.editConfig')" position="bottom">
+            <CaTooltip v-if="can('bots:update')" :text="tc('bots.editConfig')" position="bottom">
               <button type="button" class="rounded-lg p-1.5 text-[var(--ca-muted)] hover:bg-[var(--ca-panel-bg-strong)]" @click="openEdit(b)">
                 <Icon name="lucide:edit-3" class="h-4 w-4" />
               </button>
             </CaTooltip>
             <!-- Delete -->
-            <CaTooltip :text="tc('common.delete')" position="bottom">
+            <CaTooltip v-if="can('bots:delete')" :text="tc('common.delete')" position="bottom">
               <button type="button" class="rounded-lg p-1.5 text-rose-400 hover:bg-rose-500/10" @click="handleDelete(b)">
                 <Icon name="lucide:trash-2" class="h-4 w-4" />
               </button>

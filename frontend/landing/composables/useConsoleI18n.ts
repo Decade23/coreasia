@@ -183,6 +183,11 @@ const consoleMessages = {
       ipAddress: 'IP address',
       system: 'System',
     },
+    rbac: {
+      forbidden: 'Anda tidak memiliki akses untuk operasi ini',
+      readOnly: 'Anda hanya memiliki akses baca di halaman ini',
+      contactAdmin: 'Hubungi super admin untuk mendapatkan akses',
+    },
     bots: {
       kicker: 'Automation',
       title: 'Bot scheduler',
@@ -639,6 +644,11 @@ const consoleMessages = {
       descriptionLabel: 'Description',
       ipAddress: 'IP address',
       system: 'System',
+    },
+    rbac: {
+      forbidden: 'You do not have access for this operation',
+      readOnly: 'You have read-only access on this page',
+      contactAdmin: 'Contact a super admin to gain access',
     },
     bots: {
       kicker: 'Automation',

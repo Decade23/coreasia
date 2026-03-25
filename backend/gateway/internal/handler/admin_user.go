@@ -42,9 +42,6 @@ func (h *AdminUserHandler) List(c fiber.Ctx) error {
 
 func (h *AdminUserHandler) Create(c fiber.Ctx) error {
 	claims := middleware.GetClaims(c)
-	if claims.Role != "super_admin" {
-		return errResponse(c, apperr.NewForbidden("Hanya super admin yang dapat menambah user"))
-	}
 
 	var req model.CreateAdminRequest
 	if err := c.Bind().JSON(&req); err != nil {
@@ -86,9 +83,6 @@ func (h *AdminUserHandler) Create(c fiber.Ctx) error {
 
 func (h *AdminUserHandler) Update(c fiber.Ctx) error {
 	claims := middleware.GetClaims(c)
-	if claims.Role != "super_admin" {
-		return errResponse(c, apperr.NewForbidden("Hanya super admin yang dapat mengubah user"))
-	}
 
 	id, err := uuid.Parse(c.Params("id"))
 	if err != nil {
@@ -139,9 +133,6 @@ func (h *AdminUserHandler) Update(c fiber.Ctx) error {
 
 func (h *AdminUserHandler) Delete(c fiber.Ctx) error {
 	claims := middleware.GetClaims(c)
-	if claims.Role != "super_admin" {
-		return errResponse(c, apperr.NewForbidden("Hanya super admin yang dapat menghapus user"))
-	}
 
 	id, err := uuid.Parse(c.Params("id"))
 	if err != nil {

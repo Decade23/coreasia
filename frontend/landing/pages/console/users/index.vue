@@ -3,6 +3,7 @@ definePageMeta({ layout: 'console', middleware: 'console' })
 
 const { items, loading, saving, error, totalItems, fetchUsers, createUser, updateUser, deleteUser } = useAdminUsers()
 const { user: currentAdmin } = useAdminAuth()
+const { can } = usePermissions()
 const { tc } = useConsoleI18n()
 
 const showFormModal = ref(false)
@@ -96,7 +97,7 @@ const confirmDelete = async () => {
       :description="tc('users.description')"
     >
       <template #actions>
-        <button v-if="currentAdmin?.role === 'super_admin'" type="button" class="ca-btn-primary" @click="openCreate">
+        <button v-if="can('users:create')" type="button" class="ca-btn-primary" @click="openCreate">
           <Icon name="lucide:plus" class="h-4 w-4" />
           {{ tc('users.add') }}
         </button>
@@ -133,7 +134,7 @@ const confirmDelete = async () => {
               </span>
             </td>
             <td class="text-right">
-              <div v-if="currentAdmin?.role === 'super_admin'" class="flex items-center justify-end gap-1">
+              <div v-if="can('users:update')" class="flex items-center justify-end gap-1">
                 <CaTooltip :text="tc('users.editProfile')" position="bottom">
                   <button type="button" class="rounded-lg p-1.5 text-[var(--ca-muted)] hover:bg-[var(--ca-panel-bg-strong)]" @click="openEdit(u)">
                     <Icon name="lucide:edit-3" class="h-4 w-4" />

@@ -2,7 +2,7 @@
 definePageMeta({ layout: 'console', middleware: 'console' })
 
 const { items, loading, error, totalItems, currentPage, fetchArticles, deleteArticle, publishArticle, unpublishArticle } = useArticles()
-const { user: currentAdmin } = useAdminAuth()
+const { can } = usePermissions()
 const { tc } = useConsoleI18n()
 const { formatDateTime } = useConsoleDateTime()
 
@@ -262,7 +262,7 @@ const statusOptions = computed(() => [
                     <Icon name="lucide:edit-3" class="h-4 w-4" />
                   </NuxtLink>
                 </CaTooltip>
-                <CaTooltip v-if="article.status === 'draft' && currentAdmin?.role === 'super_admin'" :text="tc('common.publish')" position="bottom">
+                <CaTooltip v-if="article.status === 'draft' && can('articles:publish')" :text="tc('common.publish')" position="bottom">
                   <button
                     type="button"
                     class="rounded-lg p-1.5 text-emerald-400 hover:bg-emerald-500/10"
@@ -271,7 +271,7 @@ const statusOptions = computed(() => [
                     <Icon name="lucide:upload" class="h-4 w-4" />
                   </button>
                 </CaTooltip>
-                <CaTooltip v-if="article.status === 'published' && currentAdmin?.role === 'super_admin'" :text="tc('common.unpublish')" position="bottom">
+                <CaTooltip v-if="article.status === 'published' && can('articles:publish')" :text="tc('common.unpublish')" position="bottom">
                   <button
                     type="button"
                     class="rounded-lg p-1.5 text-amber-400 hover:bg-amber-500/10"
@@ -280,7 +280,7 @@ const statusOptions = computed(() => [
                     <Icon name="lucide:download" class="h-4 w-4" />
                   </button>
                 </CaTooltip>
-                <CaTooltip v-if="currentAdmin?.role === 'super_admin'" :text="tc('common.delete')" position="bottom">
+                <CaTooltip v-if="can('articles:delete')" :text="tc('common.delete')" position="bottom">
                   <button
                     type="button"
                     class="rounded-lg p-1.5 text-rose-400 hover:bg-rose-500/10"

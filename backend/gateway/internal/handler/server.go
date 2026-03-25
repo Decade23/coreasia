@@ -8,6 +8,7 @@ import (
 	"github.com/coreasia/gateway/internal/auth"
 	"github.com/coreasia/gateway/internal/config"
 	mw "github.com/coreasia/gateway/internal/middleware"
+	"github.com/coreasia/gateway/internal/rbac"
 	"github.com/coreasia/gateway/internal/repository"
 	"github.com/coreasia/gateway/internal/service"
 	"github.com/gofiber/fiber/v3"
@@ -132,53 +133,56 @@ func (s *Server) setupRoutes() {
 
 	// Protected admin routes
 	admin := api.Group("/admin", authMiddleware)
+
+	// Auth (self-service, no permission check)
 	admin.Get("/auth/me", authHandler.Me)
 	admin.Post("/auth/logout", authHandler.Logout)
+	admin.Get("/auth/permissions", authHandler.Permissions)
 
 	// Article management
-	admin.Get("/articles", articleHandler.ListAll)
-	admin.Get("/articles/stats", articleHandler.Stats)
-	admin.Get("/articles/:id", articleHandler.GetByID)
-	admin.Post("/articles", articleHandler.Create)
-	admin.Put("/articles/:id", articleHandler.Update)
-	admin.Delete("/articles/:id", articleHandler.Delete)
-	admin.Post("/articles/:id/publish", articleHandler.Publish)
-	admin.Post("/articles/:id/unpublish", articleHandler.Unpublish)
+	admin.Get("/articles", mw.RequirePermission(rbac.ArticlesList), articleHandler.ListAll)
+	admin.Get("/articles/stats", mw.RequirePermission(rbac.ArticlesStats), articleHandler.Stats)
+	admin.Get("/articles/:id", mw.RequirePermission(rbac.ArticlesView), articleHandler.GetByID)
+	admin.Post("/articles", mw.RequirePermission(rbac.ArticlesCreate), articleHandler.Create)
+	admin.Put("/articles/:id", mw.RequirePermission(rbac.ArticlesUpdate), articleHandler.Update)
+	admin.Delete("/articles/:id", mw.RequirePermission(rbac.ArticlesDelete), articleHandler.Delete)
+	admin.Post("/articles/:id/publish", mw.RequirePermission(rbac.ArticlesPublish), articleHandler.Publish)
+	admin.Post("/articles/:id/unpublish", mw.RequirePermission(rbac.ArticlesPublish), articleHandler.Unpublish)
 
 	// File upload
-	admin.Post("/upload", uploadHandler.Upload)
+	admin.Post("/upload", mw.RequirePermission(rbac.UploadCreate), uploadHandler.Upload)
 
-	// AI generation (rate limited) & model listing
-	admin.Post("/ai/generate", aiRateLimiter.Middleware(), aiHandler.Generate)
-	admin.Get("/ai/models/:provider", aiHandler.ListModels)
-	admin.Get("/ai/active-key/:provider", aiHandler.GetActiveKey)
-	admin.Get("/ai/settings", aiHandler.GetSettings)
-	admin.Put("/ai/settings", aiHandler.UpdateSettings)
+	// AI generation (permission check before rate limiter) & model listing
+	admin.Post("/ai/generate", mw.RequirePermission(rbac.AIGenerate), aiRateLimiter.Middleware(), aiHandler.Generate)
+	admin.Get("/ai/models/:provider", mw.RequirePermission(rbac.AIModels), aiHandler.ListModels)
+	admin.Get("/ai/active-key/:provider", mw.RequirePermission(rbac.AIModels), aiHandler.GetActiveKey)
+	admin.Get("/ai/settings", mw.RequirePermission(rbac.AISettingsView), aiHandler.GetSettings)
+	admin.Put("/ai/settings", mw.RequirePermission(rbac.AISettingsUpdate), aiHandler.UpdateSettings)
 
 	// Admin user management
-	admin.Get("/users", adminUserHandler.List)
-	admin.Post("/users", adminUserHandler.Create)
-	admin.Put("/users/:id", adminUserHandler.Update)
-	admin.Delete("/users/:id", adminUserHandler.Delete)
+	admin.Get("/users", mw.RequirePermission(rbac.UsersList), adminUserHandler.List)
+	admin.Post("/users", mw.RequirePermission(rbac.UsersCreate), adminUserHandler.Create)
+	admin.Put("/users/:id", mw.RequirePermission(rbac.UsersUpdate), adminUserHandler.Update)
+	admin.Delete("/users/:id", mw.RequirePermission(rbac.UsersDelete), adminUserHandler.Delete)
 
 	// API key management
-	admin.Get("/api-keys", apiKeyHandler.List)
-	admin.Get("/api-keys/:id", apiKeyHandler.GetByID)
-	admin.Get("/api-keys/:id/copy", apiKeyHandler.CopyKey)
-	admin.Post("/api-keys", apiKeyHandler.Create)
-	admin.Put("/api-keys/:id", apiKeyHandler.Update)
-	admin.Delete("/api-keys/:id", apiKeyHandler.Delete)
+	admin.Get("/api-keys", mw.RequirePermission(rbac.APIKeysList), apiKeyHandler.List)
+	admin.Get("/api-keys/:id", mw.RequirePermission(rbac.APIKeysView), apiKeyHandler.GetByID)
+	admin.Get("/api-keys/:id/copy", mw.RequirePermission(rbac.APIKeysCopy), apiKeyHandler.CopyKey)
+	admin.Post("/api-keys", mw.RequirePermission(rbac.APIKeysCreate), apiKeyHandler.Create)
+	admin.Put("/api-keys/:id", mw.RequirePermission(rbac.APIKeysUpdate), apiKeyHandler.Update)
+	admin.Delete("/api-keys/:id", mw.RequirePermission(rbac.APIKeysDelete), apiKeyHandler.Delete)
 
 	// Bot schedules
-	admin.Get("/bots", botScheduleHandler.List)
-	admin.Get("/bots/:id", botScheduleHandler.GetByID)
-	admin.Post("/bots", botScheduleHandler.Create)
-	admin.Put("/bots/:id", botScheduleHandler.Update)
-	admin.Delete("/bots/:id", botScheduleHandler.Delete)
-	admin.Post("/bots/:id/trigger", botScheduleHandler.Trigger)
+	admin.Get("/bots", mw.RequirePermission(rbac.BotsList), botScheduleHandler.List)
+	admin.Get("/bots/:id", mw.RequirePermission(rbac.BotsView), botScheduleHandler.GetByID)
+	admin.Post("/bots", mw.RequirePermission(rbac.BotsCreate), botScheduleHandler.Create)
+	admin.Put("/bots/:id", mw.RequirePermission(rbac.BotsUpdate), botScheduleHandler.Update)
+	admin.Delete("/bots/:id", mw.RequirePermission(rbac.BotsDelete), botScheduleHandler.Delete)
+	admin.Post("/bots/:id/trigger", mw.RequirePermission(rbac.BotsTrigger), botScheduleHandler.Trigger)
 
 	// Audit logs
-	admin.Get("/audit-logs", auditHandler.List)
+	admin.Get("/audit-logs", mw.RequirePermission(rbac.AuditList), auditHandler.List)
 }
 
 func (s *Server) Start() error {

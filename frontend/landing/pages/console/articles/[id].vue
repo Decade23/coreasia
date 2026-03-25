@@ -4,7 +4,7 @@ definePageMeta({ layout: 'console', middleware: 'console' })
 const route = useRoute()
 const id = route.params.id as string
 const { currentItem, loading, saving, error, fetchArticle, updateArticle, publishArticle, unpublishArticle } = useArticles()
-const { user: currentAdmin } = useAdminAuth()
+const { can } = usePermissions()
 const { uploadImage, uploading } = useImageUpload()
 const toast = useToast()
 const { tc } = useConsoleI18n()
@@ -189,7 +189,7 @@ const articleTimeline = computed(() => {
             </div>
             <div class="flex items-center gap-2">
               <button
-                v-if="currentItem.status === 'draft' && currentAdmin?.role === 'super_admin'"
+                v-if="currentItem.status === 'draft' && can('articles:publish')"
                 type="button"
                 class="ca-btn-success !px-3.5 !py-2"
                 :disabled="saving"
@@ -199,7 +199,7 @@ const articleTimeline = computed(() => {
                 {{ tc('common.publish') }}
               </button>
               <button
-                v-if="currentItem.status === 'published' && currentAdmin?.role === 'super_admin'"
+                v-if="currentItem.status === 'published' && can('articles:publish')"
                 type="button"
                 class="inline-flex items-center gap-1.5 rounded-lg border border-[color:var(--ca-border)] px-3 py-1.5 text-sm font-semibold text-[var(--ca-muted)] transition hover:bg-[var(--ca-panel-bg-strong)]"
                 :disabled="saving"

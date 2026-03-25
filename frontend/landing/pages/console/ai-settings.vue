@@ -2,6 +2,7 @@
 definePageMeta({ layout: 'console', middleware: 'console' })
 
 const api = useAdminApi()
+const { can } = usePermissions()
 const toast = useToast()
 const { tc } = useConsoleI18n()
 
@@ -117,12 +118,18 @@ onMounted(async () => {
     </div>
 
     <div v-else class="space-y-6 max-w-2xl">
+      <!-- Read-only notice -->
+      <div v-if="!can('ai:settings:update')" class="ca-console-note ca-console-note-warning flex items-center gap-2.5">
+        <Icon name="lucide:lock" class="h-4 w-4 text-amber-400 shrink-0" />
+        <p class="text-xs text-[var(--ca-muted)]">{{ tc('rbac.readOnly') }}</p>
+      </div>
       <!-- Enable/Disable -->
       <BaseSwitch
         id="ai-enabled"
         v-model="settings.ai_enabled"
         :label="tc('aiSettings.featureTitle')"
         :description="tc('aiSettings.featureDesc')"
+        :disabled="!can('ai:settings:update')"
       />
 
       <!-- Auto Image -->
@@ -131,6 +138,7 @@ onMounted(async () => {
         v-model="settings.ai_auto_image"
         :label="tc('aiSettings.autoImageTitle')"
         :description="tc('aiSettings.autoImageDesc')"
+        :disabled="!can('ai:settings:update')"
       />
 
       <!-- Provider & Model -->
@@ -143,6 +151,7 @@ onMounted(async () => {
           :label="tc('aiSettings.providerLabel')"
           :options="providerOptions"
           :placeholder="tc('aiSettings.providerPlaceholder')"
+          :disabled="!can('ai:settings:update')"
         />
 
         <!-- API Key status -->
@@ -169,7 +178,7 @@ onMounted(async () => {
             v-model="settings.ai_model"
             :label="tc('aiSettings.modelLabel')"
             :options="modelOptions"
-            :disabled="modelsLoading"
+            :disabled="modelsLoading || !can('ai:settings:update')"
             :placeholder="modelsLoading ? tc('aiSettings.loadingModels') : tc('aiSettings.modelPlaceholder')"
           />
           <p v-if="modelsError" class="mt-1 text-[0.65rem] text-amber-400">{{ modelsError }}</p>
@@ -197,7 +206,7 @@ onMounted(async () => {
 
       <!-- Save -->
       <div class="flex justify-end">
-        <button type="button" class="ca-btn-primary" :disabled="saving" @click="saveSettings">
+        <button v-if="can('ai:settings:update')" type="button" class="ca-btn-primary" :disabled="saving" @click="saveSettings">
           <Icon v-if="saving" name="lucide:loader-2" class="h-4 w-4 animate-spin" />
           {{ saving ? tc('aiSettings.saving') : tc('aiSettings.save') }}
         </button>
