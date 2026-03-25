@@ -10,7 +10,7 @@ type RegisterRequest struct {
 	AdminName  string    `json:"admin_name" validate:"required,min=2,max=200"`
 	AdminEmail string    `json:"admin_email" validate:"required,email"`
 	AdminPhone string    `json:"admin_phone" validate:"omitempty,min=10,max=20"`
-	Password   string    `json:"password" validate:"required,min=8,max=100"`
+	Password   string    `json:"password" validate:"required,password_strength,max=100"`
 	PlanID     uuid.UUID `json:"plan_id" validate:"required,uuid"`
 }
 

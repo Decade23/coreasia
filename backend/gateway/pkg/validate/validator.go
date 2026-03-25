@@ -1,6 +1,8 @@
 package validate
 
 import (
+	"unicode"
+
 	"github.com/coreasia/gateway/pkg/apperr"
 	"github.com/go-playground/validator/v10"
 )
@@ -9,6 +11,27 @@ var validate *validator.Validate
 
 func init() {
 	validate = validator.New(validator.WithRequiredStructEnabled())
+	validate.RegisterValidation("password_strength", passwordStrengthValidator)
+}
+
+func passwordStrengthValidator(fl validator.FieldLevel) bool {
+	pwd := fl.Field().String()
+	if len(pwd) < 8 {
+		return false
+	}
+	var hasUpper, hasLower, hasDigit bool
+	for _, ch := range pwd {
+		if unicode.IsUpper(ch) {
+			hasUpper = true
+		}
+		if unicode.IsLower(ch) {
+			hasLower = true
+		}
+		if unicode.IsDigit(ch) {
+			hasDigit = true
+		}
+	}
+	return hasUpper && hasLower && hasDigit
 }
 
 func Struct(s interface{}) *apperr.AppError {
@@ -44,6 +67,8 @@ func msgForTag(fe validator.FieldError) string {
 		return fe.Field() + " harus format UUID valid"
 	case "alphanum":
 		return fe.Field() + " hanya boleh huruf dan angka"
+	case "password_strength":
+		return "Password harus minimal 8 karakter, mengandung huruf besar, huruf kecil, dan angka"
 	default:
 		return fe.Field() + " tidak valid"
 	}

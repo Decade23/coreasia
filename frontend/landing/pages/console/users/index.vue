@@ -58,7 +58,8 @@ const handleSubmit = async () => {
 
 const handlePasswordChange = async () => {
   passwordError.value = ''
-  if (passwordForm.value.password.length < 6) {
+  const pwd = passwordForm.value.password
+  if (pwd.length < 8 || !/[A-Z]/.test(pwd) || !/[a-z]/.test(pwd) || !/[0-9]/.test(pwd)) {
     passwordError.value = tc('users.passwordMin')
     return
   }

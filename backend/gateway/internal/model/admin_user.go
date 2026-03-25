@@ -42,7 +42,7 @@ type LoginResponse struct {
 
 type CreateAdminRequest struct {
 	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required,min=8"`
+	Password string `json:"password" validate:"required,password_strength"`
 	FullName string `json:"full_name" validate:"required,min=2"`
 	Role     string `json:"role" validate:"required,oneof=admin super_admin"`
 }
@@ -52,7 +52,7 @@ type UpdateAdminRequest struct {
 	FullName *string `json:"full_name" validate:"omitempty,min=2"`
 	Role     *string `json:"role" validate:"omitempty,oneof=admin super_admin"`
 	IsActive *bool   `json:"is_active"`
-	Password *string `json:"password" validate:"omitempty,min=8"`
+	Password *string `json:"password" validate:"omitempty,password_strength"`
 }
 
 func (u *AdminUser) ToResponse() AdminUserResponse {

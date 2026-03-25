@@ -115,6 +115,11 @@ func (h *ArticleHandler) Create(c fiber.Ctx) error {
 		req.Status = "draft"
 	}
 
+	// Non-super_admin tidak boleh langsung publish saat create
+	if req.Status == "published" && claims.Role != "super_admin" {
+		req.Status = "draft"
+	}
+
 	var publishedAt *time.Time
 	if req.Status == "published" {
 		now := time.Now()
@@ -226,6 +231,9 @@ func (h *ArticleHandler) Update(c fiber.Ctx) error {
 // Delete deletes an article
 func (h *ArticleHandler) Delete(c fiber.Ctx) error {
 	claims := middleware.GetClaims(c)
+	if claims.Role != "super_admin" {
+		return errResponse(c, apperr.NewForbidden("Hanya super admin yang dapat menghapus artikel"))
+	}
 
 	id, err := uuid.Parse(c.Params("id"))
 	if err != nil {
@@ -255,6 +263,9 @@ func (h *ArticleHandler) Delete(c fiber.Ctx) error {
 // Publish publishes an article
 func (h *ArticleHandler) Publish(c fiber.Ctx) error {
 	claims := middleware.GetClaims(c)
+	if claims.Role != "super_admin" {
+		return errResponse(c, apperr.NewForbidden("Hanya super admin yang dapat mempublish artikel"))
+	}
 
 	id, err := uuid.Parse(c.Params("id"))
 	if err != nil {
@@ -285,6 +296,9 @@ func (h *ArticleHandler) Publish(c fiber.Ctx) error {
 // Unpublish sets an article back to draft
 func (h *ArticleHandler) Unpublish(c fiber.Ctx) error {
 	claims := middleware.GetClaims(c)
+	if claims.Role != "super_admin" {
+		return errResponse(c, apperr.NewForbidden("Hanya super admin yang dapat meng-unpublish artikel"))
+	}
 
 	id, err := uuid.Parse(c.Params("id"))
 	if err != nil {
