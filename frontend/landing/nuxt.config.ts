@@ -30,6 +30,12 @@ export default defineNuxtConfig({
         detectBrowserLanguage: false,
     },
     ogImage: { enabled: false },
+    robots: {
+        disallow: ['/console', '/console/'],
+    },
+    sitemap: {
+        exclude: ['/console', '/console/**'],
+    },
     css: ["~/assets/css/main.css"],
     vite: {
         plugins: [
@@ -286,8 +292,8 @@ export default defineNuxtConfig({
         '/layanan/**': { prerender: true },
         '/artikel': { ssr: true },
         '/artikel/**': { ssr: true },
-        '/console': { ssr: false },
-        '/console/**': { ssr: false },
+        '/console': { ssr: false, index: false, robots: false },
+        '/console/**': { ssr: false, index: false, robots: false },
         '/register': { ssr: true },
         // API routes shouldn't be cached
         '/api/**': { cors: true },

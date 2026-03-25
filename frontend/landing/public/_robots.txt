@@ -1,3 +1,4 @@
 User-Agent: *
-Disallow:
+Disallow: /console
+Disallow: /console/
 Sitemap: https://coreasia.id/sitemap.xml
