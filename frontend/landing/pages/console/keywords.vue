@@ -389,7 +389,7 @@ const totalPages = computed(() => Math.ceil(total.value / 20))
       @close="showDeleteConfirm = false"
     >
       <p class="text-sm text-[var(--ca-muted)]">
-        {{ tc('keywords.deleteDescription').replace('{{name}}', deletingKeyword?.keyword || '') }}
+        {{ tc('keywords.deleteDescription', { name: deletingKeyword?.keyword || '' }) }}
       </p>
       <div class="flex justify-end gap-3 pt-4">
         <button class="ca-btn-secondary text-sm" @click="showDeleteConfirm = false">

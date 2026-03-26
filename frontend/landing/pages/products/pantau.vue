@@ -86,10 +86,10 @@ const pricingPlans = computed(
             </p>
 
             <div class="mt-8 flex flex-col gap-3 sm:flex-row">
-              <NuxtLink to="/contact?subject=pantau" class="ca-btn-primary-emerald">
+              <a href="https://pantau.coreasia.id" target="_blank" rel="noopener noreferrer" class="ca-btn-primary-emerald">
                 {{ t('solutions.pantau.hero.ctaPrimary') }}
                 <Icon name="lucide:arrow-right" class="h-4 w-4" />
-              </NuxtLink>
+              </a>
               <a
                 :href="LINKS.whatsapp"
                 target="_blank"
@@ -248,9 +248,9 @@ const pricingPlans = computed(
             {{ t('solutions.pantau.cta.subtitle') }}
           </p>
           <div class="mt-6">
-            <NuxtLink to="/contact?subject=pantau" class="ca-btn-primary-emerald">
+            <a href="https://pantau.coreasia.id" target="_blank" rel="noopener noreferrer" class="ca-btn-primary-emerald">
               {{ t('solutions.pantau.cta.button') }}
-            </NuxtLink>
+            </a>
           </div>
         </div>
       </div>

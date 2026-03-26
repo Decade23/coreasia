@@ -84,10 +84,10 @@ const faqItems = computed(() => (t('services.webMonitoringDashboard.faq.items') 
             {{ t('services.webMonitoringDashboard.hero.subtitle') }}
           </p>
           <div class="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <NuxtLink to="/contact?subject=pantau" class="ca-btn-primary-emerald">
+            <a href="https://pantau.coreasia.id" target="_blank" rel="noopener noreferrer" class="ca-btn-primary-emerald">
               {{ t('services.webMonitoringDashboard.hero.ctaPrimary') }}
               <Icon name="lucide:arrow-right" class="h-4 w-4" />
-            </NuxtLink>
+            </a>
             <NuxtLink to="/products/pantau" class="ca-btn-secondary">
               {{ t('services.webMonitoringDashboard.hero.ctaSecondary') }}
             </NuxtLink>
@@ -187,10 +187,10 @@ const faqItems = computed(() => (t('services.webMonitoringDashboard.faq.items') 
             {{ t('services.webMonitoringDashboard.cta.subtitle') }}
           </p>
           <div class="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
-            <NuxtLink to="/contact?subject=pantau" class="ca-btn-primary-emerald">
+            <a href="https://pantau.coreasia.id" target="_blank" rel="noopener noreferrer" class="ca-btn-primary-emerald">
               {{ t('services.webMonitoringDashboard.cta.button') }}
               <Icon name="lucide:arrow-right" class="h-4 w-4" />
-            </NuxtLink>
+            </a>
             <a :href="LINKS.whatsapp" target="_blank" rel="noopener noreferrer" class="ca-btn-secondary">
               <Icon name="lucide:message-circle" class="h-4 w-4" />
               WhatsApp
