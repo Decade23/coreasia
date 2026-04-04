@@ -29,12 +29,16 @@ export default defineNuxtConfig({
         skipSettingLocaleOnNavigate: true,
         detectBrowserLanguage: false,
     },
-    ogImage: { enabled: false },
+    ogImage: { enabled: true },
     robots: {
-        disallow: ['/console', '/console/'],
+        disallow: ['/console', '/console/', '/register', '/maintenance', '/404', '/500'],
     },
     sitemap: {
-        exclude: ['/console', '/console/**'],
+        exclude: ['/console', '/console/**', '/blog', '/blog/**', '/404', '/500', '/maintenance', '/register'],
+        defaults: {
+            changefreq: 'weekly' as const,
+            priority: 0.7,
+        },
     },
     css: ["~/assets/css/main.css"],
     vite: {

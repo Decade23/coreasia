@@ -87,7 +87,7 @@ onMounted(async () => {
             </div>
         </section>
 
-        <section class="ca-section pt-0">
+        <section id="paket" class="ca-section pt-0">
             <div class="ca-container">
                 <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-3 lg:items-start">
                     <article
@@ -203,7 +203,7 @@ onMounted(async () => {
             </div>
         </section>
 
-        <section class="ca-section pt-0">
+        <section id="faq" class="ca-section pt-0">
             <div class="ca-container">
                 <div ref="faqSection" class="ca-card p-6 sm:p-8">
                     <div class="grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">

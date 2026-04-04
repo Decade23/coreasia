@@ -132,7 +132,7 @@ const leadership = computed(() => t('about.leadership') as Record<string, any>)
         </section>
 
         <!-- Why Us Section -->
-        <section class="ca-section">
+        <section id="visi" class="ca-section">
             <div class="ca-container">
                 <div ref="whyUsHeader" class="mb-8 text-center">
                     <span class="ca-kicker">{{ t('about.whyUs.title') }}</span>
@@ -250,7 +250,7 @@ const leadership = computed(() => t('about.leadership') as Record<string, any>)
         </section>
 
         <!-- Leadership Section -->
-        <section class="ca-section">
+        <section id="tim" class="ca-section">
             <div class="ca-container">
                 <div class="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
                     <div ref="leaderText">

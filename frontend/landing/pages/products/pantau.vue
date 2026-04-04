@@ -37,6 +37,9 @@ useHead({
         offers: {
           '@type': 'AggregateOffer',
           priceCurrency: 'IDR',
+          lowPrice: '0',
+          highPrice: '1500000',
+          offerCount: 5,
           availability: 'https://schema.org/InStock',
         },
       }),
@@ -138,7 +141,7 @@ const pricingPlans = computed(
       </div>
     </section>
 
-    <section class="ca-section pt-0">
+    <section id="fitur" class="ca-section pt-0">
       <div class="ca-container">
         <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
           <article
@@ -162,7 +165,7 @@ const pricingPlans = computed(
       </div>
     </section>
 
-    <section v-if="pricingPlans.length" class="ca-section pt-0">
+    <section id="harga" v-if="pricingPlans.length" class="ca-section pt-0">
       <div class="ca-container">
         <div class="mb-8 text-center">
           <span class="ca-kicker">{{ t('solutions.pantau.pricing.label') }}</span>

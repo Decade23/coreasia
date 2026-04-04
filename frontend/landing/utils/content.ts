@@ -5,6 +5,7 @@ const ID_CONTENT = {
   nav: {
     home: 'Beranda',
     products: 'Produk',
+    services: 'Layanan',
     partnerships: 'Kerja Sama',
     solutions: 'Solusi',
     venture: 'Venture',
@@ -40,9 +41,9 @@ const ID_CONTENT = {
   },
   // Home page
   home: {
-    title: 'CoreAsia - Ekosistem Produk Digital untuk Bisnis Bertumbuh',
+    title: 'CoreAsia - Jasa Pembuatan Website & Aplikasi Web Custom Indonesia',
     description:
-      'CoreAsia membangun produk digital dan model kerja sama strategis untuk sertifikasi, web monitoring, CRM, dan kebutuhan enterprise yang siap tumbuh.',
+      'CoreAsia adalah digital agency Indonesia yang menyediakan jasa pembuatan website, aplikasi web custom, web monitoring dashboard, dan solusi digital enterprise.',
     kicker: 'Strategic Technology Partner',
     hero: {
       // v1: 'Bangun operasi digital lebih cepat dengan ekosistem produk CoreAsia.'
@@ -265,9 +266,9 @@ const ID_CONTENT = {
   },
   // About page
   about: {
-    title: 'Tentang Kami - Strategic Technology Partner',
+    title: 'Tentang CoreAsia Teknologi - Digital Agency Jakarta, Indonesia',
     description:
-      'Mengenal lebih dekat CoreAsia yang sedang membangun fondasi sebagai strategic technology partner untuk produk digital, sertifikasi, dan kebutuhan operasional yang ingin tumbuh rapi.',
+      'CoreAsia Teknologi adalah software house dan digital agency di Jakarta yang membangun produk digital, web monitoring, dan solusi enterprise untuk bisnis di Indonesia.',
     kicker: 'Our Vision',
     hero: {
       title: 'Building <span class="ca-gradient-text">Digital Infrastructure for Future</span>',
@@ -398,9 +399,9 @@ const ID_CONTENT = {
       },
     },
     pantau: {
-      title: 'Pantau - Dashboard Analytics & Monitoring Website Lengkap',
+      title: 'Pantau - Dashboard Analytics Website & SEO Monitoring Indonesia',
       description:
-        'Pantau menggabungkan GA4, Google Search Console, leads management, laporan PDF otomatis, dan AI assistant ke satu dashboard yang mudah dipahami.',
+        'Pantau adalah dashboard monitoring website Indonesia yang menggabungkan Google Analytics 4, Search Console, keyword ranking, SEO audit, AI assistant, dan laporan PDF otomatis. Mulai gratis.',
       kicker: 'Website Analytics Dashboard',
       hero: {
         title:
@@ -461,27 +462,33 @@ const ID_CONTENT = {
           {
             name: 'Starter',
             price: 'Gratis',
-            description: 'Untuk memulai monitoring 1 website.',
-            features: ['1 website', 'Data 7 hari', 'GSC dasar', '10 AI query/hari'],
+            description: 'Mulai pantau performa website Anda.',
+            features: ['1 Website', 'Data 7 hari', '3 AI query/hari', '15 Keyword Ranking', 'Dashboard Analytics'],
           },
           {
             name: 'Professional',
-            price: 'Rp 199.000/bln',
+            price: 'Rp 250.000/bln',
             description: 'Analitik mendalam untuk profesional.',
             popular: true,
-            features: ['10 website', 'Data 90 hari', 'GA4 + GSC lengkap', 'Laporan PDF', '3 anggota tim', '50 AI query/hari'],
+            features: ['5 Website', 'Data 90 hari', 'GA4 Lengkap + GSC', '30 AI query/hari', '100 Keyword Ranking', '3 SEO Audit/bulan', 'Ekspor PDF & Excel', '3 Anggota Tim'],
           },
           {
             name: 'Business',
-            price: 'Rp 499.000/bln',
-            description: 'Untuk agensi dengan banyak klien.',
-            features: ['25 website', 'Data 180 hari', 'White-label', 'Jadwal laporan custom', '10 anggota tim', '100 AI query/hari'],
+            price: 'Rp 600.000/bln',
+            description: 'Solusi lengkap untuk agensi dan bisnis.',
+            features: ['15 Website', 'Data 180 hari', '60 AI query/hari', '300 Keyword Ranking', '10 SEO Audit/bulan', 'Jadwal Laporan Kustom', '10 Anggota Tim'],
           },
           {
             name: 'Enterprise',
-            price: 'Rp 999.000/bln',
-            description: 'Akses penuh tanpa batas.',
-            features: ['50 website', 'Data 365 hari', 'API access', 'Semua fitur Business', '25 anggota tim', '500 AI query/hari'],
+            price: 'Rp 1.500.000/bln',
+            description: 'Kelola banyak klien dengan fitur lengkap.',
+            features: ['30 Website', 'Data 365 hari', '150 AI query/hari', '500 Keyword Ranking', '20 SEO Audit/bulan', 'API Access', '25 Anggota Tim', 'Prioritas Support'],
+          },
+          {
+            name: 'Self-Hosted',
+            price: 'Hubungi Kami',
+            description: 'Deploy di server Anda sendiri.',
+            features: ['Unlimited Website', 'Unlimited Data Retention', 'Unlimited AI Query', 'Full Source Code', 'Custom Domain & Branding', 'Dedicated Support'],
           },
         ],
       },
@@ -538,9 +545,9 @@ const ID_CONTENT = {
       },
     },
     custom: {
-      title: 'Build by CoreAsia - Pembuatan Website, Web App, dan Sistem Digital',
+      title: 'Build by CoreAsia - Jasa Development Website & Web App Custom',
       description:
-        'CoreAsia membantu bisnis membangun website profesional, web application, dan sistem custom yang dirancang sesuai kebutuhan spesifik Anda.',
+        'Layanan development website dan web app custom oleh CoreAsia. Landing page, company profile, e-commerce, CRM, dan sistem digital — dibangun sesuai kebutuhan bisnis Anda.',
       kicker: 'Digital Build Service',
       hero: {
         title:
@@ -836,9 +843,9 @@ const ID_CONTENT = {
   },
   // Contact page
   contact: {
-    title: 'Hubungi Kami',
+    title: 'Hubungi CoreAsia - Konsultasi Gratis Jasa Website & Aplikasi Web',
     description:
-      'Hubungi tim CoreAsia untuk konsultasi strategis terkait produk CoreAsia, venture partnership, dan kebutuhan enterprise.',
+      'Hubungi tim CoreAsia untuk konsultasi gratis seputar jasa pembuatan website, aplikasi web custom, web monitoring, dan kebutuhan digital enterprise.',
     kicker: 'Hubungi Kami',
     hero: {
       title: 'Konsultasi strategi produk <span class="ca-gradient-text">tanpa ribet</span>',
@@ -922,9 +929,9 @@ const ID_CONTENT = {
   },
   // Pricing page
   pricing: {
-    title: 'Harga & Paket Layanan',
+    title: 'Harga & Paket CoreAsia - Jasa Website & Web App Mulai Rp 3 Juta',
     description:
-      'Pilih paket CoreAsia yang sesuai dengan kebutuhan organisasi Anda, dari tim kecil hingga kebutuhan enterprise.',
+      'Bandingkan harga dan paket layanan CoreAsia: jasa pembuatan website mulai Rp 3 juta, web app custom, dan LMS enterprise. Konsultasi gratis.',
     kicker: 'Pricing',
     hero: {
       title: 'Pilih plan yang tepat <span class="ca-gradient-text">untuk kebutuhan Anda</span>',
@@ -1090,8 +1097,8 @@ const ID_CONTENT = {
   // Keyword-targeted SEO pages
   services: {
     jasaPembuatanWebsite: {
-      title: 'Jasa Pembuatan Website & Web Profesional',
-      description: 'Jasa pembuatan web profesional untuk bisnis, UMKM, dan korporasi di seluruh Indonesia. Company profile, toko online, landing page, dan web app custom dengan harga terjangkau.',
+      title: 'Jasa Pembuatan Website Profesional Jakarta - Mulai Rp 3 Juta',
+      description: 'Jasa pembuatan website profesional untuk bisnis, UMKM, dan korporasi di Jakarta dan seluruh Indonesia. Landing page, company profile, toko online, dan web app custom dengan harga terjangkau mulai Rp 3 juta.',
       kicker: 'Jasa Pembuatan Web',
       hero: {
         title: 'Jasa pembuatan web profesional yang <span class="ca-gradient-text">membangun kredibilitas</span> bisnis Anda',
@@ -1212,8 +1219,8 @@ const ID_CONTENT = {
       },
     },
     webMonitoringDashboard: {
-      title: 'Web Monitoring Dashboard Indonesia',
-      description: 'Pantau performa website Anda dengan dashboard monitoring yang menggabungkan Google Analytics 4, Search Console, leads tracking, dan laporan otomatis.',
+      title: 'Dashboard Monitoring Website - Pantau GA4, GSC & SEO Indonesia',
+      description: 'Dashboard monitoring website lengkap yang menggabungkan Google Analytics 4, Search Console, keyword ranking, SEO audit, dan laporan PDF otomatis. Gratis untuk 1 website.',
       kicker: 'Web Monitoring',
       hero: {
         title: 'Semua data website Anda dalam <span class="ca-gradient-text">satu dashboard</span>',
@@ -1280,8 +1287,8 @@ const ID_CONTENT = {
       },
     },
     jasaPembuatanAplikasiWeb: {
-      title: 'Jasa Pembuatan Aplikasi Web Custom',
-      description: 'CoreAsia menyediakan jasa pembuatan aplikasi web custom untuk bisnis dan enterprise. Dari CRM, LMS, hingga ERP — dibangun dengan teknologi modern.',
+      title: 'Jasa Pembuatan Aplikasi Web Custom Indonesia - CRM, LMS, ERP',
+      description: 'Jasa pembuatan aplikasi web custom untuk bisnis dan enterprise di Indonesia. CRM, LMS, ERP, dashboard, dan sistem internal — dibangun dengan teknologi modern oleh CoreAsia.',
       kicker: 'Web App Development',
       hero: {
         title: 'Aplikasi web custom yang <span class="ca-gradient-text">benar-benar sesuai</span> kebutuhan bisnis',
@@ -1322,8 +1329,8 @@ const ID_CONTENT = {
   },
   // Articles
   blog: {
-    title: 'Artikel & Insight',
-    description: 'Artikel, panduan, dan insight seputar teknologi digital, web development, dan strategi pertumbuhan bisnis.',
+    title: 'Artikel & Tips SEO, Web Development, Digital Marketing Indonesia',
+    description: 'Artikel, panduan, dan tips seputar SEO, web development, digital marketing, dan strategi pertumbuhan bisnis digital di Indonesia.',
     kicker: 'Artikel',
     browseLabel: 'Jelajahi topik',
     browseDescription: 'Pilih kategori yang paling relevan agar daftar artikel terasa lebih terarah saat dibuka dari mobile maupun desktop.',
@@ -1696,6 +1703,7 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
   nav: {
     home: 'Home',
     products: 'Products',
+    services: 'Services',
     partnerships: 'Engagement Models',
     about: 'About Us',
     contact: 'Contact',
@@ -1726,9 +1734,9 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
     noResults: 'No results found.',
   },
   home: {
-    title: 'CoreAsia - Digital Product Ecosystem for Growing Businesses',
+    title: 'CoreAsia - Web Development & Custom Web App Agency Indonesia',
     description:
-      'CoreAsia builds digital products and strategic engagement models for certification, web monitoring, CRM, and enterprise operations that need room to grow.',
+      'CoreAsia is an Indonesian digital agency offering professional web development, custom web applications, website monitoring dashboards, and enterprise digital solutions.',
     hero: {
       // v1: 'Move faster with the CoreAsia product ecosystem.'
       // v1: 'From certification operations to web monitoring and multi-workspace CRM, CoreAsia helps you choose the right product and engagement model for launch, scale, and monetization.'
@@ -1946,9 +1954,9 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
     },
   },
   about: {
-    title: 'About Us - Strategic Technology Partner',
+    title: 'About CoreAsia Teknologi - Digital Agency Jakarta, Indonesia',
     description:
-      'Get to know CoreAsia as an early-stage strategic technology partner building the foundation for digital products, certification workflows, and operational systems that can scale cleanly.',
+      'CoreAsia Teknologi is a software house and digital agency based in Jakarta, Indonesia, building digital products, web monitoring tools, and enterprise solutions.',
     hero: {
       title: 'Building <span class="ca-gradient-text">digital infrastructure for the future</span>',
       subtitle:
@@ -2028,9 +2036,9 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
     },
   },
   pricing: {
-    title: 'Pricing & Service Plans',
+    title: 'Pricing & Plans - Web Development & Apps Starting from Rp 3M',
     description:
-      'Choose the CoreAsia LMS plan that matches your organization, from smaller teams to enterprise-ready needs.',
+      'Compare CoreAsia pricing and plans: website development from Rp 3 million, custom web apps, and enterprise LMS. Free consultation available.',
     hero: {
       title: 'Choose the right plan <span class="ca-gradient-text">for your organization</span>',
       subtitle:
@@ -2239,9 +2247,9 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
       },
     },
     pantau: {
-      title: 'Pantau - Complete Website Analytics & Monitoring Dashboard',
+      title: 'Pantau - Website Analytics Dashboard & SEO Monitoring Indonesia',
       description:
-        'Pantau brings GA4, Google Search Console, leads management, automated PDF reports, and AI assistant into one easy-to-read dashboard.',
+        'Pantau is an Indonesian website monitoring dashboard combining Google Analytics 4, Search Console, keyword ranking, SEO audit, AI assistant, and automated PDF reports. Free to start.',
       kicker: 'Website Analytics Dashboard',
       hero: {
         title:
@@ -2302,27 +2310,33 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
           {
             name: 'Starter',
             price: 'Free',
-            description: 'Get started monitoring 1 website.',
-            features: ['1 website', '7-day data', 'Basic GSC', '10 AI queries/day'],
+            description: 'Start monitoring your website performance.',
+            features: ['1 Website', '7-day data', '3 AI queries/day', '15 Keyword Rankings', 'Analytics Dashboard'],
           },
           {
             name: 'Professional',
-            price: 'Rp 199,000/mo',
+            price: 'Rp 250,000/mo',
             description: 'Deep analytics for professionals.',
             popular: true,
-            features: ['10 websites', '90-day data', 'Full GA4 + GSC', 'PDF reports', '3 team members', '50 AI queries/day'],
+            features: ['5 Websites', '90-day data', 'Full GA4 + GSC', '30 AI queries/day', '100 Keyword Rankings', '3 SEO Audits/month', 'PDF & Excel Export', '3 Team Members'],
           },
           {
             name: 'Business',
-            price: 'Rp 499,000/mo',
-            description: 'For agencies managing multiple clients.',
-            features: ['25 websites', '180-day data', 'White-label', 'Custom report schedule', '10 team members', '100 AI queries/day'],
+            price: 'Rp 600,000/mo',
+            description: 'Complete solution for agencies and businesses.',
+            features: ['15 Websites', '180-day data', '60 AI queries/day', '300 Keyword Rankings', '10 SEO Audits/month', 'Custom Report Schedule', '10 Team Members'],
           },
           {
             name: 'Enterprise',
-            price: 'Rp 999,000/mo',
-            description: 'Full access without limits.',
-            features: ['50 websites', '365-day data', 'API access', 'All Business features', '25 team members', '500 AI queries/day'],
+            price: 'Rp 1,500,000/mo',
+            description: 'Manage multiple clients with full features.',
+            features: ['30 Websites', '365-day data', '150 AI queries/day', '500 Keyword Rankings', '20 SEO Audits/month', 'API Access', '25 Team Members', 'Priority Support'],
+          },
+          {
+            name: 'Self-Hosted',
+            price: 'Contact Us',
+            description: 'Deploy on your own servers.',
+            features: ['Unlimited Websites', 'Unlimited Data Retention', 'Unlimited AI Queries', 'Full Source Code', 'Custom Domain & Branding', 'Dedicated Support'],
           },
         ],
       },
@@ -2379,9 +2393,9 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
       },
     },
     custom: {
-      title: 'Build by CoreAsia - Websites, Web Apps, and Digital Systems',
+      title: 'Build by CoreAsia - Custom Web Development & Web App Services',
       description:
-        'CoreAsia helps businesses build professional websites, web applications, and custom systems designed to match your specific needs.',
+        'Custom web development services by CoreAsia. Landing pages, company profiles, e-commerce, CRM, and digital systems — built to match your business needs.',
       kicker: 'Digital Build Service',
       hero: {
         title:
@@ -2663,9 +2677,9 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
     },
   },
   contact: {
-    title: 'Contact Us',
+    title: 'Contact CoreAsia - Free Consultation for Web Development & Apps',
     description:
-      'Talk to the CoreAsia team about products, pricing, venture partnership, and enterprise delivery.',
+      'Contact CoreAsia for free consultation on web development, custom web applications, website monitoring, and enterprise digital solutions.',
     kicker: 'Contact Us',
     hero: {
       title: 'Discuss your product strategy <span class="ca-gradient-text">without the noise</span>',
@@ -2737,8 +2751,8 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
   },
   services: {
     jasaPembuatanWebsite: {
-      title: 'Professional Website & Web Development Services',
-      description: 'Professional web development services for businesses, SMEs, and corporations across Indonesia. Company profile, e-commerce, landing page, and custom web apps at affordable prices.',
+      title: 'Professional Web Development Services Jakarta - From Rp 3M',
+      description: 'Professional website development for businesses, SMEs, and corporations in Jakarta and across Indonesia. Landing pages, company profiles, e-commerce, and custom web apps from Rp 3 million.',
       kicker: 'Web Development',
       hero: {
         title: 'Professional web development that <span class="ca-gradient-text">builds credibility</span> for your business',
@@ -2815,8 +2829,8 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
       },
     },
     webMonitoringDashboard: {
-      title: 'Web Monitoring Dashboard Indonesia',
-      description: 'Monitor your website performance with a dashboard that combines Google Analytics 4, Search Console, leads tracking, and automated reports.',
+      title: 'Website Monitoring Dashboard - Track GA4, GSC & SEO Indonesia',
+      description: 'Complete website monitoring dashboard combining Google Analytics 4, Search Console, keyword ranking, SEO audit, and automated PDF reports. Free for 1 website.',
       kicker: 'Web Monitoring',
       hero: {
         title: 'All your website data in <span class="ca-gradient-text">one dashboard</span>',
@@ -2859,8 +2873,8 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
       },
     },
     jasaPembuatanAplikasiWeb: {
-      title: 'Custom Web Application Development',
-      description: 'CoreAsia provides custom web application development for businesses and enterprises. From CRM, LMS, to ERP — built with modern technology.',
+      title: 'Custom Web Application Development Indonesia - CRM, LMS, ERP',
+      description: 'Custom web application development for businesses and enterprises in Indonesia. CRM, LMS, ERP, dashboards, and internal systems — built with modern technology by CoreAsia.',
       kicker: 'Web App Development',
       hero: {
         title: 'Custom web apps that <span class="ca-gradient-text">truly fit</span> your business needs',
@@ -2900,8 +2914,8 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
     },
   },
   blog: {
-    title: 'Articles & Insights',
-    description: 'Articles, guides, and insights about digital technology, web development, and business growth strategies.',
+    title: 'Articles & Tips on SEO, Web Development, Digital Marketing',
+    description: 'Articles, guides, and tips about SEO, web development, digital marketing, and business growth strategies in Indonesia.',
     kicker: 'Article',
     browseLabel: 'Browse topics',
     browseDescription: 'Use a clearer category rail so the article list feels easier to scan on both mobile and desktop.',

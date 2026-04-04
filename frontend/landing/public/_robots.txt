@@ -1,4 +1,11 @@
 User-Agent: *
 Disallow: /console
 Disallow: /console/
+Disallow: /register
+Disallow: /maintenance
+Disallow: /404
+Disallow: /500
+Allow: /artikel/
+Allow: /layanan/
+Allow: /products/
 Sitemap: https://coreasia.id/sitemap.xml

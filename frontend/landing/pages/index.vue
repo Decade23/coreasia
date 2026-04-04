@@ -78,14 +78,17 @@ useHead({
                 logo: siteAsset('/logos/logo-512.webp'),
                 image: siteAsset('/social/og-image.png'),
                 description: t('home.description') as string,
+                telephone: '+6285693380123',
                 address: {
                     '@type': 'PostalAddress',
                     addressLocality: 'Jakarta',
+                    addressRegion: 'DKI Jakarta',
                     addressCountry: 'ID',
                 },
                 contactPoint: {
                     '@type': 'ContactPoint',
                     contactType: 'Customer Service',
+                    telephone: '+6285693380123',
                     email: 'hello@coreasia.id',
                     availableLanguage: ['Indonesian', 'English'],
                 },
@@ -94,10 +97,46 @@ useHead({
                     'https://www.instagram.com/coreasia',
                 ],
                 priceRange: '$$',
-                serviceArea: {
-                    '@type': 'Country',
-                    name: 'Indonesia',
-                },
+                knowsAbout: ['Web Development', 'Web Monitoring', 'SEO', 'Web Analytics', 'Digital Marketing', 'Custom Web Applications', 'CRM', 'LMS'],
+                areaServed: [
+                    { '@type': 'City', name: 'Jakarta' },
+                    { '@type': 'City', name: 'Surabaya' },
+                    { '@type': 'City', name: 'Bandung' },
+                    { '@type': 'City', name: 'Tangerang' },
+                    { '@type': 'City', name: 'Bekasi' },
+                    { '@type': 'City', name: 'Semarang' },
+                    { '@type': 'City', name: 'Yogyakarta' },
+                    { '@type': 'City', name: 'Medan' },
+                    { '@type': 'City', name: 'Makassar' },
+                    { '@type': 'City', name: 'Bali' },
+                ],
+            }),
+        },
+        {
+            type: 'application/ld+json',
+            innerHTML: JSON.stringify({
+                '@context': 'https://schema.org',
+                '@type': 'WebSite',
+                url: siteOrigin.value,
+                name: 'CoreAsia Teknologi',
+                description: t('home.description') as string,
+                inLanguage: ['id-ID', 'en-US'],
+            }),
+        },
+        {
+            type: 'application/ld+json',
+            innerHTML: JSON.stringify({
+                '@context': 'https://schema.org',
+                '@type': 'SiteNavigationElement',
+                name: ['Produk', 'Layanan', 'Harga', 'Artikel', 'Tentang Kami', 'Hubungi Kami'],
+                url: [
+                    `${siteOrigin.value}/products`,
+                    `${siteOrigin.value}/layanan/jasa-pembuatan-website`,
+                    `${siteOrigin.value}/pricing`,
+                    `${siteOrigin.value}/artikel`,
+                    `${siteOrigin.value}/about`,
+                    `${siteOrigin.value}/contact`,
+                ],
             }),
         },
     ],
@@ -224,7 +263,7 @@ useHead({
         <HomeEcosystem />
 
         <!-- Services / Layanan -->
-        <section class="ca-section pt-0">
+        <section id="layanan" class="ca-section pt-0">
             <div class="ca-container">
                 <div class="mb-8 text-center">
                     <span class="ca-kicker">{{ t('home.services.kicker') }}</span>

@@ -148,7 +148,7 @@ const processItems = computed(() => (t('services.jasaPembuatanWebsite.process.it
     </section>
 
     <!-- Pricing Estimate -->
-    <section class="ca-section pt-0">
+    <section id="paket-harga" class="ca-section pt-0">
       <div class="ca-container">
         <div class="mb-8 text-center">
           <h2 class="ca-title">{{ t('services.jasaPembuatanWebsite.pricing.title') }}</h2>
@@ -187,7 +187,7 @@ const processItems = computed(() => (t('services.jasaPembuatanWebsite.process.it
     </section>
 
     <!-- Process -->
-    <section class="ca-section pt-0">
+    <section id="proses" class="ca-section pt-0">
       <div class="ca-container">
         <div class="mb-8 text-center">
           <h2 class="ca-title">{{ t('services.jasaPembuatanWebsite.process.title') }}</h2>
