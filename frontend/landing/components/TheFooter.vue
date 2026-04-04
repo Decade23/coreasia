@@ -141,6 +141,21 @@ const serviceLinks = computed(() => (t('components.footer.serviceLinks') as Arra
                 </div>
             </div>
 
+            <!-- Geographic Keywords for SEO -->
+            <div class="mt-8 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-[var(--ca-muted)]/60">
+                <NuxtLink to="/layanan/jasa-pembuatan-website" class="hover:text-brand-primary transition">Jasa Pembuatan Website Jakarta</NuxtLink>
+                <span class="select-none">&middot;</span>
+                <NuxtLink to="/layanan/jasa-pembuatan-website" class="hover:text-brand-primary transition">Web Development Surabaya</NuxtLink>
+                <span class="select-none">&middot;</span>
+                <NuxtLink to="/layanan/jasa-pembuatan-website" class="hover:text-brand-primary transition">Jasa Web App Bandung</NuxtLink>
+                <span class="select-none">&middot;</span>
+                <NuxtLink to="/layanan/jasa-pembuatan-aplikasi-web" class="hover:text-brand-primary transition">Jasa Aplikasi Web Custom</NuxtLink>
+                <span class="select-none">&middot;</span>
+                <NuxtLink to="/layanan/web-monitoring-dashboard" class="hover:text-brand-primary transition">Dashboard Monitoring Website</NuxtLink>
+                <span class="select-none">&middot;</span>
+                <NuxtLink to="/products/pantau" class="hover:text-brand-primary transition">SEO Monitoring Indonesia</NuxtLink>
+            </div>
+
             <div class="mt-10 border-t border-[color:var(--ca-border)] pt-5 text-xs text-[var(--ca-muted)] sm:flex sm:items-center sm:justify-between">
                 <p>
                     &copy; {{ new Date().getFullYear() }} {{ COMPANY.name }}.

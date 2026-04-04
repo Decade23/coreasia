@@ -287,7 +287,7 @@ const categoryLabel = (key: string) => {
             class="ca-card-soft group flex flex-col overflow-hidden transition hover:-translate-y-1 hover:border-[color:var(--ca-gold-border)] hover:shadow-lg"
           >
             <div v-if="article.featured_image" class="aspect-[16/9] w-full overflow-hidden">
-              <img :src="article.featured_image" :alt="article.title" class="h-full w-full object-cover transition group-hover:scale-105" />
+              <NuxtImg :src="article.featured_image" :alt="article.title" loading="lazy" format="webp" class="h-full w-full object-cover transition group-hover:scale-105" />
             </div>
             <ArticleCoverPlaceholder v-else :title="article.title" :category="categoryLabel(article.category)" />
 

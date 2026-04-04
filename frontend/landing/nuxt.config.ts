@@ -256,6 +256,8 @@ export default defineNuxtConfig({
 
     image: {
         dir: "public",
+        quality: 80,
+        formats: ['webp', 'avif'],
     },
     runtimeConfig: {
         public: {
@@ -292,7 +294,11 @@ export default defineNuxtConfig({
         '/products/**': { prerender: true },
         '/partnerships': { prerender: true },
         '/solutions/venture': { prerender: true },
+        '/solutions/leadku': { prerender: true },
+        '/solutions/lms': { prerender: true },
         '/pricing': { prerender: true },
+        '/privacy-policy': { prerender: true },
+        '/terms': { prerender: true },
         '/layanan/**': { prerender: true },
         '/artikel': { ssr: true },
         '/artikel/**': { ssr: true },

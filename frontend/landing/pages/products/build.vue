@@ -218,6 +218,30 @@ const techStack = computed(
       </div>
     </section>
 
+    <!-- Related Services -->
+    <section class="ca-section pt-0">
+      <div class="ca-container">
+        <h3 class="mb-6 text-center font-display text-xl font-bold text-[var(--ca-text)]">Layanan Terkait</h3>
+        <div class="grid gap-4 sm:grid-cols-3">
+          <NuxtLink to="/layanan/jasa-pembuatan-website" class="ca-card-soft p-5 transition hover:-translate-y-0.5">
+            <Icon name="lucide:globe" class="mb-2 h-5 w-5 text-[var(--ca-kicker)]" />
+            <p class="text-sm font-semibold text-[var(--ca-text)]">Jasa Pembuatan Website</p>
+            <p class="mt-1 text-xs text-[var(--ca-muted)]">Landing page, company profile, toko online</p>
+          </NuxtLink>
+          <NuxtLink to="/layanan/jasa-pembuatan-aplikasi-web" class="ca-card-soft p-5 transition hover:-translate-y-0.5">
+            <Icon name="lucide:layout-dashboard" class="mb-2 h-5 w-5 text-[var(--ca-kicker)]" />
+            <p class="text-sm font-semibold text-[var(--ca-text)]">Jasa Web App Custom</p>
+            <p class="mt-1 text-xs text-[var(--ca-muted)]">CRM, LMS, ERP, dashboard, dan sistem internal</p>
+          </NuxtLink>
+          <NuxtLink to="/products/pantau" class="ca-card-soft p-5 transition hover:-translate-y-0.5">
+            <Icon name="lucide:bar-chart-3" class="mb-2 h-5 w-5 text-[var(--ca-kicker)]" />
+            <p class="text-sm font-semibold text-[var(--ca-text)]">Pantau by CoreAsia</p>
+            <p class="mt-1 text-xs text-[var(--ca-muted)]">Dashboard analytics & SEO monitoring website</p>
+          </NuxtLink>
+        </div>
+      </div>
+    </section>
+
     <section class="ca-section pt-0">
       <div class="ca-container">
         <div class="ca-card p-6 text-center sm:p-10">

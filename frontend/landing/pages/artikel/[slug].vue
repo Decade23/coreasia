@@ -267,12 +267,14 @@ const goToArticles = async () => {
     <section class="ca-section pt-0">
       <div class="ca-container">
         <article class="mx-auto max-w-4xl">
-          <img
+          <NuxtImg
             v-if="article.featured_image"
             :src="article.featured_image"
             :alt="article.title"
+            loading="lazy"
+            format="webp"
             class="mb-8 aspect-[16/9] w-full rounded-[1.75rem] object-cover shadow-[0_24px_60px_rgba(15,23,42,0.08)]"
-          >
+          />
           <ArticleCoverPlaceholder
             v-else
             :title="article.title"
@@ -302,12 +304,14 @@ const goToArticles = async () => {
               class="group flex flex-col overflow-hidden rounded-2xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] transition duration-200 hover:-translate-y-0.5 hover:border-[color:var(--ca-gold-border)] hover:shadow-[var(--ca-card-soft-shadow)]"
             >
               <div class="relative overflow-hidden">
-                <img
+                <NuxtImg
                   v-if="item.featured_image"
                   :src="item.featured_image"
                   :alt="item.title"
+                  loading="lazy"
+                  format="webp"
                   class="aspect-[16/10] w-full object-cover transition duration-300 group-hover:scale-[1.03]"
-                >
+                />
                 <ArticleCoverPlaceholder
                   v-else
                   :title="item.title"

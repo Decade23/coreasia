@@ -241,6 +241,30 @@ const pricingPlans = computed(
       </div>
     </section>
 
+    <!-- Related Services -->
+    <section class="ca-section pt-0">
+      <div class="ca-container">
+        <h3 class="mb-6 text-center font-display text-xl font-bold text-[var(--ca-text)]">Layanan Terkait</h3>
+        <div class="grid gap-4 sm:grid-cols-3">
+          <NuxtLink to="/layanan/web-monitoring-dashboard" class="ca-card-soft p-5 transition hover:-translate-y-0.5">
+            <Icon name="lucide:monitor" class="mb-2 h-5 w-5 text-[var(--ca-kicker)]" />
+            <p class="text-sm font-semibold text-[var(--ca-text)]">Web Monitoring Dashboard</p>
+            <p class="mt-1 text-xs text-[var(--ca-muted)]">Layanan setup dan konfigurasi dashboard monitoring</p>
+          </NuxtLink>
+          <NuxtLink to="/pricing" class="ca-card-soft p-5 transition hover:-translate-y-0.5">
+            <Icon name="lucide:credit-card" class="mb-2 h-5 w-5 text-[var(--ca-kicker)]" />
+            <p class="text-sm font-semibold text-[var(--ca-text)]">Harga & Paket</p>
+            <p class="mt-1 text-xs text-[var(--ca-muted)]">Bandingkan paket layanan CoreAsia</p>
+          </NuxtLink>
+          <NuxtLink to="/products/build" class="ca-card-soft p-5 transition hover:-translate-y-0.5">
+            <Icon name="lucide:code-2" class="mb-2 h-5 w-5 text-[var(--ca-kicker)]" />
+            <p class="text-sm font-semibold text-[var(--ca-text)]">Build by CoreAsia</p>
+            <p class="mt-1 text-xs text-[var(--ca-muted)]">Jasa development website & web app custom</p>
+          </NuxtLink>
+        </div>
+      </div>
+    </section>
+
     <section class="ca-section pt-0">
       <div class="ca-container">
         <div class="ca-card p-6 text-center sm:p-10">
