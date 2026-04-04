@@ -1,5 +1,5 @@
 <template>
-  <div ref="container" class="relative w-full">
+  <div ref="container" class="relative w-full" :class="{ 'z-50': isOpen }">
     <!-- Label -->
     <label v-if="label" :for="id" class="ca-field-label">
       {{ label }}
