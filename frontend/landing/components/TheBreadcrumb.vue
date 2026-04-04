@@ -33,6 +33,8 @@ const breadcrumbs = computed<BreadcrumbItem[]>(() => {
     'jasa-pembuatan-website': () => 'Jasa Pembuatan Website',
     'jasa-pembuatan-aplikasi-web': () => 'Jasa Pembuatan Aplikasi Web',
     'web-monitoring-dashboard': () => 'Web Monitoring Dashboard',
+    faq: () => 'FAQ',
+    portfolio: () => 'Portfolio',
     register: () => 'Register',
     'privacy-policy': () => 'Privacy Policy',
     terms: () => 'Terms of Service',

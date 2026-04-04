@@ -10,6 +10,25 @@ useCoreSeo({
     path: '/products/lms',
 })
 
+useHead({
+    script: [
+        {
+            type: 'application/ld+json',
+            innerHTML: JSON.stringify({
+                '@context': 'https://schema.org',
+                '@type': 'SoftwareApplication',
+                name: 'LMS by CoreAsia',
+                applicationCategory: 'EducationalApplication',
+                operatingSystem: 'Web',
+                description: t('solutions.lms.description') as string,
+                url: 'https://coreasia.id/products/lms',
+                provider: { '@type': 'Organization', name: 'CoreAsia Teknologi', url: 'https://coreasia.id' },
+                offers: { '@type': 'Offer', price: '0', priceCurrency: 'IDR', availability: 'https://schema.org/PreOrder' },
+            }),
+        },
+    ],
+})
+
 const features = computed(() => {
     const raw = t('solutions.lms.detailedFeatures') as Array<Record<string, string>>
     return raw.map((feature) => ({

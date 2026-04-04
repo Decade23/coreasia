@@ -297,6 +297,8 @@ export default defineNuxtConfig({
         '/solutions/leadku': { prerender: true },
         '/solutions/lms': { prerender: true },
         '/pricing': { prerender: true },
+        '/faq': { prerender: true },
+        '/portfolio': { prerender: true },
         '/privacy-policy': { prerender: true },
         '/terms': { prerender: true },
         '/layanan/**': { prerender: true },

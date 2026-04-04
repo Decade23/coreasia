@@ -1370,6 +1370,101 @@ const ID_CONTENT = {
       button: 'Hubungi Kami',
     },
   },
+  // FAQ page (consolidated)
+  faqPage: {
+    title: 'FAQ - Pertanyaan Umum Seputar Jasa Website & Layanan CoreAsia',
+    description: 'Jawaban lengkap pertanyaan umum seputar jasa pembuatan website, aplikasi web custom, web monitoring dashboard, harga, dan proses kerja CoreAsia.',
+    kicker: 'FAQ',
+    heading: 'Pertanyaan yang Sering Diajukan',
+    subtitle: 'Temukan jawaban untuk pertanyaan umum seputar layanan CoreAsia.',
+    contactNote: 'Belum menemukan jawaban? Hubungi tim kami via',
+    contactCta: 'halaman kontak',
+    categories: {
+      general: {
+        label: 'Umum',
+        items: [
+          { question: 'Apa itu CoreAsia?', answer: 'CoreAsia Teknologi adalah digital agency dan software house di Jakarta yang membangun produk digital, menyediakan jasa pembuatan website & aplikasi web, serta dashboard monitoring website (Pantau).' },
+          { question: 'Apakah CoreAsia melayani di luar Jakarta?', answer: 'Ya, kami melayani klien dari seluruh Indonesia — Surabaya, Bandung, Tangerang, Bekasi, Semarang, Yogyakarta, Medan, Makassar, dan Bali. Semua proses dilakukan secara online.' },
+          { question: 'Bagaimana cara memulai kerja sama?', answer: 'Hubungi kami via WhatsApp atau halaman kontak untuk konsultasi gratis. Kami akan membahas kebutuhan Anda dan memberikan proposal yang sesuai.' },
+          { question: 'Apakah data saya aman?', answer: 'Ya. Setiap tenant dipisahkan secara logis, dilindungi kontrol akses, dan backup dilakukan secara berkala.' },
+        ],
+      },
+      website: {
+        label: 'Jasa Pembuatan Website',
+        items: [
+          { question: 'Berapa biaya pembuatan website?', answer: 'Landing page mulai dari Rp 3 juta, company profile Rp 5 juta, toko online Rp 10 juta, dan web app custom mulai Rp 25 juta.' },
+          { question: 'Berapa lama proses pembuatan website?', answer: 'Umumnya 2-6 minggu untuk company profile, dan 4-12 minggu untuk web app custom tergantung kompleksitas.' },
+          { question: 'Apakah website mobile-friendly?', answer: 'Ya, semua website yang kami buat responsif dan tampil optimal di desktop, tablet, dan smartphone.' },
+          { question: 'Apakah sudah termasuk hosting dan domain?', answer: 'Kami membantu setup hosting dan domain. Biaya hosting dan domain terpisah dan bisa disesuaikan.' },
+          { question: 'Apakah bisa request revisi design?', answer: 'Ya, revisi design termasuk dalam paket. Kami memastikan hasil akhir sesuai kebutuhan Anda.' },
+          { question: 'Ada paket murah untuk UMKM?', answer: 'Ya, paket landing page mulai Rp 3 juta cocok untuk UMKM dan bisnis kecil. Tetap profesional dan SEO-ready.' },
+          { question: 'Bagaimana dengan maintenance setelah launch?', answer: 'Kami menyediakan paket maintenance bulanan: update, backup, dan support teknis.' },
+        ],
+      },
+      webapp: {
+        label: 'Aplikasi Web Custom',
+        items: [
+          { question: 'Aplikasi web apa saja yang bisa dibuat?', answer: 'CRM, LMS, ERP, dashboard internal, portal pelanggan, sistem inventory, dan berbagai sistem custom lainnya.' },
+          { question: 'Teknologi apa yang digunakan?', answer: 'Kami menggunakan Go, Vue/Nuxt, React/Next.js, PostgreSQL, Redis, Docker — dipilih sesuai kebutuhan project.' },
+          { question: 'Apakah bisa integrasi dengan sistem yang sudah ada?', answer: 'Ya, kami berpengalaman mengintegrasikan dengan berbagai API dan sistem existing.' },
+        ],
+      },
+      monitoring: {
+        label: 'Web Monitoring (Pantau)',
+        items: [
+          { question: 'Apa itu Pantau?', answer: 'Pantau adalah dashboard monitoring website buatan CoreAsia yang menggabungkan Google Analytics 4, Search Console, keyword ranking, SEO audit, dan AI assistant dalam satu tempat.' },
+          { question: 'Apakah Pantau gratis?', answer: 'Ya, paket Starter gratis untuk 1 website dengan data 7 hari, 3 AI query/hari, dan 15 keyword ranking.' },
+          { question: 'Berapa harga paket Pantau?', answer: 'Professional Rp 250.000/bln (5 website), Business Rp 600.000/bln (15 website), Enterprise Rp 1.500.000/bln (30 website). Ada juga opsi Self-Hosted.' },
+          { question: 'Apakah Pantau bisa diakses di mobile?', answer: 'Ya, dashboard Pantau responsif dan bisa diakses dari browser di perangkat apa saja.' },
+        ],
+      },
+      pricing: {
+        label: 'Harga & Pembayaran',
+        items: [
+          { question: 'Apakah ada trial gratis?', answer: 'Untuk Pantau, paket Starter sudah gratis selamanya. Untuk jasa website, kami menyediakan konsultasi gratis sebelum Anda memutuskan.' },
+          { question: 'Apa metode pembayaran yang diterima?', answer: 'Transfer bank, Virtual Account (BCA, BNI, Mandiri, BRI, Permata), QRIS, dan opsi lainnya melalui payment gateway.' },
+          { question: 'Bisakah bayar secara bertahap?', answer: 'Ya, untuk project jasa pembuatan website/web app, pembayaran bisa dicicil sesuai milestone yang disepakati.' },
+        ],
+      },
+    },
+  },
+  // Portfolio page
+  portfolio: {
+    title: 'Portfolio & Studi Kasus - Proyek Digital CoreAsia',
+    description: 'Lihat portfolio proyek digital CoreAsia: web monitoring dashboard, website profesional, dan aplikasi web custom untuk bisnis di Indonesia.',
+    kicker: 'Portfolio',
+    heading: 'Proyek yang Sudah Kami Bangun',
+    subtitle: 'Dari konsep hingga production — berikut beberapa proyek yang menunjukkan kemampuan tim CoreAsia.',
+    items: [
+      {
+        title: 'Pantau by CoreAsia',
+        category: 'SaaS Product',
+        description: 'Dashboard monitoring website lengkap yang menggabungkan Google Analytics 4, Search Console, keyword ranking, SEO audit, AI assistant, dan laporan PDF otomatis. Digunakan untuk memantau performa SEO dan analytics dari satu tempat.',
+        tech: ['Go', 'Nuxt 3', 'PostgreSQL', 'Redis', 'Docker', 'Xendit', 'GA4 API', 'GSC API'],
+        link: 'https://pantau.coreasia.id',
+        highlights: ['4 paket harga (gratis — enterprise)', 'Integrasi Xendit VA + QRIS', 'AI assistant (Dexter)', 'Laporan PDF otomatis'],
+      },
+      {
+        title: 'CoreAsia Landing & CMS',
+        category: 'Company Website',
+        description: 'Website company profile dan landing page CoreAsia dengan CMS artikel, multi-bahasa (ID/EN), dan SEO-optimized. Built dengan Nuxt 4 SSR + Go API Gateway.',
+        tech: ['Nuxt 4', 'Go', 'PostgreSQL', 'Tailwind CSS', 'Docker'],
+        highlights: ['Multi-bahasa ID/EN', 'CMS artikel dengan editor rich text', 'SEO schema.org lengkap', 'Prerender + SSR hybrid'],
+      },
+      {
+        title: 'LMS Sertifikasi',
+        category: 'Custom Web App',
+        description: 'Learning Management System untuk sertifikasi digital — CBT online, manajemen peserta, penjadwalan ujian, dan integrasi BNSP.',
+        tech: ['Go', 'Vue 3', 'PostgreSQL', 'MinIO', 'Docker'],
+        highlights: ['CBT online dengan timer', 'Manajemen sertifikat digital', 'Multi-tenant', 'BNSP export'],
+      },
+    ],
+    cta: {
+      title: 'Punya proyek digital?',
+      subtitle: 'Ceritakan ide Anda. Kami bantu dari konsep hingga deployment.',
+      button: 'Diskusikan Proyek Anda',
+    },
+  },
   // Legal pages
   legal: {
     kicker: 'Legal',
@@ -2953,6 +3048,82 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
       title: 'Need a digital solution?',
       subtitle: 'Contact CoreAsia to discuss your business technology needs.',
       button: 'Contact Us',
+    },
+  },
+  faqPage: {
+    title: 'FAQ - Common Questions About CoreAsia Web Services',
+    description: 'Answers to frequently asked questions about website development, custom web apps, web monitoring dashboard, pricing, and how CoreAsia works.',
+    heading: 'Frequently Asked Questions',
+    subtitle: 'Find answers to common questions about CoreAsia services.',
+    contactNote: "Can't find your answer? Contact our team via",
+    contactCta: 'contact page',
+    categories: {
+      general: {
+        label: 'General',
+        items: [
+          { question: 'What is CoreAsia?', answer: 'CoreAsia Teknologi is a digital agency and software house based in Jakarta that builds digital products, provides web development services, and offers a website monitoring dashboard (Pantau).' },
+          { question: 'Does CoreAsia serve clients outside Jakarta?', answer: 'Yes, we serve clients across Indonesia — Surabaya, Bandung, Semarang, Yogyakarta, Medan, Makassar, Bali, and more. All processes are conducted online.' },
+          { question: 'How do I get started?', answer: 'Contact us via WhatsApp or our contact page for a free consultation. We will discuss your needs and provide a suitable proposal.' },
+        ],
+      },
+      website: {
+        label: 'Web Development',
+        items: [
+          { question: 'How much does a website cost?', answer: 'Landing pages start from Rp 3 million, company profiles from Rp 5 million, e-commerce from Rp 10 million, and custom web apps from Rp 25 million.' },
+          { question: 'How long does it take to build a website?', answer: 'Typically 2-6 weeks for a company profile, and 4-12 weeks for custom web apps depending on complexity.' },
+          { question: 'Are all websites mobile-friendly?', answer: 'Yes, all websites we build are fully responsive and optimized for desktop, tablet, and mobile devices.' },
+        ],
+      },
+      monitoring: {
+        label: 'Web Monitoring (Pantau)',
+        items: [
+          { question: 'What is Pantau?', answer: 'Pantau is a website monitoring dashboard by CoreAsia that combines Google Analytics 4, Search Console, keyword ranking, SEO audit, and AI assistant in one place.' },
+          { question: 'Is Pantau free?', answer: 'Yes, the Starter plan is free forever for 1 website with 7-day data, 3 AI queries/day, and 15 keyword rankings.' },
+          { question: 'How much does Pantau cost?', answer: 'Professional Rp 250,000/mo (5 websites), Business Rp 600,000/mo (15 websites), Enterprise Rp 1,500,000/mo (30 websites). Self-Hosted option also available.' },
+        ],
+      },
+      pricing: {
+        label: 'Pricing & Payment',
+        items: [
+          { question: 'What payment methods are accepted?', answer: 'Bank transfer, Virtual Account (BCA, BNI, Mandiri, BRI, Permata), QRIS, and other options through payment gateway.' },
+          { question: 'Can I pay in installments?', answer: 'Yes, for web development projects, payments can be split according to agreed milestones.' },
+        ],
+      },
+    },
+  },
+  portfolio: {
+    title: 'Portfolio & Case Studies - CoreAsia Digital Projects',
+    description: 'See CoreAsia digital project portfolio: web monitoring dashboard, professional websites, and custom web applications for businesses in Indonesia.',
+    heading: 'Projects We Have Built',
+    subtitle: 'From concept to production — here are some projects showcasing CoreAsia capabilities.',
+    items: [
+      {
+        title: 'Pantau by CoreAsia',
+        category: 'SaaS Product',
+        description: 'A complete website monitoring dashboard combining Google Analytics 4, Search Console, keyword ranking, SEO audit, AI assistant, and automated PDF reports.',
+        tech: ['Go', 'Nuxt 3', 'PostgreSQL', 'Redis', 'Docker', 'Xendit', 'GA4 API', 'GSC API'],
+        link: 'https://pantau.coreasia.id',
+        highlights: ['4 pricing tiers (free — enterprise)', 'Xendit VA + QRIS integration', 'AI assistant (Dexter)', 'Automated PDF reports'],
+      },
+      {
+        title: 'CoreAsia Landing & CMS',
+        category: 'Company Website',
+        description: 'CoreAsia company profile and landing page with article CMS, multi-language (ID/EN), and SEO-optimized. Built with Nuxt 4 SSR + Go API Gateway.',
+        tech: ['Nuxt 4', 'Go', 'PostgreSQL', 'Tailwind CSS', 'Docker'],
+        highlights: ['Multi-language ID/EN', 'Rich text article CMS', 'Complete schema.org SEO', 'Prerender + SSR hybrid'],
+      },
+      {
+        title: 'Certification LMS',
+        category: 'Custom Web App',
+        description: 'Learning Management System for digital certification — online CBT, participant management, exam scheduling, and BNSP integration.',
+        tech: ['Go', 'Vue 3', 'PostgreSQL', 'MinIO', 'Docker'],
+        highlights: ['Online CBT with timer', 'Digital certificate management', 'Multi-tenant', 'BNSP export'],
+      },
+    ],
+    cta: {
+      title: 'Have a digital project?',
+      subtitle: 'Tell us your idea. We help from concept to deployment.',
+      button: 'Discuss Your Project',
     },
   },
   legal: {

@@ -15,6 +15,25 @@ useSchemaOrg([
   }),
 ])
 
+useHead({
+  script: [
+    {
+      type: 'application/ld+json',
+      innerHTML: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'SoftwareApplication',
+        name: 'LeadKu by CoreAsia',
+        applicationCategory: 'BusinessApplication',
+        operatingSystem: 'Web',
+        description: t('solutions.leadku.description') as string,
+        url: 'https://coreasia.id/products/leadku',
+        provider: { '@type': 'Organization', name: 'CoreAsia Teknologi', url: 'https://coreasia.id' },
+        offers: { '@type': 'Offer', price: '0', priceCurrency: 'IDR', availability: 'https://schema.org/PreOrder' },
+      }),
+    },
+  ],
+})
+
 const features = computed(
   () => (t('solutions.leadku.detailedFeatures') as Array<Record<string, string>>) || [],
 )
