@@ -83,7 +83,7 @@ const state404 = computed<FallbackStatePayload>(() => ({
     statusLabel: t('errors.notFound.statusLabel') as string,
     pageTitle: t('errors.notFound.pageTitle') as string,
     pageDescription: t('errors.notFound.pageDescription') as string,
-    icon: 'lucide:map-x',
+    icon: 'lucide:map-pin',
     visualTitle: t('errors.notFound.visualTitle') as string,
     visualDescription: t('errors.notFound.visualDescription') as string,
     highlights: (t('errors.notFound.highlights') as FallbackHighlight[]) || [],

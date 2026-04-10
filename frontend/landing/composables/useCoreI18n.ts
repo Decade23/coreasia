@@ -1,6 +1,6 @@
 import { computed, watch } from 'vue'
 import { DEFAULT_LOCALE, LOCALES, getLocaleInfo } from '~/utils/i18n'
-import { getContent } from '~/utils/content'
+import { getContent, loadContent } from '~/utils/content'
 
 export const LOCALE_QUERY_KEY = 'lang'
 
@@ -8,11 +8,16 @@ const isSupportedLocale = (value: unknown): value is keyof typeof LOCALES => {
   return typeof value === 'string' && value in LOCALES
 }
 
+const resolvePathValue = (source: any, path: string) => {
+  return path.split('.').reduce((result, part) => result?.[part], source)
+}
+
 export const useCoreI18n = () => {
   const route = useRoute()
   const localeCookie = useCookie<keyof typeof LOCALES>('coreasia-locale', {
     default: () => DEFAULT_LOCALE,
   })
+  const contentState = useState('coreasia-content', () => getContent(DEFAULT_LOCALE))
 
   watch(
     () => route.query[LOCALE_QUERY_KEY],
@@ -43,13 +48,16 @@ export const useCoreI18n = () => {
   })
 
   const setLocale = async (nextLocale: keyof typeof LOCALES) => {
-    locale.value = nextLocale
+    const resolvedLocale = isSupportedLocale(nextLocale) ? nextLocale : DEFAULT_LOCALE
+
+    locale.value = resolvedLocale
+    contentState.value = await loadContent(resolvedLocale)
 
     const nextQuery = { ...route.query }
-    if (nextLocale === DEFAULT_LOCALE) {
+    if (resolvedLocale === DEFAULT_LOCALE) {
       delete nextQuery[LOCALE_QUERY_KEY]
     } else {
-      nextQuery[LOCALE_QUERY_KEY] = nextLocale
+      nextQuery[LOCALE_QUERY_KEY] = resolvedLocale
     }
 
     await navigateTo(
@@ -64,28 +72,15 @@ export const useCoreI18n = () => {
 
   const currentLocaleInfo = computed(() => getLocaleInfo(locale.value))
   const availableLocales = computed(() => Object.values(LOCALES))
-  const content = computed(() => getContent(locale.value))
+  const content = computed(() => contentState.value || getContent(locale.value))
 
   const t = (path: string) => {
-    const localeContent = getContent(locale.value)
-    const fallbackContent = getContent(DEFAULT_LOCALE)
-    const pathParts = path.split('.')
-
-    let result: any = localeContent
-    for (const part of pathParts) {
-      result = result?.[part]
+    const localizedValue = resolvePathValue(content.value, path)
+    if (localizedValue !== undefined) {
+      return localizedValue
     }
 
-    if (result !== undefined) {
-      return result
-    }
-
-    let fallbackResult: any = fallbackContent
-    for (const part of pathParts) {
-      fallbackResult = fallbackResult?.[part]
-    }
-
-    return fallbackResult
+    return resolvePathValue(getContent(DEFAULT_LOCALE), path)
   }
 
   return {

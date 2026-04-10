@@ -3,7 +3,7 @@
         :status-label="t('errors.notFound.statusLabel')"
         :title="t('errors.notFound.pageTitle')"
         :description="t('errors.notFound.pageDescription')"
-        icon="lucide:map-x"
+        icon="lucide:map-pin"
         :visual-title="t('errors.notFound.visualTitle')"
         :visual-description="t('errors.notFound.visualDescription')"
         :highlights="highlights"

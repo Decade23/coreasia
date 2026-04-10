@@ -213,7 +213,9 @@ export const useGatewayApi = () => {
      */
     const fetchPlans = async (): Promise<PricingPlan[]> => {
         try {
-            const res = await $fetch<ApiResponse<PlanDTO[]>>(`${baseURL}/plans`)
+            const res = await $fetch<ApiResponse<PlanDTO[]>>(`${baseURL}/plans`, {
+                timeout: 1500,
+            })
 
             if (!res?.data || !Array.isArray(res.data)) {
                 console.warn('[useGatewayApi] Unexpected plans response shape:', res)

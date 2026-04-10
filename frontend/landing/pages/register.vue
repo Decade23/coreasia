@@ -28,8 +28,25 @@ useSchemaOrg([
 ])
 
 // ── Plan Data ──
-const plans = ref<PricingPlan[]>([])
+const { data: plansData } = await useAsyncData('register-plans', fetchPlans, {
+    default: () => [],
+})
+
+const plans = computed(() => plansData.value || [])
 const selectedPlanId = ref<string>((route.query.plan as string) || '')
+
+const syncSelectedPlan = () => {
+    if (!plans.value.length) {
+        selectedPlanId.value = ''
+        return
+    }
+
+    if (selectedPlanId.value && plans.value.some(plan => plan.id === selectedPlanId.value)) {
+        return
+    }
+
+    selectedPlanId.value = plans.value.find(plan => plan.popular)?.id || plans.value[0]?.id || ''
+}
 
 const selectedPlan = computed(() => {
     return plans.value.find(p => p.id === selectedPlanId.value)
@@ -38,10 +55,21 @@ const selectedPlan = computed(() => {
         || null
 })
 
+watch(
+    () => route.query.plan,
+    (value) => {
+        selectedPlanId.value = typeof value === 'string' ? value : ''
+        syncSelectedPlan()
+    },
+    { immediate: true },
+)
+
+watch(plans, syncSelectedPlan, { immediate: true })
+
 onMounted(async () => {
-    plans.value = await fetchPlans()
-    if (!selectedPlanId.value || !plans.value.some(plan => plan.id === selectedPlanId.value)) {
-        selectedPlanId.value = plans.value.find(plan => plan.popular)?.id || plans.value[0]?.id || ''
+    if (!plans.value.length) {
+        plansData.value = await fetchPlans()
+        syncSelectedPlan()
     }
 
     const registrationId = typeof route.query.registration_id === 'string'

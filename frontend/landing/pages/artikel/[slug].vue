@@ -66,19 +66,41 @@ const toPublicArticle = (item: any): PublicArticle => ({
   created_at: item.created_at || item.publishedAt || item.published_at || new Date().toISOString(),
 })
 
-const { data: article } = await useAsyncData(`article-${slug}`, async () => {
+const staticArticle = getArticleBySlug(slug)
+
+const fetchArticleFromApi = async () => {
   try {
     const res = await $fetch<{ data: any }>(`${baseURL}/articles/${slug}`, {
-      timeout: 3500,
+      timeout: 1800,
     })
     return res?.data || null
   } catch {
-    return getArticleBySlug(slug) || null
+    return null
   }
+}
+
+const { data: articleData } = await useAsyncData(`article-${slug}`, async () => {
+  if (import.meta.server && staticArticle) {
+    return staticArticle
+  }
+
+  const apiArticle = await fetchArticleFromApi()
+  return apiArticle || staticArticle || null
 })
+
+const article = computed(() => articleData.value ? toPublicArticle(articleData.value) : null)
 
 if (!article.value) {
   throw createError({ statusCode: 404, message: 'Article not found' })
+}
+
+if (import.meta.client && staticArticle) {
+  onMounted(async () => {
+    const apiArticle = await fetchArticleFromApi()
+    if (apiArticle) {
+      articleData.value = apiArticle
+    }
+  })
 }
 
 const articleCategoryKey = computed(() => normalizeCategoryKey(article.value?.category))
@@ -123,7 +145,7 @@ useHead(() => ({
   }],
 }))
 
-const { data: relatedApiArticles } = await useAsyncData(`article-related-${slug}`, async () => {
+const fetchRelatedArticlesFromApi = async () => {
   try {
     const params = new URLSearchParams({ per_page: '6' })
     if (articleCategoryKey.value) {
@@ -131,14 +153,32 @@ const { data: relatedApiArticles } = await useAsyncData(`article-related-${slug}
     }
 
     const res = await $fetch<{ data: PublicArticle[] }>(`${baseURL}/articles?${params.toString()}`, {
-      timeout: 2500,
+      timeout: 1200,
     })
 
     return res?.data || []
   } catch {
     return []
   }
+}
+
+const { data: relatedApiArticles } = await useAsyncData(`article-related-${slug}`, async () => {
+  if (import.meta.server && staticArticle) {
+    return []
+  }
+
+  return fetchRelatedArticlesFromApi()
+}, {
+  default: () => [],
 })
+
+if (import.meta.client) {
+  onMounted(async () => {
+    if (!relatedApiArticles.value?.length) {
+      relatedApiArticles.value = await fetchRelatedArticlesFromApi()
+    }
+  })
+}
 
 const dateLocale = computed(() => (locale.value === 'en' ? 'en-US' : 'id-ID'))
 

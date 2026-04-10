@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import { transformSync } from 'ultrahtml'
+import sanitize from 'ultrahtml/transformers/sanitize'
+
 const props = defineProps<{
   content: string
 }>()
@@ -33,6 +36,8 @@ const escapeHtml = (value: string) => value
   .replace(/&/g, '&amp;')
   .replace(/</g, '&lt;')
   .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;')
+  .replace(/'/g, '&#39;')
 
 const renderInlineMarkdown = (value: string) => {
   const escaped = escapeHtml(value)
@@ -129,10 +134,16 @@ const markdownToHtml = (markdown: string) => {
   return html.join('\n')
 }
 
+const isUnsafeScheme = (value: string) => /^(?:javascript|data|vbscript|file):/i.test(value)
+
 const normalizeHref = (href: string) => {
   const trimmedHref = href.trim()
 
-  if (!trimmedHref || trimmedHref.startsWith('#') || trimmedHref.startsWith('mailto:') || trimmedHref.startsWith('tel:')) {
+  if (!trimmedHref || isUnsafeScheme(trimmedHref)) {
+    return { href: '#', internal: true }
+  }
+
+  if (trimmedHref.startsWith('#') || trimmedHref.startsWith('mailto:') || trimmedHref.startsWith('tel:')) {
     return { href: trimmedHref, internal: true }
   }
 
@@ -142,6 +153,10 @@ const normalizeHref = (href: string) => {
 
   try {
     const parsed = new URL(trimmedHref, currentOrigin.value)
+    if (!['http:', 'https:'].includes(parsed.protocol)) {
+      return { href: '#', internal: true }
+    }
+
     if (internalHosts.value.has(parsed.host.toLowerCase())) {
       return {
         href: `${parsed.pathname}${parsed.search}${parsed.hash}` || '/',
@@ -151,12 +166,59 @@ const normalizeHref = (href: string) => {
 
     return { href: parsed.toString(), internal: false }
   } catch {
-    return { href: trimmedHref, internal: false }
+    return { href: '#', internal: true }
   }
 }
 
+const normalizeImageSrc = (src: string) => {
+  const trimmedSrc = src.trim()
+
+  if (!trimmedSrc || isUnsafeScheme(trimmedSrc)) {
+    return ''
+  }
+
+  if (trimmedSrc.startsWith('/')) {
+    return trimmedSrc
+  }
+
+  try {
+    const parsed = new URL(trimmedSrc, currentOrigin.value)
+    if (!['http:', 'https:'].includes(parsed.protocol)) {
+      return ''
+    }
+
+    if (internalHosts.value.has(parsed.host.toLowerCase())) {
+      return `${parsed.pathname}${parsed.search}${parsed.hash}` || ''
+    }
+
+    return parsed.toString()
+  } catch {
+    return ''
+  }
+}
+
+const sanitizeHtml = (html: string) => {
+  return transformSync(html, [
+    sanitize({
+      allowElements: ['a', 'blockquote', 'br', 'code', 'em', 'figure', 'figcaption', 'h2', 'h3', 'h4', 'hr', 'img', 'li', 'ol', 'p', 'pre', 'strong', 'ul'],
+      allowAttributes: {
+        href: ['a'],
+        title: ['a', 'img'],
+        src: ['img'],
+        alt: ['img'],
+        width: ['img'],
+        height: ['img'],
+        loading: ['img'],
+        decoding: ['img'],
+      },
+      blockElements: ['html', 'body'],
+      dropElements: ['script', 'style', 'iframe', 'object', 'embed', 'form', 'input', 'button'],
+    }),
+  ])
+}
+
 const normalizeLinks = (html: string) => html.replace(
-  /<a\b([^>]*?)href=(["'])(.*?)\2([^>]*)>/gi,
+  /<a\b([^>]*?)href=(['"])(.*?)\2([^>]*)>/gi,
   (_match, before, quote, href, after) => {
     const normalized = normalizeHref(href)
     const attrs = `${before}${after}`.toLowerCase()
@@ -175,6 +237,18 @@ const normalizeLinks = (html: string) => html.replace(
   },
 )
 
+const normalizeImages = (html: string) => html.replace(
+  /<img\b([^>]*?)src=(['"])(.*?)\2([^>]*)\/?\s*>/gi,
+  (_match, before, quote, src, after) => {
+    const normalizedSrc = normalizeImageSrc(src)
+    if (!normalizedSrc) {
+      return ''
+    }
+
+    return `<img${before}src=${quote}${normalizedSrc}${quote}${after}>`
+  },
+)
+
 const renderedHtml = computed(() => {
   const rawContent = props.content?.trim() || ''
   if (!rawContent) return ''
@@ -183,7 +257,9 @@ const renderedHtml = computed(() => {
     ? rawContent
     : markdownToHtml(rawContent)
 
-  return normalizeLinks(html)
+  const sanitizedHtml = sanitizeHtml(html)
+
+  return normalizeImages(normalizeLinks(sanitizedHtml))
 })
 </script>
 
@@ -259,38 +335,25 @@ const renderedHtml = computed(() => {
   line-height: 1.8;
 }
 
-.ca-article-prose :deep(strong) {
+.ca-article-prose :deep(blockquote) {
+  margin: 1.5rem 0 0;
+  border-left: 3px solid var(--ca-kicker);
+  padding-left: 1rem;
   color: var(--ca-text);
-  font-weight: 700;
-}
-
-.ca-article-prose :deep(em) {
-  font-style: italic;
-}
-
-.ca-article-prose :deep(a) {
-  color: var(--ca-gold-text);
-  font-weight: 600;
-  text-decoration: underline;
-  text-decoration-thickness: 1px;
-  text-underline-offset: 0.18em;
-  word-break: break-word;
 }
 
 .ca-article-prose :deep(code) {
-  border-radius: 0.5rem;
-  background: color-mix(in srgb, var(--ca-panel-bg-strong) 88%, transparent);
+  border-radius: 0.45rem;
+  background: color-mix(in oklab, var(--ca-panel-bg-strong) 86%, black 14%);
   padding: 0.15rem 0.45rem;
-  font-size: 0.9em;
-  color: var(--ca-text);
+  font-size: 0.92em;
 }
 
 .ca-article-prose :deep(pre) {
-  margin-top: 1.25rem;
+  margin-top: 1.2rem;
   overflow-x: auto;
   border-radius: 1rem;
-  border: 1px solid color-mix(in srgb, var(--ca-border) 82%, transparent);
-  background: color-mix(in srgb, var(--ca-panel-bg) 92%, transparent);
+  background: color-mix(in oklab, var(--ca-panel-bg-strong) 88%, black 12%);
   padding: 1rem;
 }
 
@@ -299,42 +362,17 @@ const renderedHtml = computed(() => {
   padding: 0;
 }
 
-.ca-article-prose :deep(blockquote) {
-  margin: 1.4rem 0 0;
-  border-left: 3px solid color-mix(in srgb, var(--ca-gold-border) 72%, transparent);
-  background: color-mix(in srgb, var(--ca-panel-bg) 84%, transparent);
-  padding: 0.9rem 1rem 0.9rem 1.1rem;
-  border-radius: 0 1rem 1rem 0;
-}
-
-.ca-article-prose :deep(blockquote p) {
+.ca-article-prose :deep(a) {
   color: var(--ca-text);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in oklab, var(--ca-kicker) 70%, transparent 30%);
+  text-underline-offset: 0.16em;
 }
 
 .ca-article-prose :deep(img) {
-  display: block;
-  margin-top: 1.35rem;
-  border-radius: 1.25rem;
-}
-
-.ca-article-prose :deep(hr) {
-  margin-top: 1.8rem;
-  border: 0;
-  border-top: 1px solid color-mix(in srgb, var(--ca-border) 76%, transparent);
-}
-
-@media (max-width: 640px) {
-  .ca-article-prose :deep(p) {
-    font-size: 0.98rem;
-    line-height: 1.78;
-  }
-
-  .ca-article-prose :deep(h2) {
-    margin-top: 1.9rem;
-  }
-
-  .ca-article-prose :deep(h3) {
-    margin-top: 1.5rem;
-  }
+  margin-top: 1.4rem;
+  width: 100%;
+  border-radius: 1.35rem;
+  border: 1px solid var(--ca-border);
 }
 </style>
