@@ -5,23 +5,43 @@
  * Graceful fallback when GTM is blocked (ad-blockers, incognito).
  */
 
-type EventParams = Record<string, string | number | boolean | undefined>
+type EventValue = string | number | boolean | undefined | null
+type EventParams = Record<string, EventValue>
 
 declare global {
   interface Window {
-    dataLayer?: any[]
+    dataLayer?: Array<Record<string, unknown>>
   }
 }
 
-const pushEvent = (event: string, params?: EventParams) => {
+const pushEvent = (event: string, params: EventParams = {}) => {
   if (import.meta.server) return
   window.dataLayer = window.dataLayer || []
   window.dataLayer.push({ event, ...params })
 }
 
+const resolvePageContext = (): EventParams => {
+  if (import.meta.server) {
+    return {}
+  }
+
+  return {
+    page_title: typeof document !== 'undefined' ? document.title : '',
+    page_location: window.location.href,
+  }
+}
+
 export const useAnalytics = () => {
   const trackEvent = (eventName: string, params?: EventParams) => {
     pushEvent(eventName, params)
+  }
+
+  const trackPageView = (path: string, extra?: EventParams) => {
+    pushEvent('page_view', {
+      page_path: path,
+      ...resolvePageContext(),
+      ...extra,
+    })
   }
 
   const trackFormSubmit = (formName: string, extra?: EventParams) => {
@@ -33,33 +53,37 @@ export const useAnalytics = () => {
     })
   }
 
-  const trackFormStart = (formName: string) => {
+  const trackFormStart = (formName: string, extra?: EventParams) => {
     pushEvent('form_start', {
       event_category: 'Lead Generation',
       form_name: formName,
+      ...extra,
     })
   }
 
-  const trackWhatsAppClick = (source: string) => {
+  const trackWhatsAppClick = (source: string, extra?: EventParams) => {
     pushEvent('whatsapp_click', {
       event_category: 'Contact',
       event_label: source,
+      ...extra,
     })
   }
 
-  const trackCTAClick = (buttonName: string, destination?: string) => {
+  const trackCTAClick = (buttonName: string, destination?: string, extra?: EventParams) => {
     pushEvent('cta_click', {
       event_category: 'Engagement',
       button_name: buttonName,
       destination: destination || '',
+      ...extra,
     })
   }
 
-  const trackOutboundClick = (url: string, label?: string) => {
+  const trackOutboundClick = (url: string, label?: string, extra?: EventParams) => {
     pushEvent('outbound_click', {
       event_category: 'Outbound',
       event_label: label || url,
       link_url: url,
+      ...extra,
     })
   }
 
@@ -73,6 +97,7 @@ export const useAnalytics = () => {
 
   return {
     trackEvent,
+    trackPageView,
     trackFormSubmit,
     trackFormStart,
     trackWhatsAppClick,

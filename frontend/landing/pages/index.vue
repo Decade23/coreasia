@@ -181,7 +181,7 @@ useHead({
                     />
 
                     <div class="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row animate-fade-in-up delay-300">
-                        <NuxtLink to="/contact" class="ca-btn-primary" @click="trackCTAClick('hero_primary', '/contact')">
+                        <NuxtLink to="/contact" class="ca-btn-primary" data-analytics-ignore="true" @click="trackCTAClick('hero_primary', '/contact')">
                             {{ t('home.hero.ctaPrimary') }}
                             <Icon name="lucide:arrow-right" class="h-4 w-4" />
                         </NuxtLink>
@@ -190,6 +190,7 @@ useHead({
                             target="_blank"
                             rel="noopener noreferrer"
                             class="ca-btn-secondary"
+                            data-analytics-ignore="true"
                             @click="trackWhatsAppClick('hero')"
                         >
                             <Icon name="lucide:message-circle" class="h-4 w-4" />
@@ -306,6 +307,7 @@ useHead({
                         <NuxtLink
                             to="/contact"
                             class="ca-btn-primary"
+                            data-analytics-ignore="true"
                             @click="trackCTAClick('bottom_cta', '/contact')"
                         >
                             {{ t('home.readyCTA.ctaPrimary') }}
@@ -315,6 +317,7 @@ useHead({
                             target="_blank"
                             rel="noopener noreferrer"
                             class="ca-btn-secondary"
+                            data-analytics-ignore="true"
                             @click="trackWhatsAppClick('bottom_cta')"
                         >
                             {{ t('home.readyCTA.ctaSecondary') }}

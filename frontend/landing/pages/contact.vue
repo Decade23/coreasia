@@ -61,6 +61,36 @@ const formState = reactive({
     errorMessage: "",
 });
 
+const selectedPlan = computed(() => {
+    const rawPlan = Array.isArray(route.query.plan)
+        ? route.query.plan[0]
+        : route.query.plan
+
+    return typeof rawPlan === 'string' ? rawPlan : ''
+})
+
+const hasTrackedFormStart = ref(false)
+
+watch(
+    () => [form.name, form.email, form.phone, form.message],
+    (values) => {
+        if (hasTrackedFormStart.value) {
+            return
+        }
+
+        const hasStarted = values.some((value) => value.trim().length > 0)
+        if (!hasStarted) {
+            return
+        }
+
+        hasTrackedFormStart.value = true
+        trackFormStart('contact_brief', {
+            subject: form.subject || undefined,
+            plan: selectedPlan.value || undefined,
+        })
+    },
+)
+
 // Computed property for phone input handling
 const phoneModel = computed({
     get: () => form.phone,
@@ -115,6 +145,7 @@ const resetForm = () => {
     form.subject = "";
     form.message = "";
     form.consent = false;
+    hasTrackedFormStart.value = false;
 };
 
 const isValidEmail = (value: string) => {
@@ -197,7 +228,10 @@ const handleSubmit = async () => {
         }
 
         formState.isSuccess = true;
-        trackFormSubmit('contact_brief', { subject: form.subject })
+        trackFormSubmit('contact_brief', {
+            subject: form.subject,
+            plan: selectedPlan.value || undefined,
+        })
 
         if (process.client) {
             try {
@@ -321,6 +355,7 @@ useSchemaOrg([
 
                                 <a
                                     :href="LINKS.email"
+                                    data-analytics-label="contact_sidebar_email"
                                     class="flex items-center justify-between rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] px-4 py-3 transition hover:border-amber-300/40 hover:bg-amber-300/10"
                                 >
                                     <span class="flex items-center gap-3">

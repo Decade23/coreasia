@@ -187,7 +187,7 @@ function adaptPlanToUI(dto: PlanDTO, allPlans: PlanDTO[]): PricingPlan {
     } else if (nameLower.includes('enterprise') || allPlans.indexOf(dto) === allPlans.length - 1) {
         badge = 'Custom'
         ctaLabel = 'Hubungi Kami'
-        ctaTo = '/contact'
+        ctaTo = `/contact?subject=pricing&plan=${dto.id}`
     } else {
         // Middle tier(s) are "popular"
         const midIndex = Math.floor(allPlans.length / 2)

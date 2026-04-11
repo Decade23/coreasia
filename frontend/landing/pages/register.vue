@@ -6,7 +6,7 @@ import type { PricingPlan, RegisterPayload, RegistrationStatusResult } from '~/c
 import { useDebounceFn } from '@vueuse/core'
 
 const { locale, t } = useCoreI18n()
-const { trackFormSubmit } = useAnalytics()
+const { trackFormStart, trackFormSubmit } = useAnalytics()
 const { useReveal } = useScrollReveal()
 const route = useRoute()
 const { fetchPlans, checkSlug, register, getRegistrationStatus } = useGatewayApi()
@@ -107,6 +107,27 @@ const form = reactive<RegisterForm>({
     confirmPassword: '',
     agree: false,
 })
+
+const hasTrackedFormStart = ref(false)
+
+watch(
+    () => [form.orgName, form.slug, form.orgType, form.fullName, form.email, form.phone],
+    (values) => {
+        if (hasTrackedFormStart.value) {
+            return
+        }
+
+        const hasStarted = values.some((value) => value.trim().length > 0)
+        if (!hasStarted) {
+            return
+        }
+
+        hasTrackedFormStart.value = true
+        trackFormStart('registration', {
+            plan: selectedPlanId.value || undefined,
+        })
+    },
+)
 
 const formState = reactive({
     isSubmitting: false,

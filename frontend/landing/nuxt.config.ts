@@ -264,7 +264,8 @@ export default defineNuxtConfig({
             gatewayUrl: process.env.GATEWAY_URL || 'http://localhost:8081/api',
             gatewayPublicUrl: process.env.GATEWAY_PUBLIC_URL || process.env.GATEWAY_URL || 'http://localhost:8084/api',
             siteUrl: process.env.NUXT_PUBLIC_SITE_URL || process.env.SITE_URL || 'https://coreasia.id',
-            gtmId: process.env.GTM_ID || '',
+            gtmId: process.env.NUXT_PUBLIC_GTM_ID || process.env.GTM_ID || '',
+            googleSiteVerification: process.env.NUXT_PUBLIC_GOOGLE_SITE_VERIFICATION || process.env.GOOGLE_SITE_VERIFICATION || '',
         },
     },
     nitro: {
@@ -282,7 +283,7 @@ export default defineNuxtConfig({
                 'X-Content-Type-Options': 'nosniff',
                 'Referrer-Policy': 'strict-origin-when-cross-origin',
                 'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
-                'Content-Security-Policy': `default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' http://localhost:8084 https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://*.coreasia.id https://api.coreasia.id; frame-ancestors 'self'`,
+                'Content-Security-Policy': `default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' http://localhost:8084 https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://*.coreasia.id https://api.coreasia.id; frame-src 'self' https://www.googletagmanager.com; frame-ancestors 'self'`,
                 'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
             },
         },

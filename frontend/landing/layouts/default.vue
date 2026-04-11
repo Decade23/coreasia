@@ -6,8 +6,15 @@ import {
   THEME_COOKIE_KEY,
 } from '~/composables/useCoreTheme'
 
+const config = useRuntimeConfig()
 const { theme } = useCoreTheme()
 const { locale } = useCoreI18n()
+
+const googleSiteVerification = computed(() => {
+  const value = config.public.googleSiteVerification as string | undefined
+  return value?.trim() || ''
+})
+
 updateSiteConfig({
   currentLocale: computed(() => (locale.value === 'en' ? 'en-US' : 'id-ID')),
 })
@@ -34,29 +41,41 @@ const themeBootstrapScript = `(() => {
   }
 })()`
 
-useHead(() => ({
-  htmlAttrs: {
-    lang: locale.value === 'en' ? 'en' : 'id',
-    'data-theme': theme.value,
-  },
-  meta: [
+useHead(() => {
+  const meta = [
     {
       name: 'theme-color',
       content: theme.value === 'light' ? '#f6f1e8' : '#050814',
     },
-  ],
-  script: [
-    {
-      key: 'coreasia-theme-bootstrap',
-      tagPosition: 'head',
-      innerHTML: themeBootstrapScript,
+  ]
+
+  if (googleSiteVerification.value) {
+    meta.push({
+      name: 'google-site-verification',
+      content: googleSiteVerification.value,
+    })
+  }
+
+  return {
+    htmlAttrs: {
+      lang: locale.value === 'en' ? 'en' : 'id',
+      'data-theme': theme.value,
     },
-  ],
-}))
+    meta,
+    script: [
+      {
+        key: 'coreasia-theme-bootstrap',
+        tagPosition: 'head',
+        innerHTML: themeBootstrapScript,
+      },
+    ],
+  }
+})
 </script>
 
 <template>
   <div class="ca-page-shell relative min-h-screen overflow-hidden font-sans text-[var(--ca-text)]">
+    <GtmNoscript />
     <div class="pointer-events-none absolute inset-0 -z-10">
       <div class="absolute inset-0 ca-grid-bg opacity-[0.08]" />
       <div class="absolute -top-28 left-1/2 h-[30rem] w-[30rem] -translate-x-1/2 rounded-full bg-[var(--ca-orb-primary)] blur-[140px]" />
