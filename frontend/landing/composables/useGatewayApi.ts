@@ -130,6 +130,21 @@ const ALL_FEATURE_KEYS = [
     'dedicated_support',
 ]
 
+const logGatewayIssue = (level: 'warn' | 'error', message: string, error?: unknown) => {
+    // Avoid noisy SSR/prerender logs for frontend fallbacks. Client and dev mode remain verbose.
+    if (!(import.meta.client || import.meta.dev)) {
+        return
+    }
+
+    const logger = level === 'warn' ? console.warn : console.error
+    if (error !== undefined) {
+        logger(message, error)
+        return
+    }
+
+    logger(message)
+}
+
 function formatCurrency(amount: number): string {
     return new Intl.NumberFormat('id-ID', {
         style: 'currency',
@@ -218,13 +233,13 @@ export const useGatewayApi = () => {
             })
 
             if (!res?.data || !Array.isArray(res.data)) {
-                console.warn('[useGatewayApi] Unexpected plans response shape:', res)
+                logGatewayIssue('warn', '[useGatewayApi] Unexpected plans response shape:', res)
                 return []
             }
 
             return res.data.map(dto => adaptPlanToUI(dto, res.data))
         } catch (err: unknown) {
-            console.error('[useGatewayApi] Failed to fetch plans:', err)
+            logGatewayIssue('error', '[useGatewayApi] Failed to fetch plans:', err)
             return []
         }
     }
@@ -245,7 +260,7 @@ export const useGatewayApi = () => {
                 suggestion: !res?.data?.available ? `${slug}-lsp` : undefined,
             }
         } catch (err: unknown) {
-            console.error('[useGatewayApi] Slug check failed:', err)
+            logGatewayIssue('error', '[useGatewayApi] Slug check failed:', err)
             return { available: false }
         }
     }
@@ -340,7 +355,7 @@ export const useGatewayApi = () => {
                 invoiceUrl: dto.invoice_url || undefined,
             }
         } catch (err) {
-            console.error('[useGatewayApi] Failed to fetch registration status:', err)
+            logGatewayIssue('error', '[useGatewayApi] Failed to fetch registration status:', err)
             return null
         }
     }

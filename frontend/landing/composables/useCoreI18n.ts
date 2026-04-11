@@ -1,6 +1,6 @@
 import { computed, watch } from 'vue'
 import { DEFAULT_LOCALE, LOCALES, getLocaleInfo } from '~/utils/i18n'
-import { getContent, loadContent } from '~/utils/content'
+import { getContent } from '~/utils/content'
 
 export const LOCALE_QUERY_KEY = 'lang'
 
@@ -12,12 +12,33 @@ const resolvePathValue = (source: any, path: string) => {
   return path.split('.').reduce((result, part) => result?.[part], source)
 }
 
+const resolveLocaleFromRoute = (
+  route: ReturnType<typeof useRoute>,
+  fallback: keyof typeof LOCALES = DEFAULT_LOCALE,
+): keyof typeof LOCALES => {
+  const rawQueryLocale = Array.isArray(route.query[LOCALE_QUERY_KEY])
+    ? route.query[LOCALE_QUERY_KEY][0]
+    : route.query[LOCALE_QUERY_KEY]
+
+  if (isSupportedLocale(rawQueryLocale)) {
+    return rawQueryLocale
+  }
+
+  return fallback
+}
+
 export const useCoreI18n = () => {
   const route = useRoute()
   const localeCookie = useCookie<keyof typeof LOCALES>('coreasia-locale', {
     default: () => DEFAULT_LOCALE,
   })
-  const contentState = useState('coreasia-content', () => getContent(DEFAULT_LOCALE))
+
+  const resolveActiveLocale = () => {
+    const cookieLocale = isSupportedLocale(localeCookie.value) ? localeCookie.value : DEFAULT_LOCALE
+    return resolveLocaleFromRoute(route, cookieLocale)
+  }
+
+  const contentState = useState('coreasia-content', () => getContent(resolveActiveLocale()))
 
   watch(
     () => route.query[LOCALE_QUERY_KEY],
@@ -26,24 +47,20 @@ export const useCoreI18n = () => {
       if (isSupportedLocale(queryLocale)) {
         localeCookie.value = queryLocale
       }
+
+      contentState.value = getContent(resolveActiveLocale())
     },
     { immediate: true },
   )
 
   const locale = computed<keyof typeof LOCALES>({
     get() {
-      const rawQueryLocale = Array.isArray(route.query[LOCALE_QUERY_KEY])
-        ? route.query[LOCALE_QUERY_KEY][0]
-        : route.query[LOCALE_QUERY_KEY]
-
-      if (isSupportedLocale(rawQueryLocale)) {
-        return rawQueryLocale
-      }
-
-      return isSupportedLocale(localeCookie.value) ? localeCookie.value : DEFAULT_LOCALE
+      return resolveActiveLocale()
     },
     set(value) {
-      localeCookie.value = isSupportedLocale(value) ? value : DEFAULT_LOCALE
+      const nextLocale = isSupportedLocale(value) ? value : DEFAULT_LOCALE
+      localeCookie.value = nextLocale
+      contentState.value = getContent(nextLocale)
     },
   })
 
@@ -51,7 +68,6 @@ export const useCoreI18n = () => {
     const resolvedLocale = isSupportedLocale(nextLocale) ? nextLocale : DEFAULT_LOCALE
 
     locale.value = resolvedLocale
-    contentState.value = await loadContent(resolvedLocale)
 
     const nextQuery = { ...route.query }
     if (resolvedLocale === DEFAULT_LOCALE) {

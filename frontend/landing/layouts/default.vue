@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import {
   DEFAULT_THEME,
   SYSTEM_THEME_MEDIA_QUERY,
@@ -6,6 +7,11 @@ import {
 } from '~/composables/useCoreTheme'
 
 const { theme } = useCoreTheme()
+const { locale } = useCoreI18n()
+updateSiteConfig({
+  currentLocale: computed(() => (locale.value === 'en' ? 'en-US' : 'id-ID')),
+})
+
 const themeBootstrapScript = `(() => {
   try {
     const allowedThemes = ['dark', 'light']
@@ -30,6 +36,7 @@ const themeBootstrapScript = `(() => {
 
 useHead(() => ({
   htmlAttrs: {
+    lang: locale.value === 'en' ? 'en' : 'id',
     'data-theme': theme.value,
   },
   meta: [

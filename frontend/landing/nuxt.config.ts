@@ -11,6 +11,9 @@ export default defineNuxtConfig({
         host: '0.0.0.0',
         port: 3000
     },
+    experimental: {
+        browserDevtoolsTiming: false,
+    },
     modules: [
         "@nuxtjs/seo",
         "@nuxt/fonts",
@@ -76,9 +79,6 @@ export default defineNuxtConfig({
     app: {
         head: {
             title: "CoreAsia Teknologi",
-            htmlAttrs: {
-                lang: "id",
-            },
             link: [
                 {
                     rel: "preconnect",
@@ -269,6 +269,10 @@ export default defineNuxtConfig({
     },
     nitro: {
         compressPublicAssets: { gzip: true, brotli: true },
+        timing: false,
+        prerender: {
+            concurrency: 1,
+        },
     },
     routeRules: {
         // Default security headers
@@ -286,24 +290,24 @@ export default defineNuxtConfig({
         '/_nuxt/**': {
             headers: { 'Cache-Control': 'public, max-age=31536000, immutable' },
         },
-        // Landing page is static-first, revalidated every hour (SWR) or fully prerendered
-        '/': { prerender: true },
-        '/about': { prerender: true },
-        '/contact': { prerender: true },
-        '/products': { prerender: true },
-        '/products/**': { prerender: true },
-        '/partnerships': { prerender: true },
-        '/solutions': { prerender: true },
-        '/solutions/venture': { prerender: true },
-        '/solutions/leadku': { prerender: true },
-        '/solutions/lms': { prerender: true },
-        '/pricing': { prerender: true },
-        '/faq': { prerender: true },
-        '/portfolio': { prerender: true },
-        '/privacy-policy': { prerender: true },
-        '/terms': { prerender: true },
-        '/layanan': { prerender: true },
-        '/layanan/**': { prerender: true },
+        // Marketing pages stay SSR so ?lang=en works, with SWR caching for one hour
+        '/': { swr: 3600 },
+        '/about': { swr: 3600 },
+        '/contact': { swr: 3600 },
+        '/products': { swr: 3600 },
+        '/products/**': { swr: 3600 },
+        '/partnerships': { swr: 3600 },
+        '/solutions': { redirect: { to: '/solutions/venture', statusCode: 301 } },
+        '/solutions/venture': { swr: 3600 },
+        '/solutions/leadku': { swr: 3600 },
+        '/solutions/lms': { swr: 3600 },
+        '/pricing': { swr: 3600 },
+        '/faq': { swr: 3600 },
+        '/portfolio': { swr: 3600 },
+        '/privacy-policy': { swr: 3600 },
+        '/terms': { swr: 3600 },
+        '/layanan': { redirect: { to: '/layanan/jasa-pembuatan-website', statusCode: 301 } },
+        '/layanan/**': { swr: 3600 },
         '/artikel': { ssr: true },
         '/artikel/**': { ssr: true },
         '/console': { ssr: false, index: false, robots: false },
