@@ -141,8 +141,16 @@ const serviceLinks = computed(() => (t('components.footer.serviceLinks') as Arra
                 </div>
             </div>
 
+            <!-- Artikel / Blog link for SEO internal linking -->
+            <div class="mt-8">
+                <NuxtLink to="/artikel" class="inline-flex items-center gap-2 text-sm text-[var(--ca-muted)] transition hover:text-brand-primary">
+                    <Icon name="lucide:newspaper" class="h-4 w-4" />
+                    {{ t('components.footer.links.articles') || 'Artikel & Insight' }}
+                </NuxtLink>
+            </div>
+
             <!-- Geographic Keywords for SEO -->
-            <div class="mt-8 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-[var(--ca-muted)]/60">
+            <div class="mt-4 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-[var(--ca-muted)]/60">
                 <NuxtLink to="/layanan/jasa-pembuatan-website" class="hover:text-brand-primary transition">Jasa Pembuatan Website Jakarta</NuxtLink>
                 <span class="select-none">&middot;</span>
                 <NuxtLink to="/layanan/jasa-pembuatan-website" class="hover:text-brand-primary transition">Web Development Surabaya</NuxtLink>
@@ -154,6 +162,8 @@ const serviceLinks = computed(() => (t('components.footer.serviceLinks') as Arra
                 <NuxtLink to="/layanan/web-monitoring-dashboard" class="hover:text-brand-primary transition">Dashboard Monitoring Website</NuxtLink>
                 <span class="select-none">&middot;</span>
                 <NuxtLink to="/products/pantau" class="hover:text-brand-primary transition">SEO Monitoring Indonesia</NuxtLink>
+                <span class="select-none">&middot;</span>
+                <NuxtLink to="/artikel" class="hover:text-brand-primary transition">Artikel Digital Marketing</NuxtLink>
             </div>
 
             <div class="mt-10 border-t border-[color:var(--ca-border)] pt-5 text-xs text-[var(--ca-muted)] sm:flex sm:items-center sm:justify-between">

@@ -42,6 +42,13 @@ export default defineNuxtConfig({
             changefreq: 'weekly' as const,
             priority: 0.7,
         },
+        urls: [
+            // Dynamic article URLs (static data from utils/articles.ts)
+            { loc: '/artikel', changefreq: 'weekly', priority: 0.8 },
+            { loc: '/artikel/apa-itu-web-monitoring-dan-mengapa-bisnis-membutuhkannya', changefreq: 'monthly', priority: 0.6 },
+            { loc: '/artikel/panduan-memilih-software-house-indonesia', changefreq: 'monthly', priority: 0.6 },
+            { loc: '/artikel/cara-meningkatkan-seo-website-bisnis', changefreq: 'monthly', priority: 0.6 },
+        ],
     },
     css: ["~/assets/css/main.css"],
     vite: {
@@ -302,6 +309,7 @@ export default defineNuxtConfig({
         '/solutions/venture': { swr: 3600 },
         '/solutions/leadku': { swr: 3600 },
         '/solutions/lms': { swr: 3600 },
+        '/solutions/pantau': { swr: 3600 },
         '/pricing': { swr: 3600 },
         '/faq': { swr: 3600 },
         '/portfolio': { swr: 3600 },
