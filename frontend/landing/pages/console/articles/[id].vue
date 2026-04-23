@@ -79,8 +79,8 @@ const handleUnpublish = async () => {
 }
 
 const statusColor = (status: string) => {
-  if (status === 'published') return 'bg-emerald-500/10 text-emerald-400 border-emerald-400/20'
-  return 'bg-slate-500/10 text-[var(--ca-muted)] border-[var(--ca-border)]'
+  if (status === 'published') return 'ca-pill-emerald'
+  return 'ca-pill-muted'
 }
 
 const statusLabel = (status: string) => {
@@ -201,7 +201,7 @@ const articleTimeline = computed(() => {
               <button
                 v-if="currentItem.status === 'published' && can('articles:publish')"
                 type="button"
-                class="inline-flex items-center gap-1.5 rounded-lg border border-[color:var(--ca-border)] px-3 py-1.5 text-sm font-semibold text-[var(--ca-muted)] transition hover:bg-[var(--ca-panel-bg-strong)]"
+                class="ca-btn-secondary !px-3.5 !py-2"
                 :disabled="saving"
                 @click="showUnpublishConfirm = true"
               >
@@ -289,46 +289,36 @@ const articleTimeline = computed(() => {
       </form>
     </template>
 
-    <!-- Publish Confirm Modal -->
-    <Teleport to="body">
-      <div v-if="showPublishConfirm" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" @click.self="showPublishConfirm = false">
-        <div class="ca-console-dialog w-full max-w-md p-6">
-          <h3 class="font-display text-lg font-bold text-[var(--ca-text)]">
-            <Icon name="lucide:globe" class="mr-2 inline h-5 w-5 text-emerald-400" />
-            {{ tc('articles.publishTitle') }}
-          </h3>
-          <p class="mt-2 text-sm text-[var(--ca-muted)]">
-            {{ tc('articles.publishDescription', { title: currentItem?.title || '-' }) }}
-          </p>
-          <div class="mt-6 flex justify-end gap-3">
-            <button type="button" class="ca-btn-secondary" @click="showPublishConfirm = false">{{ tc('common.cancel') }}</button>
-            <button type="button" class="ca-btn-success !px-4 !py-2.5" :disabled="saving" @click="handlePublish">
-              {{ saving ? tc('articles.publishing') : tc('common.publish') }}
-            </button>
-          </div>
-        </div>
+    <ConsoleModal
+      :show="showPublishConfirm"
+      :title="tc('articles.publishTitle')"
+      @close="showPublishConfirm = false"
+    >
+      <p class="text-sm text-[var(--ca-muted)]">
+        {{ tc('articles.publishDescription', { title: currentItem?.title || '-' }) }}
+      </p>
+      <div class="mt-6 flex justify-end gap-3">
+        <button type="button" class="ca-btn-secondary" @click="showPublishConfirm = false">{{ tc('common.cancel') }}</button>
+        <button type="button" class="ca-btn-success !px-4 !py-2.5" :disabled="saving" @click="handlePublish">
+          {{ saving ? tc('articles.publishing') : tc('common.publish') }}
+        </button>
       </div>
-    </Teleport>
+    </ConsoleModal>
 
-    <!-- Unpublish Confirm Modal -->
-    <Teleport to="body">
-      <div v-if="showUnpublishConfirm" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" @click.self="showUnpublishConfirm = false">
-        <div class="ca-console-dialog w-full max-w-md p-6">
-          <h3 class="font-display text-lg font-bold text-[var(--ca-text)]">
-            <Icon name="lucide:eye-off" class="mr-2 inline h-5 w-5 text-amber-400" />
-            {{ tc('articles.unpublishTitle') }}
-          </h3>
-          <p class="mt-2 text-sm text-[var(--ca-muted)]">
-            {{ tc('articles.unpublishDescription', { title: currentItem?.title || '-' }) }}
-          </p>
-          <div class="mt-6 flex justify-end gap-3">
-            <button type="button" class="ca-btn-secondary" @click="showUnpublishConfirm = false">{{ tc('common.cancel') }}</button>
-            <button type="button" class="ca-btn-primary" :disabled="saving" @click="handleUnpublish">
-              {{ saving ? tc('common.processing') : tc('common.unpublish') }}
-            </button>
-          </div>
-        </div>
+    <ConsoleModal
+      :show="showUnpublishConfirm"
+      :title="tc('articles.unpublishTitle')"
+      @close="showUnpublishConfirm = false"
+    >
+      <p class="text-sm text-[var(--ca-muted)]">
+        {{ tc('articles.unpublishDescription', { title: currentItem?.title || '-' }) }}
+      </p>
+      <div class="mt-6 flex justify-end gap-3">
+        <button type="button" class="ca-btn-secondary" @click="showUnpublishConfirm = false">{{ tc('common.cancel') }}</button>
+        <button type="button" class="ca-btn-primary" :disabled="saving" @click="handleUnpublish">
+          {{ saving ? tc('common.processing') : tc('common.unpublish') }}
+        </button>
       </div>
-    </Teleport>
+    </ConsoleModal>
   </div>
 </template>

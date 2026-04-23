@@ -16,16 +16,16 @@ watch(resourceFilter, (val) => {
 })
 
 const actionOptions = computed(() => [
-  { label: tc('audit.actions.create'), value: 'create', class: 'bg-cyan-500/10 text-cyan-400' },
-  { label: tc('audit.actions.update'), value: 'update', class: 'bg-amber-500/10 text-amber-400' },
-  { label: tc('audit.actions.delete'), value: 'delete', class: 'bg-rose-500/10 text-rose-400' },
-  { label: tc('audit.actions.login'), value: 'login', class: 'bg-purple-500/10 text-purple-400' },
-  { label: tc('audit.actions.publish'), value: 'publish', class: 'bg-emerald-500/10 text-emerald-400' },
-  { label: tc('audit.actions.unpublish'), value: 'unpublish', class: 'bg-slate-500/10 text-[var(--ca-muted)]' },
-  { label: tc('audit.actions.upload'), value: 'upload', class: 'bg-blue-500/10 text-blue-400' },
-  { label: tc('audit.actions.ai_generate'), value: 'ai_generate', class: 'bg-violet-500/10 text-violet-400' },
-  { label: tc('audit.actions.trigger'), value: 'trigger', class: 'bg-orange-500/10 text-orange-400' },
-  { label: tc('audit.actions.copy'), value: 'copy', class: 'bg-sky-500/10 text-sky-400' },
+  { label: tc('audit.actions.create'), value: 'create', class: 'ca-pill-info' },
+  { label: tc('audit.actions.update'), value: 'update', class: 'ca-pill-gold' },
+  { label: tc('audit.actions.delete'), value: 'delete', class: 'ca-pill-danger' },
+  { label: tc('audit.actions.login'), value: 'login', class: 'ca-pill-info' },
+  { label: tc('audit.actions.publish'), value: 'publish', class: 'ca-pill-emerald' },
+  { label: tc('audit.actions.unpublish'), value: 'unpublish', class: 'ca-pill-muted' },
+  { label: tc('audit.actions.upload'), value: 'upload', class: 'ca-pill-info' },
+  { label: tc('audit.actions.ai_generate'), value: 'ai_generate', class: 'ca-pill-gold' },
+  { label: tc('audit.actions.trigger'), value: 'trigger', class: 'ca-pill-gold' },
+  { label: tc('audit.actions.copy'), value: 'copy', class: 'ca-pill-info' },
 ])
 
 const columns = computed(() => [
@@ -57,7 +57,7 @@ const actionLabel = (action: string) => {
 }
 
 const actionColor = (action: string) => {
-  return actionOptions.value.find(o => o.value === action)?.class || 'bg-slate-500/10 text-[var(--ca-muted)]'
+  return actionOptions.value.find(o => o.value === action)?.class || 'ca-pill-muted'
 }
 
 const handleRowClick = (row: any) => {
@@ -116,65 +116,47 @@ const handleRowClick = (row: any) => {
       </div>
     </div>
 
-    <!-- Detail Modal -->
-    <Teleport to="body">
-      <div v-if="selectedLog" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" @click.self="selectedLog = null">
-        <div class="ca-console-dialog w-full max-w-lg p-6">
-          <div class="flex items-start justify-between mb-5">
-            <div class="flex items-center gap-3">
-              <div class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--ca-panel-bg-strong)]">
-                <Icon name="lucide:scroll-text" class="h-5 w-5 text-amber-400" />
-              </div>
-              <div>
-                <h3 class="font-display text-lg font-bold text-[var(--ca-text)]">{{ tc('audit.detailTitle') }}</h3>
-                <span class="rounded-full px-2 py-0.5 text-[0.6rem] font-bold uppercase" :class="actionColor(selectedLog.action)">
-                  {{ actionLabel(selectedLog.action) }}
-                </span>
-              </div>
-            </div>
-            <button type="button" class="rounded-lg p-1.5 text-[var(--ca-subtle)] hover:bg-[var(--ca-panel-bg-strong)]" @click="selectedLog = null">
-              <Icon name="lucide:x" class="h-5 w-5" />
-            </button>
+    <ConsoleModal
+      :show="!!selectedLog"
+      :title="tc('audit.detailTitle')"
+      size="lg"
+      @close="selectedLog = null"
+    >
+      <div v-if="selectedLog" class="space-y-4">
+        <div>
+          <span class="rounded-full px-2 py-0.5 text-[0.6rem] font-bold uppercase" :class="actionColor(selectedLog.action)">
+            {{ actionLabel(selectedLog.action) }}
+          </span>
+        </div>
+        <div class="rounded-lg border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-3">
+          <p class="text-sm text-[var(--ca-text)]">{{ selectedLog.description || `${selectedLog.action} ${selectedLog.resource}` }}</p>
+        </div>
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div class="rounded-lg border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-3">
+            <p class="text-[0.65rem] font-semibold uppercase tracking-widest text-[var(--ca-subtle)]">{{ tc('audit.user') }}</p>
+            <p class="mt-1 text-sm font-medium text-[var(--ca-text)]">{{ selectedLog.user_name || tc('audit.system') }}</p>
           </div>
-
-          <div class="space-y-3">
-            <!-- Description -->
-            <div class="rounded-lg border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-3">
-              <p class="text-sm text-[var(--ca-text)]">{{ selectedLog.description || `${selectedLog.action} ${selectedLog.resource}` }}</p>
-            </div>
-
-            <!-- Details grid -->
-            <div class="grid grid-cols-2 gap-3">
-              <div class="rounded-lg border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-3">
-                <p class="text-[0.65rem] font-semibold uppercase tracking-widest text-[var(--ca-subtle)]">{{ tc('audit.user') }}</p>
-                <p class="mt-1 text-sm font-medium text-[var(--ca-text)]">{{ selectedLog.user_name || tc('audit.system') }}</p>
-              </div>
-              <div class="rounded-lg border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-3">
-                <p class="text-[0.65rem] font-semibold uppercase tracking-widest text-[var(--ca-subtle)]">{{ tc('audit.resource') }}</p>
-                <p class="mt-1 text-sm font-medium text-[var(--ca-text)]">{{ selectedLog.resource || '-' }}</p>
-              </div>
-              <div class="rounded-lg border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-3">
-                <p class="text-[0.65rem] font-semibold uppercase tracking-widest text-[var(--ca-subtle)]">{{ tc('audit.ipAddress') }}</p>
-                <p class="mt-1 font-mono text-sm text-[var(--ca-text)]">{{ selectedLog.ip_address || '-' }}</p>
-              </div>
-              <div class="rounded-lg border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-3">
-                <p class="text-[0.65rem] font-semibold uppercase tracking-widest text-[var(--ca-subtle)]">{{ tc('audit.time') }}</p>
-                <p class="mt-1 text-sm text-[var(--ca-text)]">{{ formatDateTime(selectedLog.created_at) }}</p>
-              </div>
-            </div>
-
-            <!-- Resource ID -->
-            <div v-if="selectedLog.resource_id" class="rounded-lg border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-3">
-              <p class="text-[0.65rem] font-semibold uppercase tracking-widest text-[var(--ca-subtle)]">Resource ID</p>
-              <p class="mt-1 font-mono text-xs text-[var(--ca-muted)] break-all">{{ selectedLog.resource_id }}</p>
-            </div>
+          <div class="rounded-lg border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-3">
+            <p class="text-[0.65rem] font-semibold uppercase tracking-widest text-[var(--ca-subtle)]">{{ tc('audit.resource') }}</p>
+            <p class="mt-1 text-sm font-medium text-[var(--ca-text)]">{{ selectedLog.resource || '-' }}</p>
           </div>
-
-          <div class="mt-5 flex justify-end">
-            <button type="button" class="ca-btn-secondary" @click="selectedLog = null">{{ tc('common.close') }}</button>
+          <div class="rounded-lg border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-3">
+            <p class="text-[0.65rem] font-semibold uppercase tracking-widest text-[var(--ca-subtle)]">{{ tc('audit.ipAddress') }}</p>
+            <p class="mt-1 font-mono text-sm text-[var(--ca-text)]">{{ selectedLog.ip_address || '-' }}</p>
+          </div>
+          <div class="rounded-lg border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-3">
+            <p class="text-[0.65rem] font-semibold uppercase tracking-widest text-[var(--ca-subtle)]">{{ tc('audit.time') }}</p>
+            <p class="mt-1 text-sm text-[var(--ca-text)]">{{ formatDateTime(selectedLog.created_at) }}</p>
           </div>
         </div>
+        <div v-if="selectedLog.resource_id" class="rounded-lg border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-3">
+          <p class="text-[0.65rem] font-semibold uppercase tracking-widest text-[var(--ca-subtle)]">Resource ID</p>
+          <p class="mt-1 break-all font-mono text-xs text-[var(--ca-muted)]">{{ selectedLog.resource_id }}</p>
+        </div>
+        <div class="flex justify-end">
+          <button type="button" class="ca-btn-secondary" @click="selectedLog = null">{{ tc('common.close') }}</button>
+        </div>
       </div>
-    </Teleport>
+    </ConsoleModal>
   </div>
 </template>

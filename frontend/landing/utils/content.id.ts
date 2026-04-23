@@ -61,6 +61,10 @@ const ID_CONTENT = {
       title: 'Pilih produk yang sesuai dengan kebutuhan tim Anda',
       subtitle:
         'Setiap produk dirancang untuk menyelesaikan masalah yang spesifik, tetapi tetap bisa berkembang dalam satu ekosistem yang terhubung.',
+      roadmapKicker: 'Roadmap Produk',
+      roadmapTitle: 'Produk berikutnya yang sedang disiapkan',
+      roadmapSubtitle:
+        'LMS dan LeadKu tetap ditampilkan sebagai arah ekosistem CoreAsia, sehingga calon client bisa melihat rencana solusi yang akan tersedia berikutnya.',
       items: [
         {
           name: 'Pantau by CoreAsia',
@@ -101,6 +105,8 @@ const ID_CONTENT = {
           tagline: 'Sertifikasi & Training',
           description:
             'Platform sertifikasi dan training management untuk operasional yang butuh workflow rapi, audit-ready, dan siap di-scale.',
+          ctaLabel: 'Lihat Roadmap LMS',
+          to: '/products/lms',
         },
         {
           name: 'LeadKu by CoreAsia',
@@ -108,6 +114,8 @@ const ID_CONTENT = {
           tagline: 'Sales CRM',
           description:
             'CRM multi-workspace untuk tim sales yang perlu pipeline lebih rapi, aktivitas tim terlacak, dan reporting yang cepat.',
+          ctaLabel: 'Lihat Roadmap LeadKu',
+          to: '/products/leadku',
         },
       ],
     },

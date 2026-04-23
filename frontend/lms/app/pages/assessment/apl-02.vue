@@ -1,13 +1,17 @@
 <script setup lang="ts">
 import DashboardLayout from '~/components/templates/DashboardLayout.vue'
+import ConfirmDialog from '~/components/molecules/ConfirmDialog.vue'
 const AssessmentUnitCard = defineAsyncComponent(() => import('~/components/organisms/AssessmentUnitCard.vue'))
 import CaButton from '~/components/atoms/CaButton.vue'
+import { useNotificationStore } from '~/stores/useNotificationStore'
 
 import { Save, CheckCircle2, Send } from 'lucide-vue-next'
 
 const { units } = await useAssessment()
+const notificationStore = useNotificationStore()
 const allClaims = ref<Record<string, any>>({})
 const isSaving = ref(false)
+const isSubmitConfirmOpen = ref(false)
 
 const totalKuk = computed(() => {
   if (!units.value) return 0
@@ -22,23 +26,30 @@ const completedKuk = computed(() => {
 
 const progress = computed(() => (completedKuk.value / totalKuk.value) * 100)
 
+const submitConfirmMessage = computed(() => {
+  const incompleteMessage = completedKuk.value < totalKuk.value
+    ? 'Beberapa kriteria unjuk kerja belum dinilai. '
+    : ''
+
+  return `${incompleteMessage}Apakah Anda yakin ingin mengirim Asesmen Mandiri ini? Data tidak dapat diubah setelah dikirim.`
+})
+
 const saveAssessment = () => {
   isSaving.value = true
   setTimeout(() => {
     isSaving.value = false
-    alert('Asesmen Mandiri telah disimpan sementara.')
+    notificationStore.success('Asesmen Mandiri telah disimpan sementara.')
   }, 1000)
 }
 
 const submitAssessment = () => {
-  if (completedKuk.value < totalKuk.value) {
-    if (!confirm('Beberapa kriteria unjuk kerja belum dinilai. Tetap kirim?')) return
-  }
-  
-  if (confirm('Apakah Anda yakin ingin mengirim Asesmen Mandiri ini? Data tidak dapat diubah setelah dikirim.')) {
-    alert('Asesmen Mandiri Berhasil Dikirim!')
-    navigateTo('/')
-  }
+  isSubmitConfirmOpen.value = true
+}
+
+const confirmSubmitAssessment = () => {
+  isSubmitConfirmOpen.value = false
+  notificationStore.success('Asesmen Mandiri berhasil dikirim.')
+  navigateTo('/')
 }
 </script>
 
@@ -110,5 +121,16 @@ const submitAssessment = () => {
         </p>
       </div>
     </div>
+
+    <ConfirmDialog
+      :open="isSubmitConfirmOpen"
+      title="Kirim Asesmen Mandiri"
+      :message="submitConfirmMessage"
+      confirm-label="Kirim Asesmen"
+      cancel-label="Periksa Lagi"
+      :variant="completedKuk < totalKuk ? 'warning' : 'default'"
+      @confirm="confirmSubmitAssessment"
+      @cancel="isSubmitConfirmOpen = false"
+    />
   </DashboardLayout>
 </template>

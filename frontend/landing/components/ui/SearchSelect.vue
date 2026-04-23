@@ -21,10 +21,19 @@
       <input
         ref="searchInput"
         :id="id"
+        name="ca-option-search"
         v-model="searchQuery"
         type="text"
-        autocomplete="off"
+        autocomplete="new-password"
+        autocapitalize="none"
+        autocorrect="off"
+        spellcheck="false"
+        data-1p-ignore="true"
+        data-bwignore="true"
+        data-form-type="other"
+        data-lpignore="true"
         role="combobox"
+        aria-autocomplete="list"
         :placeholder="selectedLabel || placeholder"
         class="w-full bg-transparent p-0 text-sm leading-normal text-[var(--ca-text)] outline-none ring-0 placeholder:transition-colors focus:outline-none focus:ring-0 focus-visible:outline-none"
         :class="[
@@ -65,7 +74,7 @@
     >
       <ul
         v-if="isOpen && filteredOptions.length > 0"
-        class="ca-field-dropdown absolute z-50 mt-2 max-h-60 w-full overflow-auto rounded-xl py-1 shadow-2xl ring-1 ring-black/5 focus:outline-hidden sm:text-sm"
+        class="ca-field-dropdown ca-scrollbar absolute z-50 mt-2 max-h-60 w-full overflow-auto rounded-xl py-1 shadow-2xl ring-1 ring-black/5 focus:outline-hidden sm:text-sm"
         role="listbox"
       >
         <li

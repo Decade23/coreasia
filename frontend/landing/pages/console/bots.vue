@@ -227,10 +227,10 @@ const confirmDelete = async () => {
 
 const statusColor = (status: string) => {
   const map: Record<string, string> = {
-    idle: 'bg-slate-500/10 text-[var(--ca-muted)]',
-    running: 'bg-blue-500/10 text-blue-400',
-    success: 'bg-emerald-500/10 text-emerald-400',
-    error: 'bg-rose-500/10 text-rose-400',
+    idle: 'ca-pill-muted',
+    running: 'ca-pill-info',
+    success: 'ca-pill-emerald',
+    error: 'ca-pill-danger',
   }
   return map[status] || map.idle
 }
@@ -295,7 +295,7 @@ const configLabel = (b: any) => {
                 <h3 class="font-display font-semibold text-[var(--ca-text)]">{{ b.name }}</h3>
                 <span
                   class="rounded-full px-2 py-0.5 text-[0.6rem] font-bold uppercase"
-                  :class="b.is_active ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-500/10 text-[var(--ca-subtle)]'"
+                  :class="b.is_active ? 'ca-pill-emerald' : 'ca-pill-muted'"
                 >
                   {{ b.is_active ? 'Aktif' : 'Nonaktif' }}
                 </span>
@@ -310,7 +310,7 @@ const configLabel = (b: any) => {
                     {{ configLabel(b).model.split('/').pop() }}
                   </span>
                 </template>
-                  <span v-else class="rounded bg-blue-500/10 px-1.5 py-0.5 text-[0.65rem] text-blue-400">
+                  <span v-else class="ca-pill-info px-1.5 py-0.5 text-[0.65rem]">
                     <Icon name="lucide:settings" class="mr-0.5 inline h-3 w-3" />
                     {{ tc('bots.useDefault') }}
                   </span>
@@ -368,7 +368,7 @@ const configLabel = (b: any) => {
         <div class="mt-4 flex flex-wrap items-center gap-4 rounded-lg border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] px-4 py-2.5">
           <div class="flex items-center gap-2">
             <span class="text-[0.65rem] font-semibold uppercase tracking-wider text-[var(--ca-subtle)]">{{ tc('bots.statusLast') }}</span>
-            <span v-if="triggeringBot === b.id" class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[0.6rem] font-bold uppercase bg-blue-500/10 text-blue-400">
+            <span v-if="triggeringBot === b.id" class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[0.6rem] font-bold uppercase ca-pill-info">
               <Icon name="lucide:loader-2" class="h-3 w-3 animate-spin" />
               {{ tc('bots.running') }}
             </span>
@@ -394,117 +394,102 @@ const configLabel = (b: any) => {
       </div>
     </div>
 
-    <!-- Form Modal -->
-    <Teleport to="body">
-      <div v-if="showFormModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" @click.self="showFormModal = false">
-        <div class="ca-console-dialog w-full max-w-lg max-h-[90vh] overflow-y-auto p-6">
-          <h3 class="font-display text-lg font-bold text-[var(--ca-text)]">
-            <Icon name="lucide:bot" class="mr-2 inline h-5 w-5 text-amber-400" />
-            {{ editingBot ? tc('bots.formEdit') : tc('bots.formCreate') }}
-          </h3>
-          <form class="mt-4 space-y-3" autocomplete="off" @submit.prevent="handleSubmit">
-            <BaseInput id="bot-name" v-model="formData.name" :label="tc('bots.name')" placeholder="Article Generator Harian" required autocomplete="off" />
+    <ConsoleModal
+      :show="showFormModal"
+      :title="editingBot ? tc('bots.formEdit') : tc('bots.formCreate')"
+      size="lg"
+      @close="showFormModal = false"
+    >
+      <form class="space-y-3" autocomplete="off" @submit.prevent="handleSubmit">
+        <BaseInput id="bot-name" v-model="formData.name" :label="tc('bots.name')" placeholder="Article Generator Harian" required autocomplete="off" />
+        <SearchSelect
+          v-if="!editingBot"
+          id="bot-type"
+          v-model="formData.bot_type"
+          :label="tc('bots.type')"
+          :options="botTypeOptions"
+          required
+        />
+        <div class="grid gap-3 sm:grid-cols-2">
+          <BaseInput id="bot-schedule" v-model="formData.schedule" :label="tc('bots.schedule')" placeholder="08:00" required autocomplete="off" />
+          <SearchSelect
+            id="bot-timezone"
+            v-model="formData.timezone"
+            :label="tc('bots.timezone')"
+            :options="timezoneOptions"
+            required
+          />
+        </div>
+        <BaseSwitch
+          id="bot-default-ai"
+          :model-value="useDefaultAI"
+          :label="tc('bots.defaultAiTitle')"
+          :description="tc('bots.defaultAiDesc')"
+          @update:model-value="handleToggleDefaultAI"
+        />
+        <template v-if="!useDefaultAI">
+          <p class="pt-1 text-[0.65rem] font-semibold uppercase tracking-widest text-[var(--ca-subtle)]">{{ tc('bots.overrideTitle') }}</p>
+          <div class="grid gap-3 sm:grid-cols-2">
             <SearchSelect
-              v-if="!editingBot"
-              id="bot-type"
-              v-model="formData.bot_type"
-              :label="tc('bots.type')"
-              :options="botTypeOptions"
+              id="bot-provider"
+              v-model="formData.provider"
+              :label="tc('apiKeys.provider')"
+              :options="providerOptions"
               required
             />
-            <div class="grid gap-3 sm:grid-cols-2">
-              <BaseInput id="bot-schedule" v-model="formData.schedule" :label="tc('bots.schedule')" placeholder="08:00" required autocomplete="off" />
+            <div>
               <SearchSelect
-                id="bot-timezone"
-                v-model="formData.timezone"
-                :label="tc('bots.timezone')"
-                :options="timezoneOptions"
+                id="bot-model"
+                v-model="formData.model"
+                :label="tc('aiSettings.modelLabel')"
+                :options="modelOptions"
+                :disabled="modelsLoading"
+                :placeholder="modelsLoading ? tc('aiSettings.loadingModels') : tc('aiSettings.modelPlaceholder')"
                 required
               />
+              <p v-if="modelsError" class="mt-1 text-[0.65rem] text-amber-400">{{ modelsError }}</p>
             </div>
-
-            <!-- AI Settings Toggle -->
-            <BaseSwitch
-              id="bot-default-ai"
-              :model-value="useDefaultAI"
-              :label="tc('bots.defaultAiTitle')"
-              :description="tc('bots.defaultAiDesc')"
-              @update:model-value="handleToggleDefaultAI"
-            />
-
-            <!-- AI Provider & Model (only when override) -->
-            <template v-if="!useDefaultAI">
-              <p class="text-[0.65rem] font-semibold uppercase tracking-widest text-[var(--ca-subtle)] pt-1">{{ tc('bots.overrideTitle') }}</p>
-              <div class="grid gap-3 sm:grid-cols-2">
-                <SearchSelect
-                  id="bot-provider"
-                  v-model="formData.provider"
-                  :label="tc('apiKeys.provider')"
-                  :options="providerOptions"
-                  required
-                />
-                <div>
-                  <SearchSelect
-                    id="bot-model"
-                    v-model="formData.model"
-                    :label="tc('aiSettings.modelLabel')"
-                    :options="modelOptions"
-                    :disabled="modelsLoading"
-                    :placeholder="modelsLoading ? tc('aiSettings.loadingModels') : tc('aiSettings.modelPlaceholder')"
-                    required
-                  />
-                  <p v-if="modelsError" class="mt-1 text-[0.65rem] text-amber-400">{{ modelsError }}</p>
-                </div>
-              </div>
-            </template>
-
-            <div class="grid gap-3 sm:grid-cols-3">
-              <SearchSelect
-                id="bot-tone"
-                v-model="formData.tone"
-                :label="tc('bots.tone')"
-                :options="toneOptions"
-              />
-              <SearchSelect
-                id="bot-language"
-                v-model="formData.language"
-                :label="tc('bots.language')"
-                :options="languageOptions"
-              />
-              <BaseInput id="bot-wordcount" v-model.number="formData.word_count" :label="tc('bots.wordCount')" type="number" placeholder="1200" autocomplete="off" />
-            </div>
-
-            <!-- Auto Image -->
-            <BaseSwitch
-              id="bot-auto-image"
-              v-model="formData.auto_image"
-              :label="tc('bots.autoImageTitle')"
-              :description="tc('bots.autoImageDesc')"
-            />
-
-            <p v-if="error" class="text-sm text-rose-400">{{ error }}</p>
-
-            <div class="flex justify-end gap-3 pt-2">
-              <button type="button" class="ca-btn-secondary" @click="showFormModal = false">{{ tc('common.cancel') }}</button>
-              <button type="submit" class="ca-btn-primary" :disabled="saving">{{ saving ? tc('common.processing') : tc('common.save') }}</button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </Teleport>
-
-    <!-- Delete Confirm -->
-    <Teleport to="body">
-      <div v-if="showDeleteConfirm" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" @click.self="showDeleteConfirm = false">
-        <div class="ca-console-dialog w-full max-w-md p-6">
-          <h3 class="font-display text-lg font-bold text-[var(--ca-text)]">{{ tc('bots.deleteTitle') }}</h3>
-          <p class="mt-2 text-sm text-[var(--ca-muted)]">{{ tc('bots.deleteDescription', { name: deletingBot?.name || '-' }) }}</p>
-          <div class="mt-6 flex justify-end gap-3">
-            <button type="button" class="ca-btn-secondary" @click="showDeleteConfirm = false">{{ tc('common.cancel') }}</button>
-            <button type="button" class="ca-btn-danger !px-4 !py-2.5" @click="confirmDelete">{{ tc('common.delete') }}</button>
           </div>
+        </template>
+        <div class="grid gap-3 sm:grid-cols-3">
+          <SearchSelect
+            id="bot-tone"
+            v-model="formData.tone"
+            :label="tc('bots.tone')"
+            :options="toneOptions"
+          />
+          <SearchSelect
+            id="bot-language"
+            v-model="formData.language"
+            :label="tc('bots.language')"
+            :options="languageOptions"
+          />
+          <BaseInput id="bot-wordcount" v-model.number="formData.word_count" :label="tc('bots.wordCount')" type="number" placeholder="1200" autocomplete="off" />
         </div>
+        <BaseSwitch
+          id="bot-auto-image"
+          v-model="formData.auto_image"
+          :label="tc('bots.autoImageTitle')"
+          :description="tc('bots.autoImageDesc')"
+        />
+        <p v-if="error" class="text-sm text-rose-400">{{ error }}</p>
+        <div class="flex justify-end gap-3 pt-2">
+          <button type="button" class="ca-btn-secondary" @click="showFormModal = false">{{ tc('common.cancel') }}</button>
+          <button type="submit" class="ca-btn-primary" :disabled="saving">{{ saving ? tc('common.processing') : tc('common.save') }}</button>
+        </div>
+      </form>
+    </ConsoleModal>
+
+    <ConsoleModal
+      :show="showDeleteConfirm"
+      :title="tc('bots.deleteTitle')"
+      @close="showDeleteConfirm = false"
+    >
+      <p class="text-sm text-[var(--ca-muted)]">{{ tc('bots.deleteDescription', { name: deletingBot?.name || '-' }) }}</p>
+      <div class="mt-6 flex justify-end gap-3">
+        <button type="button" class="ca-btn-secondary" @click="showDeleteConfirm = false">{{ tc('common.cancel') }}</button>
+        <button type="button" class="ca-btn-danger !px-4 !py-2.5" @click="confirmDelete">{{ tc('common.delete') }}</button>
       </div>
-    </Teleport>
+    </ConsoleModal>
   </div>
 </template>

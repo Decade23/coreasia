@@ -16,6 +16,8 @@ declare global {
 
 const pushEvent = (event: string, params: EventParams = {}) => {
   if (import.meta.server) return
+  if (window.location.pathname === '/console' || window.location.pathname.startsWith('/console/')) return
+
   window.dataLayer = window.dataLayer || []
   window.dataLayer.push({ event, ...params })
 }

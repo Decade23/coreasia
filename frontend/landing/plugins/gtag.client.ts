@@ -10,6 +10,12 @@ export default defineNuxtPlugin((nuxtApp) => {
   if (!id) return
 
   const router = useRouter()
+  const isConsolePath = (path: string) => path === '/console' || path.startsWith('/console/')
+
+  if (isConsolePath(router.currentRoute.value.path)) {
+    return
+  }
+
   const { trackPageView } = useAnalytics()
 
   window.dataLayer = window.dataLayer || []
@@ -33,9 +39,10 @@ export default defineNuxtPlugin((nuxtApp) => {
 
   const trackCurrentPage = () => {
     const currentPath = router.currentRoute.value.fullPath || '/'
+    const routePath = router.currentRoute.value.path || '/'
     const currentLocation = window.location.href
 
-    if (!currentLocation || currentLocation === lastTrackedLocation) {
+    if (isConsolePath(routePath) || !currentLocation || currentLocation === lastTrackedLocation) {
       return
     }
 

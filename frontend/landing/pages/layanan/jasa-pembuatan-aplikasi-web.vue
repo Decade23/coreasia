@@ -2,6 +2,14 @@
 import { LINKS } from '~/utils/constants'
 
 const { t } = useCoreI18n()
+const { useReveal, revealRef } = useScrollReveal()
+
+const heroContent = useReveal('fadeUp')
+const capabilitiesHeader = useReveal('fadeUp')
+const techStackSection = useReveal('scaleUp')
+const relatedProductsSection = useReveal('fadeUp')
+const faqSection = useReveal('fadeUp')
+const ctaSection = useReveal('scaleUp')
 
 useCoreSeo({
   title: t('services.jasaPembuatanAplikasiWeb.title') as string,
@@ -66,7 +74,7 @@ const faqItems = computed(() => (t('services.jasaPembuatanAplikasiWeb.faq.items'
       </div>
 
       <div class="ca-container relative ca-section pt-6 sm:pt-8 lg:py-28">
-        <div class="mx-auto max-w-4xl text-center">
+        <div ref="heroContent" class="mx-auto max-w-4xl text-center">
           <span class="ca-kicker">
             <Icon name="lucide:code-2" class="h-3.5 w-3.5 ca-tone-gold" />
             {{ t('services.jasaPembuatanAplikasiWeb.kicker') }}
@@ -94,11 +102,11 @@ const faqItems = computed(() => (t('services.jasaPembuatanAplikasiWeb.faq.items'
     <!-- Capabilities -->
     <section class="ca-section">
       <div class="ca-container">
-        <div class="mb-8 text-center">
+        <div ref="capabilitiesHeader" class="mb-8 text-center">
           <h2 class="ca-title">{{ t('services.jasaPembuatanAplikasiWeb.capabilities.title') }}</h2>
         </div>
         <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          <article v-for="item in capabilities" :key="item.title" class="ca-card-soft p-5">
+          <article v-for="(item, index) in capabilities" :key="item.title" :ref="revealRef('fadeUp', index * 80)" class="ca-card-soft p-5">
             <div class="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg-strong)]">
               <Icon :name="item.icon" class="h-5 w-5 ca-tone-gold" />
             </div>
@@ -112,7 +120,7 @@ const faqItems = computed(() => (t('services.jasaPembuatanAplikasiWeb.faq.items'
     <!-- Tech Stack -->
     <section class="ca-section pt-0">
       <div class="ca-container">
-        <div class="ca-card p-5 sm:p-6">
+        <div ref="techStackSection" class="ca-card p-5 sm:p-6">
           <h2 class="text-xl font-display font-bold text-[var(--ca-text)]">
             {{ t('services.jasaPembuatanAplikasiWeb.techStack.title') }}
           </h2>
@@ -132,7 +140,7 @@ const faqItems = computed(() => (t('services.jasaPembuatanAplikasiWeb.faq.items'
     <!-- Related Products -->
     <section class="ca-section pt-0">
       <div class="ca-container">
-        <div class="grid gap-4 md:grid-cols-2">
+        <div ref="relatedProductsSection" class="grid gap-4 md:grid-cols-2">
           <div class="ca-card p-5">
             <span class="ca-kicker"><Icon name="lucide:code-2" class="h-3.5 w-3.5 ca-tone-gold" /> Build</span>
             <h3 class="mt-2 text-lg font-display font-bold text-[var(--ca-text)]">Build by CoreAsia</h3>
@@ -156,7 +164,7 @@ const faqItems = computed(() => (t('services.jasaPembuatanAplikasiWeb.faq.items'
     <!-- FAQ -->
     <section class="ca-section pt-0">
       <div class="ca-container">
-        <div class="ca-card p-6 sm:p-8">
+        <div ref="faqSection" class="ca-card p-6 sm:p-8">
           <h2 class="ca-title mb-6">{{ t('services.jasaPembuatanAplikasiWeb.faq.title') }}</h2>
           <div class="space-y-3">
             <article v-for="faq in faqItems" :key="faq.question" class="rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-4">
@@ -171,7 +179,7 @@ const faqItems = computed(() => (t('services.jasaPembuatanAplikasiWeb.faq.items'
     <!-- CTA -->
     <section class="ca-section pt-0">
       <div class="ca-container">
-        <div class="ca-card p-6 text-center sm:p-10">
+        <div ref="ctaSection" class="ca-card p-6 text-center sm:p-10">
           <h2 class="text-balance font-display text-3xl font-bold text-[var(--ca-text)] sm:text-4xl">
             {{ t('services.jasaPembuatanAplikasiWeb.cta.title') }}
           </h2>

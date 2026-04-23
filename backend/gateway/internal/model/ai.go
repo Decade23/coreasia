@@ -11,11 +11,12 @@ type AIGenerateRequest struct {
 }
 
 type AIGenerateResponse struct {
-	Title         string   `json:"title"`
-	Slug          string   `json:"slug"`
-	Description   string   `json:"description"`
-	Content       string   `json:"content"`
-	Tags          []string `json:"tags"`
-	ReadTime      int      `json:"read_time"`
-	FeaturedImage string   `json:"featured_image,omitempty"`
+	Title                string   `json:"title"`
+	Slug                 string   `json:"slug"`
+	Description          string   `json:"description"`
+	Content              string   `json:"content"`
+	Tags                 []string `json:"tags"`
+	ReadTime             int      `json:"read_time"`
+	FeaturedImage        string   `json:"featured_image,omitempty"`
+	FeaturedImageWarning string   `json:"featured_image_warning,omitempty"`
 }

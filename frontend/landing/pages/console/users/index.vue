@@ -124,12 +124,12 @@ const confirmDelete = async () => {
             <td class="font-medium text-[var(--ca-text)]">{{ u.full_name }}</td>
             <td class="text-[var(--ca-muted)]">{{ u.email }}</td>
             <td>
-              <span class="rounded-full px-2 py-0.5 text-[0.68rem] font-bold uppercase" :class="u.role === 'super_admin' ? 'bg-amber-500/10 ca-tone-gold' : 'bg-slate-500/10 text-[var(--ca-muted)]'">
+              <span class="rounded-full px-2 py-0.5 text-[0.68rem] font-bold uppercase" :class="u.role === 'super_admin' ? 'ca-pill-gold' : 'ca-pill-muted'">
                 {{ u.role }}
               </span>
             </td>
             <td>
-              <span :class="u.is_active ? 'text-emerald-400' : 'text-rose-400'" class="text-xs font-medium">
+              <span :class="u.is_active ? 'ca-pill-emerald' : 'ca-pill-danger'" class="text-[0.68rem] font-semibold">
                 {{ u.is_active ? tc('users.active') : tc('users.inactive') }}
               </span>
             </td>
@@ -157,65 +157,56 @@ const confirmDelete = async () => {
       </table>
     </div>
 
-    <!-- Form Modal -->
-    <Teleport to="body">
-      <div v-if="showFormModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" @click.self="showFormModal = false">
-        <div class="ca-console-dialog w-full max-w-md p-6">
-          <h3 class="font-display text-lg font-bold text-[var(--ca-text)]">{{ editingUser ? tc('users.formEditTitle') : tc('users.formCreateTitle') }}</h3>
-          <form class="mt-4 space-y-3" @submit.prevent="handleSubmit">
-            <BaseInput id="u-name" v-model="formData.full_name" :label="tc('users.fullName')" required />
-            <BaseInput id="u-email" v-model="formData.email" :label="tc('users.email')" type="email" required />
-            <SearchSelect
-              id="u-role"
-              v-model="formData.role"
-              :label="tc('users.role')"
-              :options="roleOptions"
-            />
-            <p v-if="error" class="text-sm text-rose-400">{{ error }}</p>
-            <div class="flex justify-end gap-3 pt-2">
-              <button type="button" class="ca-btn-secondary" @click="showFormModal = false">{{ tc('common.cancel') }}</button>
-              <button type="submit" class="ca-btn-primary" :disabled="saving">{{ saving ? tc('common.processing') : tc('common.save') }}</button>
-            </div>
-          </form>
+    <ConsoleModal
+      :show="showFormModal"
+      :title="editingUser ? tc('users.formEditTitle') : tc('users.formCreateTitle')"
+      @close="showFormModal = false"
+    >
+      <form class="space-y-3" @submit.prevent="handleSubmit">
+        <BaseInput id="u-name" v-model="formData.full_name" :label="tc('users.fullName')" required />
+        <BaseInput id="u-email" v-model="formData.email" :label="tc('users.email')" type="email" required />
+        <SearchSelect
+          id="u-role"
+          v-model="formData.role"
+          :label="tc('users.role')"
+          :options="roleOptions"
+        />
+        <p v-if="error" class="text-sm text-rose-400">{{ error }}</p>
+        <div class="flex justify-end gap-3 pt-2">
+          <button type="button" class="ca-btn-secondary" @click="showFormModal = false">{{ tc('common.cancel') }}</button>
+          <button type="submit" class="ca-btn-primary" :disabled="saving">{{ saving ? tc('common.processing') : tc('common.save') }}</button>
         </div>
-      </div>
-    </Teleport>
+      </form>
+    </ConsoleModal>
 
-    <!-- Delete Confirm -->
-    <Teleport to="body">
-      <div v-if="showDeleteConfirm" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" @click.self="showDeleteConfirm = false">
-        <div class="ca-console-dialog w-full max-w-md p-6">
-          <h3 class="font-display text-lg font-bold text-[var(--ca-text)]">{{ tc('users.deleteTitle') }}</h3>
-          <p class="mt-2 text-sm text-[var(--ca-muted)]">{{ tc('users.deleteDescription', { name: deletingUser?.full_name || '-' }) }}</p>
-          <div class="mt-6 flex justify-end gap-3">
-            <button type="button" class="ca-btn-secondary" @click="showDeleteConfirm = false">{{ tc('common.cancel') }}</button>
-            <button type="button" class="ca-btn-danger !px-4 !py-2.5" @click="confirmDelete">{{ tc('common.delete') }}</button>
-          </div>
-        </div>
+    <ConsoleModal
+      :show="showDeleteConfirm"
+      :title="tc('users.deleteTitle')"
+      @close="showDeleteConfirm = false"
+    >
+      <p class="text-sm text-[var(--ca-muted)]">{{ tc('users.deleteDescription', { name: deletingUser?.full_name || '-' }) }}</p>
+      <div class="mt-6 flex justify-end gap-3">
+        <button type="button" class="ca-btn-secondary" @click="showDeleteConfirm = false">{{ tc('common.cancel') }}</button>
+        <button type="button" class="ca-btn-danger !px-4 !py-2.5" @click="confirmDelete">{{ tc('common.delete') }}</button>
       </div>
-    </Teleport>
+    </ConsoleModal>
 
-    <!-- Change Password Modal -->
-    <Teleport to="body">
-      <div v-if="showPasswordModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" @click.self="showPasswordModal = false">
-        <div class="ca-console-dialog w-full max-w-md p-6">
-          <h3 class="font-display text-lg font-bold text-[var(--ca-text)]">
-            <Icon name="lucide:key-round" class="mr-2 inline h-5 w-5 text-amber-400" />
-            {{ tc('users.passwordTitle') }}
-          </h3>
-          <p class="mt-1 text-sm text-[var(--ca-muted)]">{{ tc('users.passwordDescription', { name: passwordTarget?.full_name || '-', email: passwordTarget?.email || '-' }) }}</p>
-          <form class="mt-4 space-y-3" @submit.prevent="handlePasswordChange">
-            <BasePasswordInput id="pw-new" v-model="passwordForm.password" :label="tc('users.newPassword')" :placeholder="tc('users.passwordMin')" required />
-            <BasePasswordInput id="pw-confirm" v-model="passwordForm.confirm_password" :label="tc('users.confirmPassword')" :placeholder="tc('users.confirmPassword')" required />
-            <p v-if="passwordError" class="text-sm text-rose-400">{{ passwordError }}</p>
-            <p v-if="error" class="text-sm text-rose-400">{{ error }}</p>
-            <div class="flex justify-end gap-3 pt-2">
-              <button type="button" class="ca-btn-secondary" @click="showPasswordModal = false">{{ tc('common.cancel') }}</button>
-              <button type="submit" class="ca-btn-primary" :disabled="saving">{{ saving ? tc('common.processing') : tc('users.savePassword') }}</button>
-            </div>
-          </form>
+    <ConsoleModal
+      :show="showPasswordModal"
+      :title="tc('users.passwordTitle')"
+      @close="showPasswordModal = false"
+    >
+      <p class="mb-4 text-sm text-[var(--ca-muted)]">{{ tc('users.passwordDescription', { name: passwordTarget?.full_name || '-', email: passwordTarget?.email || '-' }) }}</p>
+      <form class="space-y-3" @submit.prevent="handlePasswordChange">
+        <BasePasswordInput id="pw-new" v-model="passwordForm.password" :label="tc('users.newPassword')" :placeholder="tc('users.passwordMin')" required />
+        <BasePasswordInput id="pw-confirm" v-model="passwordForm.confirm_password" :label="tc('users.confirmPassword')" :placeholder="tc('users.confirmPassword')" required />
+        <p v-if="passwordError" class="text-sm text-rose-400">{{ passwordError }}</p>
+        <p v-if="error" class="text-sm text-rose-400">{{ error }}</p>
+        <div class="flex justify-end gap-3 pt-2">
+          <button type="button" class="ca-btn-secondary" @click="showPasswordModal = false">{{ tc('common.cancel') }}</button>
+          <button type="submit" class="ca-btn-primary" :disabled="saving">{{ saving ? tc('common.processing') : tc('users.savePassword') }}</button>
         </div>
-      </div>
-    </Teleport>
+      </form>
+    </ConsoleModal>
   </div>
 </template>

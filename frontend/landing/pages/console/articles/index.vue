@@ -48,9 +48,9 @@ const handleUnpublish = async (id: string) => {
 }
 
 const statusColor = (status: string) => {
-  if (status === 'published') return 'bg-emerald-500/10 text-emerald-400'
-  if (status === 'archived') return 'bg-rose-500/10 text-rose-400'
-  return 'bg-slate-500/10 text-[var(--ca-muted)]'
+  if (status === 'published') return 'ca-pill-emerald'
+  if (status === 'archived') return 'ca-pill-danger'
+  return 'ca-pill-muted'
 }
 
 const statusLabel = (status: string) => {
@@ -315,18 +315,16 @@ const statusOptions = computed(() => [
       </div>
     </div>
 
-    <!-- Delete Confirmation Modal -->
-    <Teleport to="body">
-      <div v-if="showDeleteConfirm" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" @click.self="showDeleteConfirm = false">
-        <div class="ca-console-dialog w-full max-w-md p-6">
-          <h3 class="font-display text-lg font-bold text-[var(--ca-text)]">{{ tc('articles.deleteTitle') }}</h3>
-          <p class="mt-2 text-sm text-[var(--ca-muted)]">{{ tc('articles.deleteDescription', { title: deletingTitle }) }}</p>
-          <div class="mt-6 flex justify-end gap-3">
-            <button type="button" class="ca-btn-secondary" @click="showDeleteConfirm = false">{{ tc('common.cancel') }}</button>
-            <button type="button" class="ca-btn-danger !px-4 !py-2.5" @click="confirmDelete">{{ tc('common.delete') }}</button>
-          </div>
-        </div>
+    <ConsoleModal
+      :show="showDeleteConfirm"
+      :title="tc('articles.deleteTitle')"
+      @close="showDeleteConfirm = false"
+    >
+      <p class="text-sm text-[var(--ca-muted)]">{{ tc('articles.deleteDescription', { title: deletingTitle }) }}</p>
+      <div class="mt-6 flex justify-end gap-3">
+        <button type="button" class="ca-btn-secondary" @click="showDeleteConfirm = false">{{ tc('common.cancel') }}</button>
+        <button type="button" class="ca-btn-danger !px-4 !py-2.5" @click="confirmDelete">{{ tc('common.delete') }}</button>
       </div>
-    </Teleport>
+    </ConsoleModal>
   </div>
 </template>

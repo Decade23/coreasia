@@ -36,6 +36,7 @@ interface ProductRoadmapItem {
 }
 
 const { locale, t } = useCoreI18n()
+const { useReveal, revealRef } = useScrollReveal()
 const route = useRoute()
 const router = useRouter()
 const slug = route.params.slug as string
@@ -44,6 +45,12 @@ const baseURL = import.meta.client
   ? (config.public?.gatewayPublicUrl || 'http://localhost:8084/api')
   : (config.public?.gatewayUrl || 'http://localhost:8081/api')
 const siteOrigin = useSiteOrigin()
+
+const articleHero = useReveal('fadeUp')
+const articleContent = useReveal('fadeUp', 80)
+const relatedHeader = useReveal('fadeUp')
+const productsHeader = useReveal('fadeUp')
+const ctaSection = useReveal('scaleUp')
 
 const normalizeCategoryKey = (value: string | null | undefined) => {
   const normalized = (value || '').trim().toLowerCase()
@@ -79,6 +86,17 @@ const fetchArticleFromApi = async () => {
   }
 }
 
+const fetchStaticArticleRefreshFromApi = async () => {
+  try {
+    const res = await $fetch<{ data: any[] | null }>(`${baseURL}/articles?per_page=50`, {
+      timeout: 1800,
+    })
+    return (res?.data || []).find(item => item?.slug === slug) || null
+  } catch {
+    return null
+  }
+}
+
 const { data: articleData } = await useAsyncData(`article-${slug}`, async () => {
   if (import.meta.server && staticArticle) {
     return staticArticle
@@ -96,7 +114,7 @@ if (!article.value) {
 
 if (import.meta.client && staticArticle) {
   onMounted(async () => {
-    const apiArticle = await fetchArticleFromApi()
+    const apiArticle = await fetchStaticArticleRefreshFromApi()
     if (apiArticle) {
       articleData.value = apiArticle
     }
@@ -281,7 +299,7 @@ const goToArticles = async () => {
       <div class="pointer-events-none absolute inset-0">
         <div class="absolute inset-0 bg-[radial-gradient(920px_420px_at_50%_0%,rgba(251,191,36,0.12),transparent_62%)]" />
       </div>
-      <div class="ca-container relative ca-section pt-6 sm:pt-8 pb-10 sm:pb-12 lg:pb-16">
+      <div ref="articleHero" class="ca-container relative ca-section pt-6 sm:pt-8 pb-10 sm:pb-12 lg:pb-16">
         <div class="mx-auto max-w-3xl">
           <button
             type="button"
@@ -306,7 +324,7 @@ const goToArticles = async () => {
 
     <section class="ca-section pt-0">
       <div class="ca-container">
-        <article class="mx-auto max-w-4xl">
+        <article ref="articleContent" class="mx-auto max-w-4xl">
           <NuxtImg
             v-if="article.featured_image"
             :src="article.featured_image"
@@ -330,7 +348,7 @@ const goToArticles = async () => {
     <section class="ca-section pt-0">
       <div class="ca-container">
         <div class="mx-auto max-w-4xl">
-          <div class="mb-8 flex items-center gap-3">
+          <div ref="relatedHeader" class="mb-8 flex items-center gap-3">
             <div class="h-px flex-1 bg-[var(--ca-border)]" />
             <span class="text-[0.7rem] font-bold uppercase tracking-[0.18em] text-[var(--ca-subtle)]">{{ t('blog.relatedTitle') }}</span>
             <div class="h-px flex-1 bg-[var(--ca-border)]" />
@@ -338,8 +356,9 @@ const goToArticles = async () => {
 
           <div v-if="relatedArticles.length" class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             <NuxtLink
-              v-for="item in relatedArticles"
+              v-for="(item, index) in relatedArticles"
               :key="item.slug"
+              :ref="revealRef('fadeUp', index * 90)"
               :to="`/artikel/${item.slug}`"
               class="group flex flex-col overflow-hidden rounded-2xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] transition duration-200 hover:-translate-y-0.5 hover:border-[color:var(--ca-gold-border)] hover:shadow-[var(--ca-card-soft-shadow)]"
             >
@@ -391,7 +410,7 @@ const goToArticles = async () => {
     <section class="ca-section pt-0">
       <div class="ca-container">
         <div class="mx-auto max-w-4xl">
-          <div class="mb-8 flex items-center gap-3">
+          <div ref="productsHeader" class="mb-8 flex items-center gap-3">
             <div class="h-px flex-1 bg-[var(--ca-border)]" />
             <span class="text-[0.7rem] font-bold uppercase tracking-[0.18em] text-[var(--ca-subtle)]">{{ t('home.products.kicker') }}</span>
             <div class="h-px flex-1 bg-[var(--ca-border)]" />
@@ -404,8 +423,9 @@ const goToArticles = async () => {
 
           <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <NuxtLink
-              v-for="product in productSpotlights"
+              v-for="(product, index) in productSpotlights"
               :key="product.to"
+              :ref="revealRef('fadeUp', index * 90)"
               :to="product.to"
               class="group relative flex flex-col overflow-hidden rounded-2xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-5 transition duration-200 hover:-translate-y-0.5 hover:border-[color:var(--ca-gold-border)] hover:shadow-[var(--ca-card-soft-shadow)]"
             >
@@ -442,8 +462,9 @@ const goToArticles = async () => {
 
           <div v-if="productRoadmap.length" class="mt-5 grid gap-3 sm:grid-cols-2">
             <div
-              v-for="product in productRoadmap"
+              v-for="(product, index) in productRoadmap"
               :key="product.name"
+              :ref="revealRef('fadeUp', index * 90)"
               class="flex items-start gap-3 rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-4"
             >
               <Icon name="lucide:sparkles" class="mt-0.5 h-4 w-4 flex-shrink-0 text-[var(--ca-gold-text)]" />
@@ -462,7 +483,7 @@ const goToArticles = async () => {
 
     <section class="ca-section pt-0">
       <div class="ca-container">
-        <div class="ca-card p-6 text-center sm:p-10">
+        <div ref="ctaSection" class="ca-card p-6 text-center sm:p-10">
           <h2 class="text-balance font-display text-3xl font-bold text-[var(--ca-text)] sm:text-4xl">{{ t('blog.cta.title') }}</h2>
           <p class="mx-auto mt-3 max-w-2xl text-sm text-[var(--ca-muted)] sm:text-base">{{ t('blog.cta.subtitle') }}</p>
           <div class="mt-6 flex flex-col justify-center gap-3 sm:flex-row">

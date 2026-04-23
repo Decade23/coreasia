@@ -458,12 +458,13 @@ const totalPages = computed(() => Math.ceil(total.value / 20))
           @click="toggleSuggestionSelection(idx)"
         >
           <div class="flex items-center gap-3">
-            <input
-              type="checkbox"
-              :checked="selectedSuggestions.has(idx)"
-              class="h-4 w-4 rounded"
-              @click.stop="toggleSuggestionSelection(idx)"
-            />
+            <div class="w-10 shrink-0" @click.stop>
+              <BaseCheckbox
+                :id="`kw-suggestion-${idx}`"
+                :model-value="selectedSuggestions.has(idx)"
+                @update:model-value="toggleSuggestionSelection(idx)"
+              />
+            </div>
             <div class="flex-1 min-w-0">
               <p class="text-sm font-semibold text-[var(--ca-text)]">{{ s.keyword }}</p>
               <div class="flex items-center gap-3 mt-1 text-xs text-[var(--ca-muted)]">

@@ -2,6 +2,17 @@
 import { LINKS } from '~/utils/constants'
 
 const { t } = useCoreI18n()
+const { useReveal, revealRef } = useScrollReveal()
+
+const heroContent = useReveal('fadeUp')
+const whyUsHeader = useReveal('fadeUp')
+const serviceTypesHeader = useReveal('fadeUp')
+const pricingHeader = useReveal('fadeUp')
+const serviceAreaSection = useReveal('scaleUp')
+const processHeader = useReveal('fadeUp')
+const relatedProductSection = useReveal('fadeUp')
+const faqSection = useReveal('fadeUp')
+const ctaSection = useReveal('scaleUp')
 
 useCoreSeo({
   title: t('services.jasaPembuatanWebsite.title') as string,
@@ -84,7 +95,7 @@ const processItems = computed(() => (t('services.jasaPembuatanWebsite.process.it
       </div>
 
       <div class="ca-container relative ca-section pt-6 sm:pt-8 lg:py-28">
-        <div class="mx-auto max-w-4xl text-center">
+        <div ref="heroContent" class="mx-auto max-w-4xl text-center">
           <span class="ca-kicker">
             <Icon name="lucide:code-2" class="h-3.5 w-3.5 ca-tone-gold" />
             {{ t('services.jasaPembuatanWebsite.kicker') }}
@@ -112,12 +123,12 @@ const processItems = computed(() => (t('services.jasaPembuatanWebsite.process.it
     <!-- Why Us -->
     <section class="ca-section">
       <div class="ca-container">
-        <div class="mb-8 text-center">
+        <div ref="whyUsHeader" class="mb-8 text-center">
           <h2 class="ca-title">{{ t('services.jasaPembuatanWebsite.whyUs.title') }}</h2>
           <p class="ca-copy mx-auto mt-3 max-w-2xl">{{ t('services.jasaPembuatanWebsite.whyUs.subtitle') }}</p>
         </div>
         <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          <article v-for="item in whyUsItems" :key="item.title" class="ca-card-soft p-5">
+          <article v-for="(item, index) in whyUsItems" :key="item.title" :ref="revealRef('fadeUp', index * 80)" class="ca-card-soft p-5">
             <div class="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg-strong)]">
               <Icon :name="item.icon" class="h-5 w-5 ca-tone-gold" />
             </div>
@@ -131,12 +142,12 @@ const processItems = computed(() => (t('services.jasaPembuatanWebsite.process.it
     <!-- Service Types -->
     <section class="ca-section pt-0">
       <div class="ca-container">
-        <div class="mb-8 text-center">
+        <div ref="serviceTypesHeader" class="mb-8 text-center">
           <h2 class="ca-title">{{ t('services.jasaPembuatanWebsite.serviceTypes.title') }}</h2>
           <p class="ca-copy mx-auto mt-3 max-w-2xl">{{ t('services.jasaPembuatanWebsite.serviceTypes.subtitle') }}</p>
         </div>
         <div class="grid gap-4 md:grid-cols-2">
-          <article v-for="item in serviceTypeItems" :key="item.title" class="ca-card-soft p-5">
+          <article v-for="(item, index) in serviceTypeItems" :key="item.title" :ref="revealRef('fadeUp', index * 80)" class="ca-card-soft p-5">
             <div class="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg-strong)]">
               <Icon :name="item.icon" class="h-5 w-5 ca-tone-gold" />
             </div>
@@ -150,12 +161,12 @@ const processItems = computed(() => (t('services.jasaPembuatanWebsite.process.it
     <!-- Pricing Estimate -->
     <section id="paket-harga" class="ca-section pt-0">
       <div class="ca-container">
-        <div class="mb-8 text-center">
+        <div ref="pricingHeader" class="mb-8 text-center">
           <h2 class="ca-title">{{ t('services.jasaPembuatanWebsite.pricing.title') }}</h2>
           <p class="ca-copy mx-auto mt-3 max-w-2xl">{{ t('services.jasaPembuatanWebsite.pricing.subtitle') }}</p>
         </div>
         <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <article v-for="item in pricingItems" :key="item.type" class="ca-card p-5 text-center">
+          <article v-for="(item, index) in pricingItems" :key="item.type" :ref="revealRef('fadeUp', index * 80)" class="ca-card p-5 text-center">
             <h3 class="text-base font-display font-semibold text-[var(--ca-text)]">{{ item.type }}</h3>
             <p class="mt-2 text-xl font-display font-bold ca-tone-gold">{{ item.range }}</p>
             <p class="mt-2 text-sm leading-relaxed text-[var(--ca-muted)]">{{ item.description }}</p>
@@ -168,7 +179,7 @@ const processItems = computed(() => (t('services.jasaPembuatanWebsite.process.it
     <!-- Service Areas -->
     <section class="ca-section pt-0">
       <div class="ca-container">
-        <div class="ca-card p-6 text-center sm:p-8">
+        <div ref="serviceAreaSection" class="ca-card p-6 text-center sm:p-8">
           <h2 class="ca-title">{{ t('services.jasaPembuatanWebsite.serviceAreas.title') }}</h2>
           <p class="ca-copy mx-auto mt-3 max-w-2xl">{{ t('services.jasaPembuatanWebsite.serviceAreas.subtitle') }}</p>
           <div class="mt-6 flex flex-wrap items-center justify-center gap-2">
@@ -189,12 +200,12 @@ const processItems = computed(() => (t('services.jasaPembuatanWebsite.process.it
     <!-- Process -->
     <section id="proses" class="ca-section pt-0">
       <div class="ca-container">
-        <div class="mb-8 text-center">
+        <div ref="processHeader" class="mb-8 text-center">
           <h2 class="ca-title">{{ t('services.jasaPembuatanWebsite.process.title') }}</h2>
           <p class="ca-copy mx-auto mt-3 max-w-2xl">{{ t('services.jasaPembuatanWebsite.process.subtitle') }}</p>
         </div>
         <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <article v-for="item in processItems" :key="item.step" class="ca-card p-5 text-center">
+          <article v-for="(item, index) in processItems" :key="item.step" :ref="revealRef('fadeUp', index * 80)" class="ca-card p-5 text-center">
             <span class="inline-flex h-12 w-12 items-center justify-center rounded-full border border-[color:var(--ca-gold-border)] bg-[var(--ca-panel-bg-strong)] font-display text-lg font-bold ca-tone-gold">
               {{ item.step }}
             </span>
@@ -208,7 +219,7 @@ const processItems = computed(() => (t('services.jasaPembuatanWebsite.process.it
     <!-- Related Products -->
     <section class="ca-section pt-0">
       <div class="ca-container">
-        <div class="ca-card p-5 sm:p-6">
+        <div ref="relatedProductSection" class="ca-card p-5 sm:p-6">
           <div class="grid gap-6 md:grid-cols-2 md:items-center">
             <div>
               <span class="ca-kicker">
@@ -237,7 +248,7 @@ const processItems = computed(() => (t('services.jasaPembuatanWebsite.process.it
     <!-- FAQ -->
     <section class="ca-section pt-0">
       <div class="ca-container">
-        <div class="ca-card p-6 sm:p-8">
+        <div ref="faqSection" class="ca-card p-6 sm:p-8">
           <h2 class="ca-title mb-6">{{ t('services.jasaPembuatanWebsite.faq.title') }}</h2>
           <div class="space-y-3">
             <article v-for="faq in faqItems" :key="faq.question" class="rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-4">
@@ -252,7 +263,7 @@ const processItems = computed(() => (t('services.jasaPembuatanWebsite.process.it
     <!-- CTA -->
     <section class="ca-section pt-0">
       <div class="ca-container">
-        <div class="ca-card p-6 text-center sm:p-10">
+        <div ref="ctaSection" class="ca-card p-6 text-center sm:p-10">
           <h2 class="text-balance font-display text-3xl font-bold text-[var(--ca-text)] sm:text-4xl">
             {{ t('services.jasaPembuatanWebsite.cta.title') }}
           </h2>

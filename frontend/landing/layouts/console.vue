@@ -35,6 +35,7 @@ const themeBootstrapScript = `(() => {
 
 useHead(() => ({
   htmlAttrs: { 'data-theme': theme.value },
+  bodyAttrs: { class: 'ca-console-page' },
   script: [{ innerHTML: themeBootstrapScript, tagPosition: 'head' }],
 }))
 
@@ -93,7 +94,7 @@ const handleLogout = () => {
 </script>
 
 <template>
-  <div class="ca-console-shell min-h-screen bg-[var(--ca-bg)]">
+  <div class="ca-console-shell min-h-screen">
     <!-- Sidebar -->
     <aside
       class="ca-console-sidebar fixed inset-y-0 left-0 z-40 w-72 transition-transform lg:translate-x-0"
@@ -156,13 +157,23 @@ const handleLogout = () => {
     <!-- Main -->
     <div class="lg:pl-72">
       <!-- Top header bar -->
-      <header class="ca-console-topbar sticky top-0 z-20 h-[4.5rem]">
+      <header
+        class="ca-console-topbar sticky top-0 h-[4.5rem]"
+        :class="isSidebarOpen ? 'z-50' : 'z-20'"
+      >
         <div class="ca-console-content flex h-full items-center justify-between px-4 sm:px-6 lg:px-8">
           <!-- Left: hamburger + breadcrumb -->
           <div class="flex items-center gap-3">
-            <button type="button" class="ca-header-btn lg:hidden" @click="isSidebarOpen = !isSidebarOpen">
-              <Icon name="lucide:menu" class="h-5 w-5" />
-            </button>
+            <CaTooltip :text="isSidebarOpen ? tc('layout.closeMenu') : tc('layout.openMenu')" position="bottom">
+              <button
+                type="button"
+                class="ca-header-btn ca-sidebar-toggle lg:hidden"
+                :aria-label="isSidebarOpen ? tc('layout.closeMenu') : tc('layout.openMenu')"
+                @click="isSidebarOpen = !isSidebarOpen"
+              >
+                <Icon :name="isSidebarOpen ? 'lucide:x' : 'lucide:menu'" class="h-5 w-5" />
+              </button>
+            </CaTooltip>
             <div class="sm:hidden">
               <p class="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-[var(--ca-subtle)]">{{ tc('layout.kicker') }}</p>
               <p class="text-sm font-semibold text-[var(--ca-text)]">{{ currentPageLabel }}</p>
@@ -241,22 +252,23 @@ const handleLogout = () => {
       </main>
     </div>
 
-    <!-- Logout confirm modal -->
-    <Teleport to="body">
-      <div v-if="showLogoutConfirm" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" @click.self="showLogoutConfirm = false">
-        <div class="ca-console-dialog w-full max-w-sm p-6 text-center">
-          <div class="mx-auto mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-rose-500/10">
-            <Icon name="lucide:log-out" class="h-6 w-6 text-rose-400" />
-          </div>
-          <h3 class="font-display text-lg font-bold text-[var(--ca-text)]">{{ tc('layout.logoutTitle') }}</h3>
-          <p class="mt-2 text-sm text-[var(--ca-muted)]">{{ tc('layout.logoutDescription') }}</p>
-          <div class="mt-6 flex justify-center gap-3">
-            <button type="button" class="ca-btn-secondary" @click="showLogoutConfirm = false">{{ tc('common.cancel') }}</button>
-            <button type="button" class="ca-btn-danger !px-4 !py-2.5" @click="handleLogout">{{ tc('layout.logoutConfirm') }}</button>
-          </div>
+    <ConsoleModal
+      :show="showLogoutConfirm"
+      :title="tc('layout.logoutTitle')"
+      size="sm"
+      @close="showLogoutConfirm = false"
+    >
+      <div class="text-center">
+        <div class="mx-auto mb-4 inline-flex h-12 w-12 items-center justify-center rounded-full bg-rose-500/10">
+          <Icon name="lucide:log-out" class="h-6 w-6 text-rose-400" />
+        </div>
+        <p class="mt-2 text-sm text-[var(--ca-muted)]">{{ tc('layout.logoutDescription') }}</p>
+        <div class="mt-6 flex justify-center gap-3">
+          <button type="button" class="ca-btn-secondary" @click="showLogoutConfirm = false">{{ tc('common.cancel') }}</button>
+          <button type="button" class="ca-btn-danger !px-4 !py-2.5" @click="handleLogout">{{ tc('layout.logoutConfirm') }}</button>
         </div>
       </div>
-    </Teleport>
+    </ConsoleModal>
   </div>
   <ToastContainer />
 </template>
@@ -279,5 +291,15 @@ const handleLogout = () => {
   background: var(--ca-panel-bg-strong);
   color: var(--ca-text);
   transform: translateY(-1px);
+}
+
+.ca-sidebar-toggle {
+  display: inline-flex;
+}
+
+@media (min-width: 1024px) {
+  .ca-sidebar-toggle {
+    display: none !important;
+  }
 }
 </style>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { LINKS, COMPANY, buildWhatsAppUrl } from '~/utils/constants'
+import { COMPANY, buildWhatsAppUrl } from '~/utils/constants'
 import { getNavItems } from '~/utils/navigation'
 import { useCoreI18n } from '~/composables/useCoreI18n'
 import { useAnalytics } from '~/composables/useAnalytics'
@@ -199,7 +199,7 @@ const navIconMap: Record<string, string> = {
                     <LanguageSwitcher />
                     <ThemeToggle />
                     <a
-                        :href="LINKS.whatsapp"
+                        :href="waUrl"
                         target="_blank"
                         rel="noopener noreferrer"
                         class="ca-btn-secondary !px-3 !py-2"
@@ -290,7 +290,7 @@ const navIconMap: Record<string, string> = {
                             {{ t('components.header.ctaText') }}
                         </NuxtLink>
                         <a
-                            :href="LINKS.whatsapp"
+                            :href="waUrl"
                             target="_blank"
                             rel="noopener noreferrer"
                             class="ca-btn-secondary w-full"

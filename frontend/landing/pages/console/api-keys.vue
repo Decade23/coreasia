@@ -10,6 +10,7 @@ const { formatDateTime } = useConsoleDateTime()
 // Track which provider's key is currently in use by AI
 const aiProvider = ref('')
 const activeKeyId = ref<string | null>(null)
+const activeUnsplashKeyId = ref<string | null>(null)
 
 const fetchAIContext = async () => {
   try {
@@ -20,6 +21,10 @@ const fetchAIContext = async () => {
     const res = await api.get<{ id: string }>(`/admin/ai/active-key/${aiProvider.value}`)
     activeKeyId.value = res.data?.id || null
   } catch { activeKeyId.value = null }
+  try {
+    const res = await api.get<{ id: string }>('/admin/ai/active-key/unsplash')
+    activeUnsplashKeyId.value = res.data?.id || null
+  } catch { activeUnsplashKeyId.value = null }
 }
 
 const showFormModal = ref(false)
@@ -42,6 +47,7 @@ const providerOptions = computed(() => [
   { label: tc('providers.openai'), value: 'openai' },
   { label: tc('providers.groq'), value: 'groq' },
   { label: tc('providers.gemini'), value: 'gemini' },
+  { label: tc('providers.unsplash'), value: 'unsplash' },
   { label: tc('providers.other'), value: 'other' },
 ])
 
@@ -49,7 +55,7 @@ const availableModels = ref<{ id: string; name: string }[]>([])
 const modelsLoading = ref(false)
 
 const fetchModelsForProvider = async (provider: string) => {
-  if (provider === 'other') { availableModels.value = []; return }
+  if (provider === 'other' || provider === 'unsplash') { availableModels.value = []; return }
   modelsLoading.value = true
   try {
     const res = await api.get<{ id: string; name: string }[]>(`/admin/ai/models/${provider}`)
@@ -62,7 +68,9 @@ const fetchModelsForProvider = async (provider: string) => {
 }
 
 watch(() => formData.value.provider, (p) => {
-  if (showFormModal.value) fetchModelsForProvider(p)
+  if (!showFormModal.value) return
+  availableModels.value = []
+  if (editingKey.value && p === editingKey.value.provider) fetchModelsForProvider(p)
 })
 
 onMounted(() => { fetchKeys(); fetchAIContext() })
@@ -71,8 +79,8 @@ const openCreate = () => {
   editingKey.value = null
   changingKey.value = false
   formData.value = { name: '', provider: 'claude', key_value: '', description: '' }
+  availableModels.value = []
   showFormModal.value = true
-  fetchModelsForProvider('claude')
 }
 
 const openEdit = (k: any) => {
@@ -106,6 +114,7 @@ const handleSubmit = async () => {
   if (ok) {
     showFormModal.value = false
     fetchKeys()
+    fetchAIContext()
   }
 }
 
@@ -117,12 +126,18 @@ const handleDelete = (k: any) => {
 const confirmDelete = async () => {
   const ok = await deleteKey(deletingKey.value.id)
   showDeleteConfirm.value = false
-  if (ok) fetchKeys()
+  if (ok) {
+    fetchKeys()
+    fetchAIContext()
+  }
 }
 
 const handleToggleActive = async (k: any) => {
   const ok = await updateKey(k.id, { is_active: !k.is_active })
-  if (ok) fetchKeys()
+  if (ok) {
+    fetchKeys()
+    fetchAIContext()
+  }
 }
 
 const handleCopy = async (k: any) => {
@@ -188,15 +203,15 @@ const formatDate = (d: string) => formatDateTime(d)
             <span class="text-sm font-semibold text-[var(--ca-text)]">{{ k.name }}</span>
             <span
               class="rounded-full px-2 py-0.5 text-[0.6rem] font-bold uppercase"
-              :class="k.is_active ? 'bg-emerald-500/10 text-emerald-400' : 'bg-slate-500/10 text-[var(--ca-muted)]'"
+              :class="k.is_active ? 'ca-pill-emerald' : 'ca-pill-muted'"
             >
               {{ k.is_active ? 'Aktif' : 'Nonaktif' }}
             </span>
-            <span
-              v-if="activeKeyId === k.id"
-              class="rounded-full bg-amber-500/10 px-2 py-0.5 text-[0.6rem] font-bold uppercase text-amber-400"
-            >
+            <span v-if="activeKeyId === k.id" class="ca-pill-gold px-2 py-0.5 text-[0.6rem]">
               {{ tc('apiKeys.usedByAI') }}
+            </span>
+            <span v-if="activeUnsplashKeyId === k.id" class="ca-pill-gold px-2 py-0.5 text-[0.6rem]">
+              {{ tc('apiKeys.usedByAutoImage') }}
             </span>
           </div>
           <div class="mt-1 flex flex-wrap items-center gap-3 text-xs text-[var(--ca-muted)]">
@@ -254,117 +269,103 @@ const formatDate = (d: string) => formatDateTime(d)
       </div>
     </div>
 
-    <!-- Form Modal -->
-    <Teleport to="body">
-      <div v-if="showFormModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" @click.self="showFormModal = false">
-        <div class="ca-console-dialog w-full max-w-lg p-6">
-          <h3 class="font-display text-lg font-bold text-[var(--ca-text)]">
-            <Icon name="lucide:key-round" class="mr-2 inline h-5 w-5 text-amber-400" />
-            {{ editingKey ? tc('apiKeys.formEditTitle') : tc('apiKeys.formCreateTitle') }}
-          </h3>
-          <form class="mt-4 space-y-3" autocomplete="off" data-form-type="other" @submit.prevent="handleSubmit">
-            <BaseInput id="apikey-name" v-model="formData.name" :label="tc('apiKeys.name')" placeholder="Claude AI Production" required autocomplete="off" />
-            <SearchSelect
-              id="apikey-provider"
-              v-model="formData.provider"
-              :label="tc('apiKeys.provider')"
-              :options="providerOptions"
-              required
-            />
-            <div>
-              <label class="ca-field-label">
-                {{ tc('apiKeys.keyLabel') }}
-                <span v-if="!editingKey" class="ca-required">*</span>
-              </label>
-
-              <!-- Edit mode: show masked key + change button -->
-              <div v-if="editingKey && !changingKey" class="flex items-center gap-2">
-                <div class="ca-field-control flex-1 flex items-center gap-2 border-[color:var(--ca-border)]">
-                  <Icon name="lucide:shield-check" class="h-4 w-4 text-emerald-400 shrink-0" />
-                  <span class="font-mono text-sm text-[var(--ca-muted)]">{{ editingKey.key_masked || '••••••••' }}</span>
-                </div>
-                <button
-                  type="button"
-                  class="shrink-0 rounded-lg border border-amber-400/30 px-3 py-2.5 text-xs font-semibold text-amber-400 hover:bg-amber-500/10 transition"
-                  @click="changingKey = true"
-                >
-                  {{ tc('apiKeys.replaceKey') }}
-                </button>
-              </div>
-
-              <!-- Create mode or changing key: show input -->
-              <div v-else>
-                <BasePasswordInput
-                  id="apikey-value"
-                  v-model="formData.key_value"
-                  input-class="font-mono tracking-wider"
-                  :placeholder="editingKey ? tc('apiKeys.replaceKey') : tc('apiKeys.keyPlaceholder')"
-                  :required="!editingKey"
-                  autocomplete="off"
-                  show-label="Show API key"
-                  hide-label="Hide API key"
-                />
-              </div>
-
-              <p class="mt-1 text-[0.65rem] text-[var(--ca-subtle)]">
-                {{ editingKey && !changingKey ? tc('apiKeys.keyHelperEdit') : tc('apiKeys.keyHelperCreate') }}
-              </p>
+    <ConsoleModal
+      :show="showFormModal"
+      :title="editingKey ? tc('apiKeys.formEditTitle') : tc('apiKeys.formCreateTitle')"
+      size="lg"
+      @close="showFormModal = false"
+    >
+      <form class="space-y-3" autocomplete="off" data-form-type="other" @submit.prevent="handleSubmit">
+        <BaseInput id="apikey-name" v-model="formData.name" :label="tc('apiKeys.name')" placeholder="Claude AI Production" required autocomplete="off" />
+        <SearchSelect
+          id="apikey-provider"
+          v-model="formData.provider"
+          :label="tc('apiKeys.provider')"
+          :options="providerOptions"
+          required
+        />
+        <div>
+          <label class="ca-field-label">
+            {{ tc('apiKeys.keyLabel') }}
+            <span v-if="!editingKey" class="ca-required">*</span>
+          </label>
+          <div v-if="editingKey && !changingKey" class="flex items-center gap-2">
+            <div class="ca-field-control flex-1 flex items-center gap-2 border-[color:var(--ca-border)]">
+              <Icon name="lucide:shield-check" class="h-4 w-4 shrink-0 text-emerald-400" />
+              <span class="font-mono text-sm text-[var(--ca-muted)]">{{ editingKey.key_masked || '••••••••' }}</span>
             </div>
-            <BaseInput id="apikey-desc" v-model="formData.description" :label="tc('apiKeys.descriptionField')" placeholder="Untuk generate artikel harian" autocomplete="off" />
-
-            <!-- Available models info -->
-            <div v-if="formData.provider !== 'other'" class="rounded-lg border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-3">
-              <p class="text-[0.65rem] font-semibold uppercase tracking-widest text-[var(--ca-subtle)] mb-2">
-                <Icon name="lucide:cpu" class="mr-1 inline h-3 w-3" />
-                {{ tc('apiKeys.modelsTitle') }} · {{ providerOptions.find(p => p.value === formData.provider)?.label }}
-              </p>
-              <div v-if="modelsLoading" class="flex items-center gap-2 text-xs text-[var(--ca-muted)]">
-                <Icon name="lucide:loader-2" class="h-3 w-3 animate-spin" />
-                {{ tc('apiKeys.modelsLoading') }}
-              </div>
-              <div v-else-if="availableModels.length" class="flex flex-wrap gap-1.5">
-                <span
-                  v-for="m in availableModels.slice(0, 8)"
-                  :key="m.id"
-                  class="rounded bg-[var(--ca-panel-bg-strong)] px-1.5 py-0.5 font-mono text-[0.6rem] text-[var(--ca-muted)]"
-                >
-                  {{ m.name || m.id }}
-                </span>
-                <span v-if="availableModels.length > 8" class="text-[0.6rem] text-[var(--ca-subtle)]">
-                  +{{ availableModels.length - 8 }} lainnya
-                </span>
-              </div>
-              <p v-else class="text-[0.6rem] text-amber-400">
-                <Icon name="lucide:alert-triangle" class="mr-1 inline h-3 w-3" />
-                {{ tc('apiKeys.modelsError') }}
-              </p>
-            </div>
-
-            <p v-if="error" class="text-sm text-rose-400">{{ error }}</p>
-
-            <div class="flex justify-end gap-3 pt-2">
-              <button type="button" class="ca-btn-secondary" @click="showFormModal = false">{{ tc('common.cancel') }}</button>
-              <button type="submit" class="ca-btn-primary" :disabled="saving">{{ saving ? tc('common.processing') : tc('common.save') }}</button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </Teleport>
-
-    <!-- Delete Confirm -->
-    <Teleport to="body">
-      <div v-if="showDeleteConfirm" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" @click.self="showDeleteConfirm = false">
-        <div class="ca-console-dialog w-full max-w-md p-6">
-          <h3 class="font-display text-lg font-bold text-[var(--ca-text)]">{{ tc('apiKeys.deleteTitle') }}</h3>
-          <p class="mt-2 text-sm text-[var(--ca-muted)]">
-            {{ tc('apiKeys.deleteDescription', { name: deletingKey?.name || '-' }) }}
-          </p>
-          <div class="mt-6 flex justify-end gap-3">
-            <button type="button" class="ca-btn-secondary" @click="showDeleteConfirm = false">{{ tc('common.cancel') }}</button>
-            <button type="button" class="ca-btn-danger !px-4 !py-2.5" @click="confirmDelete">{{ tc('common.delete') }}</button>
+            <button
+              type="button"
+              class="shrink-0 rounded-lg border border-amber-400/30 px-3 py-2.5 text-xs font-semibold text-amber-400 transition hover:bg-amber-500/10"
+              @click="changingKey = true"
+            >
+              {{ tc('apiKeys.replaceKey') }}
+            </button>
           </div>
+          <div v-else>
+            <BasePasswordInput
+              id="apikey-value"
+              v-model="formData.key_value"
+              input-class="font-mono tracking-wider"
+              :placeholder="editingKey ? tc('apiKeys.replaceKey') : tc('apiKeys.keyPlaceholder')"
+              :required="!editingKey"
+              autocomplete="off"
+              show-label="Show API key"
+              hide-label="Hide API key"
+            />
+          </div>
+          <p class="mt-1 text-[0.65rem] text-[var(--ca-subtle)]">
+            {{ editingKey && !changingKey ? tc('apiKeys.keyHelperEdit') : tc('apiKeys.keyHelperCreate') }}
+          </p>
         </div>
+        <BaseInput id="apikey-desc" v-model="formData.description" :label="tc('apiKeys.descriptionField')" placeholder="Untuk generate artikel harian" autocomplete="off" />
+
+        <div v-if="editingKey && !['other', 'unsplash'].includes(formData.provider)" class="rounded-lg border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-3">
+          <p class="mb-2 text-[0.65rem] font-semibold uppercase tracking-widest text-[var(--ca-subtle)]">
+            <Icon name="lucide:cpu" class="mr-1 inline h-3 w-3" />
+            {{ tc('apiKeys.modelsTitle') }} · {{ providerOptions.find(p => p.value === formData.provider)?.label }}
+          </p>
+          <div v-if="modelsLoading" class="flex items-center gap-2 text-xs text-[var(--ca-muted)]">
+            <Icon name="lucide:loader-2" class="h-3 w-3 animate-spin" />
+            {{ tc('apiKeys.modelsLoading') }}
+          </div>
+          <div v-else-if="availableModels.length" class="flex flex-wrap gap-1.5">
+            <span
+              v-for="m in availableModels.slice(0, 8)"
+              :key="m.id"
+              class="rounded bg-[var(--ca-panel-bg-strong)] px-1.5 py-0.5 font-mono text-[0.6rem] text-[var(--ca-muted)]"
+            >
+              {{ m.name || m.id }}
+            </span>
+            <span v-if="availableModels.length > 8" class="text-[0.6rem] text-[var(--ca-subtle)]">
+              +{{ availableModels.length - 8 }} lainnya
+            </span>
+          </div>
+          <p v-else class="text-[0.6rem] text-amber-400">
+            <Icon name="lucide:alert-triangle" class="mr-1 inline h-3 w-3" />
+            {{ tc('apiKeys.modelsError') }}
+          </p>
+        </div>
+        <p v-if="error" class="text-sm text-rose-400">{{ error }}</p>
+        <div class="flex justify-end gap-3 pt-2">
+          <button type="button" class="ca-btn-secondary" @click="showFormModal = false">{{ tc('common.cancel') }}</button>
+          <button type="submit" class="ca-btn-primary" :disabled="saving">{{ saving ? tc('common.processing') : tc('common.save') }}</button>
+        </div>
+      </form>
+    </ConsoleModal>
+
+    <ConsoleModal
+      :show="showDeleteConfirm"
+      :title="tc('apiKeys.deleteTitle')"
+      @close="showDeleteConfirm = false"
+    >
+      <p class="text-sm text-[var(--ca-muted)]">
+        {{ tc('apiKeys.deleteDescription', { name: deletingKey?.name || '-' }) }}
+      </p>
+      <div class="mt-6 flex justify-end gap-3">
+        <button type="button" class="ca-btn-secondary" @click="showDeleteConfirm = false">{{ tc('common.cancel') }}</button>
+        <button type="button" class="ca-btn-danger !px-4 !py-2.5" @click="confirmDelete">{{ tc('common.delete') }}</button>
       </div>
-    </Teleport>
+    </ConsoleModal>
   </div>
 </template>

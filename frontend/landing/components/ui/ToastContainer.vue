@@ -54,15 +54,25 @@ const titleMap = computed<Record<string, string>>(() => ({
 </template>
 
 <style>
-.ca-toast-wrap { position: fixed; top: 1rem; right: 1rem; z-index: 9999; display: flex; flex-direction: column; gap: 0.5rem; width: 21rem; max-width: calc(100vw - 2rem); pointer-events: none; }
-.ca-toast { position: relative; display: flex; flex-direction: column; overflow: hidden; border-radius: 0.75rem; border: 1px solid; background: var(--ca-toast-bg, #1a1b23); box-shadow: 0 8px 32px -4px rgba(0,0,0,0.45); pointer-events: auto; }
+.ca-toast-wrap { position: fixed; top: 1.25rem; right: 1.25rem; z-index: 9999; display: flex; flex-direction: column; gap: 0.75rem; width: 22rem; max-width: calc(100vw - 1.5rem); pointer-events: none; }
+.ca-toast { position: relative; display: flex; flex-direction: column; overflow: hidden; border-radius: 1rem; border: 1px solid; background: color-mix(in srgb, var(--ca-toast-bg, #1a1b23) 92%, transparent); box-shadow: 0 18px 44px rgba(15, 23, 42, 0.18); backdrop-filter: blur(16px); pointer-events: auto; }
 .ca-toast-bar { position: absolute; top: 0; left: 0; bottom: 0; width: 3px; }
-.ca-toast-inner { display: flex; align-items: flex-start; gap: 0.625rem; padding: 0.75rem 0.875rem 0.625rem 1rem; }
-.ca-toast-track { height: 2px; background: var(--ca-border); margin: 0 0.875rem 0.5rem 1rem; border-radius: 1px; overflow: hidden; }
-.ca-toast-progress { height: 100%; border-radius: 1px; animation: ca-shrink linear forwards; }
+.ca-toast-inner { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.9rem 1rem 0.75rem 1.05rem; }
+.ca-toast-track { height: 3px; background: color-mix(in srgb, var(--ca-border) 78%, transparent); margin: 0 1rem 0.65rem 1.05rem; border-radius: 999px; overflow: hidden; }
+.ca-toast-progress { height: 100%; border-radius: 999px; animation: ca-shrink linear forwards; }
 @keyframes ca-shrink { from { width: 100%; } to { width: 0%; } }
 .ca-toast-in { transition: all .3s cubic-bezier(.16,1,.3,1); }
 .ca-toast-out { transition: all .2s ease-in; }
 .ca-toast-from { opacity: 0; transform: translateX(1.5rem) scale(.97); }
 .ca-toast-move { transition: transform .25s ease; }
+
+@media (max-width: 640px) {
+  .ca-toast-wrap {
+    top: 0.875rem;
+    right: 0.75rem;
+    left: 0.75rem;
+    width: auto;
+    max-width: none;
+  }
+}
 </style>

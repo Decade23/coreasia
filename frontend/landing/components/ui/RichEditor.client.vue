@@ -774,68 +774,61 @@ const runToolbarAction = (action: ToolbarAction) => {
 
     <p v-if="error" class="ca-field-error mt-1">{{ error }}</p>
 
-    <Teleport to="body">
-      <div v-if="showLinkModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" @click.self="showLinkModal = false">
-        <div class="ca-console-dialog w-full max-w-md p-6">
-          <h3 class="font-display text-lg font-bold text-[var(--ca-text)]">
-            <Icon name="lucide:link" class="mr-2 inline h-5 w-5 text-amber-400" />
-            {{ linkUrl ? tc('editor.editLinkTitle') : tc('editor.insertLinkTitle') }}
-          </h3>
-          <div class="mt-4">
-            <BaseInput
-              id="editor-link-url"
-              v-model="linkUrl"
-              type="url"
-              :label="tc('editor.linkUrlLabel')"
-              :placeholder="tc('editor.linkUrlPlaceholder')"
-              @keydown.enter.prevent="confirmLink"
-            />
-            <p class="mt-1 text-[0.7rem] text-[var(--ca-subtle)]">{{ tc('editor.linkHint') }}</p>
-          </div>
-          <div class="mt-5 flex justify-end gap-3">
-            <button type="button" class="ca-btn-secondary" @click="showLinkModal = false">{{ tc('common.cancel') }}</button>
-            <button type="button" class="ca-btn-primary" @click="confirmLink">{{ tc('common.save') }}</button>
-          </div>
-        </div>
+    <ConsoleModal
+      :show="showLinkModal"
+      :title="linkUrl ? tc('editor.editLinkTitle') : tc('editor.insertLinkTitle')"
+      @close="showLinkModal = false"
+    >
+      <div>
+        <BaseInput
+          id="editor-link-url"
+          v-model="linkUrl"
+          type="url"
+          :label="tc('editor.linkUrlLabel')"
+          :placeholder="tc('editor.linkUrlPlaceholder')"
+          @keydown.enter.prevent="confirmLink"
+        />
+        <p class="mt-1 text-[0.7rem] text-[var(--ca-subtle)]">{{ tc('editor.linkHint') }}</p>
       </div>
-    </Teleport>
+      <div class="mt-5 flex justify-end gap-3">
+        <button type="button" class="ca-btn-secondary" @click="showLinkModal = false">{{ tc('common.cancel') }}</button>
+        <button type="button" class="ca-btn-primary" @click="confirmLink">{{ tc('common.save') }}</button>
+      </div>
+    </ConsoleModal>
 
-    <Teleport to="body">
-      <div v-if="showImageModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" @click.self="showImageModal = false">
-        <div class="ca-console-dialog w-full max-w-md p-6">
-          <h3 class="font-display text-lg font-bold text-[var(--ca-text)]">
-            <Icon name="lucide:image" class="mr-2 inline h-5 w-5 text-amber-400" />
-            {{ tc('editor.insertImageTitle') }}
-          </h3>
-          <div class="mt-4">
-            <BaseInput
-              id="editor-image-url"
-              v-model="imageUrl"
-              type="url"
-              :label="tc('editor.imageUrlLabel')"
-              :placeholder="tc('editor.imageUrlPlaceholder')"
-              @keydown.enter.prevent="confirmImage"
-            />
-          </div>
-          <div v-if="imageUrl" class="mt-4 overflow-hidden rounded-2xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-2">
-            <img
-              :src="imageUrl"
-              class="h-40 w-full rounded-xl object-cover"
-              @error="($event.target as HTMLImageElement).style.display = 'none'"
-            />
-          </div>
-          <div class="mt-5 flex justify-end gap-3">
-            <button type="button" class="ca-btn-secondary" @click="showImageModal = false">{{ tc('common.cancel') }}</button>
-            <button type="button" class="ca-btn-primary" :disabled="!imageUrl" @click="confirmImage">{{ tc('editor.insertImageAction') }}</button>
-          </div>
-        </div>
+    <ConsoleModal
+      :show="showImageModal"
+      :title="tc('editor.insertImageTitle')"
+      @close="showImageModal = false"
+    >
+      <div>
+        <BaseInput
+          id="editor-image-url"
+          v-model="imageUrl"
+          type="url"
+          :label="tc('editor.imageUrlLabel')"
+          :placeholder="tc('editor.imageUrlPlaceholder')"
+          @keydown.enter.prevent="confirmImage"
+        />
       </div>
-    </Teleport>
+      <div v-if="imageUrl" class="mt-4 overflow-hidden rounded-2xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-2">
+        <img
+          :src="imageUrl"
+          class="h-40 w-full rounded-xl object-cover"
+          @error="($event.target as HTMLImageElement).style.display = 'none'"
+        />
+      </div>
+      <div class="mt-5 flex justify-end gap-3">
+        <button type="button" class="ca-btn-secondary" @click="showImageModal = false">{{ tc('common.cancel') }}</button>
+        <button type="button" class="ca-btn-primary" :disabled="!imageUrl" @click="confirmImage">{{ tc('editor.insertImageAction') }}</button>
+      </div>
+    </ConsoleModal>
   </div>
 </template>
 
 <style>
 .ca-editor-shell {
+  overflow: visible !important;
   background:
     radial-gradient(circle at top left, color-mix(in srgb, var(--ca-gold-border) 40%, transparent) 0%, transparent 28%),
     linear-gradient(180deg, color-mix(in srgb, var(--ca-bg-soft) 84%, transparent), color-mix(in srgb, var(--ca-bg) 90%, transparent));
@@ -847,6 +840,17 @@ const runToolbarAction = (action: ToolbarAction) => {
 .ca-editor-status {
   background: color-mix(in srgb, var(--ca-panel-bg) 92%, transparent);
   backdrop-filter: blur(14px);
+}
+
+.ca-editor-ribbon {
+  position: relative;
+  z-index: 40;
+}
+
+.ca-editor-stage,
+.ca-editor-status {
+  position: relative;
+  z-index: 1;
 }
 
 .ca-editor-section {
@@ -921,7 +925,7 @@ const runToolbarAction = (action: ToolbarAction) => {
   position: absolute;
   top: calc(100% + 0.65rem);
   left: 0;
-  z-index: 30;
+  z-index: 90;
   width: min(20rem, calc(100vw - 3rem));
   border: 1px solid color-mix(in srgb, var(--ca-border) 96%, transparent);
   border-radius: 1.1rem;

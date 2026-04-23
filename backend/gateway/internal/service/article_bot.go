@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"math/rand"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -251,9 +252,11 @@ func (b *ArticleBot) RunWithConfig(ctx context.Context, botConfig json.RawMessag
 
 	// Auto-fetch featured image from Unsplash
 	var featuredImage *string
-	if autoImage && b.cfg.UnsplashAccessKey != "" {
-		if imgURL := b.searchUnsplashImage(req.Keywords, topic, category); imgURL != "" {
+	if autoImage {
+		if imgURL, warning := b.findUnsplashFeaturedImage(ctx, req.Keywords, topic, category); imgURL != "" {
 			featuredImage = &imgURL
+		} else if warning != "" {
+			slog.Warn("article-bot: gambar otomatis dilewati", "reason", warning)
 		}
 	}
 
@@ -372,7 +375,14 @@ Target keyword: %s
 Kategori: %s
 Panjang: sekitar %d kata
 
-Berikan response dalam format JSON:
+Berikan response sebagai JSON valid yang bisa langsung diparse oleh json.Unmarshal.
+Aturan wajib:
+- Hanya kirim object JSON, tanpa markdown fence, tanpa komentar, tanpa teks pembuka/penutup.
+- Escape semua double quote di dalam string JSON.
+- Untuk atribut HTML di field content, gunakan petik tunggal agar JSON tidak rusak, contoh: <a href='/contact'>konsultasi</a>.
+- Field content harus berupa satu string HTML valid.
+
+Format JSON:
 {
   "title": "judul artikel yang SEO-friendly",
   "slug": "judul-artikel-dalam-format-slug",
@@ -424,7 +434,7 @@ func (b *ArticleBot) callClaude(aiModel, apiKey, systemPrompt, userPrompt string
 
 	respBody, err := b.httpPost("https://api.anthropic.com/v1/messages", apiKey, body, map[string]string{
 		"x-api-key":         apiKey,
-		"anthropic-version":  "2023-06-01",
+		"anthropic-version": "2023-06-01",
 	})
 	if err != nil {
 		return nil, err
@@ -539,58 +549,149 @@ func (b *ArticleBot) GenerateFromRequest(ctx context.Context, req model.AIGenera
 
 	// Auto-fetch featured image from Unsplash if enabled
 	if req.AutoImage {
-		if imgURL := b.searchUnsplashImage(req.Keywords, req.Topic, req.Category); imgURL != "" {
+		if imgURL, warning := b.findUnsplashFeaturedImage(ctx, req.Keywords, req.Topic, req.Category); imgURL != "" {
 			result.FeaturedImage = imgURL
+		} else if warning != "" {
+			result.FeaturedImageWarning = warning
 		}
 	}
 
 	return result, nil
 }
 
-// searchUnsplashImage finds a relevant image from Unsplash based on keywords.
-func (b *ArticleBot) searchUnsplashImage(keywords []string, topic, category string) string {
-	// Build search query from keywords, category, and topic
-	query := category
-	if len(keywords) > 0 {
-		query = strings.Join(keywords[:min(3, len(keywords))], " ")
-	}
-	if query == "" {
-		// Extract first few words from topic
-		words := strings.Fields(topic)
-		if len(words) > 3 {
-			words = words[:3]
-		}
-		query = strings.Join(words, " ")
+func (b *ArticleBot) findUnsplashFeaturedImage(ctx context.Context, keywords []string, topic, category string) (string, string) {
+	accessKey := b.resolveUnsplashAccessKey(ctx)
+	if accessKey == "" {
+		return "", "Gambar otomatis belum aktif karena Unsplash Access Key belum dikonfigurasi. Tambahkan key provider Unsplash di halaman API Keys atau isi env UNSPLASH_ACCESS_KEY."
 	}
 
-	searchURL := fmt.Sprintf("https://api.unsplash.com/search/photos?query=%s&per_page=5&orientation=landscape&content_filter=high",
-		strings.ReplaceAll(query, " ", "+"))
-
-	req, err := http.NewRequest("GET", searchURL, nil)
+	imgURL, err := b.searchUnsplashImage(ctx, accessKey, keywords, topic, category)
 	if err != nil {
-		slog.Error("unsplash: gagal buat request", "error", err)
-		return ""
+		slog.Warn("unsplash: gagal ambil gambar", "error", err)
+		return "", "Gambar otomatis belum bisa mengambil gambar dari Unsplash. Coba generate ulang atau unggah gambar manual."
 	}
-	// Unsplash requires client ID - use demo/free tier
+	if imgURL == "" {
+		return "", "Unsplash belum menemukan gambar yang cocok untuk keyword ini. Coba keyword lain atau unggah gambar manual."
+	}
+	return imgURL, ""
+}
+
+func (b *ArticleBot) resolveUnsplashAccessKey(ctx context.Context) string {
+	if b.apiKeyRepo != nil {
+		if dbKey, err := b.apiKeyRepo.FindActiveByProvider(ctx, "unsplash"); err == nil && dbKey != nil {
+			return strings.TrimSpace(dbKey.KeyValue)
+		} else if err != nil {
+			slog.Warn("unsplash: gagal membaca key dari database", "error", err)
+		}
+	}
+	return strings.TrimSpace(b.cfg.UnsplashAccessKey)
+}
+
+func buildUnsplashQueries(keywords []string, topic, category string) []string {
+	queries := make([]string, 0, 4)
+	add := func(value string) {
+		value = strings.TrimSpace(value)
+		if value == "" {
+			return
+		}
+		for _, existing := range queries {
+			if strings.EqualFold(existing, value) {
+				return
+			}
+		}
+		queries = append(queries, value)
+	}
+
+	if len(keywords) > 0 {
+		cleaned := make([]string, 0, min(3, len(keywords)))
+		seenKeywords := make(map[string]struct{}, min(3, len(keywords)))
+		for _, keyword := range keywords {
+			keyword = strings.TrimSpace(keyword)
+			key := strings.ToLower(keyword)
+			if keyword != "" {
+				if _, exists := seenKeywords[key]; exists {
+					continue
+				}
+				seenKeywords[key] = struct{}{}
+				cleaned = append(cleaned, keyword)
+			}
+			if len(cleaned) == 3 {
+				break
+			}
+		}
+		add(strings.Join(cleaned, " "))
+	}
+	add(category)
+
+	words := strings.Fields(topic)
+	if len(words) > 5 {
+		words = words[:5]
+	}
+	add(strings.Join(words, " "))
+	add("business technology")
+
+	return queries
+}
+
+// searchUnsplashImage finds a relevant image from Unsplash based on keywords.
+func (b *ArticleBot) searchUnsplashImage(ctx context.Context, accessKey string, keywords []string, topic, category string) (string, error) {
+	if strings.TrimSpace(accessKey) == "" {
+		return "", fmt.Errorf("unsplash access key kosong")
+	}
+
+	queries := buildUnsplashQueries(keywords, topic, category)
+	if len(queries) == 0 {
+		return "", nil
+	}
+
+	for _, query := range queries {
+		imgURL, downloadLocation, err := b.searchUnsplashImageByQuery(ctx, accessKey, query)
+		if err != nil {
+			return "", err
+		}
+		if imgURL == "" {
+			continue
+		}
+		if downloadLocation != "" {
+			go b.triggerUnsplashDownload(downloadLocation, accessKey)
+		}
+		slog.Info("unsplash: gambar ditemukan", "query", query, "url", imgURL)
+		return imgURL, nil
+	}
+
+	return "", nil
+}
+
+func (b *ArticleBot) searchUnsplashImageByQuery(ctx context.Context, accessKey, query string) (string, string, error) {
+	params := url.Values{}
+	params.Set("query", query)
+	params.Set("per_page", "5")
+	params.Set("orientation", "landscape")
+	params.Set("content_filter", "high")
+
+	searchURL := "https://api.unsplash.com/search/photos?" + params.Encode()
+	req, err := http.NewRequestWithContext(ctx, "GET", searchURL, nil)
+	if err != nil {
+		return "", "", fmt.Errorf("membuat request unsplash: %w", err)
+	}
 	req.Header.Set("Accept-Version", "v1")
-	req.Header.Set("Authorization", "Client-ID "+b.cfg.UnsplashAccessKey)
+	req.Header.Set("Authorization", "Client-ID "+accessKey)
 
 	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Do(req)
 	if err != nil {
-		slog.Error("unsplash: request gagal", "error", err)
-		return ""
+		return "", "", fmt.Errorf("request unsplash: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		slog.Warn("unsplash: status bukan 200", "status", resp.StatusCode)
-		return ""
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 512))
+		return "", "", fmt.Errorf("unsplash status %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
 	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return ""
+		return "", "", fmt.Errorf("membaca response unsplash: %w", err)
 	}
 
 	var result struct {
@@ -598,23 +699,43 @@ func (b *ArticleBot) searchUnsplashImage(keywords []string, topic, category stri
 			URLs struct {
 				Regular string `json:"regular"`
 			} `json:"urls"`
+			Links struct {
+				DownloadLocation string `json:"download_location"`
+			} `json:"links"`
 			AltDescription string `json:"alt_description"`
 		} `json:"results"`
 	}
 	if err := json.Unmarshal(body, &result); err != nil {
-		slog.Error("unsplash: gagal parse response", "error", err)
-		return ""
+		return "", "", fmt.Errorf("parse response unsplash: %w", err)
 	}
 
 	if len(result.Results) == 0 {
 		slog.Info("unsplash: tidak ada hasil untuk query", "query", query)
-		return ""
+		return "", "", nil
 	}
 
 	// Pick first result - Unsplash returns most relevant first
 	imgURL := result.Results[0].URLs.Regular
-	slog.Info("unsplash: gambar ditemukan", "query", query, "url", imgURL)
-	return imgURL
+	return imgURL, result.Results[0].Links.DownloadLocation, nil
+}
+
+func (b *ArticleBot) triggerUnsplashDownload(downloadLocation, accessKey string) {
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, "GET", downloadLocation, nil)
+	if err != nil {
+		return
+	}
+	req.Header.Set("Accept-Version", "v1")
+	req.Header.Set("Authorization", "Client-ID "+accessKey)
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		slog.Warn("unsplash: gagal trigger download", "error", err)
+		return
+	}
+	defer resp.Body.Close()
 }
 
 func (b *ArticleBot) httpPost(url, _ string, body interface{}, headers map[string]string) ([]byte, error) {

@@ -19,11 +19,14 @@ export const CONTACT = {
   businessHours: 'Senin - Jumat, 09.00 - 17.00 WIB',
 } as const
 
+const WHATSAPP_BASE_URL = `https://wa.me/${CONTACT.whatsapp}`
+const WHATSAPP_DEFAULT_MESSAGE = 'Halo CoreAsia, saya ingin mengetahui lebih lanjut tentang produk dan layanan Anda.'
+
 // ──────────────────────────────────────
 // Generated URLs
 // ──────────────────────────────────────
 export const LINKS = {
-  whatsapp: `https://wa.me/${CONTACT.whatsapp}?text=${encodeURIComponent('Halo CoreAsia, saya ingin mengetahui lebih lanjut tentang produk dan layanan Anda.')}`,
+  whatsapp: `${WHATSAPP_BASE_URL}?text=${encodeURIComponent(WHATSAPP_DEFAULT_MESSAGE)}`,
   email: `mailto:${CONTACT.email}`,
   linkedin: 'https://www.linkedin.com/company/coreasia',
   instagram: 'https://www.instagram.com/coreasia',
@@ -53,8 +56,8 @@ export const COMPANY = {
 
 /** Build WhatsApp URL with pre-filled message */
 export const buildWhatsAppUrl = (message?: string): string => {
-  const base = LINKS.whatsapp
-  return message ? `${base}?text=${encodeURIComponent(message)}` : base
+  const cleanMessage = message?.trim()
+  return cleanMessage ? `${WHATSAPP_BASE_URL}?text=${encodeURIComponent(cleanMessage)}` : LINKS.whatsapp
 }
 
 /** Build mailto URL with optional subject and body */

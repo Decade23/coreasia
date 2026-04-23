@@ -23,6 +23,8 @@ const form = ref({
 })
 
 const showAIModal = ref(false)
+const aiPreview = ref<any>(null)
+const aiPreviewCategory = ref('general')
 
 const slugify = (text: string) => text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 
@@ -47,22 +49,32 @@ const handleAIImageUpload = async (file: File) => {
 }
 
 const handleAIGenerate = async (params: any) => {
+  aiPreview.value = null
   const result = await generateArticle(params)
   if (result) {
-    form.value.title = result.title
-    form.value.slug = result.slug
-    form.value.description = result.description
-    form.value.content = result.content
-    form.value.tags = result.tags.join(', ')
-    form.value.read_time = result.read_time
-    form.value.seo_title = result.title
-    form.value.seo_description = result.description
-    form.value.category = params.category || form.value.category
-    if (result.featured_image && !form.value.featured_image) {
-      form.value.featured_image = result.featured_image
-    }
-    showAIModal.value = false
+    aiPreview.value = result
+    aiPreviewCategory.value = params.category || form.value.category
   }
+}
+
+const applyAIPreview = () => {
+  const result = aiPreview.value
+  if (!result) return
+
+  form.value.title = result.title
+  form.value.slug = result.slug || slugify(result.title || '')
+  form.value.description = result.description
+  form.value.content = result.content
+  form.value.tags = Array.isArray(result.tags) ? result.tags.join(', ') : ''
+  form.value.read_time = result.read_time || form.value.read_time
+  form.value.seo_title = result.title
+  form.value.seo_description = result.description
+  form.value.category = aiPreviewCategory.value || form.value.category
+  if (result.featured_image) {
+    form.value.featured_image = result.featured_image
+  }
+  showAIModal.value = false
+  aiPreview.value = null
 }
 
 const buildFormData = () => ({
@@ -121,7 +133,14 @@ const applySuggestion = (s: typeof topicSuggestions[0]) => {
   aiTopic.value = s.topic
   aiKeywords.value = s.keywords
   aiCategory.value = s.category
+  aiPreview.value = null
 }
+
+watch(showAIModal, (show) => {
+  if (!show) {
+    aiPreview.value = null
+  }
+})
 </script>
 
 <template>
@@ -209,43 +228,40 @@ const applySuggestion = (s: typeof topicSuggestions[0]) => {
       </div>
     </form>
 
-    <!-- AI Generate Modal -->
-    <Teleport to="body">
-      <div v-if="showAIModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" @click.self="showAIModal = false">
-        <div class="ca-console-dialog w-full max-w-lg max-h-[90vh] overflow-y-auto p-6">
-          <h3 class="font-display text-lg font-bold text-[var(--ca-text)]">
-            <Icon name="lucide:sparkles" class="mr-2 inline h-5 w-5 ca-tone-gold" />
-            {{ tc('articles.aiTitle') }}
-          </h3>
-
-          <!-- Topic Suggestions -->
-          <div class="mt-3">
-            <p class="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--ca-muted)]">
-              <Icon name="lucide:lightbulb" class="mr-1 inline h-3.5 w-3.5 text-amber-400" />
-              {{ tc('articles.topicSuggestions') }}
-            </p>
-            <div class="max-h-[180px] overflow-y-auto space-y-1.5 pr-1">
-              <button
-                v-for="s in topicSuggestions"
-                :key="s.topic"
-                type="button"
-                class="group flex w-full items-start gap-2.5 rounded-lg border border-[color:var(--ca-border)] px-3 py-2 text-left transition hover:border-amber-300/40 hover:bg-[var(--ca-kicker-bg)]"
-                :class="aiTopic === s.topic ? 'border-amber-400/50 bg-amber-500/5' : ''"
-                @click="applySuggestion(s)"
-              >
-                <Icon name="lucide:file-text" class="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--ca-subtle)] group-hover:text-amber-400" :class="aiTopic === s.topic ? 'text-amber-400' : ''" />
-                <div class="min-w-0">
-                  <p class="text-[0.75rem] font-medium leading-snug text-[var(--ca-text)] group-hover:text-brand-primary">{{ s.topic }}</p>
-                  <div class="mt-0.5 flex items-center gap-1.5">
-                    <span class="rounded bg-[var(--ca-panel-bg-strong)] px-1.5 py-0.5 text-[0.6rem] font-medium text-[var(--ca-subtle)]">{{ s.category }}</span>
-                    <span class="text-[0.6rem] text-[var(--ca-subtle)] truncate">{{ s.keywords }}</span>
-                  </div>
+    <ConsoleModal
+      :show="showAIModal"
+      :title="tc('articles.aiTitle')"
+      size="lg"
+      @close="showAIModal = false"
+    >
+      <div class="space-y-4">
+        <div>
+          <p class="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--ca-muted)]">
+            <Icon name="lucide:lightbulb" class="mr-1 inline h-3.5 w-3.5 text-amber-400" />
+            {{ tc('articles.topicSuggestions') }}
+          </p>
+          <div class="ca-scrollbar max-h-[180px] space-y-1.5 overflow-y-auto pr-1">
+            <button
+              v-for="s in topicSuggestions"
+              :key="s.topic"
+              type="button"
+              class="group flex w-full items-start gap-2.5 rounded-lg border border-[color:var(--ca-border)] px-3 py-2 text-left transition hover:border-amber-300/40 hover:bg-[var(--ca-kicker-bg)]"
+              :class="aiTopic === s.topic ? 'border-amber-400/50 bg-amber-500/5' : ''"
+              @click="applySuggestion(s)"
+            >
+              <Icon name="lucide:file-text" class="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--ca-subtle)] group-hover:text-amber-400" :class="aiTopic === s.topic ? 'text-amber-400' : ''" />
+              <div class="min-w-0">
+                <p class="text-[0.75rem] font-medium leading-snug text-[var(--ca-text)] group-hover:text-brand-primary">{{ s.topic }}</p>
+                <div class="mt-0.5 flex items-center gap-1.5">
+                  <span class="rounded bg-[var(--ca-panel-bg-strong)] px-1.5 py-0.5 text-[0.6rem] font-medium text-[var(--ca-subtle)]">{{ s.category }}</span>
+                  <span class="truncate text-[0.6rem] text-[var(--ca-subtle)]">{{ s.keywords }}</span>
                 </div>
-              </button>
-            </div>
+              </div>
+            </button>
           </div>
+        </div>
 
-          <div class="mt-4 space-y-3">
+        <div class="space-y-3">
             <BaseInput id="ai-topic" v-model="aiTopic" :label="tc('articles.topic')" placeholder="Apa topik artikel yang ingin digenerate?" required />
             <BaseInput id="ai-keywords" v-model="aiKeywords" :label="tc('articles.keywords')" placeholder="seo, web monitoring, bisnis digital" />
             <div class="grid gap-3 sm:grid-cols-2">
@@ -296,12 +312,70 @@ const applySuggestion = (s: typeof topicSuggestions[0]) => {
                 @select="handleAIImageUpload"
               />
             </div>
-          </div>
 
-          <p v-if="aiError" class="mt-3 text-sm text-rose-400">{{ aiError }}</p>
+            <div v-if="aiPreview" class="rounded-2xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-3 sm:p-4">
+              <div class="flex items-start gap-3">
+                <div class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400">
+                  <Icon name="lucide:sparkles" class="h-4 w-4" />
+                </div>
+                <div class="min-w-0">
+                  <p class="text-sm font-semibold text-[var(--ca-text)]">{{ tc('articles.aiPreviewTitle') }}</p>
+                  <p class="mt-1 text-xs leading-relaxed text-[var(--ca-muted)]">{{ tc('articles.aiPreviewDescription') }}</p>
+                </div>
+              </div>
 
-          <div class="mt-6 flex justify-end gap-3">
+              <div class="mt-4 grid gap-3 md:grid-cols-[1.1fr_0.9fr]">
+                <div class="rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg-strong)] p-3">
+                  <p class="text-sm font-semibold leading-snug text-[var(--ca-text)]">{{ aiPreview.title }}</p>
+                  <p class="mt-2 line-clamp-3 text-xs leading-relaxed text-[var(--ca-muted)]">{{ aiPreview.description }}</p>
+                  <div class="mt-3 flex flex-wrap gap-1.5">
+                    <span
+                      v-for="tag in aiPreview.tags || []"
+                      :key="tag"
+                      class="rounded-full border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] px-2 py-0.5 text-[0.65rem] font-semibold text-[var(--ca-muted)]"
+                    >
+                      {{ tag }}
+                    </span>
+                  </div>
+                </div>
+
+                <div>
+                  <p class="mb-2 text-[0.65rem] font-semibold uppercase tracking-widest text-[var(--ca-subtle)]">{{ tc('articles.aiPreviewImage') }}</p>
+                  <div v-if="aiPreview.featured_image" class="overflow-hidden rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg-strong)] p-1.5">
+                    <img
+                      :src="aiPreview.featured_image"
+                      alt="AI featured image preview"
+                      class="h-36 w-full rounded-lg object-cover"
+                    />
+                  </div>
+                  <div v-else class="rounded-xl border border-dashed border-[color:var(--ca-border)] bg-[var(--ca-panel-bg-strong)] px-3 py-4 text-xs leading-relaxed text-[var(--ca-muted)]">
+                    <div class="flex items-start gap-2">
+                      <Icon
+                        name="lucide:image-off"
+                        class="mt-0.5 h-3.5 w-3.5 shrink-0"
+                        :class="aiPreview.featured_image_warning ? 'text-amber-400' : 'text-[var(--ca-subtle)]'"
+                      />
+                      <span>{{ aiPreview.featured_image_warning || tc('articles.aiPreviewNoImage') }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+        </div>
+
+        <p v-if="aiError" class="text-sm text-rose-400">{{ aiError }}</p>
+
+        <div class="flex justify-end gap-3">
             <button type="button" class="ca-btn-secondary" @click="showAIModal = false">{{ tc('common.cancel') }}</button>
+            <button
+              v-if="aiPreview"
+              type="button"
+              class="ca-btn-success !px-4 !py-2.5"
+              @click="applyAIPreview"
+            >
+              <Icon name="lucide:check" class="h-4 w-4" />
+              {{ tc('articles.aiPreviewApply') }}
+            </button>
             <button
               type="button"
               class="ca-btn-primary"
@@ -317,11 +391,10 @@ const applySuggestion = (s: typeof topicSuggestions[0]) => {
               })"
             >
               <Icon v-if="generating" name="lucide:loader-2" class="h-4 w-4 animate-spin" />
-              {{ generating ? tc('articles.generating') : tc('articles.generateAI') }}
+              {{ generating ? tc('articles.generating') : aiPreview ? tc('articles.regenerateAI') : tc('articles.generateAI') }}
             </button>
-          </div>
         </div>
       </div>
-    </Teleport>
+    </ConsoleModal>
   </div>
 </template>

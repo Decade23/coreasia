@@ -130,14 +130,14 @@ const formatDate = (d: string) => formatDateTime(d)
     </div>
 
     <!-- Table -->
-    <div v-else class="overflow-x-auto overflow-y-auto max-h-[60vh] ca-scrollbar">
-      <table class="w-full">
-        <thead class="sticky top-0 z-10 bg-[var(--ca-bg)]">
-          <tr class="border-b border-[color:var(--ca-border)]">
+    <div v-else class="ca-console-table-wrap ca-scrollbar">
+      <table class="ca-console-table">
+        <thead class="sticky top-0 z-10">
+          <tr>
             <th
               v-for="col in columns"
               :key="col.key"
-              class="relative px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[var(--ca-muted)]"
+              class="relative"
               :style="col.width ? { width: col.width } : undefined"
             >
               <div class="flex items-center gap-1.5">
@@ -218,7 +218,7 @@ const formatDate = (d: string) => formatDateTime(d)
           <tr
             v-for="(row, i) in filteredData"
             :key="i"
-            class="border-b border-[color:var(--ca-border)] transition hover:bg-[var(--ca-panel-bg)] cursor-pointer"
+            class="cursor-pointer"
             @click="emit('row-click', row)"
           >
             <td

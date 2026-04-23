@@ -29,6 +29,7 @@ const modelsError = ref('')
 
 // Active key info for current provider
 const activeKeyInfo = ref<{ id: string; name: string; provider: string } | null>(null)
+const activeUnsplashKeyInfo = ref<{ id: string; name: string; provider: string } | null>(null)
 
 const fetchSettings = async () => {
   loading.value = true
@@ -54,6 +55,14 @@ const fetchActiveKey = async (provider: string) => {
   } catch { /* ignore */ }
 }
 
+const fetchUnsplashKey = async () => {
+  activeUnsplashKeyInfo.value = null
+  try {
+    const res = await api.get<{ id: string; name: string; provider: string }>('/admin/ai/active-key/unsplash')
+    activeUnsplashKeyInfo.value = res.data || null
+  } catch { /* ignore */ }
+}
+
 const fetchModels = async (provider: string) => {
   modelsLoading.value = true
   modelsError.value = ''
@@ -70,11 +79,28 @@ const fetchModels = async (provider: string) => {
 
 const initialized = ref(false)
 
-watch(() => settings.value.ai_provider, (p) => {
+const clearModelOptions = () => {
+  modelOptions.value = []
+  modelsError.value = tc('aiSettings.modelsMissing')
+}
+
+const refreshProviderState = async (provider: string, resetModel = false) => {
+  if (resetModel) {
+    settings.value.ai_model = ''
+  }
+
+  await fetchActiveKey(provider)
+  if (!activeKeyInfo.value) {
+    clearModelOptions()
+    return
+  }
+
+  await fetchModels(provider)
+}
+
+watch(() => settings.value.ai_provider, async (p) => {
   if (!initialized.value) return
-  settings.value.ai_model = ''
-  fetchModels(p)
-  fetchActiveKey(p)
+  await refreshProviderState(p, true)
 })
 
 const saveSettings = async () => {
@@ -95,11 +121,14 @@ const saveSettings = async () => {
 }
 
 const hasActiveKey = computed(() => !!activeKeyInfo.value)
+const hasUnsplashKey = computed(() => !!activeUnsplashKeyInfo.value)
 
 onMounted(async () => {
   await fetchSettings()
-  await fetchModels(settings.value.ai_provider)
-  fetchActiveKey(settings.value.ai_provider)
+  await Promise.all([
+    refreshProviderState(settings.value.ai_provider),
+    fetchUnsplashKey(),
+  ])
   initialized.value = true
 })
 </script>
@@ -140,6 +169,22 @@ onMounted(async () => {
         :description="tc('aiSettings.autoImageDesc')"
         :disabled="!can('ai:settings:update')"
       />
+      <div v-if="settings.ai_auto_image && !hasUnsplashKey" class="ca-console-note ca-console-note-warning flex items-start gap-2.5">
+        <Icon name="lucide:image-off" class="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
+        <div class="text-xs">
+          <p class="font-semibold text-amber-400">{{ tc('aiSettings.unsplashKeyMissingTitle') }}</p>
+          <p class="mt-0.5 text-[var(--ca-muted)]">
+            {{ tc('aiSettings.unsplashKeyMissingDesc') }}
+            <NuxtLink to="/console/api-keys" class="text-amber-400 underline">{{ tc('layout.apiKeys') }}</NuxtLink>.
+          </p>
+        </div>
+      </div>
+      <div v-else-if="settings.ai_auto_image && hasUnsplashKey" class="ca-console-note ca-console-note-success flex items-center gap-2.5">
+        <Icon name="lucide:image" class="h-4 w-4 shrink-0 text-emerald-400" />
+        <p class="text-xs text-[var(--ca-muted)]">
+          {{ tc('aiSettings.unsplashKeyActiveDesc', { name: activeUnsplashKeyInfo?.name || '-' }) }}
+        </p>
+      </div>
 
       <!-- Provider & Model -->
       <div class="ca-card-soft relative z-10 space-y-4 p-5 sm:p-6">
@@ -178,7 +223,7 @@ onMounted(async () => {
             v-model="settings.ai_model"
             :label="tc('aiSettings.modelLabel')"
             :options="modelOptions"
-            :disabled="modelsLoading || !can('ai:settings:update')"
+            :disabled="modelsLoading || !hasActiveKey || !can('ai:settings:update')"
             :placeholder="modelsLoading ? tc('aiSettings.loadingModels') : tc('aiSettings.modelPlaceholder')"
           />
           <p v-if="modelsError" class="mt-1 text-[0.65rem] text-amber-400">{{ modelsError }}</p>

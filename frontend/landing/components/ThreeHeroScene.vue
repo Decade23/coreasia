@@ -17,15 +17,50 @@ const getThemeColors = () => {
     }
 }
 
+const getViewportWidth = () => {
+    if (!process.client) return 1024
+    return window.innerWidth
+}
+
+const isMobileViewport = () => getViewportWidth() < 768
+
 // Adaptive particle count based on device
 const getParticleCount = () => {
     if (process.client) {
-        const width = window.innerWidth
+        const width = getViewportWidth()
         if (width < 768) return 60  // Mobile
         if (width < 1024) return 100 // Tablet
         return 150 // Desktop
     }
     return 150 // Default fallback
+}
+
+const getSceneOptions = () => {
+    if (isMobileViewport()) {
+        return {
+            particleCount: 44,
+            connectionDistance: 110,
+            particleSpeed: 0.22,
+            maxConnectionsPerParticle: 4,
+        }
+    }
+
+    const width = getViewportWidth()
+    if (width < 1024) {
+        return {
+            particleCount: 90,
+            connectionDistance: 135,
+            particleSpeed: 0.26,
+            maxConnectionsPerParticle: 5,
+        }
+    }
+
+    return {
+        particleCount: getParticleCount(),
+        connectionDistance: 150,
+        particleSpeed: 0.3,
+        maxConnectionsPerParticle: 6,
+    }
 }
 
 // Debounced resize handler
@@ -53,8 +88,9 @@ onMounted(async () => {
 
     if (containerRef.value) {
         const tc = getThemeColors()
+        const sceneOptions = getSceneOptions()
         networkScene = new NeuralNetworkScene(containerRef.value, {
-            particleCount: getParticleCount(),
+            ...sceneOptions,
             particleOpacity: tc.particleOpacity,
             lineOpacity: tc.lineOpacity,
             colors: {

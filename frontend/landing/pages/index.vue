@@ -37,8 +37,7 @@ onMounted(() => {
         }
     }).connection
 
-    const prefersLiteHero = window.innerWidth < 768
-        || window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const prefersLiteHero = window.matchMedia('(prefers-reduced-motion: reduce)').matches
         || connection?.saveData
 
     showHeroScene.value = !prefersLiteHero
@@ -150,6 +149,11 @@ useHead({
                 <!-- Ambient glow handled by --ca-page-background -->
                 <ClientOnly>
                     <LazyThreeHeroScene v-if="showHeroScene" />
+                    <div v-else class="absolute inset-0 z-0">
+                        <div class="ca-scene-grid absolute inset-0"></div>
+                        <div class="ca-scene-glow ca-light-soft-blend absolute left-1/2 top-1/2 h-[500px] w-[800px] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[100px]"></div>
+                        <div class="ca-scene-base absolute inset-0 -z-10" />
+                    </div>
                     <template #fallback>
                         <div class="absolute inset-0 z-0">
                             <div class="ca-scene-grid absolute inset-0"></div>

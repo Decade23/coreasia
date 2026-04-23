@@ -2,6 +2,14 @@
 import { LINKS } from '~/utils/constants'
 
 const { t } = useCoreI18n()
+const { useReveal, revealRef } = useScrollReveal()
+
+const heroContent = useReveal('fadeUp')
+const featuresHeader = useReveal('fadeUp')
+const audienceHeader = useReveal('fadeUp')
+const relatedProductSection = useReveal('fadeUp')
+const faqSection = useReveal('fadeUp')
+const ctaSection = useReveal('scaleUp')
 
 useCoreSeo({
   title: t('services.webMonitoringDashboard.title') as string,
@@ -71,7 +79,7 @@ const faqItems = computed(() => (t('services.webMonitoringDashboard.faq.items') 
       </div>
 
       <div class="ca-container relative ca-section pt-6 sm:pt-8 lg:py-28">
-        <div class="mx-auto max-w-4xl text-center">
+        <div ref="heroContent" class="mx-auto max-w-4xl text-center">
           <span class="ca-kicker">
             <Icon name="lucide:bar-chart-3" class="h-3.5 w-3.5 ca-tone-emerald" />
             {{ t('services.webMonitoringDashboard.kicker') }}
@@ -99,11 +107,11 @@ const faqItems = computed(() => (t('services.webMonitoringDashboard.faq.items') 
     <!-- Features -->
     <section class="ca-section">
       <div class="ca-container">
-        <div class="mb-8 text-center">
+        <div ref="featuresHeader" class="mb-8 text-center">
           <h2 class="ca-title">{{ t('services.webMonitoringDashboard.features.title') }}</h2>
         </div>
         <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          <article v-for="feature in features" :key="feature.title" class="ca-card-soft p-5">
+          <article v-for="(feature, index) in features" :key="feature.title" :ref="revealRef('fadeUp', index * 80)" class="ca-card-soft p-5">
             <div class="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg-strong)]">
               <Icon :name="feature.icon" class="h-5 w-5 ca-tone-emerald" />
             </div>
@@ -117,11 +125,11 @@ const faqItems = computed(() => (t('services.webMonitoringDashboard.faq.items') 
     <!-- Audience -->
     <section class="ca-section pt-0">
       <div class="ca-container">
-        <div class="mb-8 text-center">
+        <div ref="audienceHeader" class="mb-8 text-center">
           <h2 class="ca-title">{{ t('services.webMonitoringDashboard.audience.title') }}</h2>
         </div>
         <div class="grid gap-4 md:grid-cols-3">
-          <article v-for="item in audienceItems" :key="item.title" class="ca-card p-5">
+          <article v-for="(item, index) in audienceItems" :key="item.title" :ref="revealRef('fadeUp', index * 80)" class="ca-card p-5">
             <div class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)]">
               <Icon :name="item.icon" class="h-4 w-4 ca-tone-emerald" />
             </div>
@@ -135,7 +143,7 @@ const faqItems = computed(() => (t('services.webMonitoringDashboard.faq.items') 
     <!-- Related Product -->
     <section class="ca-section pt-0">
       <div class="ca-container">
-        <div class="ca-card p-5 sm:p-6">
+        <div ref="relatedProductSection" class="ca-card p-5 sm:p-6">
           <div class="grid gap-6 md:grid-cols-2 md:items-center">
             <div>
               <span class="ca-kicker">
@@ -164,7 +172,7 @@ const faqItems = computed(() => (t('services.webMonitoringDashboard.faq.items') 
     <!-- FAQ -->
     <section class="ca-section pt-0">
       <div class="ca-container">
-        <div class="ca-card p-6 sm:p-8">
+        <div ref="faqSection" class="ca-card p-6 sm:p-8">
           <h2 class="ca-title mb-6">{{ t('services.webMonitoringDashboard.faq.title') }}</h2>
           <div class="space-y-3">
             <article v-for="faq in faqItems" :key="faq.question" class="rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-4">
@@ -179,7 +187,7 @@ const faqItems = computed(() => (t('services.webMonitoringDashboard.faq.items') 
     <!-- CTA -->
     <section class="ca-section pt-0">
       <div class="ca-container">
-        <div class="ca-card p-6 text-center sm:p-10">
+        <div ref="ctaSection" class="ca-card p-6 text-center sm:p-10">
           <h2 class="text-balance font-display text-3xl font-bold text-[var(--ca-text)] sm:text-4xl">
             {{ t('services.webMonitoringDashboard.cta.title') }}
           </h2>

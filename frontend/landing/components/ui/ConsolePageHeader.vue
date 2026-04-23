@@ -1,5 +1,5 @@
 <template>
-  <section class="ca-console-header-card mb-6 overflow-hidden rounded-[1.75rem] p-5 sm:p-6 lg:p-7">
+  <section class="ca-console-header-card mb-6 overflow-hidden rounded-2xl p-5 sm:p-6 lg:p-7">
     <div class="relative z-[1] flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
       <div class="min-w-0 flex-1">
         <div class="flex flex-wrap items-center gap-3">
@@ -34,9 +34,6 @@
         <slot name="actions" />
       </div>
     </div>
-
-    <div class="ca-console-header-orb ca-console-header-orb-primary" />
-    <div class="ca-console-header-orb ca-console-header-orb-secondary" />
   </section>
 </template>
 

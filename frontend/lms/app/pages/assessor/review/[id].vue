@@ -3,12 +3,14 @@ import DashboardLayout from '~/components/templates/DashboardLayout.vue'
 import ReviewSection from '~/components/organisms/ReviewSection.vue'
 import CaButton from '~/components/atoms/CaButton.vue'
 import { MOCK_APPLICANTS } from '~/types/assessor'
+import { useNotificationStore } from '~/stores/useNotificationStore'
 
 import { ArrowLeft, User, FileText, CheckCircle2 } from 'lucide-vue-next'
 
 const route = useRoute()
 const applicantId = route.params.id as string
 const applicant = computed(() => MOCK_APPLICANTS.find(a => a.id === applicantId))
+const notificationStore = useNotificationStore()
 
 const { units } = await useAssessment()
 const decisions = ref<Record<string, any>>({})
@@ -18,7 +20,7 @@ const submitReview = () => {
   isSubmitting.value = true
   setTimeout(() => {
     isSubmitting.value = false
-    alert(`Rekomendasi untuk ${applicant.value?.name} telah berhasil dikirim.`)
+    notificationStore.success(`Rekomendasi untuk ${applicant.value?.name} telah berhasil dikirim.`)
     navigateTo('/assessor')
   }, 1000)
 }

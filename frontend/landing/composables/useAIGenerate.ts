@@ -20,6 +20,7 @@ export interface AIGenerateResult {
   tags: string[]
   read_time: number
   featured_image?: string
+  featured_image_warning?: string
 }
 
 export const useAIGenerate = () => {

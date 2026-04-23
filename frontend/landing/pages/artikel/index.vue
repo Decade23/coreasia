@@ -2,10 +2,16 @@
 import { ARTICLES } from '~/utils/articles'
 
 const { locale, t } = useCoreI18n()
+const { useReveal, revealRef } = useScrollReveal()
 const config = useRuntimeConfig()
 const baseURL = import.meta.client
   ? (config.public?.gatewayPublicUrl || 'http://localhost:8084/api')
   : (config.public?.gatewayUrl || 'http://localhost:8081/api')
+
+const heroContent = useReveal('fadeUp')
+const browseHeader = useReveal('fadeUp')
+const categoryControls = useReveal('fadeUp', 80)
+const ctaSection = useReveal('scaleUp')
 
 useCoreSeo({
   title: (t('blog.title') || 'Artikel & Insight') as string,
@@ -232,7 +238,7 @@ const categoryLabel = (key: string) => {
       <div class="pointer-events-none absolute inset-0">
         <div class="absolute inset-0 bg-[radial-gradient(920px_420px_at_50%_0%,rgba(251,191,36,0.15),transparent_62%)]" />
       </div>
-      <div class="ca-container relative ca-section pt-6 sm:pt-8 pb-10 text-center sm:pb-12 lg:pb-16">
+      <div ref="heroContent" class="ca-container relative ca-section pt-6 sm:pt-8 pb-10 text-center sm:pb-12 lg:pb-16">
         <span class="ca-kicker">
           <Icon name="lucide:pen-tool" class="h-3.5 w-3.5 ca-tone-gold" />
           {{ t('blog.kicker') }}
@@ -244,12 +250,12 @@ const categoryLabel = (key: string) => {
 
     <section class="ca-section pt-0">
       <div class="ca-container">
-        <div class="mb-4">
+        <div ref="browseHeader" class="mb-4">
           <p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-[var(--ca-subtle)]">{{ t('blog.browseLabel') }}</p>
           <p class="mt-2 max-w-2xl text-sm leading-relaxed text-[var(--ca-muted)]">{{ t('blog.browseDescription') }}</p>
         </div>
 
-        <div class="mb-8 rounded-2xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)]/80 p-2.5">
+        <div ref="categoryControls" class="mb-8 rounded-2xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)]/80 p-2.5">
           <div class="flex flex-wrap gap-2">
             <button
               v-for="cat in visibleCategories"
@@ -283,7 +289,7 @@ const categoryLabel = (key: string) => {
         </div>
 
         <div v-else-if="filteredArticles.length" class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          <NuxtLink v-for="article in filteredArticles" :key="article.slug" :to="`/artikel/${article.slug}`"
+          <NuxtLink v-for="(article, index) in filteredArticles" :key="article.slug" :ref="revealRef('fadeUp', index * 80)" :to="`/artikel/${article.slug}`"
             class="ca-card-soft group flex flex-col overflow-hidden transition hover:-translate-y-1 hover:border-[color:var(--ca-gold-border)] hover:shadow-lg"
           >
             <div v-if="article.featured_image" class="aspect-[16/9] w-full overflow-hidden">
@@ -320,7 +326,7 @@ const categoryLabel = (key: string) => {
 
     <section class="ca-section pt-0">
       <div class="ca-container">
-        <div class="ca-card p-6 text-center sm:p-10">
+        <div ref="ctaSection" class="ca-card p-6 text-center sm:p-10">
           <h2 class="text-balance font-display text-3xl font-bold text-[var(--ca-text)] sm:text-4xl">{{ t('blog.cta.title') }}</h2>
           <p class="mx-auto mt-3 max-w-2xl text-sm text-[var(--ca-muted)] sm:text-base">{{ t('blog.cta.subtitle') }}</p>
           <div class="mt-6">

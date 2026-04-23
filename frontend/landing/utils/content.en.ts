@@ -89,6 +89,10 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
       title: 'Choose the product that fits your team',
       subtitle:
         'Each product solves a focused operational problem while still fitting into a broader ecosystem built for business growth.',
+      roadmapKicker: 'Product Roadmap',
+      roadmapTitle: 'The next products we are preparing',
+      roadmapSubtitle:
+        'LMS and LeadKu remain visible as part of the CoreAsia ecosystem direction, so potential clients can understand what solutions are coming next.',
       items: [
         {
           name: 'Pantau by CoreAsia',
@@ -129,6 +133,8 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
           tagline: 'Certification & Training',
           description:
             'A certification and training management platform for teams that need clean workflows, audit-ready operations, and scalable delivery.',
+          ctaLabel: 'View LMS Roadmap',
+          to: '/products/lms',
         },
         {
           name: 'LeadKu by CoreAsia',
@@ -136,6 +142,8 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
           tagline: 'Sales CRM',
           description:
             'A multi-workspace CRM for sales teams that need cleaner pipelines, visible team activity, and faster reporting.',
+          ctaLabel: 'View LeadKu Roadmap',
+          to: '/products/leadku',
         },
       ],
     },

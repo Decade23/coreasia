@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import CaDatePicker from '~/components/organisms/CaDatePicker.vue'
 import type { PersonalData } from '../../types/registration'
 
 const props = defineProps<{
@@ -53,13 +54,11 @@ const updateData = (key: keyof PersonalData, value: string) => {
         </div>
 
         <div class="space-y-2">
-            <BaseInput
+            <CaDatePicker
                 id="reg-dob"
-                type="date"
                 label="Tanggal Lahir"
                 :model-value="modelValue.dateOfBirth"
-                @update:model-value="(val: string | number) => updateData('dateOfBirth', val as string)"
-                required
+                @update:model-value="(val: string | Date) => updateData('dateOfBirth', val as string)"
                 :error="errors?.dateOfBirth"
             />
         </div>

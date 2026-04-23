@@ -5,10 +5,13 @@ const { t } = useCoreI18n()
 const { useReveal, revealRef } = useScrollReveal()
 
 const productsHeader = useReveal('fadeUp')
+const roadmapHeader = useReveal('fadeUp')
 const engagementHeader = useReveal('fadeUp')
 
 const products = computed(() => (t('home.products.items') as Array<Record<string, any>>) || [])
+const roadmapProducts = computed(() => (t('home.products.comingSoon') as Array<Record<string, any>>) || [])
 const engagementModels = computed(() => (t('home.engagementModels.items') as Array<Record<string, any>>) || [])
+const roadmapIcons = ['lucide:graduation-cap', 'lucide:briefcase-business']
 
 const productMousePositions = ref(
   Array.from({ length: 10 }, () => ({ x: 0, y: 0 })),
@@ -129,6 +132,50 @@ const resetSpotlight = (positions: Array<{ x: number; y: number }>, index: numbe
             </span>
           </div>
         </NuxtLink>
+      </div>
+
+      <div v-if="roadmapProducts.length" class="mt-10">
+        <div ref="roadmapHeader" class="mb-6">
+          <span class="ca-kicker">{{ t('home.products.roadmapKicker') }}</span>
+          <h3 class="mt-4 text-balance font-display text-2xl font-bold text-[var(--ca-text)] sm:text-3xl">
+            {{ t('home.products.roadmapTitle') }}
+          </h3>
+          <p class="ca-copy mt-3 max-w-3xl">{{ t('home.products.roadmapSubtitle') }}</p>
+        </div>
+
+        <div class="grid gap-4 md:grid-cols-2">
+          <NuxtLink
+            v-for="(product, index) in roadmapProducts"
+            :key="product.name"
+            :to="product.to"
+            class="ca-card group relative overflow-hidden border-dashed p-5 transition hover:-translate-y-0.5 hover:border-[color:var(--ca-gold-border)]"
+          >
+            <div class="flex items-start justify-between gap-3">
+              <div
+                class="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg-strong)]"
+              >
+                <Icon :name="roadmapIcons[index] || 'lucide:box'" class="h-5 w-5 ca-tone-emerald" />
+              </div>
+              <span class="shrink-0 rounded-full border border-[color:var(--ca-border)] px-2.5 py-1 text-[0.68rem] font-bold uppercase tracking-[0.12em] text-[var(--ca-muted)]">
+                {{ product.badge }}
+              </span>
+            </div>
+
+            <h4 class="mt-5 text-lg font-display font-semibold text-[var(--ca-text)]">
+              {{ product.name }}
+            </h4>
+            <p class="mt-1 text-sm font-medium ca-tone-gold">
+              {{ product.tagline }}
+            </p>
+            <p class="mt-3 text-sm leading-relaxed text-[var(--ca-muted)]">
+              {{ product.description }}
+            </p>
+            <span class="mt-5 inline-flex items-center gap-1 text-sm font-semibold ca-tone-gold">
+              {{ product.ctaLabel }}
+              <Icon name="lucide:arrow-right" class="h-4 w-4 transition group-hover:translate-x-0.5" />
+            </span>
+          </NuxtLink>
+        </div>
       </div>
     </div>
   </section>

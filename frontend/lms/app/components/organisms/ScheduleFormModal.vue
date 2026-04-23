@@ -2,6 +2,7 @@
 import { reactive, watch, computed } from 'vue'
 import { X } from 'lucide-vue-next'
 import CaButton from '~/components/atoms/CaButton.vue'
+import CaDatePicker from '~/components/organisms/CaDatePicker.vue'
 import type { ScheduleDomain, ScheduleFormData, ScheduleType } from '~/types/schedule'
 import { useFormValidation, required } from '~/composables/useFormValidation'
 
@@ -130,21 +131,17 @@ const handleSubmit = () => {
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                            <BaseInput
+                            <CaDatePicker
                                 id="sched-start"
-                                type="date"
                                 label="Tanggal Mulai"
                                 v-model="form.startDate"
-                                required
                                 :error="errors.startDate"
                                 @update:model-value="clearFieldError('startDate')"
                             />
-                            <BaseInput
+                            <CaDatePicker
                                 id="sched-end"
-                                type="date"
                                 label="Tanggal Selesai"
                                 v-model="form.endDate"
-                                required
                                 :error="errors.endDate"
                                 @update:model-value="clearFieldError('endDate')"
                             />

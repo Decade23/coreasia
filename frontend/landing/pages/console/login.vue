@@ -39,6 +39,7 @@ const themeBootstrapScript = `(() => {
 
 useHead(() => ({
   htmlAttrs: { 'data-theme': theme.value },
+  bodyAttrs: { class: 'ca-console-page' },
   script: [{ innerHTML: themeBootstrapScript, tagPosition: 'head' }],
 }))
 
@@ -58,12 +59,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="ca-console-shell relative flex min-h-screen items-center justify-center overflow-hidden bg-[var(--ca-bg)] px-4 py-12">
-    <div class="pointer-events-none absolute inset-0">
-      <div class="ca-console-header-orb ca-console-header-orb-primary left-[8%] top-[8%]" />
-      <div class="ca-console-header-orb ca-console-header-orb-secondary bottom-[8%] right-[12%]" />
-    </div>
-
+  <div class="ca-console-shell relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-12">
     <div class="relative z-[1] w-full max-w-lg">
       <div class="mb-8 text-center">
         <div class="mx-auto inline-flex h-16 w-16 items-center justify-center rounded-[1.75rem] border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] shadow-[var(--ca-card-soft-shadow)]">
