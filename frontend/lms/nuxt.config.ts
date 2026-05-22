@@ -9,6 +9,7 @@ export default defineNuxtConfig({
     '@pinia/nuxt',
     '@nuxtjs/i18n',
     '@vueuse/nuxt',
+    '@nuxtjs/color-mode',
   ],
   vite: {
     plugins: [
@@ -21,6 +22,11 @@ export default defineNuxtConfig({
       apiBase: 'http://localhost:8083/api',
       tenantSlug: 'demo',
     },
+  },
+  colorMode: {
+    preference: 'system',
+    fallback: 'dark',
+    classSuffix: '',
   },
   devServer: {
     port: 3001

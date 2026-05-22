@@ -1,60 +1,32 @@
 type Theme = 'dark' | 'light'
 
-const STORAGE_KEY = 'ca-theme'
+export function useTheme() {
+  const colorMode = useColorMode()
 
-const theme = ref<Theme>('dark')
+  const isDark = computed(() => colorMode.value === 'dark')
+  const isLight = computed(() => colorMode.value === 'light')
 
-function applyTheme(newTheme: Theme) {
-  if (import.meta.server) return
-
-  const html = document.documentElement
-
-  html.classList.add('theme-transition')
-  requestAnimationFrame(() => {
-    if (newTheme === 'light') {
-      html.classList.add('light')
-    } else {
-      html.classList.remove('light')
-    }
+  function toggle() {
+    const html = document.documentElement
+    html.classList.add('theme-transition')
+    
+    colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'
 
     setTimeout(() => {
       html.classList.remove('theme-transition')
     }, 400)
-  })
-
-  localStorage.setItem(STORAGE_KEY, newTheme)
-  theme.value = newTheme
-}
-
-export function useTheme() {
-  const isDark = computed(() => theme.value === 'dark')
-  const isLight = computed(() => theme.value === 'light')
-
-  function toggle() {
-    applyTheme(theme.value === 'dark' ? 'light' : 'dark')
   }
 
   function set(newTheme: Theme) {
-    applyTheme(newTheme)
+    colorMode.preference = newTheme
   }
 
   function init() {
-    if (import.meta.server) return
-
-    const stored = localStorage.getItem(STORAGE_KEY) as Theme | null
-    const preferred = stored ?? (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark')
-
-    theme.value = preferred
-
-    if (preferred === 'light') {
-      document.documentElement.classList.add('light')
-    } else {
-      document.documentElement.classList.remove('light')
-    }
+    // color-mode automatically handles initialization, but we keep this for backwards compatibility
   }
 
   return {
-    theme: readonly(theme),
+    theme: computed(() => colorMode.value as Theme),
     isDark,
     isLight,
     toggle,

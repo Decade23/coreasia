@@ -46,10 +46,13 @@ const variantStyles = {
                 class="fixed inset-0 z-[100] flex items-center justify-center p-4"
             >
                 <!-- Backdrop -->
-                <div class="absolute inset-0 bg-core-950/80 backdrop-blur-sm" @click="emit('cancel')" />
+                <div class="absolute inset-0 transition-opacity duration-300" :style="{ background: 'var(--th-overlay)' }" @click="emit('cancel')" />
 
                 <!-- Dialog -->
-                <div class="relative w-full max-w-md ca-card p-8 z-10">
+                <div 
+                    class="relative w-full max-w-md ca-card p-8 z-10 transform transition-all duration-300 shadow-glass-lg"
+                    :class="open ? 'scale-100 opacity-100 translate-y-0' : 'scale-95 opacity-0 translate-y-4'"
+                >
                     <div class="flex flex-col items-center text-center">
                         <div
                             class="w-14 h-14 rounded-2xl flex items-center justify-center mb-5"

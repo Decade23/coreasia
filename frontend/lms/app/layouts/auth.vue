@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Hexagon } from 'lucide-vue-next'
+import ThemeToggle from '~/components/atoms/ThemeToggle.vue'
 </script>
 
 <template>
@@ -15,14 +16,21 @@ import { Hexagon } from 'lucide-vue-next'
 
     <!-- Header Logo -->
     <div class="absolute top-8 left-8 flex items-center gap-3 z-20">
-      <div class="w-10 h-10 rounded-xl bg-linear-to-br from-brand to-emerald-400 p-px">
+      <div class="w-10 h-10 rounded-xl bg-linear-to-br from-brand to-emerald-400 p-px shadow-glow-cyan">
         <div class="w-full h-full bg-core-950 rounded-[11px] flex items-center justify-center">
           <Hexagon class="w-5 h-5 text-brand" />
         </div>
       </div>
       <div>
         <h2 class="text-content font-bold text-lg tracking-tight leading-none">CoreAsia</h2>
-        <span class="text-[10px] text-content-subtle uppercase tracking-widest font-black">LMS Platform</span>
+        <span class="text-[10px] text-brand uppercase tracking-widest font-black">LMS Platform</span>
+      </div>
+    </div>
+
+    <!-- Theme Toggle -->
+    <div class="absolute top-8 right-8 z-20">
+      <div class="ca-card-glass rounded-xl p-1">
+        <ThemeToggle />
       </div>
     </div>
 

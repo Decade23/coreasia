@@ -13,7 +13,7 @@ import Modal from '~/components/organisms/Modal.vue'
 import ConfirmDialog from '~/components/molecules/ConfirmDialog.vue'
 import LoadingSpinner from '~/components/atoms/LoadingSpinner.vue'
 import ErrorAlert from '~/components/atoms/ErrorAlert.vue'
-import { Building2, Palette, Users, Save, Check, Plus, Pencil, Trash2 } from 'lucide-vue-next'
+import { Building2, Palette, Users, Save, Check, Plus, Pencil, Trash2, CreditCard } from 'lucide-vue-next'
 import { useTenantSettings, type TenantGeneral, type TenantBranding } from '~/composables/useTenantSettings'
 import { useUsers, type CreateUserPayload, type UpdateUserPayload } from '~/composables/useUsers'
 import type { UserDomain } from '~/adapters/UserAdapter'
@@ -288,11 +288,17 @@ onBeforeUnmount(() => {
         <div class="space-y-6 py-6">
             <div class="space-y-4">
                 <Breadcrumb :items="[{ label: 'Admin', to: '/admin' }, { label: t('nav.settings') }]" />
-                <PageHeader
-                    :eyebrow="t('nav.settings')"
-                    :title="t('admin.settings.title')"
-                    :subtitle="t('admin.settings.subtitle')"
-                />
+                <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    <PageHeader
+                        :eyebrow="t('nav.settings')"
+                        :title="t('admin.settings.title')"
+                        :subtitle="t('admin.settings.subtitle')"
+                    />
+                    <NuxtLink to="/admin/settings/billing" class="flex w-fit items-center gap-2 rounded-xl border border-divider bg-tint px-4 py-2 text-sm font-bold text-content transition hover:bg-brand/10 hover:text-brand">
+                        <CreditCard class="h-4 w-4" />
+                        Subscription & Billing
+                    </NuxtLink>
+                </div>
             </div>
 
             <ErrorAlert v-if="error" :message="error" @dismiss="error = null" />

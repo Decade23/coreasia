@@ -13,7 +13,7 @@ defineEmits(['manage'])
 </script>
 
 <template>
-  <div class="bg-core-800 p-6 rounded-[2rem] relative flex flex-col h-full shadow-glow-base transition-all duration-500 hover:-translate-y-1 hover:shadow-glow-base-strong group">
+  <div class="ca-card-interactive p-6 flex flex-col h-full group" @click="$emit('manage', scheme)">
     
     <!-- Subtle Glow effect on card hover -->
     <div class="absolute top-0 right-0 w-32 h-32 bg-cyan-500/10 rounded-full blur-[60px] opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none -mr-16 -mt-16" />
@@ -42,11 +42,11 @@ defineEmits(['manage'])
     </div>
 
     <!-- Footer/Aksi -->
-    <div class="flex items-center justify-between mt-auto relative z-10">
+    <div class="flex items-center justify-between mt-auto relative z-10 pt-4 border-t border-divider group-hover:border-divider-hover transition-colors">
       <div class="text-[10px] font-black uppercase tracking-widest text-content-subtle">
         <span class="text-content font-bold text-sm">{{ scheme.unitCount }}</span> Unit
       </div>
-      <button @click="$emit('manage', scheme)" class="text-xs font-black uppercase tracking-widest text-cyan-400 group-hover:translate-x-1 group-hover:text-cyan-300 transition-all flex items-center gap-1">
+      <button class="text-xs font-black uppercase tracking-widest text-brand group-hover:translate-x-1 group-hover:text-brand-400 transition-all flex items-center gap-1">
         Kelola <span class="text-lg leading-none">&rarr;</span>
       </button>
     </div>

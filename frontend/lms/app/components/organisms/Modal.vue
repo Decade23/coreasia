@@ -31,9 +31,15 @@ const widthClass = {
             leave-to-class="opacity-0"
         >
             <div v-if="open" class="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                <div class="absolute inset-0 backdrop-blur-sm" :style="{ background: 'var(--th-overlay)' }" @click="emit('close')" />
+                <div class="absolute inset-0 backdrop-blur-sm transition-opacity duration-300" :style="{ background: 'var(--th-overlay)' }" @click="emit('close')" />
 
-                <div class="relative w-full ca-card p-0 z-10 max-h-[90vh] flex flex-col" :class="widthClass[maxWidth || 'lg']">
+                <div 
+                    class="relative w-full ca-card p-0 z-10 max-h-[90vh] flex flex-col transform transition-all duration-300 shadow-glass-lg" 
+                    :class="[
+                        widthClass[maxWidth || 'lg'],
+                        open ? 'scale-100 opacity-100 translate-y-0' : 'scale-95 opacity-0 translate-y-4'
+                    ]"
+                >
                     <!-- Header -->
                     <div v-if="title || $slots.header" class="flex items-center justify-between p-6 border-b border-divider">
                         <slot name="header">
@@ -48,12 +54,12 @@ const widthClass = {
                     </div>
 
                     <!-- Body -->
-                    <div class="p-6 overflow-y-auto flex-1">
+                    <div class="p-6 overflow-y-auto flex-1 custom-scrollbar">
                         <slot />
                     </div>
 
                     <!-- Footer -->
-                    <div v-if="$slots.footer" class="p-6 border-t border-divider">
+                    <div v-if="$slots.footer" class="p-6 border-t border-divider bg-surface-soft/50 rounded-b-2xl">
                         <slot name="footer" />
                     </div>
                 </div>

@@ -29,20 +29,20 @@ const handleLogin = async () => {
 </script>
 
 <template>
-    <div class="w-full max-w-md p-6 sm:p-8 md:p-12 ca-card group transition-all duration-700 mx-4">
+    <div class="w-full max-w-md p-6 sm:p-8 md:p-12 ca-card-glass group transition-all duration-700 mx-4 relative overflow-hidden">
         <!-- Glow Effect -->
         <div
-            class="absolute -top-32 -right-32 w-64 h-64 bg-brand/10 rounded-full blur-[80px] group-hover:bg-brand/20 transition-colors duration-700 pointer-events-none"
+            class="absolute -top-32 -right-32 w-64 h-64 bg-brand/20 rounded-full blur-[80px] group-hover:bg-brand/30 transition-colors duration-700 pointer-events-none"
         />
         <div
-            class="absolute -bottom-32 -left-32 w-64 h-64 bg-brand-300/10 rounded-full blur-[80px] group-hover:bg-brand-400/10 transition-colors duration-700 pointer-events-none"
+            class="absolute -bottom-32 -left-32 w-64 h-64 bg-emerald-500/10 rounded-full blur-[80px] group-hover:bg-emerald-400/20 transition-colors duration-700 pointer-events-none"
         />
 
         <div class="relative z-10">
             <div
-                class="w-16 h-16 rounded-2xl bg-tint border border-divider-strong flex items-center justify-center mb-8 shadow-inner shadow-black/50 mx-auto md:mx-0"
+                class="w-16 h-16 rounded-2xl bg-gradient-to-br from-core-800 to-core-900 border border-divider-strong flex items-center justify-center mb-8 shadow-inner shadow-black/50 mx-auto md:mx-0 group-hover:shadow-glow-cyan transition-shadow duration-500"
             >
-                <Play class="w-8 h-8 text-brand fill-brand/20" />
+                <Play class="w-8 h-8 text-brand fill-brand/20 group-hover:fill-brand/40 transition-colors" />
             </div>
 
             <h1 class="text-3xl md:text-4xl font-black mb-3 tracking-tight text-content text-center md:text-left">
@@ -92,8 +92,7 @@ const handleLogin = async () => {
 
                 <CaButton
                     type="submit"
-                    variant="primary"
-                    class="w-full mt-8 py-4 justify-center"
+                    class="w-full mt-8 py-4 justify-center ca-btn-primary"
                     :disabled="pending || !form.email || !form.password"
                     :loading="pending"
                 >

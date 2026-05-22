@@ -340,7 +340,14 @@ const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms))
 const isSafeRedirect = (url: string): boolean => {
     try {
         const parsed = new URL(url)
-        const allowed = ['coreasia.id', 'www.coreasia.id']
+        const allowed = [
+            'coreasia.id',
+            'www.coreasia.id',
+            'app.midtrans.com',
+            'app.sandbox.midtrans.com',
+            'checkout.xendit.co',
+            'api.xendit.co',
+        ]
         return allowed.some(h => parsed.hostname === h || parsed.hostname.endsWith(`.${h}`))
     } catch {
         return false

@@ -154,12 +154,12 @@ const userDisplayRole = computed(() => {
         <div class="relative z-10 flex h-full flex-col">
             <div class="flex h-16 shrink-0 items-center justify-between px-6 lg:h-[72px]">
                 <NuxtLink to="/" class="group flex items-center gap-3">
-                    <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-linear-to-br from-brand-400 to-brand-600 text-lg font-black text-slate-950 shadow-glow-cyan-card transition-transform duration-300 group-hover:scale-105">
+                    <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-brand text-lg font-black text-slate-950 shadow-glow-cyan-card transition-all duration-300 group-hover:scale-105 group-hover:shadow-glow-cyan">
                         C
                     </div>
                     <div>
                         <span class="block leading-none font-bold tracking-tight text-content text-lg">CoreAsia</span>
-                        <span class="text-[9px] font-bold uppercase tracking-[0.2em] text-content-faint">LMS Platform</span>
+                        <span class="text-[9px] font-black uppercase tracking-[0.2em] text-brand">LMS Platform</span>
                     </div>
                 </NuxtLink>
 
@@ -185,11 +185,11 @@ const userDisplayRole = computed(() => {
                         v-for="item in section.items"
                         :key="item.to"
                         :to="item.to"
-                        class="group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-semibold text-content-subtle transition-all duration-200 hover:bg-tint-subtle hover:text-content"
-                        active-class="bg-brand/10 text-brand font-bold"
+                        class="group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-semibold text-content-subtle transition-all duration-300 hover:bg-tint-strong hover:text-content hover:shadow-glass-sm"
+                        active-class="bg-brand/10 text-brand font-bold shadow-inset-light"
                         @click="emit('close')"
                     >
-                        <div class="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-brand opacity-0 transition-all duration-200 shadow-glow-cyan-strong group-[.router-link-active]:opacity-100" />
+                        <div class="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-brand opacity-0 transition-all duration-300 shadow-glow-cyan-strong group-[.router-link-active]:opacity-100" />
 
                         <component
                             :is="item.icon"
