@@ -5,7 +5,9 @@ import { useCoreI18n } from '~/composables/useCoreI18n'
 const { t } = useCoreI18n()
 
 const productLinks = computed(() => (t('components.footer.productLinks') as Array<{ label: string; to: string }>) || [])
-const partnershipLinks = computed(() => (t('components.footer.partnershipLinks') as Array<{ label: string; to: string }>) || [])
+const partnershipLinks = computed(
+    () => (t('components.footer.partnershipLinks') as Array<{ label: string; to: string }>) || [],
+)
 const serviceLinks = computed(() => (t('components.footer.serviceLinks') as Array<{ label: string; to: string }>) || [])
 </script>
 
@@ -42,7 +44,9 @@ const serviceLinks = computed(() => (t('components.footer.serviceLinks') as Arra
 
                     <div class="flex flex-wrap items-center gap-2">
                         <span
-                            v-for="chip in (Array.isArray(t('components.footer.chips')) ? t('components.footer.chips') : [])"
+                            v-for="chip in Array.isArray(t('components.footer.chips'))
+                                ? t('components.footer.chips')
+                                : []"
                             :key="chip"
                             class="ca-chip"
                         >
@@ -78,9 +82,7 @@ const serviceLinks = computed(() => (t('components.footer.serviceLinks') as Arra
                 </div>
 
                 <div v-if="serviceLinks.length">
-                    <h3 class="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--ca-muted)]">
-                        Layanan
-                    </h3>
+                    <h3 class="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--ca-muted)]">Layanan</h3>
                     <ul class="mt-4 space-y-2 text-sm text-[var(--ca-muted)]">
                         <li v-for="item in serviceLinks" :key="item.to">
                             <NuxtLink :to="item.to" class="transition hover:text-brand-primary">
@@ -96,7 +98,10 @@ const serviceLinks = computed(() => (t('components.footer.serviceLinks') as Arra
                     </h3>
                     <ul class="mt-4 space-y-3 text-sm text-[var(--ca-muted)]">
                         <li>
-                            <a :href="LINKS.email" class="inline-flex items-center gap-2 transition hover:text-brand-primary">
+                            <a
+                                :href="LINKS.email"
+                                class="inline-flex items-center gap-2 transition hover:text-brand-primary"
+                            >
                                 <Icon name="lucide:mail" class="h-4 w-4" />
                                 {{ CONTACT.email }}
                             </a>
@@ -120,6 +125,7 @@ const serviceLinks = computed(() => (t('components.footer.serviceLinks') as Arra
 
                     <div class="mt-5 flex items-center gap-2">
                         <a
+                            v-if="LINKS.linkedin"
                             :href="LINKS.linkedin"
                             target="_blank"
                             rel="noopener noreferrer"
@@ -143,7 +149,10 @@ const serviceLinks = computed(() => (t('components.footer.serviceLinks') as Arra
 
             <!-- Artikel / Blog link for SEO internal linking -->
             <div class="mt-8">
-                <NuxtLink to="/artikel" class="inline-flex items-center gap-2 text-sm text-[var(--ca-muted)] transition hover:text-brand-primary">
+                <NuxtLink
+                    to="/artikel"
+                    class="inline-flex items-center gap-2 text-sm text-[var(--ca-muted)] transition hover:text-brand-primary"
+                >
                     <Icon name="lucide:newspaper" class="h-4 w-4" />
                     {{ t('components.footer.links.articles') || 'Artikel & Insight' }}
                 </NuxtLink>
@@ -151,22 +160,36 @@ const serviceLinks = computed(() => (t('components.footer.serviceLinks') as Arra
 
             <!-- Geographic Keywords for SEO -->
             <div class="mt-4 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-[var(--ca-muted)]/60">
-                <NuxtLink to="/layanan/jasa-pembuatan-website" class="hover:text-brand-primary transition">Jasa Pembuatan Website Jakarta</NuxtLink>
+                <NuxtLink to="/layanan/jasa-pembuatan-website" class="hover:text-brand-primary transition">
+                    Jasa Pembuatan Website Jakarta
+                </NuxtLink>
                 <span class="select-none">&middot;</span>
-                <NuxtLink to="/layanan/jasa-pembuatan-website" class="hover:text-brand-primary transition">Web Development Surabaya</NuxtLink>
+                <NuxtLink to="/layanan/jasa-pembuatan-website" class="hover:text-brand-primary transition">
+                    Web Development Surabaya
+                </NuxtLink>
                 <span class="select-none">&middot;</span>
-                <NuxtLink to="/layanan/jasa-pembuatan-website" class="hover:text-brand-primary transition">Jasa Web App Bandung</NuxtLink>
+                <NuxtLink to="/layanan/jasa-pembuatan-website" class="hover:text-brand-primary transition">
+                    Jasa Web App Bandung
+                </NuxtLink>
                 <span class="select-none">&middot;</span>
-                <NuxtLink to="/layanan/jasa-pembuatan-aplikasi-web" class="hover:text-brand-primary transition">Jasa Aplikasi Web Custom</NuxtLink>
+                <NuxtLink to="/layanan/jasa-pembuatan-aplikasi-web" class="hover:text-brand-primary transition">
+                    Jasa Aplikasi Web Custom
+                </NuxtLink>
                 <span class="select-none">&middot;</span>
-                <NuxtLink to="/layanan/web-monitoring-dashboard" class="hover:text-brand-primary transition">Dashboard Monitoring Website</NuxtLink>
+                <NuxtLink to="/layanan/web-monitoring-dashboard" class="hover:text-brand-primary transition">
+                    Dashboard Monitoring Website
+                </NuxtLink>
                 <span class="select-none">&middot;</span>
-                <NuxtLink to="/products/pantau" class="hover:text-brand-primary transition">SEO Monitoring Indonesia</NuxtLink>
+                <NuxtLink to="/products/pantau" class="hover:text-brand-primary transition">
+                    SEO Monitoring Indonesia
+                </NuxtLink>
                 <span class="select-none">&middot;</span>
                 <NuxtLink to="/artikel" class="hover:text-brand-primary transition">Artikel Digital Marketing</NuxtLink>
             </div>
 
-            <div class="mt-10 border-t border-[color:var(--ca-border)] pt-5 text-xs text-[var(--ca-muted)] sm:flex sm:items-center sm:justify-between">
+            <div
+                class="mt-10 border-t border-[color:var(--ca-border)] pt-5 text-xs text-[var(--ca-muted)] sm:flex sm:items-center sm:justify-between"
+            >
                 <p>
                     &copy; {{ new Date().getFullYear() }} {{ COMPANY.name }}.
                     {{ t('components.footer.copyright') }}

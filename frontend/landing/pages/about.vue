@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { COMPANY, CONTACT, LINKS } from '~/utils/constants'
+import { BRAND_ASSETS, COMPANY, CONTACT, LINKS, STRUCTURED_SAME_AS } from '~/utils/constants'
 import { useCoreI18n } from '~/composables/useCoreI18n'
 
 const { useReveal, revealRef } = useScrollReveal()
@@ -29,8 +29,10 @@ useSchemaOrg([
     }),
     defineOrganization({
         name: COMPANY.name,
+        alternateName: COMPANY.shortName,
         url: COMPANY.url,
-        logo: `${COMPANY.url}/logos/logo-512.webp`,
+        logo: `${COMPANY.url}${BRAND_ASSETS.logo}`,
+        sameAs: Array.from(STRUCTURED_SAME_AS),
         address: {
             addressCountry: 'ID',
             addressLocality: 'Jakarta',
@@ -79,10 +81,7 @@ const leadership = computed(() => t('about.leadership') as Record<string, any>)
             <div class="ca-container relative ca-section pt-6 sm:pt-8 lg:py-28">
                 <div class="max-w-5xl text-center lg:text-left">
                     <span ref="heroKicker" class="ca-kicker">
-                        <Icon
-                            name="lucide:sparkles"
-                            class="h-3.5 w-3.5 ca-tone-gold"
-                        />
+                        <Icon name="lucide:sparkles" class="h-3.5 w-3.5 ca-tone-gold" />
                         {{ t('about.kicker') }}
                     </span>
 
@@ -93,10 +92,7 @@ const leadership = computed(() => t('about.leadership') as Record<string, any>)
                         <span v-html="t('about.hero.title')" />
                     </h1>
 
-                    <p
-                        ref="heroCopy"
-                        class="ca-copy mt-5 max-w-3xl text-balance"
-                    >
+                    <p ref="heroCopy" class="ca-copy mt-5 max-w-3xl text-balance">
                         {{ t('about.hero.subtitle') }}
                     </p>
 
@@ -104,26 +100,12 @@ const leadership = computed(() => t('about.leadership') as Record<string, any>)
                         ref="heroActions"
                         class="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row lg:justify-start"
                     >
-                        <NuxtLink
-                            to="/contact"
-                            class="ca-btn-primary"
-                        >
+                        <NuxtLink to="/contact" class="ca-btn-primary">
                             {{ t('about.hero.ctaPrimary') }}
-                            <Icon
-                                name="lucide:arrow-right"
-                                class="h-4 w-4"
-                            />
+                            <Icon name="lucide:arrow-right" class="h-4 w-4" />
                         </NuxtLink>
-                        <a
-                            :href="LINKS.whatsapp"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="ca-btn-secondary"
-                        >
-                            <Icon
-                                name="lucide:message-circle"
-                                class="h-4 w-4"
-                            />
+                        <a :href="LINKS.whatsapp" target="_blank" rel="noopener noreferrer" class="ca-btn-secondary">
+                            <Icon name="lucide:message-circle" class="h-4 w-4" />
                             {{ t('about.hero.ctaSecondary') }}
                         </a>
                     </div>
@@ -194,7 +176,14 @@ const leadership = computed(() => t('about.leadership') as Record<string, any>)
                     <!-- Timeline line (desktop) -->
                     <div
                         class="absolute left-0 right-0 top-12 mx-auto hidden h-[2px] md:block lg:left-1/2 lg:h-96 lg:w-0 lg:transform lg:-translate-x-1/2"
-                        style="background: linear-gradient(to right, var(--ca-subtle) 0%, rgba(251,191,36,0.95) 50%, rgba(16,185,129,0.95) 100%);"
+                        style="
+                            background: linear-gradient(
+                                to right,
+                                var(--ca-subtle) 0%,
+                                rgba(251, 191, 36, 0.95) 50%,
+                                rgba(16, 185, 129, 0.95) 100%
+                            );
+                        "
                     />
 
                     <!-- Timeline items -->
@@ -208,13 +197,28 @@ const leadership = computed(() => t('about.leadership') as Record<string, any>)
                             <!-- Timeline dot (mobile) -->
                             <div
                                 class="absolute left-0 top-3 hidden h-2 w-full md:left-1/2 md:top-4 md:block md:h-2 md:w-8 md:transform md:-translate-x-1/2"
-                                style="background: linear-gradient(to right, var(--ca-subtle) 0%, rgba(251,191,36,0.95) 50%, rgba(16,185,129,0.95) 100%);"
+                                style="
+                                    background: linear-gradient(
+                                        to right,
+                                        var(--ca-subtle) 0%,
+                                        rgba(251, 191, 36, 0.95) 50%,
+                                        rgba(16, 185, 129, 0.95) 100%
+                                    );
+                                "
                             />
 
                             <!-- Timeline dot center -->
                             <div
                                 class="absolute left-0 top-3 hidden h-3 w-3 rounded-full border-2 md:left-1/2 md:top-3 md:block md:h-4 md:w-4 md:transform md:-translate-x-1/2 md:border-2"
-                                style="border-color: var(--ca-surface); background: linear-gradient(135deg, var(--ca-subtle) 0%, rgba(251,191,36,0.95) 50%, rgba(16,185,129,0.95) 100%);"
+                                style="
+                                    border-color: var(--ca-surface);
+                                    background: linear-gradient(
+                                        135deg,
+                                        var(--ca-subtle) 0%,
+                                        rgba(251, 191, 36, 0.95) 50%,
+                                        rgba(16, 185, 129, 0.95) 100%
+                                    );
+                                "
                             />
 
                             <!-- Content -->
@@ -223,20 +227,13 @@ const leadership = computed(() => t('about.leadership') as Record<string, any>)
                                 <div
                                     class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)]"
                                 >
-                                    <Icon
-                                        :name="item.icon"
-                                        class="h-5 w-5 ca-tone-gold"
-                                    />
+                                    <Icon :name="item.icon" class="h-5 w-5 ca-tone-gold" />
                                 </div>
 
-                                <h3
-                                    class="mt-4 text-sm font-bold uppercase tracking-[0.14em] text-[var(--ca-subtle)]"
-                                >
+                                <h3 class="mt-4 text-sm font-bold uppercase tracking-[0.14em] text-[var(--ca-subtle)]">
                                     {{ item.year }}
                                 </h3>
-                                <h4
-                                    class="mt-1 text-lg font-display font-bold text-[var(--ca-text)]"
-                                >
+                                <h4 class="mt-1 text-lg font-display font-bold text-[var(--ca-text)]">
                                     {{ item.title }}
                                 </h4>
                                 <p class="mt-2 text-sm leading-relaxed text-[var(--ca-muted)]">
@@ -263,11 +260,7 @@ const leadership = computed(() => t('about.leadership') as Record<string, any>)
                         </p>
 
                         <div class="mt-6 flex flex-wrap gap-2">
-                            <span
-                                v-for="chip in (t('about.leadership.chips') as string[])"
-                                :key="chip"
-                                class="ca-chip"
-                            >
+                            <span v-for="chip in t('about.leadership.chips') as string[]" :key="chip" class="ca-chip">
                                 {{ chip }}
                             </span>
                         </div>
@@ -280,17 +273,14 @@ const leadership = computed(() => t('about.leadership') as Record<string, any>)
                         />
 
                         <!-- Profile image placeholder -->
-                        <div class="relative overflow-hidden rounded-3xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-1">
+                        <div
+                            class="relative overflow-hidden rounded-3xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-1"
+                        >
                             <div
                                 class="aspect-square w-full max-w-sm rounded-2xl border border-[color:var(--ca-border)] bg-[linear-gradient(180deg,var(--ca-surface),var(--ca-bg-soft))] md:aspect-[4/5]"
                             >
-                                <div
-                                    class="flex h-full items-center justify-center text-[var(--ca-subtle)]"
-                                >
-                                    <Icon
-                                        name="lucide:user"
-                                        class="h-16 w-16"
-                                    />
+                                <div class="flex h-full items-center justify-center text-[var(--ca-subtle)]">
+                                    <Icon name="lucide:user" class="h-16 w-16" />
                                 </div>
                             </div>
                         </div>
@@ -303,39 +293,19 @@ const leadership = computed(() => t('about.leadership') as Record<string, any>)
         <section class="ca-section pt-0">
             <div class="ca-container">
                 <div ref="ctaSection" class="ca-card p-8 text-center sm:p-10">
-                    <h2
-                        class="text-balance font-display text-3xl font-bold text-[var(--ca-text)] sm:text-4xl"
-                    >
+                    <h2 class="text-balance font-display text-3xl font-bold text-[var(--ca-text)] sm:text-4xl">
                         {{ t('about.readyCTA.title') }}
                     </h2>
-                    <p
-                        class="mx-auto mt-3 max-w-2xl text-sm text-[var(--ca-muted)] sm:text-base"
-                    >
+                    <p class="mx-auto mt-3 max-w-2xl text-sm text-[var(--ca-muted)] sm:text-base">
                         {{ t('about.readyCTA.subtitle') }}
                     </p>
-                    <div
-                        class="mt-6 flex flex-col justify-center gap-3 sm:flex-row"
-                    >
-                        <NuxtLink
-                            to="/contact"
-                            class="ca-btn-primary"
-                        >
+                    <div class="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+                        <NuxtLink to="/contact" class="ca-btn-primary">
                             {{ t('about.readyCTA.ctaPrimary') }}
-                            <Icon
-                                name="lucide:arrow-right"
-                                class="h-4 w-4"
-                            />
+                            <Icon name="lucide:arrow-right" class="h-4 w-4" />
                         </NuxtLink>
-                        <a
-                            :href="LINKS.whatsapp"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="ca-btn-secondary"
-                        >
-                            <Icon
-                                name="lucide:message-circle"
-                                class="h-4 w-4"
-                            />
+                        <a :href="LINKS.whatsapp" target="_blank" rel="noopener noreferrer" class="ca-btn-secondary">
+                            <Icon name="lucide:message-circle" class="h-4 w-4" />
                             {{ t('about.readyCTA.ctaSecondary') }}
                         </a>
                     </div>

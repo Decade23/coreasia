@@ -8,4 +8,10 @@ Disallow: /500
 Allow: /artikel/
 Allow: /layanan/
 Allow: /products/
+Allow: /favicon.ico
+Allow: /logo.svg
+Allow: /favicons/
+Allow: /icons/
+Allow: /logos/
+Allow: /social/
 Sitemap: https://coreasia.id/sitemap.xml

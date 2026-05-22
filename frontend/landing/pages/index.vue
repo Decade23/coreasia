@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { LINKS } from '~/utils/constants'
+import { BRAND_ASSETS, COMPANY, CONTACT, LINKS, PRIMARY_SITE_LINKS, STRUCTURED_SAME_AS } from '~/utils/constants'
 import { useCoreI18n } from '~/composables/useCoreI18n'
 import { useAnalytics } from '~/composables/useAnalytics'
 
@@ -15,6 +15,13 @@ const showHeroScene = ref(false)
 const heroCardRefs = ref<HTMLElement[]>([])
 const heroMousePositions = ref(Array.from({ length: 3 }, () => ({ x: 0, y: 0 })))
 const siteAsset = (path: string) => new URL(path, siteOrigin.value).toString()
+const structuredSameAs = Array.from(STRUCTURED_SAME_AS)
+const primarySiteLinks = computed(() =>
+    PRIMARY_SITE_LINKS.map((item) => ({
+        ...item,
+        url: siteAsset(item.path),
+    })),
+)
 
 const updateHeroSpotlight = (index: number, event: MouseEvent) => {
     const card = heroCardRefs.value[index]
@@ -31,14 +38,15 @@ const resetHeroSpotlight = (index: number) => {
 }
 
 onMounted(() => {
-    const connection = (navigator as Navigator & {
-        connection?: {
-            saveData?: boolean
+    const connection = (
+        navigator as Navigator & {
+            connection?: {
+                saveData?: boolean
+            }
         }
-    }).connection
+    ).connection
 
-    const prefersLiteHero = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-        || connection?.saveData
+    const prefersLiteHero = window.matchMedia('(prefers-reduced-motion: reduce)').matches || connection?.saveData
 
     showHeroScene.value = !prefersLiteHero
 })
@@ -54,13 +62,11 @@ useSchemaOrg([
         name: 'CoreAsia Product Ecosystem',
     }),
     defineOrganization({
-        name: 'CoreAsia Teknologi',
+        name: COMPANY.name,
+        alternateName: COMPANY.shortName,
         url: siteOrigin.value,
-        logo: siteAsset('/logos/logo-512.webp'),
-        sameAs: [
-            'https://www.linkedin.com/company/coreasia',
-            'https://www.instagram.com/coreasia',
-        ],
+        logo: siteAsset(BRAND_ASSETS.logo),
+        sameAs: structuredSameAs,
     }),
 ])
 
@@ -72,12 +78,15 @@ useHead({
             innerHTML: JSON.stringify({
                 '@context': 'https://schema.org',
                 '@type': 'ProfessionalService',
-                name: 'CoreAsia Teknologi',
+                '@id': `${siteOrigin.value}/#business`,
+                name: COMPANY.name,
+                alternateName: COMPANY.shortName,
                 url: siteOrigin.value,
-                logo: siteAsset('/logos/logo-512.webp'),
-                image: siteAsset('/social/og-image.png'),
+                logo: siteAsset(BRAND_ASSETS.logo),
+                image: siteAsset(BRAND_ASSETS.socialImage),
                 description: t('home.description') as string,
-                telephone: '+6285693380123',
+                telephone: `+${CONTACT.whatsapp}`,
+                email: CONTACT.email,
                 address: {
                     '@type': 'PostalAddress',
                     addressLocality: 'Jakarta',
@@ -87,16 +96,22 @@ useHead({
                 contactPoint: {
                     '@type': 'ContactPoint',
                     contactType: 'Customer Service',
-                    telephone: '+6285693380123',
-                    email: 'hello@coreasia.id',
+                    telephone: `+${CONTACT.whatsapp}`,
+                    email: CONTACT.email,
                     availableLanguage: ['Indonesian', 'English'],
                 },
-                sameAs: [
-                    'https://www.linkedin.com/company/coreasia',
-                    'https://www.instagram.com/coreasia',
-                ],
+                sameAs: structuredSameAs,
                 priceRange: '$$',
-                knowsAbout: ['Web Development', 'Web Monitoring', 'SEO', 'Web Analytics', 'Digital Marketing', 'Custom Web Applications', 'CRM', 'LMS'],
+                knowsAbout: [
+                    'Web Development',
+                    'Web Monitoring',
+                    'SEO',
+                    'Web Analytics',
+                    'Digital Marketing',
+                    'Custom Web Applications',
+                    'CRM',
+                    'LMS',
+                ],
                 areaServed: [
                     { '@type': 'City', name: 'Jakarta' },
                     { '@type': 'City', name: 'Surabaya' },
@@ -116,9 +131,14 @@ useHead({
             innerHTML: JSON.stringify({
                 '@context': 'https://schema.org',
                 '@type': 'WebSite',
+                '@id': `${siteOrigin.value}/#website`,
                 url: siteOrigin.value,
-                name: 'CoreAsia Teknologi',
+                name: COMPANY.name,
+                alternateName: COMPANY.shortName,
                 description: t('home.description') as string,
+                publisher: {
+                    '@id': `${siteOrigin.value}/#business`,
+                },
                 inLanguage: ['id-ID', 'en-US'],
             }),
         },
@@ -126,16 +146,12 @@ useHead({
             type: 'application/ld+json',
             innerHTML: JSON.stringify({
                 '@context': 'https://schema.org',
-                '@type': 'SiteNavigationElement',
-                name: ['Produk', 'Layanan', 'Harga', 'Artikel', 'Tentang Kami', 'Hubungi Kami'],
-                url: [
-                    `${siteOrigin.value}/products`,
-                    `${siteOrigin.value}/layanan/jasa-pembuatan-website`,
-                    `${siteOrigin.value}/pricing`,
-                    `${siteOrigin.value}/artikel`,
-                    `${siteOrigin.value}/about`,
-                    `${siteOrigin.value}/contact`,
-                ],
+                '@graph': primarySiteLinks.value.map((item) => ({
+                    '@type': 'SiteNavigationElement',
+                    '@id': `${item.url}#site-navigation`,
+                    name: item.name,
+                    url: item.url,
+                })),
             }),
         },
     ],
@@ -151,13 +167,17 @@ useHead({
                     <LazyThreeHeroScene v-if="showHeroScene" />
                     <div v-else class="absolute inset-0 z-0">
                         <div class="ca-scene-grid absolute inset-0"></div>
-                        <div class="ca-scene-glow ca-light-soft-blend absolute left-1/2 top-1/2 h-[500px] w-[800px] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[100px]"></div>
+                        <div
+                            class="ca-scene-glow ca-light-soft-blend absolute left-1/2 top-1/2 h-[500px] w-[800px] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[100px]"
+                        ></div>
                         <div class="ca-scene-base absolute inset-0 -z-10" />
                     </div>
                     <template #fallback>
                         <div class="absolute inset-0 z-0">
                             <div class="ca-scene-grid absolute inset-0"></div>
-                            <div class="ca-scene-glow ca-light-soft-blend absolute left-1/2 top-1/2 h-[500px] w-[800px] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[100px]"></div>
+                            <div
+                                class="ca-scene-glow ca-light-soft-blend absolute left-1/2 top-1/2 h-[500px] w-[800px] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[100px]"
+                            ></div>
                             <div class="ca-scene-base absolute inset-0 -z-10" />
                         </div>
                     </template>
@@ -167,10 +187,7 @@ useHead({
             <div class="ca-container relative ca-section pt-6 sm:pt-8 lg:py-28">
                 <div class="mx-auto max-w-4xl text-center">
                     <span class="ca-kicker animate-fade-in-up min-h-[32px]">
-                        <Icon
-                            name="lucide:sparkles"
-                            class="h-3.5 w-3.5 ca-tone-gold"
-                        />
+                        <Icon name="lucide:sparkles" class="h-3.5 w-3.5 ca-tone-gold" />
                         <TypewriterEffect :text="t('home.kicker')" />
                     </span>
 
@@ -184,8 +201,15 @@ useHead({
                         v-html="t('home.hero.subtitle')"
                     />
 
-                    <div class="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row animate-fade-in-up delay-300">
-                        <NuxtLink to="/contact" class="ca-btn-primary" data-analytics-ignore="true" @click="trackCTAClick('hero_primary', '/contact')">
+                    <div
+                        class="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row animate-fade-in-up delay-300"
+                    >
+                        <NuxtLink
+                            to="/contact"
+                            class="ca-btn-primary"
+                            data-analytics-ignore="true"
+                            @click="trackCTAClick('hero_primary', '/contact')"
+                        >
                             {{ t('home.hero.ctaPrimary') }}
                             <Icon name="lucide:arrow-right" class="h-4 w-4" />
                         </NuxtLink>
@@ -206,11 +230,18 @@ useHead({
                         <p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-[var(--ca-subtle)]">
                             {{ t('home.products.kicker') }}
                         </p>
-                        <div class="mx-auto mt-3 grid max-w-md gap-3 text-left sm:max-w-none" :class="featuredProducts.length >= 3 ? 'sm:grid-cols-3' : 'sm:grid-cols-2 sm:max-w-lg'">
+                        <div
+                            class="mx-auto mt-3 grid max-w-md gap-3 text-left sm:max-w-none"
+                            :class="featuredProducts.length >= 3 ? 'sm:grid-cols-3' : 'sm:grid-cols-2 sm:max-w-lg'"
+                        >
                             <NuxtLink
                                 v-for="(product, index) in featuredProducts"
                                 :key="product.name"
-                                :ref="(el: any) => { if (el) heroCardRefs[index] = el.$el || el }"
+                                :ref="
+                                    (el: any) => {
+                                        if (el) heroCardRefs[index] = el.$el || el
+                                    }
+                                "
                                 :to="product.to"
                                 class="ca-card-soft group relative overflow-hidden rounded-2xl p-4 transition-all duration-300 hover:-translate-y-1 hover:border-[color:var(--ca-gold-border)] hover:shadow-[0_8px_30px_rgba(245,158,11,0.08)]"
                                 @mousemove="updateHeroSpotlight(index, $event)"
@@ -225,9 +256,17 @@ useHead({
 
                                 <div class="relative z-10">
                                     <div class="flex items-center gap-3">
-                                        <div class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg-strong)]">
+                                        <div
+                                            class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg-strong)]"
+                                        >
                                             <Icon
-                                                :name="index === 0 ? 'lucide:bar-chart-3' : index === 1 ? 'lucide:code-2' : 'lucide:box'"
+                                                :name="
+                                                    index === 0
+                                                        ? 'lucide:bar-chart-3'
+                                                        : index === 1
+                                                          ? 'lucide:code-2'
+                                                          : 'lucide:box'
+                                                "
                                                 class="h-4 w-4 ca-tone-gold"
                                             />
                                         </div>
@@ -235,9 +274,14 @@ useHead({
                                             <h3 class="text-sm font-display font-bold text-[var(--ca-text)] truncate">
                                                 {{ product.name }}
                                             </h3>
-                                            <span class="text-[0.68rem] text-[var(--ca-muted)]">{{ product.tagline }}</span>
+                                            <span class="text-[0.68rem] text-[var(--ca-muted)]">
+                                                {{ product.tagline }}
+                                            </span>
                                         </div>
-                                        <Icon name="lucide:arrow-right" class="h-4 w-4 flex-shrink-0 text-[var(--ca-subtle)] transition-all group-hover:translate-x-0.5 group-hover:text-[var(--ca-gold-text)]" />
+                                        <Icon
+                                            name="lucide:arrow-right"
+                                            class="h-4 w-4 flex-shrink-0 text-[var(--ca-subtle)] transition-all group-hover:translate-x-0.5 group-hover:text-[var(--ca-gold-text)]"
+                                        />
                                     </div>
                                     <p class="mt-2 line-clamp-2 text-xs leading-relaxed text-[var(--ca-muted)]">
                                         {{ product.heroDesc || product.description }}
@@ -253,11 +297,7 @@ useHead({
                     </p>
 
                     <div class="mt-8 flex flex-wrap items-center justify-center gap-2 animate-fade-in delay-500">
-                        <span
-                            v-for="chip in t('home.hero.chips')"
-                            :key="chip"
-                            class="ca-chip"
-                        >
+                        <span v-for="chip in t('home.hero.chips')" :key="chip" class="ca-chip">
                             {{ chip }}
                         </span>
                     </div>
@@ -277,12 +317,14 @@ useHead({
                 </div>
                 <div class="grid gap-4 md:grid-cols-3">
                     <NuxtLink
-                        v-for="item in (t('home.services.items') as Array<Record<string, string>>)"
+                        v-for="item in t('home.services.items') as Array<Record<string, string>>"
                         :key="item.to"
                         :to="item.to"
                         class="ca-card-soft group p-5 transition hover:-translate-y-0.5 hover:border-[color:var(--ca-gold-border)]"
                     >
-                        <h3 class="text-base font-display font-semibold text-[var(--ca-text)] group-hover:text-[var(--ca-gold-text)]">
+                        <h3
+                            class="text-base font-display font-semibold text-[var(--ca-text)] group-hover:text-[var(--ca-gold-text)]"
+                        >
                             {{ item.label }}
                         </h3>
                         <p class="mt-2 text-sm leading-relaxed text-[var(--ca-muted)]">{{ item.description }}</p>
@@ -297,10 +339,7 @@ useHead({
 
         <section class="ca-section pt-0">
             <div class="ca-container">
-                <div
-                    ref="ctaSection"
-                    class="ca-card p-6 text-center sm:p-10"
-                >
+                <div ref="ctaSection" class="ca-card p-6 text-center sm:p-10">
                     <h2 class="text-balance font-display text-3xl font-bold text-[var(--ca-text)] sm:text-4xl">
                         {{ t('home.readyCTA.title') }}
                     </h2>

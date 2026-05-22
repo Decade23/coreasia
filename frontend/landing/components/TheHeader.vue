@@ -6,19 +6,20 @@ import { useAnalytics } from '~/composables/useAnalytics'
 import { useMagnetic } from '~/composables/useMagnetic'
 import { useWindowScroll } from '@vueuse/core'
 
-const route = useRoute();
+const route = useRoute()
 const { locale, t } = useCoreI18n()
 const { trackWhatsAppClick, trackCTAClick } = useAnalytics()
 
 const waUrl = computed(() => {
-    const greeting = locale.value === 'en'
-        ? `Hi CoreAsia, I'd like to learn more about your products and services.`
-        : `Halo CoreAsia, saya ingin mengetahui lebih lanjut tentang produk dan layanan Anda.`
+    const greeting =
+        locale.value === 'en'
+            ? `Hi CoreAsia, I'd like to learn more about your products and services.`
+            : `Halo CoreAsia, saya ingin mengetahui lebih lanjut tentang produk dan layanan Anda.`
     return buildWhatsAppUrl(greeting)
 })
 const { y } = useWindowScroll()
 
-const isMobileMenuOpen = ref(false);
+const isMobileMenuOpen = ref(false)
 
 // Smart Scroll & Dynamic Style Logic
 const isHeaderVisible = ref(true)
@@ -27,7 +28,7 @@ const isAtTop = ref(true)
 
 watch(y, (newY) => {
     isAtTop.value = newY <= 50
-    
+
     // Always show at very top to avoid flickering or hidden nav on load
     if (newY <= 0) {
         isHeaderVisible.value = true
@@ -36,97 +37,107 @@ watch(y, (newY) => {
     }
 
     // Determine direction
-    const direction = newY > lastScrollY.value ? 'down' : 'up';
-    
+    const direction = newY > lastScrollY.value ? 'down' : 'up'
+
     // Threshold to hide: scroll down > 100px
     if (direction === 'down' && newY > 100) {
-        isHeaderVisible.value = false;
+        isHeaderVisible.value = false
     } else if (direction === 'up') {
-        isHeaderVisible.value = true;
+        isHeaderVisible.value = true
     }
-    
-    lastScrollY.value = newY;
+
+    lastScrollY.value = newY
 })
 
 const headerClass = computed(() => {
     // Base classes - ensure header is always visible
     // Compact height (h-14) on mobile, standard (h-16) on desktop
-    let classes = "fixed top-0 left-0 right-0 z-50 w-full h-14 lg:h-16 transition-transform duration-300"
+    let classes = 'fixed top-0 left-0 right-0 z-50 w-full h-14 lg:h-16 transition-transform duration-300'
 
     // Smart Scroll: Hide header on scroll down, unless menu is open
     if (!isHeaderVisible.value && !isMobileMenuOpen.value) {
-        classes += " -translate-y-full"
+        classes += ' -translate-y-full'
     } else {
-        classes += " translate-y-0"
+        classes += ' translate-y-0'
     }
 
     // Dynamic styling based on scroll position
     if (isAtTop.value && !isMobileMenuOpen.value) {
         // Transparent at top (immersive)
-        classes += " bg-transparent border-b border-transparent"
+        classes += ' bg-transparent border-b border-transparent'
     } else {
         // Glassmorphism when scrolled or menu open
-        classes += " ca-glass-header backdrop-blur-xl"
+        classes += ' ca-glass-header backdrop-blur-xl'
     }
 
     return classes
 })
 
-const navItems = computed(() => getNavItems(locale.value));
+const navItems = computed(() => getNavItems(locale.value))
 
 const isActive = (path: string) => {
-    if (path.includes("#")) {
-        const [targetPath, targetHash] = path.split("#");
-        return route.path === (targetPath || "/") && route.hash === `#${targetHash}`;
+    if (path.includes('#')) {
+        const [targetPath, targetHash] = path.split('#')
+        return route.path === (targetPath || '/') && route.hash === `#${targetHash}`
     }
 
-    if (path === "/") {
-        return route.path === "/";
+    if (path === '/') {
+        return route.path === '/'
     }
 
-    return route.path === path || route.path.startsWith(`${path}/`);
-};
+    return route.path === path || route.path.startsWith(`${path}/`)
+}
 
 const setBodyLock = (locked: boolean) => {
     if (!process.client) {
-        return;
+        return
     }
-    document.body.style.overflow = locked ? "hidden" : "";
-};
+    document.body.style.overflow = locked ? 'hidden' : ''
+}
 
 const toggleMobileMenu = () => {
-    isMobileMenuOpen.value = !isMobileMenuOpen.value;
-};
+    isMobileMenuOpen.value = !isMobileMenuOpen.value
+}
 
 const closeMobileMenu = () => {
-    isMobileMenuOpen.value = false;
-};
+    isMobileMenuOpen.value = false
+}
+
+const handleMobileConsultClick = () => {
+    trackCTAClick('mobile_konsultasi', '/contact')
+    closeMobileMenu()
+}
+
+const handleMobileWhatsAppClick = () => {
+    trackWhatsAppClick('mobile_menu')
+    closeMobileMenu()
+}
 
 const handleEscape = (event: KeyboardEvent) => {
-    if (event.key === "Escape" && isMobileMenuOpen.value) {
-        closeMobileMenu();
+    if (event.key === 'Escape' && isMobileMenuOpen.value) {
+        closeMobileMenu()
     }
-};
+}
 
 watch(
     () => route.fullPath,
     () => {
-        closeMobileMenu();
+        closeMobileMenu()
     },
-);
+)
 
 watch(isMobileMenuOpen, (value: boolean) => {
-    setBodyLock(value);
-});
+    setBodyLock(value)
+})
 
 onMounted(() => {
-    window.addEventListener("keydown", handleEscape);
-});
+    window.addEventListener('keydown', handleEscape)
+})
 
 onUnmounted(() => {
-    window.removeEventListener("keydown", handleEscape);
-    setBodyLock(false);
-});
+    window.removeEventListener('keydown', handleEscape)
+    setBodyLock(false)
+})
 
 // Magnetic Button implementation
 const contactBtnRef = ref(null)
@@ -135,6 +146,7 @@ const { style: magneticStyle } = useMagnetic(contactBtnRef, 0.3)
 const navIconMap: Record<string, string> = {
     '/': 'lucide:home',
     '/products': 'lucide:box',
+    '/layanan/jasa-pembuatan-website': 'lucide:code-2',
     '/partnerships': 'lucide:handshake',
     '/pricing': 'lucide:tag',
     '/artikel': 'lucide:pen-tool',
@@ -146,14 +158,8 @@ const navIconMap: Record<string, string> = {
     <header :class="headerClass">
         <div class="ca-container h-full">
             <div class="flex h-full items-center justify-between gap-3">
-                <NuxtLink
-                    to="/"
-                    class="group inline-flex items-center gap-2 lg:gap-3"
-                    :aria-label="t('nav.home')"
-                >
-                    <span
-                        class="inline-flex h-9 w-9 items-center justify-center lg:h-10 lg:w-10"
-                    >
+                <NuxtLink to="/" class="group inline-flex items-center gap-2 lg:gap-3" :aria-label="t('nav.home')">
+                    <span class="inline-flex h-9 w-9 items-center justify-center lg:h-10 lg:w-10">
                         <NuxtImg
                             src="/logo.svg"
                             alt="CoreAsia logo"
@@ -165,21 +171,18 @@ const navIconMap: Record<string, string> = {
                         />
                     </span>
                     <span class="flex flex-col leading-none">
-                        <span
-                            class="font-display text-base font-bold tracking-tight text-[var(--ca-text)] lg:text-lg"
-                            >{{ COMPANY.shortName }}</span
-                        >
+                        <span class="font-display text-base font-bold tracking-tight text-[var(--ca-text)] lg:text-lg">
+                            {{ COMPANY.shortName }}
+                        </span>
                         <span
                             class="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--ca-muted)]"
-                            >{{ t('components.brand.tagline') }}</span
                         >
+                            {{ t('components.brand.tagline') }}
+                        </span>
                     </span>
                 </NuxtLink>
 
-                <nav
-                    :aria-label="t('components.header.ariaLabel')"
-                    class="hidden items-center gap-1 lg:flex"
-                >
+                <nav :aria-label="t('components.header.ariaLabel')" class="hidden items-center gap-1 lg:flex">
                     <NuxtLink
                         v-for="item in navItems"
                         :key="item.to"
@@ -224,13 +227,14 @@ const navIconMap: Record<string, string> = {
                     class="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-[color:var(--ca-border)] text-[var(--ca-muted)] transition hover:bg-[var(--ca-panel-bg-strong)] hover:text-[var(--ca-text)] lg:hidden"
                     :aria-expanded="isMobileMenuOpen"
                     aria-controls="mobile-nav"
-                    :aria-label="isMobileMenuOpen ? t('components.header.mobileMenuAriaClose') : t('components.header.mobileMenuAriaOpen')"
+                    :aria-label="
+                        isMobileMenuOpen
+                            ? t('components.header.mobileMenuAriaClose')
+                            : t('components.header.mobileMenuAriaOpen')
+                    "
                     @click="toggleMobileMenu"
                 >
-                    <Icon
-                        :name="isMobileMenuOpen ? 'lucide:x' : 'lucide:menu'"
-                        class="h-5 w-5"
-                    />
+                    <Icon :name="isMobileMenuOpen ? 'lucide:x' : 'lucide:menu'" class="h-5 w-5" />
                 </button>
             </div>
         </div>
@@ -265,7 +269,11 @@ const navIconMap: Record<string, string> = {
                         >
                             <span
                                 class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors"
-                                :class="isActive(item.to) ? 'bg-brand-primary/12 text-brand-primary' : 'bg-[var(--ca-panel-bg-strong)] text-[var(--ca-muted)]'"
+                                :class="
+                                    isActive(item.to)
+                                        ? 'bg-brand-primary/12 text-brand-primary'
+                                        : 'bg-[var(--ca-panel-bg-strong)] text-[var(--ca-muted)]'
+                                "
                             >
                                 <Icon :name="navIconMap[item.to] || 'lucide:circle'" class="h-4 w-4" />
                             </span>
@@ -282,11 +290,7 @@ const navIconMap: Record<string, string> = {
 
                     <!-- CTA actions -->
                     <div class="flex flex-col gap-2">
-                        <NuxtLink
-                            to="/contact"
-                            class="ca-btn-primary w-full"
-                            @click="trackCTAClick('mobile_konsultasi', '/contact'); closeMobileMenu()"
-                        >
+                        <NuxtLink to="/contact" class="ca-btn-primary w-full" @click="handleMobileConsultClick">
                             {{ t('components.header.ctaText') }}
                         </NuxtLink>
                         <a
@@ -294,7 +298,7 @@ const navIconMap: Record<string, string> = {
                             target="_blank"
                             rel="noopener noreferrer"
                             class="ca-btn-secondary w-full"
-                            @click="trackWhatsAppClick('mobile_menu'); closeMobileMenu()"
+                            @click="handleMobileWhatsAppClick"
                         >
                             <Icon name="lucide:message-circle" class="h-4 w-4" />
                             {{ t('common.whatsapp') }}
@@ -308,7 +312,8 @@ const navIconMap: Record<string, string> = {
                             <ThemeToggle />
                         </div>
                         <p class="text-right text-[0.7rem] leading-snug text-[var(--ca-subtle)]">
-                            {{ t('components.header.responseTime') }}<br />
+                            {{ t('components.header.responseTime') }}
+                            <br />
                             {{ t('components.header.businessHours') }}
                         </p>
                     </div>
