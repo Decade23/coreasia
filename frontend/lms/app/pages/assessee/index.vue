@@ -35,6 +35,8 @@ onMounted(() => fetchCertificates())
 const handleViewCert = (cert: IssuedCertificateDomain) => {
     navigateTo(`/assessee/certificates/${cert.id}`)
 }
+
+const demoExamId = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
 </script>
 
 <template>
@@ -103,7 +105,7 @@ const handleViewCert = (cert: IssuedCertificateDomain) => {
                                 <p class="text-cyan-400 text-xs font-bold mt-1.5 flex items-center gap-1.5">
                                     <Clock class="w-3 h-3" /> {{ app.examSchedule.time }} &bull; {{ app.examSchedule.location }}
                                 </p>
-                                <CaButton variant="secondary" fullWidth class="mt-6" @click="navigateTo('/cbt/simulation')">
+                                <CaButton variant="secondary" fullWidth class="mt-6" @click="navigateTo(`/cbt/${demoExamId}`)">
                                     Masuk Ujian (CBT)
                                 </CaButton>
                             </div>

@@ -24,7 +24,8 @@
         "action": "Aksi",
         "detail": "Detail",
         "yes": "Ya",
-        "no": "Tidak"
+        "no": "Tidak",
+        "welcome": "Selamat Datang"
     },
     "auth": {
         "login": "Masuk",
@@ -67,6 +68,14 @@
         "superAdmin": "Super Admin",
         "admin": "Administrator",
         "qualityManager": "Manajer Mutu",
+        "assessor": "Asesor",
+        "assessee": "Asesi",
+        "user": "Pengguna"
+    },
+    "roles": {
+        "super_admin": "Super Admin",
+        "admin": "Administrator",
+        "quality_manager": "Manajer Mutu",
         "assessor": "Asesor",
         "assessee": "Asesi",
         "user": "Pengguna"
@@ -328,12 +337,12 @@
                 "license": "KEP.xxxx/BNSP/xxxx",
                 "address": "Alamat lengkap kantor",
                 "phone": "021-xxxxxxx",
-                "email": "info@lsp.id",
+                "email": "info{'@'}lsp.id",
                 "website": "https://lsp.id",
                 "logo": "https://domain-anda/logo.svg",
                 "customDomain": "lms.namalsp.id",
                 "fullName": "Nama lengkap pengguna",
-                "userEmail": "user@example.com",
+                "userEmail": "user{'@'}example.com",
                 "password": "Minimal 6 karakter",
                 "phoneNumber": "08xxxxxxxxxx"
             },

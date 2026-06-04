@@ -7,6 +7,7 @@ import (
 
 	"github.com/coreasia/lms-api/internal/application/dto"
 	"github.com/coreasia/lms-api/internal/infrastructure/persistence/postgres"
+	infraRepo "github.com/coreasia/lms-api/internal/infrastructure/persistence/repository"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -77,12 +78,8 @@ func (uc *ReportUseCase) BnspExport(ctx context.Context, req dto.BnspExportReque
 	}, nil
 }
 
-type reportSchemaKey string
-
-const reportContextKey reportSchemaKey = "tenant_schema"
-
 func reportSchemaFromCtx(ctx context.Context) string {
-	if schema, ok := ctx.Value(reportContextKey).(string); ok && schema != "" {
+	if schema, ok := ctx.Value(infraRepo.SchemaContextKey).(string); ok && schema != "" {
 		return schema
 	}
 	return "_template"

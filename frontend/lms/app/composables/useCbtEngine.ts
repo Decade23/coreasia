@@ -111,8 +111,8 @@ export const useCbtEngine = () => {
     const triggerAutoSave = async () => {
         if (!currentExam.value) return
         try {
-            await coreApi.post('/exams/sync', {
-                examId: currentExam.value.id,
+            await coreApi.post(`/exams/${currentExam.value.id}/sync`, {
+                exam_id: currentExam.value.id,
                 answers: answers.value,
             })
         } catch (e) {
@@ -132,10 +132,14 @@ export const useCbtEngine = () => {
         error.value = null
 
         try {
-            await coreApi.post('/exams/submit', {
-                examId: currentExam.value?.id,
+            if (!currentExam.value) {
+                throw new Error('Ujian belum dimuat')
+            }
+
+            await coreApi.post(`/exams/${currentExam.value.id}/submit`, {
+                exam_id: currentExam.value.id,
                 answers: answers.value,
-                remainingTime: timeRemainingSeconds.value,
+                remaining_time: timeRemainingSeconds.value,
             })
             navigateTo('/assessee')
         } catch (e: any) {

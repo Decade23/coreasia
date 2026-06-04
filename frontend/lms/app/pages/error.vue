@@ -30,8 +30,11 @@ const errorMap: Record<number, { title: string; description: string }> = {
 const errorInfo = computed(() => errorMap[statusCode.value] ?? errorMap[500]!)
 
 
+const router = useRouter()
+
 const handleBack = () => {
-    clearError({ redirect: '/' })
+    clearError()
+    router.back()
 }
 </script>
 

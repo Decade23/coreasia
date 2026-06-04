@@ -8,9 +8,7 @@ const props = defineProps<{
 const emit = defineEmits(['update:modelValue'])
 
 const schemes = [
-  { id: 'S-01', name: 'Junior Web Developer' },
-  { id: 'S-02', name: 'Digital Marketing Specialist' },
-  { id: 'S-03', name: 'Data Analyst Junior' },
+  { id: '11111111-1111-1111-1111-111111111111', code: 'JWD', name: 'Junior Web Developer' },
 ]
 
 const purposes = [
@@ -42,7 +40,7 @@ const updateData = (key: keyof CompetencyData, value: string) => {
           <!-- Active Highlight -->
           <div v-if="modelValue.schemeId === scheme.id" class="absolute inset-0 bg-gradient-to-br from-brand/10 to-transparent pointer-events-none" />
           
-          <span class="text-[10px] font-black uppercase tracking-widest mb-2 transition-colors relative z-10" :class="modelValue.schemeId === scheme.id ? 'text-brand' : 'text-content-subtle'">{{ scheme.id }}</span>
+          <span class="text-[10px] font-black uppercase tracking-widest mb-2 transition-colors relative z-10" :class="modelValue.schemeId === scheme.id ? 'text-brand' : 'text-content-subtle'">{{ scheme.code }}</span>
           <span class="font-bold text-lg transition-colors relative z-10" :class="modelValue.schemeId === scheme.id ? 'text-content' : 'text-content-muted group-hover:text-content'">{{ scheme.name }}</span>
         </button>
       </div>

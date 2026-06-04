@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { CheckCircle, XCircle, RotateCcw } from 'lucide-vue-next'
+import BaseTextarea from '~/components/atoms/BaseTextarea.vue'
 import CaButton from '~/components/atoms/CaButton.vue'
 import ConfirmDialog from '~/components/molecules/ConfirmDialog.vue'
 import type { VerificationActionPayload, VerificationStatus } from '~/types/verification'

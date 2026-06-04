@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import DashboardLayout from '~/components/templates/DashboardLayout.vue'
 import ApplicantQueueCard from '~/components/organisms/ApplicantQueueCard.vue'
+import CaInputSearch from '~/components/molecules/CaInputSearch.vue'
 import { MOCK_APPLICANTS } from '~/types/assessor'
 import { Search, Filter, RefreshCcw } from 'lucide-vue-next'
 
@@ -35,9 +36,8 @@ const refreshQueue = () => {
         <button 
           @click="refreshQueue"
           class="p-2 rounded-xl bg-core-900/60 backdrop-blur-md border border-divider-strong text-content-muted hover:text-brand transition-all shadow-xl"
-          :class="{ 'animate-spin': isLoading }"
         >
-          <RefreshCcw class="w-5 h-5" />
+          <RefreshCcw class="w-5 h-5" :class="{ 'animate-spin': isLoading }" />
         </button>
       </div>
     </template>
@@ -49,7 +49,7 @@ const refreshQueue = () => {
           <CaInputSearch v-model="searchQuery" placeholder="Cari nama atau NIK asesi..." />
         </div>
         
-        <button class="flex h-[52px] items-center gap-2 px-6 border border-divider bg-core-800 shadow-xl glass-card rounded-xl text-content-muted hover:border-cyan-500/30 hover:text-content transition-all">
+        <button class="flex h-[52px] items-center gap-2 px-6 border border-divider bg-core-800 shadow-xl ca-card-glass rounded-xl text-content-muted hover:border-cyan-500/30 hover:text-content transition-all">
           <Filter class="w-4 h-4" />
           <span class="text-sm font-bold">Filter Status</span>
         </button>
@@ -69,7 +69,7 @@ const refreshQueue = () => {
           />
         </div>
 
-        <div v-else class="py-20 text-center animate-fade-in">
+        <div v-else class="py-20 text-center sr-fadeUp">
           <div class="w-20 h-20 bg-core-900/50 rounded-full flex items-center justify-center mx-auto mb-6 text-content-subtle border border-divider">
             <Search class="w-10 h-10" />
           </div>
@@ -80,13 +80,3 @@ const refreshQueue = () => {
     </div>
   </DashboardLayout>
 </template>
-
-<style scoped>
-.animate-fade-in {
-  animation: fadeIn 0.5s ease-out;
-}
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-</style>

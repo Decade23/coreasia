@@ -31,6 +31,12 @@ export default defineNuxtConfig({
   devServer: {
     port: 3001
   },
+  components: [
+    { path: '~/components/atoms', pathPrefix: false },
+    { path: '~/components/molecules', pathPrefix: false, ignore: ['CaDatePicker.vue'] },
+    { path: '~/components/organisms', pathPrefix: false },
+    { path: '~/components/templates', pathPrefix: false },
+  ],
   css: ['~/assets/css/main.css'],
   i18n: {
     locales: [
@@ -38,7 +44,9 @@ export default defineNuxtConfig({
       { code: 'en', iso: 'en-US', file: 'en.json', name: 'English' }
     ],
     defaultLocale: 'id',
-    langDir: 'locales',
+    langDir: '../locales',
+    lazy: false,
+    detectBrowserLanguage: false,
     strategy: 'prefix_except_default'
   }
 })

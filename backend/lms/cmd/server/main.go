@@ -40,10 +40,7 @@ func main() {
 	defer db.Close()
 
 	if *migrate || *seed || *seedDev {
-		runMigrations(cfg, db, ctx)
-		if *seed || *seedDev {
-			runSeeds(db, ctx, *seedDev)
-		}
+		runBootstrap(cfg, db, ctx, *seed || *seedDev, *seedDev)
 		return
 	}
 
@@ -76,52 +73,54 @@ func setupLogger() {
 	slog.SetDefault(slog.New(handler))
 }
 
-func runMigrations(cfg *infrastructure.Config, db *postgres.TenantDB, ctx context.Context) {
-	slog.Info("menjalankan migrasi database...")
+func runBootstrap(cfg *infrastructure.Config, db *postgres.TenantDB, ctx context.Context, includeSeeds bool, includeDev bool) {
+	slog.Info("menjalankan bootstrap database", "include_seeds", includeSeeds, "include_dev", includeDev)
 
 	migrator := postgres.NewMigrator(cfg.Database.DSN(), "migrations/global", "migrations/tenant")
+	s := seeder.NewSeeder(db.Pool)
 
 	if err := migrator.RunGlobal(); err != nil {
 		slog.Error("gagal migrasi global", "error", err)
 		os.Exit(1)
 	}
 
+	if includeSeeds {
+		if err := s.RunGlobalSystem(ctx); err != nil {
+			slog.Error("gagal seed global system", "error", err)
+			os.Exit(1)
+		}
+
+		if includeDev {
+			if err := s.RunGlobalDev(ctx); err != nil {
+				slog.Error("gagal seed global dev", "error", err)
+				os.Exit(1)
+			}
+		}
+	}
+
 	provisioner := postgres.NewTenantProvisioner(db, migrator)
+	if includeSeeds {
+		provisioner.SetSeeder(s)
+	}
+
 	schemas, err := provisioner.ListTenantSchemas(ctx)
 	if err != nil {
-		slog.Warn("tidak dapat list tenant schemas", "error", err)
-		return
-	}
-
-	if err := migrator.RunAllTenants(schemas); err != nil {
-		slog.Error("gagal migrasi tenant", "error", err)
+		slog.Error("tidak dapat list tenant schemas", "error", err)
 		os.Exit(1)
 	}
 
-	slog.Info("migrasi selesai", "tenant_count", len(schemas))
-}
-
-func runSeeds(db *postgres.TenantDB, ctx context.Context, includeDev bool) {
-	slog.Info("menjalankan seeds...")
-
-	s := seeder.NewSeeder(db.Pool)
-
-	if err := s.RunGlobalSystem(ctx); err != nil {
-		slog.Error("gagal seed global", "error", err)
-		os.Exit(1)
+	for _, schema := range schemas {
+		if err := provisioner.Provision(ctx, schema); err != nil {
+			slog.Error("gagal provision tenant", "schema", schema, "error", err)
+			os.Exit(1)
+		}
+		if includeSeeds && includeDev {
+			if err := s.RunTenantDev(ctx, schema); err != nil {
+				slog.Error("gagal seed tenant dev", "schema", schema, "error", err)
+				os.Exit(1)
+			}
+		}
 	}
 
-	provisioner := postgres.NewTenantProvisioner(db, nil)
-	schemas, err := provisioner.ListTenantSchemas(ctx)
-	if err != nil {
-		slog.Warn("tidak dapat list tenant schemas untuk seed", "error", err)
-		return
-	}
-
-	if err := s.RunAllTenants(ctx, schemas, includeDev); err != nil {
-		slog.Error("gagal seed tenant", "error", err)
-		os.Exit(1)
-	}
-
-	slog.Info("seeds selesai", "tenant_count", len(schemas), "include_dev", includeDev)
+	slog.Info("bootstrap database selesai", "tenant_count", len(schemas), "include_seeds", includeSeeds, "include_dev", includeDev)
 }

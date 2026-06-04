@@ -18,3 +18,13 @@ frontend/landing/node_modules/
 frontend/landing/.nuxt/
 frontend/landing/dist/
 frontend/landing/.output/
+
+# Ad-hoc screenshot & e2e capture artifacts (machine-local)
+/screenshots/
+/screenshots2/
+/screenshots3/
+/screenshots_all_pages/
+/results*.json
+/playwright_test.js
+/quick_screenshot.js
+/screenshot_all.js

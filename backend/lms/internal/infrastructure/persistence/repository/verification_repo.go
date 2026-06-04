@@ -130,9 +130,9 @@ func (r *VerificationRepo) Create(ctx context.Context, v *entity.Verification) e
 	v.CreatedAt = now
 	v.UpdatedAt = now
 	_, err := r.db.Pool.Exec(ctx,
-		fmt.Sprintf(`INSERT INTO %s.verifications (id, assessee_id, scheme_id, status, personal_data, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)`, prefix),
-		v.ID, v.AssesseeID, v.SchemeID, v.Status, v.PersonalData, v.CreatedAt, v.UpdatedAt)
+		fmt.Sprintf(`INSERT INTO %s.verifications (id, assessee_id, scheme_id, status, personal_data, submitted_at, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`, prefix),
+		v.ID, v.AssesseeID, v.SchemeID, v.Status, v.PersonalData, v.SubmittedAt, v.CreatedAt, v.UpdatedAt)
 	return err
 }
 

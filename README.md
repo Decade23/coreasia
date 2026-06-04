@@ -72,6 +72,16 @@ docker compose -f docker-compose.dev.yml down
 
 ### Credentials
 
+LMS dev tenant menggunakan slug/header `demo` dan otomatis dibuat oleh service `api-bootstrap`.
+
+| LMS Role | Email | Password |
+|----------|-------|----------|
+| Admin | `admin@coreasia.id` | `admin123` |
+| Super Admin | `superadmin@coreasia.id` | `admin123` |
+| Quality Manager | `qm@coreasia.id` | `admin123` |
+| Assessor | `assessor@coreasia.id` | `admin123` |
+| Assessee | `assessee@coreasia.id` | `admin123` |
+
 | Service | Username | Password |
 |---------|----------|----------|
 | MinIO Console | `minioadmin` | `minioadmin` |

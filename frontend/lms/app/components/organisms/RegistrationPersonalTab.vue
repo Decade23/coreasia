@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import BaseInput from '~/components/atoms/BaseInput.vue'
+import BaseTextarea from '~/components/atoms/BaseTextarea.vue'
 import CaDatePicker from '~/components/organisms/CaDatePicker.vue'
 import type { PersonalData } from '../../types/registration'
 

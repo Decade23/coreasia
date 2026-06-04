@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Home, AlertCircle } from 'lucide-vue-next'
 import type { NuxtError } from '#app'
+import gridPattern from '~/assets/grid.svg'
 
 const props = defineProps({
   error: {
@@ -20,7 +21,7 @@ const handleError = () => clearError({ redirect: '/' })
     <div class="absolute bottom-0 left-0 w-[600px] h-[600px] bg-emerald-500/5 rounded-full blur-[100px] translate-y-1/3 -translate-x-1/4 pointer-events-none" />
     
     <!-- Grid Overlay -->
-    <div class="absolute inset-0 bg-[url('/img/grid.svg')] bg-center opacity-10 pointer-events-none" />
+    <div class="absolute inset-0 bg-center opacity-10 pointer-events-none" :style="{ backgroundImage: `url(${gridPattern})` }" />
 
     <!-- Main Content -->
     <div class="relative z-10 w-full max-w-2xl px-6 text-center">
@@ -34,11 +35,15 @@ const handleError = () => clearError({ redirect: '/' })
           <div class="ca-card p-6 md:p-8 backdrop-blur-2xl bg-core-900/40 border-divider-strong shadow-2xl mb-12">
             <AlertCircle class="w-12 h-12 md:w-16 md:h-16 text-brand mx-auto mb-4" />
             <h2 class="text-2xl md:text-3xl font-bold text-content mb-2 font-display">
-              <template v-if="error.statusCode === 404">Halaman Tidak Ditemukan</template>
+              <template v-if="error.statusCode === 403">Akses Ditolak</template>
+              <template v-else-if="error.statusCode === 404">Halaman Tidak Ditemukan</template>
               <template v-else>Terjadi Kesalahan</template>
             </h2>
             <p class="text-content-muted text-sm md:text-base font-medium max-w-sm mx-auto">
-              <template v-if="error.statusCode === 404">
+              <template v-if="error.statusCode === 403">
+                Anda tidak memiliki izin untuk mengakses halaman ini.
+              </template>
+              <template v-else-if="error.statusCode === 404">
                 Maaf, rute atau halaman yang Anda tuju sepertinya tidak ada di platform ini, atau Anda tidak memiliki akses.
               </template>
               <template v-else>

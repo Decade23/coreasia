@@ -102,6 +102,11 @@ func (r *QuestionRepo) FindAll(ctx context.Context, page, perPage int, schemeID 
 		if err := rows.Scan(&q.ID, &q.SchemeID, &q.QuestionType, &q.QuestionText, &q.Difficulty, &q.Points, &q.IsActive, &q.Rubric, &q.Instructions, &q.CreatedAt, &q.UpdatedAt); err != nil {
 			return nil, 0, err
 		}
+		options, err := r.findOptions(ctx, schema, q.ID)
+		if err != nil {
+			return nil, 0, err
+		}
+		q.Options = options
 		questions = append(questions, q)
 	}
 

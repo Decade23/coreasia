@@ -52,6 +52,13 @@ const formatDate = (date: Date) => {
         </template>
 
         <div class="py-6 space-y-8">
+            <!-- Breadcrumb -->
+            <Breadcrumb :items="[
+                { label: 'Admin', to: '/admin' },
+                { label: 'Skema Sertifikasi', to: '/admin/schemes' },
+                { label: currentScheme?.name || 'Detail Skema' },
+            ]" />
+
             <!-- Error -->
             <ErrorAlert v-if="error" :message="error" @dismiss="error = null" />
 

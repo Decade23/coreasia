@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Upload, Eye, FileCheck } from 'lucide-vue-next'
+import BaseTextarea from '~/components/atoms/BaseTextarea.vue'
 import type { ExamQuestionDomain } from '~/adapters/ExamAdapter'
 
 const props = defineProps<{

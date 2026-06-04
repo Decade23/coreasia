@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { reactive, watch, computed } from 'vue'
 import { X } from 'lucide-vue-next'
+import BaseInput from '~/components/atoms/BaseInput.vue'
+import BaseTextarea from '~/components/atoms/BaseTextarea.vue'
 import CaButton from '~/components/atoms/CaButton.vue'
 import type { SchemeDomain, SchemeFormData } from '~/types/scheme'
 import { useFormValidation, required, minLength, maxLength, numericOnly } from '~/composables/useFormValidation'

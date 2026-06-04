@@ -40,7 +40,7 @@ import ThemeToggle from '../atoms/ThemeToggle.vue'
         <!-- Footer -->
         <footer class="relative z-10 border-t border-divider py-8">
             <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                <p class="text-xs text-content-subtle">&copy; 2024 CoreAsia. Platform Sertifikasi & Kompetensi Nasional.</p>
+                <p class="text-xs text-content-subtle">&copy; {{ new Date().getFullYear() }} CoreAsia. Platform Sertifikasi &amp; Kompetensi Nasional.</p>
             </div>
         </footer>
     </div>

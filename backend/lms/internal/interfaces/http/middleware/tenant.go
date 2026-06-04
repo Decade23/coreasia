@@ -7,6 +7,7 @@ import (
 
 	"github.com/coreasia/lms-api/internal/infrastructure"
 	"github.com/coreasia/lms-api/internal/infrastructure/persistence/postgres"
+	infraRepo "github.com/coreasia/lms-api/internal/infrastructure/persistence/repository"
 	"github.com/coreasia/lms-api/internal/interfaces/http/response"
 	"github.com/coreasia/lms-api/pkg/apperr"
 	"github.com/gofiber/fiber/v3"
@@ -39,6 +40,7 @@ func TenantResolver(db *postgres.TenantDB, cfg infrastructure.TenantConfig) fibe
 
 		c.Locals(string(TenantSchemaKey), schemaName)
 		c.Locals(string(TenantIDKey), tenantID)
+		c.SetContext(context.WithValue(c.Context(), infraRepo.SchemaContextKey, schemaName))
 		return c.Next()
 	}
 }

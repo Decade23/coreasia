@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { reactive, watch, computed } from 'vue'
 import { X } from 'lucide-vue-next'
+import BaseInput from '~/components/atoms/BaseInput.vue'
 import CaButton from '~/components/atoms/CaButton.vue'
 import type { AssessorProfileDomain, AssessorFormData } from '~/types/assessor-profile'
 import { useFormValidation, required, email, minLength, phoneNumber } from '~/composables/useFormValidation'

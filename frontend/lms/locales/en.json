@@ -24,7 +24,8 @@
         "action": "Action",
         "detail": "Detail",
         "yes": "Yes",
-        "no": "No"
+        "no": "No",
+        "welcome": "Welcome"
     },
     "auth": {
         "login": "Login",
@@ -67,6 +68,14 @@
         "superAdmin": "Super Admin",
         "admin": "Administrator",
         "qualityManager": "Quality Manager",
+        "assessor": "Assessor",
+        "assessee": "Assessee",
+        "user": "User"
+    },
+    "roles": {
+        "super_admin": "Super Admin",
+        "admin": "Administrator",
+        "quality_manager": "Quality Manager",
         "assessor": "Assessor",
         "assessee": "Assessee",
         "user": "User"
@@ -328,12 +337,12 @@
                 "license": "DECISION.xxxx/BNSP/xxxx",
                 "address": "Full office address",
                 "phone": "021-xxxxxxx",
-                "email": "info@lsp.id",
+                "email": "info{'@'}lsp.id",
                 "website": "https://lsp.id",
                 "logo": "https://your-domain/logo.svg",
                 "customDomain": "lms.yourlsp.id",
                 "fullName": "User full name",
-                "userEmail": "user@example.com",
+                "userEmail": "user{'@'}example.com",
                 "password": "Minimum 6 characters",
                 "phoneNumber": "08xxxxxxxxxx"
             },

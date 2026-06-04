@@ -76,6 +76,7 @@ func (s *Server) setupRoutes() {
 	scheduleUC := usecase.NewScheduleUseCase(scheduleRepo)
 	assessorUC := usecase.NewAssessorUseCase(assessorRepo, userRepo)
 	verificationUC := usecase.NewVerificationUseCase(verificationRepo)
+	registrationUC := usecase.NewRegistrationUseCase(userRepo, schemeRepo, verificationRepo, auditRepo)
 	examUC := usecase.NewExamUseCase(examRepo, questionRepo, schemeRepo)
 	assessmentUC := usecase.NewAssessmentUseCase(assessmentRepo, schemeRepo)
 	qualityUC := usecase.NewQualityUseCase(qualityRepo, userRepo, schemeRepo)
@@ -101,76 +102,93 @@ func (s *Server) setupRoutes() {
 	authHandler := handler.NewAuthHandler(authUC)
 	authHandler.RegisterRoutes(api, authMw)
 
+	registrationHandler := handler.NewRegistrationHandler(registrationUC)
+	registrationHandler.RegisterRoutes(api)
+
 	// Tenant settings, audit trail, notifications
 	tenantHandler := handler.NewTenantHandler(settingsRepo, auditRepo, notifRepo)
 	tenantHandler.RegisterRoutes(api, authMw)
 
-	// Admin CRUD routes (admin + super_admin only)
-	admin := api.Group("", authMw, middleware.RequireRoles(
+	adminRoles := middleware.RequireRoles(
 		valueobject.RoleSuperAdmin,
 		valueobject.RoleAdmin,
-	))
-
-	schemeHandler := handler.NewSchemeHandler(schemeUC)
-	schemeHandler.RegisterRoutes(admin)
-
-	questionHandler := handler.NewQuestionHandler(questionUC)
-	questionHandler.RegisterRoutes(admin)
-
-	scheduleHandler := handler.NewScheduleHandler(scheduleUC)
-	scheduleHandler.RegisterRoutes(admin)
-
-	assessorHandler := handler.NewAssessorHandler(assessorUC)
-	assessorHandler.RegisterRoutes(admin)
-
-	// User management (admin only)
-	userHandler := handler.NewUserHandler(userRepo)
-	userHandler.RegisterRoutes(admin)
-
-	// Certificate templates (admin only)
-	certHandler.RegisterTemplateRoutes(admin)
-
-	// Reports (admin only)
-	reportHandler := handler.NewReportHandler(reportUC, auditRepo)
-	reportHandler.RegisterRoutes(admin)
-
-	// Verification routes (admin + quality_manager)
-	verificationGroup := api.Group("", authMw, middleware.RequireRoles(
+	)
+	qualityRoles := middleware.RequireRoles(
 		valueobject.RoleSuperAdmin,
 		valueobject.RoleAdmin,
 		valueobject.RoleQualityManager,
-	))
+	)
+	adminAudit := middleware.AuditMutations(auditRepo)
+
+	// Admin CRUD routes (admin + super_admin only)
+	api.Use("/schemes", authMw, adminRoles, adminAudit)
+	api.Use("/questions", authMw, adminRoles, adminAudit)
+	api.Use("/schedules", authMw, adminRoles, adminAudit)
+	api.Use("/assessors", authMw, adminRoles, adminAudit)
+	api.Use("/users", authMw, adminRoles, adminAudit)
+	api.Use("/certificate-templates", authMw, adminRoles, adminAudit)
+	api.Use("/reports", authMw, adminRoles, adminAudit)
+
+	schemeHandler := handler.NewSchemeHandler(schemeUC)
+	schemeHandler.RegisterRoutes(api)
+
+	questionHandler := handler.NewQuestionHandler(questionUC)
+	questionHandler.RegisterRoutes(api)
+
+	scheduleHandler := handler.NewScheduleHandler(scheduleUC)
+	scheduleHandler.RegisterRoutes(api)
+
+	assessorHandler := handler.NewAssessorHandler(assessorUC)
+	assessorHandler.RegisterRoutes(api)
+
+	// User management (admin only)
+	userHandler := handler.NewUserHandler(userRepo)
+	userHandler.RegisterRoutes(api)
+
+	// Certificate templates (admin only)
+	certHandler.RegisterTemplateRoutes(api)
+
+	// Reports (admin only)
+	reportHandler := handler.NewReportHandler(reportUC, auditRepo)
+	reportHandler.RegisterRoutes(api)
+
+	// Verification routes (admin + quality_manager)
+	api.Use("/verifications", authMw, qualityRoles, adminAudit)
+	api.Use("/quality", authMw, qualityRoles, adminAudit)
 
 	verificationHandler := handler.NewVerificationHandler(verificationUC)
-	verificationHandler.RegisterRoutes(verificationGroup)
+	verificationHandler.RegisterRoutes(api)
 
 	// Quality management (admin + quality_manager)
 	qualityHandler := handler.NewQualityHandler(qualityUC)
-	qualityHandler.RegisterRoutes(verificationGroup)
+	qualityHandler.RegisterRoutes(api)
 
 	// Certificate list (admin + assessee)
-	certViewGroup := api.Group("", authMw, middleware.RequireRoles(
+	api.Use("/certificates", authMw, middleware.RequireRoles(
 		valueobject.RoleSuperAdmin,
 		valueobject.RoleAdmin,
 		valueobject.RoleAssessee,
 	))
-	certHandler.RegisterCertRoutes(certViewGroup)
+	certHandler.RegisterCertRoutes(api)
 
 	// Exam routes (assessee only)
-	assesseeGroup := api.Group("", authMw, middleware.RequireRoles(
+	api.Use("/exams", authMw, middleware.RequireRoles(
 		valueobject.RoleAssessee,
 	))
 
 	examHandler := handler.NewExamHandler(examUC)
-	examHandler.RegisterRoutes(assesseeGroup)
+	examHandler.RegisterRoutes(api)
 
 	// Assessment routes (assessor only)
-	assessorGroup := api.Group("", authMw, middleware.RequireRoles(
+	api.Use("/assessment", authMw, middleware.RequireRoles(
+		valueobject.RoleAssessor,
+	))
+	api.Use("/assessments", authMw, middleware.RequireRoles(
 		valueobject.RoleAssessor,
 	))
 
 	assessmentHandler := handler.NewAssessmentHandler(assessmentUC)
-	assessmentHandler.RegisterRoutes(assessorGroup)
+	assessmentHandler.RegisterRoutes(api)
 }
 
 func (s *Server) Start() error {

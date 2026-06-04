@@ -16,6 +16,9 @@ import (
 //go:embed seeds/global/system/*.sql
 var globalSystemSeeds embed.FS
 
+//go:embed seeds/global/dev/*.sql
+var globalDevSeeds embed.FS
+
 //go:embed seeds/tenant/system/*.sql
 var tenantSystemSeeds embed.FS
 
@@ -34,6 +37,12 @@ func NewSeeder(pool *pgxpool.Pool) *Seeder {
 func (s *Seeder) RunGlobalSystem(ctx context.Context) error {
 	slog.Info("menjalankan global system seeds")
 	return s.runSeeds(ctx, globalSystemSeeds, "seeds/global/system", "")
+}
+
+// RunGlobalDev executes development-only global seeds (e.g., demo tenant).
+func (s *Seeder) RunGlobalDev(ctx context.Context) error {
+	slog.Info("menjalankan global dev seeds")
+	return s.runSeeds(ctx, globalDevSeeds, "seeds/global/dev", "")
 }
 
 // RunTenantSystem executes system seeds for a specific tenant schema.

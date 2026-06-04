@@ -1,5 +1,13 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import BaseInput from '~/components/atoms/BaseInput.vue'
+import BaseTextarea from '~/components/atoms/BaseTextarea.vue'
+import CaCheckbox from '~/components/atoms/CaCheckbox.vue'
+import CaRadio from '~/components/atoms/CaRadio.vue'
+import CaToggle from '~/components/atoms/CaToggle.vue'
+import CaSelect from '~/components/molecules/CaSelect.vue'
+import CaAsyncSelect from '~/components/organisms/CaAsyncSelect.vue'
+import CaDatePicker from '~/components/organisms/CaDatePicker.vue'
 
 const textValue = ref('')
 const passwordValue = ref('')

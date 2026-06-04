@@ -3,6 +3,8 @@ package postgres
 import (
 	"fmt"
 	"log/slog"
+	"net/url"
+	"strings"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/pgx/v5"
@@ -10,9 +12,9 @@ import (
 )
 
 type Migrator struct {
-	dsn            string
-	globalPath     string
-	tenantPath     string
+	dsn        string
+	globalPath string
+	tenantPath string
 }
 
 func NewMigrator(dsn, globalPath, tenantPath string) *Migrator {
@@ -26,7 +28,7 @@ func NewMigrator(dsn, globalPath, tenantPath string) *Migrator {
 func (m *Migrator) RunGlobal() error {
 	slog.Info("menjalankan migrasi global (public schema)")
 
-	dbURL := m.dsn + "&search_path=public"
+	dbURL := migrationDSN(m.dsn, "public")
 	mg, err := migrate.New("file://"+m.globalPath, dbURL)
 	if err != nil {
 		return fmt.Errorf("membuat migrator global: %w", err)
@@ -44,7 +46,7 @@ func (m *Migrator) RunGlobal() error {
 func (m *Migrator) RunTenant(schemaName string) error {
 	slog.Info("menjalankan migrasi tenant", "schema", schemaName)
 
-	dbURL := m.dsn + "&search_path=" + schemaName
+	dbURL := migrationDSN(m.dsn, schemaName)
 	mg, err := migrate.New("file://"+m.tenantPath, dbURL)
 	if err != nil {
 		return fmt.Errorf("membuat migrator tenant %s: %w", schemaName, err)
@@ -57,6 +59,15 @@ func (m *Migrator) RunTenant(schemaName string) error {
 
 	slog.Info("migrasi tenant selesai", "schema", schemaName)
 	return nil
+}
+
+func migrationDSN(dsn string, schemaName string) string {
+	dbURL := strings.Replace(dsn, "postgres://", "pgx5://", 1)
+	separator := "&"
+	if !strings.Contains(dbURL, "?") {
+		separator = "?"
+	}
+	return dbURL + separator + "search_path=" + url.QueryEscape(schemaName)
 }
 
 func (m *Migrator) RunAllTenants(schemas []string) error {

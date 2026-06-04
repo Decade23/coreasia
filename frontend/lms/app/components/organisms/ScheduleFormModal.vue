@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { reactive, watch, computed } from 'vue'
 import { X } from 'lucide-vue-next'
+import BaseInput from '~/components/atoms/BaseInput.vue'
 import CaButton from '~/components/atoms/CaButton.vue'
+import CaSelect from '~/components/molecules/CaSelect.vue'
 import CaDatePicker from '~/components/organisms/CaDatePicker.vue'
 import type { ScheduleDomain, ScheduleFormData, ScheduleType } from '~/types/schedule'
 import { useFormValidation, required } from '~/composables/useFormValidation'
