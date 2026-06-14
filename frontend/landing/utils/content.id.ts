@@ -550,6 +550,246 @@ const ID_CONTENT = {
         button: 'Coba Pantau Gratis',
       },
     },
+    downloader: {
+      title: 'CoreAsia Downloader - Download Manager Premium untuk macOS',
+      description:
+        'CoreAsia Downloader (CAD) adalah download manager premium untuk macOS (Apple Silicon). Simpan video & file dari web dengan satu klik: engine unduhan cepat multi-koneksi, pemilih kualitas, ekstraksi audio MP3, antrean + riwayat, dan companion browser extension.',
+      kicker: 'Download Manager Premium',
+      hero: {
+        title:
+          'Simpan video &amp; file dari web <span class="ca-gradient-text">dengan satu klik</span>.',
+        subtitle:
+          'CoreAsia Downloader (CAD) adalah download manager premium untuk macOS dengan engine unduhan cepat multi-koneksi, pemilih kualitas, ekstraksi audio MP3, serta antrean dan riwayat tersimpan — dalam antarmuka yang bersih dan ringan.',
+        ctaPrimary: 'Unduh untuk macOS',
+        ctaSecondary: 'Lihat Harga',
+        chips: ['macOS (Apple Silicon)', 'Multi-koneksi', 'MP3 Audio', 'Privasi-first'],
+      },
+      workflowAside: {
+        label: 'How It Works',
+        title: 'Mulai mengunduh dalam 4 langkah',
+        items: [
+          {
+            title: '1. Pasang & buka aplikasi',
+            description:
+              'Unduh file .dmg dari coreasia.id, seret ke folder Applications, lalu jalankan. Coba gratis selama 3 hari.',
+          },
+          {
+            title: '2. Pasang extension browser',
+            description:
+              'Tambahkan companion extension untuk Chrome atau Edge agar media yang bisa diunduh terdeteksi langsung dari browser.',
+          },
+          {
+            title: '3. Tempel tautan atau pakai extension',
+            description:
+              'Salin URL ke aplikasi, atau biarkan extension mendeteksi media dan mengirimkannya otomatis ke aplikasi.',
+          },
+          {
+            title: '4. Pilih kualitas & unduh',
+            description:
+              'Pilih resolusi atau ekstrak audio MP3, lalu biarkan engine multi-koneksi menyelesaikan unduhan dengan cepat. Semua tersimpan rapi di antrean & riwayat.',
+          },
+        ],
+      },
+      features: {
+        label: 'Fitur Utama',
+        title: 'Semua yang Anda butuhkan untuk mengunduh',
+        subtitle:
+          'Dari deteksi media otomatis hingga ekstraksi audio — CoreAsia Downloader dirancang agar menyimpan apa pun dari web terasa cepat dan rapi.',
+        items: [
+          {
+            title: 'Auto-capture via Extension',
+            description:
+              'Companion browser extension untuk Chrome & Edge mendeteksi media yang bisa diunduh di halaman dan mengirimkannya langsung ke aplikasi CoreAsia Downloader di komputer Anda.',
+            icon: 'lucide:wand-sparkles',
+          },
+          {
+            title: 'Pemilih Kualitas',
+            description:
+              'Pilih resolusi video yang Anda inginkan sebelum mengunduh — dari yang hemat ruang hingga kualitas tertinggi yang tersedia.',
+            icon: 'lucide:settings-2',
+          },
+          {
+            title: 'Unduhan Cepat Multi-koneksi',
+            description:
+              'Engine unduhan membuka banyak koneksi sekaligus sehingga file selesai jauh lebih cepat dibanding unduhan satu jalur biasa.',
+            icon: 'lucide:zap',
+          },
+          {
+            title: 'Ekstraksi Audio MP3',
+            description:
+              'Ambil hanya audionya dan simpan sebagai MP3 — cocok untuk musik, podcast, atau materi belajar tanpa video.',
+            icon: 'lucide:music',
+          },
+          {
+            title: 'Antrean & Riwayat Tersimpan',
+            description:
+              'Susun banyak unduhan dalam antrean dan biarkan berjalan berurutan. Riwayat tersimpan sehingga Anda selalu bisa menemukan file lama.',
+            icon: 'lucide:list-checks',
+          },
+          {
+            title: 'Antarmuka Bersih & Ringan',
+            description:
+              'Tata letak yang rapi dan fokus membuat setiap unduhan mudah diatur. Ringan dijalankan dan langsung enak dipakai tanpa perlu belajar.',
+            icon: 'lucide:sparkles',
+          },
+        ],
+      },
+      workflow: {
+        label: 'Cara Pakai',
+        title: 'Dari halaman web ke file tersimpan',
+        subtitle:
+          'Empat langkah sederhana — pasang sekali, lalu simpan apa pun dari browser favorit Anda.',
+        steps: [
+          {
+            title: 'Pasang aplikasi',
+            description:
+              'Unduh file .dmg lalu seret ke folder Applications. Coba gratis 3 hari.',
+          },
+          {
+            title: 'Pasang extension browser',
+            description:
+              'Tambahkan companion extension untuk Chrome atau Edge supaya media bisa ditangkap langsung dari halaman.',
+          },
+          {
+            title: 'Klik di browser',
+            description:
+              'Buka situs apa pun, lalu klik tombol CA Download. Extension juga bisa menangkap media secara otomatis.',
+          },
+          {
+            title: 'Pilih kualitas & unduh',
+            description:
+              'Atur nama file & kualitas (atau audio MP3), lalu tekan Download. Engine multi-koneksi menyelesaikannya dengan cepat.',
+          },
+        ],
+      },
+      platforms: {
+        label: 'Platform',
+        title: 'Tersedia di macOS, Windows menyusul',
+        subtitle:
+          'CoreAsia Downloader hadir lebih dulu untuk macOS (Apple Silicon). Versi Windows sedang disiapkan agar lebih banyak orang bisa menikmati pengalaman yang sama.',
+        items: [
+          {
+            title: 'macOS (Apple Silicon)',
+            description:
+              'Tersedia sekarang. Unduh file .dmg langsung dari coreasia.id dan mulai dalam hitungan menit.',
+            icon: 'lucide:apple',
+            badge: 'Tersedia',
+            available: true,
+          },
+          {
+            title: 'Windows',
+            description:
+              'Sedang disiapkan. Versi Windows akan menyusul untuk membawa pengalaman yang sama ke lebih banyak perangkat.',
+            icon: 'lucide:monitor',
+            badge: 'Menyusul',
+            available: false,
+          },
+        ],
+      },
+      pricing: {
+        label: 'Pricing',
+        title: 'Harga sederhana, tanpa langganan',
+        subtitle:
+          'Coba gratis 3 hari. Setelah itu, beli Lifetime License untuk pemakaian selamanya atau ambil 1-Day Pass untuk kebutuhan sesekali.',
+        popularLabel: 'Paling Populer',
+        plans: [
+          {
+            name: 'Free Trial',
+            price: '3 Hari',
+            description: 'Coba semua fitur tanpa biaya. Setelah masa coba berakhir, aplikasi perlu diaktivasi.',
+            features: [
+              'Akses penuh selama 3 hari',
+              'Tanpa kartu kredit',
+              'Semua fitur inti aktif',
+            ],
+            cta: 'Mulai Coba Gratis',
+          },
+          {
+            name: 'Lifetime License',
+            price: '$29',
+            description: 'Sekali bayar, pakai selamanya (≈ Rp500rb). Pilihan terbaik untuk pemakaian rutin.',
+            popular: true,
+            features: [
+              'Lisensi seumur hidup, sekali bayar',
+              'Semua fitur tanpa batas',
+              'Aktivasi mudah & cepat',
+              'Update untuk versi yang sama',
+            ],
+            cta: 'Beli Lifetime',
+          },
+          {
+            name: '1-Day Pass',
+            price: '$9.90',
+            description: 'Butuh sehari saja? Aktifkan akses penuh untuk satu hari pemakaian.',
+            features: [
+              'Akses penuh selama 1 hari',
+              'Cocok untuk kebutuhan sesekali',
+              'Tanpa langganan berulang',
+            ],
+            cta: 'Beli 1-Day Pass',
+          },
+        ],
+      },
+      privacy: {
+        label: 'Privasi & Lisensi',
+        title: 'Dirancang untuk menghormati privasi Anda',
+        items: [
+          {
+            title: 'Aktivasi Mudah',
+            description:
+              'Aktivasi cukup sekali dan langsung jalan — masukkan lisensi Anda, lalu aplikasi siap dipakai dalam hitungan detik.',
+            icon: 'lucide:shield-check',
+          },
+          {
+            title: 'Ramah Privasi',
+            description:
+              'Aktivitas unduhan Anda tetap di komputer Anda. CoreAsia Downloader dirancang untuk menghormati privasi sejak awal.',
+            icon: 'lucide:lock',
+          },
+          {
+            title: 'Dibuat oleh CoreAsia',
+            description:
+              'Dikembangkan oleh PT Inti Asia Teknologi (brand CoreAsia). Butuh bantuan? Hubungi kami di hello@coreasia.id.',
+            icon: 'lucide:badge-check',
+          },
+        ],
+      },
+      related: {
+        title: 'Produk Terkait',
+        items: [
+          {
+            title: 'Pantau by CoreAsia',
+            description: 'Dashboard analytics & SEO monitoring website',
+            icon: 'lucide:bar-chart-3',
+            to: '/products/pantau',
+          },
+          {
+            title: 'Build by CoreAsia',
+            description: 'Jasa development website & web app custom',
+            icon: 'lucide:code-2',
+            to: '/products/build',
+          },
+          {
+            title: 'Semua Produk',
+            description: 'Jelajahi ekosistem produk & layanan CoreAsia',
+            icon: 'lucide:boxes',
+            to: '/products',
+          },
+        ],
+      },
+      cta: {
+        title: 'Siap menyimpan apa pun dari web?',
+        subtitle:
+          'Unduh CoreAsia Downloader untuk macOS dan coba gratis selama 3 hari. Pasang juga companion extension untuk auto-capture media dari browser.',
+        ctaPrimary: 'Unduh untuk macOS',
+        ctaSecondary: 'hello@coreasia.id',
+        termsPrefix: 'Dengan mengunduh, Anda menyetujui',
+        termsLabel: 'Terms',
+        termsAnd: '&amp;',
+        privacyLabel: 'Privacy',
+        termsSuffix: 'CoreAsia Downloader.',
+      },
+    },
     custom: {
       title: 'Build by CoreAsia - Jasa Development Website & Web App Custom',
       description:
@@ -1575,6 +1815,152 @@ const ID_CONTENT = {
         contact: {
           title: '9. Hubungi Kami',
           content: 'Untuk pertanyaan terkait syarat dan ketentuan, hubungi kami di {email}.',
+        },
+      },
+    },
+    downloaderPrivacy: {
+      title: 'Kebijakan Privasi CoreAsia Downloader',
+      description: 'Kebijakan privasi CoreAsia Downloader (aplikasi macOS & browser extension) — bagaimana data Anda diperlakukan. Ramah privasi: data diproses lokal di perangkat Anda.',
+      lastUpdated: 'Terakhir diperbarui: Juni 2026',
+      sections: {
+        intro: {
+          title: '1. Ringkasan',
+          content: 'CoreAsia Downloader (selanjutnya "CAD") adalah download manager untuk desktop beserta browser extension pendamping, dikelola oleh PT Inti Asia Teknologi (brand CoreAsia). Kebijakan ini menjelaskan data apa yang ditangani oleh aplikasi desktop dan extension. Prinsipnya sederhana: pemrosesan terjadi secara lokal di komputer Anda dan kami tidak mengumpulkan data pribadi Anda ke server kami.',
+        },
+        extension: {
+          title: '2. Browser Extension (Chrome/Edge)',
+          content: 'Extension pendamping membantu mendeteksi media yang dapat diunduh di halaman yang sedang Anda buka. Untuk itu, extension dapat membaca:',
+          items: [
+            'URL tab aktif dan tautan media (mis. video/audio) yang ada di halaman yang Anda buka',
+            'HANYA saat Anda memulai unduhan yang memerlukannya: cookie untuk situs terkait, agar aplikasi dapat mengunduh konten yang membutuhkan sesi login Anda',
+          ],
+        },
+        extensionLocal: {
+          title: '3. Ke Mana Data Extension Dikirim',
+          content: 'Data di atas dikirim HANYA ke aplikasi CoreAsia Downloader yang berjalan secara LOKAL di komputer Anda (alamat 127.0.0.1 / localhost). Data ini TIDAK dikirim ke server CoreAsia maupun pihak ketiga mana pun. Extension tidak menjual data, tidak menampilkan iklan, dan tidak melacak aktivitas browsing Anda untuk tujuan periklanan.',
+        },
+        desktop: {
+          title: '4. Aplikasi Desktop',
+          content: 'Aplikasi desktop berjalan di komputer Anda dan:',
+          items: [
+            'Mengunduh file yang Anda minta ke folder pilihan Anda',
+            'Menyimpan setelan, lisensi, dan riwayat unduhan secara LOKAL di perangkat Anda',
+            'Tidak mengunggah riwayat unduhan Anda ke server kami',
+          ],
+        },
+        license: {
+          title: '5. Aktivasi Lisensi',
+          content: 'Aktivasi lisensi tidak memerlukan pembuatan akun dan tidak mengirimkan data pribadi Anda ke server kami untuk validasi. Pembelian dan penerbitan lisensi ditangani oleh penyedia pembayaran (misalnya Paddle), yang memproses data transaksi Anda sesuai kebijakan privasi mereka masing-masing.',
+        },
+        trial: {
+          title: '6. Masa Coba (Trial)',
+          content: 'Masa coba (trial) 3 hari dihitung menggunakan cap waktu lokal di perangkat Anda. Tidak ada data pribadi yang dikumpulkan untuk menjalankan trial.',
+        },
+        diagnostics: {
+          title: '7. Diagnostik Opsional (Opt-In)',
+          content: 'Pengiriman diagnostik bersifat OPSIONAL dan MATI secara default. Bila — dan hanya bila — Anda mengaktifkannya sendiri, aplikasi dapat mengirim informasi diagnostik anonim untuk membantu perbaikan produk, yaitu: versi aplikasi, versi sistem operasi, dan ID instalasi acak. Informasi ini tidak mengidentifikasi Anda secara pribadi dan tidak mencakup riwayat atau isi unduhan Anda. Anda dapat menonaktifkannya kapan saja.',
+        },
+        noSale: {
+          title: '8. Tidak Ada Penjualan Data',
+          content: 'Kami tidak menjual, menyewakan, atau memperdagangkan data pribadi Anda kepada pihak ketiga.',
+        },
+        rights: {
+          title: '9. Hak Anda',
+          content: 'Karena sebagian besar data disimpan secara lokal di perangkat Anda, Anda memegang kendali penuh dan dapat:',
+          items: [
+            'Menghapus riwayat, setelan, dan data aplikasi langsung dari perangkat Anda',
+            'Menonaktifkan diagnostik opsional kapan saja',
+            'Menghapus aplikasi dan extension untuk menghentikan seluruh pemrosesan data terkait',
+          ],
+        },
+        retention: {
+          title: '10. Penyimpanan dan Retensi Data',
+          content: 'Setelan, lisensi, dan riwayat unduhan disimpan secara lokal di perangkat Anda hingga Anda menghapusnya. Kami tidak menyimpan salinan data tersebut di server kami.',
+        },
+        changes: {
+          title: '11. Perubahan Kebijakan',
+          content: 'Kami dapat memperbarui kebijakan privasi ini dari waktu ke waktu. Perubahan akan diinformasikan melalui halaman ini beserta tanggal pembaruan terakhir.',
+        },
+        governingLaw: {
+          title: '12. Hukum yang Berlaku',
+          content: 'Kebijakan privasi ini diatur dan ditafsirkan berdasarkan hukum Republik Indonesia. CoreAsia Downloader dikelola oleh PT Inti Asia Teknologi.',
+        },
+        contact: {
+          title: '13. Hubungi Kami',
+          content: 'Untuk pertanyaan terkait kebijakan privasi CoreAsia Downloader, hubungi kami di {email}.',
+        },
+      },
+    },
+    downloaderTerms: {
+      title: 'Syarat dan Ketentuan CoreAsia Downloader',
+      description: 'Syarat dan ketentuan penggunaan CoreAsia Downloader (aplikasi macOS & browser extension). Harap baca dengan saksama sebelum menggunakan produk.',
+      lastUpdated: 'Terakhir diperbarui: Juni 2026',
+      sections: {
+        intro: {
+          title: '1. Ketentuan Umum',
+          content: 'CoreAsia Downloader ("CAD") adalah download manager untuk macOS (Apple Silicon) beserta browser extension pendamping, dikelola oleh PT Inti Asia Teknologi (brand CoreAsia). Dengan mengunduh, memasang, atau menggunakan CAD, Anda menyetujui untuk terikat dengan syarat dan ketentuan ini.',
+        },
+        license: {
+          title: '2. Pemberian Lisensi',
+          content: 'Kami memberikan Anda lisensi yang terbatas, non-eksklusif, dan tidak dapat dipindahtangankan untuk menggunakan CoreAsia Downloader sesuai dengan paket yang Anda beli, untuk penggunaan pribadi Anda. Anda tidak diperbolehkan menjual ulang, menyewakan, mendistribusikan, melakukan rekayasa balik, atau mendistribusikan ulang kunci lisensi tanpa izin tertulis dari kami.',
+        },
+        trial: {
+          title: '3. Masa Coba (Trial)',
+          content: 'CAD menyediakan masa coba (trial) gratis selama 3 hari. Setelah masa coba berakhir, Anda perlu mengaktifkan lisensi berbayar untuk terus menggunakan fitur yang memerlukan aktivasi. Masa coba dihitung menggunakan cap waktu lokal di perangkat Anda.',
+        },
+        pricing: {
+          title: '4. Pembayaran dan Lisensi',
+          content: 'Pilihan lisensi yang tersedia:',
+          items: [
+            'Lifetime License — $29 (sekali bayar, sekitar Rp500 ribu)',
+            '1-Day Pass — $9.90 (akses selama 1 hari)',
+            'Pembelian dan penerbitan lisensi ditangani oleh penyedia pembayaran (misalnya Paddle); harga dapat berubah sewaktu-waktu dan pajak yang berlaku dapat ditambahkan',
+          ],
+        },
+        refund: {
+          title: '5. Kebijakan Pengembalian Dana (Refund)',
+          content: 'Kami menerapkan kebijakan refund yang wajar. Jika Anda mengalami masalah teknis yang membuat aplikasi tidak dapat digunakan dan tidak dapat kami selesaikan, Anda dapat mengajukan permintaan pengembalian dana dalam jangka waktu yang wajar setelah pembelian. Permintaan refund ditinjau berdasarkan keadaan masing-masing kasus. Hubungi kami di {email} untuk mengajukan.',
+        },
+        acceptableUse: {
+          title: '6. Penggunaan yang Dapat Diterima',
+          content: 'CoreAsia Downloader adalah alat serbaguna untuk mengelola unduhan. Anda WAJIB:',
+          items: [
+            'Hanya mengunduh konten yang Anda miliki haknya, atau yang Anda diizinkan untuk mengunduhnya',
+            'Mematuhi syarat layanan, hak cipta, dan ketentuan situs pihak ketiga tempat konten berasal',
+            'Tidak menggunakan CAD untuk melanggar hukum atau hak pihak lain',
+          ],
+        },
+        acceptableUseLiability: {
+          title: '7. Tanggung Jawab atas Penggunaan',
+          content: 'CoreAsia Downloader adalah alat serbaguna; Anda bertanggung jawab penuh atas cara Anda menggunakannya dan atas konten yang Anda unduh. PT Inti Asia Teknologi tidak bertanggung jawab atas penyalahgunaan aplikasi, termasuk pengunduhan konten yang melanggar hak cipta atau ketentuan pihak ketiga.',
+        },
+        thirdParty: {
+          title: '8. Layanan dan Situs Pihak Ketiga',
+          content: 'CAD dapat berinteraksi dengan situs dan layanan pihak ketiga. Kami tidak mengendalikan dan tidak bertanggung jawab atas ketersediaan, konten, atau kebijakan situs pihak ketiga tersebut. Perubahan pada situs pihak ketiga dapat memengaruhi fungsi unduhan tertentu.',
+        },
+        warranty: {
+          title: '9. Tanpa Jaminan (As-Is)',
+          content: 'CoreAsia Downloader disediakan "sebagaimana adanya" (as-is) tanpa jaminan dalam bentuk apa pun, baik tersurat maupun tersirat. Kami tidak menjamin bahwa aplikasi akan selalu bebas dari kesalahan, tidak terputus, atau kompatibel dengan setiap situs maupun konfigurasi sistem.',
+        },
+        liability: {
+          title: '10. Batasan Tanggung Jawab',
+          content: 'Sejauh diizinkan oleh hukum yang berlaku, PT Inti Asia Teknologi tidak bertanggung jawab atas kerugian tidak langsung, insidental, atau konsekuensial yang timbul dari penggunaan atau ketidakmampuan menggunakan CoreAsia Downloader.',
+        },
+        termination: {
+          title: '11. Penghentian',
+          content: 'Kami berhak menghentikan atau menangguhkan lisensi Anda apabila Anda melanggar syarat dan ketentuan ini. Anda juga dapat berhenti menggunakan CAD kapan saja dengan menghapus aplikasi dan extension dari perangkat Anda.',
+        },
+        applicableLaw: {
+          title: '12. Hukum yang Berlaku',
+          content: 'Syarat dan ketentuan ini diatur dan ditafsirkan berdasarkan hukum Republik Indonesia.',
+        },
+        changes: {
+          title: '13. Perubahan Ketentuan',
+          content: 'PT Inti Asia Teknologi berhak mengubah syarat dan ketentuan ini sewaktu-waktu. Perubahan berlaku efektif setelah dipublikasikan di halaman ini.',
+        },
+        contact: {
+          title: '14. Hubungi Kami',
+          content: 'Untuk pertanyaan terkait syarat dan ketentuan CoreAsia Downloader, hubungi kami di {email}.',
         },
       },
     },

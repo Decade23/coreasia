@@ -736,6 +736,246 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
         button: 'Try Pantau Free',
       },
     },
+    downloader: {
+      title: 'CoreAsia Downloader - Premium Download Manager for macOS',
+      description:
+        'CoreAsia Downloader (CAD) is a premium download manager for macOS (Apple Silicon). Save videos & files from the web in one click: a fast multi-connection engine, quality picker, MP3 audio extraction, queue + history, and a companion browser extension.',
+      kicker: 'Premium Download Manager',
+      hero: {
+        title:
+          'Save videos &amp; files from the web <span class="ca-gradient-text">in one click</span>.',
+        subtitle:
+          'CoreAsia Downloader (CAD) is a premium download manager for macOS with a fast multi-connection engine, quality picker, MP3 audio extraction, plus a saved queue and history — all in a clean, lightweight interface.',
+        ctaPrimary: 'Download for macOS',
+        ctaSecondary: 'See Pricing',
+        chips: ['macOS (Apple Silicon)', 'Multi-connection', 'MP3 Audio', 'Privacy-first'],
+      },
+      workflowAside: {
+        label: 'How It Works',
+        title: 'Start downloading in 4 steps',
+        items: [
+          {
+            title: '1. Install & open the app',
+            description:
+              'Download the .dmg from coreasia.id, drag it to your Applications folder, then launch it. Try it free for 3 days.',
+          },
+          {
+            title: '2. Install the browser extension',
+            description:
+              'Add the companion extension for Chrome or Edge so downloadable media is detected right inside your browser.',
+          },
+          {
+            title: '3. Paste a link or use the extension',
+            description:
+              'Copy a URL into the app, or let the extension detect media and send it to the app automatically.',
+          },
+          {
+            title: '4. Pick a quality & download',
+            description:
+              'Choose a resolution or extract MP3 audio, then let the multi-connection engine finish the download fast. Everything stays organized in your queue & history.',
+          },
+        ],
+      },
+      features: {
+        label: 'Key Features',
+        title: 'Everything you need to download',
+        subtitle:
+          'From automatic media detection to audio extraction — CoreAsia Downloader is built to make saving anything from the web feel fast and tidy.',
+        items: [
+          {
+            title: 'Auto-capture via Extension',
+            description:
+              'A companion browser extension for Chrome & Edge detects downloadable media on the page and sends it straight to the CoreAsia Downloader app on your computer.',
+            icon: 'lucide:wand-sparkles',
+          },
+          {
+            title: 'Quality Picker',
+            description:
+              'Choose the video resolution you want before downloading — from space-saving sizes to the highest quality available.',
+            icon: 'lucide:settings-2',
+          },
+          {
+            title: 'Fast Multi-connection Downloads',
+            description:
+              'The download engine opens many connections at once, so files finish far faster than an ordinary single-stream download.',
+            icon: 'lucide:zap',
+          },
+          {
+            title: 'MP3 Audio Extraction',
+            description:
+              'Grab just the audio and save it as MP3 — perfect for music, podcasts, or study material without the video.',
+            icon: 'lucide:music',
+          },
+          {
+            title: 'Saved Queue & History',
+            description:
+              'Line up multiple downloads in a queue and let them run in order. Your history is saved so you can always find older files.',
+            icon: 'lucide:list-checks',
+          },
+          {
+            title: 'Clean, Lightweight Interface',
+            description:
+              'A tidy, focused layout makes every download easy to manage. It runs light and feels intuitive from the first use.',
+            icon: 'lucide:sparkles',
+          },
+        ],
+      },
+      workflow: {
+        label: 'How to Use',
+        title: 'From a web page to a saved file',
+        subtitle:
+          'Four simple steps — set it up once, then save anything from your favorite browser.',
+        steps: [
+          {
+            title: 'Install the app',
+            description:
+              'Download the .dmg and drag it to your Applications folder. Try it free for 3 days.',
+          },
+          {
+            title: 'Install the browser extension',
+            description:
+              'Add the companion extension for Chrome or Edge so media can be captured right from the page.',
+          },
+          {
+            title: 'Click in your browser',
+            description:
+              'Open any site, then click the CA Download button. The extension can also capture media automatically.',
+          },
+          {
+            title: 'Pick a quality & download',
+            description:
+              'Set the file name & quality (or MP3 audio), then hit Download. The multi-connection engine finishes it fast.',
+          },
+        ],
+      },
+      platforms: {
+        label: 'Platform',
+        title: 'Available on macOS, Windows coming soon',
+        subtitle:
+          'CoreAsia Downloader arrives first for macOS (Apple Silicon). A Windows version is in the works so more people can enjoy the same experience.',
+        items: [
+          {
+            title: 'macOS (Apple Silicon)',
+            description:
+              'Available now. Download the .dmg directly from coreasia.id and get started in minutes.',
+            icon: 'lucide:apple',
+            badge: 'Available',
+            available: true,
+          },
+          {
+            title: 'Windows',
+            description:
+              'In the works. A Windows version is coming to bring the same experience to more devices.',
+            icon: 'lucide:monitor',
+            badge: 'Coming soon',
+            available: false,
+          },
+        ],
+      },
+      pricing: {
+        label: 'Pricing',
+        title: 'Simple pricing, no subscription',
+        subtitle:
+          'Try it free for 3 days. After that, buy a Lifetime License for unlimited use or grab a 1-Day Pass for occasional needs.',
+        popularLabel: 'Most Popular',
+        plans: [
+          {
+            name: 'Free Trial',
+            price: '3 Days',
+            description: 'Try every feature at no cost. After the trial ends, the app needs activation.',
+            features: [
+              'Full access for 3 days',
+              'No credit card',
+              'All core features active',
+            ],
+            cta: 'Start Free Trial',
+          },
+          {
+            name: 'Lifetime License',
+            price: '$29',
+            description: 'Pay once, use forever (≈ Rp500k). The best choice for regular use.',
+            popular: true,
+            features: [
+              'Lifetime license, one-time payment',
+              'All features, unlimited',
+              'Quick, easy activation',
+              'Updates for the same version',
+            ],
+            cta: 'Buy Lifetime',
+          },
+          {
+            name: '1-Day Pass',
+            price: '$9.90',
+            description: 'Just need a day? Activate full access for a single day of use.',
+            features: [
+              'Full access for 1 day',
+              'Great for occasional needs',
+              'No recurring subscription',
+            ],
+            cta: 'Buy 1-Day Pass',
+          },
+        ],
+      },
+      privacy: {
+        label: 'Privacy & License',
+        title: 'Built to respect your privacy',
+        items: [
+          {
+            title: 'Easy Activation',
+            description:
+              'Activate once and you are ready to go — enter your license and the app is up and running in seconds.',
+            icon: 'lucide:shield-check',
+          },
+          {
+            title: 'Privacy-friendly',
+            description:
+              'Your download activity stays on your computer. CoreAsia Downloader is designed to respect your privacy from the start.',
+            icon: 'lucide:lock',
+          },
+          {
+            title: 'Made by CoreAsia',
+            description:
+              'Built by PT Inti Asia Teknologi (the CoreAsia brand). Need help? Reach us at hello@coreasia.id.',
+            icon: 'lucide:badge-check',
+          },
+        ],
+      },
+      related: {
+        title: 'Related Products',
+        items: [
+          {
+            title: 'Pantau by CoreAsia',
+            description: 'Website analytics & SEO monitoring dashboard',
+            icon: 'lucide:bar-chart-3',
+            to: '/products/pantau',
+          },
+          {
+            title: 'Build by CoreAsia',
+            description: 'Custom website & web app development services',
+            icon: 'lucide:code-2',
+            to: '/products/build',
+          },
+          {
+            title: 'All Products',
+            description: 'Explore the CoreAsia product & service ecosystem',
+            icon: 'lucide:boxes',
+            to: '/products',
+          },
+        ],
+      },
+      cta: {
+        title: 'Ready to save anything from the web?',
+        subtitle:
+          'Download CoreAsia Downloader for macOS and try it free for 3 days. Install the companion extension too to auto-capture media from your browser.',
+        ctaPrimary: 'Download for macOS',
+        ctaSecondary: 'hello@coreasia.id',
+        termsPrefix: 'By downloading, you agree to the CoreAsia Downloader',
+        termsLabel: 'Terms',
+        termsAnd: '&amp;',
+        privacyLabel: 'Privacy',
+        termsSuffix: '.',
+      },
+    },
     custom: {
       title: 'Build by CoreAsia - Custom Web Development & Web App Services',
       description:
@@ -1480,6 +1720,154 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
         contact: {
           title: '9. Contact Us',
           content: 'For questions about these terms and conditions, contact us at {email}.',
+        },
+      },
+    },
+    downloaderPrivacy: {
+      title: 'CoreAsia Downloader Privacy Policy',
+      description:
+        'CoreAsia Downloader privacy policy (macOS app & browser extension) — how your data is handled. Privacy-friendly: data is processed locally on your device.',
+      lastUpdated: 'Last updated: June 2026',
+      sections: {
+        intro: {
+          title: '1. Summary',
+          content: 'CoreAsia Downloader ("CAD") is a desktop download manager with a companion browser extension, operated by PT Inti Asia Teknologi (the CoreAsia brand). This policy explains what data the desktop app and extension handle. The principle is simple: processing happens locally on your computer and we do not collect your personal data to our servers.',
+        },
+        extension: {
+          title: '2. Browser Extension (Chrome/Edge)',
+          content: 'The companion extension helps detect downloadable media on the page you are viewing. To do this, the extension may read:',
+          items: [
+            'The active tab URL and media links (e.g. video/audio) present on the page you open',
+            'ONLY when you start a download that requires it: cookies for the relevant site, so the app can download content that needs your logged-in session',
+          ],
+        },
+        extensionLocal: {
+          title: '3. Where Extension Data Is Sent',
+          content: 'The data above is sent ONLY to the CoreAsia Downloader application running LOCALLY on your computer (address 127.0.0.1 / localhost). This data is NOT sent to CoreAsia servers or any third party. The extension does not sell data, does not show ads, and does not track your browsing activity for advertising purposes.',
+        },
+        desktop: {
+          title: '4. Desktop Application',
+          content: 'The desktop application runs on your computer and:',
+          items: [
+            'Downloads the files you request to the folder you choose',
+            'Stores settings, license, and download history LOCALLY on your device',
+            'Does not upload your download history to our servers',
+          ],
+        },
+        license: {
+          title: '5. License Activation',
+          content: 'License activation does not require creating an account and does not send your personal data to our servers for validation. License purchase and issuance are handled by a payment provider (for example Paddle), which processes your transaction data under its own privacy policy.',
+        },
+        trial: {
+          title: '6. Trial Period',
+          content: 'The 3-day free trial is tracked using a local timestamp on your device. No personal data is collected to run the trial.',
+        },
+        diagnostics: {
+          title: '7. Optional Diagnostics (Opt-In)',
+          content: 'Sending diagnostics is OPTIONAL and OFF by default. If — and only if — you enable it yourself, the app may send anonymous diagnostic information to help improve the product, namely: app version, operating system version, and a random installation ID. This information does not personally identify you and does not include your download history or contents. You can disable it at any time.',
+        },
+        noSale: {
+          title: '8. No Sale of Data',
+          content: 'We do not sell, rent, or trade your personal data to third parties.',
+        },
+        rights: {
+          title: '9. Your Rights',
+          content: 'Because most data is stored locally on your device, you remain in full control and can:',
+          items: [
+            'Delete history, settings, and app data directly from your device',
+            'Turn off optional diagnostics at any time',
+            'Remove the app and extension to stop all related data processing',
+          ],
+        },
+        retention: {
+          title: '10. Data Storage and Retention',
+          content: 'Settings, license, and download history are stored locally on your device until you delete them. We do not keep copies of that data on our servers.',
+        },
+        changes: {
+          title: '11. Policy Changes',
+          content: 'We may update this privacy policy from time to time. Changes will be communicated through this page along with the last updated date.',
+        },
+        governingLaw: {
+          title: '12. Governing Law',
+          content: 'This privacy policy is governed by and interpreted under the laws of the Republic of Indonesia. CoreAsia Downloader is operated by PT Inti Asia Teknologi.',
+        },
+        contact: {
+          title: '13. Contact Us',
+          content: 'For questions about the CoreAsia Downloader privacy policy, contact us at {email}.',
+        },
+      },
+    },
+    downloaderTerms: {
+      title: 'CoreAsia Downloader Terms and Conditions',
+      description:
+        'Terms and conditions for using CoreAsia Downloader (macOS app & browser extension). Please review them carefully before using the product.',
+      lastUpdated: 'Last updated: June 2026',
+      sections: {
+        intro: {
+          title: '1. General Terms',
+          content: 'CoreAsia Downloader ("CAD") is a download manager for macOS (Apple Silicon) with a companion browser extension, operated by PT Inti Asia Teknologi (the CoreAsia brand). By downloading, installing, or using CAD, you agree to be bound by these terms and conditions.',
+        },
+        license: {
+          title: '2. License Grant',
+          content: 'We grant you a limited, non-exclusive, non-transferable license to use CoreAsia Downloader in accordance with the plan you purchased, for your personal use. You may not resell, rent, distribute, reverse engineer, or redistribute license keys without our written permission.',
+        },
+        trial: {
+          title: '3. Trial Period',
+          content: 'CAD offers a free 3-day trial. After the trial ends, you need to activate a paid license to keep using features that require activation. The trial is tracked using a local timestamp on your device.',
+        },
+        pricing: {
+          title: '4. Payment and Licensing',
+          content: 'Available license options:',
+          items: [
+            'Lifetime License — $29 (one-time payment)',
+            '1-Day Pass — $9.90 (1-day access)',
+            'License purchase and issuance are handled by a payment provider (for example Paddle); prices may change at any time and applicable taxes may be added',
+          ],
+        },
+        refund: {
+          title: '5. Refund Policy',
+          content: 'We apply a reasonable refund policy. If you experience a technical issue that renders the app unusable and that we cannot resolve, you may request a refund within a reasonable period after purchase. Refund requests are reviewed on a case-by-case basis. Contact us at {email} to request one.',
+        },
+        acceptableUse: {
+          title: '6. Acceptable Use',
+          content: 'CoreAsia Downloader is a general-purpose tool for managing downloads. You MUST:',
+          items: [
+            'Only download content you own the rights to, or that you are permitted to download',
+            'Comply with the terms of service, copyright, and rules of the third-party sites the content comes from',
+            'Not use CAD to break the law or infringe the rights of others',
+          ],
+        },
+        acceptableUseLiability: {
+          title: '7. Responsibility for Use',
+          content: 'CoreAsia Downloader is a general-purpose tool; you are fully responsible for how you use it and for the content you download. PT Inti Asia Teknologi is not responsible for misuse of the app, including downloading content that infringes copyright or third-party terms.',
+        },
+        thirdParty: {
+          title: '8. Third-Party Services and Sites',
+          content: 'CAD may interact with third-party sites and services. We do not control and are not responsible for the availability, content, or policies of those third-party sites. Changes to third-party sites may affect certain download functionality.',
+        },
+        warranty: {
+          title: '9. No Warranty (As-Is)',
+          content: 'CoreAsia Downloader is provided "as-is" without warranty of any kind, whether express or implied. We do not guarantee that the app will always be error-free, uninterrupted, or compatible with every site or system configuration.',
+        },
+        liability: {
+          title: '10. Limitation of Liability',
+          content: 'To the extent permitted by applicable law, PT Inti Asia Teknologi is not liable for indirect, incidental, or consequential damages arising from the use of or inability to use CoreAsia Downloader.',
+        },
+        termination: {
+          title: '11. Termination',
+          content: 'We reserve the right to terminate or suspend your license if you violate these terms and conditions. You may also stop using CAD at any time by removing the app and extension from your device.',
+        },
+        applicableLaw: {
+          title: '12. Governing Law',
+          content: 'These terms and conditions are governed by and interpreted under the laws of the Republic of Indonesia.',
+        },
+        changes: {
+          title: '13. Changes to Terms',
+          content: 'PT Inti Asia Teknologi may update these terms and conditions at any time. Changes become effective after publication on this page.',
+        },
+        contact: {
+          title: '14. Contact Us',
+          content: 'For questions about the CoreAsia Downloader terms and conditions, contact us at {email}.',
         },
       },
     },
