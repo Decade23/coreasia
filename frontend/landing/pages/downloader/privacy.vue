@@ -18,7 +18,7 @@ const sections = computed(() => {
     return Object.values(raw).map(section => ({
         ...section,
         content: section.content
-            ?.replace(/{company}/g, COMPANY.name)
+            ?.replace(/{company}/g, COMPANY.legalName)
             ?.replace(/{email}/g, CONTACT.email)
     }))
 })

@@ -692,9 +692,11 @@ const ID_CONTENT = {
         subtitle:
           'Coba gratis 3 hari. Setelah itu, beli Lifetime License untuk pemakaian selamanya atau ambil 1-Day Pass untuk kebutuhan sesekali.',
         popularLabel: 'Paling Populer',
+        soonLabel: 'Segera hadir',
         plans: [
           {
             name: 'Free Trial',
+            action: 'download',
             price: '3 Hari',
             description: 'Coba semua fitur tanpa biaya. Setelah masa coba berakhir, aplikasi perlu diaktivasi.',
             features: [
@@ -706,6 +708,8 @@ const ID_CONTENT = {
           },
           {
             name: 'Lifetime License',
+            action: 'buy',
+            fsPath: 'coreasia-download-manager',
             price: '$29',
             description: 'Sekali bayar, pakai selamanya (≈ Rp500rb). Pilihan terbaik untuk pemakaian rutin.',
             popular: true,
@@ -719,6 +723,7 @@ const ID_CONTENT = {
           },
           {
             name: '1-Day Pass',
+            action: 'soon',
             price: '$9.90',
             description: 'Butuh sehari saja? Aktifkan akses penuh untuk satu hari pemakaian.',
             features: [
@@ -787,6 +792,7 @@ const ID_CONTENT = {
         termsLabel: 'Terms',
         termsAnd: '&amp;',
         privacyLabel: 'Privacy',
+        refundLabel: 'Refund',
         termsSuffix: 'CoreAsia Download Manager.',
       },
     },
@@ -1825,10 +1831,14 @@ const ID_CONTENT = {
       sections: {
         intro: {
           title: '1. Ringkasan',
-          content: 'CoreAsia Download Manager (selanjutnya "CAD") adalah download manager untuk desktop beserta browser extension pendamping, dikelola oleh PT Inti Asia Teknologi (brand CoreAsia). Kebijakan ini menjelaskan data apa yang ditangani oleh aplikasi desktop dan extension. Prinsipnya sederhana: pemrosesan terjadi secara lokal di komputer Anda dan kami tidak mengumpulkan data pribadi Anda ke server kami.',
+          content: 'CoreAsia Download Manager (selanjutnya "CAD") adalah download manager untuk desktop beserta browser extension pendamping, dikelola oleh {company} (brand CoreAsia). Pemrosesan oleh aplikasi dan extension dilakukan secara lokal di perangkat Anda, dan untuk fungsi inti CAD kami tidak mengumpulkan data pribadi Anda ke server kami — KECUALI sebagaimana dijelaskan dalam Kebijakan ini, yaitu: (a) data pembelian yang diproses oleh penjual sah/Merchant of Record (FastSpring) sesuai kebijakan privasi mereka; (b) data diagnostik teknis bila Anda mengaktifkannya (lihat Diagnostik); (c) data aktivasi/identifikasi lisensi bila validasi lisensi daring diaktifkan pada versi mendatang; dan (d) pengungkapan yang diwajibkan hukum atau perintah resmi yang sah. Selebihnya, kami tidak mengunggah riwayat, isi unduhan, atau URL Anda ke server kami, dan kami tidak menjual data pribadi Anda. Bila kami memperkenalkan fitur berbasis server di masa depan, kami akan memperbarui Kebijakan ini sebelum fitur tersebut aktif.',
+        },
+        controller: {
+          title: '2. Pengendali Data & Peran',
+          content: '{company} adalah pengendali data (data controller) untuk data yang diproses oleh aplikasi, diagnostik opsional, dan aktivasi lisensi. Untuk pembelian, FastSpring bertindak sebagai penjual sah (Merchant of Record) dan pengendali/pemroses data pembayaran Anda (nama, email, alamat tagih, data kartu/pajak) sesuai kebijakan privasinya; {company} tidak menyimpan data kartu Anda. Pertanyaan privasi dapat dikirim ke {email}.',
         },
         extension: {
-          title: '2. Browser Extension (Chrome/Edge)',
+          title: '3. Browser Extension (Chrome/Edge)',
           content: 'Extension pendamping membantu mendeteksi media yang dapat diunduh di halaman yang sedang Anda buka. Untuk itu, extension dapat membaca:',
           items: [
             'URL tab aktif dan tautan media (mis. video/audio) yang ada di halaman yang Anda buka',
@@ -1836,11 +1846,11 @@ const ID_CONTENT = {
           ],
         },
         extensionLocal: {
-          title: '3. Ke Mana Data Extension Dikirim',
+          title: '4. Ke Mana Data Extension Dikirim',
           content: 'Data di atas dikirim HANYA ke aplikasi CoreAsia Download Manager yang berjalan secara LOKAL di komputer Anda (alamat 127.0.0.1 / localhost). Data ini TIDAK dikirim ke server CoreAsia maupun pihak ketiga mana pun. Extension tidak menjual data, tidak menampilkan iklan, dan tidak melacak aktivitas browsing Anda untuk tujuan periklanan.',
         },
         desktop: {
-          title: '4. Aplikasi Desktop',
+          title: '5. Aplikasi Desktop',
           content: 'Aplikasi desktop berjalan di komputer Anda dan:',
           items: [
             'Mengunduh file yang Anda minta ke folder pilihan Anda',
@@ -1849,24 +1859,32 @@ const ID_CONTENT = {
           ],
         },
         license: {
-          title: '5. Aktivasi Lisensi',
-          content: 'Aktivasi lisensi tidak memerlukan pembuatan akun dan tidak mengirimkan data pribadi Anda ke server kami untuk validasi. Pembelian dan penerbitan lisensi ditangani oleh penyedia pembayaran (misalnya Paddle), yang memproses data transaksi Anda sesuai kebijakan privasi mereka masing-masing.',
+          title: '6. Aktivasi Lisensi',
+          content: 'Aktivasi tidak memerlukan akun. Saat ini lisensi divalidasi secara lokal (offline, Ed25519) tanpa mengirim data pribadi ke server kami. Pada versi mendatang, kami dapat memperkenalkan validasi lisensi daring; jika diaktifkan, hanya pengenal lisensi/instalasi minimum yang dikirim untuk mencegah penyalahgunaan, dan Kebijakan ini akan diperbarui sebelum fitur tersebut aktif. Pembelian dan penerbitan lisensi diproses oleh penjual sah (FastSpring) sesuai kebijakan privasi mereka.',
         },
         trial: {
-          title: '6. Masa Coba (Trial)',
+          title: '7. Masa Coba (Trial)',
           content: 'Masa coba (trial) 3 hari dihitung menggunakan cap waktu lokal di perangkat Anda. Tidak ada data pribadi yang dikumpulkan untuk menjalankan trial.',
         },
         diagnostics: {
-          title: '7. Diagnostik Opsional (Opt-In)',
-          content: 'Pengiriman diagnostik bersifat OPSIONAL dan MATI secara default. Bila — dan hanya bila — Anda mengaktifkannya sendiri, aplikasi dapat mengirim informasi diagnostik anonim untuk membantu perbaikan produk, yaitu: versi aplikasi, versi sistem operasi, dan ID instalasi acak. Informasi ini tidak mengidentifikasi Anda secara pribadi dan tidak mencakup riwayat atau isi unduhan Anda. Anda dapat menonaktifkannya kapan saja.',
+          title: '8. Diagnostik Opsional (Opt-In)',
+          content: 'Diagnostik teknis bersifat opsional dan MATI secara default; hanya aktif bila Anda mengaktifkannya sendiri, dan dapat Anda matikan kapan saja. Bila diaktifkan, kami mengirim data teknis terbatas berupa pengenal instalasi yang di-pseudonimkan (hash satu-arah yang tidak dapat dikembalikan ke identitas Anda) beserta versi aplikasi, versi sistem operasi, locale, dan zona waktu. Kami tidak mengirim riwayat, isi unduhan, atau URL Anda. Data ini hanya digunakan untuk diagnostik dan peningkatan kualitas produk.',
+        },
+        legalBasis: {
+          title: '9. Dasar Pemrosesan & Transfer Lintas Negara',
+          content: 'Dasar pemrosesan kami: pelaksanaan kontrak (memproses pembelian dan lisensi Anda), persetujuan (diagnostik opsional), dan kepentingan sah (keamanan serta peningkatan produk). Data pembelian dapat diproses di luar negara tempat tinggal Anda (misalnya melalui FastSpring di Amerika Serikat) dengan perlindungan yang sesuai hukum yang berlaku (mis. klausa kontraktual standar).',
+        },
+        security: {
+          title: '10. Keamanan Data & Pemberitahuan Pelanggaran',
+          content: 'Kami menerapkan langkah teknis dan organisasi yang wajar untuk melindungi data, namun tidak ada metode transmisi atau penyimpanan yang 100% aman; kami tidak dapat menjamin keamanan absolut. Apabila terjadi kegagalan pelindungan data pribadi yang menimbulkan risiko bagi Anda, kami akan memberitahukan kepada Anda dan otoritas yang berwenang sesuai tenggat hukum yang berlaku — termasuk paling lambat 3x24 jam berdasarkan UU PDP No. 27 Tahun 2022, dan, bila berlaku, tanpa penundaan yang tidak wajar / dalam 72 jam berdasarkan GDPR Pasal 33.',
         },
         noSale: {
-          title: '8. Tidak Ada Penjualan Data',
+          title: '11. Tidak Ada Penjualan Data',
           content: 'Kami tidak menjual, menyewakan, atau memperdagangkan data pribadi Anda kepada pihak ketiga.',
         },
         rights: {
-          title: '9. Hak Anda',
-          content: 'Karena sebagian besar data disimpan secara lokal di perangkat Anda, Anda memegang kendali penuh dan dapat:',
+          title: '12. Hak Anda',
+          content: 'Karena sebagian besar data disimpan secara lokal di perangkat Anda, Anda memegang kendali penuh. Tergantung yurisdiksi Anda (mis. Uni Eropa/Inggris di bawah GDPR/UK GDPR, atau Indonesia di bawah UU PDP), Anda berhak: mengakses, memperbaiki, menghapus, membatasi, atau menolak pemrosesan data pribadi Anda, meminta portabilitas, dan menarik persetujuan kapan saja tanpa memengaruhi keabsahan pemrosesan sebelumnya. Untuk data pembayaran, ajukan melalui kami atau langsung ke FastSpring. Anda juga berhak mengadu ke otoritas pelindungan data yang berwenang (mis. Lembaga PDP di Indonesia, atau otoritas perlindungan data di Uni Eropa/Inggris). Hubungi kami di {email}. Hak-hak ini dapat Anda jalankan langsung dengan cara berikut:',
           items: [
             'Menghapus riwayat, setelan, dan data aplikasi langsung dari perangkat Anda',
             'Menonaktifkan diagnostik opsional kapan saja',
@@ -1874,19 +1892,27 @@ const ID_CONTENT = {
           ],
         },
         retention: {
-          title: '10. Penyimpanan dan Retensi Data',
-          content: 'Setelan, lisensi, dan riwayat unduhan disimpan secara lokal di perangkat Anda hingga Anda menghapusnya. Kami tidak menyimpan salinan data tersebut di server kami.',
+          title: '13. Penyimpanan dan Retensi Data',
+          content: 'Setelan, lisensi, dan riwayat unduhan disimpan secara lokal di perangkat Anda hingga Anda menghapusnya. Kami tidak menyimpan salinan data tersebut di server kami. Data diagnostik opsional (bila Anda aktifkan) disimpan maksimal 12 (dua belas) bulan, lalu dihapus atau di-anonimkan. Data aktivasi lisensi disimpan selama lisensi berlaku untuk keperluan dukungan dan anti-penyalahgunaan. Data pembelian disimpan oleh FastSpring sesuai kebijakan dan kewajiban pajaknya.',
+        },
+        recipients: {
+          title: '14. Penerima Data / Sub-pemroses',
+          content: 'Kategori penerima data kami terbatas pada: (a) FastSpring (penjual sah / pemroses pembayaran); (b) penyedia analitik/diagnostik kami (hanya untuk data diagnostik opsional yang Anda aktifkan); dan (c) penyedia infrastruktur/hosting yang mendukung layanan terbatas kami. Kami tidak membagikan data pribadi Anda kepada pihak lain selain sebagaimana dijelaskan dalam Kebijakan ini atau diwajibkan hukum.',
+        },
+        thirdPartyContent: {
+          title: '15. Konten/Situs Pihak Ketiga',
+          content: 'Kebijakan ini hanya mengatur penanganan data oleh CAD. Konten, situs, dan layanan pihak ketiga yang Anda akses melalui CAD diatur oleh kebijakan dan ketentuan mereka sendiri, di luar kendali kami. Tanggung jawab atas legalitas konten yang Anda unduh diatur dalam Ketentuan Penggunaan.',
         },
         changes: {
-          title: '11. Perubahan Kebijakan',
-          content: 'Kami dapat memperbarui kebijakan privasi ini dari waktu ke waktu. Perubahan akan diinformasikan melalui halaman ini beserta tanggal pembaruan terakhir.',
+          title: '16. Perubahan Kebijakan',
+          content: 'Kami dapat memperbarui Kebijakan ini dari waktu ke waktu, ditandai tanggal revisi pada halaman ini. Untuk perubahan material terhadap cara kami memproses data pribadi, kami akan memberi pemberitahuan yang wajar (di dalam aplikasi atau pada halaman ini) sebelum berlaku, dan — bila diwajibkan hukum — meminta persetujuan baru Anda.',
         },
         governingLaw: {
-          title: '12. Hukum yang Berlaku',
-          content: 'Kebijakan privasi ini diatur dan ditafsirkan berdasarkan hukum Republik Indonesia. CoreAsia Download Manager dikelola oleh PT Inti Asia Teknologi.',
+          title: '17. Hukum yang Berlaku',
+          content: 'Kebijakan privasi ini diatur dan ditafsirkan berdasarkan hukum Republik Indonesia. CoreAsia Download Manager dikelola oleh {company}.',
         },
         contact: {
-          title: '13. Hubungi Kami',
+          title: '18. Hubungi Kami',
           content: 'Untuk pertanyaan terkait kebijakan privasi CoreAsia Download Manager, hubungi kami di {email}.',
         },
       },
@@ -1898,69 +1924,156 @@ const ID_CONTENT = {
       sections: {
         intro: {
           title: '1. Ketentuan Umum',
-          content: 'CoreAsia Download Manager ("CAD") adalah download manager untuk macOS (Apple Silicon) beserta browser extension pendamping, dikelola oleh PT Inti Asia Teknologi (brand CoreAsia). Dengan mengunduh, memasang, atau menggunakan CAD, Anda menyetujui untuk terikat dengan syarat dan ketentuan ini.',
+          content: 'CoreAsia Download Manager ("CAD") adalah download manager untuk macOS (Apple Silicon) beserta browser extension pendamping, dikelola oleh {company} (brand CoreAsia). Dengan mengunduh, memasang, atau menggunakan CAD, Anda menyetujui untuk terikat dengan syarat dan ketentuan ini.',
+        },
+        natureRoles: {
+          title: '2. Sifat Alat, Tanpa Hosting, & Peran Para Pihak',
+          content: 'CAD adalah alat berfungsi-ganda (general-purpose) yang dijalankan dan diproses sepenuhnya di perangkat Anda. {company} tidak meng-host, menyimpan ke server kami, menyalin, mengindeks, men-cache, mem-mirror/proxy, mengunggah ulang, maupun mendistribusikan konten apa pun yang Anda akses atau unduh melalui CAD. Seluruh konten ditransfer langsung dari sumber pihak ketiga ke perangkat Anda; kami bukan perantara, penyedia, atau penerbit konten tersebut. CAD memiliki kegunaan sah yang substansial, termasuk mengunduh konten milik Anda sendiri, konten berlisensi terbuka, atau konten yang telah Anda peroleh izinnya. Peran para pihak: {company} adalah pemberi lisensi (licensor) perangkat lunak CAD. FastSpring adalah penjual sah (Merchant of Record / seller of record) atas transaksi pembelian Anda; FastSpring—bukan {company}—yang berkontrak jual-beli dengan Anda, serta menangani pembayaran, faktur, pajak, dan kewajiban penjual menurut hukum yang berlaku. Ketentuan dan kebijakan FastSpring mengatur transaksi jual-beli tersebut. Kebijakan refund {company} merupakan kebijakan tambahan (good-will) di atas hak statutori Anda yang dipenuhi melalui FastSpring.',
         },
         license: {
-          title: '2. Pemberian Lisensi',
-          content: 'Kami memberikan Anda lisensi yang terbatas, non-eksklusif, dan tidak dapat dipindahtangankan untuk menggunakan CoreAsia Download Manager sesuai dengan paket yang Anda beli, untuk penggunaan pribadi Anda. Anda tidak diperbolehkan menjual ulang, menyewakan, mendistribusikan, melakukan rekayasa balik, atau mendistribusikan ulang kunci lisensi tanpa izin tertulis dari kami.',
+          title: '3. Pemberian Lisensi',
+          content: 'Kami memberikan Anda lisensi yang terbatas, non-eksklusif, dan tidak dapat dipindahtangankan untuk menggunakan CoreAsia Download Manager sesuai dengan paket yang Anda beli, untuk penggunaan pribadi Anda. Anda tidak diperbolehkan menjual ulang, menyewakan, mendistribusikan, melakukan rekayasa balik, atau mendistribusikan ulang kunci lisensi tanpa izin tertulis dari kami. Lisensi berlaku selama hak Anda tidak berakhir berdasarkan Pasal 14 (Penghentian) atau karena refund/chargeback sebagaimana diatur dalam Kebijakan Refund. Pengalihan: Anda tidak dapat mengalihkan hak/kewajiban berdasarkan Ketentuan ini tanpa persetujuan tertulis kami. Kami dapat mengalihkan Ketentuan ini, seluruhnya atau sebagian, kepada afiliasi atau dalam rangka merger, akuisisi, reorganisasi, atau penjualan aset, dengan tetap menghormati hak Anda berdasarkan hukum konsumen wajib.',
         },
         trial: {
-          title: '3. Masa Coba (Trial)',
+          title: '4. Masa Coba (Trial)',
           content: 'CAD menyediakan masa coba (trial) gratis selama 3 hari. Setelah masa coba berakhir, Anda perlu mengaktifkan lisensi berbayar untuk terus menggunakan fitur yang memerlukan aktivasi. Masa coba dihitung menggunakan cap waktu lokal di perangkat Anda.',
         },
         pricing: {
-          title: '4. Pembayaran dan Lisensi',
-          content: 'Pilihan lisensi yang tersedia:',
+          title: '5. Pembayaran dan Lisensi',
+          content: 'Harga dapat berubah sewaktu-waktu untuk pembelian baru; perubahan harga tidak memengaruhi lisensi yang telah Anda beli. Produk Lifetime adalah pembayaran satu kali tanpa biaya berlangganan berulang. Penjual sah (Merchant of Record / seller of record) untuk transaksi adalah FastSpring, yang berkontrak jual-beli dengan Anda serta memproses pembayaran, faktur, dan pajak sesuai kebijakannya; pajak yang berlaku dapat ditampilkan atau ditambahkan sesuai yurisdiksi Anda saat checkout. Pilihan lisensi yang tersedia:',
           items: [
-            'Lifetime License — $29 (sekali bayar, sekitar Rp500 ribu)',
-            '1-Day Pass — $9.90 (akses selama 1 hari)',
-            'Pembelian dan penerbitan lisensi ditangani oleh penyedia pembayaran (misalnya Paddle); harga dapat berubah sewaktu-waktu dan pajak yang berlaku dapat ditambahkan',
+            'Lifetime License — sekali bayar, tanpa biaya berlangganan berulang',
+            '1-Day Pass — akses selama 1 hari',
+            'Pembelian dan penerbitan lisensi ditangani oleh FastSpring sebagai penjual sah (Merchant of Record); pajak yang berlaku dapat ditambahkan sesuai yurisdiksi Anda saat checkout',
           ],
         },
         refund: {
-          title: '5. Kebijakan Pengembalian Dana (Refund)',
-          content: 'Kami menerapkan kebijakan refund yang wajar. Jika Anda mengalami masalah teknis yang membuat aplikasi tidak dapat digunakan dan tidak dapat kami selesaikan, Anda dapat mengajukan permintaan pengembalian dana dalam jangka waktu yang wajar setelah pembelian. Permintaan refund ditinjau berdasarkan keadaan masing-masing kasus. Hubungi kami di {email} untuk mengajukan.',
+          title: '6. Kebijakan Pengembalian Dana (Refund)',
+          content: 'Kami menyediakan jaminan uang kembali 14 (empat belas) hari sejak tanggal pembelian lisensi Lifetime — tanpa perlu memberi alasan, dan hanya ditolak bila terbukti penyalahgunaan — serta masa coba gratis 3 hari sebelum pembelian. Di luar jendela tersebut, permintaan ditinjau berdasarkan keadaan masing-masing kasus, terutama untuk masalah teknis yang membuat aplikasi tidak dapat digunakan dan tidak dapat kami selesaikan. Saat pengembalian dana atau sengketa disetujui, lisensi terkait berakhir secara hukum dan tidak lagi sah digunakan. Pembelian diproses oleh FastSpring sebagai Merchant of Record. Kebijakan ini tidak mengurangi hak konsumen wajib Anda menurut hukum yang berlaku. Ketentuan lengkap, pengecualian, dan cara mengajukan diatur dalam Kebijakan Refund kami di coreasia.id/downloader/refund; bila terdapat perbedaan, Kebijakan Refund yang berlaku. Hubungi kami di {email}.',
         },
         acceptableUse: {
-          title: '6. Penggunaan yang Dapat Diterima',
-          content: 'CoreAsia Download Manager adalah alat serbaguna untuk mengelola unduhan. Anda WAJIB:',
+          title: '7. Penggunaan yang Dapat Diterima',
+          content: 'CoreAsia Download Manager adalah alat serbaguna untuk mengelola unduhan. Anda bertanggung jawab penuh memastikan bahwa setiap pengunduhan adalah sah di yurisdiksi Anda dan tidak melanggar hak pihak ketiga. Anda dilarang menggunakan CAD untuk membongkar, menghindari, atau mengakali (circumvent) tindakan pengamanan teknologi/manajemen hak digital (DRM) atau kontrol akses, sejauh hal itu dilarang oleh hukum yang berlaku (termasuk Pasal 52 UU Hak Cipta dan ketentuan anti-circumvention serupa). CAD tidak ditujukan dan tidak boleh digunakan untuk menembus paywall, DRM, atau pembatasan akses berbayar tanpa hak. Anda WAJIB:',
           items: [
             'Hanya mengunduh konten yang Anda miliki haknya, atau yang Anda diizinkan untuk mengunduhnya',
             'Mematuhi syarat layanan, hak cipta, dan ketentuan situs pihak ketiga tempat konten berasal',
             'Tidak menggunakan CAD untuk melanggar hukum atau hak pihak lain',
           ],
         },
+        sanctions: {
+          title: '8. Kepatuhan Sanksi/Ekspor & Ketersediaan',
+          content: 'Anda menyatakan bahwa Anda tidak berada di, dan tidak menggunakan CAD untuk kepentingan pihak di, yurisdiksi atau daftar yang dikenai sanksi atau pembatasan ekspor yang melarang penyediaan perangkat lunak ini, dan bahwa penggunaan Anda mematuhi hukum pengendalian ekspor dan sanksi yang berlaku. {company} dapat membatasi atau menghentikan ketersediaan CAD di yurisdiksi tertentu untuk mematuhi hukum.',
+        },
+        indemnity: {
+          title: '9. Ganti Rugi (Indemnifikasi) — Pengguna Bisnis',
+          content: 'Klausul ini hanya berlaku bagi pengguna bisnis/komersial dan tidak berlaku bagi konsumen (orang perseorangan yang menggunakan CAD di luar kegiatan usaha atau profesinya). Sejauh diizinkan hukum yang berlaku, jika Anda pengguna bisnis, Anda setuju membela, mengganti rugi, dan membebaskan {company} beserta afiliasi, direktur, dan karyawannya dari segala klaim, tuntutan, gugatan, kerugian, kewajiban, denda, kerusakan, biaya, dan ongkos pihak ketiga (termasuk biaya hukum yang wajar) yang timbul dari atau berkaitan dengan: (a) penggunaan CAD oleh Anda; (b) konten yang Anda unduh, simpan, atau distribusikan menggunakan CAD; (c) pelanggaran Anda atas Ketentuan ini atau Pasal 7 (Penggunaan yang Dapat Diterima); atau (d) pelanggaran Anda atas hak cipta, merek, privasi, atau hak pihak ketiga lain, maupun Ketentuan Layanan situs/layanan pihak ketiga. Kewajiban ini tetap berlaku setelah lisensi berakhir. Konsumen: Jika Anda konsumen, Anda tidak menanggung kewajiban indemnifikasi apa pun berdasarkan Ketentuan ini. Hal ini tidak menghapus tanggung jawab Anda berdasarkan hukum atas perbuatan Anda sendiri yang melanggar hukum.',
+        },
         acceptableUseLiability: {
-          title: '7. Tanggung Jawab atas Penggunaan',
-          content: 'CoreAsia Download Manager adalah alat serbaguna; Anda bertanggung jawab penuh atas cara Anda menggunakannya dan atas konten yang Anda unduh. PT Inti Asia Teknologi tidak bertanggung jawab atas penyalahgunaan aplikasi, termasuk pengunduhan konten yang melanggar hak cipta atau ketentuan pihak ketiga.',
+          title: '10. Tanggung Jawab atas Penggunaan',
+          content: 'CoreAsia Download Manager adalah alat serbaguna; Anda bertanggung jawab penuh atas cara Anda menggunakannya dan atas konten yang Anda unduh. {company} tidak bertanggung jawab atas penyalahgunaan aplikasi, termasuk pengunduhan konten yang melanggar hak cipta atau ketentuan pihak ketiga.',
         },
         thirdParty: {
-          title: '8. Layanan dan Situs Pihak Ketiga',
+          title: '11. Layanan dan Situs Pihak Ketiga',
           content: 'CAD dapat berinteraksi dengan situs dan layanan pihak ketiga. Kami tidak mengendalikan dan tidak bertanggung jawab atas ketersediaan, konten, atau kebijakan situs pihak ketiga tersebut. Perubahan pada situs pihak ketiga dapat memengaruhi fungsi unduhan tertentu.',
         },
         warranty: {
-          title: '9. Tanpa Jaminan (As-Is)',
-          content: 'CoreAsia Download Manager disediakan "sebagaimana adanya" (as-is) tanpa jaminan dalam bentuk apa pun, baik tersurat maupun tersirat. Kami tidak menjamin bahwa aplikasi akan selalu bebas dari kesalahan, tidak terputus, atau kompatibel dengan setiap situs maupun konfigurasi sistem.',
+          title: '12. Tanpa Jaminan (As-Is)',
+          content: 'CAD disediakan "sebagaimana adanya" (as-is) dan "sebagaimana tersedia" (as-available), tanpa jaminan apa pun, tersurat maupun tersirat. Sejauh maksimum diizinkan hukum yang berlaku, kami secara TEGAS MENOLAK seluruh jaminan tersirat, termasuk jaminan kelayakan untuk diperdagangkan (merchantability), kesesuaian untuk tujuan tertentu (fitness for a particular purpose), tidak adanya pelanggaran hak (non-infringement), kepemilikan (title), dan kenikmatan tanpa gangguan (quiet enjoyment). Kami tidak menjamin CAD bebas error, tidak terputus, aman, atau kompatibel dengan setiap situs, layanan, atau konfigurasi perangkat. Penyelamat hak konsumen (afirmatif): Jika Anda konsumen, tidak ada dalam Pasal ini yang mengecualikan, membatasi, atau memengaruhi jaminan dan hak statutori Anda yang tidak dapat dikesampingkan menurut hukum perlindungan konsumen di negara tempat tinggal Anda — termasuk UU No. 8 Tahun 1999 dan, bila berlaku bagi Anda, hukum konsumen Uni Eropa/Inggris (termasuk hak atas kesesuaian/conformity konten digital). Pengecualian dalam Pasal ini tidak berlaku bagi konsumen sejauh hukum wajib tersebut melarangnya. Kewajiban kesesuaian/garansi penjual dipenuhi melalui FastSpring sebagai penjual sah (lihat Pasal 2).',
         },
         liability: {
-          title: '10. Batasan Tanggung Jawab',
-          content: 'Sejauh diizinkan oleh hukum yang berlaku, PT Inti Asia Teknologi tidak bertanggung jawab atas kerugian tidak langsung, insidental, atau konsekuensial yang timbul dari penggunaan atau ketidakmampuan menggunakan CoreAsia Download Manager.',
+          title: '13. Batasan Tanggung Jawab',
+          content: '(1) Pengecualian kerugian (berlaku umum, dengan carve-out konsumen). Sejauh diizinkan hukum yang berlaku, {company} tidak bertanggung jawab atas kerugian tidak langsung, insidental, khusus, konsekuensial, atau punitif, termasuk kehilangan data, kehilangan keuntungan, atau gangguan usaha, yang timbul dari penggunaan atau ketidakmampuan menggunakan CAD. (2) Plafon agregat (cap) — hanya pengguna bisnis. Bagi pengguna bisnis/komersial, sejauh diizinkan hukum, tanggung jawab total dan agregat {company} yang timbul dari atau terkait CAD, lisensi, atau Ketentuan ini—dalam kontrak, perbuatan melawan hukum (termasuk kelalaian), maupun dasar lain—tidak melebihi jumlah biaya lisensi yang benar-benar diterima {company} atas produk terkait dalam 12 (dua belas) bulan sebelum peristiwa yang menimbulkan klaim. Batas ini bersifat akumulatif atas seluruh klaim dan tidak diperbarui per kejadian. (3) Konsumen (afirmatif). Plafon agregat pada ayat (2) tidak berlaku bagi konsumen. Tanggung jawab kami kepada konsumen ditentukan oleh hukum yang berlaku; tidak ada dalam Pasal ini yang membatasi tanggung jawab kepada konsumen di bawah batas yang dijamin hukum konsumen wajib (termasuk UU No. 8 Tahun 1999 dan, bila berlaku, hukum konsumen Uni Eropa/Inggris). (4) Carve-out non-derogable & keterpisahan. Tidak ada dalam Pasal 12 dan 13 yang mengecualikan atau membatasi tanggung jawab yang tidak dapat dikecualikan menurut hukum, termasuk atas: (i) kematian atau cedera badan akibat kelalaian kami; (ii) penipuan atau pernyataan keliru yang disengaja; (iii) kelalaian berat (gross negligence) atau kesalahan yang disengaja; dan (iv) hak statutori konsumen yang tidak dapat dikesampingkan. Apabila suatu pembatasan dinyatakan tidak berlaku, pembatasan tersebut dipisahkan (severable) dan sisanya tetap berlaku penuh.',
         },
         termination: {
-          title: '11. Penghentian',
-          content: 'Kami berhak menghentikan atau menangguhkan lisensi Anda apabila Anda melanggar syarat dan ketentuan ini. Anda juga dapat berhenti menggunakan CAD kapan saja dengan menghapus aplikasi dan extension dari perangkat Anda.',
+          title: '14. Penghentian',
+          content: 'Kami berhak menghentikan atau menangguhkan lisensi Anda apabila Anda melanggar syarat dan ketentuan ini. Anda juga dapat berhenti menggunakan CAD kapan saja dengan menghapus aplikasi dan extension dari perangkat Anda. Lisensi juga berakhir secara otomatis dan seketika apabila pembayaran Anda di-refund, dibatalkan, atau di-chargeback. Karena alasan teknis, kunci lisensi luring (offline) tidak selalu dapat dinonaktifkan dari jarak jauh; setiap penggunaan CAD setelah pengakhiran yang sah merupakan penggunaan tanpa lisensi dan melanggar Ketentuan ini. Pengecualian hak konsumen: Ketentuan ini tidak berlaku bagi—dan tidak menjadikan "pelanggaran"—penggunaan yang sah dalam rangka Anda menjalankan hak refund atau hak pembatalan (withdrawal) statutori Anda; selama dan sepanjang hak tersebut berlaku, penggunaan Anda tetap sah hingga refund/pembatalan tuntas diproses.',
         },
-        applicableLaw: {
-          title: '12. Hukum yang Berlaku',
-          content: 'Syarat dan ketentuan ini diatur dan ditafsirkan berdasarkan hukum Republik Indonesia.',
+        disputeResolution: {
+          title: '15. Hukum yang Berlaku & Penyelesaian Sengketa',
+          content: 'Ketentuan ini diatur oleh hukum Republik Indonesia tanpa memperhatikan kaidah konflik hukum. Penyelesaian bertahap: Setiap sengketa terlebih dahulu diupayakan diselesaikan secara musyawarah melalui kontak resmi kami dalam waktu 30 (tiga puluh) hari sebelum menempuh jalur formal. Forum — pengguna bisnis: Bagi pengguna bisnis/komersial, sengketa yang tidak terselesaikan tunduk pada yurisdiksi eksklusif pengadilan yang berwenang di Jakarta, Indonesia, dan setiap klaim harus diajukan dalam waktu 1 (satu) tahun sejak peristiwa yang menimbulkannya, sejauh diizinkan hukum. Forum & batas waktu — konsumen (afirmatif): Ketentuan forum Jakarta dan batas waktu 1 (satu) tahun di atas tidak berlaku bagi konsumen. Konsumen Indonesia berhak menempuh penyelesaian sengketa konsumen melalui Badan Penyelesaian Sengketa Konsumen (BPSK) dan/atau Pengadilan Negeri di tempat domisilinya, sesuai UU No. 8 Tahun 1999. Konsumen Uni Eropa/Inggris dan yurisdiksi lain dapat mengandalkan ketentuan wajib dan berperkara di pengadilan domisilinya, serta menikmati jangka waktu klaim/garansi yang dijamin hukumnya (misalnya garansi statutori 2 tahun di Uni Eropa). Tidak ada dalam Pasal ini yang memperpendek jangka waktu yang dijamin hukum konsumen wajib. Tanpa pelepasan gugatan kelompok: Kami tidak mewajibkan arbitrase dan tidak memberlakukan pelepasan hak gugatan kelompok (class-action waiver) terhadap konsumen. Hak konsumen atas upaya hukum kolektif yang dijamin hukum (termasuk Directive (EU) 2020/1828) tetap utuh.',
+        },
+        copyright: {
+          title: '16. Kebijakan Hak Cipta & Pelanggar Berulang',
+          content: '{company} menghormati hak kekayaan intelektual. CAD tidak meng-host konten apa pun (lihat Pasal 2); karena itu, mekanisme notice-and-takedown DMCA Pasal 512(c) untuk konten yang di-host tidak berlaku penuh bagi kami. Pemegang hak yang meyakini CAD digunakan untuk melanggar haknya dapat mengirim pemberitahuan tertulis ke {email} yang memuat: (a) identifikasi karya; (b) dasar klaim; (c) data kontak; dan (d) pernyataan itikad baik. Tindakan kami terbatas pada langkah wajar atas kendali kami. Kebijakan pelanggar berulang: Kami dapat menangguhkan atau menghentikan lisensi pengguna yang, berdasarkan pemberitahuan yang sah dan/atau bukti yang memadai, terbukti dua kali atau lebih menggunakan CAD untuk pelanggaran hak cipta. Penghentian karena pelanggaran berulang tidak menimbulkan hak refund.',
         },
         changes: {
-          title: '13. Perubahan Ketentuan',
-          content: 'PT Inti Asia Teknologi berhak mengubah syarat dan ketentuan ini sewaktu-waktu. Perubahan berlaku efektif setelah dipublikasikan di halaman ini.',
+          title: '17. Perubahan Ketentuan',
+          content: 'Kami dapat memperbarui Ketentuan ini dari waktu ke waktu. Perubahan non-material berlaku saat dipublikasikan beserta tanggal revisi. Untuk perubahan material yang merugikan konsumen, kami akan memberi pemberitahuan yang wajar (misalnya melalui aplikasi atau halaman ini) sebelum berlaku, dan Anda dapat berhenti menggunakan CAD bila tidak menyetujuinya. Perubahan tidak berlaku surut atas hak yang telah Anda peroleh atas pembelian yang sudah dilakukan, dan tidak memengaruhi hak konsumen wajib Anda.',
+        },
+        general: {
+          title: '18. Ketentuan Umum',
+          content: '(a) Keterpisahan. Apabila ada ketentuan yang dinyatakan tidak sah atau tidak dapat diberlakukan, ketentuan tersebut ditafsirkan/dibatasi seminimal mungkin agar tetap berlaku; bila tidak mungkin, ketentuan tersebut dipisahkan dan sisanya tetap berlaku penuh. (b) Keseluruhan Perjanjian & Hierarki. Ketentuan ini bersama Kebijakan Privasi dan Kebijakan Refund merupakan keseluruhan perjanjian terkait CAD dan menggantikan komunikasi sebelumnya. Materi pemasaran bersifat ilustratif dan bukan bagian perjanjian kecuali ditegaskan tertulis. Bila terjadi pertentangan: untuk refund berlaku Kebijakan Refund; untuk data berlaku Kebijakan Privasi; selebihnya Ketentuan ini. Untuk transaksi jual-beli, ketentuan FastSpring sebagai penjual sah yang mengatur. Ketentuan ini tidak mengesampingkan hak konsumen atas informasi yang tidak menyesatkan. (c) Keadaan Kahar. Kami tidak bertanggung jawab atas keterlambatan/kegagalan akibat keadaan di luar kendali wajar kami (bencana alam, gangguan jaringan, tindakan pemerintah/perubahan hukum, pemblokiran/perubahan situs pihak ketiga). Hal ini tidak menghapus hak refund atau hak statutori konsumen. (d) Tanpa Pengesampingan. Kelalaian/keterlambatan menegakkan suatu ketentuan bukan pengesampingan; pengesampingan hanya sah bila tertulis oleh wakil kami yang berwenang. (e) Pemberitahuan. Pemberitahuan hukum kepada kami: {email} (atau alamat terdaftar {company}). Pemberitahuan kepada Anda dapat melalui aplikasi, email pembelian, atau halaman ini. (f) Bahasa yang Mengatur. Ketentuan ini dibuat dalam Bahasa Indonesia; terjemahan disediakan untuk kemudahan. Antar pengguna bisnis, bila terdapat perbedaan penafsiran, versi Bahasa Indonesia yang berlaku. Bagi konsumen, versi dalam bahasa tempat Ketentuan ini disajikan kepada Anda (atau bahasa yang dapat Anda pahami sesuai hukum wajib setempat) yang mengikat Anda; versi tersebut tidak boleh dipakai untuk mengikat Anda pada makna yang tidak Anda pahami.',
         },
         contact: {
-          title: '14. Hubungi Kami',
+          title: '19. Hubungi Kami',
           content: 'Untuk pertanyaan terkait syarat dan ketentuan CoreAsia Download Manager, hubungi kami di {email}.',
+        },
+      },
+    },
+    downloaderRefund: {
+      title: 'Kebijakan Pengembalian Dana CoreAsia Download Manager',
+      description: 'Kebijakan refund CoreAsia Download Manager — jaminan uang kembali 14 hari, hak konsumen, dan ketentuan Merchant of Record (FastSpring).',
+      lastUpdated: 'Terakhir diperbarui: Juni 2026',
+      sections: {
+        intro: {
+          title: '1. Ringkasan',
+          content: 'Kebijakan ini menjelaskan ketentuan pengembalian dana untuk pembelian lisensi CoreAsia Download Manager ("CAD") dari {company}. Kami menyediakan masa coba gratis 3 hari agar Anda dapat menilai kompatibilitas sebelum membeli, dan jaminan uang kembali 14 hari untuk lisensi Lifetime. Kebijakan ini diberikan sebagai tambahan atas, dan tidak mengurangi, hak konsumen wajib Anda menurut hukum yang berlaku. Pembelian Anda diproses oleh FastSpring sebagai Merchant of Record.',
+        },
+        trialFirst: {
+          title: '2. Coba Gratis Dulu',
+          content: 'CAD menyediakan masa coba gratis 3 hari sebelum pembelian. Kami menyarankan Anda menggunakan masa coba ini untuk memastikan kompatibilitas dengan perangkat dan kebutuhan Anda sebelum membeli. Masa coba ini disediakan sebagai bentuk niat baik dan tidak mengurangi hak pembatalan atau hak konsumen wajib Anda. License key dikirim secara elektronik segera setelah pembelian.',
+        },
+        guarantee: {
+          title: '3. Jaminan Uang Kembali 14 Hari',
+          content: 'Untuk lisensi Lifetime, Anda dapat meminta pengembalian dana penuh dalam waktu 14 (empat belas) hari sejak tanggal pembelian. Anda tidak perlu memberikan alasan untuk meminta pengembalian dana dalam masa ini. Kami hanya akan menolak permintaan dalam masa ini bila terbukti terjadi penyalahgunaan sebagaimana diuraikan pada bagian "Pencegahan Penyalahgunaan". Pengembalian dana berdasarkan jaminan ini menyebabkan lisensi Anda berakhir, sebagaimana diatur pada bagian "Efek Refund atas Lisensi Anda".',
+        },
+        outsideWindow: {
+          title: '4. Permintaan di Luar Jendela 14 Hari',
+          content: 'Permintaan di luar masa jaminan 14 hari berada di luar jaminan ini dan tidak menciptakan hak atas pengembalian dana. Atas kebijaksanaan kami dan dengan itikad baik, kami tetap dapat mempertimbangkannya kasus per kasus — terutama bila terdapat (i) masalah teknis yang membuat aplikasi tidak dapat digunakan dan tidak dapat kami selesaikan dalam waktu yang wajar; (ii) pembelian ganda atau keliru yang dapat diverifikasi; atau (iii) produk secara material tidak sesuai dengan deskripsi resmi kami. Untuk pembelian ganda yang tidak disengaja, kami mengembalikan dana atas salinan berlebih (duplikat), bukan atas lisensi yang Anda pertahankan dan gunakan. Ketentuan ini tidak mengurangi hak Anda yang lebih luas berdasarkan hukum yang berlaku, yang tetap berlaku.',
+        },
+        effect: {
+          title: '5. Efek Refund atas Lisensi Anda',
+          content: 'Saat permintaan pengembalian dana Anda disetujui dan dana dikembalikan, lisensi CAD yang terkait dengan pembelian tersebut berakhir secara hukum dan tidak lagi sah digunakan sejak tanggal refund. Anda setuju untuk berhenti menggunakan CAD dan menghapus aplikasi beserta license key dari seluruh perangkat Anda. Setiap penggunaan, penyalinan, pembagian, atau penjualan ulang license key setelah refund merupakan penggunaan tanpa lisensi yang sah dan merupakan pelanggaran Ketentuan Penggunaan kami, yang dapat kami tindak lanjuti sesuai hukum yang berlaku. Dengan mengajukan dan menerima pengembalian dana, Anda menyetujui ketentuan ini.',
+        },
+        abuse: {
+          title: '6. Pencegahan Penyalahgunaan',
+          content: 'Kami berhak menolak atau membatasi permintaan pengembalian dana yang kami nilai secara wajar menyalahgunakan kebijakan ini — termasuk, namun tidak terbatas pada: permintaan berulang atau berpola, perilaku beli-lalu-refund secara serial, indikasi penggunaan license key setelah refund sebelumnya, pembagian atau penjualan ulang key, atau pembelian yang tampaknya dilakukan untuk memperoleh akses sementara tanpa membayar. Pengembalian dana pada umumnya diberikan satu kali per pelanggan untuk produk yang sama, kecuali kami menentukan lain. Lisensi CAD diberikan kepada satu pengguna untuk penggunaan wajar pada perangkat milik Anda sendiri; lisensi bersifat pribadi dan tidak dapat dipindahtangankan. Anda tidak boleh membagikan, menjual ulang, mempublikasikan, atau menyebarkan license key Anda.',
+        },
+        digitalConsent: {
+          title: '7. Konten Digital & Persetujuan Mulai Segera (EU/UK)',
+          content: 'Untuk konsumen Uni Eropa/Inggris, hak pembatalan (withdrawal) 14 hari atas konten/layanan digital dapat hilang hanya bila ketiga syarat berikut terpenuhi sebelum pelaksanaan dimulai: (a) Anda memberikan persetujuan eksplisit terlebih dahulu agar pelaksanaan dimulai segera; (b) Anda mengakui bahwa dengan demikian Anda kehilangan hak pembatalan 14 hari; dan (c) Anda menerima konfirmasi pada media yang tahan lama (durable medium, mis. email). Konfirmasi durable medium ini disampaikan oleh FastSpring sebagai penjual sah. Apabila salah satu syarat tidak terpenuhi, pelepasan hak ini batal dan Anda tetap berhak atas pembatalan dan refund penuh sesuai hukum, meskipun unduhan telah dimulai. Dalam keadaan apa pun, hal ini tidak menghapus jaminan uang kembali 14 hari kami, yang tetap kami berikan sebagai kebijakan komersial, dan tidak mengurangi hak statutori Anda.',
+        },
+        statutory: {
+          title: '8. Hak Statutori Anda',
+          content: 'Kebijakan dan jaminan ini diberikan sebagai tambahan atas, dan tidak mengurangi, hak konsumen wajib yang Anda miliki menurut hukum yang berlaku — termasuk hak pembatalan dan jaminan kesesuaian produk bagi konsumen di Uni Eropa, EEA, dan Inggris (kecuali bila hak tersebut telah berakhir secara sah karena Anda meminta dan menyetujui pelaksanaan segera saat checkout), serta hak menurut Undang-Undang No. 8 Tahun 1999 tentang Perlindungan Konsumen di Indonesia. Bila hak wajib memberi Anda perlindungan lebih luas, hak itulah yang berlaku.',
+        },
+        products: {
+          title: '9. Produk: Lifetime & 1-Day Pass',
+          content: '"Lifetime" berarti lisensi sekali bayar yang berlaku tanpa biaya berulang untuk lini versi mayor CoreAsia Download Manager yang berlaku saat pembelian, termasuk semua update dalam lini versi tersebut. Peningkatan ke versi mayor berikutnya dapat ditawarkan secara terpisah. Jika kami menghentikan produk, lisensi Anda tetap berfungsi pada versi terakhir yang dirilis. Jaminan uang kembali 14 hari berlaku untuk lisensi Lifetime. Untuk 1-Day Pass: masa berlaku dimulai sejak license key dikirim kepada Anda; karena layanan dilaksanakan segera setelah pengiriman, 1-Day Pass tidak dapat dikembalikan setelah key dikirim, kecuali hukum yang berlaku menentukan lain.',
+        },
+        howTo: {
+          title: '10. Cara Mengajukan',
+          content: 'Kirim email ke {email} dengan menyertakan nomor order / Order Reference dan email yang Anda pakai saat pembelian. Ceritakan kendala Anda dan kami bantu secepatnya.',
+        },
+        processing: {
+          title: '11. Proses & Waktu',
+          content: 'Setelah disetujui, pengembalian dana diproses melalui FastSpring ke metode pembayaran asli Anda, dengan estimasi 5–10 hari kerja setelah persetujuan; waktu aktual bergantung pada penyedia pembayaran dan bank penerbit Anda. Refund diproses dalam mata uang transaksi asli. Jika pembayaran Anda dikonversi oleh bank atau penyedia kartu, jumlah yang Anda terima dapat sedikit berbeda akibat selisih kurs atau biaya konversi pihak ketiga, yang berada di luar kendali kami maupun FastSpring.',
+        },
+        dispute: {
+          title: '12. Sebelum Mengajukan Sengketa (Chargeback)',
+          content: 'Untuk pembelian yang sah, mohon hubungi kami lebih dulu di {email} sebelum mengajukan sengketa (chargeback) ke bank Anda; sebagian besar masalah dapat kami selesaikan lebih cepat lewat email. Tagihan Anda dapat muncul menyebut FastSpring (mis. "FS* fsprg.com"), CoreAsia, atau CAD — mohon kenali ini sebelum melaporkan tagihan tak dikenal. Menghubungi kami lebih dulu tidak membatasi hak Anda untuk mengajukan sengketa melalui bank atau penyedia kartu kapan pun. Sama seperti refund, sengketa yang dikabulkan untuk Anda mengakhiri lisensi terkait secara hukum sejak tanggal tersebut dengan ketentuan yang sama seperti bagian "Efek Refund atas Lisensi Anda", dan Anda setuju untuk berhenti menggunakan CAD.',
+        },
+        mor: {
+          title: '13. Penjual Tercatat (Merchant of Record)',
+          content: 'Pembelian Anda diproses oleh FastSpring sebagai Merchant of Record dan penjual tercatat. Kontrak pembelian dan penanganan pajak (VAT/GST) secara hukum dilakukan oleh FastSpring; hak konsumen wajib Anda dapat dijalankan melalui FastSpring. Kebijakan refund ini melengkapi dan tidak menggantikan Terms of Sale FastSpring; bila terdapat pertentangan atas hal yang ditangani FastSpring sebagai Merchant of Record, Terms of Sale FastSpring yang berlaku. {company} bertanggung jawab atas produk, lisensi, dan dukungan.',
+        },
+        integration: {
+          title: '14. Hukum yang Berlaku, Keterpaduan & Peran Penjual',
+          content: 'Kebijakan Refund ini merupakan bagian dari dan tunduk pada Ketentuan Penggunaan CAD, dan diatur oleh hukum Republik Indonesia, tanpa mengurangi hak konsumen wajib yang berlaku bagi Anda (termasuk hak pembatalan konsumen Uni Eropa/Inggris dan hak berdasarkan UU No. 8 Tahun 1999). FastSpring adalah penjual sah (Merchant of Record); kewajiban statutori penjual atas refund, pembatalan (withdrawal), dan kesesuaian/garansi dipenuhi melalui FastSpring. Kebijakan refund {company} merupakan kebijakan tambahan (good-will) di atas hak statutori tersebut. Apabila terdapat pertentangan mengenai refund antara dokumen ini dan Ketentuan Penggunaan, Kebijakan Refund ini yang berlaku untuk hal refund. Konsekuensi pelanggaran, ganti rugi, dan penyelesaian sengketa diatur lebih lanjut dalam Ketentuan Penggunaan (Pasal 9 dan Pasal 15).',
+        },
+        contact: {
+          title: '15. Hubungi Kami',
+          content: '{company}. Untuk pertanyaan tentang kebijakan ini atau pengajuan pengembalian dana, hubungi kami di {email}.',
         },
       },
     },

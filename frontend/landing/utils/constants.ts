@@ -37,12 +37,23 @@ export const LINKS = {
 // ──────────────────────────────────────
 export const COMPANY = {
     name: 'CoreAsia Teknologi',
+    legalName: 'PT Inti Asia Teknologi',
     shortName: 'CoreAsia',
     tagline: 'Strategic Technology Partner',
     domain: 'coreasia.id',
     url: 'https://coreasia.id',
     description:
         'Ekosistem produk digital dan mitra teknologi strategis untuk sertifikasi, monitoring web, CRM, dan model pertumbuhan berbasis SaaS maupun venture.',
+} as const
+
+// ──────────────────────────────────────
+// FastSpring (Merchant of Record) — popup checkout (SBL)
+// ──────────────────────────────────────
+export const FASTSPRING = {
+    sbl: 'https://sbl.onfastspring.com/sbl/1.0.7/fastspring-builder.min.js',
+    // TEST storefront; ganti ke 'coreasia.onfastspring.com/popup-coreasia' saat Live Mode aktif
+    storefront: 'coreasia.test.onfastspring.com/popup-coreasia',
+    productPath: 'coreasia-download-manager',
 } as const
 
 export const BRAND_ASSETS = {

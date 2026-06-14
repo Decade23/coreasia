@@ -878,9 +878,11 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
         subtitle:
           'Try it free for 3 days. After that, buy a Lifetime License for unlimited use or grab a 1-Day Pass for occasional needs.',
         popularLabel: 'Most Popular',
+        soonLabel: 'Coming soon',
         plans: [
           {
             name: 'Free Trial',
+            action: 'download',
             price: '3 Days',
             description: 'Try every feature at no cost. After the trial ends, the app needs activation.',
             features: [
@@ -892,6 +894,8 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
           },
           {
             name: 'Lifetime License',
+            action: 'buy',
+            fsPath: 'coreasia-download-manager',
             price: '$29',
             description: 'Pay once, use forever (≈ Rp500k). The best choice for regular use.',
             popular: true,
@@ -905,6 +909,7 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
           },
           {
             name: '1-Day Pass',
+            action: 'soon',
             price: '$9.90',
             description: 'Just need a day? Activate full access for a single day of use.',
             features: [
@@ -973,6 +978,7 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
         termsLabel: 'Terms',
         termsAnd: '&amp;',
         privacyLabel: 'Privacy',
+        refundLabel: 'Refund',
         termsSuffix: '.',
       },
     },
@@ -1731,10 +1737,14 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
       sections: {
         intro: {
           title: '1. Summary',
-          content: 'CoreAsia Download Manager ("CAD") is a desktop download manager with a companion browser extension, operated by PT Inti Asia Teknologi (the CoreAsia brand). This policy explains what data the desktop app and extension handle. The principle is simple: processing happens locally on your computer and we do not collect your personal data to our servers.',
+          content: 'CoreAsia Download Manager ("CAD") is a desktop download manager with a companion browser extension, operated by {company} (the CoreAsia brand). Processing by the app and extension happens locally on your device, and for the core functions of CAD we do not collect your personal data to our servers — EXCEPT as described in this Policy: (a) purchase data processed by the seller of record / Merchant of Record (FastSpring) per their privacy policy; (b) technical diagnostics if you enable them (see Diagnostics); (c) license activation/identification data if online license validation is introduced in a future version; and (d) disclosures required by law or valid legal process. Otherwise, we do not upload your history, download contents, or URLs to our servers, and we do not sell your personal data. If we introduce server-based features in the future, we will update this Policy before such features become active.',
+        },
+        controller: {
+          title: '2. Data Controller & Roles',
+          content: '{company} is the data controller for data processed by the app, optional diagnostics, and license activation. For purchases, FastSpring acts as seller of record (Merchant of Record) and controller/processor of your payment data (name, email, billing address, card/tax data) per its privacy policy; {company} does not store your card data. Privacy questions may be sent to {email}.',
         },
         extension: {
-          title: '2. Browser Extension (Chrome/Edge)',
+          title: '3. Browser Extension (Chrome/Edge)',
           content: 'The companion extension helps detect downloadable media on the page you are viewing. To do this, the extension may read:',
           items: [
             'The active tab URL and media links (e.g. video/audio) present on the page you open',
@@ -1742,11 +1752,11 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
           ],
         },
         extensionLocal: {
-          title: '3. Where Extension Data Is Sent',
+          title: '4. Where Extension Data Is Sent',
           content: 'The data above is sent ONLY to the CoreAsia Download Manager application running LOCALLY on your computer (address 127.0.0.1 / localhost). This data is NOT sent to CoreAsia servers or any third party. The extension does not sell data, does not show ads, and does not track your browsing activity for advertising purposes.',
         },
         desktop: {
-          title: '4. Desktop Application',
+          title: '5. Desktop Application',
           content: 'The desktop application runs on your computer and:',
           items: [
             'Downloads the files you request to the folder you choose',
@@ -1755,24 +1765,32 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
           ],
         },
         license: {
-          title: '5. License Activation',
-          content: 'License activation does not require creating an account and does not send your personal data to our servers for validation. License purchase and issuance are handled by a payment provider (for example Paddle), which processes your transaction data under its own privacy policy.',
+          title: '6. License Activation',
+          content: 'Activation requires no account. Currently licenses are validated locally (offline, Ed25519) without sending personal data to our servers. In a future version, we may introduce online license validation; if enabled, only minimal license/installation identifiers are sent to prevent abuse, and this Policy will be updated before that feature is active. Purchase and license issuance are handled by the seller of record (FastSpring) per their privacy policy.',
         },
         trial: {
-          title: '6. Trial Period',
+          title: '7. Trial Period',
           content: 'The 3-day free trial is tracked using a local timestamp on your device. No personal data is collected to run the trial.',
         },
         diagnostics: {
-          title: '7. Optional Diagnostics (Opt-In)',
-          content: 'Sending diagnostics is OPTIONAL and OFF by default. If — and only if — you enable it yourself, the app may send anonymous diagnostic information to help improve the product, namely: app version, operating system version, and a random installation ID. This information does not personally identify you and does not include your download history or contents. You can disable it at any time.',
+          title: '8. Optional Diagnostics (Opt-In)',
+          content: 'Technical diagnostics are optional and OFF by default; they are active only if you turn them on yourself, and you can turn them off at any time. When enabled, we send limited technical data: a pseudonymized installation identifier (a one-way hash that cannot be reversed to your identity), plus app version, operating-system version, locale, and time zone. We do not send your history, download contents, or URLs. This data is used solely for diagnostics and product-quality improvement.',
+        },
+        legalBasis: {
+          title: '9. Legal Bases & Cross-Border Transfers',
+          content: 'Our legal bases: performance of a contract (processing your purchase and license), consent (optional diagnostics), and legitimate interests (security and product improvement). Purchase data may be processed outside your country of residence (e.g., via FastSpring in the United States) with safeguards required by applicable law (e.g., standard contractual clauses).',
+        },
+        security: {
+          title: '10. Data Security & Breach Notification',
+          content: 'We apply reasonable technical and organizational measures to protect data, but no method of transmission or storage is 100% secure; we cannot guarantee absolute security. If a personal-data breach occurs that poses a risk to you, we will notify you and the competent authority within the time limits required by applicable law — including no later than 3x24 hours under the Indonesian PDP Law No. 27 of 2022, and, where applicable, without undue delay / within 72 hours under GDPR Article 33.',
         },
         noSale: {
-          title: '8. No Sale of Data',
+          title: '11. No Sale of Data',
           content: 'We do not sell, rent, or trade your personal data to third parties.',
         },
         rights: {
-          title: '9. Your Rights',
-          content: 'Because most data is stored locally on your device, you remain in full control and can:',
+          title: '12. Your Rights',
+          content: 'Because most data is stored locally on your device, you remain in full control. Depending on your jurisdiction (e.g., EU/UK under GDPR/UK GDPR, or Indonesia under the PDP Law), you have the right to: access, rectify, erase, restrict, or object to processing of your personal data, request portability, and withdraw consent at any time without affecting prior lawful processing. For payment data, submit a request through us or directly to FastSpring. You also have the right to lodge a complaint with the competent data-protection authority (e.g., the Indonesian PDP Authority, or an EU/UK data-protection authority). Contact us at {email}. You can exercise these rights directly as follows:',
           items: [
             'Delete history, settings, and app data directly from your device',
             'Turn off optional diagnostics at any time',
@@ -1780,19 +1798,27 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
           ],
         },
         retention: {
-          title: '10. Data Storage and Retention',
-          content: 'Settings, license, and download history are stored locally on your device until you delete them. We do not keep copies of that data on our servers.',
+          title: '13. Data Storage and Retention',
+          content: 'Settings, license, and download history are stored locally on your device until you delete them. We do not keep copies of that data on our servers. Optional diagnostics data (if you enable it) is retained for at most 12 (twelve) months, then deleted or anonymized. License-activation data is retained for the license term for support and anti-abuse purposes. Purchase data is retained by FastSpring per its policies and tax obligations.',
+        },
+        recipients: {
+          title: '14. Data Recipients / Sub-processors',
+          content: 'Our categories of data recipients are limited to: (a) FastSpring (seller of record / payment processor); (b) our analytics/diagnostics provider (only for the optional diagnostics data you enable); and (c) infrastructure/hosting providers supporting our limited services. We do not share your personal data with others except as described in this Policy or required by law.',
+        },
+        thirdPartyContent: {
+          title: '15. Third-Party Content/Sites',
+          content: 'This Policy covers only the handling of data by CAD. Third-party content, sites, and services you access through CAD are governed by their own policies and terms, beyond our control. Responsibility for the legality of content you download is governed by the Terms of Use.',
         },
         changes: {
-          title: '11. Policy Changes',
-          content: 'We may update this privacy policy from time to time. Changes will be communicated through this page along with the last updated date.',
+          title: '16. Policy Changes',
+          content: 'We may update this Policy from time to time, marked by a revision date on this page. For material changes to how we process personal data, we will give reasonable notice (in-app or on this page) before they take effect and — where required by law — request your renewed consent.',
         },
         governingLaw: {
-          title: '12. Governing Law',
-          content: 'This privacy policy is governed by and interpreted under the laws of the Republic of Indonesia. CoreAsia Download Manager is operated by PT Inti Asia Teknologi.',
+          title: '17. Governing Law',
+          content: 'This privacy policy is governed by and interpreted under the laws of the Republic of Indonesia. CoreAsia Download Manager is operated by {company}.',
         },
         contact: {
-          title: '13. Contact Us',
+          title: '18. Contact Us',
           content: 'For questions about the CoreAsia Download Manager privacy policy, contact us at {email}.',
         },
       },
@@ -1805,69 +1831,156 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
       sections: {
         intro: {
           title: '1. General Terms',
-          content: 'CoreAsia Download Manager ("CAD") is a download manager for macOS (Apple Silicon) with a companion browser extension, operated by PT Inti Asia Teknologi (the CoreAsia brand). By downloading, installing, or using CAD, you agree to be bound by these terms and conditions.',
+          content: 'CoreAsia Download Manager ("CAD") is a download manager for macOS (Apple Silicon) with a companion browser extension, operated by {company} (the CoreAsia brand). By downloading, installing, or using CAD, you agree to be bound by these terms and conditions.',
+        },
+        natureRoles: {
+          title: '2. Nature of the Tool, No Hosting, & Roles of the Parties',
+          content: 'CAD is a general-purpose, dual-use tool that runs and processes entirely on your device. {company} does not host, store on our servers, copy, index, cache, mirror/proxy, re-upload, or distribute any content you access or download through CAD. All content is transferred directly from third-party sources to your device; we are not an intermediary, provider, or publisher of that content. CAD has substantial lawful uses, including downloading content you own, openly licensed content, or content for which you have obtained permission. Roles of the parties: {company} is the licensor of the CAD software. FastSpring is the seller of record (Merchant of Record) for your purchase; FastSpring—not {company}—is your counterparty to the sale and handles payment, invoicing, taxes, and seller obligations under applicable law. The FastSpring terms and policies govern that sale. The {company} refund policy is an additional good-will policy layered on top of your statutory rights, which are fulfilled through FastSpring.',
         },
         license: {
-          title: '2. License Grant',
-          content: 'We grant you a limited, non-exclusive, non-transferable license to use CoreAsia Download Manager in accordance with the plan you purchased, for your personal use. You may not resell, rent, distribute, reverse engineer, or redistribute license keys without our written permission.',
+          title: '3. License Grant',
+          content: 'We grant you a limited, non-exclusive, non-transferable license to use CoreAsia Download Manager in accordance with the plan you purchased, for your personal use. You may not resell, rent, distribute, reverse engineer, or redistribute license keys without our written permission. The license remains valid for as long as your rights are not terminated under Section 14 (Termination) or by refund/chargeback as set out in the Refund Policy. Assignment: You may not assign your rights or obligations under these Terms without our written consent. We may assign these Terms, in whole or in part, to an affiliate or in connection with a merger, acquisition, reorganization, or sale of assets, while respecting your rights under mandatory consumer law.',
         },
         trial: {
-          title: '3. Trial Period',
+          title: '4. Trial Period',
           content: 'CAD offers a free 3-day trial. After the trial ends, you need to activate a paid license to keep using features that require activation. The trial is tracked using a local timestamp on your device.',
         },
         pricing: {
-          title: '4. Payment and Licensing',
-          content: 'Available license options:',
+          title: '5. Payment and Licensing',
+          content: 'Prices may change at any time for new purchases; price changes do not affect a license you have already bought. The Lifetime product is a one-time payment with no recurring subscription fees. The seller of record (Merchant of Record) for the transaction is FastSpring, which is your counterparty to the sale and processes payment, invoicing, and taxes per its policies; applicable taxes may be shown or added based on your jurisdiction at checkout. Available license options:',
           items: [
-            'Lifetime License — $29 (one-time payment)',
-            '1-Day Pass — $9.90 (1-day access)',
-            'License purchase and issuance are handled by a payment provider (for example Paddle); prices may change at any time and applicable taxes may be added',
+            'Lifetime License — one-time payment, no recurring subscription fees',
+            '1-Day Pass — 1-day access',
+            'License purchase and issuance are handled by FastSpring as seller of record (Merchant of Record); applicable taxes may be added based on your jurisdiction at checkout',
           ],
         },
         refund: {
-          title: '5. Refund Policy',
-          content: 'We apply a reasonable refund policy. If you experience a technical issue that renders the app unusable and that we cannot resolve, you may request a refund within a reasonable period after purchase. Refund requests are reviewed on a case-by-case basis. Contact us at {email} to request one.',
+          title: '6. Refund Policy',
+          content: 'We offer a 14 (fourteen)-day money-back guarantee from the date of a Lifetime license purchase — no reason required, declined only where abuse is established — plus a free 3-day trial before purchase. Outside that window, requests are reviewed case-by-case, in particular for technical issues that make the app unusable and that we cannot resolve. When a refund or dispute is approved, the related license legally ends and is no longer valid for use. Purchases are processed by FastSpring as Merchant of Record. This policy does not limit your mandatory statutory consumer rights under applicable law. Full terms, exceptions, and how to request are set out in our Refund Policy at coreasia.id/downloader/refund; in case of any conflict, the Refund Policy prevails. Contact us at {email}.',
         },
         acceptableUse: {
-          title: '6. Acceptable Use',
-          content: 'CoreAsia Download Manager is a general-purpose tool for managing downloads. You MUST:',
+          title: '7. Acceptable Use',
+          content: 'CoreAsia Download Manager is a general-purpose tool for managing downloads. You are solely responsible for ensuring that each download is lawful in your jurisdiction and does not infringe third-party rights. You must not use CAD to remove, bypass, or circumvent technological protection measures / digital rights management (DRM) or access controls, to the extent prohibited by applicable law (including Article 52 of the Indonesian Copyright Law and comparable anti-circumvention provisions). CAD is not intended for, and must not be used to, defeat paywalls, DRM, or paid-access restrictions without authorization. You MUST:',
           items: [
             'Only download content you own the rights to, or that you are permitted to download',
             'Comply with the terms of service, copyright, and rules of the third-party sites the content comes from',
             'Not use CAD to break the law or infringe the rights of others',
           ],
         },
+        sanctions: {
+          title: '8. Sanctions/Export Compliance & Availability',
+          content: 'You represent that you are not located in, and do not use CAD for or on behalf of any party in, any jurisdiction or list subject to sanctions or export restrictions that prohibit provision of this software, and that your use complies with applicable export-control and sanctions laws. {company} may restrict or discontinue availability of CAD in certain jurisdictions to comply with law.',
+        },
+        indemnity: {
+          title: '9. Indemnification — Business Users',
+          content: 'This clause applies only to business/commercial users and does not apply to consumers (natural persons using CAD outside their trade or profession). To the extent permitted by applicable law, if you are a business user, you agree to defend, indemnify, and hold harmless {company} and its affiliates, directors, and employees from any third-party claims, demands, suits, losses, liabilities, fines, damages, costs, and expenses (including reasonable legal fees) arising out of or relating to: (a) your use of CAD; (b) content you download, store, or distribute using CAD; (c) your breach of these Terms or Section 7 (Acceptable Use); or (d) your infringement of any third-party copyright, trademark, privacy, or other rights, or of any third-party site/service Terms of Service. This obligation survives termination of your license. Consumers: If you are a consumer, you bear no indemnification obligation under these Terms. This does not relieve you of liability under law for your own unlawful acts.',
+        },
         acceptableUseLiability: {
-          title: '7. Responsibility for Use',
-          content: 'CoreAsia Download Manager is a general-purpose tool; you are fully responsible for how you use it and for the content you download. PT Inti Asia Teknologi is not responsible for misuse of the app, including downloading content that infringes copyright or third-party terms.',
+          title: '10. Responsibility for Use',
+          content: 'CoreAsia Download Manager is a general-purpose tool; you are fully responsible for how you use it and for the content you download. {company} is not responsible for misuse of the app, including downloading content that infringes copyright or third-party terms.',
         },
         thirdParty: {
-          title: '8. Third-Party Services and Sites',
+          title: '11. Third-Party Services and Sites',
           content: 'CAD may interact with third-party sites and services. We do not control and are not responsible for the availability, content, or policies of those third-party sites. Changes to third-party sites may affect certain download functionality.',
         },
         warranty: {
-          title: '9. No Warranty (As-Is)',
-          content: 'CoreAsia Download Manager is provided "as-is" without warranty of any kind, whether express or implied. We do not guarantee that the app will always be error-free, uninterrupted, or compatible with every site or system configuration.',
+          title: '12. Disclaimer of Warranties (As-Is)',
+          content: 'CAD is provided "as-is" and "as-available," without warranties of any kind, express or implied. To the maximum extent permitted by applicable law, we EXPRESSLY DISCLAIM all implied warranties, including merchantability, fitness for a particular purpose, non-infringement, title, and quiet enjoyment. We do not warrant that CAD will be error-free, uninterrupted, secure, or compatible with every site, service, or device configuration. Consumer safeguard (affirmative): If you are a consumer, nothing in this Section excludes, limits, or affects your statutory warranties and rights that cannot be waived under the consumer-protection law of your country of residence — including the Indonesian Law No. 8 of 1999 and, where applicable to you, EU/UK consumer law (including rights to conformity of digital content). The exclusions in this Section do not apply to consumers to the extent such mandatory law prohibits them. Seller conformity/warranty obligations are fulfilled through FastSpring as seller of record (see Section 2).',
         },
         liability: {
-          title: '10. Limitation of Liability',
-          content: 'To the extent permitted by applicable law, PT Inti Asia Teknologi is not liable for indirect, incidental, or consequential damages arising from the use of or inability to use CoreAsia Download Manager.',
+          title: '13. Limitation of Liability',
+          content: '(1) Exclusion of damages (general, with consumer carve-out). To the extent permitted by applicable law, {company} is not liable for indirect, incidental, special, consequential, or punitive damages, including loss of data, loss of profits, or business interruption, arising from use of or inability to use CAD. (2) Aggregate cap — business users only. For business/commercial users, to the extent permitted by law, total aggregate liability of {company} arising out of or relating to CAD, the license, or these Terms—whether in contract, tort (including negligence), or otherwise—shall not exceed the license fees actually received by {company} for the relevant product in the 12 (twelve) months preceding the event giving rise to the claim. This cap is cumulative across all claims and does not reset per event. (3) Consumers (affirmative). The aggregate cap in (2) does not apply to consumers. Our liability to consumers is determined by applicable law; nothing in this Section limits liability to consumers below the levels guaranteed by mandatory consumer law (including the Indonesian Law No. 8 of 1999 and, where applicable, EU/UK consumer law). (4) Non-derogable carve-out & severability. Nothing in Sections 12 and 13 excludes or limits liability that cannot be excluded under law, including for: (i) death or personal injury caused by our negligence; (ii) fraud or fraudulent misrepresentation; (iii) gross negligence or willful misconduct; and (iv) non-waivable consumer statutory rights. If any limitation is held unenforceable, it is severable and the remainder stays in full force.',
         },
         termination: {
-          title: '11. Termination',
-          content: 'We reserve the right to terminate or suspend your license if you violate these terms and conditions. You may also stop using CAD at any time by removing the app and extension from your device.',
+          title: '14. Termination',
+          content: 'We reserve the right to terminate or suspend your license if you violate these terms and conditions. You may also stop using CAD at any time by removing the app and extension from your device. The license also terminates automatically and immediately if your payment is refunded, reversed, or charged back. For technical reasons, offline license keys cannot always be deactivated remotely; any use of CAD after valid termination is unlicensed use and breaches these Terms. Consumer-rights exception: This does not apply to—and does not render a "breach"—lawful use in the course of exercising your statutory refund or withdrawal rights; while and to the extent those rights apply, your use remains licensed until the refund/withdrawal is fully processed.',
         },
-        applicableLaw: {
-          title: '12. Governing Law',
-          content: 'These terms and conditions are governed by and interpreted under the laws of the Republic of Indonesia.',
+        disputeResolution: {
+          title: '15. Governing Law & Dispute Resolution',
+          content: 'These Terms are governed by the laws of the Republic of Indonesia, without regard to conflict-of-laws rules. Tiered resolution: Any dispute shall first be addressed amicably via our official contact within 30 (thirty) days before any formal proceedings. Forum — business users: For business/commercial users, unresolved disputes are subject to the exclusive jurisdiction of the competent courts in Jakarta, Indonesia, and any claim must be brought within 1 (one) year of the event giving rise to it, to the extent permitted by law. Forum & time limit — consumers (affirmative): The Jakarta forum and the 1 (one) year time limit above do not apply to consumers. Indonesian consumers may pursue consumer dispute resolution through the Consumer Dispute Resolution Body (BPSK) and/or the District Court of their domicile, under Law No. 8 of 1999. EU/UK and other consumers may rely on the mandatory provisions and bring proceedings in the courts of their domicile, and enjoy the claim/warranty periods guaranteed by their law (e.g., the 2-year statutory guarantee in the EU). Nothing in this Section shortens any period guaranteed by mandatory consumer law. No class-action waiver: We do not require arbitration and do not impose a class-action waiver on consumers. Consumer rights to collective redress guaranteed by law (including Directive (EU) 2020/1828) remain intact.',
+        },
+        copyright: {
+          title: '16. Copyright Policy & Repeat Infringers',
+          content: '{company} respects intellectual property rights. CAD hosts no content (see Section 2); accordingly, the DMCA Section 512(c) notice-and-takedown mechanism for hosted content does not fully apply to us. A rights holder who believes CAD is being used to infringe its rights may send written notice to {email} including: (a) identification of the work; (b) the basis of the claim; (c) contact details; and (d) a good-faith statement. Our action is limited to reasonable steps within our control. Repeat-infringer policy: We may suspend or terminate the license of any user who, based on valid notices and/or adequate evidence, is shown on two or more occasions to have used CAD for copyright infringement. Termination for repeat infringement gives rise to no refund.',
         },
         changes: {
-          title: '13. Changes to Terms',
-          content: 'PT Inti Asia Teknologi may update these terms and conditions at any time. Changes become effective after publication on this page.',
+          title: '17. Changes to the Terms',
+          content: 'We may update these Terms from time to time. Non-material changes take effect upon publication with a revision date. For material changes that are adverse to consumers, we will give reasonable notice (e.g., in-app or on this page) before they take effect, and you may stop using CAD if you do not agree. Changes are not retroactive to rights already acquired through purchases already made, and do not affect your mandatory consumer rights.',
+        },
+        general: {
+          title: '18. General',
+          content: '(a) Severability. If any provision is held invalid or unenforceable, it shall be construed/limited minimally to remain effective; if impossible, it is severed and the remainder stays in full force. (b) Entire Agreement & Hierarchy. These Terms together with the Privacy Policy and Refund Policy are the entire agreement regarding CAD and supersede prior communications. Marketing materials are illustrative and not part of the agreement unless confirmed in writing. In case of conflict: refund matters are governed by the Refund Policy; data matters by the Privacy Policy; otherwise by these Terms. For the sale transaction, the FastSpring terms as seller of record govern. These Terms do not waive consumer rights to non-misleading information. (c) Force Majeure. We are not liable for delay/failure due to causes beyond our reasonable control (natural disasters, network outages, government action/legal changes, third-party site blocking/changes). This does not remove refund rights or consumer statutory rights. (d) No Waiver. Failure or delay in enforcing a provision is not a waiver; a waiver is valid only if in writing by our authorized representative. (e) Notices. Legal notices to us: {email} (or the registered address of {company}). Notices to you may be given via the app, your purchase email, or this page. (f) Governing Language. These Terms are made in Bahasa Indonesia; translations are provided for convenience. Between business users, the Bahasa Indonesia version prevails in case of discrepancy. For consumers, the version in the language in which these Terms were presented to you (or a language you can understand under mandatory local law) binds you; it may not be used to bind you to a meaning you do not understand.',
         },
         contact: {
-          title: '14. Contact Us',
+          title: '19. Contact Us',
           content: 'For questions about the CoreAsia Download Manager terms and conditions, contact us at {email}.',
+        },
+      },
+    },
+    downloaderRefund: {
+      title: 'CoreAsia Download Manager Refund Policy',
+      description: 'Refund policy for CoreAsia Download Manager — 14-day money-back guarantee, consumer rights, and Merchant of Record (FastSpring) terms.',
+      lastUpdated: 'Last updated: June 2026',
+      sections: {
+        intro: {
+          title: '1. Overview',
+          content: 'This policy explains the refund terms for purchases of CoreAsia Download Manager ("CAD") licenses from {company}. We provide a free 3-day trial so you can assess compatibility before you buy, and a 14-day money-back guarantee for Lifetime licenses. This policy is offered in addition to, and does not limit, your mandatory consumer rights under applicable law. Your purchase is processed by FastSpring as Merchant of Record.',
+        },
+        trialFirst: {
+          title: '2. Try It Free First',
+          content: 'CAD offers a free 3-day trial before purchase. We recommend using this trial to confirm compatibility with your device and needs before buying. The trial is offered as a goodwill gesture and does not limit your cancellation or mandatory consumer rights. Your license key is delivered electronically immediately after purchase.',
+        },
+        guarantee: {
+          title: '3. 14-Day Money-Back Guarantee',
+          content: 'For Lifetime licenses, you may request a full refund within 14 (fourteen) days of the purchase date. You do not need to give a reason to request a refund within this period. We will decline a request within this period only where abuse is established, as described in "Abuse Prevention". A refund under this guarantee causes your license to end, as set out in "Effect of Refund on Your License".',
+        },
+        outsideWindow: {
+          title: '4. Requests Outside the 14-Day Window',
+          content: 'Requests outside the 14-day guarantee window fall outside this guarantee and create no entitlement to a refund. At our discretion and in good faith, we may still consider them on a case-by-case basis — in particular where there is (i) a technical issue that makes the application unusable and that we cannot resolve within a reasonable time; (ii) a verifiable duplicate or accidental purchase; or (iii) a product that materially fails to match our official description. For accidental duplicate purchases, we refund the extra (duplicate) copy, not a license you keep and use. Nothing here limits broader rights you may have under applicable law, which still apply.',
+        },
+        effect: {
+          title: '5. Effect of Refund on Your License',
+          content: 'When your refund request is approved and the funds are returned, the CAD license tied to that purchase legally ends and is no longer valid for use as of the refund date. You agree to stop using CAD and to delete the application and the license key from all your devices. Any use, copying, sharing, or resale of the license key after a refund is unlicensed use and a breach of our Terms of Use, which we may act on under applicable law. By requesting and accepting a refund, you agree to these terms.',
+        },
+        abuse: {
+          title: '6. Abuse Prevention',
+          content: 'We may decline or limit refund requests we reasonably consider to be abuse of this policy — including, without limitation: repeated or patterned requests, serial buy-then-refund behavior, signs of license-key use after a prior refund, sharing or reselling a key, or purchases that appear intended to obtain temporary access without paying. Refunds are generally granted once per customer for the same product, unless we decide otherwise. A CAD license is granted to a single user for reasonable use on devices you own; it is personal and non-transferable. You must not share, resell, publish, or distribute your license key.',
+        },
+        digitalConsent: {
+          title: '7. Digital Content & Consent to Immediate Performance (EU/UK)',
+          content: 'For EU/UK consumers, the 14-day right of withdrawal for digital content/services may be lost only if all three of the following are met before performance begins: (a) you give prior explicit consent for performance to begin immediately; (b) you acknowledge that you thereby lose the 14-day right of withdrawal; and (c) you receive confirmation on a durable medium (e.g., email). This durable-medium confirmation is provided by FastSpring as seller of record. If any of these is not met, this waiver is void and you retain the right to withdraw and obtain a full refund as provided by law, even if the download has begun. In all cases, this does not remove our 14-day money-back guarantee, which we continue to offer as a commercial policy, and does not limit your statutory rights.',
+        },
+        statutory: {
+          title: '8. Your Statutory Rights',
+          content: 'This policy and guarantee are offered in addition to, and do not limit, the mandatory consumer rights you have under applicable law — including cancellation and conformity rights for consumers in the EU, EEA, and the UK (except where that right has validly ended because you requested and consented to immediate performance at checkout), and rights under Indonesia Law No. 8 of 1999 on Consumer Protection. Where mandatory rights give you broader protection, those rights prevail.',
+        },
+        products: {
+          title: '9. Products: Lifetime & 1-Day Pass',
+          content: '"Lifetime" means a one-time license valid with no recurring fees for the major version line of CoreAsia Download Manager current at purchase, including all updates within that line. Upgrades to a future major version may be offered separately. If we discontinue the product, your license continues to work on the last released version. The 14-day money-back guarantee applies to Lifetime licenses. For the 1-Day Pass: the validity period begins when the license key is delivered to you; because the service is performed immediately upon delivery, the 1-Day Pass is non-refundable once the key has been delivered, unless applicable law provides otherwise.',
+        },
+        howTo: {
+          title: '10. How to Request',
+          content: 'Email us at {email} with your order number / Order Reference and the email you used at purchase. Tell us what went wrong and we will help quickly.',
+        },
+        processing: {
+          title: '11. Processing & Timing',
+          content: 'Once approved, refunds are processed via FastSpring to your original payment method, with an estimated 5–10 business days after approval; actual timing depends on the payment provider and your issuing bank. Refunds are issued in the original transaction currency. If your payment was converted by your bank or card provider, the amount you receive may differ slightly due to exchange-rate movements or third-party conversion fees, which are outside our control and that of FastSpring.',
+        },
+        dispute: {
+          title: '12. Before Filing a Dispute (Chargeback)',
+          content: 'For valid purchases, please contact us first at {email} before filing a dispute (chargeback) with your bank; most issues are resolved faster by email. Your statement may reference FastSpring (e.g. "FS* fsprg.com"), CoreAsia, or CAD — please recognize this before reporting an unrecognized charge. Contacting us first does not limit your right to raise a dispute with your bank or card provider at any time. Like a refund, a dispute resolved in your favor legally terminates the related license as of that date on the same terms as "Effect of Refund on Your License", and you agree to stop using CAD.',
+        },
+        mor: {
+          title: '13. Merchant of Record',
+          content: 'Your purchase is processed by FastSpring as Merchant of Record and seller of record. The purchase contract and tax handling (VAT/GST) are legally performed by FastSpring; your mandatory consumer rights may be exercised through FastSpring. This refund policy supplements and does not override the FastSpring Terms of Sale; where they conflict on matters FastSpring handles as Merchant of Record, the FastSpring Terms of Sale prevail. {company} is responsible for the product, license, and support.',
+        },
+        integration: {
+          title: '14. Governing Law, Integration & Seller Role',
+          content: 'This Refund Policy forms part of and is subject to the CAD Terms of Use, and is governed by the laws of the Republic of Indonesia, without diminishing the mandatory consumer rights applicable to you (including EU/UK consumer withdrawal rights and rights under Law No. 8 of 1999). FastSpring is the seller of record (Merchant of Record); the seller statutory obligations for refunds, withdrawal, and conformity/warranty are fulfilled through FastSpring. The {company} refund policy is an additional good-will policy layered on top of those statutory rights. If there is any conflict regarding refunds between this document and the Terms of Use, this Refund Policy prevails for refund matters. Consequences of breach, indemnification, and dispute resolution are further governed by the Terms of Use (Sections 9 and 15).',
+        },
+        contact: {
+          title: '15. Contact Us',
+          content: '{company}. For questions about this policy or to request a refund, contact us at {email}.',
         },
       },
     },

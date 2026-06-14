@@ -8,13 +8,13 @@ const heroSection = useReveal('fadeUp')
 const contentCard = useReveal('fadeUp', 100)
 
 useCoreSeo({
-    title: t('legal.downloaderTerms.title') as string,
-    description: t('legal.downloaderTerms.description') as string,
-    path: '/downloader/terms',
+    title: t('legal.downloaderRefund.title') as string,
+    description: t('legal.downloaderRefund.description') as string,
+    path: '/downloader/refund',
 })
 
 const sections = computed(() => {
-    const raw = t('legal.downloaderTerms.sections') as Record<string, any>
+    const raw = t('legal.downloaderRefund.sections') as Record<string, any>
     return Object.values(raw).map(section => ({
         ...section,
         content: section.content
@@ -38,10 +38,10 @@ const sections = computed(() => {
                 <h1
                     class="mt-5 font-display text-4xl font-bold text-[var(--ca-text)] sm:text-5xl"
                 >
-                    {{ t('legal.downloaderTerms.title') }}
+                    {{ t('legal.downloaderRefund.title') }}
                 </h1>
                 <p class="ca-copy mt-4">
-                    {{ t('legal.downloaderTerms.lastUpdated') }}
+                    {{ t('legal.downloaderRefund.lastUpdated') }}
                 </p>
             </div>
         </section>

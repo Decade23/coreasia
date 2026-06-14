@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { LINKS } from '~/utils/constants'
+import { LINKS, FASTSPRING } from '~/utils/constants'
 
 const { t } = useCoreI18n()
 
@@ -47,6 +47,13 @@ useHead({
         },
       }),
     },
+    {
+      id: 'fsc-api',
+      src: FASTSPRING.sbl,
+      type: 'text/javascript',
+      'data-storefront': FASTSPRING.storefront,
+      tagPosition: 'head',
+    },
   ],
 })
 
@@ -75,6 +82,15 @@ const platforms = computed(
 const pricingPlans = computed(
   () => (t('solutions.downloader.pricing.plans') as Array<Record<string, any>>) || [],
 )
+
+// Buka popup checkout FastSpring (SBL) untuk produk tertentu.
+function buyNow(path: string) {
+  const fs = (window as unknown as { fastspring?: { builder?: any } }).fastspring
+  if (fs?.builder) {
+    fs.builder.push({ reset: true, products: [{ path, quantity: 1 }] })
+    fs.builder.checkout()
+  }
+}
 const privacyPoints = computed(
   () => (t('solutions.downloader.privacy.items') as Array<Record<string, string>>) || [],
 )
@@ -410,12 +426,30 @@ const relatedItems = computed(
               </li>
             </ul>
             <a
+              v-if="plan.action === 'download'"
               href="https://assets.coreasia.id/CoreAsia-Download-Manager.dmg"
               class="mt-5"
               :class="plan.popular ? 'ca-btn-primary' : 'ca-btn-secondary'"
             >
               {{ plan.cta }}
             </a>
+            <button
+              v-else-if="plan.action === 'buy'"
+              type="button"
+              class="mt-5"
+              :class="plan.popular ? 'ca-btn-primary' : 'ca-btn-secondary'"
+              @click="buyNow(plan.fsPath)"
+            >
+              {{ plan.cta }}
+            </button>
+            <button
+              v-else
+              type="button"
+              disabled
+              class="mt-5 ca-btn-secondary opacity-50 cursor-not-allowed"
+            >
+              {{ t('solutions.downloader.pricing.soonLabel') }}
+            </button>
           </article>
         </div>
       </div>
@@ -495,9 +529,10 @@ const relatedItems = computed(
           </div>
           <p class="mt-6 text-xs text-[var(--ca-muted)]">
             {{ t('solutions.downloader.cta.termsPrefix') }}
-            <NuxtLink to="/downloader/terms" class="ca-link-accent">{{ t('solutions.downloader.cta.termsLabel') }}</NuxtLink>
-            <span v-html="t('solutions.downloader.cta.termsAnd')" />
+            <NuxtLink to="/downloader/terms" class="ca-link-accent">{{ t('solutions.downloader.cta.termsLabel') }}</NuxtLink>,
             <NuxtLink to="/downloader/privacy" class="ca-link-accent">{{ t('solutions.downloader.cta.privacyLabel') }}</NuxtLink>
+            <span v-html="t('solutions.downloader.cta.termsAnd')" />
+            <NuxtLink to="/downloader/refund" class="ca-link-accent">{{ t('solutions.downloader.cta.refundLabel') }}</NuxtLink>
             {{ t('solutions.downloader.cta.termsSuffix') }}
           </p>
         </div>
