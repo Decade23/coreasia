@@ -14,7 +14,7 @@ useCoreSeo({
 
 useSchemaOrg([
   defineWebPage({
-    name: 'CoreAsia Downloader',
+    name: 'CoreAsia Download Manager',
     description: PAGE_DESCRIPTION,
   }),
 ])
@@ -27,7 +27,7 @@ useHead({
       innerHTML: JSON.stringify({
         '@context': 'https://schema.org',
         '@type': 'SoftwareApplication',
-        name: 'CoreAsia Downloader',
+        name: 'CoreAsia Download Manager',
         applicationCategory: 'UtilitiesApplication',
         operatingSystem: 'macOS',
         description: PAGE_DESCRIPTION,
@@ -112,7 +112,7 @@ const relatedItems = computed(
 
             <div class="mt-8 flex flex-col gap-3 sm:flex-row">
               <a
-                href="https://coreasia.id/downloader/CoreAsia-Downloader.dmg"
+                href="https://assets.coreasia.id/CoreAsia-Download-Manager.dmg"
                 class="ca-btn-primary"
               >
                 {{ t('solutions.downloader.hero.ctaPrimary') }}
@@ -410,7 +410,7 @@ const relatedItems = computed(
               </li>
             </ul>
             <a
-              href="https://coreasia.id/downloader/CoreAsia-Downloader.dmg"
+              href="https://assets.coreasia.id/CoreAsia-Download-Manager.dmg"
               class="mt-5"
               :class="plan.popular ? 'ca-btn-primary' : 'ca-btn-secondary'"
             >
@@ -483,7 +483,7 @@ const relatedItems = computed(
           </p>
           <div class="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
             <a
-              href="https://coreasia.id/downloader/CoreAsia-Downloader.dmg"
+              href="https://assets.coreasia.id/CoreAsia-Download-Manager.dmg"
               class="ca-btn-primary"
             >
               {{ t('solutions.downloader.cta.ctaPrimary') }}

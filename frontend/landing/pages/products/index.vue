@@ -10,9 +10,9 @@ const heroAside = useReveal('slideRight', 150)
 const highlightsHeader = useReveal('fadeUp')
 const ctaSection = useReveal('scaleUp')
 
-// CoreAsia Downloader — produk macOS, didefinisikan di sini karena teks belum dipindah ke content i18n.
+// CoreAsia Download Manager — produk macOS, didefinisikan di sini karena teks belum dipindah ke content i18n.
 const downloaderProduct: Record<string, any> = {
-    name: 'CoreAsia Downloader',
+    name: 'CoreAsia Download Manager',
     badge: 'Live',
     tagline: 'Download Manager macOS',
     description:
@@ -23,7 +23,7 @@ const downloaderProduct: Record<string, any> = {
         'Engine cepat multi-koneksi',
         'Antrean + riwayat tersimpan',
     ],
-    ctaLabel: 'Pelajari Downloader',
+    ctaLabel: 'Pelajari Download Manager',
     to: '/products/downloader',
 }
 

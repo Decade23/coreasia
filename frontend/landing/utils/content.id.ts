@@ -551,15 +551,15 @@ const ID_CONTENT = {
       },
     },
     downloader: {
-      title: 'CoreAsia Downloader - Download Manager Premium untuk macOS',
+      title: 'CoreAsia Download Manager — Unduh Cepat Multi-Koneksi untuk macOS',
       description:
-        'CoreAsia Downloader (CAD) adalah download manager premium untuk macOS (Apple Silicon). Simpan video & file dari web dengan satu klik: engine unduhan cepat multi-koneksi, pemilih kualitas, ekstraksi audio MP3, antrean + riwayat, dan companion browser extension.',
+        'CoreAsia Download Manager (CAD) adalah download manager premium untuk macOS (Apple Silicon). Simpan video & file dari web dengan satu klik: engine unduhan cepat multi-koneksi, pemilih kualitas, ekstraksi audio MP3, antrean + riwayat, dan companion browser extension.',
       kicker: 'Download Manager Premium',
       hero: {
         title:
           'Simpan video &amp; file dari web <span class="ca-gradient-text">dengan satu klik</span>.',
         subtitle:
-          'CoreAsia Downloader (CAD) adalah download manager premium untuk macOS dengan engine unduhan cepat multi-koneksi, pemilih kualitas, ekstraksi audio MP3, serta antrean dan riwayat tersimpan — dalam antarmuka yang bersih dan ringan.',
+          'CoreAsia Download Manager (CAD) adalah download manager premium untuk macOS dengan engine unduhan cepat multi-koneksi, pemilih kualitas, ekstraksi audio MP3, serta antrean dan riwayat tersimpan — dalam antarmuka yang bersih dan ringan.',
         ctaPrimary: 'Unduh untuk macOS',
         ctaSecondary: 'Lihat Harga',
         chips: ['macOS (Apple Silicon)', 'Multi-koneksi', 'MP3 Audio', 'Privasi-first'],
@@ -594,12 +594,12 @@ const ID_CONTENT = {
         label: 'Fitur Utama',
         title: 'Semua yang Anda butuhkan untuk mengunduh',
         subtitle:
-          'Dari deteksi media otomatis hingga ekstraksi audio — CoreAsia Downloader dirancang agar menyimpan apa pun dari web terasa cepat dan rapi.',
+          'Dari deteksi media otomatis hingga ekstraksi audio — CoreAsia Download Manager dirancang agar menyimpan apa pun dari web terasa cepat dan rapi.',
         items: [
           {
             title: 'Auto-capture via Extension',
             description:
-              'Companion browser extension untuk Chrome & Edge mendeteksi media yang bisa diunduh di halaman dan mengirimkannya langsung ke aplikasi CoreAsia Downloader di komputer Anda.',
+              'Companion browser extension untuk Chrome & Edge mendeteksi media yang bisa diunduh di halaman dan mengirimkannya langsung ke aplikasi CoreAsia Download Manager di komputer Anda.',
             icon: 'lucide:wand-sparkles',
           },
           {
@@ -666,7 +666,7 @@ const ID_CONTENT = {
         label: 'Platform',
         title: 'Tersedia di macOS, Windows menyusul',
         subtitle:
-          'CoreAsia Downloader hadir lebih dulu untuk macOS (Apple Silicon). Versi Windows sedang disiapkan agar lebih banyak orang bisa menikmati pengalaman yang sama.',
+          'CoreAsia Download Manager hadir lebih dulu untuk macOS (Apple Silicon). Versi Windows sedang disiapkan agar lebih banyak orang bisa menikmati pengalaman yang sama.',
         items: [
           {
             title: 'macOS (Apple Silicon)',
@@ -743,7 +743,7 @@ const ID_CONTENT = {
           {
             title: 'Ramah Privasi',
             description:
-              'Aktivitas unduhan Anda tetap di komputer Anda. CoreAsia Downloader dirancang untuk menghormati privasi sejak awal.',
+              'Aktivitas unduhan Anda tetap di komputer Anda. CoreAsia Download Manager dirancang untuk menghormati privasi sejak awal.',
             icon: 'lucide:lock',
           },
           {
@@ -780,14 +780,14 @@ const ID_CONTENT = {
       cta: {
         title: 'Siap menyimpan apa pun dari web?',
         subtitle:
-          'Unduh CoreAsia Downloader untuk macOS dan coba gratis selama 3 hari. Pasang juga companion extension untuk auto-capture media dari browser.',
+          'Unduh CoreAsia Download Manager untuk macOS dan coba gratis selama 3 hari. Pasang juga companion extension untuk auto-capture media dari browser.',
         ctaPrimary: 'Unduh untuk macOS',
         ctaSecondary: 'hello@coreasia.id',
         termsPrefix: 'Dengan mengunduh, Anda menyetujui',
         termsLabel: 'Terms',
         termsAnd: '&amp;',
         privacyLabel: 'Privacy',
-        termsSuffix: 'CoreAsia Downloader.',
+        termsSuffix: 'CoreAsia Download Manager.',
       },
     },
     custom: {
@@ -1819,13 +1819,13 @@ const ID_CONTENT = {
       },
     },
     downloaderPrivacy: {
-      title: 'Kebijakan Privasi CoreAsia Downloader',
-      description: 'Kebijakan privasi CoreAsia Downloader (aplikasi macOS & browser extension) — bagaimana data Anda diperlakukan. Ramah privasi: data diproses lokal di perangkat Anda.',
+      title: 'Kebijakan Privasi CoreAsia Download Manager',
+      description: 'Kebijakan privasi CoreAsia Download Manager (aplikasi macOS & browser extension) — bagaimana data Anda diperlakukan. Ramah privasi: data diproses lokal di perangkat Anda.',
       lastUpdated: 'Terakhir diperbarui: Juni 2026',
       sections: {
         intro: {
           title: '1. Ringkasan',
-          content: 'CoreAsia Downloader (selanjutnya "CAD") adalah download manager untuk desktop beserta browser extension pendamping, dikelola oleh PT Inti Asia Teknologi (brand CoreAsia). Kebijakan ini menjelaskan data apa yang ditangani oleh aplikasi desktop dan extension. Prinsipnya sederhana: pemrosesan terjadi secara lokal di komputer Anda dan kami tidak mengumpulkan data pribadi Anda ke server kami.',
+          content: 'CoreAsia Download Manager (selanjutnya "CAD") adalah download manager untuk desktop beserta browser extension pendamping, dikelola oleh PT Inti Asia Teknologi (brand CoreAsia). Kebijakan ini menjelaskan data apa yang ditangani oleh aplikasi desktop dan extension. Prinsipnya sederhana: pemrosesan terjadi secara lokal di komputer Anda dan kami tidak mengumpulkan data pribadi Anda ke server kami.',
         },
         extension: {
           title: '2. Browser Extension (Chrome/Edge)',
@@ -1837,7 +1837,7 @@ const ID_CONTENT = {
         },
         extensionLocal: {
           title: '3. Ke Mana Data Extension Dikirim',
-          content: 'Data di atas dikirim HANYA ke aplikasi CoreAsia Downloader yang berjalan secara LOKAL di komputer Anda (alamat 127.0.0.1 / localhost). Data ini TIDAK dikirim ke server CoreAsia maupun pihak ketiga mana pun. Extension tidak menjual data, tidak menampilkan iklan, dan tidak melacak aktivitas browsing Anda untuk tujuan periklanan.',
+          content: 'Data di atas dikirim HANYA ke aplikasi CoreAsia Download Manager yang berjalan secara LOKAL di komputer Anda (alamat 127.0.0.1 / localhost). Data ini TIDAK dikirim ke server CoreAsia maupun pihak ketiga mana pun. Extension tidak menjual data, tidak menampilkan iklan, dan tidak melacak aktivitas browsing Anda untuk tujuan periklanan.',
         },
         desktop: {
           title: '4. Aplikasi Desktop',
@@ -1883,26 +1883,26 @@ const ID_CONTENT = {
         },
         governingLaw: {
           title: '12. Hukum yang Berlaku',
-          content: 'Kebijakan privasi ini diatur dan ditafsirkan berdasarkan hukum Republik Indonesia. CoreAsia Downloader dikelola oleh PT Inti Asia Teknologi.',
+          content: 'Kebijakan privasi ini diatur dan ditafsirkan berdasarkan hukum Republik Indonesia. CoreAsia Download Manager dikelola oleh PT Inti Asia Teknologi.',
         },
         contact: {
           title: '13. Hubungi Kami',
-          content: 'Untuk pertanyaan terkait kebijakan privasi CoreAsia Downloader, hubungi kami di {email}.',
+          content: 'Untuk pertanyaan terkait kebijakan privasi CoreAsia Download Manager, hubungi kami di {email}.',
         },
       },
     },
     downloaderTerms: {
-      title: 'Syarat dan Ketentuan CoreAsia Downloader',
-      description: 'Syarat dan ketentuan penggunaan CoreAsia Downloader (aplikasi macOS & browser extension). Harap baca dengan saksama sebelum menggunakan produk.',
+      title: 'Syarat dan Ketentuan CoreAsia Download Manager',
+      description: 'Syarat dan ketentuan penggunaan CoreAsia Download Manager (aplikasi macOS & browser extension). Harap baca dengan saksama sebelum menggunakan produk.',
       lastUpdated: 'Terakhir diperbarui: Juni 2026',
       sections: {
         intro: {
           title: '1. Ketentuan Umum',
-          content: 'CoreAsia Downloader ("CAD") adalah download manager untuk macOS (Apple Silicon) beserta browser extension pendamping, dikelola oleh PT Inti Asia Teknologi (brand CoreAsia). Dengan mengunduh, memasang, atau menggunakan CAD, Anda menyetujui untuk terikat dengan syarat dan ketentuan ini.',
+          content: 'CoreAsia Download Manager ("CAD") adalah download manager untuk macOS (Apple Silicon) beserta browser extension pendamping, dikelola oleh PT Inti Asia Teknologi (brand CoreAsia). Dengan mengunduh, memasang, atau menggunakan CAD, Anda menyetujui untuk terikat dengan syarat dan ketentuan ini.',
         },
         license: {
           title: '2. Pemberian Lisensi',
-          content: 'Kami memberikan Anda lisensi yang terbatas, non-eksklusif, dan tidak dapat dipindahtangankan untuk menggunakan CoreAsia Downloader sesuai dengan paket yang Anda beli, untuk penggunaan pribadi Anda. Anda tidak diperbolehkan menjual ulang, menyewakan, mendistribusikan, melakukan rekayasa balik, atau mendistribusikan ulang kunci lisensi tanpa izin tertulis dari kami.',
+          content: 'Kami memberikan Anda lisensi yang terbatas, non-eksklusif, dan tidak dapat dipindahtangankan untuk menggunakan CoreAsia Download Manager sesuai dengan paket yang Anda beli, untuk penggunaan pribadi Anda. Anda tidak diperbolehkan menjual ulang, menyewakan, mendistribusikan, melakukan rekayasa balik, atau mendistribusikan ulang kunci lisensi tanpa izin tertulis dari kami.',
         },
         trial: {
           title: '3. Masa Coba (Trial)',
@@ -1923,7 +1923,7 @@ const ID_CONTENT = {
         },
         acceptableUse: {
           title: '6. Penggunaan yang Dapat Diterima',
-          content: 'CoreAsia Downloader adalah alat serbaguna untuk mengelola unduhan. Anda WAJIB:',
+          content: 'CoreAsia Download Manager adalah alat serbaguna untuk mengelola unduhan. Anda WAJIB:',
           items: [
             'Hanya mengunduh konten yang Anda miliki haknya, atau yang Anda diizinkan untuk mengunduhnya',
             'Mematuhi syarat layanan, hak cipta, dan ketentuan situs pihak ketiga tempat konten berasal',
@@ -1932,7 +1932,7 @@ const ID_CONTENT = {
         },
         acceptableUseLiability: {
           title: '7. Tanggung Jawab atas Penggunaan',
-          content: 'CoreAsia Downloader adalah alat serbaguna; Anda bertanggung jawab penuh atas cara Anda menggunakannya dan atas konten yang Anda unduh. PT Inti Asia Teknologi tidak bertanggung jawab atas penyalahgunaan aplikasi, termasuk pengunduhan konten yang melanggar hak cipta atau ketentuan pihak ketiga.',
+          content: 'CoreAsia Download Manager adalah alat serbaguna; Anda bertanggung jawab penuh atas cara Anda menggunakannya dan atas konten yang Anda unduh. PT Inti Asia Teknologi tidak bertanggung jawab atas penyalahgunaan aplikasi, termasuk pengunduhan konten yang melanggar hak cipta atau ketentuan pihak ketiga.',
         },
         thirdParty: {
           title: '8. Layanan dan Situs Pihak Ketiga',
@@ -1940,11 +1940,11 @@ const ID_CONTENT = {
         },
         warranty: {
           title: '9. Tanpa Jaminan (As-Is)',
-          content: 'CoreAsia Downloader disediakan "sebagaimana adanya" (as-is) tanpa jaminan dalam bentuk apa pun, baik tersurat maupun tersirat. Kami tidak menjamin bahwa aplikasi akan selalu bebas dari kesalahan, tidak terputus, atau kompatibel dengan setiap situs maupun konfigurasi sistem.',
+          content: 'CoreAsia Download Manager disediakan "sebagaimana adanya" (as-is) tanpa jaminan dalam bentuk apa pun, baik tersurat maupun tersirat. Kami tidak menjamin bahwa aplikasi akan selalu bebas dari kesalahan, tidak terputus, atau kompatibel dengan setiap situs maupun konfigurasi sistem.',
         },
         liability: {
           title: '10. Batasan Tanggung Jawab',
-          content: 'Sejauh diizinkan oleh hukum yang berlaku, PT Inti Asia Teknologi tidak bertanggung jawab atas kerugian tidak langsung, insidental, atau konsekuensial yang timbul dari penggunaan atau ketidakmampuan menggunakan CoreAsia Downloader.',
+          content: 'Sejauh diizinkan oleh hukum yang berlaku, PT Inti Asia Teknologi tidak bertanggung jawab atas kerugian tidak langsung, insidental, atau konsekuensial yang timbul dari penggunaan atau ketidakmampuan menggunakan CoreAsia Download Manager.',
         },
         termination: {
           title: '11. Penghentian',
@@ -1960,7 +1960,7 @@ const ID_CONTENT = {
         },
         contact: {
           title: '14. Hubungi Kami',
-          content: 'Untuk pertanyaan terkait syarat dan ketentuan CoreAsia Downloader, hubungi kami di {email}.',
+          content: 'Untuk pertanyaan terkait syarat dan ketentuan CoreAsia Download Manager, hubungi kami di {email}.',
         },
       },
     },
