@@ -362,7 +362,7 @@ func mayarIsPaid(p *MayarWebhookPayload) bool {
 		return false
 	}
 	s := p.statusString()
-	return s == "" || s == "success" || s == "paid" || s == "settlement" || s == "true"
+	return s == "" || s == "success" || s == "paid" || s == "settled" || s == "settlement" || s == "true"
 }
 
 // PurchaseWebhookMayar handles Mayar payment webhooks: on a verified "paid"
