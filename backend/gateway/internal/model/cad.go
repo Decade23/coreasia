@@ -9,18 +9,20 @@ import (
 // ───────────────────────── License ─────────────────────────
 
 type CADLicense struct {
-	ID          uuid.UUID  `json:"id"`
-	LicenseKey  string     `json:"license_key"`
-	Email       *string    `json:"email"`
-	Tier        string     `json:"tier"`
-	Status      string     `json:"status"`
-	OrderRef    *string    `json:"order_ref"`
-	DeviceLimit int        `json:"device_limit"`
-	ExpiresAt   *time.Time `json:"expires_at"`
-	Notes       *string    `json:"notes"`
-	CreatedBy   *uuid.UUID `json:"created_by"`
-	CreatedAt   time.Time  `json:"created_at"`
-	UpdatedAt   time.Time  `json:"updated_at"`
+	ID             uuid.UUID  `json:"id"`
+	LicenseKey     string     `json:"license_key"`
+	Email          *string    `json:"email"`
+	Tier           string     `json:"tier"`
+	Status         string     `json:"status"`
+	Platform       string     `json:"platform"`
+	OrderRef       *string    `json:"order_ref"`
+	DeviceLimit    int        `json:"device_limit"`
+	LastTransferAt *time.Time `json:"last_transfer_at"`
+	ExpiresAt      *time.Time `json:"expires_at"`
+	Notes          *string    `json:"notes"`
+	CreatedBy      *uuid.UUID `json:"created_by"`
+	CreatedAt      time.Time  `json:"created_at"`
+	UpdatedAt      time.Time  `json:"updated_at"`
 
 	// DeviceCount is query-computed (active installations), not a DB column.
 	DeviceCount int `json:"device_count"`
@@ -28,34 +30,38 @@ type CADLicense struct {
 
 // CADLicenseResponse masks the (long) license key; full value via copy endpoint.
 type CADLicenseResponse struct {
-	ID          uuid.UUID  `json:"id"`
-	KeyMasked   string     `json:"key_masked"`
-	Email       *string    `json:"email"`
-	Tier        string     `json:"tier"`
-	Status      string     `json:"status"`
-	OrderRef    *string    `json:"order_ref"`
-	DeviceLimit int        `json:"device_limit"`
-	DeviceCount int        `json:"device_count"`
-	ExpiresAt   *time.Time `json:"expires_at"`
-	Notes       *string    `json:"notes"`
-	CreatedAt   time.Time  `json:"created_at"`
-	UpdatedAt   time.Time  `json:"updated_at"`
+	ID             uuid.UUID  `json:"id"`
+	KeyMasked      string     `json:"key_masked"`
+	Email          *string    `json:"email"`
+	Tier           string     `json:"tier"`
+	Status         string     `json:"status"`
+	Platform       string     `json:"platform"`
+	OrderRef       *string    `json:"order_ref"`
+	DeviceLimit    int        `json:"device_limit"`
+	DeviceCount    int        `json:"device_count"`
+	LastTransferAt *time.Time `json:"last_transfer_at"`
+	ExpiresAt      *time.Time `json:"expires_at"`
+	Notes          *string    `json:"notes"`
+	CreatedAt      time.Time  `json:"created_at"`
+	UpdatedAt      time.Time  `json:"updated_at"`
 }
 
 func (l *CADLicense) ToResponse() CADLicenseResponse {
 	return CADLicenseResponse{
-		ID:          l.ID,
-		KeyMasked:   maskKey(l.LicenseKey),
-		Email:       l.Email,
-		Tier:        l.Tier,
-		Status:      l.Status,
-		OrderRef:    l.OrderRef,
-		DeviceLimit: l.DeviceLimit,
-		DeviceCount: l.DeviceCount,
-		ExpiresAt:   l.ExpiresAt,
-		Notes:       l.Notes,
-		CreatedAt:   l.CreatedAt,
-		UpdatedAt:   l.UpdatedAt,
+		ID:             l.ID,
+		KeyMasked:      maskKey(l.LicenseKey),
+		Email:          l.Email,
+		Tier:           l.Tier,
+		Status:         l.Status,
+		Platform:       l.Platform,
+		OrderRef:       l.OrderRef,
+		DeviceLimit:    l.DeviceLimit,
+		DeviceCount:    l.DeviceCount,
+		LastTransferAt: l.LastTransferAt,
+		ExpiresAt:      l.ExpiresAt,
+		Notes:          l.Notes,
+		CreatedAt:      l.CreatedAt,
+		UpdatedAt:      l.UpdatedAt,
 	}
 }
 
@@ -98,12 +104,21 @@ type CADInstallation struct {
 
 // ───────────────────────── App-facing (public) payloads ─────────────────────────
 
-// CADActivateRequest is sent by the CAD app to bind a device to a license (online activation, future phase).
+// CADActivateRequest is sent by the CAD app to bind a device to a license
+// (device-locked online activation). Platform defaults to "macos" when empty.
 type CADActivateRequest struct {
 	LicenseKey string  `json:"license_key" validate:"required"`
 	DeviceHash string  `json:"device_hash" validate:"required"`
+	Platform   string  `json:"platform"`
 	AppVersion *string `json:"app_version"`
 	OSVersion  *string `json:"os_version"`
+}
+
+// CADDeactivateRequest is sent by the CAD app for self-service device transfer:
+// the user releases the current device so they can activate on another one.
+type CADDeactivateRequest struct {
+	LicenseKey string `json:"license_key" validate:"required"`
+	DeviceHash string `json:"device_hash" validate:"required"`
 }
 
 // CADTelemetryRequest is an anonymous, privacy-first event. NO URLs / download history ever.

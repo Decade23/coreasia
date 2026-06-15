@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"log/slog"
 	"strings"
+	"time"
 
 	"github.com/coreasia/gateway/internal/config"
 	"github.com/coreasia/gateway/internal/middleware"
@@ -29,9 +30,38 @@ type mayarVerifier interface {
 	VerifyTransactionPaid(ctx context.Context, transactionID string) (bool, error)
 }
 
+// cadStore is the subset of *repository.CADRepo the handler depends on. Declared
+// as an interface so handler logic (activate/deactivate/admin override) can be
+// unit-tested with an in-memory stub, no live DB required.
+type cadStore interface {
+	FindAll(ctx context.Context) ([]model.CADLicense, error)
+	FindByID(ctx context.Context, id uuid.UUID) (*model.CADLicense, error)
+	FindByKey(ctx context.Context, key string) (*model.CADLicense, error)
+	Create(ctx context.Context, l *model.CADLicense) error
+	Update(ctx context.Context, l *model.CADLicense) error
+	Delete(ctx context.Context, id uuid.UUID) error
+	ImportBatch(ctx context.Context, keys []string, tier string, createdBy *uuid.UUID) (int, error)
+	AssignNextUnsoldLicense(ctx context.Context, email, orderRef string) (*model.CADLicense, bool, error)
+	FindInstallation(ctx context.Context, licenseID uuid.UUID, deviceHash string) (*model.CADInstallation, error)
+	FindActiveInstallationOther(ctx context.Context, licenseID uuid.UUID, deviceHash string) (*model.CADInstallation, error)
+	RevokeInstallation(ctx context.Context, licenseID uuid.UUID, deviceHash string) (int, error)
+	RevokeInstallationByID(ctx context.Context, id uuid.UUID) (int, error)
+	SetLastTransfer(ctx context.Context, licenseID uuid.UUID) error
+	CreateInstallation(ctx context.Context, i *model.CADInstallation) error
+	TouchInstallation(ctx context.Context, id uuid.UUID, appVersion, osVersion *string) error
+	ListInstallations(ctx context.Context, licenseID *uuid.UUID, limit int) ([]model.CADInstallation, error)
+	InsertEvent(ctx context.Context, e *model.CADTelemetryRequest, country *string) error
+	Summary(ctx context.Context) (*model.CADAnalyticsSummary, error)
+}
+
+// auditLogger is the subset of *repository.AuditLogRepo the handler uses.
+type auditLogger interface {
+	LogAction(ctx context.Context, userID *uuid.UUID, userName *string, action, resource string, resourceID *string, description *string, ip string)
+}
+
 type CADHandler struct {
-	repo        *repository.CADRepo
-	auditLog    *repository.AuditLogRepo
+	repo        cadStore
+	auditLog    auditLogger
 	email       *service.EmailService
 	mayarSecret string
 	mayar       mayarVerifier // outbound callback-verifier (may be nil)
@@ -121,7 +151,7 @@ func (h *CADHandler) Create(c fiber.Ctx) error {
 	if tier == "" {
 		tier = "lifetime"
 	}
-	limit := 2
+	limit := 1 // kebijakan 1-device (admin bisa override via request)
 	if req.DeviceLimit != nil {
 		limit = *req.DeviceLimit
 	}
@@ -263,7 +293,9 @@ func (h *CADHandler) Analytics(c fiber.Ctx) error {
 
 // ───────────────────────── Public (app-facing) ─────────────────────────
 
-// Activate binds a device to a license (online activation; offline verify remains primary).
+// Activate binds a device to a license (device-locked online activation):
+// platform must match, and only ONE device may be active per license. A second
+// device is rejected with 409 — the user must deactivate the old device first.
 func (h *CADHandler) Activate(c fiber.Ctx) error {
 	var req model.CADActivateRequest
 	if err := c.Bind().JSON(&req); err != nil {
@@ -271,6 +303,9 @@ func (h *CADHandler) Activate(c fiber.Ctx) error {
 	}
 	if appErr := validate.Struct(&req); appErr != nil {
 		return errResponse(c, appErr)
+	}
+	if req.Platform == "" {
+		req.Platform = "macos"
 	}
 	lic, err := h.repo.FindByKey(c.Context(), req.LicenseKey)
 	if err != nil {
@@ -280,22 +315,106 @@ func (h *CADHandler) Activate(c fiber.Ctx) error {
 	if lic == nil || lic.Status != "active" {
 		return errResponse(c, apperr.NewBadRequest("Lisensi tidak valid atau dinonaktifkan"))
 	}
+	// Platform lock: the license is bound to one platform.
+	if lic.Platform != req.Platform {
+		return errResponse(c, apperr.NewBadRequest(
+			fmt.Sprintf("Lisensi ini untuk %s, tidak bisa dipakai di %s", lic.Platform, req.Platform)))
+	}
+	// Idempotent: same device already active → just refresh.
+	if inst, err := h.repo.FindInstallation(c.Context(), lic.ID, req.DeviceHash); err != nil {
+		return errResponse(c, apperr.NewInternal(err))
+	} else if inst != nil && !inst.Revoked {
+		_ = h.repo.TouchInstallation(c.Context(), inst.ID, req.AppVersion, req.OSVersion)
+		return ok(c, fiber.Map{"status": "active", "tier": lic.Tier, "platform": lic.Platform, "install_id": inst.ID})
+	}
+	// 1-active-device policy: a DIFFERENT device is already bound → block.
+	if other, err := h.repo.FindActiveInstallationOther(c.Context(), lic.ID, req.DeviceHash); err != nil {
+		slog.Error("gagal cek perangkat aktif lain", "error", err)
+		return errResponse(c, apperr.NewInternal(err))
+	} else if other != nil {
+		return errResponse(c, apperr.NewConflict("Lisensi sudah aktif di perangkat lain. Deaktivasi perangkat lama dulu (di app atau hubungi support)."))
+	}
+	// No active device → bind. A previously-revoked row for this same device is
+	// re-activated via TouchInstallation (which clears revoked).
 	if inst, err := h.repo.FindInstallation(c.Context(), lic.ID, req.DeviceHash); err != nil {
 		return errResponse(c, apperr.NewInternal(err))
 	} else if inst != nil {
 		_ = h.repo.TouchInstallation(c.Context(), inst.ID, req.AppVersion, req.OSVersion)
-		return ok(c, fiber.Map{"status": "active", "tier": lic.Tier, "install_id": inst.ID})
-	}
-	count, _ := h.repo.CountActiveDevices(c.Context(), lic.ID)
-	if count >= lic.DeviceLimit {
-		return errResponse(c, apperr.NewBadRequest("Batas perangkat tercapai"))
+		return ok(c, fiber.Map{"status": "active", "tier": lic.Tier, "platform": lic.Platform, "install_id": inst.ID})
 	}
 	ni := model.CADInstallation{LicenseID: &lic.ID, DeviceHash: req.DeviceHash, AppVersion: req.AppVersion, OSVersion: req.OSVersion}
 	if err := h.repo.CreateInstallation(c.Context(), &ni); err != nil {
 		slog.Error("gagal create installation", "error", err)
 		return errResponse(c, apperr.NewInternal(err))
 	}
-	return ok(c, fiber.Map{"status": "active", "tier": lic.Tier, "install_id": ni.ID})
+	return ok(c, fiber.Map{"status": "active", "tier": lic.Tier, "platform": lic.Platform, "install_id": ni.ID})
+}
+
+// Deactivate releases the current device for a license (self-service transfer).
+// Rate-limited to once / 30 days via license.last_transfer_at; admins can
+// override without limit via DeviceDeactivate.
+func (h *CADHandler) Deactivate(c fiber.Ctx) error {
+	var req model.CADDeactivateRequest
+	if err := c.Bind().JSON(&req); err != nil {
+		return errResponse(c, apperr.NewBadRequest("Format request tidak valid"))
+	}
+	if appErr := validate.Struct(&req); appErr != nil {
+		return errResponse(c, appErr)
+	}
+	lic, err := h.repo.FindByKey(c.Context(), req.LicenseKey)
+	if err != nil {
+		slog.Error("gagal cari license utk deaktivasi", "error", err)
+		return errResponse(c, apperr.NewInternal(err))
+	}
+	if lic == nil {
+		return errResponse(c, apperr.NewBadRequest("Perangkat tidak ditemukan atau sudah nonaktif"))
+	}
+	inst, err := h.repo.FindInstallation(c.Context(), lic.ID, req.DeviceHash)
+	if err != nil {
+		return errResponse(c, apperr.NewInternal(err))
+	}
+	if inst == nil || inst.Revoked {
+		return errResponse(c, apperr.NewBadRequest("Perangkat tidak ditemukan atau sudah nonaktif"))
+	}
+	// Rate-limit: self-service transfer allowed once / 30 days.
+	if lic.LastTransferAt != nil {
+		next := lic.LastTransferAt.Add(30 * 24 * time.Hour)
+		if time.Now().Before(next) {
+			return errResponse(c, apperr.NewTooManyRequests(
+				fmt.Sprintf("Batas pindah perangkat tercapai. Coba lagi setelah %s atau hubungi support.", next.Format("2006-01-02"))))
+		}
+	}
+	if _, err := h.repo.RevokeInstallation(c.Context(), lic.ID, req.DeviceHash); err != nil {
+		slog.Error("gagal deaktivasi perangkat", "error", err)
+		return errResponse(c, apperr.NewInternal(err))
+	}
+	if err := h.repo.SetLastTransfer(c.Context(), lic.ID); err != nil {
+		slog.Error("gagal set last_transfer_at", "error", err)
+		return errResponse(c, apperr.NewInternal(err))
+	}
+	return ok(c, fiber.Map{"ok": true})
+}
+
+// DeviceDeactivate is an admin override: revoke an installation by id, with no
+// rate-limit and without touching last_transfer_at. Audit logged.
+func (h *CADHandler) DeviceDeactivate(c fiber.Ctx) error {
+	claims := middleware.GetClaims(c)
+	id, err := uuid.Parse(c.Params("id"))
+	if err != nil {
+		return errResponse(c, apperr.NewBadRequest("ID tidak valid"))
+	}
+	n, err := h.repo.RevokeInstallationByID(c.Context(), id)
+	if err != nil {
+		slog.Error("gagal deaktivasi perangkat (admin)", "error", err)
+		return errResponse(c, apperr.NewInternal(err))
+	}
+	if n == 0 {
+		return errResponse(c, apperr.NewNotFound("Perangkat"))
+	}
+	desc := "Deaktivasi perangkat CAD (admin override)"
+	idStr := id.String()
+	h.auditLog.LogAction(c.Context(), &claims.UserID, &claims.FullName, "deactivate", "cad_installations", &idStr, &desc, c.IP())
+	return ok(c, fiber.Map{"ok": true})
 }
 
 // Telemetry ingests one anonymous event. NEVER stores URLs / download history / PII.
@@ -412,7 +531,7 @@ func (h *CADHandler) PurchaseWebhookMayar(c fiber.Ctx) error {
 		return ok(c, fiber.Map{"received": true, "verified": false})
 	}
 
-	lic, err := h.repo.AssignNextUnsoldLicense(c.Context(), email, orderRef)
+	lic, created, err := h.repo.AssignNextUnsoldLicense(c.Context(), email, orderRef)
 	if err != nil {
 		slog.Error("gagal assign license CAD utk pembelian", "order_ref", orderRef, "error", err)
 		return errResponse(c, apperr.NewInternal(err))
@@ -424,8 +543,15 @@ func (h *CADHandler) PurchaseWebhookMayar(c fiber.Ctx) error {
 		return ok(c, fiber.Map{"received": true, "fulfilled": false})
 	}
 
+	// Idempotent hit (webhook retry / duplicate): key already issued+emailed on
+	// the first call — do NOT re-send the email.
+	if !created {
+		slog.Info("webhook Mayar duplikat — license sudah terbit sebelumnya, email tidak dikirim ulang",
+			"order_ref", orderRef, "license_id", lic.ID)
+		return ok(c, fiber.Map{"received": true, "fulfilled": true, "emailed": false, "duplicate": true})
+	}
+
 	if err := h.email.SendLicenseKey(c.Context(), email, lic.LicenseKey, cadDownloadURL); err != nil {
-		// Key is already assigned (idempotent on retry); log loudly but ack.
 		slog.Error("gagal kirim email license key CAD", "order_ref", orderRef, "email", email, "error", err)
 		return ok(c, fiber.Map{"received": true, "fulfilled": true, "emailed": false})
 	}

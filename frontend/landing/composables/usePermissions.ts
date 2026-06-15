@@ -17,7 +17,7 @@ const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     'upload:create', 'audit:list',
     'cad:licenses:list', 'cad:licenses:view', 'cad:licenses:create', 'cad:licenses:update',
     'cad:licenses:delete', 'cad:licenses:copy', 'cad:licenses:import',
-    'cad:devices:list', 'cad:analytics:view',
+    'cad:devices:list', 'cad:devices:manage', 'cad:analytics:view',
   ],
   admin: [
     'dashboard:view',
@@ -28,7 +28,7 @@ const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     'ai:generate', 'ai:models', 'ai:settings:view',
     'apikeys:list', 'apikeys:view',
     'upload:create', 'audit:list',
-    'cad:licenses:list', 'cad:licenses:view', 'cad:devices:list', 'cad:analytics:view',
+    'cad:licenses:list', 'cad:licenses:view', 'cad:devices:list', 'cad:devices:manage', 'cad:analytics:view',
   ],
 }
 

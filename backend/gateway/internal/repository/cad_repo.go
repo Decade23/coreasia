@@ -21,7 +21,7 @@ func NewCADRepo(pool *pgxpool.Pool) *CADRepo {
 
 func (r *CADRepo) FindAll(ctx context.Context) ([]model.CADLicense, error) {
 	rows, err := r.pool.Query(ctx,
-		`SELECT l.id, l.license_key, l.email, l.tier, l.status, l.order_ref, l.device_limit, l.expires_at, l.notes, l.created_by, l.created_at, l.updated_at,
+		`SELECT l.id, l.license_key, l.email, l.tier, l.status, l.platform, l.order_ref, l.device_limit, l.last_transfer_at, l.expires_at, l.notes, l.created_by, l.created_at, l.updated_at,
 		        (SELECT count(*) FROM public.cad_installations i WHERE i.license_id = l.id AND i.revoked = false) AS device_count
 		 FROM public.cad_licenses l ORDER BY l.created_at DESC`)
 	if err != nil {
@@ -32,7 +32,7 @@ func (r *CADRepo) FindAll(ctx context.Context) ([]model.CADLicense, error) {
 	var out []model.CADLicense
 	for rows.Next() {
 		var l model.CADLicense
-		if err := rows.Scan(&l.ID, &l.LicenseKey, &l.Email, &l.Tier, &l.Status, &l.OrderRef, &l.DeviceLimit, &l.ExpiresAt, &l.Notes, &l.CreatedBy, &l.CreatedAt, &l.UpdatedAt, &l.DeviceCount); err != nil {
+		if err := rows.Scan(&l.ID, &l.LicenseKey, &l.Email, &l.Tier, &l.Status, &l.Platform, &l.OrderRef, &l.DeviceLimit, &l.LastTransferAt, &l.ExpiresAt, &l.Notes, &l.CreatedBy, &l.CreatedAt, &l.UpdatedAt, &l.DeviceCount); err != nil {
 			return nil, fmt.Errorf("scanning cad license: %w", err)
 		}
 		out = append(out, l)
@@ -43,10 +43,10 @@ func (r *CADRepo) FindAll(ctx context.Context) ([]model.CADLicense, error) {
 func (r *CADRepo) FindByID(ctx context.Context, id uuid.UUID) (*model.CADLicense, error) {
 	var l model.CADLicense
 	err := r.pool.QueryRow(ctx,
-		`SELECT l.id, l.license_key, l.email, l.tier, l.status, l.order_ref, l.device_limit, l.expires_at, l.notes, l.created_by, l.created_at, l.updated_at,
+		`SELECT l.id, l.license_key, l.email, l.tier, l.status, l.platform, l.order_ref, l.device_limit, l.last_transfer_at, l.expires_at, l.notes, l.created_by, l.created_at, l.updated_at,
 		        (SELECT count(*) FROM public.cad_installations i WHERE i.license_id = l.id AND i.revoked = false)
 		 FROM public.cad_licenses l WHERE l.id = $1`, id).
-		Scan(&l.ID, &l.LicenseKey, &l.Email, &l.Tier, &l.Status, &l.OrderRef, &l.DeviceLimit, &l.ExpiresAt, &l.Notes, &l.CreatedBy, &l.CreatedAt, &l.UpdatedAt, &l.DeviceCount)
+		Scan(&l.ID, &l.LicenseKey, &l.Email, &l.Tier, &l.Status, &l.Platform, &l.OrderRef, &l.DeviceLimit, &l.LastTransferAt, &l.ExpiresAt, &l.Notes, &l.CreatedBy, &l.CreatedAt, &l.UpdatedAt, &l.DeviceCount)
 	if err != nil {
 		if err.Error() == "no rows in result set" {
 			return nil, nil
@@ -59,9 +59,9 @@ func (r *CADRepo) FindByID(ctx context.Context, id uuid.UUID) (*model.CADLicense
 func (r *CADRepo) FindByKey(ctx context.Context, key string) (*model.CADLicense, error) {
 	var l model.CADLicense
 	err := r.pool.QueryRow(ctx,
-		`SELECT id, license_key, email, tier, status, order_ref, device_limit, expires_at, notes, created_by, created_at, updated_at
+		`SELECT id, license_key, email, tier, status, platform, order_ref, device_limit, last_transfer_at, expires_at, notes, created_by, created_at, updated_at
 		 FROM public.cad_licenses WHERE license_key = $1`, key).
-		Scan(&l.ID, &l.LicenseKey, &l.Email, &l.Tier, &l.Status, &l.OrderRef, &l.DeviceLimit, &l.ExpiresAt, &l.Notes, &l.CreatedBy, &l.CreatedAt, &l.UpdatedAt)
+		Scan(&l.ID, &l.LicenseKey, &l.Email, &l.Tier, &l.Status, &l.Platform, &l.OrderRef, &l.DeviceLimit, &l.LastTransferAt, &l.ExpiresAt, &l.Notes, &l.CreatedBy, &l.CreatedAt, &l.UpdatedAt)
 	if err != nil {
 		if err.Error() == "no rows in result set" {
 			return nil, nil
@@ -72,11 +72,14 @@ func (r *CADRepo) FindByKey(ctx context.Context, key string) (*model.CADLicense,
 }
 
 func (r *CADRepo) Create(ctx context.Context, l *model.CADLicense) error {
+	if l.Platform == "" {
+		l.Platform = "macos"
+	}
 	return r.pool.QueryRow(ctx,
-		`INSERT INTO public.cad_licenses (license_key, email, tier, status, order_ref, device_limit, expires_at, notes, created_by)
-		 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+		`INSERT INTO public.cad_licenses (license_key, email, tier, status, platform, order_ref, device_limit, expires_at, notes, created_by)
+		 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
 		 RETURNING id, created_at, updated_at`,
-		l.LicenseKey, l.Email, l.Tier, l.Status, l.OrderRef, l.DeviceLimit, l.ExpiresAt, l.Notes, l.CreatedBy).
+		l.LicenseKey, l.Email, l.Tier, l.Status, l.Platform, l.OrderRef, l.DeviceLimit, l.ExpiresAt, l.Notes, l.CreatedBy).
 		Scan(&l.ID, &l.CreatedAt, &l.UpdatedAt)
 }
 
@@ -105,8 +108,8 @@ func (r *CADRepo) ImportBatch(ctx context.Context, keys []string, tier string, c
 			continue
 		}
 		ct, err := r.pool.Exec(ctx,
-			`INSERT INTO public.cad_licenses (license_key, tier, status, created_by)
-			 VALUES ($1,$2,'active',$3) ON CONFLICT (license_key) DO NOTHING`, k, tier, createdBy)
+			`INSERT INTO public.cad_licenses (license_key, tier, status, platform, created_by)
+			 VALUES ($1,$2,'active','macos',$3) ON CONFLICT (license_key) DO NOTHING`, k, tier, createdBy)
 		if err != nil {
 			return inserted, fmt.Errorf("importing cad license: %w", err)
 		}
@@ -123,14 +126,18 @@ func (r *CADRepo) ImportBatch(ctx context.Context, keys []string, tier string, c
 //     atomically claimed via SELECT ... FOR UPDATE SKIP LOCKED and stamped with
 //     the buyer email + order_ref.
 //   - Returns (nil, nil) when the pool is exhausted (no unsold keys left).
-func (r *CADRepo) AssignNextUnsoldLicense(ctx context.Context, email, orderRef string) (*model.CADLicense, error) {
+//
+// Returns (license, created, error). created=true only when a key was newly
+// claimed; created=false on an idempotent hit (order already fulfilled) so the
+// caller can skip re-sending the delivery email on webhook retries.
+func (r *CADRepo) AssignNextUnsoldLicense(ctx context.Context, email, orderRef string) (*model.CADLicense, bool, error) {
 	// Idempotency first: same order already fulfilled?
 	existing, err := r.findByOrderRef(ctx, orderRef)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 	if existing != nil {
-		return existing, nil
+		return existing, false, nil
 	}
 
 	var l model.CADLicense
@@ -143,26 +150,26 @@ func (r *CADRepo) AssignNextUnsoldLicense(ctx context.Context, email, orderRef s
 		     ORDER BY created_at
 		     LIMIT 1 FOR UPDATE SKIP LOCKED
 		 )
-		 RETURNING id, license_key, email, tier, status, order_ref, device_limit, expires_at, notes, created_by, created_at, updated_at`,
+		 RETURNING id, license_key, email, tier, status, platform, order_ref, device_limit, last_transfer_at, expires_at, notes, created_by, created_at, updated_at`,
 		email, orderRef).
-		Scan(&l.ID, &l.LicenseKey, &l.Email, &l.Tier, &l.Status, &l.OrderRef, &l.DeviceLimit, &l.ExpiresAt, &l.Notes, &l.CreatedBy, &l.CreatedAt, &l.UpdatedAt)
+		Scan(&l.ID, &l.LicenseKey, &l.Email, &l.Tier, &l.Status, &l.Platform, &l.OrderRef, &l.DeviceLimit, &l.LastTransferAt, &l.ExpiresAt, &l.Notes, &l.CreatedBy, &l.CreatedAt, &l.UpdatedAt)
 	if err != nil {
 		if err.Error() == "no rows in result set" {
 			// Pool exhausted: no unsold keys available.
-			return nil, nil
+			return nil, false, nil
 		}
-		return nil, fmt.Errorf("assigning cad license: %w", err)
+		return nil, false, fmt.Errorf("assigning cad license: %w", err)
 	}
-	return &l, nil
+	return &l, true, nil
 }
 
 // findByOrderRef returns the license already bound to an order_ref, or nil.
 func (r *CADRepo) findByOrderRef(ctx context.Context, orderRef string) (*model.CADLicense, error) {
 	var l model.CADLicense
 	err := r.pool.QueryRow(ctx,
-		`SELECT id, license_key, email, tier, status, order_ref, device_limit, expires_at, notes, created_by, created_at, updated_at
+		`SELECT id, license_key, email, tier, status, platform, order_ref, device_limit, last_transfer_at, expires_at, notes, created_by, created_at, updated_at
 		 FROM public.cad_licenses WHERE order_ref = $1 LIMIT 1`, orderRef).
-		Scan(&l.ID, &l.LicenseKey, &l.Email, &l.Tier, &l.Status, &l.OrderRef, &l.DeviceLimit, &l.ExpiresAt, &l.Notes, &l.CreatedBy, &l.CreatedAt, &l.UpdatedAt)
+		Scan(&l.ID, &l.LicenseKey, &l.Email, &l.Tier, &l.Status, &l.Platform, &l.OrderRef, &l.DeviceLimit, &l.LastTransferAt, &l.ExpiresAt, &l.Notes, &l.CreatedBy, &l.CreatedAt, &l.UpdatedAt)
 	if err != nil {
 		if err.Error() == "no rows in result set" {
 			return nil, nil
@@ -194,6 +201,58 @@ func (r *CADRepo) FindInstallation(ctx context.Context, licenseID uuid.UUID, dev
 		return nil, fmt.Errorf("finding installation: %w", err)
 	}
 	return &i, nil
+}
+
+// FindActiveInstallationOther returns an active (revoked=false) installation
+// bound to this license on a DIFFERENT device than deviceHash, if any. Used to
+// enforce the 1-active-device policy (block activation on a second device).
+func (r *CADRepo) FindActiveInstallationOther(ctx context.Context, licenseID uuid.UUID, deviceHash string) (*model.CADInstallation, error) {
+	var i model.CADInstallation
+	err := r.pool.QueryRow(ctx,
+		`SELECT id, license_id, device_hash, app_version, os_version, revoked, first_seen, last_seen
+		 FROM public.cad_installations
+		 WHERE license_id=$1 AND device_hash<>$2 AND revoked=false
+		 ORDER BY last_seen DESC LIMIT 1`, licenseID, deviceHash).
+		Scan(&i.ID, &i.LicenseID, &i.DeviceHash, &i.AppVersion, &i.OSVersion, &i.Revoked, &i.FirstSeen, &i.LastSeen)
+	if err != nil {
+		if err.Error() == "no rows in result set" {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("finding other active installation: %w", err)
+	}
+	return &i, nil
+}
+
+// RevokeInstallation marks the active installation for (license, device) as
+// revoked. Returns the number of rows affected (0 = none active).
+func (r *CADRepo) RevokeInstallation(ctx context.Context, licenseID uuid.UUID, deviceHash string) (int, error) {
+	ct, err := r.pool.Exec(ctx,
+		`UPDATE public.cad_installations SET revoked=true, last_seen=now()
+		 WHERE license_id=$1 AND device_hash=$2 AND revoked=false`, licenseID, deviceHash)
+	if err != nil {
+		return 0, fmt.Errorf("revoking installation: %w", err)
+	}
+	return int(ct.RowsAffected()), nil
+}
+
+// RevokeInstallationByID marks one installation revoked by its id (admin
+// override). Returns rows affected (0 = not found / already revoked).
+func (r *CADRepo) RevokeInstallationByID(ctx context.Context, id uuid.UUID) (int, error) {
+	ct, err := r.pool.Exec(ctx,
+		`UPDATE public.cad_installations SET revoked=true, last_seen=now()
+		 WHERE id=$1 AND revoked=false`, id)
+	if err != nil {
+		return 0, fmt.Errorf("revoking installation by id: %w", err)
+	}
+	return int(ct.RowsAffected()), nil
+}
+
+// SetLastTransfer stamps the license's last_transfer_at=now() (self-service
+// transfer rate-limit clock).
+func (r *CADRepo) SetLastTransfer(ctx context.Context, licenseID uuid.UUID) error {
+	_, err := r.pool.Exec(ctx,
+		`UPDATE public.cad_licenses SET last_transfer_at=now(), updated_at=now() WHERE id=$1`, licenseID)
+	return err
 }
 
 func (r *CADRepo) CreateInstallation(ctx context.Context, i *model.CADInstallation) error {

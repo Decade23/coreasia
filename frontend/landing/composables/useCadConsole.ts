@@ -12,7 +12,9 @@ export interface CadLicense {
   order_ref: string | null
   device_limit: number
   device_count: number
+  platform: string | null
   expires_at: string | null
+  last_transfer_at?: string | null
   notes: string | null
   created_at: string
   updated_at: string
@@ -24,6 +26,7 @@ export interface CadDevice {
   device_hash: string
   app_version: string | null
   os_version: string | null
+  platform: string | null
   revoked: boolean
   first_seen: string
   last_seen: string
@@ -141,6 +144,21 @@ export const useCadConsole = () => {
     }
   }
 
+  const deactivateDevice = async (deviceId: string): Promise<boolean> => {
+    saving.value = true
+    try {
+      await api.post('/admin/cad/devices/' + deviceId + '/deactivate')
+      toast.success(tc('cad.deviceReleased'))
+      await fetchDevices()
+      return true
+    } catch (err: any) {
+      toast.error(err?.data?.errors?.message || tc('cad.actionFailed'))
+      return false
+    } finally {
+      saving.value = false
+    }
+  }
+
   const copyKey = async (id: string): Promise<void> => {
     try {
       const res = await api.get<{ license_key: string }>(`/admin/cad/licenses/${id}/copy`)
@@ -156,6 +174,6 @@ export const useCadConsole = () => {
   return {
     licenses, devices, summary, loading, saving,
     fetchLicenses, fetchDevices, fetchAnalytics,
-    importKeys, setStatus, deleteLicense, copyKey,
+    importKeys, setStatus, deleteLicense, copyKey, deactivateDevice,
   }
 }

@@ -209,10 +209,12 @@ func (s *Server) setupRoutes() {
 	admin.Put("/cad/licenses/:id", mw.RequirePermission(rbac.CADLicensesUpdate), cadHandler.Update)
 	admin.Delete("/cad/licenses/:id", mw.RequirePermission(rbac.CADLicensesDelete), cadHandler.Delete)
 	admin.Get("/cad/devices", mw.RequirePermission(rbac.CADDevicesList), cadHandler.ListDevices)
+	admin.Post("/cad/devices/:id/deactivate", mw.RequirePermission(rbac.CADDevicesManage), cadHandler.DeviceDeactivate)
 	admin.Get("/cad/analytics", mw.RequirePermission(rbac.CADAnalyticsView), cadHandler.Analytics)
 
 	// CAD public (app-facing) — the desktop app calls these; no admin auth
 	api.Post("/cad/activate", cadHandler.Activate)
+	api.Post("/cad/deactivate", cadHandler.Deactivate)
 	api.Post("/cad/telemetry", cadHandler.Telemetry)
 
 	// CAD purchase webhook (Mayar) — public, secured by shared-secret token

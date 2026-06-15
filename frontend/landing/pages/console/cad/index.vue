@@ -13,6 +13,7 @@ const showImport = ref(false)
 const importText = ref('')
 const importTier = ref('lifetime')
 const deleteTarget = ref<string | null>(null)
+const releaseTarget = ref<string | null>(null)
 
 const loadTab = async (t: Tab) => {
   tab.value = t
@@ -37,6 +38,13 @@ const confirmDelete = async () => {
   if (deleteTarget.value) {
     await cad.deleteLicense(deleteTarget.value)
     deleteTarget.value = null
+  }
+}
+
+const confirmRelease = async () => {
+  if (releaseTarget.value) {
+    await cad.deactivateDevice(releaseTarget.value)
+    releaseTarget.value = null
   }
 }
 
@@ -158,9 +166,11 @@ const tabs: { key: Tab; label: string; icon: string; perm: string }[] = [
               <th class="px-4 py-3">{{ tc('cad.colKey') }}</th>
               <th class="px-4 py-3">{{ tc('cad.colEmail') }}</th>
               <th class="px-4 py-3">{{ tc('cad.colTier') }}</th>
+              <th class="px-4 py-3">{{ tc('cad.platform') }}</th>
               <th class="px-4 py-3">{{ tc('cad.colStatus') }}</th>
               <th class="px-4 py-3">{{ tc('cad.colDevices') }}</th>
               <th class="px-4 py-3">{{ tc('cad.colCreated') }}</th>
+              <th class="px-4 py-3">{{ tc('cad.lastTransfer') }}</th>
               <th class="px-4 py-3 text-right">{{ tc('cad.colActions') }}</th>
             </tr>
           </thead>
@@ -169,11 +179,13 @@ const tabs: { key: Tab; label: string; icon: string; perm: string }[] = [
               <td class="px-4 py-3 font-mono text-xs text-[var(--ca-text)]">{{ l.key_masked }}</td>
               <td class="px-4 py-3 text-[var(--ca-muted)]">{{ l.email || '-' }}</td>
               <td class="px-4 py-3 text-[var(--ca-muted)]">{{ l.tier }}</td>
+              <td class="px-4 py-3 text-[var(--ca-muted)]">{{ l.platform || '-' }}</td>
               <td class="px-4 py-3">
                 <span class="rounded-full px-2 py-0.5 text-xs font-semibold" :class="statusClass(l.status)">{{ l.status }}</span>
               </td>
               <td class="px-4 py-3 text-[var(--ca-muted)]">{{ l.device_count }} / {{ l.device_limit }}</td>
               <td class="px-4 py-3 text-[var(--ca-muted)]">{{ fmtDate(l.created_at) }}</td>
+              <td class="px-4 py-3 text-[var(--ca-muted)]">{{ fmtDate(l.last_transfer_at ?? null) }}</td>
               <td class="px-4 py-3">
                 <div class="flex items-center justify-end gap-1.5">
                   <button v-if="can('cad:licenses:copy')" type="button" class="ca-header-btn !h-8 !min-w-8" :title="tc('cad.copy')" @click="cad.copyKey(l.id)">
@@ -205,17 +217,27 @@ const tabs: { key: Tab; label: string; icon: string; perm: string }[] = [
           <thead class="text-xs uppercase text-[var(--ca-subtle)]">
             <tr class="border-b border-[color:var(--ca-border)]">
               <th class="px-4 py-3">{{ tc('cad.colDevice') }}</th>
+              <th class="px-4 py-3">{{ tc('cad.platform') }}</th>
               <th class="px-4 py-3">{{ tc('cad.colAppVer') }}</th>
               <th class="px-4 py-3">{{ tc('cad.colOs') }}</th>
               <th class="px-4 py-3">{{ tc('cad.colLastSeen') }}</th>
+              <th class="px-4 py-3 text-right">{{ tc('cad.colActions') }}</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="d in devices" :key="d.id" class="border-b border-[color:var(--ca-border)]/60">
               <td class="px-4 py-3 font-mono text-xs text-[var(--ca-text)]">{{ shortHash(d.device_hash) }}</td>
+              <td class="px-4 py-3 text-[var(--ca-muted)]">{{ d.platform || '-' }}</td>
               <td class="px-4 py-3 text-[var(--ca-muted)]">{{ d.app_version || '-' }}</td>
               <td class="px-4 py-3 text-[var(--ca-muted)]">{{ d.os_version || '-' }}</td>
               <td class="px-4 py-3 text-[var(--ca-muted)]">{{ fmtDate(d.last_seen) }}</td>
+              <td class="px-4 py-3">
+                <div class="flex items-center justify-end gap-1.5">
+                  <button v-if="can('cad:devices:manage') && !d.revoked" type="button" class="ca-header-btn !h-8 !min-w-8 text-amber-400" :title="tc('cad.releaseDevice')" :disabled="saving" @click="releaseTarget = d.id">
+                    <Icon name="lucide:unplug" class="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -246,6 +268,17 @@ const tabs: { key: Tab; label: string; icon: string; perm: string }[] = [
         <div class="mt-6 flex justify-center gap-3">
           <button type="button" class="ca-btn-secondary" @click="deleteTarget = null">{{ tc('common.cancel') }}</button>
           <button type="button" class="ca-btn-danger !px-4 !py-2.5" :disabled="saving" @click="confirmDelete">{{ tc('cad.delete') }}</button>
+        </div>
+      </div>
+    </ConsoleModal>
+
+    <!-- Release/deactivate device confirm -->
+    <ConsoleModal :show="!!releaseTarget" :title="tc('cad.releaseConfirmTitle')" size="sm" @close="releaseTarget = null">
+      <div class="text-center">
+        <p class="text-sm text-[var(--ca-muted)]">{{ tc('cad.releaseConfirmBody') }}</p>
+        <div class="mt-6 flex justify-center gap-3">
+          <button type="button" class="ca-btn-secondary" @click="releaseTarget = null">{{ tc('common.cancel') }}</button>
+          <button type="button" class="ca-btn-primary" :disabled="saving" @click="confirmRelease">{{ tc('cad.releaseDevice') }}</button>
         </div>
       </div>
     </ConsoleModal>

@@ -85,6 +85,7 @@ const (
 	CADLicensesCopy   Permission = "cad:licenses:copy"
 	CADLicensesImport Permission = "cad:licenses:import"
 	CADDevicesList    Permission = "cad:devices:list"
+	CADDevicesManage  Permission = "cad:devices:manage"
 	CADAnalyticsView  Permission = "cad:analytics:view"
 )
 
@@ -137,6 +138,7 @@ var RolePermissions = map[string]map[Permission]bool{
 		CADLicensesCopy:   true,
 		CADLicensesImport: true,
 		CADDevicesList:    true,
+		CADDevicesManage:  true,
 		CADAnalyticsView:  true,
 	},
 	"admin": {
@@ -162,6 +164,7 @@ var RolePermissions = map[string]map[Permission]bool{
 		CADLicensesList:  true,
 		CADLicensesView:  true,
 		CADDevicesList:   true,
+		CADDevicesManage: true,
 		CADAnalyticsView: true,
 	},
 }
