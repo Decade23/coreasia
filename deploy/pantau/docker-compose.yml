@@ -9,10 +9,8 @@
 
 services:
   gateway:
-    build:
-      context: ./gateway
-      dockerfile: Dockerfile
-    image: coreasia-gateway:latest
+    # Image built in CI (GitHub Actions → GHCR), pulled here — never built on the VPS.
+    image: ghcr.io/decade23/coreasia-gateway:latest
     container_name: coreasia-cad-gateway
     restart: unless-stopped
     env_file: ./.env
