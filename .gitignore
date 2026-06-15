@@ -13,6 +13,11 @@ nul
 assets/
 logs/
 
+# Production secrets — NEVER commit real env files
+.env.prod
+.env.production
+.env.*.local
+
 # Nuxt / Node specific
 frontend/landing/node_modules/
 frontend/landing/.nuxt/

@@ -1,0 +1,113 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# CoreAsia Gateway — PRODUCTION stack (dedicated VPS for CoreAsia/CAD).
+# Serves https://api.coreasia.id  (Caddy auto-HTTPS → gateway:8081).
+#
+# Usage on the VPS:
+#   cp .env.prod.example .env.prod   # then fill real values
+#   docker compose -f docker-compose.prod.yml up -d
+#
+# Only Caddy publishes public ports (80/443). gateway/postgres/redis stay on the
+# internal network. Migrations run automatically on gateway startup; the admin
+# user is auto-seeded from ADMIN_* on first boot.
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+  # ── Gateway (Go / Fiber v3) ────────────────────────────────────────────────
+  gateway:
+    image: ghcr.io/decade23/coreasia-gateway:latest
+    # To build locally instead of pulling from GHCR, comment out `image:` above
+    # and uncomment this block:
+    # build:
+    #   context: ./backend/gateway
+    #   dockerfile: Dockerfile
+    container_name: coreasia-gateway
+    env_file:
+      - ./.env.prod
+    expose:
+      - "8081"            # internal only — reached via caddy reverse_proxy
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    networks:
+      - coreasia-net
+    restart: unless-stopped
+
+  # ── PostgreSQL 17 ──────────────────────────────────────────────────────────
+  postgres:
+    image: postgres:17-alpine
+    container_name: coreasia-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+    networks:
+      - coreasia-net
+    restart: unless-stopped
+
+  # ── Redis 7 (cache) ────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: coreasia-redis
+    command: redis-server --appendonly yes --maxmemory 128mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 192M
+    networks:
+      - coreasia-net
+    restart: unless-stopped
+
+  # ── Caddy (TLS termination + reverse proxy, auto Let's Encrypt) ────────────
+  caddy:
+    image: caddy:2-alpine
+    container_name: coreasia-caddy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data        # persists issued certificates — do NOT delete
+      - caddy_config:/config
+    depends_on:
+      - gateway
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+    networks:
+      - coreasia-net
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  redisdata:
+  caddy_data:
+  caddy_config:
+
+networks:
+  coreasia-net:
+    driver: bridge

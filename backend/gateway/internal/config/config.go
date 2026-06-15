@@ -16,6 +16,8 @@ type Config struct {
 	R2       R2Config       `yaml:"r2"`
 	Xendit   XenditConfig   `yaml:"xendit"`
 	Midtrans MidtransConfig `yaml:"midtrans"`
+	Email    EmailConfig    `yaml:"email"`
+	Payments PaymentsConfig `yaml:"payments"`
 }
 
 type AppConfig struct {
@@ -53,6 +55,26 @@ type MidtransConfig struct {
 	UnfinishURL     string `yaml:"unfinish_url" env:"MIDTRANS_UNFINISH_URL" env-default:"https://coreasia.id/register"`
 	ErrorURL        string `yaml:"error_url" env:"MIDTRANS_ERROR_URL" env-default:"https://coreasia.id/register"`
 	MerchantName    string `yaml:"merchant_name" env:"MIDTRANS_MERCHANT_NAME" env-default:"CoreAsia"`
+}
+
+// EmailConfig drives transactional email (license-key delivery on purchase).
+type EmailConfig struct {
+	Provider string `yaml:"provider" env:"EMAIL_PROVIDER" env-default:"resend"`
+	APIKey   string `yaml:"api_key" env:"RESEND_API_KEY"`
+	From     string `yaml:"from" env:"EMAIL_FROM" env-default:"CoreAsia <noreply@coreasia.id>"`
+}
+
+// PaymentsConfig holds shared secrets for inbound payment webhooks (Mayar, dst)
+// plus the credentials used for OUTBOUND callback-verification against Mayar's API.
+type PaymentsConfig struct {
+	MayarWebhookToken string `yaml:"mayar_webhook_token" env:"MAYAR_WEBHOOK_TOKEN"`
+	// MayarAPIKey is the Bearer API key for OUTBOUND calls to Mayar (callback verify).
+	MayarAPIKey string `yaml:"mayar_api_key" env:"MAYAR_API_KEY"`
+	// MayarAPIBase is the Mayar REST API base URL (no trailing slash). Prod default.
+	MayarAPIBase string `yaml:"mayar_api_base" env:"MAYAR_API_BASE" env-default:"https://api.mayar.id/hl/v1"`
+	// MayarVerify, when true, independently confirms a webhook is genuinely PAID via
+	// Mayar's API before a license key is minted. Default false → behaviour unchanged.
+	MayarVerify bool `yaml:"mayar_verify" env:"MAYAR_VERIFY" env-default:"false"`
 }
 
 type CORSConfig struct {

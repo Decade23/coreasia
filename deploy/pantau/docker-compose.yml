@@ -1,0 +1,81 @@
+# CoreAsia Download Manager — license API (CAD gateway)
+# Co-hosted on the Pantau VPS (IDCloudHost Jakarta) "dulu".
+# Routed by Pantau's existing nginx-proxy + acme-companion (auto Let's Encrypt).
+# DB + Redis are OWN containers (isolated volumes) — Pantau data is never touched.
+#
+#   cd /opt/coreasia-cad && docker compose build && docker compose up -d
+#
+# Prereq: Cloudflare A record api.coreasia.id -> 116.193.191.185 (DNS-only/grey).
+
+services:
+  gateway:
+    build:
+      context: ./gateway
+      dockerfile: Dockerfile
+    image: coreasia-gateway:latest
+    container_name: coreasia-cad-gateway
+    restart: unless-stopped
+    env_file: ./.env
+    environment:
+      # Picked up by Pantau's nginx-proxy + acme-companion:
+      VIRTUAL_HOST: api.coreasia.id
+      VIRTUAL_PORT: "8081"
+      LETSENCRYPT_HOST: api.coreasia.id
+      LETSENCRYPT_EMAIL: hello@coreasia.id
+    expose:
+      - "8081"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - cad-internal   # reach db/redis (by container name)
+      - proxy          # discovered by nginx-proxy
+    mem_limit: 224m
+
+  db:
+    image: postgres:17-alpine
+    container_name: coreasia-cad-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - cad-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    networks:
+      - cad-internal
+    mem_limit: 256m
+
+  redis:
+    image: redis:7-alpine
+    container_name: coreasia-cad-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 48mb --maxmemory-policy allkeys-lru
+    volumes:
+      - cad-redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    networks:
+      - cad-internal
+    mem_limit: 64m
+
+networks:
+  cad-internal:
+    driver: bridge
+  proxy:
+    external: true
+    name: pantau_pantau-net
+
+volumes:
+  cad-pgdata:
+  cad-redisdata:

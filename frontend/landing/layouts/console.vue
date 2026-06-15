@@ -46,6 +46,7 @@ const menuItems = computed(() => [
   { label: tc('layout.keywords'), icon: 'lucide:tag', to: '/console/keywords' },
   { label: tc('layout.aiSettings'), icon: 'lucide:sparkles', to: '/console/ai-settings' },
   { label: tc('layout.apiKeys'), icon: 'lucide:key-round', to: '/console/api-keys' },
+  { label: tc('layout.cad'), icon: 'lucide:download-cloud', to: '/console/cad' },
   { label: tc('layout.users'), icon: 'lucide:users', to: '/console/users' },
   { label: tc('layout.auditLog'), icon: 'lucide:scroll-text', to: '/console/audit-log' },
 ])

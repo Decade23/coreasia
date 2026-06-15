@@ -31,6 +31,18 @@ midtrans:
   error_url: "https://coreasia.id/register"
   merchant_name: "CoreAsia"
 
+email:
+  provider: "resend"
+  api_key: ""
+  from: "CoreAsia <noreply@coreasia.id>"
+
+payments:
+  mayar_webhook_token: ""
+  # Callback-verification (OUTBOUND to Mayar) — guards against spoofed "paid" webhooks.
+  mayar_api_key: ""                          # Bearer API key for Mayar REST API
+  mayar_api_base: "https://api.mayar.id/hl/v1"
+  mayar_verify: false                        # set true (with mayar_api_key) to require verification
+
 jwt:
   secret: "dev-gateway-secret-change-in-production-min32chars"
   access_ttl: "60m"

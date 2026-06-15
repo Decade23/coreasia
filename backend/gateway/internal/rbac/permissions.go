@@ -75,6 +75,19 @@ const (
 	AuditList Permission = "audit:list"
 )
 
+// CAD (CoreAsia Download Manager)
+const (
+	CADLicensesList   Permission = "cad:licenses:list"
+	CADLicensesView   Permission = "cad:licenses:view"
+	CADLicensesCreate Permission = "cad:licenses:create"
+	CADLicensesUpdate Permission = "cad:licenses:update"
+	CADLicensesDelete Permission = "cad:licenses:delete"
+	CADLicensesCopy   Permission = "cad:licenses:copy"
+	CADLicensesImport Permission = "cad:licenses:import"
+	CADDevicesList    Permission = "cad:devices:list"
+	CADAnalyticsView  Permission = "cad:analytics:view"
+)
+
 // RolePermissions maps each role to its allowed permissions.
 // To add a new role, add an entry here. To grant/revoke a permission, edit the map.
 // Keep in sync with frontend: composables/usePermissions.ts
@@ -116,6 +129,15 @@ var RolePermissions = map[string]map[Permission]bool{
 		KeywordsAISuggest: true,
 		UploadCreate:      true,
 		AuditList:         true,
+		CADLicensesList:   true,
+		CADLicensesView:   true,
+		CADLicensesCreate: true,
+		CADLicensesUpdate: true,
+		CADLicensesDelete: true,
+		CADLicensesCopy:   true,
+		CADLicensesImport: true,
+		CADDevicesList:    true,
+		CADAnalyticsView:  true,
 	},
 	"admin": {
 		DashboardView:  true,
@@ -137,6 +159,10 @@ var RolePermissions = map[string]map[Permission]bool{
 		APIKeysView:       true,
 		UploadCreate:      true,
 		AuditList:         true,
+		CADLicensesList:  true,
+		CADLicensesView:  true,
+		CADDevicesList:   true,
+		CADAnalyticsView: true,
 	},
 }
 

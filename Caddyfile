@@ -1,0 +1,34 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# CoreAsia Gateway — Caddy reverse proxy + automatic HTTPS.
+# Public host: api.coreasia.id  →  internal gateway:8081 (Fiber, APP_PORT=8081).
+#
+# ── TLS behind Cloudflare: pick ONE option ──────────────────────────────────
+#
+# OPTION A — DNS-only (grey cloud) + Caddy's automatic Let's Encrypt (simplest).
+#   In Cloudflare DNS, set the A record `api` to "DNS only" (grey cloud).
+#   Caddy completes the HTTP-01/TLS-ALPN challenge directly on ports 80/443 and
+#   manages the cert automatically. No extra config needed below.
+#   Trade-off: the origin IP is exposed (no Cloudflare proxy / WAF / caching).
+#
+# OPTION B — Proxied (orange cloud) + Cloudflare Origin Certificate.
+#   Keep the A record proxied. Caddy CANNOT use Let's Encrypt through the proxy,
+#   so issue a Cloudflare Origin Certificate (Cloudflare dashboard → SSL/TLS →
+#   Origin Server → Create Certificate), copy the cert + key onto the VPS, mount
+#   them into the caddy container, and replace the block below with:
+#
+#       api.coreasia.id {
+#           tls /etc/caddy/origin-cert.pem /etc/caddy/origin-key.pem
+#           encode gzip
+#           reverse_proxy gateway:8081
+#       }
+#
+#   Then set Cloudflare SSL/TLS mode to "Full (strict)". This hides the origin IP
+#   and adds Cloudflare's WAF/CDN in front. Recommended for a gray-area product.
+#
+# Default below uses OPTION A. Switch to B if you keep the orange cloud on.
+# ─────────────────────────────────────────────────────────────────────────────
+
+api.coreasia.id {
+	encode gzip
+	reverse_proxy gateway:8081
+}

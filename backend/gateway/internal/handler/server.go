@@ -71,6 +71,7 @@ func (s *Server) setupRoutes() {
 		"../lms/migrations/tenant",
 	)
 	midtransService := service.NewMidtransService(s.cfg.Midtrans)
+	emailService := service.NewEmailService(s.cfg.Email)
 
 	r2Service, err := service.NewR2Service(s.cfg.R2)
 	if err != nil {
@@ -111,6 +112,9 @@ func (s *Server) setupRoutes() {
 	apiKeyHandler := NewAPIKeyHandler(apiKeyRepo, auditLogRepo, s.rdb)
 	botScheduleRepo := repository.NewBotScheduleRepo(s.pool)
 	botScheduleHandler := NewBotScheduleHandler(botScheduleRepo, auditLogRepo, articleBot)
+	cadRepo := repository.NewCADRepo(s.pool)
+	mayarClient := service.NewMayarClient(s.cfg.Payments)
+	cadHandler := NewCADHandler(cadRepo, auditLogRepo, emailService, s.cfg.Payments, mayarClient)
 
 	// Auth middleware
 	authMiddleware := mw.AuthMiddleware(jwtProvider)
@@ -195,6 +199,24 @@ func (s *Server) setupRoutes() {
 
 	// Audit logs
 	admin.Get("/audit-logs", mw.RequirePermission(rbac.AuditList), auditHandler.List)
+
+	// CAD (CoreAsia Download Manager) — admin console
+	admin.Get("/cad/licenses", mw.RequirePermission(rbac.CADLicensesList), cadHandler.List)
+	admin.Get("/cad/licenses/:id", mw.RequirePermission(rbac.CADLicensesView), cadHandler.GetByID)
+	admin.Get("/cad/licenses/:id/copy", mw.RequirePermission(rbac.CADLicensesCopy), cadHandler.CopyKey)
+	admin.Post("/cad/licenses", mw.RequirePermission(rbac.CADLicensesCreate), cadHandler.Create)
+	admin.Post("/cad/licenses/import", mw.RequirePermission(rbac.CADLicensesImport), cadHandler.Import)
+	admin.Put("/cad/licenses/:id", mw.RequirePermission(rbac.CADLicensesUpdate), cadHandler.Update)
+	admin.Delete("/cad/licenses/:id", mw.RequirePermission(rbac.CADLicensesDelete), cadHandler.Delete)
+	admin.Get("/cad/devices", mw.RequirePermission(rbac.CADDevicesList), cadHandler.ListDevices)
+	admin.Get("/cad/analytics", mw.RequirePermission(rbac.CADAnalyticsView), cadHandler.Analytics)
+
+	// CAD public (app-facing) — the desktop app calls these; no admin auth
+	api.Post("/cad/activate", cadHandler.Activate)
+	api.Post("/cad/telemetry", cadHandler.Telemetry)
+
+	// CAD purchase webhook (Mayar) — public, secured by shared-secret token
+	api.Post("/cad/purchase/mayar", cadHandler.PurchaseWebhookMayar)
 }
 
 func (s *Server) Start() error {
