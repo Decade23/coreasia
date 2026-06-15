@@ -78,6 +78,9 @@ services:
     container_name: coreasia-cad-watchtower
     restart: unless-stopped
     command: --label-enable --cleanup --interval 120
+    environment:
+      # containrrr/watchtower (2023) defaults to API 1.25; daemon needs >= 1.40.
+      DOCKER_API_VERSION: "1.43"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /home/pantau-coreasia/.docker/config.json:/config.json:ro
