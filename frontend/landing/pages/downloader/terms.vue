@@ -1,7 +1,14 @@
 <script setup lang="ts">
-import { CONTACT, COMPANY } from '~/utils/constants'
+import { CONTACT, COMPANY, MERCHANT } from '~/utils/constants'
 
 const { t } = useCoreI18n()
+
+// Resolusi token konten legal (sumber-tunggal nama perusahaan, email, & MoR).
+const sub = (s?: string) => s
+    ?.replace(/{company}/g, COMPANY.legalName)
+    ?.replace(/{email}/g, CONTACT.email)
+    ?.replace(/{mor}/g, MERCHANT.name)
+    ?.replace(/{morStatement}/g, MERCHANT.statement)
 
 const { useReveal } = useScrollReveal()
 const heroSection = useReveal('fadeUp')
@@ -9,7 +16,7 @@ const contentCard = useReveal('fadeUp', 100)
 
 useCoreSeo({
     title: t('legal.downloaderTerms.title') as string,
-    description: t('legal.downloaderTerms.description') as string,
+    description: sub(t('legal.downloaderTerms.description') as string) as string,
     path: '/downloader/terms',
 })
 
@@ -17,9 +24,8 @@ const sections = computed(() => {
     const raw = t('legal.downloaderTerms.sections') as Record<string, any>
     return Object.values(raw).map(section => ({
         ...section,
-        content: section.content
-            ?.replace(/{company}/g, COMPANY.legalName)
-            ?.replace(/{email}/g, CONTACT.email)
+        content: sub(section.content),
+        items: section.items?.map((i: string) => sub(i)),
     }))
 })
 </script>

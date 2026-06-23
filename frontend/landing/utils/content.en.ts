@@ -1737,11 +1737,11 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
       sections: {
         intro: {
           title: '1. Summary',
-          content: 'CoreAsia Download Manager ("CAD") is a desktop download manager with a companion browser extension, operated by {company} (the CoreAsia brand). Processing by the app and extension happens locally on your device, and for the core functions of CAD we do not collect your personal data to our servers — EXCEPT as described in this Policy: (a) purchase data processed by the seller of record / Merchant of Record (FastSpring) per their privacy policy; (b) technical diagnostics if you enable them (see Diagnostics); (c) license activation/identification data if online license validation is introduced in a future version; and (d) disclosures required by law or valid legal process. Otherwise, we do not upload your history, download contents, or URLs to our servers, and we do not sell your personal data. If we introduce server-based features in the future, we will update this Policy before such features become active.',
+          content: 'CoreAsia Download Manager ("CAD") is a desktop download manager with a companion browser extension, operated by {company} (the CoreAsia brand). Processing by the app and extension happens locally on your device, and for the core functions of CAD we do not collect your personal data to our servers — EXCEPT as described in this Policy: (a) purchase data processed by the seller of record / Merchant of Record ({mor}) per their privacy policy; (b) technical diagnostics if you enable them (see Diagnostics); (c) license activation/identification data if online license validation is introduced in a future version; and (d) disclosures required by law or valid legal process. Otherwise, we do not upload your history, download contents, or URLs to our servers, and we do not sell your personal data. If we introduce server-based features in the future, we will update this Policy before such features become active.',
         },
         controller: {
           title: '2. Data Controller & Roles',
-          content: '{company} is the data controller for data processed by the app, optional diagnostics, and license activation. For purchases, FastSpring acts as seller of record (Merchant of Record) and controller/processor of your payment data (name, email, billing address, card/tax data) per its privacy policy; {company} does not store your card data. Privacy questions may be sent to {email}.',
+          content: '{company} is the data controller for data processed by the app, optional diagnostics, and license activation. For purchases, {mor} acts as seller of record (Merchant of Record) and controller/processor of your payment data (name, email, billing address, card/tax data) per its privacy policy; {company} does not store your card data. Privacy questions may be sent to {email}.',
         },
         extension: {
           title: '3. Browser Extension (Chrome/Edge)',
@@ -1766,7 +1766,7 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
         },
         license: {
           title: '6. License Activation',
-          content: 'Activation requires no account. Currently licenses are validated locally (offline, Ed25519) without sending personal data to our servers. In a future version, we may introduce online license validation; if enabled, only minimal license/installation identifiers are sent to prevent abuse, and this Policy will be updated before that feature is active. Purchase and license issuance are handled by the seller of record (FastSpring) per their privacy policy.',
+          content: 'Activation requires no account. Currently licenses are validated locally (offline, Ed25519) without sending personal data to our servers. In a future version, we may introduce online license validation; if enabled, only minimal license/installation identifiers are sent to prevent abuse, and this Policy will be updated before that feature is active. Purchase and license issuance are handled by the seller of record ({mor}) per their privacy policy.',
         },
         trial: {
           title: '7. Trial Period',
@@ -1778,7 +1778,7 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
         },
         legalBasis: {
           title: '9. Legal Bases & Cross-Border Transfers',
-          content: 'Our legal bases: performance of a contract (processing your purchase and license), consent (optional diagnostics), and legitimate interests (security and product improvement). Purchase data may be processed outside your country of residence (e.g., via FastSpring in the United States) with safeguards required by applicable law (e.g., standard contractual clauses).',
+          content: 'Our legal bases: performance of a contract (processing your purchase and license), consent (optional diagnostics), and legitimate interests (security and product improvement). Purchase data may be processed outside your country of residence (e.g., via {mor} in the United States) with safeguards required by applicable law (e.g., standard contractual clauses).',
         },
         security: {
           title: '10. Data Security & Breach Notification',
@@ -1790,7 +1790,7 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
         },
         rights: {
           title: '12. Your Rights',
-          content: 'Because most data is stored locally on your device, you remain in full control. Depending on your jurisdiction (e.g., EU/UK under GDPR/UK GDPR, or Indonesia under the PDP Law), you have the right to: access, rectify, erase, restrict, or object to processing of your personal data, request portability, and withdraw consent at any time without affecting prior lawful processing. For payment data, submit a request through us or directly to FastSpring. You also have the right to lodge a complaint with the competent data-protection authority (e.g., the Indonesian PDP Authority, or an EU/UK data-protection authority). Contact us at {email}. You can exercise these rights directly as follows:',
+          content: 'Because most data is stored locally on your device, you remain in full control. Depending on your jurisdiction (e.g., EU/UK under GDPR/UK GDPR, or Indonesia under the PDP Law), you have the right to: access, rectify, erase, restrict, or object to processing of your personal data, request portability, and withdraw consent at any time without affecting prior lawful processing. For payment data, submit a request through us or directly to {mor}. You also have the right to lodge a complaint with the competent data-protection authority (e.g., the Indonesian PDP Authority, or an EU/UK data-protection authority). Contact us at {email}. You can exercise these rights directly as follows:',
           items: [
             'Delete history, settings, and app data directly from your device',
             'Turn off optional diagnostics at any time',
@@ -1799,11 +1799,11 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
         },
         retention: {
           title: '13. Data Storage and Retention',
-          content: 'Settings, license, and download history are stored locally on your device until you delete them. We do not keep copies of that data on our servers. Optional diagnostics data (if you enable it) is retained for at most 12 (twelve) months, then deleted or anonymized. License-activation data is retained for the license term for support and anti-abuse purposes. Purchase data is retained by FastSpring per its policies and tax obligations.',
+          content: 'Settings, license, and download history are stored locally on your device until you delete them. We do not keep copies of that data on our servers. Optional diagnostics data (if you enable it) is retained for at most 12 (twelve) months, then deleted or anonymized. License-activation data is retained for the license term for support and anti-abuse purposes. Purchase data is retained by {mor} per its policies and tax obligations.',
         },
         recipients: {
           title: '14. Data Recipients / Sub-processors',
-          content: 'Our categories of data recipients are limited to: (a) FastSpring (seller of record / payment processor); (b) our analytics/diagnostics provider (only for the optional diagnostics data you enable); and (c) infrastructure/hosting providers supporting our limited services. We do not share your personal data with others except as described in this Policy or required by law.',
+          content: 'Our categories of data recipients are limited to: (a) {mor} (seller of record / payment processor); (b) our analytics/diagnostics provider (only for the optional diagnostics data you enable); and (c) infrastructure/hosting providers supporting our limited services. We do not share your personal data with others except as described in this Policy or required by law.',
         },
         thirdPartyContent: {
           title: '15. Third-Party Content/Sites',
@@ -1835,7 +1835,7 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
         },
         natureRoles: {
           title: '2. Nature of the Tool, No Hosting, & Roles of the Parties',
-          content: 'CAD is a general-purpose, dual-use tool that runs and processes entirely on your device. {company} does not host, store on our servers, copy, index, cache, mirror/proxy, re-upload, or distribute any content you access or download through CAD. All content is transferred directly from third-party sources to your device; we are not an intermediary, provider, or publisher of that content. CAD has substantial lawful uses, including downloading content you own, openly licensed content, or content for which you have obtained permission. Roles of the parties: {company} is the licensor of the CAD software. FastSpring is the seller of record (Merchant of Record) for your purchase; FastSpring—not {company}—is your counterparty to the sale and handles payment, invoicing, taxes, and seller obligations under applicable law. The FastSpring terms and policies govern that sale. The {company} refund policy is an additional good-will policy layered on top of your statutory rights, which are fulfilled through FastSpring.',
+          content: 'CAD is a general-purpose, dual-use tool that runs and processes entirely on your device. {company} does not host, store on our servers, copy, index, cache, mirror/proxy, re-upload, or distribute any content you access or download through CAD. All content is transferred directly from third-party sources to your device; we are not an intermediary, provider, or publisher of that content. CAD has substantial lawful uses, including downloading content you own, openly licensed content, or content for which you have obtained permission. Roles of the parties: {company} is the licensor of the CAD software. {mor} is the seller of record (Merchant of Record) for your purchase; {mor}—not {company}—is your counterparty to the sale and handles payment, invoicing, taxes, and seller obligations under applicable law. The {mor} terms and policies govern that sale. The {company} refund policy is an additional good-will policy layered on top of your statutory rights, which are fulfilled through {mor}.',
         },
         license: {
           title: '3. License Grant',
@@ -1847,16 +1847,16 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
         },
         pricing: {
           title: '5. Payment and Licensing',
-          content: 'Prices may change at any time for new purchases; price changes do not affect a license you have already bought. The Lifetime product is a one-time payment with no recurring subscription fees. The seller of record (Merchant of Record) for the transaction is FastSpring, which is your counterparty to the sale and processes payment, invoicing, and taxes per its policies; applicable taxes may be shown or added based on your jurisdiction at checkout. Available license options:',
+          content: 'Prices may change at any time for new purchases; price changes do not affect a license you have already bought. The Lifetime product is a one-time payment with no recurring subscription fees. The seller of record (Merchant of Record) for the transaction is {mor}, which is your counterparty to the sale and processes payment, invoicing, and taxes per its policies; applicable taxes may be shown or added based on your jurisdiction at checkout. Available license options:',
           items: [
             'Lifetime License — one-time payment, no recurring subscription fees',
             '1-Day Pass — 1-day access',
-            'License purchase and issuance are handled by FastSpring as seller of record (Merchant of Record); applicable taxes may be added based on your jurisdiction at checkout',
+            'License purchase and issuance are handled by {mor} as seller of record (Merchant of Record); applicable taxes may be added based on your jurisdiction at checkout',
           ],
         },
         refund: {
           title: '6. Refund Policy',
-          content: 'We offer a 14 (fourteen)-day money-back guarantee from the date of a Lifetime license purchase — no reason required, declined only where abuse is established — plus a free 3-day trial before purchase. Outside that window, requests are reviewed case-by-case, in particular for technical issues that make the app unusable and that we cannot resolve. When a refund or dispute is approved, the related license legally ends and is no longer valid for use. Purchases are processed by FastSpring as Merchant of Record. This policy does not limit your mandatory statutory consumer rights under applicable law. Full terms, exceptions, and how to request are set out in our Refund Policy at coreasia.id/downloader/refund; in case of any conflict, the Refund Policy prevails. Contact us at {email}.',
+          content: 'We offer a 14 (fourteen)-day money-back guarantee from the date of a Lifetime license purchase — no reason required, declined only where abuse is established — plus a free 3-day trial before purchase. Outside that window, requests are reviewed case-by-case, in particular for technical issues that make the app unusable and that we cannot resolve. When a refund or dispute is approved, the related license legally ends and is no longer valid for use. Purchases are processed by {mor} as Merchant of Record. This policy does not limit your mandatory statutory consumer rights under applicable law. Full terms, exceptions, and how to request are set out in our Refund Policy at coreasia.id/downloader/refund; in case of any conflict, the Refund Policy prevails. Contact us at {email}.',
         },
         acceptableUse: {
           title: '7. Acceptable Use',
@@ -1885,7 +1885,7 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
         },
         warranty: {
           title: '12. Disclaimer of Warranties (As-Is)',
-          content: 'CAD is provided "as-is" and "as-available," without warranties of any kind, express or implied. To the maximum extent permitted by applicable law, we EXPRESSLY DISCLAIM all implied warranties, including merchantability, fitness for a particular purpose, non-infringement, title, and quiet enjoyment. We do not warrant that CAD will be error-free, uninterrupted, secure, or compatible with every site, service, or device configuration. Consumer safeguard (affirmative): If you are a consumer, nothing in this Section excludes, limits, or affects your statutory warranties and rights that cannot be waived under the consumer-protection law of your country of residence — including the Indonesian Law No. 8 of 1999 and, where applicable to you, EU/UK consumer law (including rights to conformity of digital content). The exclusions in this Section do not apply to consumers to the extent such mandatory law prohibits them. Seller conformity/warranty obligations are fulfilled through FastSpring as seller of record (see Section 2).',
+          content: 'CAD is provided "as-is" and "as-available," without warranties of any kind, express or implied. To the maximum extent permitted by applicable law, we EXPRESSLY DISCLAIM all implied warranties, including merchantability, fitness for a particular purpose, non-infringement, title, and quiet enjoyment. We do not warrant that CAD will be error-free, uninterrupted, secure, or compatible with every site, service, or device configuration. Consumer safeguard (affirmative): If you are a consumer, nothing in this Section excludes, limits, or affects your statutory warranties and rights that cannot be waived under the consumer-protection law of your country of residence — including the Indonesian Law No. 8 of 1999 and, where applicable to you, EU/UK consumer law (including rights to conformity of digital content). The exclusions in this Section do not apply to consumers to the extent such mandatory law prohibits them. Seller conformity/warranty obligations are fulfilled through {mor} as seller of record (see Section 2).',
         },
         liability: {
           title: '13. Limitation of Liability',
@@ -1909,7 +1909,7 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
         },
         general: {
           title: '18. General',
-          content: '(a) Severability. If any provision is held invalid or unenforceable, it shall be construed/limited minimally to remain effective; if impossible, it is severed and the remainder stays in full force. (b) Entire Agreement & Hierarchy. These Terms together with the Privacy Policy and Refund Policy are the entire agreement regarding CAD and supersede prior communications. Marketing materials are illustrative and not part of the agreement unless confirmed in writing. In case of conflict: refund matters are governed by the Refund Policy; data matters by the Privacy Policy; otherwise by these Terms. For the sale transaction, the FastSpring terms as seller of record govern. These Terms do not waive consumer rights to non-misleading information. (c) Force Majeure. We are not liable for delay/failure due to causes beyond our reasonable control (natural disasters, network outages, government action/legal changes, third-party site blocking/changes). This does not remove refund rights or consumer statutory rights. (d) No Waiver. Failure or delay in enforcing a provision is not a waiver; a waiver is valid only if in writing by our authorized representative. (e) Notices. Legal notices to us: {email} (or the registered address of {company}). Notices to you may be given via the app, your purchase email, or this page. (f) Governing Language. These Terms are made in Bahasa Indonesia; translations are provided for convenience. Between business users, the Bahasa Indonesia version prevails in case of discrepancy. For consumers, the version in the language in which these Terms were presented to you (or a language you can understand under mandatory local law) binds you; it may not be used to bind you to a meaning you do not understand.',
+          content: '(a) Severability. If any provision is held invalid or unenforceable, it shall be construed/limited minimally to remain effective; if impossible, it is severed and the remainder stays in full force. (b) Entire Agreement & Hierarchy. These Terms together with the Privacy Policy and Refund Policy are the entire agreement regarding CAD and supersede prior communications. Marketing materials are illustrative and not part of the agreement unless confirmed in writing. In case of conflict: refund matters are governed by the Refund Policy; data matters by the Privacy Policy; otherwise by these Terms. For the sale transaction, the {mor} terms as seller of record govern. These Terms do not waive consumer rights to non-misleading information. (c) Force Majeure. We are not liable for delay/failure due to causes beyond our reasonable control (natural disasters, network outages, government action/legal changes, third-party site blocking/changes). This does not remove refund rights or consumer statutory rights. (d) No Waiver. Failure or delay in enforcing a provision is not a waiver; a waiver is valid only if in writing by our authorized representative. (e) Notices. Legal notices to us: {email} (or the registered address of {company}). Notices to you may be given via the app, your purchase email, or this page. (f) Governing Language. These Terms are made in Bahasa Indonesia; translations are provided for convenience. Between business users, the Bahasa Indonesia version prevails in case of discrepancy. For consumers, the version in the language in which these Terms were presented to you (or a language you can understand under mandatory local law) binds you; it may not be used to bind you to a meaning you do not understand.',
         },
         contact: {
           title: '19. Contact Us',
@@ -1919,12 +1919,12 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
     },
     downloaderRefund: {
       title: 'CoreAsia Download Manager Refund Policy',
-      description: 'Refund policy for CoreAsia Download Manager — 14-day money-back guarantee, consumer rights, and Merchant of Record (FastSpring) terms.',
+      description: 'Refund policy for CoreAsia Download Manager — 14-day money-back guarantee, consumer rights, and Merchant of Record ({mor}) terms.',
       lastUpdated: 'Last updated: June 2026',
       sections: {
         intro: {
           title: '1. Overview',
-          content: 'This policy explains the refund terms for purchases of CoreAsia Download Manager ("CAD") licenses from {company}. We provide a free 3-day trial so you can assess compatibility before you buy, and a 14-day money-back guarantee for Lifetime licenses. This policy is offered in addition to, and does not limit, your mandatory consumer rights under applicable law. Your purchase is processed by FastSpring as Merchant of Record.',
+          content: 'This policy explains the refund terms for purchases of CoreAsia Download Manager ("CAD") licenses from {company}. We provide a free 3-day trial so you can assess compatibility before you buy, and a 14-day money-back guarantee for Lifetime licenses. This policy is offered in addition to, and does not limit, your mandatory consumer rights under applicable law. Your purchase is processed by {mor} as Merchant of Record.',
         },
         trialFirst: {
           title: '2. Try It Free First',
@@ -1948,7 +1948,7 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
         },
         digitalConsent: {
           title: '7. Digital Content & Consent to Immediate Performance (EU/UK)',
-          content: 'For EU/UK consumers, the 14-day right of withdrawal for digital content/services may be lost only if all three of the following are met before performance begins: (a) you give prior explicit consent for performance to begin immediately; (b) you acknowledge that you thereby lose the 14-day right of withdrawal; and (c) you receive confirmation on a durable medium (e.g., email). This durable-medium confirmation is provided by FastSpring as seller of record. If any of these is not met, this waiver is void and you retain the right to withdraw and obtain a full refund as provided by law, even if the download has begun. In all cases, this does not remove our 14-day money-back guarantee, which we continue to offer as a commercial policy, and does not limit your statutory rights.',
+          content: 'For EU/UK consumers, the 14-day right of withdrawal for digital content/services may be lost only if all three of the following are met before performance begins: (a) you give prior explicit consent for performance to begin immediately; (b) you acknowledge that you thereby lose the 14-day right of withdrawal; and (c) you receive confirmation on a durable medium (e.g., email). This durable-medium confirmation is provided by {mor} as seller of record. If any of these is not met, this waiver is void and you retain the right to withdraw and obtain a full refund as provided by law, even if the download has begun. In all cases, this does not remove our 14-day money-back guarantee, which we continue to offer as a commercial policy, and does not limit your statutory rights.',
         },
         statutory: {
           title: '8. Your Statutory Rights',
@@ -1964,19 +1964,19 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
         },
         processing: {
           title: '11. Processing & Timing',
-          content: 'Once approved, refunds are processed via FastSpring to your original payment method, with an estimated 5–10 business days after approval; actual timing depends on the payment provider and your issuing bank. Refunds are issued in the original transaction currency. If your payment was converted by your bank or card provider, the amount you receive may differ slightly due to exchange-rate movements or third-party conversion fees, which are outside our control and that of FastSpring.',
+          content: 'Once approved, refunds are processed via {mor} to your original payment method, with an estimated 5–10 business days after approval; actual timing depends on the payment provider and your issuing bank. Refunds are issued in the original transaction currency. If your payment was converted by your bank or card provider, the amount you receive may differ slightly due to exchange-rate movements or third-party conversion fees, which are outside our control and that of {mor}.',
         },
         dispute: {
           title: '12. Before Filing a Dispute (Chargeback)',
-          content: 'For valid purchases, please contact us first at {email} before filing a dispute (chargeback) with your bank; most issues are resolved faster by email. Your statement may reference FastSpring (e.g. "FS* fsprg.com"), CoreAsia, or CAD — please recognize this before reporting an unrecognized charge. Contacting us first does not limit your right to raise a dispute with your bank or card provider at any time. Like a refund, a dispute resolved in your favor legally terminates the related license as of that date on the same terms as "Effect of Refund on Your License", and you agree to stop using CAD.',
+          content: 'For valid purchases, please contact us first at {email} before filing a dispute (chargeback) with your bank; most issues are resolved faster by email. Your statement may reference {mor} (e.g. "{morStatement}"), CoreAsia, or CAD — please recognize this before reporting an unrecognized charge. Contacting us first does not limit your right to raise a dispute with your bank or card provider at any time. Like a refund, a dispute resolved in your favor legally terminates the related license as of that date on the same terms as "Effect of Refund on Your License", and you agree to stop using CAD.',
         },
         mor: {
           title: '13. Merchant of Record',
-          content: 'Your purchase is processed by FastSpring as Merchant of Record and seller of record. The purchase contract and tax handling (VAT/GST) are legally performed by FastSpring; your mandatory consumer rights may be exercised through FastSpring. This refund policy supplements and does not override the FastSpring Terms of Sale; where they conflict on matters FastSpring handles as Merchant of Record, the FastSpring Terms of Sale prevail. {company} is responsible for the product, license, and support.',
+          content: 'Your purchase is processed by {mor} as Merchant of Record and seller of record. The purchase contract and tax handling (VAT/GST) are legally performed by {mor}; your mandatory consumer rights may be exercised through {mor}. This refund policy supplements and does not override the {mor} Terms of Sale; where they conflict on matters {mor} handles as Merchant of Record, the {mor} Terms of Sale prevail. {company} is responsible for the product, license, and support.',
         },
         integration: {
           title: '14. Governing Law, Integration & Seller Role',
-          content: 'This Refund Policy forms part of and is subject to the CAD Terms of Use, and is governed by the laws of the Republic of Indonesia, without diminishing the mandatory consumer rights applicable to you (including EU/UK consumer withdrawal rights and rights under Law No. 8 of 1999). FastSpring is the seller of record (Merchant of Record); the seller statutory obligations for refunds, withdrawal, and conformity/warranty are fulfilled through FastSpring. The {company} refund policy is an additional good-will policy layered on top of those statutory rights. If there is any conflict regarding refunds between this document and the Terms of Use, this Refund Policy prevails for refund matters. Consequences of breach, indemnification, and dispute resolution are further governed by the Terms of Use (Sections 9 and 15).',
+          content: 'This Refund Policy forms part of and is subject to the CAD Terms of Use, and is governed by the laws of the Republic of Indonesia, without diminishing the mandatory consumer rights applicable to you (including EU/UK consumer withdrawal rights and rights under Law No. 8 of 1999). {mor} is the seller of record (Merchant of Record); the seller statutory obligations for refunds, withdrawal, and conformity/warranty are fulfilled through {mor}. The {company} refund policy is an additional good-will policy layered on top of those statutory rights. If there is any conflict regarding refunds between this document and the Terms of Use, this Refund Policy prevails for refund matters. Consequences of breach, indemnification, and dispute resolution are further governed by the Terms of Use (Sections 9 and 15).',
         },
         contact: {
           title: '15. Contact Us',

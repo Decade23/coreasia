@@ -46,6 +46,18 @@ export const COMPANY = {
         'Ekosistem produk digital dan mitra teknologi strategis untuk sertifikasi, monitoring web, CRM, dan model pertumbuhan berbasis SaaS maupun venture.',
 } as const
 
+// Merchant of Record (penjual sah) untuk pembelian CoreAsia Download Manager.
+// Sumber-tunggal — dirujuk via token {mor}/{morStatement} di konten legal
+// (privacy/terms/refund). Ganti penyedia? cukup ubah di sini.
+export const MERCHANT = {
+    name: 'Gumroad',
+    // Cara tagihan ini muncul di rekening pembeli (untuk mengenali charge).
+    // TODO(owner): verifikasi descriptor Gumroad sebenarnya pada statement nyata.
+    statement: 'GUMROAD.COM',
+    // Halaman checkout produk (Gumroad custom domain). App desktop pakai URL yang sama (BUY_URL).
+    buyUrl: 'https://getcadm.coreasia.id',
+} as const
+
 // ──────────────────────────────────────
 // FastSpring (Merchant of Record) — popup checkout (SBL)
 // ──────────────────────────────────────

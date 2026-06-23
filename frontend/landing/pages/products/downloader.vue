@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { LINKS, FASTSPRING } from '~/utils/constants'
+import { LINKS, MERCHANT } from '~/utils/constants'
 
 const { t } = useCoreI18n()
 
@@ -47,13 +47,6 @@ useHead({
         },
       }),
     },
-    {
-      id: 'fsc-api',
-      src: FASTSPRING.sbl,
-      type: 'text/javascript',
-      'data-storefront': FASTSPRING.storefront,
-      tagPosition: 'head',
-    },
   ],
 })
 
@@ -83,13 +76,9 @@ const pricingPlans = computed(
   () => (t('solutions.downloader.pricing.plans') as Array<Record<string, any>>) || [],
 )
 
-// Buka popup checkout FastSpring (SBL) untuk produk tertentu.
-function buyNow(path: string) {
-  const fs = (window as unknown as { fastspring?: { builder?: any } }).fastspring
-  if (fs?.builder) {
-    fs.builder.push({ reset: true, products: [{ path, quantity: 1 }] })
-    fs.builder.checkout()
-  }
+// Buka halaman checkout Gumroad (Merchant of Record) untuk membeli lisensi.
+function buyNow(_path?: string) {
+  window.open(MERCHANT.buyUrl, '_blank', 'noopener')
 }
 const privacyPoints = computed(
   () => (t('solutions.downloader.privacy.items') as Array<Record<string, string>>) || [],
