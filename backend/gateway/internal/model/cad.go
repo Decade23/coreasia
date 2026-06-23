@@ -89,6 +89,14 @@ type ImportCADLicensesRequest struct {
 	Tier string   `json:"tier"`
 }
 
+// GenerateCADLicenseRequest mints NEW signed keys server-side (admin "Generate").
+type GenerateCADLicenseRequest struct {
+	Email       string `json:"email" validate:"required,email"`
+	Tier        string `json:"tier"`
+	Count       int    `json:"count" validate:"omitempty,min=1,max=100"`
+	DeviceLimit *int   `json:"device_limit"`
+}
+
 // ───────────────────────── Installation / device ─────────────────────────
 
 type CADInstallation struct {

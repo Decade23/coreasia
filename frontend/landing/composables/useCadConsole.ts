@@ -114,6 +114,22 @@ export const useCadConsole = () => {
     }
   }
 
+  const generateKeys = async (email: string, tier = 'lifetime', count = 1): Promise<string[]> => {
+    saving.value = true
+    try {
+      const res = await api.post<{ keys: string[]; count: number }>('/admin/cad/licenses/generate', { email, tier, count })
+      const keys = res.data?.keys ?? []
+      toast.success(tc('cad.generated', { n: keys.length }))
+      await fetchLicenses()
+      return keys
+    } catch (err: any) {
+      toast.error(err?.data?.errors?.message || tc('cad.actionFailed'))
+      return []
+    } finally {
+      saving.value = false
+    }
+  }
+
   const setStatus = async (id: string, status: string): Promise<boolean> => {
     saving.value = true
     try {
@@ -174,6 +190,6 @@ export const useCadConsole = () => {
   return {
     licenses, devices, summary, loading, saving,
     fetchLicenses, fetchDevices, fetchAnalytics,
-    importKeys, setStatus, deleteLicense, copyKey, deactivateDevice,
+    importKeys, generateKeys, setStatus, deleteLicense, copyKey, deactivateDevice,
   }
 }

@@ -18,6 +18,15 @@ type Config struct {
 	Midtrans MidtransConfig `yaml:"midtrans"`
 	Email    EmailConfig    `yaml:"email"`
 	Payments PaymentsConfig `yaml:"payments"`
+	CAD      CADConfig      `yaml:"cad"`
+}
+
+// CADConfig — penerbitan license key CoreAsia Download Manager.
+type CADConfig struct {
+	// SigningKey = seed Ed25519 (base64url, 32 byte) untuk MENANDATANGANI license key
+	// server-side (admin "Generate"). HARUS berpasangan dgn LICENSE_PUBKEY di app.
+	// Kosong = fitur generate nonaktif (import tetap jalan). RAHASIA — jangan commit.
+	SigningKey string `yaml:"signing_key" env:"CAD_LICENSE_SIGNING_KEY"`
 }
 
 type AppConfig struct {

@@ -63,16 +63,18 @@ type CADHandler struct {
 	repo        cadStore
 	auditLog    auditLogger
 	email       *service.EmailService
+	signer      *service.CADKeySigner // server-side key generation; nil = generate disabled
 	mayarSecret string
 	mayar       mayarVerifier // outbound callback-verifier (may be nil)
 	mayarVerify bool          // when true, REQUIRE callback verification before minting a key
 }
 
-func NewCADHandler(repo *repository.CADRepo, auditLog *repository.AuditLogRepo, email *service.EmailService, payments config.PaymentsConfig, mayar mayarVerifier) *CADHandler {
+func NewCADHandler(repo *repository.CADRepo, auditLog *repository.AuditLogRepo, email *service.EmailService, signer *service.CADKeySigner, payments config.PaymentsConfig, mayar mayarVerifier) *CADHandler {
 	return &CADHandler{
 		repo:        repo,
 		auditLog:    auditLog,
 		email:       email,
+		signer:      signer,
 		mayarSecret: payments.MayarWebhookToken,
 		mayar:       mayar,
 		mayarVerify: payments.MayarVerify,
@@ -173,6 +175,55 @@ func (h *CADHandler) Create(c fiber.Ctx) error {
 	idStr := lic.ID.String()
 	h.auditLog.LogAction(c.Context(), &claims.UserID, &claims.FullName, "create", "cad_licenses", &idStr, &desc, c.IP())
 	return created(c, lic.ToResponse())
+}
+
+// Generate mints NEW signed keys server-side (Ed25519) and stores them. Returns the
+// full keys ONCE (admin copies them). Requires CAD_LICENSE_SIGNING_KEY configured.
+func (h *CADHandler) Generate(c fiber.Ctx) error {
+	claims := middleware.GetClaims(c)
+	if h.signer == nil {
+		return errResponse(c, apperr.NewInternal(fmt.Errorf("CAD signing key belum dikonfigurasi di server (set CAD_LICENSE_SIGNING_KEY)")))
+	}
+	var req model.GenerateCADLicenseRequest
+	if err := c.Bind().JSON(&req); err != nil {
+		return errResponse(c, apperr.NewBadRequest("Format request tidak valid"))
+	}
+	if appErr := validate.Struct(&req); appErr != nil {
+		return errResponse(c, appErr)
+	}
+	tier := req.Tier
+	if tier == "" {
+		tier = "lifetime"
+	}
+	count := req.Count
+	if count < 1 {
+		count = 1
+	}
+	limit := 1
+	if req.DeviceLimit != nil {
+		limit = *req.DeviceLimit
+	}
+	keys := make([]string, 0, count)
+	for i := 0; i < count; i++ {
+		key, err := h.signer.Sign(req.Email, tier, 0) // exp=0 → lifetime
+		if err != nil {
+			slog.Error("gagal sign cad key", "error", err)
+			return errResponse(c, apperr.NewInternal(err))
+		}
+		em := req.Email
+		lic := model.CADLicense{
+			LicenseKey: key, Email: &em, Tier: tier, Status: "active",
+			DeviceLimit: limit, CreatedBy: &claims.UserID,
+		}
+		if err := h.repo.Create(c.Context(), &lic); err != nil {
+			slog.Error("gagal simpan cad license (generate)", "error", err)
+			return errResponse(c, apperr.NewInternal(err))
+		}
+		keys = append(keys, key)
+	}
+	desc := fmt.Sprintf("Generate %d license CAD untuk %s", len(keys), req.Email)
+	h.auditLog.LogAction(c.Context(), &claims.UserID, &claims.FullName, "generate", "cad_licenses", nil, &desc, c.IP())
+	return ok(c, fiber.Map{"keys": keys, "count": len(keys)})
 }
 
 func (h *CADHandler) Update(c fiber.Ctx) error {

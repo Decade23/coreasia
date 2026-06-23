@@ -12,6 +12,10 @@ const tab = ref<Tab>('analytics')
 const showImport = ref(false)
 const importText = ref('')
 const importTier = ref('lifetime')
+const showGenerate = ref(false)
+const genEmail = ref('')
+const genCount = ref(1)
+const genResult = ref<string[]>([])
 const deleteTarget = ref<string | null>(null)
 const releaseTarget = ref<string | null>(null)
 
@@ -33,6 +37,20 @@ const submitImport = async () => {
     importText.value = ''
   }
 }
+
+const submitGenerate = async () => {
+  const email = genEmail.value.trim()
+  if (!email) return
+  const keys = await cad.generateKeys(email, 'lifetime', genCount.value || 1)
+  if (keys.length) genResult.value = keys
+}
+const closeGenerate = () => {
+  showGenerate.value = false
+  genResult.value = []
+  genEmail.value = ''
+  genCount.value = 1
+}
+const copyText = async (t: string) => { try { await navigator.clipboard.writeText(t) } catch { /* noop */ } }
 
 const confirmDelete = async () => {
   if (deleteTarget.value) {
@@ -76,15 +94,26 @@ const tabs: { key: Tab; label: string; icon: string; perm: string }[] = [
         <h1 class="font-display text-2xl font-bold text-[var(--ca-text)]">{{ tc('cad.title') }}</h1>
         <p class="mt-1 text-sm text-[var(--ca-muted)]">{{ tc('cad.subtitle') }}</p>
       </div>
-      <button
-        v-if="can('cad:licenses:import')"
-        type="button"
-        class="ca-btn-primary"
-        @click="showImport = true"
-      >
-        <Icon name="lucide:upload" class="h-4 w-4" />
-        {{ tc('cad.import') }}
-      </button>
+      <div class="flex flex-wrap items-center gap-2">
+        <button
+          v-if="can('cad:licenses:create')"
+          type="button"
+          class="ca-btn-primary"
+          @click="showGenerate = true"
+        >
+          <Icon name="lucide:sparkles" class="h-4 w-4" />
+          {{ tc('cad.generate') }}
+        </button>
+        <button
+          v-if="can('cad:licenses:import')"
+          type="button"
+          class="ca-btn-secondary"
+          @click="showImport = true"
+        >
+          <Icon name="lucide:upload" class="h-4 w-4" />
+          {{ tc('cad.import') }}
+        </button>
+      </div>
     </div>
 
     <!-- Tabs -->
@@ -159,34 +188,34 @@ const tabs: { key: Tab; label: string; icon: string; perm: string }[] = [
       <p class="border-b border-[color:var(--ca-border)] px-4 py-2 text-xs text-[var(--ca-subtle)]">{{ tc('cad.revokeNote') }}</p>
       <div v-if="loading" class="p-6 text-sm text-[var(--ca-muted)]">…</div>
       <p v-else-if="!licenses.length" class="p-6 text-sm text-[var(--ca-muted)]">{{ tc('cad.empty') }}</p>
-      <div v-else class="overflow-x-auto">
+      <div v-else class="overflow-auto max-h-[60vh]">
         <table class="w-full text-left text-sm">
-          <thead class="text-xs uppercase text-[var(--ca-subtle)]">
+          <thead class="sticky top-0 z-10 bg-[var(--ca-panel-bg-strong)] text-xs uppercase text-[var(--ca-subtle)]">
             <tr class="border-b border-[color:var(--ca-border)]">
-              <th class="px-4 py-3">{{ tc('cad.colKey') }}</th>
-              <th class="px-4 py-3">{{ tc('cad.colEmail') }}</th>
-              <th class="px-4 py-3">{{ tc('cad.colTier') }}</th>
-              <th class="px-4 py-3">{{ tc('cad.platform') }}</th>
-              <th class="px-4 py-3">{{ tc('cad.colStatus') }}</th>
-              <th class="px-4 py-3">{{ tc('cad.colDevices') }}</th>
-              <th class="px-4 py-3">{{ tc('cad.colCreated') }}</th>
-              <th class="px-4 py-3">{{ tc('cad.lastTransfer') }}</th>
-              <th class="px-4 py-3 text-right">{{ tc('cad.colActions') }}</th>
+              <th class="px-3 py-2">{{ tc('cad.colKey') }}</th>
+              <th class="px-3 py-2">{{ tc('cad.colEmail') }}</th>
+              <th class="px-3 py-2">{{ tc('cad.colTier') }}</th>
+              <th class="px-3 py-2">{{ tc('cad.platform') }}</th>
+              <th class="px-3 py-2">{{ tc('cad.colStatus') }}</th>
+              <th class="px-3 py-2">{{ tc('cad.colDevices') }}</th>
+              <th class="px-3 py-2">{{ tc('cad.colCreated') }}</th>
+              <th class="px-3 py-2">{{ tc('cad.lastTransfer') }}</th>
+              <th class="px-3 py-2 text-right">{{ tc('cad.colActions') }}</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="l in licenses" :key="l.id" class="border-b border-[color:var(--ca-border)]/60">
-              <td class="px-4 py-3 font-mono text-xs text-[var(--ca-text)]">{{ l.key_masked }}</td>
-              <td class="px-4 py-3 text-[var(--ca-muted)]">{{ l.email || '-' }}</td>
-              <td class="px-4 py-3 text-[var(--ca-muted)]">{{ l.tier }}</td>
-              <td class="px-4 py-3 text-[var(--ca-muted)]">{{ l.platform || '-' }}</td>
-              <td class="px-4 py-3">
+              <td class="px-3 py-2 font-mono text-xs text-[var(--ca-text)]">{{ l.key_masked }}</td>
+              <td class="px-3 py-2 text-[var(--ca-muted)]">{{ l.email || '-' }}</td>
+              <td class="px-3 py-2 text-[var(--ca-muted)]">{{ l.tier }}</td>
+              <td class="px-3 py-2 text-[var(--ca-muted)]">{{ l.platform || '-' }}</td>
+              <td class="px-3 py-2">
                 <span class="rounded-full px-2 py-0.5 text-xs font-semibold" :class="statusClass(l.status)">{{ l.status }}</span>
               </td>
-              <td class="px-4 py-3 text-[var(--ca-muted)]">{{ l.device_count }} / {{ l.device_limit }}</td>
-              <td class="px-4 py-3 text-[var(--ca-muted)]">{{ fmtDate(l.created_at) }}</td>
-              <td class="px-4 py-3 text-[var(--ca-muted)]">{{ fmtDate(l.last_transfer_at ?? null) }}</td>
-              <td class="px-4 py-3">
+              <td class="px-3 py-2 text-[var(--ca-muted)]">{{ l.device_count }} / {{ l.device_limit }}</td>
+              <td class="px-3 py-2 text-[var(--ca-muted)]">{{ fmtDate(l.created_at) }}</td>
+              <td class="px-3 py-2 text-[var(--ca-muted)]">{{ fmtDate(l.last_transfer_at ?? null) }}</td>
+              <td class="px-3 py-2">
                 <div class="flex items-center justify-end gap-1.5">
                   <button v-if="can('cad:licenses:copy')" type="button" class="ca-header-btn !h-8 !min-w-8" :title="tc('cad.copy')" @click="cad.copyKey(l.id)">
                     <Icon name="lucide:copy" class="h-3.5 w-3.5" />
@@ -212,26 +241,26 @@ const tabs: { key: Tab; label: string; icon: string; perm: string }[] = [
     <div v-else class="ca-card overflow-hidden">
       <div v-if="loading" class="p-6 text-sm text-[var(--ca-muted)]">…</div>
       <p v-else-if="!devices.length" class="p-6 text-sm text-[var(--ca-muted)]">{{ tc('cad.emptyDevices') }}</p>
-      <div v-else class="overflow-x-auto">
+      <div v-else class="overflow-auto max-h-[60vh]">
         <table class="w-full text-left text-sm">
-          <thead class="text-xs uppercase text-[var(--ca-subtle)]">
+          <thead class="sticky top-0 z-10 bg-[var(--ca-panel-bg-strong)] text-xs uppercase text-[var(--ca-subtle)]">
             <tr class="border-b border-[color:var(--ca-border)]">
-              <th class="px-4 py-3">{{ tc('cad.colDevice') }}</th>
-              <th class="px-4 py-3">{{ tc('cad.platform') }}</th>
-              <th class="px-4 py-3">{{ tc('cad.colAppVer') }}</th>
-              <th class="px-4 py-3">{{ tc('cad.colOs') }}</th>
-              <th class="px-4 py-3">{{ tc('cad.colLastSeen') }}</th>
-              <th class="px-4 py-3 text-right">{{ tc('cad.colActions') }}</th>
+              <th class="px-3 py-2">{{ tc('cad.colDevice') }}</th>
+              <th class="px-3 py-2">{{ tc('cad.platform') }}</th>
+              <th class="px-3 py-2">{{ tc('cad.colAppVer') }}</th>
+              <th class="px-3 py-2">{{ tc('cad.colOs') }}</th>
+              <th class="px-3 py-2">{{ tc('cad.colLastSeen') }}</th>
+              <th class="px-3 py-2 text-right">{{ tc('cad.colActions') }}</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="d in devices" :key="d.id" class="border-b border-[color:var(--ca-border)]/60">
-              <td class="px-4 py-3 font-mono text-xs text-[var(--ca-text)]">{{ shortHash(d.device_hash) }}</td>
-              <td class="px-4 py-3 text-[var(--ca-muted)]">{{ d.platform || '-' }}</td>
-              <td class="px-4 py-3 text-[var(--ca-muted)]">{{ d.app_version || '-' }}</td>
-              <td class="px-4 py-3 text-[var(--ca-muted)]">{{ d.os_version || '-' }}</td>
-              <td class="px-4 py-3 text-[var(--ca-muted)]">{{ fmtDate(d.last_seen) }}</td>
-              <td class="px-4 py-3">
+              <td class="px-3 py-2 font-mono text-xs text-[var(--ca-text)]">{{ shortHash(d.device_hash) }}</td>
+              <td class="px-3 py-2 text-[var(--ca-muted)]">{{ d.platform || '-' }}</td>
+              <td class="px-3 py-2 text-[var(--ca-muted)]">{{ d.app_version || '-' }}</td>
+              <td class="px-3 py-2 text-[var(--ca-muted)]">{{ d.os_version || '-' }}</td>
+              <td class="px-3 py-2 text-[var(--ca-muted)]">{{ fmtDate(d.last_seen) }}</td>
+              <td class="px-3 py-2">
                 <div class="flex items-center justify-end gap-1.5">
                   <button v-if="can('cad:devices:manage') && !d.revoked" type="button" class="ca-header-btn !h-8 !min-w-8 text-amber-400" :title="tc('cad.releaseDevice')" :disabled="saving" @click="releaseTarget = d.id">
                     <Icon name="lucide:unplug" class="h-3.5 w-3.5" />
@@ -258,6 +287,52 @@ const tabs: { key: Tab; label: string; icon: string; perm: string }[] = [
           <button type="button" class="ca-btn-secondary" @click="showImport = false">{{ tc('common.cancel') }}</button>
           <button type="button" class="ca-btn-primary" :disabled="saving" @click="submitImport">{{ tc('cad.importBtn') }}</button>
         </div>
+      </div>
+    </ConsoleModal>
+
+    <!-- Generate modal -->
+    <ConsoleModal :show="showGenerate" :title="tc('cad.generateTitle')" size="md" @close="closeGenerate">
+      <div class="space-y-3">
+        <p class="text-sm text-[var(--ca-muted)]">{{ tc('cad.generateHint') }}</p>
+        <template v-if="!genResult.length">
+          <div>
+            <label class="mb-1 block text-xs text-[var(--ca-subtle)]">{{ tc('cad.generateEmail') }}</label>
+            <input
+              v-model="genEmail"
+              type="email"
+              placeholder="pembeli@email.com"
+              class="w-full rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] px-3 py-2 text-sm text-[var(--ca-text)]"
+            >
+          </div>
+          <div class="w-32">
+            <label class="mb-1 block text-xs text-[var(--ca-subtle)]">{{ tc('cad.generateCount') }}</label>
+            <input
+              v-model.number="genCount"
+              type="number"
+              min="1"
+              max="100"
+              class="w-full rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] px-3 py-2 text-sm text-[var(--ca-text)]"
+            >
+          </div>
+          <div class="flex justify-end gap-3">
+            <button type="button" class="ca-btn-secondary" @click="closeGenerate">{{ tc('common.cancel') }}</button>
+            <button type="button" class="ca-btn-primary" :disabled="saving || !genEmail.trim()" @click="submitGenerate">{{ tc('cad.generateBtn') }}</button>
+          </div>
+        </template>
+        <template v-else>
+          <p class="text-sm font-medium text-[var(--ca-text)]">{{ tc('cad.generatedKeys') }}</p>
+          <div class="max-h-60 space-y-2 overflow-auto">
+            <div v-for="(k, i) in genResult" :key="i" class="flex items-center gap-2 rounded-lg border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-2">
+              <code class="flex-1 break-all font-mono text-xs text-[var(--ca-text)]">{{ k }}</code>
+              <button type="button" class="ca-header-btn !h-8 !min-w-8" :title="tc('cad.copy')" @click="copyText(k)">
+                <Icon name="lucide:copy" class="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
+          <div class="flex justify-end">
+            <button type="button" class="ca-btn-primary" @click="closeGenerate">{{ tc('common.cancel') }}</button>
+          </div>
+        </template>
       </div>
     </ConsoleModal>
 

@@ -114,7 +114,12 @@ func (s *Server) setupRoutes() {
 	botScheduleHandler := NewBotScheduleHandler(botScheduleRepo, auditLogRepo, articleBot)
 	cadRepo := repository.NewCADRepo(s.pool)
 	mayarClient := service.NewMayarClient(s.cfg.Payments)
-	cadHandler := NewCADHandler(cadRepo, auditLogRepo, emailService, s.cfg.Payments, mayarClient)
+	cadSigner, err := service.NewCADKeySigner(s.cfg.CAD.SigningKey)
+	if err != nil {
+		slog.Warn("CAD key signer dinonaktifkan (generate tidak tersedia)", "error", err)
+		cadSigner = nil
+	}
+	cadHandler := NewCADHandler(cadRepo, auditLogRepo, emailService, cadSigner, s.cfg.Payments, mayarClient)
 
 	// Auth middleware
 	authMiddleware := mw.AuthMiddleware(jwtProvider)
@@ -205,6 +210,7 @@ func (s *Server) setupRoutes() {
 	admin.Get("/cad/licenses/:id", mw.RequirePermission(rbac.CADLicensesView), cadHandler.GetByID)
 	admin.Get("/cad/licenses/:id/copy", mw.RequirePermission(rbac.CADLicensesCopy), cadHandler.CopyKey)
 	admin.Post("/cad/licenses", mw.RequirePermission(rbac.CADLicensesCreate), cadHandler.Create)
+	admin.Post("/cad/licenses/generate", mw.RequirePermission(rbac.CADLicensesCreate), cadHandler.Generate)
 	admin.Post("/cad/licenses/import", mw.RequirePermission(rbac.CADLicensesImport), cadHandler.Import)
 	admin.Put("/cad/licenses/:id", mw.RequirePermission(rbac.CADLicensesUpdate), cadHandler.Update)
 	admin.Delete("/cad/licenses/:id", mw.RequirePermission(rbac.CADLicensesDelete), cadHandler.Delete)
