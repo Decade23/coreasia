@@ -84,6 +84,12 @@ type PaymentsConfig struct {
 	// MayarVerify, when true, independently confirms a webhook is genuinely PAID via
 	// Mayar's API before a license key is minted. Default false → behaviour unchanged.
 	MayarVerify bool `yaml:"mayar_verify" env:"MAYAR_VERIFY" env-default:"false"`
+	// GumroadPingToken — shared secret yang diselipkan di URL Gumroad Ping
+	// (?token=...) untuk mengautentikasi webhook (Gumroad ping tak punya HMAC).
+	// Kosong = webhook Gumroad ditolak (fail closed).
+	GumroadPingToken string `yaml:"gumroad_ping_token" env:"GUMROAD_PING_TOKEN"`
+	// GumroadSellerID (opsional) — bila diisi, field seller_id ping harus cocok.
+	GumroadSellerID string `yaml:"gumroad_seller_id" env:"GUMROAD_SELLER_ID"`
 }
 
 type CORSConfig struct {
@@ -116,11 +122,11 @@ type AIConfig struct {
 }
 
 type R2Config struct {
-	AccountID      string `yaml:"account_id" env:"R2_ACCOUNT_ID"`
-	AccessKeyID    string `yaml:"access_key_id" env:"R2_ACCESS_KEY_ID"`
+	AccountID       string `yaml:"account_id" env:"R2_ACCOUNT_ID"`
+	AccessKeyID     string `yaml:"access_key_id" env:"R2_ACCESS_KEY_ID"`
 	SecretAccessKey string `yaml:"secret_access_key" env:"R2_SECRET_ACCESS_KEY"`
-	BucketName     string `yaml:"bucket_name" env:"R2_BUCKET_NAME" env-default:"coreasia-articles"`
-	PublicURL      string `yaml:"public_url" env:"R2_PUBLIC_URL"`
+	BucketName      string `yaml:"bucket_name" env:"R2_BUCKET_NAME" env-default:"coreasia-articles"`
+	PublicURL       string `yaml:"public_url" env:"R2_PUBLIC_URL"`
 }
 
 func (d DatabaseConfig) DSN() string {

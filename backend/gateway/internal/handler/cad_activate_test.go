@@ -132,7 +132,10 @@ func (f *fakeCADStore) TouchInstallation(_ context.Context, id uuid.UUID, _, _ *
 // ── unused-by-these-tests methods (satisfy interface) ──
 
 func (f *fakeCADStore) FindAll(context.Context) ([]model.CADLicense, error) { return nil, nil }
-func (f *fakeCADStore) Create(context.Context, *model.CADLicense) error     { return nil }
+func (f *fakeCADStore) FindByOrderRef(context.Context, string) (*model.CADLicense, error) {
+	return nil, nil
+}
+func (f *fakeCADStore) Create(context.Context, *model.CADLicense) error { return nil }
 func (f *fakeCADStore) Update(context.Context, *model.CADLicense) error     { return nil }
 func (f *fakeCADStore) Delete(context.Context, uuid.UUID) error             { return nil }
 func (f *fakeCADStore) ImportBatch(context.Context, []string, string, *uuid.UUID) (int, error) {

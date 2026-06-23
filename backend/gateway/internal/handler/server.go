@@ -223,8 +223,9 @@ func (s *Server) setupRoutes() {
 	api.Post("/cad/deactivate", cadHandler.Deactivate)
 	api.Post("/cad/telemetry", cadHandler.Telemetry)
 
-	// CAD purchase webhook (Mayar) — public, secured by shared-secret token
+	// CAD purchase webhooks — public, secured by shared-secret token
 	api.Post("/cad/purchase/mayar", cadHandler.PurchaseWebhookMayar)
+	api.Post("/cad/purchase/gumroad", cadHandler.PurchaseWebhookGumroad)
 }
 
 func (s *Server) Start() error {

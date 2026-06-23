@@ -15,6 +15,7 @@ const importTier = ref('lifetime')
 const showGenerate = ref(false)
 const genEmail = ref('')
 const genCount = ref(1)
+const genSendEmail = ref(true)
 const genResult = ref<string[]>([])
 const deleteTarget = ref<string | null>(null)
 const releaseTarget = ref<string | null>(null)
@@ -41,7 +42,7 @@ const submitImport = async () => {
 const submitGenerate = async () => {
   const email = genEmail.value.trim()
   if (!email) return
-  const keys = await cad.generateKeys(email, 'lifetime', genCount.value || 1)
+  const keys = await cad.generateKeys(email, 'lifetime', genCount.value || 1, genSendEmail.value)
   if (keys.length) genResult.value = keys
 }
 const closeGenerate = () => {
@@ -49,6 +50,7 @@ const closeGenerate = () => {
   genResult.value = []
   genEmail.value = ''
   genCount.value = 1
+  genSendEmail.value = true
 }
 const copyText = async (t: string) => { try { await navigator.clipboard.writeText(t) } catch { /* noop */ } }
 
@@ -314,6 +316,10 @@ const tabs: { key: Tab; label: string; icon: string; perm: string }[] = [
               class="w-full rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] px-3 py-2 text-sm text-[var(--ca-text)]"
             >
           </div>
+          <label class="flex items-center gap-2 text-sm text-[var(--ca-muted)]">
+            <input v-model="genSendEmail" type="checkbox" class="h-4 w-4 rounded border-[color:var(--ca-border)]">
+            {{ tc('cad.generateSendEmail') }}
+          </label>
           <div class="flex justify-end gap-3">
             <button type="button" class="ca-btn-secondary" @click="closeGenerate">{{ tc('common.cancel') }}</button>
             <button type="button" class="ca-btn-primary" :disabled="saving || !genEmail.trim()" @click="submitGenerate">{{ tc('cad.generateBtn') }}</button>

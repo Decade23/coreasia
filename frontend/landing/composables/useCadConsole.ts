@@ -114,12 +114,14 @@ export const useCadConsole = () => {
     }
   }
 
-  const generateKeys = async (email: string, tier = 'lifetime', count = 1): Promise<string[]> => {
+  const generateKeys = async (email: string, tier = 'lifetime', count = 1, sendEmail = false): Promise<string[]> => {
     saving.value = true
     try {
-      const res = await api.post<{ keys: string[]; count: number }>('/admin/cad/licenses/generate', { email, tier, count })
+      const res = await api.post<{ keys: string[]; count: number; emailed: number }>('/admin/cad/licenses/generate', { email, tier, count, send_email: sendEmail })
       const keys = res.data?.keys ?? []
-      toast.success(tc('cad.generated', { n: keys.length }))
+      toast.success(sendEmail && (res.data?.emailed ?? 0) > 0
+        ? tc('cad.generatedEmailed', { n: keys.length })
+        : tc('cad.generated', { n: keys.length }))
       await fetchLicenses()
       return keys
     } catch (err: any) {

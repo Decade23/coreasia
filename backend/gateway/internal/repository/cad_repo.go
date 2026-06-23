@@ -71,6 +71,23 @@ func (r *CADRepo) FindByKey(ctx context.Context, key string) (*model.CADLicense,
 	return &l, nil
 }
 
+// FindByOrderRef returns the license for an order reference (idempotency for
+// purchase webhooks), or (nil, nil) if none. Latest first.
+func (r *CADRepo) FindByOrderRef(ctx context.Context, orderRef string) (*model.CADLicense, error) {
+	var l model.CADLicense
+	err := r.pool.QueryRow(ctx,
+		`SELECT id, license_key, email, tier, status, platform, order_ref, device_limit, last_transfer_at, expires_at, notes, created_by, created_at, updated_at
+		 FROM public.cad_licenses WHERE order_ref = $1 ORDER BY created_at DESC LIMIT 1`, orderRef).
+		Scan(&l.ID, &l.LicenseKey, &l.Email, &l.Tier, &l.Status, &l.Platform, &l.OrderRef, &l.DeviceLimit, &l.LastTransferAt, &l.ExpiresAt, &l.Notes, &l.CreatedBy, &l.CreatedAt, &l.UpdatedAt)
+	if err != nil {
+		if err.Error() == "no rows in result set" {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("finding cad license by order_ref: %w", err)
+	}
+	return &l, nil
+}
+
 func (r *CADRepo) Create(ctx context.Context, l *model.CADLicense) error {
 	if l.Platform == "" {
 		l.Platform = "macos"

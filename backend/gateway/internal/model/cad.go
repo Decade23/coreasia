@@ -95,6 +95,7 @@ type GenerateCADLicenseRequest struct {
 	Tier        string `json:"tier"`
 	Count       int    `json:"count" validate:"omitempty,min=1,max=100"`
 	DeviceLimit *int   `json:"device_limit"`
+	SendEmail   bool   `json:"send_email"` // email the key(s) to Email after generating
 }
 
 // ───────────────────────── Installation / device ─────────────────────────
