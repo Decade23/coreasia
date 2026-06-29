@@ -345,6 +345,9 @@ func (r *CADRepo) Summary(ctx context.Context) (*model.CADAnalyticsSummary, erro
 
 	s.ByVersion = r.countBy(ctx, `SELECT COALESCE(app_version,'unknown'), count(*) FROM public.cad_installations WHERE revoked=false GROUP BY app_version ORDER BY count(*) DESC LIMIT 10`)
 	s.ByOS = r.countBy(ctx, `SELECT COALESCE(os_version,'unknown'), count(*) FROM public.cad_installations WHERE revoked=false GROUP BY os_version ORDER BY count(*) DESC LIMIT 10`)
+	// Negara: unik per install_id dari event (90 hari). Hanya event yang country-nya
+	// terisi (di-set dari header CF-IPCountry pasca-update gateway ini).
+	s.ByCountry = r.countBy(ctx, `SELECT country, count(distinct install_id) FROM public.cad_analytics_events WHERE country IS NOT NULL AND country <> '' AND created_at > now() - interval '90 days' GROUP BY country ORDER BY count(distinct install_id) DESC LIMIT 20`)
 
 	rows, err := r.pool.Query(ctx,
 		`SELECT to_char(created_at::date,'YYYY-MM-DD') AS d, count(distinct install_id)

@@ -82,6 +82,7 @@ const consoleMessages = {
       activeDevices: 'Perangkat Aktif (30 hari)',
       byVersion: 'Per Versi App',
       byOs: 'Per Versi OS',
+      byCountry: 'Per Negara',
       dailyActive: 'Pengguna Aktif Harian (14 hari)',
       noData: 'Belum ada data',
       colKey: 'Key',

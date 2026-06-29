@@ -182,6 +182,18 @@ const tabs: { key: Tab; label: string; icon: string; perm: string }[] = [
             </div>
           </div>
         </div>
+        <div class="ca-card p-5">
+          <h3 class="mb-3 text-sm font-semibold text-[var(--ca-text)]">{{ tc('cad.byCountry') }}</h3>
+          <p v-if="!summary?.by_country?.length" class="text-sm text-[var(--ca-muted)]">{{ tc('cad.noData') }}</p>
+          <div v-for="row in summary?.by_country || []" :key="row.label" class="mb-2">
+            <div class="flex justify-between text-xs text-[var(--ca-muted)]">
+              <span>{{ row.label }}</span><span>{{ row.count }}</span>
+            </div>
+            <div class="mt-1 h-2 rounded-full bg-[var(--ca-panel-bg-strong)]">
+              <div class="h-2 rounded-full bg-[var(--ca-accent)]" :style="{ width: barWidth(row.count, summary?.by_country || []) + '%' }" />
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 

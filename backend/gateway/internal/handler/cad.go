@@ -493,7 +493,13 @@ func (h *CADHandler) Telemetry(c fiber.Ctx) error {
 	if !cadAllowedEvents[req.EventType] {
 		return errResponse(c, apperr.NewBadRequest("event_type tidak dikenal"))
 	}
-	if err := h.repo.InsertEvent(c.Context(), &req, nil); err != nil {
+	// Geo kasar (negara) dari Cloudflare (api.coreasia.id di belakang CF). Hanya
+	// kode ISO-2 valid; "XX"/"T1" (tak diketahui/Tor) diabaikan → tetap NULL.
+	var country *string
+	if cc := c.Get("CF-IPCountry"); len(cc) == 2 && cc != "XX" && cc != "T1" {
+		country = &cc
+	}
+	if err := h.repo.InsertEvent(c.Context(), &req, country); err != nil {
 		slog.Error("gagal insert telemetry", "error", err)
 		return errResponse(c, apperr.NewInternal(err))
 	}

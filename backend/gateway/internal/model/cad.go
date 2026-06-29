@@ -157,5 +157,6 @@ type CADAnalyticsSummary struct {
 	ActiveDevices  int64          `json:"active_devices"` // last 30 days
 	ByVersion      []CADCount     `json:"by_version"`
 	ByOS           []CADCount     `json:"by_os"`
+	ByCountry      []CADCount     `json:"by_country"` // unique installs per country (90d)
 	DailyActive    []CADTimePoint `json:"daily_active"` // last 14 days
 }

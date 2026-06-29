@@ -49,6 +49,7 @@ export interface CadSummary {
   active_devices: number
   by_version: CadCount[]
   by_os: CadCount[]
+  by_country: CadCount[]
   daily_active: CadTimePoint[]
 }
 
