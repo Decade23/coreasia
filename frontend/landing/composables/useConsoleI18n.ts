@@ -83,6 +83,7 @@ const consoleMessages = {
       byVersion: 'Per Versi App',
       byOs: 'Per Versi OS',
       byCountry: 'Per Negara',
+      page: 'Halaman',
       dailyActive: 'Pengguna Aktif Harian (14 hari)',
       noData: 'Belum ada data',
       colKey: 'Key',

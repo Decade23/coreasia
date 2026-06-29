@@ -81,6 +81,24 @@ const statusClass = (s: string) =>
       ? 'bg-rose-500/10 text-rose-400'
       : 'bg-amber-500/10 text-amber-400'
 
+// Pagination client-side (data tabel bisa ratusan baris, mis. pool lisensi).
+const PAGE_SIZE = 25
+const licPage = ref(1)
+const devPage = ref(1)
+const pageCount = (n: number) => Math.max(1, Math.ceil(n / PAGE_SIZE))
+const licPages = computed(() => pageCount(licenses.value.length))
+const devPages = computed(() => pageCount(devices.value.length))
+const pagedLicenses = computed(() => {
+  const p = Math.min(licPage.value, licPages.value)
+  return licenses.value.slice((p - 1) * PAGE_SIZE, p * PAGE_SIZE)
+})
+const pagedDevices = computed(() => {
+  const p = Math.min(devPage.value, devPages.value)
+  return devices.value.slice((p - 1) * PAGE_SIZE, p * PAGE_SIZE)
+})
+watch(licenses, () => { licPage.value = 1 })  // reset ke hal.1 saat data refresh
+watch(devices, () => { devPage.value = 1 })
+
 const tabs: { key: Tab; label: string; icon: string; perm: string }[] = [
   { key: 'analytics', label: tc('cad.tabAnalytics'), icon: 'lucide:bar-chart-3', perm: 'cad:analytics:view' },
   { key: 'licenses', label: tc('cad.tabLicenses'), icon: 'lucide:key-round', perm: 'cad:licenses:list' },
@@ -218,7 +236,7 @@ const tabs: { key: Tab; label: string; icon: string; perm: string }[] = [
             </tr>
           </thead>
           <tbody>
-            <tr v-for="l in licenses" :key="l.id" class="border-b border-[color:var(--ca-border)]/60">
+            <tr v-for="l in pagedLicenses" :key="l.id" class="border-b border-[color:var(--ca-border)]/60">
               <td class="px-3 py-2 font-mono text-xs text-[var(--ca-text)]">{{ l.key_masked }}</td>
               <td class="px-3 py-2 text-[var(--ca-muted)]">{{ l.email || '-' }}</td>
               <td class="px-3 py-2 text-[var(--ca-muted)]">{{ l.tier }}</td>
@@ -249,6 +267,13 @@ const tabs: { key: Tab; label: string; icon: string; perm: string }[] = [
           </tbody>
         </table>
       </div>
+      <div v-if="licenses.length" class="flex items-center justify-between border-t border-[color:var(--ca-border)] px-3 py-2 text-xs text-[var(--ca-muted)]">
+        <span>{{ tc('cad.page') }} {{ Math.min(licPage, licPages) }} / {{ licPages }} · {{ licenses.length }}</span>
+        <div class="flex gap-1.5">
+          <button type="button" class="ca-header-btn !h-8 !min-w-8" :disabled="licPage <= 1" @click="licPage = Math.max(1, licPage - 1)"><Icon name="lucide:chevron-left" class="h-3.5 w-3.5" /></button>
+          <button type="button" class="ca-header-btn !h-8 !min-w-8" :disabled="licPage >= licPages" @click="licPage = Math.min(licPages, licPage + 1)"><Icon name="lucide:chevron-right" class="h-3.5 w-3.5" /></button>
+        </div>
+      </div>
     </div>
 
     <!-- DEVICES -->
@@ -268,7 +293,7 @@ const tabs: { key: Tab; label: string; icon: string; perm: string }[] = [
             </tr>
           </thead>
           <tbody>
-            <tr v-for="d in devices" :key="d.id" class="border-b border-[color:var(--ca-border)]/60">
+            <tr v-for="d in pagedDevices" :key="d.id" class="border-b border-[color:var(--ca-border)]/60">
               <td class="px-3 py-2 font-mono text-xs text-[var(--ca-text)]">{{ shortHash(d.device_hash) }}</td>
               <td class="px-3 py-2 text-[var(--ca-muted)]">{{ d.platform || '-' }}</td>
               <td class="px-3 py-2 text-[var(--ca-muted)]">{{ d.app_version || '-' }}</td>
@@ -284,6 +309,13 @@ const tabs: { key: Tab; label: string; icon: string; perm: string }[] = [
             </tr>
           </tbody>
         </table>
+      </div>
+      <div v-if="devices.length" class="flex items-center justify-between border-t border-[color:var(--ca-border)] px-3 py-2 text-xs text-[var(--ca-muted)]">
+        <span>{{ tc('cad.page') }} {{ Math.min(devPage, devPages) }} / {{ devPages }} · {{ devices.length }}</span>
+        <div class="flex gap-1.5">
+          <button type="button" class="ca-header-btn !h-8 !min-w-8" :disabled="devPage <= 1" @click="devPage = Math.max(1, devPage - 1)"><Icon name="lucide:chevron-left" class="h-3.5 w-3.5" /></button>
+          <button type="button" class="ca-header-btn !h-8 !min-w-8" :disabled="devPage >= devPages" @click="devPage = Math.min(devPages, devPage + 1)"><Icon name="lucide:chevron-right" class="h-3.5 w-3.5" /></button>
+        </div>
       </div>
     </div>
 
