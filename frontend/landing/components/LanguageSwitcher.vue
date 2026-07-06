@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { type Locale } from '~/utils/i18n'
+import type { Locale } from '~/utils/i18n'
 import { useCoreI18n } from '~/composables/useCoreI18n'
 
 const { locale, availableLocales, setLocale } = useCoreI18n()
@@ -8,15 +8,27 @@ const isOpen = ref(false)
 const triggerRef = ref<HTMLElement | null>(null)
 const dropdownRef = ref<HTMLElement | null>(null)
 
-const dropdownPos = ref<{ top: number; left?: number; right?: number }>({ top: 0, right: 0 })
+const dropdownPos = ref<{ top?: number; bottom?: number; left?: number; right?: number }>({ top: 0, right: 0 })
+
+// Estimasi tinggi sebelum dropdown ter-render; setelah render diganti ukuran asli
+const DROPDOWN_GAP = 8
+const DROPDOWN_HEIGHT_FALLBACK = 100
 
 const updatePosition = () => {
   if (!triggerRef.value) return
   const rect = triggerRef.value.getBoundingClientRect()
   const isRightHalf = rect.left > window.innerWidth / 2
-  dropdownPos.value = isRightHalf
-    ? { top: rect.bottom + 8, right: window.innerWidth - rect.right }
-    : { top: rect.bottom + 8, left: rect.left }
+  const horizontal = isRightHalf
+    ? { right: window.innerWidth - rect.right }
+    : { left: rect.left }
+
+  const dropdownHeight = dropdownRef.value?.getBoundingClientRect().height ?? DROPDOWN_HEIGHT_FALLBACK
+  const overflowsBottom = rect.bottom + DROPDOWN_GAP + dropdownHeight > window.innerHeight
+  const fitsAbove = rect.top - DROPDOWN_GAP - dropdownHeight >= 0
+
+  dropdownPos.value = overflowsBottom && fitsAbove
+    ? { bottom: window.innerHeight - rect.top + DROPDOWN_GAP, ...horizontal }
+    : { top: rect.bottom + DROPDOWN_GAP, ...horizontal }
 }
 
 const open = () => {
@@ -28,6 +40,18 @@ const close = () => {
   isOpen.value = false
 }
 
+watch(isOpen, (value) => {
+  if (value) {
+    // Ukur ulang setelah dropdown ter-render supaya keputusan flip pakai tinggi asli
+    nextTick(updatePosition)
+    window.addEventListener('scroll', updatePosition, true)
+    window.addEventListener('resize', updatePosition)
+  } else {
+    window.removeEventListener('scroll', updatePosition, true)
+    window.removeEventListener('resize', updatePosition)
+  }
+})
+
 const handleOutsideClick = (event: MouseEvent) => {
   const target = event.target as Node
   if (triggerRef.value?.contains(target) || dropdownRef.value?.contains(target)) return
@@ -35,7 +59,11 @@ const handleOutsideClick = (event: MouseEvent) => {
 }
 
 onMounted(() => document.addEventListener('mousedown', handleOutsideClick))
-onUnmounted(() => document.removeEventListener('mousedown', handleOutsideClick))
+onUnmounted(() => {
+  document.removeEventListener('mousedown', handleOutsideClick)
+  window.removeEventListener('scroll', updatePosition, true)
+  window.removeEventListener('resize', updatePosition)
+})
 
 const highlightedIndex = ref(0)
 
@@ -121,7 +149,7 @@ const flagIsText = computed(() => {
           role="listbox"
           class="ca-field-dropdown fixed w-44 rounded-xl py-1 shadow-2xl"
           :style="{
-            top: `${dropdownPos.top}px`,
+            ...(dropdownPos.bottom !== undefined ? { bottom: `${dropdownPos.bottom}px` } : { top: `${dropdownPos.top}px` }),
             ...(dropdownPos.right !== undefined ? { right: `${dropdownPos.right}px` } : { left: `${dropdownPos.left}px` }),
             zIndex: 9999,
           }"
