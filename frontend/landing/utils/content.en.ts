@@ -1917,6 +1917,41 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
         },
       },
     },
+    downloaderRecover: {
+      title: 'Find Your License Key',
+      description: 'Lost your CoreAsia Download Manager license key or switching Macs? Follow these recovery steps — check your purchase email, Gumroad Library, or contact us.',
+      subtitle: 'Lost your key or moving to a new Mac? Most cases are solved in two minutes with the steps below — no need to wait for support.',
+      cta: 'Email us for key recovery',
+      ctaSubject: 'CADM license key recovery',
+      sections: {
+        email: {
+          title: '1. Check your purchase email',
+          content: 'Your license key is emailed automatically right after purchase — from CoreAsia, and (for Gumroad purchases) it also appears on your Gumroad receipt. Try this first:',
+          items: [
+            'Search your inbox for "CoreAsia Download Manager" or "license key".',
+            'Check your Spam / Junk / Promotions folders — automated emails sometimes land there.',
+            'Make sure you are searching the email address you used at checkout (it may differ from your main address).',
+          ],
+        },
+        gumroad: {
+          title: '2. Bought on Gumroad? Open your Library',
+          content: 'Every Gumroad purchase is stored permanently in your account. Go to gumroad.com/library, sign in with the email you used to buy, and open "CoreAsia Download Manager" — the receipt inside contains your license key and a button to resend it to your email.',
+        },
+        transfer: {
+          title: '3. New Mac, or key rejected as "already active on another device"?',
+          content: 'Your license works on one Mac at a time, and you can move it yourself:',
+          items: [
+            'On your old Mac: open CoreAsia Download Manager → Settings → License → "Deactivate this device".',
+            'On your new Mac: open the app → Activate → enter the same license key.',
+            'Old Mac no longer accessible (broken/sold)? Contact us — after verifying your purchase, we will release the device lock from our server.',
+          ],
+        },
+        contact: {
+          title: '4. Still stuck? We will help',
+          content: 'Email {email} FROM the address you used to purchase, and include: your approximate purchase date and order number (if available — shown on your Gumroad receipt). We reply within 24 hours. For your security, never share your license key with anyone.',
+        },
+      },
+    },
     downloaderRefund: {
       title: 'CoreAsia Download Manager Refund Policy',
       description: 'Refund policy for CoreAsia Download Manager — 14-day money-back guarantee, consumer rights, and Merchant of Record ({mor}) terms.',

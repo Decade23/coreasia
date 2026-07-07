@@ -2010,6 +2010,41 @@ const ID_CONTENT = {
         },
       },
     },
+    downloaderRecover: {
+      title: 'Temukan License Key Anda',
+      description: 'Kehilangan license key CoreAsia Download Manager atau pindah Mac? Ikuti langkah pemulihan ini — cek email pembelian, Gumroad Library, atau hubungi kami.',
+      subtitle: 'Key hilang atau ganti Mac? Hampir semua kasus selesai dalam dua menit lewat langkah di bawah — tanpa perlu menunggu balasan support.',
+      cta: 'Email kami untuk pemulihan key',
+      ctaSubject: 'Pemulihan license key CADM',
+      sections: {
+        email: {
+          title: '1. Cek email pembelian Anda',
+          content: 'License key dikirim otomatis ke email Anda segera setelah pembelian — dari CoreAsia dan (untuk pembelian Gumroad) juga tercantum di receipt Gumroad. Coba langkah ini dulu:',
+          items: [
+            'Cari di inbox dengan kata kunci "CoreAsia Download Manager" atau "license key".',
+            'Periksa folder Spam / Junk / Promotions — email otomatis kadang tersaring ke sana.',
+            'Pastikan Anda mencari di alamat email yang dipakai saat checkout (bisa berbeda dari email utama Anda).',
+          ],
+        },
+        gumroad: {
+          title: '2. Beli lewat Gumroad? Buka Library Anda',
+          content: 'Semua pembelian Gumroad tersimpan permanen di akun Anda. Buka gumroad.com/library, masuk dengan email yang Anda pakai saat membeli, lalu buka produk "CoreAsia Download Manager" — receipt di dalamnya memuat license key Anda dan tombol kirim-ulang receipt ke email.',
+        },
+        transfer: {
+          title: '3. Ganti Mac atau key tertolak "sudah aktif di perangkat lain"?',
+          content: 'Lisensi Anda berlaku untuk satu Mac pada satu waktu, dan Anda bisa memindahkannya sendiri:',
+          items: [
+            'Di Mac lama: buka CoreAsia Download Manager → Settings → License → "Deactivate this device".',
+            'Di Mac baru: buka aplikasi → Activate → masukkan license key yang sama.',
+            'Mac lama sudah tidak bisa diakses (rusak/terjual)? Hubungi kami — setelah verifikasi pembelian, kami lepaskan kunci perangkatnya dari server.',
+          ],
+        },
+        contact: {
+          title: '4. Masih belum ketemu? Kami bantu',
+          content: 'Kirim email ke {email} DARI alamat email yang Anda pakai saat membeli, dan sertakan: perkiraan tanggal pembelian serta nomor order (jika ada — tertera di receipt Gumroad). Kami balas maksimal 1×24 jam. Demi keamanan, jangan pernah membagikan license key Anda kepada siapa pun.',
+        },
+      },
+    },
     downloaderRefund: {
       title: 'Kebijakan Pengembalian Dana CoreAsia Download Manager',
       description: 'Kebijakan refund CoreAsia Download Manager — jaminan uang kembali 14 hari, hak konsumen, dan ketentuan Merchant of Record ({mor}).',
