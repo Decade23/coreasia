@@ -222,6 +222,38 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
       ctaSecondary: 'View Pricing',
       chips: ['Website Analytics', 'Digital Build', 'Custom Solutions'],
     },
+    macApps: [
+      {
+        name: 'CoreAsia Download Manager',
+        badge: 'Live',
+        tagline: 'macOS Download Manager',
+        description:
+          'A premium download manager for macOS: save videos & files from the web in one click. Fast multi-connection download engine, quality picker, MP3 audio extraction, queue + history, and a companion browser extension.',
+        features: [
+          'Auto-capture media via the browser extension',
+          'Quality picker & MP3 audio extraction',
+          'Fast multi-connection engine',
+          'Queue + saved history',
+        ],
+        ctaLabel: 'Explore Download Manager',
+        to: '/products/downloader',
+      },
+      {
+        name: 'CoreAsia Mounter',
+        badge: 'Live',
+        tagline: 'NTFS for Mac',
+        description:
+          'Write to NTFS drives on Apple Silicon Macs. Plug in a drive — it is detected and mounted automatically, ready to write from the menu bar. Reading NTFS is free forever.',
+        features: [
+          'Write to NTFS drives right from the menu bar',
+          'Auto-mount every time you plug in',
+          'Your Mac stays protected, your data stays put',
+          'One-time $25 payment, lifetime — no subscription',
+        ],
+        ctaLabel: 'Explore Mounter',
+        to: '/products/mounter',
+      },
+    ],
     highlights: {
       title: 'A faster way to choose the right product',
       items: [
@@ -980,6 +1012,219 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
         privacyLabel: 'Privacy',
         refundLabel: 'Refund',
         termsSuffix: '.',
+      },
+    },
+    mounter: {
+      title: 'CoreAsia Mounter — NTFS for Mac: Write to NTFS Drives on Apple Silicon',
+      description:
+        'CoreAsia Mounter unlocks write access to NTFS drives on Apple Silicon Macs. Plug in a drive — it is detected and mounted automatically, ready to write from the menu bar. Reading NTFS is free forever; write access is a $25 one-time lifetime purchase.',
+      kicker: 'NTFS for Mac',
+      hero: {
+        title:
+          'CoreAsia Mounter — write to NTFS drives on <span class="ca-gradient-text">Apple Silicon Macs</span>.',
+        subtitle:
+          'Plug in a drive and everything just works — it is detected, mounted, and ready to write from the menu bar, automatically. No complicated setup, no changes to your Mac. Reading NTFS is free forever.',
+        ctaPrimary: 'Free 1-Day Trial',
+        ctaSecondary: 'Buy $25 Lifetime',
+        chips: ['macOS Tahoe · Apple Silicon', 'Auto-mount', 'One-time payment, lifetime'],
+      },
+      pain: {
+        label: 'Problem → Solution',
+        title: 'NTFS drive stuck in read-only on your Mac?',
+        items: [
+          {
+            title: 'The problem: NTFS is read-only on macOS',
+            description:
+              'macOS opens NTFS drives for reading only. Want to save, edit, or delete files directly on the drive? Denied.',
+          },
+          {
+            title: 'The old ways: messy & risky',
+            description:
+              'Other solutions require fiddling with your Mac’s settings, error-prone technical steps, or subscriptions that keep charging every year.',
+          },
+          {
+            title: 'The solution: CoreAsia Mounter',
+            description:
+              'One lightweight menu bar app: plug in the drive and your NTFS drive is ready to write — automatic, safe, hassle-free.',
+          },
+        ],
+      },
+      security: {
+        label: 'Highlights',
+        title: 'Effortless up front, safe underneath',
+        subtitle:
+          'All the technical complexity is handled behind the scenes — you just plug in your drive and get to work.',
+        items: [
+          {
+            title: 'Auto-mount',
+            description:
+              'Every NTFS drive you plug in is recognized and mounted automatically. Set it up once, and it is always ready.',
+            icon: 'lucide:zap',
+          },
+          {
+            title: 'Your Mac stays protected',
+            description:
+              'Nothing to change, nothing to switch off. Your Mac’s built-in protections keep working exactly as they should.',
+            icon: 'lucide:shield-check',
+          },
+          {
+            title: 'No technical steps',
+            description:
+              'No commands to type, no restarts. Everything happens from the menu bar with a single click.',
+            icon: 'lucide:mouse-pointer-click',
+          },
+          {
+            title: 'Your data stays put',
+            description:
+              'No reformatting, no shuffling files around — your drive and everything on it stays intact and still works on Windows.',
+            icon: 'lucide:hard-drive',
+          },
+        ],
+        engine: {
+          badge: 'Reliable',
+          title: 'Install once, works continuously',
+          description:
+            'CoreAsia Mounter runs quietly in your menu bar and keeps getting updates for the latest macOS. Need a hand? Our team responds quickly over email.',
+        },
+      },
+      workflow: {
+        label: 'How It Works',
+        title: 'Plug in → enable → write. The rest is automatic.',
+        subtitle:
+          'No complicated setup. Install once, and every NTFS drive is instantly ready — mounted automatically every time you plug it in.',
+        steps: [
+          {
+            title: 'Plug in the drive',
+            description:
+              'Connect an NTFS hard drive or SSD to your Mac. CoreAsia Mounter recognizes it instantly — no need to even open the app.',
+          },
+          {
+            title: 'Enable write mode',
+            description:
+              'One click from the menu bar and write mode is on. From then on, the drive mounts automatically every time you plug it in — no restarts, no repeats.',
+          },
+          {
+            title: 'Start writing',
+            description:
+              'Copy, edit, rename, and delete files on the NTFS drive like any regular drive. Done? Eject as usual.',
+          },
+        ],
+      },
+      pricing: {
+        label: 'Pricing',
+        title: 'Read free forever, write for a one-time $25',
+        subtitle:
+          'Not a subscription. Try write access free for 1 day; after the trial ends, reading NTFS stays free forever. Checkout via Gumroad — IDR pricing appears automatically at checkout.',
+        popularLabel: 'Most Popular',
+        plans: [
+          {
+            name: 'Free Reading',
+            price: 'Free',
+            description:
+              'Read and copy files from NTFS drives — free forever, even after the trial ends.',
+            features: [
+              'Read NTFS drives with no time limit',
+              'No license, no cost',
+              'Stays active after the trial ends',
+            ],
+            cta: 'Get the App',
+          },
+          {
+            name: '1-Day Trial',
+            price: '1 Day',
+            description:
+              'Full unlock: every write feature active for one full day so you can put it to the test.',
+            features: [
+              'All write features active',
+              'Valid for one full day',
+              'After the trial, reading stays free',
+            ],
+            cta: 'Start Free 1-Day Trial',
+          },
+          {
+            name: 'Lifetime License',
+            price: '$25',
+            popular: true,
+            description:
+              'Pay once, use forever — not a subscription. IDR pricing appears automatically at Gumroad checkout.',
+            features: [
+              'One-time payment, no subscription',
+              'All write features, forever',
+              'Auto-mount every time you plug in',
+              'License key delivered via email',
+              'Secure checkout via Gumroad',
+            ],
+            cta: 'Buy $25 Lifetime',
+          },
+        ],
+      },
+      faq: {
+        label: 'FAQ',
+        title: 'Frequently asked questions',
+        subtitle: 'Still have questions? Email us at support@coreasia.id.',
+        items: [
+          {
+            question: 'Which Macs and macOS versions are supported?',
+            answer:
+              'CoreAsia Mounter is built and tested for Apple Silicon Macs (M-series chips) running macOS Tahoe. Support for future macOS versions will follow through updates.',
+          },
+          {
+            question: 'Is my data safe when writing to NTFS drives?',
+            answer:
+              'CoreAsia Mounter’s write support is built on technology that has been proven for years and is widely used across platforms. That said, no software is 100% risk-free: as with any storage media, make it a habit to back up important data before writing to any drive.',
+          },
+          {
+            question: 'How do I activate after purchasing?',
+            answer:
+              'After a successful payment, your license key is sent automatically to your email. Open CoreAsia Mounter, enter the license key, and write access is unlocked instantly.',
+          },
+          {
+            question: 'Can I pay from Indonesia?',
+            answer:
+              'Yes. Gumroad checkout accepts online debit cards such as Jago, Jenius, or blu, plus PayPal. Prices are shown in IDR automatically at checkout. QRIS is not available yet.',
+          },
+          {
+            question: 'How is this different from free or subscription NTFS apps?',
+            answer:
+              'Free workarounds usually involve complicated technical steps and tend to break after macOS updates. Subscription apps keep charging every year. CoreAsia Mounter is effortless from day one — auto-mount, a single $25 payment for lifetime use, and your Mac stays exactly as secure as it was.',
+          },
+          {
+            question: 'What is the refund policy?',
+            answer:
+              'Purchases are processed by Gumroad as the merchant of record, so refunds follow Gumroad’s standard policy.',
+          },
+        ],
+      },
+      related: {
+        title: 'Related Products',
+        items: [
+          {
+            title: 'CoreAsia Download Manager',
+            description: 'Premium download manager for macOS',
+            icon: 'lucide:download',
+            to: '/products/downloader',
+          },
+          {
+            title: 'Pantau by CoreAsia',
+            description: 'Website analytics & SEO monitoring dashboard',
+            icon: 'lucide:bar-chart-3',
+            to: '/products/pantau',
+          },
+          {
+            title: 'All Products',
+            description: 'Explore the CoreAsia product & service ecosystem',
+            icon: 'lucide:boxes',
+            to: '/products',
+          },
+        ],
+      },
+      cta: {
+        title: 'Ready to write to your NTFS drives?',
+        subtitle:
+          'Try it free for 1 day with every write feature unlocked. After the trial ends, reading NTFS stays free forever.',
+        ctaPrimary: 'Free 1-Day Trial',
+        ctaSecondary: 'support@coreasia.id',
+        note: 'Purchases are processed by Gumroad as the merchant of record. IDR pricing appears automatically at checkout.',
       },
     },
     custom: {

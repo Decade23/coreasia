@@ -10,31 +10,17 @@ const heroAside = useReveal('slideRight', 150)
 const highlightsHeader = useReveal('fadeUp')
 const ctaSection = useReveal('scaleUp')
 
-// CoreAsia Download Manager — produk macOS, didefinisikan di sini karena teks belum dipindah ke content i18n.
-const downloaderProduct: Record<string, any> = {
-    name: 'CoreAsia Download Manager',
-    badge: 'Live',
-    tagline: 'Download Manager macOS',
-    description:
-        'Download manager premium untuk macOS: simpan video & file dari web dengan satu klik. Engine unduhan cepat multi-koneksi, pemilih kualitas, ekstraksi audio MP3, antrean + riwayat, dan companion browser extension.',
-    features: [
-        'Auto-capture media via browser extension',
-        'Pemilih kualitas & ekstraksi audio MP3',
-        'Engine cepat multi-koneksi',
-        'Antrean + riwayat tersimpan',
-    ],
-    ctaLabel: 'Pelajari Download Manager',
-    to: '/products/downloader',
-}
+// Produk macOS (Download Manager & Mounter) kini bilingual di content.id/en.ts → productsPage.macApps.
+const macApps = computed(() => (t('productsPage.macApps') as Array<Record<string, any>>) || [])
 
 const products = computed(() => {
     const items = (t('home.products.items') as Array<Record<string, any>>) || []
-    return [...items, downloaderProduct]
+    return [...items, ...macApps.value]
 })
 const comingSoon = computed(() => (t('home.products.comingSoon') as Array<Record<string, any>>) || [])
 const highlights = computed(() => (t('productsPage.highlights.items') as Array<Record<string, any>>) || [])
 
-const productIcons = ['lucide:bar-chart-3', 'lucide:code-2', 'lucide:download']
+const productIcons = ['lucide:bar-chart-3', 'lucide:code-2', 'lucide:download', 'lucide:hard-drive']
 
 useCoreSeo({
     title: t('productsPage.title') as string,

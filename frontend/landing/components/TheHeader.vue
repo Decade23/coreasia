@@ -182,13 +182,13 @@ const navIconMap: Record<string, string> = {
                     </span>
                 </NuxtLink>
 
-                <nav :aria-label="t('components.header.ariaLabel')" class="hidden items-center gap-1 lg:flex">
+                <nav :aria-label="t('components.header.ariaLabel')" class="hidden items-center gap-0.5 lg:flex xl:gap-1">
                     <NuxtLink
                         v-for="item in navItems"
                         :key="item.to"
                         :to="item.to"
                         :class="[
-                            'rounded-lg px-3 py-2 text-sm font-semibold transition-colors',
+                            'whitespace-nowrap rounded-lg px-2 py-2 text-sm font-semibold transition-colors xl:px-3',
                             isActive(item.to)
                                 ? 'bg-[var(--ca-kicker-bg)] text-brand-primary'
                                 : 'text-[var(--ca-muted)] hover:bg-[var(--ca-panel-bg-strong)] hover:text-[var(--ca-text)]',
@@ -198,23 +198,24 @@ const navIconMap: Record<string, string> = {
                     </NuxtLink>
                 </nav>
 
-                <div class="hidden items-center gap-2 lg:flex">
+                <div class="hidden items-center gap-1.5 lg:flex xl:gap-2">
                     <LanguageSwitcher />
                     <ThemeToggle />
                     <a
                         :href="waUrl"
                         target="_blank"
                         rel="noopener noreferrer"
-                        class="ca-btn-secondary !px-3 !py-2"
+                        class="ca-btn-secondary !px-2.5 !py-2 xl:!px-3"
+                        :aria-label="t('common.whatsapp')"
                         @click="trackWhatsAppClick('header')"
                     >
                         <Icon name="lucide:message-circle" class="h-4 w-4" />
-                        {{ t('common.whatsapp') }}
+                        <span class="hidden xl:inline">{{ t('common.whatsapp') }}</span>
                     </a>
                     <NuxtLink
                         ref="contactBtnRef"
                         to="/contact"
-                        class="ca-btn-primary !px-4 !py-2"
+                        class="ca-btn-primary !px-3 !py-2 xl:!px-4"
                         :style="magneticStyle"
                         @click="trackCTAClick('header_konsultasi', '/contact')"
                     >

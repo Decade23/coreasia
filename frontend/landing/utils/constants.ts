@@ -58,6 +58,13 @@ export const MERCHANT = {
     buyUrl: 'https://getcadm.coreasia.id',
 } as const
 
+// Merchant of Record (penjual sah) untuk pembelian CoreAsia Mounter.
+// Checkout Gumroad — harga IDR muncul otomatis saat checkout.
+export const MOUNTER = {
+    buyUrl: 'https://coreasia.gumroad.com/l/mounter?utm_source=coreasia.id&utm_medium=landing&utm_campaign=mounter-launch',
+    supportEmail: 'mailto:support@coreasia.id',
+} as const
+
 // ──────────────────────────────────────
 // FastSpring (Merchant of Record) — popup checkout (SBL)
 // ──────────────────────────────────────

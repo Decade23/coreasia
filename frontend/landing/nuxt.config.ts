@@ -53,6 +53,7 @@ export default defineNuxtConfig({
             { loc: '/products/pantau', changefreq: 'weekly', priority: 0.82 },
             { loc: '/products/leadku', changefreq: 'weekly', priority: 0.82 },
             { loc: '/products/downloader', changefreq: 'weekly', priority: 0.85 },
+            { loc: '/products/mounter', changefreq: 'weekly', priority: 0.85 },
             { loc: '/products/lms', changefreq: 'monthly', priority: 0.72 },
             { loc: '/products/build', changefreq: 'monthly', priority: 0.72 },
             { loc: '/layanan/jasa-pembuatan-website', changefreq: 'weekly', priority: 0.9 },

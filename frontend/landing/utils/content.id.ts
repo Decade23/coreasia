@@ -195,6 +195,38 @@ const ID_CONTENT = {
       ctaSecondary: 'Lihat Pricing',
       chips: ['Website Analytics', 'Digital Build', 'Custom Solutions'],
     },
+    macApps: [
+      {
+        name: 'CoreAsia Download Manager',
+        badge: 'Live',
+        tagline: 'Download Manager macOS',
+        description:
+          'Download manager premium untuk macOS: simpan video & file dari web dengan satu klik. Engine unduhan cepat multi-koneksi, pemilih kualitas, ekstraksi audio MP3, antrean + riwayat, dan companion browser extension.',
+        features: [
+          'Auto-capture media via browser extension',
+          'Pemilih kualitas & ekstraksi audio MP3',
+          'Engine cepat multi-koneksi',
+          'Antrean + riwayat tersimpan',
+        ],
+        ctaLabel: 'Pelajari Download Manager',
+        to: '/products/downloader',
+      },
+      {
+        name: 'CoreAsia Mounter',
+        badge: 'Live',
+        tagline: 'NTFS for Mac',
+        description:
+          'Tulis ke drive NTFS di Mac Apple Silicon. Colok drive — langsung dikenali dan ter-mount otomatis, siap ditulis dari menu bar. Membaca NTFS gratis selamanya.',
+        features: [
+          'Tulis ke drive NTFS langsung dari menu bar',
+          'Mount otomatis setiap kali drive dicolok',
+          'Keamanan Mac tetap utuh, data tetap di tempatnya',
+          'Sekali bayar $25, lifetime — bukan langganan',
+        ],
+        ctaLabel: 'Pelajari Mounter',
+        to: '/products/mounter',
+      },
+    ],
     highlights: {
       title: 'Cara cepat memilih produk yang tepat',
       items: [
@@ -794,6 +826,219 @@ const ID_CONTENT = {
         privacyLabel: 'Privacy',
         refundLabel: 'Refund',
         termsSuffix: 'CoreAsia Download Manager.',
+      },
+    },
+    mounter: {
+      title: 'CoreAsia Mounter — NTFS for Mac: Tulis ke Drive NTFS di Apple Silicon',
+      description:
+        'CoreAsia Mounter membuka fitur tulis ke drive NTFS di Mac Apple Silicon. Colok drive — langsung dikenali dan ter-mount otomatis, siap ditulis dari menu bar. Membaca NTFS gratis selamanya; fitur tulis $25 sekali bayar, lifetime.',
+      kicker: 'NTFS for Mac',
+      hero: {
+        title:
+          'CoreAsia Mounter — tulis ke drive NTFS di <span class="ca-gradient-text">Mac Apple Silicon</span>.',
+        subtitle:
+          'Colok drive, dan semuanya bekerja otomatis — drive langsung dikenali, ter-mount, dan siap ditulis dari menu bar. Tanpa setup rumit, tanpa mengubah pengaturan Mac Anda. Membaca NTFS gratis selamanya.',
+        ctaPrimary: 'Coba Gratis 1 Hari',
+        ctaSecondary: 'Beli $25 Lifetime',
+        chips: ['macOS Tahoe · Apple Silicon', 'Mount otomatis', 'Sekali bayar, lifetime'],
+      },
+      pain: {
+        label: 'Masalah → Solusi',
+        title: 'Drive NTFS cuma bisa dibaca di Mac?',
+        items: [
+          {
+            title: 'Masalahnya: NTFS read-only di macOS',
+            description:
+              'macOS membuka drive NTFS hanya untuk dibaca. Mau menyimpan, mengedit, atau menghapus file langsung di drive? Ditolak.',
+          },
+          {
+            title: 'Cara lama: ribet & berisiko',
+            description:
+              'Solusi lain mengharuskan utak-atik pengaturan Mac, langkah teknis yang rawan salah, atau biaya langganan yang menagih setiap tahun.',
+          },
+          {
+            title: 'Solusinya: CoreAsia Mounter',
+            description:
+              'Satu aplikasi ringan di menu bar: colok drive, dan drive NTFS Anda langsung siap ditulis — otomatis, aman, tanpa ribet.',
+          },
+        ],
+      },
+      security: {
+        label: 'Keunggulan',
+        title: 'Praktis di depan, aman di belakang',
+        subtitle:
+          'Semua kerumitan teknis kami tangani di balik layar — Anda cukup colok drive dan langsung bekerja seperti biasa.',
+        items: [
+          {
+            title: 'Mount otomatis',
+            description:
+              'Setiap drive NTFS yang dicolok langsung dikenali dan ter-mount otomatis. Sekali diatur, selalu siap dipakai.',
+            icon: 'lucide:zap',
+          },
+          {
+            title: 'Keamanan Mac tetap utuh',
+            description:
+              'Tidak ada pengaturan yang perlu diubah atau dimatikan. Perlindungan bawaan Mac Anda tetap bekerja sepenuhnya.',
+            icon: 'lucide:shield-check',
+          },
+          {
+            title: 'Tanpa langkah teknis',
+            description:
+              'Tidak ada perintah yang harus diketik, tidak perlu restart. Semua cukup dari menu bar dengan sekali klik.',
+            icon: 'lucide:mouse-pointer-click',
+          },
+          {
+            title: 'Data tetap di tempatnya',
+            description:
+              'Tanpa format ulang, tanpa pindah-pindah file — drive dan seluruh isinya tetap utuh, tetap bisa dipakai di Windows.',
+            icon: 'lucide:hard-drive',
+          },
+        ],
+        engine: {
+          badge: 'Andalan',
+          title: 'Pasang sekali, bekerja terus',
+          description:
+            'CoreAsia Mounter berjalan senyap di menu bar dan terus diperbarui mengikuti macOS terbaru. Ada kendala? Tim kami siap membantu via email dengan respons cepat.',
+        },
+      },
+      workflow: {
+        label: 'Cara Kerja',
+        title: 'Colok → aktifkan → tulis. Selebihnya otomatis.',
+        subtitle:
+          'Tidak ada setup rumit. Pasang sekali, dan setiap drive NTFS langsung siap dipakai — ter-mount otomatis setiap kali dicolok.',
+        steps: [
+          {
+            title: 'Colok drive',
+            description:
+              'Hubungkan hardisk atau SSD NTFS ke Mac Anda. CoreAsia Mounter langsung mengenalinya — bahkan tanpa perlu membuka aplikasi.',
+          },
+          {
+            title: 'Aktifkan mode tulis',
+            description:
+              'Satu klik dari menu bar, mode tulis aktif. Selanjutnya drive ter-mount otomatis setiap kali dicolok — tanpa restart, tanpa diulang.',
+          },
+          {
+            title: 'Langsung tulis',
+            description:
+              'Copy, edit, rename, dan hapus file di drive NTFS seperti drive biasa. Selesai? Eject seperti biasa.',
+          },
+        ],
+      },
+      pricing: {
+        label: 'Pricing',
+        title: 'Baca gratis selamanya, tulis $25 sekali bayar',
+        subtitle:
+          'Bukan langganan. Coba fitur tulis gratis 1 hari; setelah trial berakhir, membaca NTFS tetap gratis selamanya. Checkout via Gumroad — harga IDR muncul otomatis saat checkout.',
+        popularLabel: 'Paling Populer',
+        plans: [
+          {
+            name: 'Baca Gratis',
+            price: 'Gratis',
+            description:
+              'Membaca dan menyalin file dari drive NTFS — gratis selamanya, bahkan setelah trial berakhir.',
+            features: [
+              'Baca drive NTFS tanpa batas waktu',
+              'Tanpa lisensi, tanpa biaya',
+              'Tetap aktif setelah trial berakhir',
+            ],
+            cta: 'Dapatkan Aplikasinya',
+          },
+          {
+            name: 'Trial 1 Hari',
+            price: '1 Hari',
+            description:
+              'Full-unlock: semua fitur tulis aktif selama 1 hari penuh untuk Anda uji.',
+            features: [
+              'Semua fitur tulis aktif',
+              'Berlaku 1 hari penuh',
+              'Setelah trial, baca tetap gratis',
+            ],
+            cta: 'Coba Gratis 1 Hari',
+          },
+          {
+            name: 'Lifetime License',
+            price: '$25',
+            popular: true,
+            description:
+              'Sekali bayar, pakai selamanya — bukan langganan. Harga IDR otomatis saat checkout Gumroad.',
+            features: [
+              'Sekali bayar, bukan langganan',
+              'Semua fitur tulis, selamanya',
+              'Mount otomatis setiap drive dicolok',
+              'License key dikirim via email',
+              'Checkout aman via Gumroad',
+            ],
+            cta: 'Beli $25 Lifetime',
+          },
+        ],
+      },
+      faq: {
+        label: 'FAQ',
+        title: 'Pertanyaan yang sering diajukan',
+        subtitle: 'Masih ada pertanyaan lain? Email kami di support@coreasia.id.',
+        items: [
+          {
+            question: 'Mac dan macOS apa saja yang didukung?',
+            answer:
+              'CoreAsia Mounter dibuat dan diuji untuk Mac Apple Silicon (chip M-series) dengan macOS Tahoe. Dukungan versi macOS berikutnya menyusul lewat update.',
+          },
+          {
+            question: 'Apakah data saya aman saat menulis ke drive NTFS?',
+            answer:
+              'Fitur tulis CoreAsia Mounter dibangun di atas teknologi yang sudah teruji bertahun-tahun dan dipakai luas di berbagai platform. Meski begitu, tidak ada perangkat lunak yang 100% bebas risiko: seperti pada media penyimpanan apa pun, biasakan mem-backup data penting sebelum menulis ke drive mana pun.',
+          },
+          {
+            question: 'Bagaimana cara aktivasi setelah membeli?',
+            answer:
+              'Setelah pembayaran berhasil, license key dikirim otomatis ke email Anda. Buka CoreAsia Mounter, masukkan license key, dan fitur tulis langsung aktif.',
+          },
+          {
+            question: 'Bisa bayar dari Indonesia?',
+            answer:
+              'Bisa. Checkout via Gumroad menerima kartu debit online seperti Jago, Jenius, atau blu, serta PayPal. Harga tampil dalam IDR otomatis saat checkout. QRIS belum tersedia.',
+          },
+          {
+            question: 'Apa bedanya dengan aplikasi NTFS gratisan atau berlangganan?',
+            answer:
+              'Solusi gratisan umumnya menuntut langkah teknis yang rumit dan sering bermasalah setelah update macOS. Aplikasi berlangganan menagih terus setiap tahun. CoreAsia Mounter praktis sejak awal — mount otomatis, cukup sekali bayar $25 untuk selamanya, dan keamanan Mac Anda tetap utuh.',
+          },
+          {
+            question: 'Bagaimana kebijakan refund?',
+            answer:
+              'Pembelian diproses oleh Gumroad sebagai merchant of record, sehingga refund mengikuti kebijakan standar Gumroad.',
+          },
+        ],
+      },
+      related: {
+        title: 'Produk Terkait',
+        items: [
+          {
+            title: 'CoreAsia Download Manager',
+            description: 'Download manager premium untuk macOS',
+            icon: 'lucide:download',
+            to: '/products/downloader',
+          },
+          {
+            title: 'Pantau by CoreAsia',
+            description: 'Dashboard analytics & SEO monitoring website',
+            icon: 'lucide:bar-chart-3',
+            to: '/products/pantau',
+          },
+          {
+            title: 'Semua Produk',
+            description: 'Jelajahi ekosistem produk & layanan CoreAsia',
+            icon: 'lucide:boxes',
+            to: '/products',
+          },
+        ],
+      },
+      cta: {
+        title: 'Siap menulis ke drive NTFS Anda?',
+        subtitle:
+          'Coba gratis 1 hari dengan semua fitur tulis aktif. Setelah trial berakhir, membaca NTFS tetap gratis selamanya.',
+        ctaPrimary: 'Coba Gratis 1 Hari',
+        ctaSecondary: 'support@coreasia.id',
+        note: 'Pembelian diproses oleh Gumroad sebagai merchant of record. Harga IDR muncul otomatis saat checkout.',
       },
     },
     custom: {
