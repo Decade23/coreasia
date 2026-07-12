@@ -21,7 +21,7 @@ func NewCADRepo(pool *pgxpool.Pool) *CADRepo {
 
 func (r *CADRepo) FindAll(ctx context.Context) ([]model.CADLicense, error) {
 	rows, err := r.pool.Query(ctx,
-		`SELECT l.id, l.license_key, l.email, l.tier, l.status, l.platform, l.order_ref, l.device_limit, l.last_transfer_at, l.expires_at, l.notes, l.created_by, l.created_at, l.updated_at,
+		`SELECT l.id, l.license_key, l.email, l.tier, l.status, l.platform, l.product, l.order_ref, l.device_limit, l.last_transfer_at, l.expires_at, l.notes, l.created_by, l.created_at, l.updated_at,
 		        (SELECT count(*) FROM public.cad_installations i WHERE i.license_id = l.id AND i.revoked = false) AS device_count
 		 FROM public.cad_licenses l ORDER BY l.created_at DESC`)
 	if err != nil {
@@ -32,7 +32,7 @@ func (r *CADRepo) FindAll(ctx context.Context) ([]model.CADLicense, error) {
 	var out []model.CADLicense
 	for rows.Next() {
 		var l model.CADLicense
-		if err := rows.Scan(&l.ID, &l.LicenseKey, &l.Email, &l.Tier, &l.Status, &l.Platform, &l.OrderRef, &l.DeviceLimit, &l.LastTransferAt, &l.ExpiresAt, &l.Notes, &l.CreatedBy, &l.CreatedAt, &l.UpdatedAt, &l.DeviceCount); err != nil {
+		if err := rows.Scan(&l.ID, &l.LicenseKey, &l.Email, &l.Tier, &l.Status, &l.Platform, &l.Product, &l.OrderRef, &l.DeviceLimit, &l.LastTransferAt, &l.ExpiresAt, &l.Notes, &l.CreatedBy, &l.CreatedAt, &l.UpdatedAt, &l.DeviceCount); err != nil {
 			return nil, fmt.Errorf("scanning cad license: %w", err)
 		}
 		out = append(out, l)
@@ -43,10 +43,10 @@ func (r *CADRepo) FindAll(ctx context.Context) ([]model.CADLicense, error) {
 func (r *CADRepo) FindByID(ctx context.Context, id uuid.UUID) (*model.CADLicense, error) {
 	var l model.CADLicense
 	err := r.pool.QueryRow(ctx,
-		`SELECT l.id, l.license_key, l.email, l.tier, l.status, l.platform, l.order_ref, l.device_limit, l.last_transfer_at, l.expires_at, l.notes, l.created_by, l.created_at, l.updated_at,
+		`SELECT l.id, l.license_key, l.email, l.tier, l.status, l.platform, l.product, l.order_ref, l.device_limit, l.last_transfer_at, l.expires_at, l.notes, l.created_by, l.created_at, l.updated_at,
 		        (SELECT count(*) FROM public.cad_installations i WHERE i.license_id = l.id AND i.revoked = false)
 		 FROM public.cad_licenses l WHERE l.id = $1`, id).
-		Scan(&l.ID, &l.LicenseKey, &l.Email, &l.Tier, &l.Status, &l.Platform, &l.OrderRef, &l.DeviceLimit, &l.LastTransferAt, &l.ExpiresAt, &l.Notes, &l.CreatedBy, &l.CreatedAt, &l.UpdatedAt, &l.DeviceCount)
+		Scan(&l.ID, &l.LicenseKey, &l.Email, &l.Tier, &l.Status, &l.Platform, &l.Product, &l.OrderRef, &l.DeviceLimit, &l.LastTransferAt, &l.ExpiresAt, &l.Notes, &l.CreatedBy, &l.CreatedAt, &l.UpdatedAt, &l.DeviceCount)
 	if err != nil {
 		if err.Error() == "no rows in result set" {
 			return nil, nil
@@ -59,9 +59,9 @@ func (r *CADRepo) FindByID(ctx context.Context, id uuid.UUID) (*model.CADLicense
 func (r *CADRepo) FindByKey(ctx context.Context, key string) (*model.CADLicense, error) {
 	var l model.CADLicense
 	err := r.pool.QueryRow(ctx,
-		`SELECT id, license_key, email, tier, status, platform, order_ref, device_limit, last_transfer_at, expires_at, notes, created_by, created_at, updated_at
+		`SELECT id, license_key, email, tier, status, platform, product, order_ref, device_limit, last_transfer_at, expires_at, notes, created_by, created_at, updated_at
 		 FROM public.cad_licenses WHERE license_key = $1`, key).
-		Scan(&l.ID, &l.LicenseKey, &l.Email, &l.Tier, &l.Status, &l.Platform, &l.OrderRef, &l.DeviceLimit, &l.LastTransferAt, &l.ExpiresAt, &l.Notes, &l.CreatedBy, &l.CreatedAt, &l.UpdatedAt)
+		Scan(&l.ID, &l.LicenseKey, &l.Email, &l.Tier, &l.Status, &l.Platform, &l.Product, &l.OrderRef, &l.DeviceLimit, &l.LastTransferAt, &l.ExpiresAt, &l.Notes, &l.CreatedBy, &l.CreatedAt, &l.UpdatedAt)
 	if err != nil {
 		if err.Error() == "no rows in result set" {
 			return nil, nil
@@ -76,9 +76,9 @@ func (r *CADRepo) FindByKey(ctx context.Context, key string) (*model.CADLicense,
 func (r *CADRepo) FindByOrderRef(ctx context.Context, orderRef string) (*model.CADLicense, error) {
 	var l model.CADLicense
 	err := r.pool.QueryRow(ctx,
-		`SELECT id, license_key, email, tier, status, platform, order_ref, device_limit, last_transfer_at, expires_at, notes, created_by, created_at, updated_at
+		`SELECT id, license_key, email, tier, status, platform, product, order_ref, device_limit, last_transfer_at, expires_at, notes, created_by, created_at, updated_at
 		 FROM public.cad_licenses WHERE order_ref = $1 ORDER BY created_at DESC LIMIT 1`, orderRef).
-		Scan(&l.ID, &l.LicenseKey, &l.Email, &l.Tier, &l.Status, &l.Platform, &l.OrderRef, &l.DeviceLimit, &l.LastTransferAt, &l.ExpiresAt, &l.Notes, &l.CreatedBy, &l.CreatedAt, &l.UpdatedAt)
+		Scan(&l.ID, &l.LicenseKey, &l.Email, &l.Tier, &l.Status, &l.Platform, &l.Product, &l.OrderRef, &l.DeviceLimit, &l.LastTransferAt, &l.ExpiresAt, &l.Notes, &l.CreatedBy, &l.CreatedAt, &l.UpdatedAt)
 	if err != nil {
 		if err.Error() == "no rows in result set" {
 			return nil, nil
@@ -92,11 +92,14 @@ func (r *CADRepo) Create(ctx context.Context, l *model.CADLicense) error {
 	if l.Platform == "" {
 		l.Platform = "macos"
 	}
+	if l.Product == "" {
+		l.Product = "cad"
+	}
 	return r.pool.QueryRow(ctx,
-		`INSERT INTO public.cad_licenses (license_key, email, tier, status, platform, order_ref, device_limit, expires_at, notes, created_by)
-		 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+		`INSERT INTO public.cad_licenses (license_key, email, tier, status, platform, product, order_ref, device_limit, expires_at, notes, created_by)
+		 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
 		 RETURNING id, created_at, updated_at`,
-		l.LicenseKey, l.Email, l.Tier, l.Status, l.Platform, l.OrderRef, l.DeviceLimit, l.ExpiresAt, l.Notes, l.CreatedBy).
+		l.LicenseKey, l.Email, l.Tier, l.Status, l.Platform, l.Product, l.OrderRef, l.DeviceLimit, l.ExpiresAt, l.Notes, l.CreatedBy).
 		Scan(&l.ID, &l.CreatedAt, &l.UpdatedAt)
 }
 
@@ -163,13 +166,13 @@ func (r *CADRepo) AssignNextUnsoldLicense(ctx context.Context, email, orderRef s
 		 SET email = $1, order_ref = $2, updated_at = now()
 		 WHERE id = (
 		     SELECT id FROM public.cad_licenses
-		     WHERE status = 'active' AND order_ref IS NULL
+		     WHERE status = 'active' AND order_ref IS NULL AND product = 'cad'
 		     ORDER BY created_at
 		     LIMIT 1 FOR UPDATE SKIP LOCKED
 		 )
-		 RETURNING id, license_key, email, tier, status, platform, order_ref, device_limit, last_transfer_at, expires_at, notes, created_by, created_at, updated_at`,
+		 RETURNING id, license_key, email, tier, status, platform, product, order_ref, device_limit, last_transfer_at, expires_at, notes, created_by, created_at, updated_at`,
 		email, orderRef).
-		Scan(&l.ID, &l.LicenseKey, &l.Email, &l.Tier, &l.Status, &l.Platform, &l.OrderRef, &l.DeviceLimit, &l.LastTransferAt, &l.ExpiresAt, &l.Notes, &l.CreatedBy, &l.CreatedAt, &l.UpdatedAt)
+		Scan(&l.ID, &l.LicenseKey, &l.Email, &l.Tier, &l.Status, &l.Platform, &l.Product, &l.OrderRef, &l.DeviceLimit, &l.LastTransferAt, &l.ExpiresAt, &l.Notes, &l.CreatedBy, &l.CreatedAt, &l.UpdatedAt)
 	if err != nil {
 		if err.Error() == "no rows in result set" {
 			// Pool exhausted: no unsold keys available.
@@ -184,9 +187,9 @@ func (r *CADRepo) AssignNextUnsoldLicense(ctx context.Context, email, orderRef s
 func (r *CADRepo) findByOrderRef(ctx context.Context, orderRef string) (*model.CADLicense, error) {
 	var l model.CADLicense
 	err := r.pool.QueryRow(ctx,
-		`SELECT id, license_key, email, tier, status, platform, order_ref, device_limit, last_transfer_at, expires_at, notes, created_by, created_at, updated_at
+		`SELECT id, license_key, email, tier, status, platform, product, order_ref, device_limit, last_transfer_at, expires_at, notes, created_by, created_at, updated_at
 		 FROM public.cad_licenses WHERE order_ref = $1 LIMIT 1`, orderRef).
-		Scan(&l.ID, &l.LicenseKey, &l.Email, &l.Tier, &l.Status, &l.Platform, &l.OrderRef, &l.DeviceLimit, &l.LastTransferAt, &l.ExpiresAt, &l.Notes, &l.CreatedBy, &l.CreatedAt, &l.UpdatedAt)
+		Scan(&l.ID, &l.LicenseKey, &l.Email, &l.Tier, &l.Status, &l.Platform, &l.Product, &l.OrderRef, &l.DeviceLimit, &l.LastTransferAt, &l.ExpiresAt, &l.Notes, &l.CreatedBy, &l.CreatedAt, &l.UpdatedAt)
 	if err != nil {
 		if err.Error() == "no rows in result set" {
 			return nil, nil

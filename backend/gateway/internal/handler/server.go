@@ -119,7 +119,12 @@ func (s *Server) setupRoutes() {
 		slog.Warn("CAD key signer dinonaktifkan (generate tidak tersedia)", "error", err)
 		cadSigner = nil
 	}
-	cadHandler := NewCADHandler(cadRepo, auditLogRepo, emailService, cadSigner, s.cfg.Payments, mayarClient)
+	mounterSigner, err := service.NewCADKeySigner(s.cfg.Mounter.SigningKey)
+	if err != nil {
+		slog.Warn("Mounter key signer dinonaktifkan (penerbitan key Mounter tidak tersedia)", "error", err)
+		mounterSigner = nil
+	}
+	cadHandler := NewCADHandler(cadRepo, auditLogRepo, emailService, cadSigner, mounterSigner, s.cfg.Payments, mayarClient)
 
 	// Auth middleware
 	authMiddleware := mw.AuthMiddleware(jwtProvider)

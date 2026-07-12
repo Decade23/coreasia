@@ -48,21 +48,27 @@ type resendErrorResponse struct {
 	Message string `json:"message"`
 }
 
-// SendLicenseKey emails the buyer their CAD license key + download link + activation steps.
-func (s *EmailService) SendLicenseKey(ctx context.Context, toEmail, licenseKey, downloadURL string) error {
+// SendLicenseKey emails the buyer their license key + download link + activation
+// steps. productName is the display name shown in the subject/body (e.g.
+// "CoreAsia Download Manager", "CoreAsia Mounter"); empty falls back to CAD for
+// backward compatibility.
+func (s *EmailService) SendLicenseKey(ctx context.Context, toEmail, licenseKey, downloadURL, productName string) error {
 	if !s.IsConfigured() {
 		slog.Warn("email service tidak dikonfigurasi (RESEND_API_KEY kosong), lewati kirim license key", "to", toEmail)
 		return nil
 	}
+	if productName == "" {
+		productName = "CoreAsia Download Manager"
+	}
 
-	subject := "Lisensi CoreAsia Download Manager Anda / Your License Key"
+	subject := fmt.Sprintf("Lisensi %s Anda / Your License Key", productName)
 
 	reqBody := resendEmailRequest{
 		From:    s.cfg.From,
 		To:      []string{toEmail},
 		Subject: subject,
-		HTML:    licenseKeyHTML(licenseKey, downloadURL),
-		Text:    licenseKeyText(licenseKey, downloadURL),
+		HTML:    licenseKeyHTML(licenseKey, downloadURL, productName),
+		Text:    licenseKeyText(licenseKey, downloadURL, productName),
 	}
 
 	payload, err := json.Marshal(reqBody)
@@ -96,25 +102,25 @@ func (s *EmailService) SendLicenseKey(ctx context.Context, toEmail, licenseKey, 
 	return nil
 }
 
-func licenseKeyHTML(licenseKey, downloadURL string) string {
+func licenseKeyHTML(licenseKey, downloadURL, productName string) string {
 	return fmt.Sprintf(`<!DOCTYPE html>
 <html lang="id">
 <body style="margin:0;padding:24px;background:#f4f5f7;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#1f2329;">
   <div style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:12px;padding:32px;">
-    <h1 style="font-size:20px;margin:0 0 16px;">Terima kasih sudah membeli CoreAsia Download Manager</h1>
+    <h1 style="font-size:20px;margin:0 0 16px;">Terima kasih sudah membeli %[3]s</h1>
     <p style="font-size:14px;line-height:1.6;margin:0 0 8px;">Berikut license key Anda. Simpan baik-baik.</p>
     <p style="font-size:13px;color:#6b7280;line-height:1.6;margin:0 0 16px;"><em>Thank you for your purchase. Below is your license key — please keep it safe.</em></p>
 
-    <div style="background:#0f172a;color:#e2e8f0;font-family:'SF Mono',Menlo,Consolas,monospace;font-size:14px;padding:16px;border-radius:8px;word-break:break-all;margin:0 0 24px;">%s</div>
+    <div style="background:#0f172a;color:#e2e8f0;font-family:'SF Mono',Menlo,Consolas,monospace;font-size:14px;padding:16px;border-radius:8px;word-break:break-all;margin:0 0 24px;">%[1]s</div>
 
     <p style="font-size:14px;line-height:1.6;margin:0 0 8px;"><strong>Unduh aplikasi / Download the app:</strong></p>
     <p style="margin:0 0 24px;">
-      <a href="%s" style="display:inline-block;background:#2563eb;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;padding:12px 20px;border-radius:8px;">Unduh CoreAsia Download Manager</a>
+      <a href="%[2]s" style="display:inline-block;background:#2563eb;color:#ffffff;text-decoration:none;font-size:14px;font-weight:600;padding:12px 20px;border-radius:8px;">Unduh %[3]s</a>
     </p>
 
     <p style="font-size:14px;line-height:1.6;margin:0 0 4px;"><strong>Cara aktivasi / How to activate:</strong></p>
     <ol style="font-size:14px;line-height:1.7;margin:0 0 8px;padding-left:20px;">
-      <li>Buka aplikasi CoreAsia Download Manager.</li>
+      <li>Buka aplikasi %[3]s.</li>
       <li>Klik <strong>Activate</strong>, lalu tempel (paste) license key di atas.</li>
       <li>Selesai — aplikasi aktif di perangkat Anda.</li>
     </ol>
@@ -124,23 +130,23 @@ func licenseKeyHTML(licenseKey, downloadURL string) string {
     <p style="font-size:12px;color:#9ca3af;line-height:1.6;margin:0;">CoreAsia — PT Inti Asia Teknologi. Butuh bantuan? Balas email ini.</p>
   </div>
 </body>
-</html>`, licenseKey, downloadURL)
+</html>`, licenseKey, downloadURL, productName)
 }
 
-func licenseKeyText(licenseKey, downloadURL string) string {
-	return fmt.Sprintf(`Terima kasih sudah membeli CoreAsia Download Manager.
+func licenseKeyText(licenseKey, downloadURL, productName string) string {
+	return fmt.Sprintf(`Terima kasih sudah membeli %[3]s.
 (Thank you for your purchase.)
 
 License key Anda / Your license key:
-%s
+%[1]s
 
 Unduh aplikasi / Download the app:
-%s
+%[2]s
 
 Cara aktivasi / How to activate:
-1. Buka aplikasi CoreAsia Download Manager.
+1. Buka aplikasi %[3]s.
 2. Klik Activate, lalu tempel (paste) license key di atas.
 3. Selesai.
 
-CoreAsia — PT Inti Asia Teknologi. Butuh bantuan? Balas email ini.`, licenseKey, downloadURL)
+CoreAsia — PT Inti Asia Teknologi. Butuh bantuan? Balas email ini.`, licenseKey, downloadURL, productName)
 }

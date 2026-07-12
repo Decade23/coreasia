@@ -16,14 +16,28 @@ const showGenerate = ref(false)
 const genEmail = ref('')
 const genCount = ref(1)
 const genSendEmail = ref(true)
+const genProduct = ref('cad')
 const genResult = ref<string[]>([])
 const deleteTarget = ref<string | null>(null)
 const releaseTarget = ref<string | null>(null)
 
+// Filter produk untuk tab Lisensi ('' = semua). Label produk hardcoded — nama produk,
+// bukan teks yang diterjemahkan.
+const productFilter = ref('')
+const genProductOptions = [
+  { label: 'CAD', value: 'cad' },
+  { label: 'Mounter', value: 'mounter' },
+]
+const productFilterOptions = [
+  { label: tc('common.all'), value: '' },
+  ...genProductOptions,
+]
+watch(productFilter, val => cad.fetchLicenses(val))
+
 const loadTab = async (t: Tab) => {
   tab.value = t
   if (t === 'analytics') await cad.fetchAnalytics()
-  else if (t === 'licenses') await cad.fetchLicenses()
+  else if (t === 'licenses') await cad.fetchLicenses(productFilter.value)
   else await cad.fetchDevices()
 }
 
@@ -42,7 +56,7 @@ const submitImport = async () => {
 const submitGenerate = async () => {
   const email = genEmail.value.trim()
   if (!email) return
-  const keys = await cad.generateKeys(email, 'lifetime', genCount.value || 1, genSendEmail.value)
+  const keys = await cad.generateKeys(email, 'lifetime', genCount.value || 1, genSendEmail.value, genProduct.value)
   if (keys.length) genResult.value = keys
 }
 const closeGenerate = () => {
@@ -51,6 +65,7 @@ const closeGenerate = () => {
   genEmail.value = ''
   genCount.value = 1
   genSendEmail.value = true
+  genProduct.value = 'cad'
 }
 const copyText = async (t: string) => { try { await navigator.clipboard.writeText(t) } catch { /* noop */ } }
 
@@ -80,6 +95,12 @@ const statusClass = (s: string) =>
     : s === 'revoked'
       ? 'bg-rose-500/10 text-rose-400'
       : 'bg-amber-500/10 text-amber-400'
+// Baris lama tanpa field product dianggap "cad".
+const productLabel = (p?: string) => (p === 'mounter' ? 'Mounter' : 'CAD')
+const productClass = (p?: string) =>
+  p === 'mounter'
+    ? 'bg-blue-500/10 text-blue-400'
+    : 'bg-[var(--ca-panel-bg-strong)] text-[var(--ca-muted)]'
 
 // Pagination client-side (data tabel bisa ratusan baris, mis. pool lisensi).
 const PAGE_SIZE = 25
@@ -216,7 +237,20 @@ const tabs: { key: Tab; label: string; icon: string; perm: string }[] = [
     </div>
 
     <!-- LICENSES -->
-    <div v-else-if="tab === 'licenses'" class="ca-card overflow-hidden">
+    <div v-else-if="tab === 'licenses'" class="space-y-3">
+      <!-- Toolbar: filter produk (di luar card agar dropdown tidak terpotong overflow-hidden) -->
+      <div class="flex flex-wrap items-center justify-end gap-2">
+        <label for="cad-product-filter" class="text-xs text-[var(--ca-subtle)]">Product</label>
+        <div class="w-44">
+          <SearchSelect
+            id="cad-product-filter"
+            v-model="productFilter"
+            :placeholder="tc('common.all')"
+            :options="productFilterOptions"
+          />
+        </div>
+      </div>
+      <div class="ca-card overflow-hidden">
       <p class="border-b border-[color:var(--ca-border)] px-4 py-2 text-xs text-[var(--ca-subtle)]">{{ tc('cad.revokeNote') }}</p>
       <div v-if="loading" class="p-6 text-sm text-[var(--ca-muted)]">…</div>
       <p v-else-if="!licenses.length" class="p-6 text-sm text-[var(--ca-muted)]">{{ tc('cad.empty') }}</p>
@@ -225,6 +259,7 @@ const tabs: { key: Tab; label: string; icon: string; perm: string }[] = [
           <thead class="sticky top-0 z-10 bg-[var(--ca-panel-bg-strong)] text-xs uppercase text-[var(--ca-subtle)]">
             <tr class="border-b border-[color:var(--ca-border)]">
               <th class="px-3 py-2">{{ tc('cad.colKey') }}</th>
+              <th class="px-3 py-2">Product</th>
               <th class="px-3 py-2">{{ tc('cad.colEmail') }}</th>
               <th class="px-3 py-2">{{ tc('cad.colTier') }}</th>
               <th class="px-3 py-2">{{ tc('cad.platform') }}</th>
@@ -238,6 +273,9 @@ const tabs: { key: Tab; label: string; icon: string; perm: string }[] = [
           <tbody>
             <tr v-for="l in pagedLicenses" :key="l.id" class="border-b border-[color:var(--ca-border)]/60">
               <td class="px-3 py-2 font-mono text-xs text-[var(--ca-text)]">{{ l.key_masked }}</td>
+              <td class="px-3 py-2">
+                <span class="rounded-full px-2 py-0.5 text-xs font-semibold" :class="productClass(l.product)">{{ productLabel(l.product) }}</span>
+              </td>
               <td class="px-3 py-2 text-[var(--ca-muted)]">{{ l.email || '-' }}</td>
               <td class="px-3 py-2 text-[var(--ca-muted)]">{{ l.tier }}</td>
               <td class="px-3 py-2 text-[var(--ca-muted)]">{{ l.platform || '-' }}</td>
@@ -273,6 +311,7 @@ const tabs: { key: Tab; label: string; icon: string; perm: string }[] = [
           <button type="button" class="ca-header-btn !h-8 !min-w-8" :disabled="licPage <= 1" @click="licPage = Math.max(1, licPage - 1)"><Icon name="lucide:chevron-left" class="h-3.5 w-3.5" /></button>
           <button type="button" class="ca-header-btn !h-8 !min-w-8" :disabled="licPage >= licPages" @click="licPage = Math.min(licPages, licPage + 1)"><Icon name="lucide:chevron-right" class="h-3.5 w-3.5" /></button>
         </div>
+      </div>
       </div>
     </div>
 
@@ -349,6 +388,14 @@ const tabs: { key: Tab; label: string; icon: string; perm: string }[] = [
               placeholder="pembeli@email.com"
               class="w-full rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] px-3 py-2 text-sm text-[var(--ca-text)]"
             >
+          </div>
+          <div class="w-44">
+            <label class="mb-1 block text-xs text-[var(--ca-subtle)]">Product</label>
+            <SearchSelect
+              id="cad-gen-product"
+              v-model="genProduct"
+              :options="genProductOptions"
+            />
           </div>
           <div class="w-32">
             <label class="mb-1 block text-xs text-[var(--ca-subtle)]">{{ tc('cad.generateCount') }}</label>

@@ -15,6 +15,7 @@ type CADLicense struct {
 	Tier           string     `json:"tier"`
 	Status         string     `json:"status"`
 	Platform       string     `json:"platform"`
+	Product        string     `json:"product"` // "cad" | "mounter" — produk pemilik key
 	OrderRef       *string    `json:"order_ref"`
 	DeviceLimit    int        `json:"device_limit"`
 	LastTransferAt *time.Time `json:"last_transfer_at"`
@@ -36,6 +37,7 @@ type CADLicenseResponse struct {
 	Tier           string     `json:"tier"`
 	Status         string     `json:"status"`
 	Platform       string     `json:"platform"`
+	Product        string     `json:"product"`
 	OrderRef       *string    `json:"order_ref"`
 	DeviceLimit    int        `json:"device_limit"`
 	DeviceCount    int        `json:"device_count"`
@@ -54,6 +56,7 @@ func (l *CADLicense) ToResponse() CADLicenseResponse {
 		Tier:           l.Tier,
 		Status:         l.Status,
 		Platform:       l.Platform,
+		Product:        l.Product,
 		OrderRef:       l.OrderRef,
 		DeviceLimit:    l.DeviceLimit,
 		DeviceCount:    l.DeviceCount,
@@ -96,6 +99,7 @@ type GenerateCADLicenseRequest struct {
 	Count       int    `json:"count" validate:"omitempty,min=1,max=100"`
 	DeviceLimit *int   `json:"device_limit"`
 	SendEmail   bool   `json:"send_email"` // email the key(s) to Email after generating
+	Product     string `json:"product" validate:"omitempty,oneof=cad mounter"`
 }
 
 // ───────────────────────── Installation / device ─────────────────────────

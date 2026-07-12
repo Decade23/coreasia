@@ -8,6 +8,8 @@ export interface CadLicense {
   key_masked: string
   email: string | null
   tier: string
+  /** "cad" | "mounter" — baris lama tanpa field ini dianggap "cad". */
+  product?: string
   status: string
   order_ref: string | null
   device_limit: number
@@ -64,10 +66,19 @@ export const useCadConsole = () => {
   const loading = ref(false)
   const saving = ref(false)
 
-  const fetchLicenses = async () => {
+  // Filter produk aktif untuk list lisensi ('' = semua). Diingat di sini supaya
+  // refetch internal setelah mutasi (generate/import/revoke/delete) tetap memakai
+  // filter yang sedang aktif di UI.
+  const licenseProduct = ref('')
+
+  const fetchLicenses = async (product?: string) => {
+    if (product !== undefined) licenseProduct.value = product
     loading.value = true
     try {
-      const res = await api.get<CadLicense[]>('/admin/cad/licenses')
+      const res = await api.get<CadLicense[]>(
+        '/admin/cad/licenses',
+        licenseProduct.value ? { product: licenseProduct.value } : undefined,
+      )
       licenses.value = res.data || []
     } catch {
       toast.error(tc('cad.loadFailed'))
@@ -115,10 +126,10 @@ export const useCadConsole = () => {
     }
   }
 
-  const generateKeys = async (email: string, tier = 'lifetime', count = 1, sendEmail = false): Promise<string[]> => {
+  const generateKeys = async (email: string, tier = 'lifetime', count = 1, sendEmail = false, product = 'cad'): Promise<string[]> => {
     saving.value = true
     try {
-      const res = await api.post<{ keys: string[]; count: number; emailed: number }>('/admin/cad/licenses/generate', { email, tier, count, send_email: sendEmail })
+      const res = await api.post<{ keys: string[]; count: number; emailed: number }>('/admin/cad/licenses/generate', { email, tier, count, send_email: sendEmail, product })
       const keys = res.data?.keys ?? []
       toast.success(sendEmail && (res.data?.emailed ?? 0) > 0
         ? tc('cad.generatedEmailed', { n: keys.length })

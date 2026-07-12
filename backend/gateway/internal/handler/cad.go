@@ -23,6 +23,18 @@ import (
 // cadDownloadURL is the public DMG link emailed to buyers on purchase.
 const cadDownloadURL = "https://assets.coreasia.id/CoreAsia-Download-Manager.dmg"
 
+// mounterDownloadURL — link unduhan yang diemail ke pembeli CoreAsia Mounter.
+// Sementara mengarah ke landing produk; ganti ke URL DMG assets saat rilis final.
+const mounterDownloadURL = "https://coreasia.id/products/mounter"
+
+// Kode produk (kolom cad_licenses.product) + nama tampilan untuk email.
+const (
+	productCAD         = "cad"
+	productMounter     = "mounter"
+	cadProductName     = "CoreAsia Download Manager"
+	mounterProductName = "CoreAsia Mounter"
+)
+
 // mayarVerifier independently confirms a Mayar transaction is genuinely PAID.
 // Implemented by *service.MayarClient; an interface so the gating logic in
 // PurchaseWebhookMayar can be unit-tested with a stub.
@@ -64,7 +76,8 @@ type CADHandler struct {
 	repo          cadStore
 	auditLog      auditLogger
 	email         *service.EmailService
-	signer        *service.CADKeySigner // server-side key generation; nil = generate disabled
+	signer        *service.CADKeySigner // CAD server-side key generation; nil = disabled
+	mounterSigner *service.CADKeySigner // CoreAsia Mounter signer (keypair TERPISAH); nil = disabled
 	mayarSecret   string
 	mayar         mayarVerifier // outbound callback-verifier (may be nil)
 	mayarVerify   bool          // when true, REQUIRE callback verification before minting a key
@@ -72,17 +85,31 @@ type CADHandler struct {
 	gumroadSeller string        // optional: expected seller_id
 }
 
-func NewCADHandler(repo *repository.CADRepo, auditLog *repository.AuditLogRepo, email *service.EmailService, signer *service.CADKeySigner, payments config.PaymentsConfig, mayar mayarVerifier) *CADHandler {
+func NewCADHandler(repo *repository.CADRepo, auditLog *repository.AuditLogRepo, email *service.EmailService, signer *service.CADKeySigner, mounterSigner *service.CADKeySigner, payments config.PaymentsConfig, mayar mayarVerifier) *CADHandler {
 	return &CADHandler{
 		repo:          repo,
 		auditLog:      auditLog,
 		email:         email,
 		signer:        signer,
+		mounterSigner: mounterSigner,
 		mayarSecret:   payments.MayarWebhookToken,
 		mayar:         mayar,
 		mayarVerify:   payments.MayarVerify,
 		gumroadToken:  payments.GumroadPingToken,
 		gumroadSeller: payments.GumroadSellerID,
+	}
+}
+
+// productProfile memetakan kode produk → profil fulfillment (nama email, link
+// unduhan, signer). ok=false untuk kode yang tidak dikenal.
+func (h *CADHandler) productProfile(code string) (name, downloadURL string, signer *service.CADKeySigner, ok bool) {
+	switch code {
+	case productMounter:
+		return mounterProductName, mounterDownloadURL, h.mounterSigner, true
+	case productCAD, "":
+		return cadProductName, cadDownloadURL, h.signer, true
+	default:
+		return "", "", nil, false
 	}
 }
 
@@ -101,9 +128,14 @@ func (h *CADHandler) List(c fiber.Ctx) error {
 		slog.Error("gagal list cad licenses", "error", err)
 		return errResponse(c, apperr.NewInternal(err))
 	}
-	resp := make([]model.CADLicenseResponse, len(items))
+	// Filter opsional per produk (?product=cad|mounter); tanpa param = semua.
+	product := strings.ToLower(strings.TrimSpace(c.Query("product")))
+	resp := make([]model.CADLicenseResponse, 0, len(items))
 	for i := range items {
-		resp[i] = items[i].ToResponse()
+		if product != "" && items[i].Product != product {
+			continue
+		}
+		resp = append(resp, items[i].ToResponse())
 	}
 	return ok(c, resp)
 }
@@ -186,15 +218,24 @@ func (h *CADHandler) Create(c fiber.Ctx) error {
 // full keys ONCE (admin copies them). Requires CAD_LICENSE_SIGNING_KEY configured.
 func (h *CADHandler) Generate(c fiber.Ctx) error {
 	claims := middleware.GetClaims(c)
-	if h.signer == nil {
-		return errResponse(c, apperr.NewInternal(fmt.Errorf("CAD signing key belum dikonfigurasi di server (set CAD_LICENSE_SIGNING_KEY)")))
-	}
 	var req model.GenerateCADLicenseRequest
 	if err := c.Bind().JSON(&req); err != nil {
 		return errResponse(c, apperr.NewBadRequest("Format request tidak valid"))
 	}
 	if appErr := validate.Struct(&req); appErr != nil {
 		return errResponse(c, appErr)
+	}
+	product := strings.ToLower(strings.TrimSpace(req.Product))
+	if product == "" {
+		product = productCAD
+	}
+	prodName, prodDownloadURL, signer, okProd := h.productProfile(product)
+	if !okProd {
+		return errResponse(c, apperr.NewBadRequest("Produk tidak dikenal (cad|mounter)"))
+	}
+	if signer == nil {
+		return errResponse(c, apperr.NewInternal(fmt.Errorf("signing key %s belum dikonfigurasi di server (set %s)", prodName,
+			map[string]string{productCAD: "CAD_LICENSE_SIGNING_KEY", productMounter: "MOUNTER_LICENSE_SIGNING_KEY"}[product])))
 	}
 	tier := req.Tier
 	if tier == "" {
@@ -211,30 +252,30 @@ func (h *CADHandler) Generate(c fiber.Ctx) error {
 	keys := make([]string, 0, count)
 	emailed := 0
 	for i := 0; i < count; i++ {
-		key, err := h.signer.Sign(req.Email, tier, 0) // exp=0 → lifetime
+		key, err := signer.Sign(req.Email, tier, 0) // exp=0 → lifetime
 		if err != nil {
-			slog.Error("gagal sign cad key", "error", err)
+			slog.Error("gagal sign license key", "product", product, "error", err)
 			return errResponse(c, apperr.NewInternal(err))
 		}
 		em := req.Email
 		lic := model.CADLicense{
-			LicenseKey: key, Email: &em, Tier: tier, Status: "active",
+			LicenseKey: key, Email: &em, Tier: tier, Status: "active", Product: product,
 			DeviceLimit: limit, CreatedBy: &claims.UserID,
 		}
 		if err := h.repo.Create(c.Context(), &lic); err != nil {
-			slog.Error("gagal simpan cad license (generate)", "error", err)
+			slog.Error("gagal simpan license (generate)", "product", product, "error", err)
 			return errResponse(c, apperr.NewInternal(err))
 		}
 		keys = append(keys, key)
 		if req.SendEmail {
-			if err := h.email.SendLicenseKey(c.Context(), req.Email, key, cadDownloadURL); err != nil {
+			if err := h.email.SendLicenseKey(c.Context(), req.Email, key, prodDownloadURL, prodName); err != nil {
 				slog.Error("gagal kirim email license key (generate)", "email", req.Email, "error", err)
 			} else {
 				emailed++
 			}
 		}
 	}
-	desc := fmt.Sprintf("Generate %d license CAD untuk %s (emailed: %d)", len(keys), req.Email, emailed)
+	desc := fmt.Sprintf("Generate %d license %s untuk %s (emailed: %d)", len(keys), prodName, req.Email, emailed)
 	h.auditLog.LogAction(c.Context(), &claims.UserID, &claims.FullName, "generate", "cad_licenses", nil, &desc, c.IP())
 	return ok(c, fiber.Map{"keys": keys, "count": len(keys), "emailed": emailed})
 }
@@ -621,7 +662,7 @@ func (h *CADHandler) PurchaseWebhookMayar(c fiber.Ctx) error {
 		return ok(c, fiber.Map{"received": true, "fulfilled": true, "emailed": false, "duplicate": true})
 	}
 
-	if err := h.email.SendLicenseKey(c.Context(), email, lic.LicenseKey, cadDownloadURL); err != nil {
+	if err := h.email.SendLicenseKey(c.Context(), email, lic.LicenseKey, cadDownloadURL, cadProductName); err != nil {
 		slog.Error("gagal kirim email license key CAD", "order_ref", orderRef, "email", email, "error", err)
 		return ok(c, fiber.Map{"received": true, "fulfilled": true, "emailed": false})
 	}
@@ -712,6 +753,18 @@ func (h *CADHandler) PurchaseWebhookGumroad(c fiber.Ctx) error {
 		slog.Error("gumroad webhook tanpa email/sale_id", "has_email", email != "", "sale_id", saleID)
 		return ok(c, fiber.Map{"received": true, "ignored": "no email/sale_id"})
 	}
+
+	// Gumroad Ping bersifat account-wide (fire untuk SEMUA produk di toko) —
+	// tentukan produk dari permalink. Produk tak dikenal WAJIB di-ack tanpa
+	// mint supaya pembeli produk lain tidak menerima key/link yang salah.
+	product := h.resolveGumroadProduct(c)
+	prodName, prodDownloadURL, signer, okProd := h.productProfile(product)
+	if !okProd {
+		slog.Warn("gumroad webhook: produk tidak dikenal — di-ack tanpa terbit key",
+			"permalink", c.FormValue("permalink"), "product_permalink", c.FormValue("product_permalink"),
+			"product_id", c.FormValue("product_id"), "sale_id", saleID)
+		return ok(c, fiber.Map{"received": true, "ignored": "unknown product"})
+	}
 	orderRef := "gumroad:" + saleID
 
 	// Idempotency: sudah terbit untuk sale ini? jangan terbit/email ulang.
@@ -720,29 +773,52 @@ func (h *CADHandler) PurchaseWebhookGumroad(c fiber.Ctx) error {
 		return ok(c, fiber.Map{"received": true, "fulfilled": true, "duplicate": true})
 	}
 
-	if h.signer == nil {
-		slog.Error("gumroad webhook: signer nonaktif (CAD_LICENSE_SIGNING_KEY kosong) — perlu terbit manual",
-			"order_ref", orderRef, "email", email)
+	if signer == nil {
+		slog.Error("gumroad webhook: signer nonaktif — perlu terbit manual",
+			"product", product, "order_ref", orderRef, "email", email)
 		return ok(c, fiber.Map{"received": true, "fulfilled": false, "reason": "signer disabled"})
 	}
-	key, err := h.signer.Sign(email, "lifetime", 0)
+	key, err := signer.Sign(email, "lifetime", 0)
 	if err != nil {
-		slog.Error("gumroad webhook: gagal sign key", "order_ref", orderRef, "error", err)
+		slog.Error("gumroad webhook: gagal sign key", "product", product, "order_ref", orderRef, "error", err)
 		return errResponse(c, apperr.NewInternal(err))
 	}
 	em, ref := email, orderRef
 	lic := model.CADLicense{
-		LicenseKey: key, Email: &em, Tier: "lifetime", Status: "active",
+		LicenseKey: key, Email: &em, Tier: "lifetime", Status: "active", Product: product,
 		DeviceLimit: 1, OrderRef: &ref,
 	}
 	if err := h.repo.Create(c.Context(), &lic); err != nil {
-		slog.Error("gumroad webhook: gagal simpan license", "order_ref", orderRef, "error", err)
+		slog.Error("gumroad webhook: gagal simpan license", "product", product, "order_ref", orderRef, "error", err)
 		return errResponse(c, apperr.NewInternal(err))
 	}
-	if err := h.email.SendLicenseKey(c.Context(), email, key, cadDownloadURL); err != nil {
-		slog.Error("gumroad webhook: key terbit tapi email GAGAL", "order_ref", orderRef, "email", email, "error", err)
+	if err := h.email.SendLicenseKey(c.Context(), email, key, prodDownloadURL, prodName); err != nil {
+		slog.Error("gumroad webhook: key terbit tapi email GAGAL", "product", product, "order_ref", orderRef, "email", email, "error", err)
 		return ok(c, fiber.Map{"received": true, "fulfilled": true, "emailed": false})
 	}
-	slog.Info("gumroad: license key terbit & terkirim", "order_ref", orderRef, "email", email, "license_id", lic.ID)
+	slog.Info("gumroad: license key terbit & terkirim", "product", product, "order_ref", orderRef, "email", email, "license_id", lic.ID)
 	return ok(c, fiber.Map{"received": true, "fulfilled": true, "emailed": true})
+}
+
+// resolveGumroadProduct menentukan kode produk dari field permalink pada Gumroad
+// Ping. `permalink` berisi slug produk; `product_permalink` bisa berupa URL penuh
+// (ambil segmen path terakhir). Ping lama tanpa permalink dianggap CAD (perilaku
+// sebelum multi-produk). Slug tak dikenal → string apa adanya (ditolak caller).
+func (h *CADHandler) resolveGumroadProduct(c fiber.Ctx) string {
+	slug := strings.TrimSpace(c.FormValue("permalink"))
+	if slug == "" {
+		slug = strings.TrimSpace(c.FormValue("product_permalink"))
+	}
+	slug = strings.TrimRight(slug, "/")
+	if i := strings.LastIndexByte(slug, '/'); i >= 0 {
+		slug = slug[i+1:]
+	}
+	switch strings.ToLower(slug) {
+	case "mounter":
+		return productMounter
+	case "coreasia-download-manager", "":
+		return productCAD
+	default:
+		return strings.ToLower(slug)
+	}
 }

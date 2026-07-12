@@ -19,6 +19,7 @@ type Config struct {
 	Email    EmailConfig    `yaml:"email"`
 	Payments PaymentsConfig `yaml:"payments"`
 	CAD      CADConfig      `yaml:"cad"`
+	Mounter  MounterConfig  `yaml:"mounter"`
 }
 
 // CADConfig — penerbitan license key CoreAsia Download Manager.
@@ -27,6 +28,15 @@ type CADConfig struct {
 	// server-side (admin "Generate"). HARUS berpasangan dgn LICENSE_PUBKEY di app.
 	// Kosong = fitur generate nonaktif (import tetap jalan). RAHASIA — jangan commit.
 	SigningKey string `yaml:"signing_key" env:"CAD_LICENSE_SIGNING_KEY"`
+}
+
+// MounterConfig — penerbitan license key CoreAsia Mounter (format & alur identik
+// dengan CAD, tetapi WAJIB keypair terpisah: pubkey pasangannya di-embed di app
+// Mounter (LicenseVerifier.licensePublicKey), bukan pubkey CAD).
+type MounterConfig struct {
+	// SigningKey = seed Ed25519 (base64url, 32 byte) khusus Mounter. Kosong =
+	// penerbitan key Mounter nonaktif (webhook tetap ack, log error). RAHASIA.
+	SigningKey string `yaml:"signing_key" env:"MOUNTER_LICENSE_SIGNING_KEY"`
 }
 
 type AppConfig struct {
