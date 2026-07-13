@@ -838,7 +838,7 @@ const ID_CONTENT = {
           'CoreAsia Mounter — tulis ke drive NTFS di <span class="ca-gradient-text">Mac Apple Silicon</span>.',
         subtitle:
           'Colok drive, dan semuanya bekerja otomatis — drive langsung dikenali, ter-mount, dan siap ditulis dari menu bar. Tanpa setup rumit, tanpa mengubah pengaturan Mac Anda. Membaca NTFS gratis selamanya.',
-        ctaPrimary: 'Coba Gratis 1 Hari',
+        ctaPrimary: 'Unduh Gratis untuk macOS',
         ctaSecondary: 'Beli $25 Lifetime',
         chips: ['macOS Tahoe · Apple Silicon', 'Mount otomatis', 'Sekali bayar, lifetime'],
       },
@@ -1036,7 +1036,7 @@ const ID_CONTENT = {
         title: 'Siap menulis ke drive NTFS Anda?',
         subtitle:
           'Coba gratis 1 hari dengan semua fitur tulis aktif. Setelah trial berakhir, membaca NTFS tetap gratis selamanya.',
-        ctaPrimary: 'Coba Gratis 1 Hari',
+        ctaPrimary: 'Unduh Gratis untuk macOS',
         ctaSecondary: 'support@coreasia.id',
         note: 'Pembelian diproses oleh Gumroad sebagai merchant of record. Harga IDR muncul otomatis saat checkout.',
       },

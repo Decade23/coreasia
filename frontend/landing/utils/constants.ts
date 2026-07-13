@@ -62,6 +62,10 @@ export const MERCHANT = {
 // Checkout Gumroad — harga IDR muncul otomatis saat checkout.
 export const MOUNTER = {
     buyUrl: 'https://coreasia.gumroad.com/l/mounter?utm_source=coreasia.id&utm_medium=landing&utm_campaign=mounter-launch',
+    // Unduhan app GRATIS (baca NTFS gratis + trial tulis 1 hari mulai di dalam app).
+    // Pembelian Gumroad mengirim license key, BUKAN file app — jadi tombol "unduh"
+    // memakai URL ini, tombol "beli" memakai buyUrl.
+    downloadUrl: 'https://assets.coreasia.id/CoreAsia-Mounter.dmg',
     supportEmail: 'mailto:support@coreasia.id',
 } as const
 

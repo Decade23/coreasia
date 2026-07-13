@@ -1024,7 +1024,7 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
           'CoreAsia Mounter — write to NTFS drives on <span class="ca-gradient-text">Apple Silicon Macs</span>.',
         subtitle:
           'Plug in a drive and everything just works — it is detected, mounted, and ready to write from the menu bar, automatically. No complicated setup, no changes to your Mac. Reading NTFS is free forever.',
-        ctaPrimary: 'Free 1-Day Trial',
+        ctaPrimary: 'Download Free for macOS',
         ctaSecondary: 'Buy $25 Lifetime',
         chips: ['macOS Tahoe · Apple Silicon', 'Auto-mount', 'One-time payment, lifetime'],
       },
@@ -1222,7 +1222,7 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
         title: 'Ready to write to your NTFS drives?',
         subtitle:
           'Try it free for 1 day with every write feature unlocked. After the trial ends, reading NTFS stays free forever.',
-        ctaPrimary: 'Free 1-Day Trial',
+        ctaPrimary: 'Download Free for macOS',
         ctaSecondary: 'support@coreasia.id',
         note: 'Purchases are processed by Gumroad as the merchant of record. IDR pricing appears automatically at checkout.',
       },

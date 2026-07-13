@@ -127,13 +127,11 @@ const relatedItems = computed(
 
             <div class="mt-8 flex flex-col gap-3 sm:flex-row">
               <a
-                :href="MOUNTER.buyUrl"
-                target="_blank"
-                rel="noopener"
+                :href="MOUNTER.downloadUrl"
                 class="ca-btn-primary"
               >
+                <Icon name="lucide:download" class="h-4 w-4" />
                 {{ t('solutions.mounter.hero.ctaPrimary') }}
-                <Icon name="lucide:arrow-right" class="h-4 w-4" />
               </a>
               <a
                 :href="MOUNTER.buyUrl"
@@ -389,7 +387,7 @@ const relatedItems = computed(
               </li>
             </ul>
             <a
-              :href="MOUNTER.buyUrl"
+              :href="plan.popular ? MOUNTER.buyUrl : MOUNTER.downloadUrl"
               target="_blank"
               rel="noopener"
               class="mt-5"
@@ -462,14 +460,9 @@ const relatedItems = computed(
             {{ t('solutions.mounter.cta.subtitle') }}
           </p>
           <div class="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
-            <a
-              :href="MOUNTER.buyUrl"
-              target="_blank"
-              rel="noopener"
-              class="ca-btn-primary"
-            >
+            <a :href="MOUNTER.downloadUrl" class="ca-btn-primary">
+              <Icon name="lucide:download" class="h-4 w-4" />
               {{ t('solutions.mounter.cta.ctaPrimary') }}
-              <Icon name="lucide:arrow-right" class="h-4 w-4" />
             </a>
             <a :href="MOUNTER.supportEmail" class="ca-btn-secondary">
               {{ t('solutions.mounter.cta.ctaSecondary') }}

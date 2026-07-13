@@ -24,8 +24,8 @@ import (
 const cadDownloadURL = "https://assets.coreasia.id/CoreAsia-Download-Manager.dmg"
 
 // mounterDownloadURL — link unduhan yang diemail ke pembeli CoreAsia Mounter.
-// Sementara mengarah ke landing produk; ganti ke URL DMG assets saat rilis final.
-const mounterDownloadURL = "https://coreasia.id/products/mounter"
+// DMG di R2 (assets.coreasia.id), sejajar dengan CAD.
+const mounterDownloadURL = "https://assets.coreasia.id/CoreAsia-Mounter.dmg"
 
 // Kode produk (kolom cad_licenses.product) + nama tampilan untuk email.
 const (
