@@ -591,7 +591,7 @@ const ID_CONTENT = {
         title:
           'Simpan video &amp; file dari web <span class="ca-gradient-text">dengan satu klik</span>.',
         subtitle:
-          'CoreAsia Download Manager (CAD) adalah download manager premium untuk macOS dengan engine unduhan cepat multi-koneksi, pemilih kualitas, ekstraksi audio MP3, serta antrean dan riwayat tersimpan — dalam antarmuka yang bersih dan ringan.',
+          'CoreAsia Download Manager (CAD) adalah download manager premium untuk macOS & Windows dengan engine unduhan cepat multi-koneksi, pemilih kualitas, ekstraksi audio MP3, serta antrean dan riwayat tersimpan — dalam antarmuka yang bersih dan ringan.',
         ctaPrimary: 'Unduh untuk macOS',
         ctaSecondary: 'Lihat Harga',
         ctaMac: 'Unduh untuk macOS',
@@ -603,6 +603,8 @@ const ID_CONTENT = {
       workflowAside: {
         label: 'How It Works',
         title: 'Mulai mengunduh dalam 4 langkah',
+        installWinDesc:
+          'Unduh installer .exe dari coreasia.id, jalankan, lalu ikuti wizard (per-user, tanpa admin) dan buka aplikasi. Coba gratis selama 3 hari.',
         items: [
           {
             title: '1. Pasang & buka aplikasi',

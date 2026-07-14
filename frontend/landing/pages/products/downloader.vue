@@ -73,9 +73,16 @@ const ctaSection = useReveal('scaleUp')
 const heroChips = computed(
   () => (t('solutions.downloader.hero.chips') as string[]) || [],
 )
-const workflowAsideItems = computed(
-  () => (t('solutions.downloader.workflowAside.items') as Array<Record<string, string>>) || [],
-)
+const workflowAsideItems = computed(() => {
+  const items = ((t('solutions.downloader.workflowAside.items') as Array<Record<string, string>>) || []).map(
+    (x) => ({ ...x }),
+  )
+  // Langkah 1 khusus-OS: pengunjung Windows dapat instruksi installer .exe (bukan .dmg/seret ke Applications).
+  if (os.value === 'windows' && items[0]) {
+    items[0].description = t('solutions.downloader.workflowAside.installWinDesc') as string
+  }
+  return items
+})
 const features = computed(
   () => (t('solutions.downloader.features.items') as Array<Record<string, string>>) || [],
 )

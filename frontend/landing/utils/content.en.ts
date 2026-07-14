@@ -777,7 +777,7 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
         title:
           'Save videos &amp; files from the web <span class="ca-gradient-text">in one click</span>.',
         subtitle:
-          'CoreAsia Download Manager (CAD) is a premium download manager for macOS with a fast multi-connection engine, quality picker, MP3 audio extraction, plus a saved queue and history — all in a clean, lightweight interface.',
+          'CoreAsia Download Manager (CAD) is a premium download manager for macOS & Windows with a fast multi-connection engine, quality picker, MP3 audio extraction, plus a saved queue and history — all in a clean, lightweight interface.',
         ctaPrimary: 'Download for macOS',
         ctaSecondary: 'See Pricing',
         ctaMac: 'Download for macOS',
@@ -789,6 +789,8 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
       workflowAside: {
         label: 'How It Works',
         title: 'Start downloading in 4 steps',
+        installWinDesc:
+          'Download the .exe installer from coreasia.id, run it, then follow the wizard (per-user, no admin) and open the app. Try it free for 3 days.',
         items: [
           {
             title: '1. Install & open the app',
