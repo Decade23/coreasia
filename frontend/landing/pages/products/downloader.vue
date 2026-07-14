@@ -1,7 +1,20 @@
 <script setup lang="ts">
-import { LINKS, MERCHANT } from '~/utils/constants'
+import { LINKS, MERCHANT, DOWNLOADS } from '~/utils/constants'
 
 const { t } = useCoreI18n()
+
+// Unduhan otomatis sesuai OS pengunjung (Windows/macOS); keduanya tetap bisa dipilih manual.
+const os = useOS()
+const primaryDl = computed(() =>
+  os.value === 'windows'
+    ? { url: DOWNLOADS.windows, label: t('solutions.downloader.hero.ctaWin') as string, beta: DOWNLOADS.windowsBeta }
+    : { url: DOWNLOADS.mac, label: t('solutions.downloader.hero.ctaMac') as string, beta: false },
+)
+const otherDl = computed(() =>
+  os.value === 'windows'
+    ? { url: DOWNLOADS.mac, label: 'macOS', beta: false }
+    : { url: DOWNLOADS.windows, label: 'Windows', beta: DOWNLOADS.windowsBeta },
+)
 
 const PAGE_DESCRIPTION = t('solutions.downloader.description') as string
 const PAGE_URL = 'https://coreasia.id/products/downloader'
@@ -29,7 +42,7 @@ useHead({
         '@type': 'SoftwareApplication',
         name: 'CoreAsia Download Manager',
         applicationCategory: 'UtilitiesApplication',
-        operatingSystem: 'macOS',
+        operatingSystem: 'macOS, Windows',
         description: PAGE_DESCRIPTION,
         url: PAGE_URL,
         provider: {
@@ -116,17 +129,25 @@ const relatedItems = computed(
             </p>
 
             <div class="mt-8 flex flex-col gap-3 sm:flex-row">
-              <a
-                href="https://assets.coreasia.id/CoreAsia-Download-Manager.dmg"
-                class="ca-btn-primary"
-              >
-                {{ t('solutions.downloader.hero.ctaPrimary') }}
+              <a :href="primaryDl.url" class="ca-btn-primary">
+                {{ primaryDl.label }}
+                <span
+                  v-if="primaryDl.beta"
+                  class="ml-1.5 rounded-full bg-white/25 px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wide"
+                >{{ t('solutions.downloader.hero.winBadge') }}</span>
                 <Icon name="lucide:arrow-down-to-line" class="h-4 w-4" />
               </a>
               <NuxtLink to="#harga" class="ca-btn-secondary">
                 {{ t('solutions.downloader.hero.ctaSecondary') }}
               </NuxtLink>
             </div>
+            <p class="mt-3 text-sm text-[var(--ca-subtle)]">
+              {{ t('solutions.downloader.hero.alsoOther') }}
+              <a
+                :href="otherDl.url"
+                class="font-semibold text-[var(--ca-text)] underline decoration-dotted underline-offset-4 hover:text-[var(--ca-gold)]"
+              >{{ otherDl.label }}<template v-if="otherDl.beta"> ({{ t('solutions.downloader.hero.winBadge') }})</template></a>
+            </p>
 
             <div class="mt-6 flex flex-wrap gap-2">
               <span v-for="chip in heroChips" :key="chip" class="ca-chip">

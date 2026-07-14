@@ -69,6 +69,14 @@ export const MOUNTER = {
     supportEmail: 'mailto:support@coreasia.id',
 } as const
 
+// Unduhan installer CoreAsia Download Manager per-OS (di-host di R2/assets.coreasia.id).
+// Halaman produk memilih otomatis via useOS(); Windows masih BETA (belum ter-sign).
+export const DOWNLOADS = {
+    mac: 'https://assets.coreasia.id/CoreAsia-Download-Manager.dmg',
+    windows: 'https://assets.coreasia.id/CoreAsia-Download-Manager-Setup.exe',
+    windowsBeta: true,
+} as const
+
 // ──────────────────────────────────────
 // FastSpring (Merchant of Record) — popup checkout (SBL)
 // ──────────────────────────────────────

@@ -594,7 +594,11 @@ const ID_CONTENT = {
           'CoreAsia Download Manager (CAD) adalah download manager premium untuk macOS dengan engine unduhan cepat multi-koneksi, pemilih kualitas, ekstraksi audio MP3, serta antrean dan riwayat tersimpan — dalam antarmuka yang bersih dan ringan.',
         ctaPrimary: 'Unduh untuk macOS',
         ctaSecondary: 'Lihat Harga',
-        chips: ['macOS (Apple Silicon)', 'Multi-koneksi', 'MP3 Audio', 'Privasi-first'],
+        ctaMac: 'Unduh untuk macOS',
+        ctaWin: 'Unduh untuk Windows',
+        winBadge: 'Beta',
+        alsoOther: 'Juga tersedia untuk',
+        chips: ['macOS · Windows', 'Multi-koneksi', 'MP3 Audio', 'Privasi-first'],
       },
       workflowAside: {
         label: 'How It Works',
