@@ -316,29 +316,32 @@ export default defineNuxtConfig({
         '/browserconfig.xml': {
             headers: { 'Cache-Control': 'public, max-age=86400, must-revalidate' },
         },
-        // Halaman marketing tetap SSR. WAJIB pakai bentuk isr+allowQuery, BUKAN swr:
-        // preset Vercel menerjemahkan swr jadi rewrite ber-query (?__isr_route=...)
-        // yang MEMBUANG query string masuk, sehingga ?lang=en tak pernah sampai ke
-        // renderer dan halaman EN selalu keluar Bahasa Indonesia. swr juga membuang
-        // angka detiknya (jadi expiration:false = cache sampai deploy berikutnya).
-        '/': { isr: { expiration: 3600, allowQuery: ['lang'] } },
-        '/about': { isr: { expiration: 3600, allowQuery: ['lang'] } },
-        '/contact': { isr: { expiration: 3600, allowQuery: ['lang'] } },
-        '/products': { isr: { expiration: 3600, allowQuery: ['lang'] } },
-        '/products/**': { isr: { expiration: 3600, allowQuery: ['lang'] } },
-        '/partnerships': { isr: { expiration: 3600, allowQuery: ['lang'] } },
+        // Halaman marketing WAJIB tanpa cache rute Vercel. Dua bentuk sudah dicoba
+        // dan dua-duanya membuang query string sebelum sampai ke renderer, sehingga
+        // ?lang=en selalu keluar Bahasa Indonesia di sisi server:
+        //   swr: 3600                                  -> ISR, expiration:false
+        //   isr: { expiration, allowQuery: ['lang'] }  -> allowQuery TIDAK menolong
+        // Terbukti di produksi: rute ber-ISR mengembalikan <html lang="id-ID"> untuk
+        // ?lang=en, sementara /register dan /artikel yang ssr:true mengembalikan
+        // "en-US". Konsekuensi yang diterima: tiap permintaan jadi invokasi fungsi.
+        '/': { ssr: true },
+        '/about': { ssr: true },
+        '/contact': { ssr: true },
+        '/products': { ssr: true },
+        '/products/**': { ssr: true },
+        '/partnerships': { ssr: true },
         '/solutions': { redirect: { to: '/solutions/venture', statusCode: 301 } },
         '/solutions/leadku': { redirect: { to: '/products/leadku', statusCode: 301 } },
         '/solutions/lms': { redirect: { to: '/products/lms', statusCode: 301 } },
         '/solutions/pantau': { redirect: { to: '/products/pantau', statusCode: 301 } },
-        '/solutions/venture': { isr: { expiration: 3600, allowQuery: ['lang'] } },
-        '/pricing': { isr: { expiration: 3600, allowQuery: ['lang'] } },
-        '/faq': { isr: { expiration: 3600, allowQuery: ['lang'] } },
-        '/portfolio': { isr: { expiration: 3600, allowQuery: ['lang'] } },
-        '/privacy-policy': { isr: { expiration: 3600, allowQuery: ['lang'] } },
-        '/terms': { isr: { expiration: 3600, allowQuery: ['lang'] } },
+        '/solutions/venture': { ssr: true },
+        '/pricing': { ssr: true },
+        '/faq': { ssr: true },
+        '/portfolio': { ssr: true },
+        '/privacy-policy': { ssr: true },
+        '/terms': { ssr: true },
         '/layanan': { redirect: { to: '/layanan/jasa-pembuatan-website', statusCode: 301 } },
-        '/layanan/**': { isr: { expiration: 3600, allowQuery: ['lang'] } },
+        '/layanan/**': { ssr: true },
         '/blog': { redirect: { to: '/artikel', statusCode: 301 } },
         '/artikel': { ssr: true },
         '/artikel/**': { ssr: true },
