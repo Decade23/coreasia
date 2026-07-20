@@ -69,6 +69,16 @@ export const MOUNTER = {
     supportEmail: 'mailto:support@coreasia.id',
 } as const
 
+// LeadKu adalah aplikasi terpisah di subdomainnya sendiri. Halaman produk di sini
+// berperan sebagai etalase; setiap ajakan bertindak harus punya jalan langsung ke
+// aplikasinya, bukan berhenti di formulir kontak.
+export const LEADKU = {
+    appUrl: 'https://leadku.coreasia.id',
+    // #harga adalah id section paket di landing LeadKu — mendarat langsung di harga.
+    pricingUrl: 'https://leadku.coreasia.id/#harga',
+    trialUrl: 'https://leadku.coreasia.id/auth/register',
+} as const
+
 // Unduhan installer CoreAsia Download Manager per-OS (di-host di R2/assets.coreasia.id).
 // Halaman produk memilih otomatis via useOS(); Windows masih BETA (belum ter-sign).
 export const DOWNLOADS = {

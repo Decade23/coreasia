@@ -1377,11 +1377,14 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
         subtitle:
           'LeadKu is built for teams that need better sales visibility, clearer team activity, and reporting that does not feel heavy.',
         ctaPrimary: 'Start 7-Day Free Trial',
-        ctaSecondary: 'WhatsApp',
+        ctaPricing: 'See Pricing & Plans',
+        ctaSecondary: 'Talk to Us First',
+        appNote: 'LeadKu runs on its own app:',
         chips: ['Pipeline visibility', 'Team activity tracking', 'Multi-workspace ready'],
       },
       pricing: {
         label: 'Pricing',
+        planCta: 'Choose this plan',
         title: 'Plans that follow how your team grows',
         subtitle:
           'Start with a 7-day trial, then pick a plan based on the users and data you need. Save with longer commitments: 3 months -10%, 6 months -15%, 12 months -20%.',
