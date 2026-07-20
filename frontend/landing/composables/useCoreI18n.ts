@@ -1,42 +1,32 @@
 import { computed, watch } from 'vue'
-import { DEFAULT_LOCALE, LOCALES, getLocaleInfo } from '~/utils/i18n'
+import {
+  DEFAULT_LOCALE,
+  LOCALES,
+  LOCALE_QUERY_KEY,
+  getLocaleInfo,
+  isSupportedLocale,
+  resolveLocaleFromQuery,
+} from '~/utils/i18n'
 import { getContent } from '~/utils/content'
 
-export const LOCALE_QUERY_KEY = 'lang'
-
-const isSupportedLocale = (value: unknown): value is keyof typeof LOCALES => {
-  return typeof value === 'string' && value in LOCALES
-}
+export { LOCALE_QUERY_KEY }
 
 const resolvePathValue = (source: any, path: string) => {
   return path.split('.').reduce((result, part) => result?.[part], source)
 }
 
-const resolveLocaleFromRoute = (
-  route: ReturnType<typeof useRoute>,
-  fallback: keyof typeof LOCALES = DEFAULT_LOCALE,
-): keyof typeof LOCALES => {
-  const rawQueryLocale = Array.isArray(route.query[LOCALE_QUERY_KEY])
-    ? route.query[LOCALE_QUERY_KEY][0]
-    : route.query[LOCALE_QUERY_KEY]
-
-  if (isSupportedLocale(rawQueryLocale)) {
-    return rawQueryLocale
-  }
-
-  return fallback
-}
-
 export const useCoreI18n = () => {
   const route = useRoute()
-  const localeCookie = useCookie<keyof typeof LOCALES>('coreasia-locale', {
-    default: () => DEFAULT_LOCALE,
-  })
+  // TANPA opsi `default`: default membuat Nuxt menuliskan cookie saat SSR ketika
+  // pengunjung belum punya, dan header Set-Cookie itu ikut tersimpan di cache lalu
+  // dipaksakan ke semua orang — menimpa preferensi bahasa mereka dengan 'id'.
+  // Cookie kini hanya lahir dari pilihan eksplisit pengguna.
+  const localeCookie = useCookie<keyof typeof LOCALES | undefined>('coreasia-locale')
 
-  const resolveActiveLocale = () => {
-    const cookieLocale = isSupportedLocale(localeCookie.value) ? localeCookie.value : DEFAULT_LOCALE
-    return resolveLocaleFromRoute(route, cookieLocale)
-  }
+  // Cookie sengaja TIDAK ikut menentukan hasil render — lihat resolveLocaleFromQuery.
+  // Ia hanya dicatat saat pengguna memilih bahasa, lalu dipakai plugin sticky di
+  // sisi klien untuk mengarahkan ke URL ber-?lang.
+  const resolveActiveLocale = () => resolveLocaleFromQuery(route.query)
 
   const contentState = useState('coreasia-content', () => getContent(resolveActiveLocale()))
 
@@ -44,7 +34,10 @@ export const useCoreI18n = () => {
     () => route.query[LOCALE_QUERY_KEY],
     (value) => {
       const queryLocale = Array.isArray(value) ? value[0] : value
-      if (isSupportedLocale(queryLocale)) {
+      // Hanya di klien: menulis cookie saat SSR akan menempelkan header Set-Cookie
+      // pada respons yang di-cache, sehingga preferensi satu pengunjung ikut
+      // dipaksakan ke semua orang yang menerima salinan cache itu.
+      if (import.meta.client && isSupportedLocale(queryLocale)) {
         localeCookie.value = queryLocale
       }
 

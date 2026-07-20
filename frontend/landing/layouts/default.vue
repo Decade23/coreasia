@@ -70,7 +70,11 @@ useHead(() => {
       },
     ],
   }
-})
+// tagPriority adalah OPSI useHead, bukan atribut di dalam htmlAttrs. Diperlukan
+// karena nuxt-seo-utils ikut mendaftarkan htmlAttrs.lang dari siteConfig.defaultLocale
+// ('id'); tanpa prioritas ini nilai itu yang menang dan halaman EN tetap keluar
+// <html lang="id"> meski judul, canonical, dan isinya sudah Inggris.
+}, { tagPriority: 'high' })
 </script>
 
 <template>

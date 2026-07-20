@@ -15,17 +15,9 @@ export default defineNuxtConfig({
         browserDevtoolsTiming: false,
     },
     modules: ['@nuxtjs/seo', '@nuxt/eslint', '@nuxt/fonts', '@nuxt/icon', '@nuxt/image', '@pinia/nuxt'],
-    i18n: {
-        strategy: 'no_prefix',
-        defaultLocale: 'id',
-        locales: [
-            { code: 'id', iso: 'id-ID' },
-            { code: 'en', iso: 'en-US' },
-        ],
-        pages: undefined,
-        skipSettingLocaleOnNavigate: true,
-        detectBrowserLanguage: false,
-    },
+    // Blok `i18n: {...}` dihapus dari sini: @nuxtjs/i18n tidak terpasang (tidak ada di
+    // modules maupun package.json), jadi konfigurasi itu tak pernah dibaca siapa pun dan
+    // hanya menyesatkan — locale ditangani composables/useCoreI18n.ts.
     ogImage: { enabled: true },
     robots: {
         disallow: ['/console', '/console/', '/register', '/maintenance', '/404', '/500'],
@@ -324,25 +316,29 @@ export default defineNuxtConfig({
         '/browserconfig.xml': {
             headers: { 'Cache-Control': 'public, max-age=86400, must-revalidate' },
         },
-        // Marketing pages stay SSR so ?lang=en works, with SWR caching for one hour
-        '/': { swr: 3600 },
-        '/about': { swr: 3600 },
-        '/contact': { swr: 3600 },
-        '/products': { swr: 3600 },
-        '/products/**': { swr: 3600 },
-        '/partnerships': { swr: 3600 },
+        // Halaman marketing tetap SSR. WAJIB pakai bentuk isr+allowQuery, BUKAN swr:
+        // preset Vercel menerjemahkan swr jadi rewrite ber-query (?__isr_route=...)
+        // yang MEMBUANG query string masuk, sehingga ?lang=en tak pernah sampai ke
+        // renderer dan halaman EN selalu keluar Bahasa Indonesia. swr juga membuang
+        // angka detiknya (jadi expiration:false = cache sampai deploy berikutnya).
+        '/': { isr: { expiration: 3600, allowQuery: ['lang'] } },
+        '/about': { isr: { expiration: 3600, allowQuery: ['lang'] } },
+        '/contact': { isr: { expiration: 3600, allowQuery: ['lang'] } },
+        '/products': { isr: { expiration: 3600, allowQuery: ['lang'] } },
+        '/products/**': { isr: { expiration: 3600, allowQuery: ['lang'] } },
+        '/partnerships': { isr: { expiration: 3600, allowQuery: ['lang'] } },
         '/solutions': { redirect: { to: '/solutions/venture', statusCode: 301 } },
         '/solutions/leadku': { redirect: { to: '/products/leadku', statusCode: 301 } },
         '/solutions/lms': { redirect: { to: '/products/lms', statusCode: 301 } },
         '/solutions/pantau': { redirect: { to: '/products/pantau', statusCode: 301 } },
-        '/solutions/venture': { swr: 3600 },
-        '/pricing': { swr: 3600 },
-        '/faq': { swr: 3600 },
-        '/portfolio': { swr: 3600 },
-        '/privacy-policy': { swr: 3600 },
-        '/terms': { swr: 3600 },
+        '/solutions/venture': { isr: { expiration: 3600, allowQuery: ['lang'] } },
+        '/pricing': { isr: { expiration: 3600, allowQuery: ['lang'] } },
+        '/faq': { isr: { expiration: 3600, allowQuery: ['lang'] } },
+        '/portfolio': { isr: { expiration: 3600, allowQuery: ['lang'] } },
+        '/privacy-policy': { isr: { expiration: 3600, allowQuery: ['lang'] } },
+        '/terms': { isr: { expiration: 3600, allowQuery: ['lang'] } },
         '/layanan': { redirect: { to: '/layanan/jasa-pembuatan-website', statusCode: 301 } },
-        '/layanan/**': { swr: 3600 },
+        '/layanan/**': { isr: { expiration: 3600, allowQuery: ['lang'] } },
         '/blog': { redirect: { to: '/artikel', statusCode: 301 } },
         '/artikel': { ssr: true },
         '/artikel/**': { ssr: true },

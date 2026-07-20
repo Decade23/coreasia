@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { LINKS } from '~/utils/constants'
+import { LEADKU, LINKS } from '~/utils/constants'
 
 const { t } = useCoreI18n()
 
@@ -85,20 +85,30 @@ const workflowItems = computed(
               {{ t('solutions.leadku.hero.subtitle') }}
             </p>
 
-            <div class="mt-8 flex flex-col gap-3 sm:flex-row">
-              <NuxtLink to="/contact?subject=leadku" class="ca-btn-primary">
+            <!-- Aksi utama menuju aplikasinya langsung; LeadKu self-service, jadi
+                 memaksa lewat formulir kontak dulu hanya menambah gesekan. -->
+            <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+              <a :href="LEADKU.trialUrl" target="_blank" rel="noopener" class="ca-btn-primary">
                 {{ t('solutions.leadku.hero.ctaPrimary') }}
-                <Icon name="lucide:arrow-right" class="h-4 w-4" />
-              </NuxtLink>
-              <a
-                :href="LINKS.whatsapp"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="ca-btn-secondary"
-              >
-                {{ t('solutions.leadku.hero.ctaSecondary') }}
+                <Icon name="lucide:arrow-up-right" class="h-4 w-4" />
               </a>
+              <a :href="LEADKU.pricingUrl" target="_blank" rel="noopener" class="ca-btn-secondary">
+                {{ t('solutions.leadku.hero.ctaPricing') }}
+              </a>
+              <NuxtLink to="/contact?subject=leadku" class="ca-btn-secondary">
+                {{ t('solutions.leadku.hero.ctaSecondary') }}
+              </NuxtLink>
             </div>
+
+            <p class="mt-4 text-sm text-[var(--ca-text-muted)]">
+              {{ t('solutions.leadku.hero.appNote') }}
+              <a
+                :href="LEADKU.appUrl"
+                target="_blank"
+                rel="noopener"
+                class="font-semibold text-[color:var(--ca-accent)] underline underline-offset-2"
+              >leadku.coreasia.id</a>
+            </p>
 
             <div class="mt-6 flex flex-wrap gap-2">
               <span
@@ -170,11 +180,16 @@ const workflowItems = computed(
           <p class="ca-copy mx-auto mt-3 max-w-2xl">{{ t('solutions.leadku.pricing.subtitle') }}</p>
         </div>
 
+        <!-- Seluruh kartu jadi tautan ke halaman harga LeadKu: pengunjung yang sudah
+             menemukan paketnya bisa langsung lanjut, tak perlu mencari tombol lain. -->
         <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          <article
+          <a
             v-for="plan in pricingPlans"
             :key="plan.name"
-            class="ca-card p-5 transition"
+            :href="LEADKU.pricingUrl"
+            target="_blank"
+            rel="noopener"
+            class="ca-card block p-5 transition hover:-translate-y-0.5 hover:shadow-lg"
             :class="plan.popular ? 'ring-2 ring-[var(--ca-emerald)]' : ''"
           >
             <div v-if="plan.popular" class="mb-3">
@@ -201,7 +216,11 @@ const workflowItems = computed(
                 <span>{{ feature }}</span>
               </li>
             </ul>
-          </article>
+            <span class="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-[color:var(--ca-accent)]">
+              {{ t('solutions.leadku.pricing.planCta') }}
+              <Icon name="lucide:arrow-up-right" class="h-3.5 w-3.5" />
+            </span>
+          </a>
         </div>
 
         <p v-if="pricingNote" class="ca-copy mx-auto mt-6 max-w-3xl text-center text-sm">
@@ -251,8 +270,12 @@ const workflowItems = computed(
           <p class="mx-auto mt-3 max-w-2xl text-sm text-[var(--ca-muted)] sm:text-base">
             {{ t('solutions.leadku.cta.subtitle') }}
           </p>
-          <div class="mt-6">
-            <NuxtLink to="/contact?subject=leadku" class="ca-btn-primary">
+          <div class="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+            <a :href="LEADKU.trialUrl" target="_blank" rel="noopener" class="ca-btn-primary">
+              {{ t('solutions.leadku.hero.ctaPrimary') }}
+              <Icon name="lucide:arrow-up-right" class="h-4 w-4" />
+            </a>
+            <NuxtLink to="/contact?subject=leadku" class="ca-btn-secondary">
               {{ t('solutions.leadku.cta.button') }}
             </NuxtLink>
           </div>

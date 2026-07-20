@@ -1191,11 +1191,14 @@ const ID_CONTENT = {
         subtitle:
           'LeadKu dirancang untuk tim yang membutuhkan alur sales yang lebih terpantau, aktivitas tim yang lebih jelas, dan reporting yang tidak berbelit.',
         ctaPrimary: 'Coba Gratis 7 Hari',
-        ctaSecondary: 'WhatsApp',
+        ctaPricing: 'Lihat Harga & Paket',
+        ctaSecondary: 'Konsultasi Dulu',
+        appNote: 'LeadKu berjalan di aplikasinya sendiri:',
         chips: ['Pipeline visibility', 'Team activity tracking', 'Multi-workspace ready'],
       },
       pricing: {
         label: 'Pricing',
+        planCta: 'Pilih paket ini',
         title: 'Paket disusun mengikuti tahap pertumbuhan tim',
         subtitle:
           'Mulai dari trial 7 hari, lalu pilih paket sesuai jumlah pengguna dan data yang dibutuhkan. Hemat dengan komitmen durasi: 3 bulan -10%, 6 bulan -15%, 12 bulan -20%.',
