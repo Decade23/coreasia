@@ -58,8 +58,12 @@ useHead(() => {
 
   return {
     htmlAttrs: {
+      // tagPriority tinggi karena nuxt-seo-utils juga mendaftarkan htmlAttrs.lang dari
+      // siteConfig.defaultLocale ('id'); tanpa ini nilai itu menang dan halaman EN
+      // tetap keluar <html lang="id">.
       lang: locale.value === 'en' ? 'en' : 'id',
       'data-theme': theme.value,
+      tagPriority: 'high',
     },
     meta,
     script: [
