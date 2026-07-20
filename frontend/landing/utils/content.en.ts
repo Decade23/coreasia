@@ -92,11 +92,12 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
       roadmapKicker: 'Product Roadmap',
       roadmapTitle: 'The next products we are preparing',
       roadmapSubtitle:
-        'LMS and LeadKu remain visible as part of the CoreAsia ecosystem direction, so potential clients can understand what solutions are coming next.',
+        'LMS remains visible as part of the CoreAsia ecosystem direction, so potential clients can understand what solutions are coming next.',
       items: [
         {
           name: 'Pantau by CoreAsia',
           badge: 'Live',
+          icon: 'lucide:bar-chart-3',
           tagline: 'Web Monitoring',
           heroDesc: 'GA4 + Search Console + leads + PDF reports in one easy-to-read dashboard.',
           description:
@@ -113,6 +114,7 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
         {
           name: 'Build by CoreAsia',
           badge: 'Service',
+          icon: 'lucide:code-2',
           tagline: 'Web & App',
           heroDesc: 'Websites, web apps, or custom systems — from concept to launch, we deliver.',
           description:
@@ -125,6 +127,23 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
           ctaLabel: 'View Services',
           to: '/products/build',
         },
+        {
+          name: 'LeadKu by CoreAsia',
+          badge: 'Live',
+          icon: 'lucide:trending-up',
+          tagline: 'Sales CRM',
+          heroDesc: 'Leads, pipeline, follow-ups, quotations, and sales reporting in one workspace.',
+          description:
+            'A CRM for Indonesian sales teams. Bring lead data, activities, quotations, invoices, and manager reporting together so the path to closing stays visible and no follow-up slips through.',
+          features: [
+            'Visual pipeline & sales funnel',
+            'Activities, follow-ups, and reminders',
+            'Quotations & invoices linked to deals',
+            'Dashboard, forecast, and role-based access',
+          ],
+          ctaLabel: 'Explore LeadKu',
+          to: '/products/leadku',
+        },
       ],
       comingSoon: [
         {
@@ -135,15 +154,6 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
             'A certification and training management platform for teams that need clean workflows, audit-ready operations, and scalable delivery.',
           ctaLabel: 'View LMS Roadmap',
           to: '/products/lms',
-        },
-        {
-          name: 'LeadKu by CoreAsia',
-          badge: 'Coming Soon',
-          tagline: 'Sales CRM',
-          description:
-            'A multi-workspace CRM for sales teams that need cleaner pipelines, visible team activity, and faster reporting.',
-          ctaLabel: 'View LeadKu Roadmap',
-          to: '/products/leadku',
         },
       ],
     },
@@ -226,6 +236,7 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
       {
         name: 'CoreAsia Download Manager',
         badge: 'Live',
+        icon: 'lucide:download',
         tagline: 'macOS Download Manager',
         description:
           'A premium download manager for macOS: save videos & files from the web in one click. Fast multi-connection download engine, quality picker, MP3 audio extraction, queue + history, and a companion browser extension.',
@@ -241,6 +252,7 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
       {
         name: 'CoreAsia Mounter',
         badge: 'Live',
+        icon: 'lucide:hard-drive',
         tagline: 'NTFS for Mac',
         description:
           'Write to NTFS drives on Apple Silicon Macs. Plug in a drive — it is detected and mounted automatically, ready to write from the menu bar. Reading NTFS is free forever.',
@@ -1364,9 +1376,49 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
           'Clean up your sales pipeline with a <span class="ca-gradient-text">lighter multi-workspace CRM</span>.',
         subtitle:
           'LeadKu is built for teams that need better sales visibility, clearer team activity, and reporting that does not feel heavy.',
-        ctaPrimary: 'Request LeadKu Preview',
+        ctaPrimary: 'Start 7-Day Free Trial',
         ctaSecondary: 'WhatsApp',
         chips: ['Pipeline visibility', 'Team activity tracking', 'Multi-workspace ready'],
+      },
+      pricing: {
+        label: 'Pricing',
+        title: 'Plans that follow how your team grows',
+        subtitle:
+          'Start with a 7-day trial, then pick a plan based on the users and data you need. Save with longer commitments: 3 months -10%, 6 months -15%, 12 months -20%.',
+        plans: [
+          {
+            name: 'Trial',
+            price: 'Free',
+            description: 'Try it for 7 days before deciding.',
+            features: ['3 users', '500 contacts', '20 AI credits', 'Workspace ready to use', '7-day trial'],
+          },
+          {
+            name: 'Basic',
+            price: 'Rp 750,000/mo',
+            description: 'For teams just starting to organise sales.',
+            features: ['3 users', '2,500 contacts', '100 AI credits/month', 'Visual pipeline', 'Activities & tasks', 'Quotations and invoices'],
+          },
+          {
+            name: 'Pro',
+            price: 'Rp 1,750,000/mo',
+            description: 'For teams that want to win more often.',
+            popular: true,
+            features: ['6 users', '10,000 contacts', '500 AI credits/month', 'Everything in Basic', 'Products and price lists', 'Quotation/invoice templates'],
+          },
+          {
+            name: 'Business',
+            price: 'Rp 3,500,000/mo',
+            description: 'For organisations operating at scale.',
+            features: ['12 users', '50,000 contacts', '2,000 AI credits/month (fair use)', 'Everything in Pro', 'Light custom reporting', 'Priority support'],
+          },
+          {
+            name: 'On-Premise',
+            price: 'From Rp 100,000,000',
+            description: 'Deploy on your own server.',
+            features: ['Docker deployment', 'Database setup', 'Admin training', 'Maintenance 20-25%/year', 'Custom scope'],
+          },
+        ],
+        note: 'Additional users Rp 150,000/user/month. Onboarding, data migration, and training are available as separate implementation packages.',
       },
       detailedFeatures: [
         {
@@ -2363,6 +2415,7 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
       productLinks: [
         { label: 'Pantau', to: '/products/pantau' },
         { label: 'Build by CoreAsia', to: '/products/build' },
+        { label: 'LeadKu', to: '/products/leadku' },
         { label: 'Articles & Insights', to: '/artikel' },
       ],
       partnershipLinks: [

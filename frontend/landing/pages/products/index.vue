@@ -20,6 +20,9 @@ const products = computed(() => {
 const comingSoon = computed(() => (t('home.products.comingSoon') as Array<Record<string, any>>) || [])
 const highlights = computed(() => (t('productsPage.highlights.items') as Array<Record<string, any>>) || [])
 
+// Ikon diambil dari field `icon` tiap produk. Array di bawah hanya jaring pengaman
+// untuk entri lama yang belum punya field itu — dulu ikon murni ditentukan POSISI,
+// sehingga menyisipkan produk baru di tengah diam-diam menggeser ikon produk lain.
 const productIcons = ['lucide:bar-chart-3', 'lucide:code-2', 'lucide:download', 'lucide:hard-drive']
 
 useCoreSeo({
@@ -162,7 +165,7 @@ useSchemaOrg([
                     >
                         <div class="flex items-center gap-4">
                             <div class="inline-flex h-14 w-14 items-center justify-center rounded-2xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg-strong)]">
-                                <Icon :name="productIcons[index] || 'lucide:box'" class="h-6 w-6 ca-tone-gold" />
+                                <Icon :name="product.icon || productIcons[index] || 'lucide:box'" class="h-6 w-6 ca-tone-gold" />
                             </div>
                             <div>
                                 <h3 class="text-xl font-display font-bold text-[var(--ca-text)]">

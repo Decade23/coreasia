@@ -28,7 +28,16 @@ useHead({
         description: t('solutions.leadku.description') as string,
         url: 'https://coreasia.id/products/leadku',
         provider: { '@type': 'Organization', name: 'CoreAsia Teknologi', url: 'https://coreasia.id' },
-        offers: { '@type': 'Offer', price: '0', priceCurrency: 'IDR', availability: 'https://schema.org/PreOrder' },
+        // Rentang paket self-service (Basic-Business). On-Premise sengaja tidak
+        // dimasukkan: harganya per-project lewat sales, bukan harga etalase.
+        offers: {
+          '@type': 'AggregateOffer',
+          priceCurrency: 'IDR',
+          lowPrice: '750000',
+          highPrice: '3500000',
+          offerCount: 3,
+          availability: 'https://schema.org/InStock',
+        },
       }),
     },
   ],
@@ -37,6 +46,10 @@ useHead({
 const features = computed(
   () => (t('solutions.leadku.detailedFeatures') as Array<Record<string, string>>) || [],
 )
+const pricingPlans = computed(
+  () => (t('solutions.leadku.pricing.plans') as Array<Record<string, any>>) || [],
+)
+const pricingNote = computed(() => t('solutions.leadku.pricing.note') as string)
 const audienceItems = computed(
   () => (t('solutions.leadku.audience.items') as Array<Record<string, string>>) || [],
 )
@@ -146,6 +159,54 @@ const workflowItems = computed(
             </p>
           </article>
         </div>
+      </div>
+    </section>
+
+    <section id="harga" v-if="pricingPlans.length" class="ca-section pt-0">
+      <div class="ca-container">
+        <div class="mb-8 text-center">
+          <span class="ca-kicker">{{ t('solutions.leadku.pricing.label') }}</span>
+          <h2 class="ca-title mt-4">{{ t('solutions.leadku.pricing.title') }}</h2>
+          <p class="ca-copy mx-auto mt-3 max-w-2xl">{{ t('solutions.leadku.pricing.subtitle') }}</p>
+        </div>
+
+        <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <article
+            v-for="plan in pricingPlans"
+            :key="plan.name"
+            class="ca-card p-5 transition"
+            :class="plan.popular ? 'ring-2 ring-[var(--ca-emerald)]' : ''"
+          >
+            <div v-if="plan.popular" class="mb-3">
+              <span class="rounded-full bg-[var(--ca-emerald)] px-2.5 py-1 text-[0.68rem] font-bold uppercase tracking-[0.12em] text-white">
+                Popular
+              </span>
+            </div>
+            <h3 class="text-lg font-display font-bold text-[var(--ca-text)]">
+              {{ plan.name }}
+            </h3>
+            <p class="mt-1 text-2xl font-bold text-[var(--ca-text)]">
+              {{ plan.price }}
+            </p>
+            <p class="mt-2 text-sm text-[var(--ca-muted)]">
+              {{ plan.description }}
+            </p>
+            <ul class="mt-4 space-y-2">
+              <li
+                v-for="feature in plan.features"
+                :key="feature"
+                class="flex items-start gap-2 text-sm text-[var(--ca-muted)]"
+              >
+                <Icon name="lucide:check" class="mt-0.5 h-3.5 w-3.5 flex-shrink-0 ca-tone-emerald" />
+                <span>{{ feature }}</span>
+              </li>
+            </ul>
+          </article>
+        </div>
+
+        <p v-if="pricingNote" class="ca-copy mx-auto mt-6 max-w-3xl text-center text-sm">
+          {{ pricingNote }}
+        </p>
       </div>
     </section>
 

@@ -64,11 +64,12 @@ const ID_CONTENT = {
       roadmapKicker: 'Roadmap Produk',
       roadmapTitle: 'Produk berikutnya yang sedang disiapkan',
       roadmapSubtitle:
-        'LMS dan LeadKu tetap ditampilkan sebagai arah ekosistem CoreAsia, sehingga calon client bisa melihat rencana solusi yang akan tersedia berikutnya.',
+        'LMS tetap ditampilkan sebagai arah ekosistem CoreAsia, sehingga calon client bisa melihat rencana solusi yang akan tersedia berikutnya.',
       items: [
         {
           name: 'Pantau by CoreAsia',
           badge: 'Live',
+          icon: 'lucide:bar-chart-3',
           tagline: 'Web Monitoring',
           heroDesc: 'GA4 + Search Console + leads + laporan PDF dalam satu dashboard yang mudah dipahami.',
           description:
@@ -85,6 +86,7 @@ const ID_CONTENT = {
         {
           name: 'Build by CoreAsia',
           badge: 'Service',
+          icon: 'lucide:code-2',
           tagline: 'Web & App',
           heroDesc: 'Website, web app, atau sistem custom — dari konsep sampai live, kami yang eksekusi.',
           description:
@@ -97,6 +99,23 @@ const ID_CONTENT = {
           ctaLabel: 'Lihat Layanan',
           to: '/products/build',
         },
+        {
+          name: 'LeadKu by CoreAsia',
+          badge: 'Live',
+          icon: 'lucide:trending-up',
+          tagline: 'Sales CRM',
+          heroDesc: 'Lead, pipeline, follow-up, quotation, dan laporan sales dalam satu workspace.',
+          description:
+            'CRM untuk tim sales Indonesia. Satukan data lead, aktivitas, quotation, invoice, dan laporan manager supaya proses closing lebih terlihat dan tidak ada follow-up yang tertinggal.',
+          features: [
+            'Pipeline visual & sales funnel',
+            'Aktivitas, follow-up, dan reminder',
+            'Quotation & invoice terhubung deal',
+            'Dashboard, forecast, dan role access',
+          ],
+          ctaLabel: 'Pelajari LeadKu',
+          to: '/products/leadku',
+        },
       ],
       comingSoon: [
         {
@@ -107,15 +126,6 @@ const ID_CONTENT = {
             'Platform sertifikasi dan training management untuk operasional yang butuh workflow rapi, audit-ready, dan siap di-scale.',
           ctaLabel: 'Lihat Roadmap LMS',
           to: '/products/lms',
-        },
-        {
-          name: 'LeadKu by CoreAsia',
-          badge: 'Coming Soon',
-          tagline: 'Sales CRM',
-          description:
-            'CRM multi-workspace untuk tim sales yang perlu pipeline lebih rapi, aktivitas tim terlacak, dan reporting yang cepat.',
-          ctaLabel: 'Lihat Roadmap LeadKu',
-          to: '/products/leadku',
         },
       ],
     },
@@ -199,6 +209,7 @@ const ID_CONTENT = {
       {
         name: 'CoreAsia Download Manager',
         badge: 'Live',
+        icon: 'lucide:download',
         tagline: 'Download Manager macOS',
         description:
           'Download manager premium untuk macOS: simpan video & file dari web dengan satu klik. Engine unduhan cepat multi-koneksi, pemilih kualitas, ekstraksi audio MP3, antrean + riwayat, dan companion browser extension.',
@@ -214,6 +225,7 @@ const ID_CONTENT = {
       {
         name: 'CoreAsia Mounter',
         badge: 'Live',
+        icon: 'lucide:hard-drive',
         tagline: 'NTFS for Mac',
         description:
           'Tulis ke drive NTFS di Mac Apple Silicon. Colok drive — langsung dikenali dan ter-mount otomatis, siap ditulis dari menu bar. Membaca NTFS gratis selamanya.',
@@ -1178,9 +1190,49 @@ const ID_CONTENT = {
           'Rapikan pipeline sales dengan <span class="ca-gradient-text">CRM multi-workspace</span> yang lebih ringan.',
         subtitle:
           'LeadKu dirancang untuk tim yang membutuhkan alur sales yang lebih terpantau, aktivitas tim yang lebih jelas, dan reporting yang tidak berbelit.',
-        ctaPrimary: 'Minta Preview LeadKu',
+        ctaPrimary: 'Coba Gratis 7 Hari',
         ctaSecondary: 'WhatsApp',
         chips: ['Pipeline visibility', 'Team activity tracking', 'Multi-workspace ready'],
+      },
+      pricing: {
+        label: 'Pricing',
+        title: 'Paket disusun mengikuti tahap pertumbuhan tim',
+        subtitle:
+          'Mulai dari trial 7 hari, lalu pilih paket sesuai jumlah pengguna dan data yang dibutuhkan. Hemat dengan komitmen durasi: 3 bulan -10%, 6 bulan -15%, 12 bulan -20%.',
+        plans: [
+          {
+            name: 'Trial',
+            price: 'Gratis',
+            description: 'Coba dulu 7 hari sebelum memutuskan.',
+            features: ['3 pengguna', '500 kontak', '20 kredit AI', 'Workspace siap pakai', 'Trial 7 hari'],
+          },
+          {
+            name: 'Basic',
+            price: 'Rp 750.000/bln',
+            description: 'Untuk yang baru mulai merapikan penjualan.',
+            features: ['3 pengguna', '2.500 kontak', '100 kredit AI/bulan', 'Pipeline visual', 'Aktivitas & task', 'Quotation dan invoice'],
+          },
+          {
+            name: 'Pro',
+            price: 'Rp 1.750.000/bln',
+            description: 'Untuk tim yang mau menang lebih sering.',
+            popular: true,
+            features: ['6 pengguna', '10.000 kontak', '500 kredit AI/bulan', 'Semua fitur Basic', 'Produk dan price list', 'Template quotation/invoice'],
+          },
+          {
+            name: 'Business',
+            price: 'Rp 3.500.000/bln',
+            description: 'Untuk organisasi yang bermain besar.',
+            features: ['12 pengguna', '50.000 kontak', '2.000 kredit AI/bulan (fair use)', 'Semua fitur Pro', 'Custom report ringan', 'Priority support'],
+          },
+          {
+            name: 'On-Premise',
+            price: 'Mulai Rp 100.000.000',
+            description: 'Deploy di server Anda sendiri.',
+            features: ['Deployment Docker', 'Setup database', 'Training admin', 'Maintenance 20-25%/tahun', 'Scope custom'],
+          },
+        ],
+        note: 'Tambah pengguna Rp 150.000/user/bulan. Onboarding, migrasi data, dan training tersedia sebagai paket implementasi terpisah.',
       },
       detailedFeatures: [
         {
@@ -2476,6 +2528,7 @@ const ID_CONTENT = {
       productLinks: [
         { label: 'Pantau', to: '/products/pantau' },
         { label: 'Build by CoreAsia', to: '/products/build' },
+        { label: 'LeadKu', to: '/products/leadku' },
         { label: 'Artikel & Insight', to: '/artikel' },
       ],
       partnershipLinks: [
