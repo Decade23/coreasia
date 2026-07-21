@@ -297,6 +297,21 @@ body,
 html {
     scroll-behavior: smooth;
     text-rendering: optimizeLegibility;
+    /* Header situs ini fixed (h-14 = 56px, lg:h-16 = 64px). Tanpa kompensasi,
+       setiap anchor #section mendarat di y=0 sehingga judulnya TERTUTUP PENUH
+       di balik header - terukur -56px di mobile dan -64px di desktop.
+       Dipasang sebagai scroll-padding-top di elemen scroll, bukan
+       scroll-margin-top per section, karena ada belasan id yang bisa
+       di-deep-link (#paket, #visi, #tim, #keamanan, #proses, #harga, ...)
+       dan cara ini berlaku otomatis untuk semuanya, termasuk section yang
+       dibuat kemudian. Angka = tinggi header + 16px napas. */
+    scroll-padding-top: 72px;
+}
+
+@media (min-width: 1024px) {
+    html {
+        scroll-padding-top: 80px;
+    }
 }
 
 body {
