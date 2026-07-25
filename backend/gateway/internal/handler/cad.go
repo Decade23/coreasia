@@ -56,7 +56,8 @@ type cadStore interface {
 	ImportBatch(ctx context.Context, keys []string, tier string, createdBy *uuid.UUID) (int, error)
 	AssignNextUnsoldLicense(ctx context.Context, email, orderRef string) (*model.CADLicense, bool, error)
 	FindInstallation(ctx context.Context, licenseID uuid.UUID, deviceHash string) (*model.CADInstallation, error)
-	FindActiveInstallationOther(ctx context.Context, licenseID uuid.UUID, deviceHash string) (*model.CADInstallation, error)
+	FindActiveInstallationOther(ctx context.Context, licenseID uuid.UUID, deviceHash, platform string) (*model.CADInstallation, error)
+	SetHolderName(ctx context.Context, licenseID uuid.UUID, name string) error
 	RevokeInstallation(ctx context.Context, licenseID uuid.UUID, deviceHash string) (int, error)
 	RevokeInstallationByID(ctx context.Context, id uuid.UUID) (int, error)
 	SetLastTransfer(ctx context.Context, licenseID uuid.UUID) error
@@ -398,9 +399,15 @@ func (h *CADHandler) Analytics(c fiber.Ctx) error {
 
 // ───────────────────────── Public (app-facing) ─────────────────────────
 
-// Activate binds a device to a license (device-locked online activation):
-// platform must match, and only ONE device may be active per license. A second
-// device is rejected with 409 — the user must deactivate the old device first.
+// Activate binds a device to a license (device-locked online activation).
+//
+// Kebijakan: SATU lisensi = SATU slot macOS + SATU slot Windows. Perangkat kedua
+// pada platform yang SAMA ditolak 409 (user harus deaktivasi yang lama dulu),
+// tetapi Mac yang aktif TIDAK memblokir aktivasi di Windows.
+//
+// Email (bila dikirim) diverifikasi cocok dengan email pembeli. Sengaja tidak
+// wajib: klien 1.9.0 yang sudah beredar belum mengirimnya, dan menolak mereka
+// akan mematikan re-aktivasi pengguna berbayar yang sah.
 func (h *CADHandler) Activate(c fiber.Ctx) error {
 	var req model.CADActivateRequest
 	if err := c.Bind().JSON(&req); err != nil {
@@ -420,10 +427,25 @@ func (h *CADHandler) Activate(c fiber.Ctx) error {
 	if lic == nil || lic.Status != "active" {
 		return errResponse(c, apperr.NewBadRequest("Lisensi tidak valid atau dinonaktifkan"))
 	}
-	// Platform lock: the license is bound to one platform.
-	if lic.Platform != req.Platform {
+	// Platform lock hanya berlaku untuk lisensi platform-spesifik (produk lain).
+	// Lisensi CAD 'universal' boleh dipakai di macOS DAN Windows (1 slot masing2).
+	if lic.Platform != "universal" && lic.Platform != req.Platform {
 		return errResponse(c, apperr.NewBadRequest(
 			fmt.Sprintf("Lisensi ini untuk %s, tidak bisa dipakai di %s", lic.Platform, req.Platform)))
+	}
+	// Verifikasi pemilik: email yang diketik user harus cocok dgn email pembeli.
+	// Perbandingan case-insensitive + trim (user sering mengetik dgn kapital beda).
+	if req.Email != "" && lic.Email != nil && *lic.Email != "" {
+		if !strings.EqualFold(strings.TrimSpace(req.Email), strings.TrimSpace(*lic.Email)) {
+			return errResponse(c, apperr.NewBadRequest(
+				"Email tidak cocok dengan pemilik lisensi ini. Pakai email yang Anda gunakan saat membeli."))
+		}
+	}
+	// Nama pemilik (opsional) — catatan saja, tak memengaruhi keputusan aktivasi.
+	if req.Name != "" {
+		if err := h.repo.SetHolderName(c.Context(), lic.ID, strings.TrimSpace(req.Name)); err != nil {
+			slog.Warn("gagal simpan holder_name", "error", err) // non-fatal
+		}
 	}
 	// Idempotent: same device already active → just refresh.
 	if inst, err := h.repo.FindInstallation(c.Context(), lic.ID, req.DeviceHash); err != nil {
@@ -432,12 +454,19 @@ func (h *CADHandler) Activate(c fiber.Ctx) error {
 		_ = h.repo.TouchInstallation(c.Context(), inst.ID, req.AppVersion, req.OSVersion)
 		return ok(c, fiber.Map{"status": "active", "tier": lic.Tier, "platform": lic.Platform, "install_id": inst.ID})
 	}
-	// 1-active-device policy: a DIFFERENT device is already bound → block.
-	if other, err := h.repo.FindActiveInstallationOther(c.Context(), lic.ID, req.DeviceHash); err != nil {
+	// Slot PER-PLATFORM: hanya perangkat lain di platform yang SAMA yang memblokir.
+	// Mac aktif tidak menghalangi aktivasi Windows (dan sebaliknya).
+	if other, err := h.repo.FindActiveInstallationOther(c.Context(), lic.ID, req.DeviceHash, req.Platform); err != nil {
 		slog.Error("gagal cek perangkat aktif lain", "error", err)
 		return errResponse(c, apperr.NewInternal(err))
 	} else if other != nil {
-		return errResponse(c, apperr.NewConflict("Lisensi sudah aktif di perangkat lain. Deaktivasi perangkat lama dulu (di app atau hubungi support)."))
+		devName := "Mac"
+		if req.Platform == "windows" {
+			devName = "PC Windows"
+		}
+		return errResponse(c, apperr.NewConflict(fmt.Sprintf(
+			"Lisensi ini sudah aktif di %s lain. Buka CoreAsia di %s tersebut → Settings → License → Deactivate, lalu aktifkan di sini. (Slot Mac dan Windows terpisah.)",
+			devName, devName)))
 	}
 	// No active device → bind. A previously-revoked row for this same device is
 	// re-activated via TouchInstallation (which clears revoked).
@@ -447,7 +476,7 @@ func (h *CADHandler) Activate(c fiber.Ctx) error {
 		_ = h.repo.TouchInstallation(c.Context(), inst.ID, req.AppVersion, req.OSVersion)
 		return ok(c, fiber.Map{"status": "active", "tier": lic.Tier, "platform": lic.Platform, "install_id": inst.ID})
 	}
-	ni := model.CADInstallation{LicenseID: &lic.ID, DeviceHash: req.DeviceHash, AppVersion: req.AppVersion, OSVersion: req.OSVersion}
+	ni := model.CADInstallation{LicenseID: &lic.ID, DeviceHash: req.DeviceHash, Platform: req.Platform, AppVersion: req.AppVersion, OSVersion: req.OSVersion}
 	if err := h.repo.CreateInstallation(c.Context(), &ni); err != nil {
 		slog.Error("gagal create installation", "error", err)
 		return errResponse(c, apperr.NewInternal(err))

@@ -12,10 +12,11 @@ type CADLicense struct {
 	ID             uuid.UUID  `json:"id"`
 	LicenseKey     string     `json:"license_key"`
 	Email          *string    `json:"email"`
+	HolderName     *string    `json:"holder_name"` // nama pemilik (opsional, diisi saat aktivasi)
 	Tier           string     `json:"tier"`
 	Status         string     `json:"status"`
-	Platform       string     `json:"platform"`
-	Product        string     `json:"product"` // "cad" | "mounter" — produk pemilik key
+	Platform       string     `json:"platform"` // "universal" (CAD) | "macos"/"windows" (produk lain)
+	Product        string     `json:"product"`  // "cad" | "mounter" — produk pemilik key
 	OrderRef       *string    `json:"order_ref"`
 	DeviceLimit    int        `json:"device_limit"`
 	LastTransferAt *time.Time `json:"last_transfer_at"`
@@ -108,6 +109,7 @@ type CADInstallation struct {
 	ID         uuid.UUID  `json:"id"`
 	LicenseID  *uuid.UUID `json:"license_id"`
 	DeviceHash string     `json:"device_hash"`
+	Platform   string     `json:"platform"` // "macos" | "windows" — slot dihitung per platform
 	AppVersion *string    `json:"app_version"`
 	OSVersion  *string    `json:"os_version"`
 	Revoked    bool       `json:"revoked"`
@@ -117,12 +119,20 @@ type CADInstallation struct {
 
 // ───────────────────────── App-facing (public) payloads ─────────────────────────
 
-// CADActivateRequest is sent by the CAD app to bind a device to a license
-// (device-locked online activation). Platform defaults to "macos" when empty.
+// CADActivateRequest is sent by the CAD app to bind a device to a license.
+// One license = one macOS slot + one Windows slot. Platform defaults to "macos"
+// when empty (klien lama <1.9.1 tak mengirimnya).
+//
+// Email = verifikasi pemilik: bila dikirim, HARUS cocok dengan email pembeli.
+// Sengaja TIDAK `required` — klien 1.9.0 yang sudah beredar belum mengirimnya,
+// dan menolak mereka berarti mematikan re-aktivasi pengguna berbayar yang sah.
+// Name opsional (catatan pemilik saja).
 type CADActivateRequest struct {
 	LicenseKey string  `json:"license_key" validate:"required"`
 	DeviceHash string  `json:"device_hash" validate:"required"`
-	Platform   string  `json:"platform"`
+	Platform   string  `json:"platform" validate:"omitempty,oneof=macos windows"`
+	Email      string  `json:"email" validate:"omitempty,email"`
+	Name       string  `json:"name" validate:"omitempty,max=120"`
 	AppVersion *string `json:"app_version"`
 	OSVersion  *string `json:"os_version"`
 }

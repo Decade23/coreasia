@@ -211,9 +211,9 @@ func (r *CADRepo) CountActiveDevices(ctx context.Context, licenseID uuid.UUID) (
 func (r *CADRepo) FindInstallation(ctx context.Context, licenseID uuid.UUID, deviceHash string) (*model.CADInstallation, error) {
 	var i model.CADInstallation
 	err := r.pool.QueryRow(ctx,
-		`SELECT id, license_id, device_hash, app_version, os_version, revoked, first_seen, last_seen
+		`SELECT id, license_id, device_hash, platform, app_version, os_version, revoked, first_seen, last_seen
 		 FROM public.cad_installations WHERE license_id=$1 AND device_hash=$2`, licenseID, deviceHash).
-		Scan(&i.ID, &i.LicenseID, &i.DeviceHash, &i.AppVersion, &i.OSVersion, &i.Revoked, &i.FirstSeen, &i.LastSeen)
+		Scan(&i.ID, &i.LicenseID, &i.DeviceHash, &i.Platform, &i.AppVersion, &i.OSVersion, &i.Revoked, &i.FirstSeen, &i.LastSeen)
 	if err != nil {
 		if err.Error() == "no rows in result set" {
 			return nil, nil
@@ -226,14 +226,17 @@ func (r *CADRepo) FindInstallation(ctx context.Context, licenseID uuid.UUID, dev
 // FindActiveInstallationOther returns an active (revoked=false) installation
 // bound to this license on a DIFFERENT device than deviceHash, if any. Used to
 // enforce the 1-active-device policy (block activation on a second device).
-func (r *CADRepo) FindActiveInstallationOther(ctx context.Context, licenseID uuid.UUID, deviceHash string) (*model.CADInstallation, error) {
+// FindActiveInstallationOther finds another ACTIVE device on the SAME platform.
+// Slot dihitung per platform (1 macOS + 1 Windows), jadi Mac yang aktif tidak
+// memblokir aktivasi di Windows — hanya Mac lain yang memblokir Mac.
+func (r *CADRepo) FindActiveInstallationOther(ctx context.Context, licenseID uuid.UUID, deviceHash, platform string) (*model.CADInstallation, error) {
 	var i model.CADInstallation
 	err := r.pool.QueryRow(ctx,
-		`SELECT id, license_id, device_hash, app_version, os_version, revoked, first_seen, last_seen
+		`SELECT id, license_id, device_hash, platform, app_version, os_version, revoked, first_seen, last_seen
 		 FROM public.cad_installations
-		 WHERE license_id=$1 AND device_hash<>$2 AND revoked=false
-		 ORDER BY last_seen DESC LIMIT 1`, licenseID, deviceHash).
-		Scan(&i.ID, &i.LicenseID, &i.DeviceHash, &i.AppVersion, &i.OSVersion, &i.Revoked, &i.FirstSeen, &i.LastSeen)
+		 WHERE license_id=$1 AND device_hash<>$2 AND platform=$3 AND revoked=false
+		 ORDER BY last_seen DESC LIMIT 1`, licenseID, deviceHash, platform).
+		Scan(&i.ID, &i.LicenseID, &i.DeviceHash, &i.Platform, &i.AppVersion, &i.OSVersion, &i.Revoked, &i.FirstSeen, &i.LastSeen)
 	if err != nil {
 		if err.Error() == "no rows in result set" {
 			return nil, nil
@@ -277,10 +280,23 @@ func (r *CADRepo) SetLastTransfer(ctx context.Context, licenseID uuid.UUID) erro
 
 func (r *CADRepo) CreateInstallation(ctx context.Context, i *model.CADInstallation) error {
 	return r.pool.QueryRow(ctx,
-		`INSERT INTO public.cad_installations (license_id, device_hash, app_version, os_version)
-		 VALUES ($1,$2,$3,$4) RETURNING id, first_seen, last_seen`,
-		i.LicenseID, i.DeviceHash, i.AppVersion, i.OSVersion).
+		`INSERT INTO public.cad_installations (license_id, device_hash, platform, app_version, os_version)
+		 VALUES ($1,$2,$3,$4,$5) RETURNING id, first_seen, last_seen`,
+		i.LicenseID, i.DeviceHash, i.Platform, i.AppVersion, i.OSVersion).
 		Scan(&i.ID, &i.FirstSeen, &i.LastSeen)
+}
+
+// SetHolderName menyimpan nama pemilik yang diisi user saat aktivasi (opsional).
+// Hanya menulis bila kolom masih kosong ATAU nilai baru berbeda — tak menimpa
+// dengan string kosong (klien yang tak mengirim nama tak boleh menghapus data).
+func (r *CADRepo) SetHolderName(ctx context.Context, licenseID uuid.UUID, name string) error {
+	if name == "" {
+		return nil
+	}
+	_, err := r.pool.Exec(ctx,
+		`UPDATE public.cad_licenses SET holder_name=$2, updated_at=now()
+		  WHERE id=$1 AND (holder_name IS NULL OR holder_name <> $2)`, licenseID, name)
+	return err
 }
 
 // TouchInstallation refreshes last_seen + version info for an existing device.
