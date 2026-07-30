@@ -1396,8 +1396,18 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
             features: ['3 users', '500 contacts', '20 AI credits', 'Workspace ready to use', '7-day trial'],
           },
           {
-            name: 'Basic',
-            price: 'Rp 750,000/mo',
+            name: 'Personal',
+            price: 'Rp 100,000/mo',
+            description: 'For solo operators who just need a tidy pipeline.',
+            features: ['1 user', '50 contacts', '10 AI credits/month', 'Visual pipeline', 'Quotations and invoices'],
+          },
+          {
+            // Angka di sini WAJIB mengikuti katalog billing LeadKu. Lihat
+            // catatan di content.id.ts.
+            name: 'Starter',
+            price: 'Rp 450,000/mo',
+            listPrice: 'Rp 750,000',
+            promo: 'Launch price until 31 Oct 2026',
             description: 'For teams just starting to organise sales.',
             features: ['3 users', '2,500 contacts', '100 AI credits/month', 'Visual pipeline', 'Activities & tasks', 'Quotations and invoices'],
           },
@@ -1406,7 +1416,7 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
             price: 'Rp 1,750,000/mo',
             description: 'For teams that want to win more often.',
             popular: true,
-            features: ['6 users', '10,000 contacts', '500 AI credits/month', 'Everything in Basic', 'Products and price lists', 'Quotation/invoice templates'],
+            features: ['6 users', '10,000 contacts', '500 AI credits/month', 'Everything in Starter', 'Products and price lists', 'Quotation/invoice templates'],
           },
           {
             name: 'Business',

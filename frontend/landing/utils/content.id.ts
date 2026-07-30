@@ -1210,8 +1210,22 @@ const ID_CONTENT = {
             features: ['3 pengguna', '500 kontak', '20 kredit AI', 'Workspace siap pakai', 'Trial 7 hari'],
           },
           {
-            name: 'Basic',
-            price: 'Rp 750.000/bln',
+            name: 'Personal',
+            price: 'Rp 100.000/bln',
+            description: 'Untuk yang jalan sendiri dan cukup butuh pipeline rapi.',
+            features: ['1 pengguna', '50 kontak', '10 kredit AI/bulan', 'Pipeline visual', 'Quotation dan invoice'],
+          },
+          {
+            // Angka di sini WAJIB mengikuti katalog billing LeadKu
+            // (GET /api/v1/public/billing/catalog). Sebelumnya halaman ini
+            // menampilkan 750.000 tanpa keterangan apa pun, padahal itu
+            // list_amount alias harga sebelum promo, sementara harga jualnya
+            // 450.000. Prospek yang membandingkan halaman ini dengan
+            // leadku.coreasia.id melihat dua angka berbeda untuk paket yang sama.
+            name: 'Starter',
+            price: 'Rp 450.000/bln',
+            listPrice: 'Rp 750.000',
+            promo: 'Harga perdana sampai 31 Okt 2026',
             description: 'Untuk yang baru mulai merapikan penjualan.',
             features: ['3 pengguna', '2.500 kontak', '100 kredit AI/bulan', 'Pipeline visual', 'Aktivitas & task', 'Quotation dan invoice'],
           },
@@ -1220,7 +1234,7 @@ const ID_CONTENT = {
             price: 'Rp 1.750.000/bln',
             description: 'Untuk tim yang mau menang lebih sering.',
             popular: true,
-            features: ['6 pengguna', '10.000 kontak', '500 kredit AI/bulan', 'Semua fitur Basic', 'Produk dan price list', 'Template quotation/invoice'],
+            features: ['6 pengguna', '10.000 kontak', '500 kredit AI/bulan', 'Semua fitur Starter', 'Produk dan price list', 'Template quotation/invoice'],
           },
           {
             name: 'Business',

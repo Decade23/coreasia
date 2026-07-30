@@ -210,8 +210,17 @@ const workflowItems = computed(
             <h3 class="text-lg font-display font-bold text-[var(--ca-text)]">
               {{ plan.name }}
             </h3>
-            <p class="mt-1 text-2xl font-bold text-[var(--ca-text)]">
-              {{ plan.price }}
+            <p class="mt-1 flex flex-wrap items-baseline gap-2">
+              <span class="text-2xl font-bold text-[var(--ca-text)]">{{ plan.price }}</span>
+              <!-- Harga daftar ditampilkan dicoret, bukan disembunyikan: tanpa
+                   pembanding, angka promo terbaca sebagai harga biasa dan
+                   diskonnya hilang begitu saja. -->
+              <span v-if="plan.listPrice" class="text-sm font-semibold text-[var(--ca-muted)] line-through">
+                {{ plan.listPrice }}
+              </span>
+            </p>
+            <p v-if="plan.promo" class="mt-1 inline-block rounded-full bg-[var(--ca-emerald)]/10 px-2.5 py-0.5 text-[0.7rem] font-bold ca-tone-emerald">
+              {{ plan.promo }}
             </p>
             <p class="mt-2 text-sm text-[var(--ca-muted)]">
               {{ plan.description }}
