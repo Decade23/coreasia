@@ -265,6 +265,11 @@ useCoreSeo({
     description: t('contact.description') as string,
     path: "/contact",
     image: "/social/linkedin-share.webp",
+    // Kartu LinkedIn kami 1200x627 dan benar-benar WebP, beda dari bawaan
+    // 1200x630 PNG. Deklarasi harus ikut berkasnya, bukan sebaliknya.
+    ogImageWidth: 1200,
+    ogImageHeight: 627,
+    ogImageType: "image/webp",
     twitterImage: "/social/twitter-card.webp",
 });
 

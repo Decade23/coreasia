@@ -128,6 +128,10 @@ useCoreSeo({
     description: article.value.description,
     path: `/artikel/${slug}`,
     ogType: 'article',
+    // featured_image datang dari admin console dengan ukuran bebas, jadi hanya
+    // dipakai kalau ada dan dibiarkan tanpa deklarasi dimensi. Artikel tanpa gambar
+    // jatuh ke kartu bawaan yang dimensinya sudah pasti.
+    image: article.value.featured_image || undefined,
 })
 
 useSchemaOrg([defineWebPage({ name: article.value.title, description: article.value.description })])

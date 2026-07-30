@@ -39,6 +39,11 @@ export default defineNuxtConfig({
             changefreq: 'weekly' as const,
             priority: 0.7,
         },
+        // URL artikel tidak lagi ditulis tangan di sini. Daftar manual membuat setiap
+        // artikel baru dari admin console tak pernah masuk sitemap sampai ada yang
+        // ingat mengedit berkas ini, jadi sumbernya dipindah ke rute server yang
+        // membaca gateway (lihat server/api/__sitemap__/urls.ts).
+        sources: ['/api/__sitemap__/urls'],
         urls: [
             { loc: '/', changefreq: 'weekly', priority: 1.0 },
             { loc: '/products', changefreq: 'weekly', priority: 0.9 },
@@ -58,19 +63,6 @@ export default defineNuxtConfig({
             { loc: '/contact', changefreq: 'monthly', priority: 0.72 },
             { loc: '/faq', changefreq: 'monthly', priority: 0.65 },
             { loc: '/artikel', changefreq: 'weekly', priority: 0.8 },
-            // Dynamic article URLs (static data from utils/articles.ts)
-            {
-                loc: '/artikel/apa-itu-web-monitoring-dan-mengapa-bisnis-membutuhkannya',
-                changefreq: 'monthly',
-                priority: 0.6,
-            },
-            { loc: '/artikel/panduan-memilih-software-house-indonesia', changefreq: 'monthly', priority: 0.6 },
-            { loc: '/artikel/cara-meningkatkan-seo-website-bisnis', changefreq: 'monthly', priority: 0.6 },
-            { loc: '/artikel/download-manager-untuk-mac-apa-itu-dan-kapan-membutuhkannya', changefreq: 'monthly', priority: 0.65 },
-            { loc: '/artikel/cara-mempercepat-download-di-macbook', changefreq: 'monthly', priority: 0.65 },
-            { loc: '/artikel/cara-download-banyak-file-sekaligus-di-mac', changefreq: 'monthly', priority: 0.6 },
-            { loc: '/artikel/cara-merapikan-file-unduhan-di-mac-otomatis', changefreq: 'monthly', priority: 0.6 },
-            { loc: '/artikel/download-gagal-atau-terputus-di-mac-penyebab-dan-solusi', changefreq: 'monthly', priority: 0.6 },
         ],
     },
     css: ['~/assets/css/main.css'],
@@ -201,35 +193,11 @@ export default defineNuxtConfig({
                     content: 'CoreAsia Teknologi',
                 },
                 { property: 'og:type', content: 'website' },
-                {
-                    property: 'og:image',
-                    content: absoluteSiteAsset('/social/og-image.png'),
-                },
-                {
-                    property: 'og:image:secure_url',
-                    content: absoluteSiteAsset('/social/og-image.png'),
-                },
-                { property: 'og:image:type', content: 'image/png' },
-                { property: 'og:image:width', content: '1200' },
-                { property: 'og:image:height', content: '630' },
-                {
-                    property: 'og:image:alt',
-                    content: 'CoreAsia Teknologi preview',
-                },
-                {
-                    property: 'og:image',
-                    content: absoluteSiteAsset('/social/linkedin-share.webp'),
-                },
-                { property: 'og:image:type', content: 'image/webp' },
-                { property: 'og:image:width', content: '1200' },
-                { property: 'og:image:height', content: '627' },
-                {
-                    property: 'og:image',
-                    content: absoluteSiteAsset('/social/square-preview.webp'),
-                },
-                { property: 'og:image:type', content: 'image/webp' },
-                { property: 'og:image:width', content: '500' },
-                { property: 'og:image:height', content: '500' },
+                // Tidak ada og:image statis di sini. useSeoMeta hanya men-dedupe `og:image`,
+                // sedangkan `og:image:width/height/type/secure_url` dari config bertahan dan
+                // menempel ke gambar milik halaman lain, sehingga scraper pernah memakai
+                // dimensi 500x500 (kartu kotak) untuk gambar 1200x630. Seluruh metadata
+                // gambar sosial kini disetel satu paket di composables/useCoreSeo.ts.
                 { name: 'twitter:card', content: 'summary_large_image' },
                 {
                     name: 'twitter:image',

@@ -14,6 +14,12 @@ useCoreSeo({
   description: PAGE_DESCRIPTION,
   path: '/products/mounter',
   image: '/social/og-mounter.png',
+  // Berkas og-mounter.png berukuran 1280x640, bukan 1200x630 bawaan. Deklarasi
+  // sengaja mengikuti berkasnya supaya scraper tidak salah memotong kartu.
+  // Perbaikan rasio ke 1.91:1 adalah pekerjaan desain, bukan metadata.
+  ogImageWidth: 1280,
+  ogImageHeight: 640,
+  ogImageType: 'image/png',
 })
 
 useSchemaOrg([

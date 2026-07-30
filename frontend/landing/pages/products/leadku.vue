@@ -7,6 +7,13 @@ useCoreSeo({
   title: t('solutions.leadku.title') as string,
   description: t('solutions.leadku.description') as string,
   path: '/products/leadku',
+  // Kartu khusus LeadKu, 1200x630 PNG, tersedia di public/social/og-leadku.png.
+  // Dimensi ditulis eksplisit supaya deklarasi tetap ikut berkasnya kalau aset
+  // ini nanti diganti versi desain.
+  image: '/social/og-leadku.png',
+  ogImageWidth: 1200,
+  ogImageHeight: 630,
+  ogImageType: 'image/png',
 })
 
 useSchemaOrg([
@@ -28,14 +35,17 @@ useHead({
         description: t('solutions.leadku.description') as string,
         url: 'https://coreasia.id/products/leadku',
         provider: { '@type': 'Organization', name: 'CoreAsia Teknologi', url: 'https://coreasia.id' },
-        // Rentang paket self-service (Basic-Business). On-Premise sengaja tidak
-        // dimasukkan: harganya per-project lewat sales, bukan harga etalase.
+        // Rentang paket self-service (Personal, Basic, Pro, Business) mengikuti
+        // katalog billing LeadKu. Angka ini WAJIB disamakan lagi setiap katalog
+        // berubah: struktur data yang tidak cocok dengan harga terpasang bisa
+        // dianggap menyesatkan oleh Google. On-Premise sengaja tidak dihitung
+        // karena requires_sales_contact, harganya per-project bukan harga etalase.
         offers: {
           '@type': 'AggregateOffer',
           priceCurrency: 'IDR',
-          lowPrice: '750000',
+          lowPrice: '100000',
           highPrice: '3500000',
-          offerCount: 3,
+          offerCount: 4,
           availability: 'https://schema.org/InStock',
         },
       }),
