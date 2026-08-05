@@ -22,10 +22,15 @@ const scrollToTop = () => {
         leave-from-class="opacity-100 translate-y-0"
         leave-to-class="opacity-0 translate-y-4"
     >
+        <!--
+            Duduk di atas FloatingWhatsApp yang mengisi sudut kanan bawah (tinggi 3,5rem
+            plus jarak 0,75rem), bukan di sudutnya sendiri, supaya keduanya tidak saling
+            menimpa. Nilai right digeser agar titik tengahnya sejajar dengan tombol itu.
+        -->
         <button
             v-if="isVisible"
             type="button"
-            class="fixed bottom-6 right-6 z-40 flex h-10 w-10 items-center justify-center rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg-strong)] text-[var(--ca-brand)] backdrop-blur transition hover:border-[color:var(--ca-gold-border)] hover:bg-[var(--ca-gold-bg)] sm:bottom-8 sm:right-8 sm:h-12 sm:w-12"
+            class="fixed bottom-[5.75rem] right-8 z-40 flex h-10 w-10 items-center justify-center rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg-strong)] text-[var(--ca-brand)] backdrop-blur transition hover:border-[color:var(--ca-gold-border)] hover:bg-[var(--ca-gold-bg)] sm:bottom-[6.25rem] sm:right-9 sm:h-12 sm:w-12"
             :aria-label="t('components.backToTop.ariaLabel')"
             @click="scrollToTop"
         >

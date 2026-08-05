@@ -7,10 +7,13 @@
 // Contact Information
 // ──────────────────────────────────────
 export const CONTACT = {
+    // Satu-satunya tempat nomor WhatsApp ditulis di seluruh landing. Semua tautan
+    // (LINKS.whatsapp, buildWhatsAppUrl, structured data JSON-LD, footer) diturunkan
+    // dari sini supaya pergantian nomor berikutnya cukup mengubah dua baris ini.
     /** WhatsApp number in international format (tanpa +) */
-    whatsapp: '6285693380123',
+    whatsapp: '6285121533395',
     /** Display format untuk UI */
-    whatsappDisplay: '+62 856-9338-0123',
+    whatsappDisplay: '+62 851-2153-3395',
     /** Primary email */
     email: 'hello@coreasia.id',
     /** Office location */

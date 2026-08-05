@@ -2416,6 +2416,12 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
     backToTop: {
       ariaLabel: 'Back to top',
     },
+    whatsappFloat: {
+      ariaLabel: 'Chat on WhatsApp with the CoreAsia team',
+      tooltip: 'WhatsApp chat',
+      message:
+        'Hello CoreAsia, I am visiting coreasia.id. I would like to discuss which product or service fits my business.',
+    },
     footer: {
       description:
         'CoreAsia builds digital products and strategic engagement models for organizations that want faster launch cycles, cleaner scaling, and stronger monetization.',

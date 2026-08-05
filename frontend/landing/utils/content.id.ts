@@ -2530,6 +2530,12 @@ const ID_CONTENT = {
     backToTop: {
       ariaLabel: 'Kembali ke atas',
     },
+    whatsappFloat: {
+      ariaLabel: 'Chat WhatsApp dengan tim CoreAsia',
+      tooltip: 'Chat WhatsApp',
+      message:
+        'Halo CoreAsia, saya datang dari situs coreasia.id. Saya ingin berkonsultasi soal produk dan layanan yang cocok untuk bisnis saya.',
+    },
     footer: {
       copyright: 'All rights reserved.',
       description:

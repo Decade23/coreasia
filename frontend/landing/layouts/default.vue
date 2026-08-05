@@ -91,6 +91,14 @@ useHead(() => {
       <slot />
     </main>
     <TheFooter />
+    <!--
+      Hanya di layout publik. Layout console memakai layouts/console.vue, dan di sana
+      tombol melayang justru menutupi tombol aksi sementara pengguna berbayar sudah
+      punya jalur dukungan sendiri. Dirender juga saat SSR (di luar ClientOnly) supaya
+      tautannya ada sejak muatan pertama, tidak menunggu hidrasi seperti BackToTop
+      yang memang bergantung pada posisi gulir.
+    -->
+    <FloatingWhatsApp />
     <ClientOnly>
       <BackToTop />
     </ClientOnly>
