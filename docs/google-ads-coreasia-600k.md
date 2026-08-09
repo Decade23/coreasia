@@ -164,10 +164,51 @@ Structured snippet `Katalog layanan`:
 
 Kampanye tetap dijeda sampai seluruh poin berikut lolos:
 
-- Lead tersimpan ke database sebelum halaman menyatakan sukses.
-- First-touch UTM, GCLID, FBCLID, landing page, dan referrer tersimpan.
-- Event `lead_form_saved` hanya dikirim setelah respons API sukses.
-- Satu test lead muncul di database dengan atribusi yang benar.
-- Tag Assistant menunjukkan event diterima oleh GA4/Google Ads.
-- Search Partners, Display Network, dan broad match tetap nonaktif.
-- Billing profile selesai tanpa melampaui plafon Rp600.000 termasuk pajak.
+- [x] Lead tersimpan ke database sebelum halaman menyatakan sukses.
+- [x] First-touch UTM, GCLID, FBCLID, landing page, dan referrer tersimpan.
+- [x] Event `lead_form_saved` hanya dikirim setelah respons API sukses.
+- [x] Satu test lead muncul di database dengan atribusi yang benar.
+- [x] Beacon konversi lolos CSP dan membawa label yang benar.
+- [ ] Tag Assistant menunjukkan event diterima oleh GA4/Google Ads.
+- [ ] Search Partners, Display Network, dan broad match tetap nonaktif.
+- [ ] Billing profile selesai tanpa melampaui plafon Rp600.000 termasuk pajak.
+
+### Bukti verifikasi produksi (9 Agustus 2026)
+
+Uji dilakukan lewat peramban sungguhan pada formulir produksi `coreasia.id/contact`,
+bukan pemanggilan API langsung, sehingga menembus seluruh alur dari klik iklan
+sampai baris database.
+
+Formulir dibuka dengan parameter iklan lengkap, lalu diisi dan dikirim:
+
+```
+POST /api/public/leads  ->  201
+{"success":true,"lead_id":"49eaed5a-ff9f-4f5c-87a6-96391ff0284b","status":"new"}
+```
+
+Baris yang tersimpan di `public.contact_leads`:
+
+| kolom | nilai |
+| --- | --- |
+| `utm_source` | `google` |
+| `utm_medium` | `cpc` |
+| `utm_campaign` | `coreasia_jasa_website_jakarta_7d` |
+| `utm_term` | `jasa pembuatan website` |
+| `utm_content` | `uji_tracking` |
+| `gclid` | `UJI_GCLID_20260809` |
+| `landing_page` | URL kontak lengkap beserta seluruh parameter |
+| `referrer` | `https://coreasia.id/` |
+
+Beacon konversi yang benar-benar terkirim, sudah membawa label konversi:
+
+```
+https://www.googleadservices.com/pagead/conversion/18379615354/?...&en=conversion
+https://googleads.g.doubleclick.net/pagead/viewthroughconversion/18379615354/?...
+```
+
+Baris uji tersebut memakai nama `UJI TRACKING - abaikan` dan boleh dihapus kapan saja.
+
+### Sisa pekerjaan sebelum kampanye diaktifkan
+
+Tiga poin gerbang yang belum tercentang seluruhnya butuh akses akun Google Ads
+dan keputusan anggaran, jadi tidak bisa diselesaikan dari sisi kode.

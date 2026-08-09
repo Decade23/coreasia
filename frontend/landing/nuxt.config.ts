@@ -277,7 +277,16 @@ export default defineNuxtConfig({
                 //
                 // Diverifikasi dari console peramban di produksi: kedua host itu
                 // memang ditolak CSP saat halaman kontak dibuka dengan gclid.
-                'Content-Security-Policy': `default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://www.googleadservices.com https://googleads.g.doubleclick.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' http://localhost:8084 https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://ad.doubleclick.net https://stats.g.doubleclick.net https://www.google.com https://www.google.co.id https://*.coreasia.id https://api.coreasia.id; frame-src 'self' https://www.googletagmanager.com https://td.doubleclick.net; frame-ancestors 'self'`,
+                //
+                // Jalur enhanced conversion (`/pagead/1p-conversion`) memakai
+                // domain Google negara pengunjung, dan ccTLD tidak bisa diwakili
+                // wildcard: `https://*.google.com` tidak mencakup google.com.sg.
+                // Daftar di bawah menutup rute ASEAN yang realistis untuk trafik
+                // Indonesia. Jalur konversi utamanya sendiri (googleadservices dan
+                // googleads.g.doubleclick.net) tidak bergantung ccTLD, jadi ccTLD
+                // yang belum terdaftar hanya kehilangan sinyal pencocokan, bukan
+                // konversinya.
+                'Content-Security-Policy': `default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://www.googleadservices.com https://googleads.g.doubleclick.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' http://localhost:8084 https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://ad.doubleclick.net https://stats.g.doubleclick.net https://www.google.com https://www.google.co.id https://www.google.com.sg https://www.google.com.my https://www.google.com.au https://*.coreasia.id https://api.coreasia.id; frame-src 'self' https://www.googletagmanager.com https://td.doubleclick.net; frame-ancestors 'self'`,
                 'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
             },
         },
