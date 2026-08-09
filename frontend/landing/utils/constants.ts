@@ -23,7 +23,9 @@ export const CONTACT = {
 } as const
 
 const WHATSAPP_BASE_URL = `https://wa.me/${CONTACT.whatsapp}`
-const WHATSAPP_DEFAULT_MESSAGE = 'Halo CoreAsia, saya ingin mengetahui lebih lanjut tentang produk dan layanan Anda.'
+/** Pesan dasar WhatsApp. Diekspor agar composables/useWhatsAppLink.ts bisa
+ *  menambahinya keterangan halaman asal tanpa menduplikasi teksnya. */
+export const WHATSAPP_DEFAULT_MESSAGE = 'Halo CoreAsia, saya ingin mengetahui lebih lanjut tentang produk dan layanan Anda.'
 
 // ──────────────────────────────────────
 // Generated URLs

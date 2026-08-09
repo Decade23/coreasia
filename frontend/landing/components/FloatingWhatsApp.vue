@@ -1,15 +1,16 @@
 <script setup lang="ts">
-import { buildWhatsAppUrl } from '~/utils/constants'
+import { useWhatsAppLink } from '~/composables/useWhatsAppLink'
 import { useCoreI18n } from '~/composables/useCoreI18n'
 import { useAnalytics } from '~/composables/useAnalytics'
 
 const { t } = useCoreI18n()
 const { trackWhatsAppClick } = useAnalytics()
+const { buildContextualUrl } = useWhatsAppLink()
 
 // Pesan pra-isi dibedakan dari CTA header dan footer supaya tim penjualan tahu
 // percakapan ini datang dari tombol melayang, bukan dari halaman kontak yang sudah
 // membawa konteks formulir. Nomornya sendiri diambil dari utils/constants.ts.
-const waUrl = computed(() => buildWhatsAppUrl(t('components.whatsappFloat.message') as string))
+const waUrl = computed(() => buildContextualUrl(t('components.whatsappFloat.message') as string))
 </script>
 
 <template>

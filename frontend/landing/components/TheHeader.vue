@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { COMPANY, buildWhatsAppUrl } from '~/utils/constants'
+import { COMPANY } from '~/utils/constants'
+import { useWhatsAppLink } from '~/composables/useWhatsAppLink'
 import { getNavItems } from '~/utils/navigation'
 import { useCoreI18n } from '~/composables/useCoreI18n'
 import { useAnalytics } from '~/composables/useAnalytics'
@@ -10,12 +11,14 @@ const route = useRoute()
 const { locale, t } = useCoreI18n()
 const { trackWhatsAppClick, trackCTAClick } = useAnalytics()
 
+const { buildContextualUrl } = useWhatsAppLink()
+
 const waUrl = computed(() => {
     const greeting =
         locale.value === 'en'
             ? `Hi CoreAsia, I'd like to learn more about your products and services.`
             : `Halo CoreAsia, saya ingin mengetahui lebih lanjut tentang produk dan layanan Anda.`
-    return buildWhatsAppUrl(greeting)
+    return buildContextualUrl(greeting)
 })
 const { y } = useWindowScroll()
 
