@@ -1445,6 +1445,8 @@ const ID_CONTENT = {
         consent: 'Saya menyetujui data ini digunakan untuk tindak lanjut konsultasi.',
       },
       subjects: {
+        website: 'Jasa Pembuatan Website',
+        webapp: 'Jasa Pembuatan Aplikasi Web',
         lms: 'CoreAsia LMS',
         pantau: 'Pantau by CoreAsia',
         leadku: 'LeadKu by CoreAsia',

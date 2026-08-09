@@ -84,7 +84,7 @@ const techStack = computed(
             </p>
 
             <div class="mt-8 flex flex-col gap-3 sm:flex-row">
-              <NuxtLink to="/contact?subject=custom" class="ca-btn-primary">
+              <NuxtLink to="/contact" class="ca-btn-primary">
                 {{ t('solutions.custom.hero.ctaPrimary') }}
                 <Icon name="lucide:arrow-right" class="h-4 w-4" />
               </NuxtLink>
@@ -252,7 +252,7 @@ const techStack = computed(
             {{ t('solutions.custom.cta.subtitle') }}
           </p>
           <div class="mt-6">
-            <NuxtLink to="/contact?subject=custom" class="ca-btn-primary">
+            <NuxtLink to="/contact" class="ca-btn-primary">
               {{ t('solutions.custom.cta.button') }}
             </NuxtLink>
           </div>

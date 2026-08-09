@@ -1612,12 +1612,15 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
         consent: 'I agree that this data may be used for consultation follow-up.',
       },
       subjects: {
+        website: 'Website Development',
+        webapp: 'Web Application Development',
         lms: 'CoreAsia LMS',
         pantau: 'Pantau by CoreAsia',
         leadku: 'LeadKu by CoreAsia',
         pricing: 'Pricing Information',
         venture: 'Venture Partnership',
         enterprise: 'Custom Enterprise Solution',
+        support: 'Technical Support',
       },
       placeholders: {
         name: 'Your name',
