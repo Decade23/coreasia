@@ -11,6 +11,7 @@ type EventParams = Record<string, EventValue>
 declare global {
   interface Window {
     dataLayer?: Array<Record<string, unknown>>
+    gtag?: (...args: unknown[]) => void
   }
 }
 
@@ -63,6 +64,20 @@ export const useAnalytics = () => {
     })
   }
 
+  const trackLeadSaved = (leadId: string, formName: string, extra?: EventParams) => {
+    const params: EventParams = {
+      event_category: 'Lead Generation',
+      lead_id: leadId,
+      form_name: formName,
+      ...extra,
+    }
+
+    // Custom event is the stable GTM trigger for Google Ads conversion tags.
+    pushEvent('lead_form_saved', params)
+    // GA4 recommended lead event supports standard acquisition reporting.
+    pushEvent('generate_lead', params)
+  }
+
   const trackWhatsAppClick = (source: string, extra?: EventParams) => {
     pushEvent('whatsapp_click', {
       event_category: 'Contact',
@@ -102,6 +117,7 @@ export const useAnalytics = () => {
     trackPageView,
     trackFormSubmit,
     trackFormStart,
+    trackLeadSaved,
     trackWhatsAppClick,
     trackCTAClick,
     trackOutboundClick,

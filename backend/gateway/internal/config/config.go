@@ -76,11 +76,12 @@ type MidtransConfig struct {
 	MerchantName    string `yaml:"merchant_name" env:"MIDTRANS_MERCHANT_NAME" env-default:"CoreAsia"`
 }
 
-// EmailConfig drives transactional email (license-key delivery on purchase).
+// EmailConfig drives transactional email (license delivery and lead alerts).
 type EmailConfig struct {
-	Provider string `yaml:"provider" env:"EMAIL_PROVIDER" env-default:"resend"`
-	APIKey   string `yaml:"api_key" env:"RESEND_API_KEY"`
-	From     string `yaml:"from" env:"EMAIL_FROM" env-default:"CoreAsia <noreply@coreasia.id>"`
+	Provider              string `yaml:"provider" env:"EMAIL_PROVIDER" env-default:"resend"`
+	APIKey                string `yaml:"api_key" env:"RESEND_API_KEY"`
+	From                  string `yaml:"from" env:"EMAIL_FROM" env-default:"CoreAsia <noreply@coreasia.id>"`
+	LeadNotificationEmail string `yaml:"lead_notification_email" env:"LEAD_NOTIFICATION_EMAIL" env-default:"hello@coreasia.id"`
 }
 
 // PaymentsConfig holds shared secrets for inbound payment webhooks (Mayar, dst)

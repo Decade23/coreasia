@@ -1,12 +1,20 @@
 <script setup lang="ts">
-import { LINKS, CONTACT, COMPANY, buildWhatsAppUrl, buildMailtoUrl } from '~/utils/constants'
+import { LINKS, CONTACT, COMPANY, buildWhatsAppUrl } from '~/utils/constants'
 import { useCoreI18n } from '~/composables/useCoreI18n'
 import { useAnalytics } from '~/composables/useAnalytics'
 
 const { useReveal } = useScrollReveal()
 const { t } = useCoreI18n()
-const { trackFormSubmit, trackFormStart, trackWhatsAppClick } = useAnalytics()
+const { trackFormStart, trackLeadSaved, trackWhatsAppClick } = useAnalytics()
+const { getAttribution } = useLeadAttribution()
+const { trackLeadConversion } = useGoogleAdsConversion()
 const route = useRoute()
+const config = useRuntimeConfig()
+
+const publicApiBase = (import.meta.client
+    ? config.public.gatewayPublicUrl
+    : config.public.gatewayUrl
+) as string
 
 const heroKicker = useReveal('fadeUp', 0)
 const heroTitle = useReveal('fadeUp', 100)
@@ -58,6 +66,8 @@ watchEffect(() => {
 const formState = reactive({
     isSubmitting: false,
     isSuccess: false,
+    hasSubmissionError: false,
+    successWhatsAppUrl: "",
     errorMessage: "",
 });
 
@@ -126,7 +136,7 @@ const phoneModel = computed({
         let formatted = raw;
         if (raw.startsWith("+62")) {
             const rest = raw.slice(3);
-            let chunks = [];
+            const chunks = [];
             if (rest.length > 0) chunks.push(rest.slice(0, 3));
             if (rest.length > 3) chunks.push(rest.slice(3, 7));
             if (rest.length > 7) chunks.push(rest.slice(7, 13)); 
@@ -167,15 +177,22 @@ const buildMessage = () => {
         .replace('{phone}', cleanPhone)
         .replace('{message}', form.message);
 
-    return {
-        subjectLabel,
-        body,
-    };
+    return body;
 };
+
+const whatsappFallbackUrl = computed(() => buildWhatsAppUrl(buildMessage()));
+
+interface CreateLeadResponse {
+    success: boolean;
+    lead_id: string;
+    status: string;
+}
 
 const handleSubmit = async () => {
     formState.isSubmitting = true;
     formState.isSuccess = false;
+    formState.hasSubmissionError = false;
+    formState.successWhatsAppUrl = "";
     formState.errorMessage = "";
 
     if (!form.name.trim()) {
@@ -215,25 +232,47 @@ const handleSubmit = async () => {
     }
 
     try {
-        const { subjectLabel, body } = buildMessage();
+        const body = buildMessage();
+        const attribution = getAttribution();
+        const cleanPhone = form.phone.replace(/\s+/g, "").trim();
+        const apiBase = publicApiBase.replace(/\/+$/, "");
 
-        if (process.client) {
-            const waUrl = buildWhatsAppUrl(body);
-            const mailtoUrl = buildMailtoUrl(`[Inquiry] ${subjectLabel}`, body);
+        const response = await $fetch<CreateLeadResponse>(`${apiBase}/public/leads`, {
+            method: "POST",
+            body: {
+                name: form.name.trim(),
+                email: form.email.trim().toLowerCase(),
+                phone: cleanPhone,
+                subject: form.subject.trim(),
+                message: form.message.trim(),
+                consent: form.consent,
+                utm_source: attribution?.utm_source || "",
+                utm_medium: attribution?.utm_medium || "",
+                utm_campaign: attribution?.utm_campaign || "",
+                utm_term: attribution?.utm_term || "",
+                utm_content: attribution?.utm_content || "",
+                gclid: attribution?.gclid || "",
+                fbclid: attribution?.fbclid || "",
+                landing_page: attribution?.landing_page || window.location.href,
+                referrer: attribution?.referrer || "",
+            },
+        });
 
-            const popup = window.open(waUrl, "_blank", "noopener,noreferrer");
-            if (!popup) {
-                window.location.href = mailtoUrl;
-            }
+        if (!response.success || !response.lead_id) {
+            throw new Error("Lead API returned an invalid success response");
         }
 
+        // A form submission becomes a conversion only after the lead is durably
+        // accepted by the API. Failed requests must never inflate ad results.
         formState.isSuccess = true;
-        trackFormSubmit('contact_brief', {
+        formState.successWhatsAppUrl = buildWhatsAppUrl(body);
+        trackLeadSaved(response.lead_id, 'contact_brief', {
             subject: form.subject,
             plan: selectedPlan.value || undefined,
         })
+        trackLeadConversion(response.lead_id)
 
-        if (process.client) {
+        if (import.meta.client) {
             try {
                 const confetti = (await import('canvas-confetti')).default;
                 
@@ -249,12 +288,9 @@ const handleSubmit = async () => {
         }
         
         resetForm();
-
-        setTimeout(() => {
-            formState.isSuccess = false;
-        }, 5000);
-    } catch (error) {
+    } catch {
         formState.errorMessage = t('contact.form.error') as string;
+        formState.hasSubmissionError = true;
     } finally {
         formState.isSubmitting = false;
     }
@@ -515,6 +551,19 @@ useSchemaOrg([
                                 {{ t('contact.form.success') }}
                             </p>
 
+                            <a
+                                v-if="formState.isSuccess && formState.successWhatsAppUrl"
+                                :href="formState.successWhatsAppUrl"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                data-analytics-ignore="true"
+                                class="ca-btn-secondary w-full"
+                                @click="trackWhatsAppClick('contact_form_success')"
+                            >
+                                <Icon name="lucide:message-circle" class="h-4 w-4" />
+                                {{ t('contact.form.whatsappContinue') }}
+                            </a>
+
                             <p
                                 v-if="formState.errorMessage"
                                 class="ca-status-danger"
@@ -522,6 +571,19 @@ useSchemaOrg([
                             >
                                 {{ formState.errorMessage }}
                             </p>
+
+                            <a
+                                v-if="formState.hasSubmissionError"
+                                :href="whatsappFallbackUrl"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                data-analytics-ignore="true"
+                                class="ca-btn-secondary w-full"
+                                @click="trackWhatsAppClick('contact_form_failure_fallback')"
+                            >
+                                <Icon name="lucide:message-circle" class="h-4 w-4" />
+                                {{ t('contact.form.whatsappFallback') }}
+                            </a>
                         </form>
                     </article>
                 </div>

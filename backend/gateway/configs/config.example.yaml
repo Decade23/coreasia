@@ -35,6 +35,7 @@ email:
   provider: "resend"
   api_key: ""
   from: "CoreAsia <noreply@coreasia.id>"
+  lead_notification_email: "hello@coreasia.id"
 
 payments:
   mayar_webhook_token: ""

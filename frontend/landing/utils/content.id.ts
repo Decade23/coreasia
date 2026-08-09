@@ -1435,7 +1435,7 @@ const ID_CONTENT = {
     },
     form: {
       title: 'Kirim Brief Singkat',
-      subtitle: 'Form ini akan mengarahkan pesan Anda ke WhatsApp/email agar tim dapat menindaklanjuti lebih cepat.',
+      subtitle: 'Brief akan disimpan terlebih dahulu, lalu WhatsApp dibuka agar tim dapat menindaklanjuti lebih cepat.',
       fields: {
         name: 'Nama lengkap',
         email: 'Email',
@@ -1466,8 +1466,10 @@ const ID_CONTENT = {
       },
       submit: 'Kirim Brief',
       submitting: 'Memproses...',
-      success: 'Brief berhasil diproses. Jika WhatsApp tidak terbuka, cek draft email yang disiapkan otomatis.',
-      error: 'Terjadi kendala saat memproses brief. Silakan hubungi WhatsApp langsung.',
+      success: 'Brief berhasil disimpan. WhatsApp telah disiapkan untuk melanjutkan percakapan.',
+      error: 'Brief belum tersimpan karena koneksi atau server bermasalah. Data Anda belum terkirim. Silakan coba lagi atau lanjutkan lewat WhatsApp.',
+      whatsappContinue: 'Lanjutkan percakapan di WhatsApp',
+      whatsappFallback: 'Lanjutkan lewat WhatsApp',
       validation: {
         nameRequired: 'Nama wajib diisi',
         emailRequired: 'Email wajib diisi',

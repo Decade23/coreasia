@@ -71,7 +71,7 @@ func (rl *IPRateLimiter) Middleware() fiber.Handler {
 			remaining := entry.resetAt.Sub(now)
 			rl.mu.Unlock()
 			appErr := apperr.NewTooManyRequests(
-				fmt.Sprintf("Terlalu banyak percobaan login. Coba lagi dalam %d menit.", int(remaining.Minutes())+1),
+				fmt.Sprintf("Terlalu banyak permintaan. Coba lagi dalam %d menit.", int(remaining.Minutes())+1),
 			)
 			return c.Status(appErr.HTTPStatus).JSON(fiber.Map{
 				"data":   nil,
@@ -86,15 +86,15 @@ func (rl *IPRateLimiter) Middleware() fiber.Handler {
 }
 
 type rateLimitEntry struct {
-	count     int
-	resetAt   time.Time
+	count   int
+	resetAt time.Time
 }
 
 type RateLimiter struct {
-	mu       sync.Mutex
-	entries  map[uuid.UUID]*rateLimitEntry
-	limit    int
-	window   time.Duration
+	mu      sync.Mutex
+	entries map[uuid.UUID]*rateLimitEntry
+	limit   int
+	window  time.Duration
 }
 
 func NewRateLimiter(limit int, window time.Duration) *RateLimiter {

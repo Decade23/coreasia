@@ -26,11 +26,22 @@ type Server struct {
 }
 
 func NewServer(cfg *config.Config, pool *pgxpool.Pool, rdb *redis.Client) *Server {
-	app := fiber.New(fiber.Config{
+	appConfig := fiber.Config{
 		AppName:      cfg.App.Name,
 		ErrorHandler: globalErrorHandler,
 		BodyLimit:    10 * 1024 * 1024, // 10MB for file uploads
-	})
+	}
+	// Production traffic reaches Fiber through the Caddy container. Trust only
+	// internal/loopback proxies so c.IP() sees the real client from
+	// X-Forwarded-For without allowing direct clients to spoof the limiter key.
+	if cfg.App.Env == "production" {
+		appConfig.ProxyHeader = fiber.HeaderXForwardedFor
+		appConfig.TrustProxy = true
+		appConfig.EnableIPValidation = true
+		appConfig.TrustProxyConfig = fiber.TrustProxyConfig{Private: true, Loopback: true}
+	}
+
+	app := fiber.New(appConfig)
 
 	s := &Server{app: app, cfg: cfg, pool: pool, rdb: rdb}
 	s.setupMiddleware()
@@ -62,6 +73,7 @@ func (s *Server) setupRoutes() {
 	adminUserRepo := repository.NewAdminUserRepo(s.pool)
 	articleRepo := repository.NewArticleRepo(s.pool)
 	auditLogRepo := repository.NewAuditLogRepo(s.pool)
+	contactLeadRepo := repository.NewContactLeadRepo(s.pool)
 
 	// Services
 	provisioner := service.NewProvisioner(
@@ -93,6 +105,7 @@ func (s *Server) setupRoutes() {
 	// Rate limiters
 	aiRateLimiter := mw.NewRateLimiter(10, 1*time.Hour)
 	loginRateLimiter := mw.NewIPRateLimiter(5, 15*time.Minute, s.cfg.App.Env == "development")
+	contactLeadRateLimiter := mw.NewIPRateLimiter(10, 1*time.Hour, s.cfg.App.Env == "development")
 
 	// Handlers
 	healthHandler := NewHealthHandler(s.pool)
@@ -100,6 +113,7 @@ func (s *Server) setupRoutes() {
 	onboardingHandler := NewOnboardingHandler(tenantRepo, planRepo, provisioner, midtransService)
 	authHandler := NewAuthHandler(adminUserRepo, auditLogRepo, jwtProvider)
 	articleHandler := NewArticleHandler(articleRepo, auditLogRepo)
+	contactLeadHandler := NewContactLeadHandler(contactLeadRepo, emailService)
 	adminUserHandler := NewAdminUserHandler(adminUserRepo, auditLogRepo)
 	uploadHandler := NewUploadHandler(r2Service, auditLogRepo)
 	apiKeyRepo := repository.NewAPIKeyRepo(s.pool)
@@ -133,6 +147,11 @@ func (s *Server) setupRoutes() {
 	healthHandler.RegisterRoutes(s.app)
 
 	api := s.app.Group("/api")
+	public := api.Group("/public")
+
+	// Public lead capture. A successful response is only returned after the
+	// submission has been persisted by PostgreSQL.
+	public.Post("/leads", contactLeadRateLimiter.Middleware(), contactLeadHandler.Create)
 
 	// Existing routes
 	plansHandler.RegisterRoutes(api)

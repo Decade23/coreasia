@@ -45,6 +45,9 @@ func (f *fakeCADStore) addInstall(i *model.CADInstallation) {
 	if i.ID == uuid.Nil {
 		i.ID = uuid.New()
 	}
+	if i.Platform == "" {
+		i.Platform = "macos"
+	}
 	f.installs = append(f.installs, i)
 }
 
@@ -70,9 +73,9 @@ func (f *fakeCADStore) FindInstallation(_ context.Context, licenseID uuid.UUID, 
 	return nil, nil
 }
 
-func (f *fakeCADStore) FindActiveInstallationOther(_ context.Context, licenseID uuid.UUID, deviceHash string) (*model.CADInstallation, error) {
+func (f *fakeCADStore) FindActiveInstallationOther(_ context.Context, licenseID uuid.UUID, deviceHash, platform string) (*model.CADInstallation, error) {
 	for _, i := range f.installs {
-		if i.LicenseID != nil && *i.LicenseID == licenseID && i.DeviceHash != deviceHash && !i.Revoked {
+		if i.LicenseID != nil && *i.LicenseID == licenseID && i.DeviceHash != deviceHash && i.Platform == platform && !i.Revoked {
 			return i, nil
 		}
 	}
@@ -111,6 +114,15 @@ func (f *fakeCADStore) SetLastTransfer(_ context.Context, licenseID uuid.UUID) e
 	return nil
 }
 
+func (f *fakeCADStore) SetHolderName(_ context.Context, licenseID uuid.UUID, holderName string) error {
+	for _, l := range f.licenses {
+		if l.ID == licenseID {
+			l.HolderName = &holderName
+		}
+	}
+	return nil
+}
+
 func (f *fakeCADStore) CreateInstallation(_ context.Context, i *model.CADInstallation) error {
 	i.ID = uuid.New()
 	i.FirstSeen = time.Now()
@@ -136,8 +148,8 @@ func (f *fakeCADStore) FindByOrderRef(context.Context, string) (*model.CADLicens
 	return nil, nil
 }
 func (f *fakeCADStore) Create(context.Context, *model.CADLicense) error { return nil }
-func (f *fakeCADStore) Update(context.Context, *model.CADLicense) error     { return nil }
-func (f *fakeCADStore) Delete(context.Context, uuid.UUID) error             { return nil }
+func (f *fakeCADStore) Update(context.Context, *model.CADLicense) error { return nil }
+func (f *fakeCADStore) Delete(context.Context, uuid.UUID) error         { return nil }
 func (f *fakeCADStore) ImportBatch(context.Context, []string, string, *uuid.UUID) (int, error) {
 	return 0, nil
 }
