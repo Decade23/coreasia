@@ -263,7 +263,21 @@ export default defineNuxtConfig({
                 'X-Content-Type-Options': 'nosniff',
                 'Referrer-Policy': 'strict-origin-when-cross-origin',
                 'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
-                'Content-Security-Policy': `default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' http://localhost:8084 https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://www.google.com https://www.google.co.id https://*.coreasia.id https://api.coreasia.id; frame-src 'self' https://www.googletagmanager.com; frame-ancestors 'self'`,
+                // CSP wajib mengizinkan host pencatat konversi Google Ads, bukan
+                // hanya Tag Manager dan Analytics.
+                //
+                // Sebelum ini script-src hanya memuat googletagmanager dan
+                // google-analytics, sehingga skrip viewthroughconversion dari
+                // googleads.g.doubleclick.net DIBLOKIR, dan connect-src tidak
+                // memuat ad.doubleclick.net sehingga panggilan pencatatnya ikut
+                // diblokir. Akibatnya gtag termuat dan config terproses, tetapi
+                // konversi tidak pernah sampai ke Google. Terlihat sehat di
+                // permukaan, nol data di dasbor iklan, dan anggaran habis tanpa
+                // satu pun konversi tercatat.
+                //
+                // Diverifikasi dari console peramban di produksi: kedua host itu
+                // memang ditolak CSP saat halaman kontak dibuka dengan gclid.
+                'Content-Security-Policy': `default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://www.googleadservices.com https://googleads.g.doubleclick.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' http://localhost:8084 https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://ad.doubleclick.net https://stats.g.doubleclick.net https://www.google.com https://www.google.co.id https://*.coreasia.id https://api.coreasia.id; frame-src 'self' https://www.googletagmanager.com https://td.doubleclick.net; frame-ancestors 'self'`,
                 'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
             },
         },
