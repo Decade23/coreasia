@@ -1,5 +1,10 @@
 <script setup lang="ts">
-import { LINKS } from '~/utils/constants'
+import { useWhatsAppLink } from '~/composables/useWhatsAppLink'
+
+// Tautan WhatsApp membawa nama halaman asal, karena kliknya tidak pernah
+// tercatat sebagai konversi Google Ads. Lihat composables/useWhatsAppLink.ts.
+const { buildContextualUrl } = useWhatsAppLink()
+const waUrl = computed(() => buildContextualUrl())
 
 const { t } = useCoreI18n()
 const { useReveal, revealRef } = useScrollReveal()
@@ -31,6 +36,11 @@ useSchemaOrg([
 const serviceCities = ['Jakarta', 'Surabaya', 'Bandung', 'Tangerang', 'Bekasi', 'Makassar', 'Semarang', 'Yogyakarta', 'Medan', 'Bali']
 const faqItems = computed(() => (t('services.jasaPembuatanWebsite.faq.items') as Array<{ question: string; answer: string }>) || [])
 
+// Penawaran pada JSON-LD dibangun dari blok konten yang sama dengan kartu harga,
+// sehingga nama, deskripsi, dan angkanya punya satu sumber dan ikut bahasa aktif.
+type PricingItem = { type: string; range: string; lowPrice: string; description: string }
+const offerItems = (t('services.jasaPembuatanWebsite.pricing.items') as PricingItem[]) || []
+
 useHead({
   script: [
     {
@@ -38,7 +48,7 @@ useHead({
       innerHTML: JSON.stringify({
         '@context': 'https://schema.org',
         '@type': 'Service',
-        name: 'Jasa Pembuatan Website Profesional',
+        name: t('services.jasaPembuatanWebsite.schema.serviceName') as string,
         serviceType: 'Web Development',
         description: t('services.jasaPembuatanWebsite.description') as string,
         url: 'https://coreasia.id/layanan/jasa-pembuatan-website',
@@ -53,13 +63,21 @@ useHead({
         ],
         hasOfferCatalog: {
           '@type': 'OfferCatalog',
-          name: 'Paket Jasa Pembuatan Website',
-          itemListElement: [
-            { '@type': 'Offer', name: 'Landing Page', price: '3000000', priceCurrency: 'IDR', description: 'Satu halaman promosi, responsif, SEO-ready' },
-            { '@type': 'Offer', name: 'Company Profile', price: '5000000', priceCurrency: 'IDR', description: '3-7 halaman, design custom, konten manajemen dasar' },
-            { '@type': 'Offer', name: 'Toko Online', price: '10000000', priceCurrency: 'IDR', description: 'Katalog produk, keranjang, pembayaran, integrasi pengiriman' },
-            { '@type': 'Offer', name: 'Web App Custom', price: '25000000', priceCurrency: 'IDR', description: 'Dashboard, sistem manajemen, fitur khusus sesuai kebutuhan' },
-          ],
+          name: t('services.jasaPembuatanWebsite.schema.offerCatalogName') as string,
+          // Harga di halaman ini bersifat "mulai dari", bukan harga pasti.
+          // Karena itu setiap paket dinyatakan sebagai AggregateOffer dengan
+          // batas bawah (lowPrice dan PriceSpecification.minPrice), tanpa properti `price`.
+          // offerCount disertakan karena Google menyarankannya untuk AggregateOffer:
+          // tiap entri di sini mewakili tepat satu paket.
+          itemListElement: offerItems.map((item) => ({
+            '@type': 'AggregateOffer',
+            name: item.type,
+            description: item.description,
+            priceCurrency: 'IDR',
+            lowPrice: item.lowPrice,
+            offerCount: '1',
+            priceSpecification: { '@type': 'PriceSpecification', priceCurrency: 'IDR', minPrice: item.lowPrice },
+          })),
         },
       }),
     },
@@ -112,9 +130,16 @@ const processItems = computed(() => (t('services.jasaPembuatanWebsite.process.it
               {{ t('services.jasaPembuatanWebsite.hero.ctaPrimary') }}
               <Icon name="lucide:arrow-right" class="h-4 w-4" />
             </NuxtLink>
-            <NuxtLink to="/products/build" class="ca-btn-secondary">
+            <NuxtLink to="/portfolio" class="ca-btn-secondary">
               {{ t('services.jasaPembuatanWebsite.hero.ctaSecondary') }}
             </NuxtLink>
+            <!-- Tautan dalam halaman: pakai anchor biasa supaya lompatannya
+                 ditangani browser (menghormati scroll-padding-top di main.css)
+                 dan tetap jalan meski hash-nya sudah aktif. Posisinya di hero
+                 karena bagian harga ada di bawahnya. -->
+            <a href="#paket-harga" class="ca-btn-secondary">
+              {{ t('services.jasaPembuatanWebsite.hero.ctaTertiary') }}
+            </a>
           </div>
         </div>
       </div>
@@ -140,7 +165,7 @@ const processItems = computed(() => (t('services.jasaPembuatanWebsite.process.it
     </section>
 
     <!-- Service Types -->
-    <section class="ca-section pt-0">
+    <section id="jenis-website" class="ca-section pt-0">
       <div class="ca-container">
         <div ref="serviceTypesHeader" class="mb-8 text-center">
           <h2 class="ca-title">{{ t('services.jasaPembuatanWebsite.serviceTypes.title') }}</h2>
@@ -224,20 +249,22 @@ const processItems = computed(() => (t('services.jasaPembuatanWebsite.process.it
             <div>
               <span class="ca-kicker">
                 <Icon name="lucide:box" class="h-3.5 w-3.5 ca-tone-gold" />
-                Produk Terkait
+                {{ t('services.jasaPembuatanWebsite.relatedProduct.kicker') }}
               </span>
-              <h3 class="mt-3 text-xl font-display font-bold text-[var(--ca-text)]">Build by CoreAsia</h3>
+              <h3 class="mt-3 text-xl font-display font-bold text-[var(--ca-text)]">
+                {{ t('services.jasaPembuatanWebsite.relatedProduct.title') }}
+              </h3>
               <p class="mt-2 text-sm leading-relaxed text-[var(--ca-muted)]">
-                Layanan pembuatan website dan aplikasi web custom kami. Lihat detail proses, teknologi, dan cara kerja kami.
+                {{ t('services.jasaPembuatanWebsite.relatedProduct.description') }}
               </p>
             </div>
             <div class="flex flex-col gap-3 sm:flex-row md:justify-end">
               <NuxtLink to="/products/build" class="ca-btn-primary">
-                Pelajari Build
+                {{ t('services.jasaPembuatanWebsite.relatedProduct.ctaPrimary') }}
                 <Icon name="lucide:arrow-right" class="h-4 w-4" />
               </NuxtLink>
-              <NuxtLink to="/pricing" class="ca-btn-secondary">
-                Lihat Harga
+              <NuxtLink to="/layanan/jasa-pembuatan-aplikasi-web" class="ca-btn-secondary">
+                {{ t('services.jasaPembuatanWebsite.relatedProduct.ctaSecondary') }}
               </NuxtLink>
             </div>
           </div>
@@ -246,7 +273,7 @@ const processItems = computed(() => (t('services.jasaPembuatanWebsite.process.it
     </section>
 
     <!-- FAQ -->
-    <section class="ca-section pt-0">
+    <section id="faq" class="ca-section pt-0">
       <div class="ca-container">
         <div ref="faqSection" class="ca-card p-6 sm:p-8">
           <h2 class="ca-title mb-6">{{ t('services.jasaPembuatanWebsite.faq.title') }}</h2>
@@ -275,7 +302,7 @@ const processItems = computed(() => (t('services.jasaPembuatanWebsite.process.it
               {{ t('services.jasaPembuatanWebsite.cta.button') }}
               <Icon name="lucide:arrow-right" class="h-4 w-4" />
             </NuxtLink>
-            <a :href="LINKS.whatsapp" target="_blank" rel="noopener noreferrer" class="ca-btn-secondary">
+            <a :href="waUrl" target="_blank" rel="noopener noreferrer" class="ca-btn-secondary">
               <Icon name="lucide:message-circle" class="h-4 w-4" />
               WhatsApp
             </a>

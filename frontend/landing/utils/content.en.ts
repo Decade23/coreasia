@@ -206,8 +206,8 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
       title: 'Need a website or web application?',
       subtitle: 'Beyond digital products, we also provide professional web development services for various business needs.',
       items: [
-        { label: 'Website Development', description: 'Company profile, online store, landing page — custom & SEO-ready.', to: '/layanan/jasa-pembuatan-website' },
-        { label: 'Web App Development', description: 'Dashboards, portals, management systems — tailored to your needs.', to: '/layanan/jasa-pembuatan-aplikasi-web' },
+        { label: 'Website Development', description: 'Company profile, online store, and landing pages, built to order and SEO-ready.', to: '/layanan/jasa-pembuatan-website' },
+        { label: 'Web App Development', description: 'Dashboards, portals, and management systems that match your business process.', to: '/layanan/jasa-pembuatan-aplikasi-web' },
         { label: 'Web Monitoring Dashboard', description: 'Monitor website performance from one easy-to-understand dashboard.', to: '/layanan/web-monitoring-dashboard' },
       ],
     },
@@ -424,9 +424,9 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
     },
   },
   pricing: {
-    title: 'Pricing & Plans - Web Development & Apps Starting from Rp 3M',
+    title: 'Product Subscription Pricing',
     description:
-      'Compare CoreAsia pricing and plans: website development from Rp 3 million, custom web apps, and enterprise LMS. Free consultation available.',
+      'Compare CoreAsia product subscription plans. Cost estimates for website and web application services are on the service pages. Free consultation.',
     hero: {
       title: 'Choose the right plan <span class="ca-gradient-text">for your organization</span>',
       subtitle:
@@ -466,6 +466,12 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
     },
     allPlansInclude:
       'All plans include SSL, recurring backups, and technical support for baseline operational needs.',
+    services: {
+      title: 'Looking for website development pricing?',
+      description: 'The plans above are product subscriptions. Cost estimates for website and web application work are on the service pages below.',
+      websiteCta: 'Website Cost Estimates',
+      webAppCta: 'Custom Web App Service',
+    },
     cta: {
       title: 'Ready to digitize your certification workflow?',
       subtitle:
@@ -699,26 +705,26 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
             name: 'Starter',
             price: 'Free',
             description: 'Start monitoring your website performance.',
-            features: ['1 Website', '7-day data', '3 AI queries/day', '15 Keyword Rankings', 'Analytics Dashboard'],
+            features: ['1 Website', '7-day data', '3 AI queries per day', '15 Keyword Rankings', 'Analytics Dashboard'],
           },
           {
             name: 'Professional',
             price: 'Rp 250,000/mo',
             description: 'Deep analytics for professionals.',
             popular: true,
-            features: ['5 Websites', '90-day data', 'Full GA4 + GSC', '30 AI queries/day', '100 Keyword Rankings', '3 SEO Audits/month', 'PDF & Excel Export', '3 Team Members'],
+            features: ['5 Websites', '90-day data', 'Full GA4 + GSC', '30 AI queries per day', '100 Keyword Rankings', '3 SEO Audits per month', 'PDF & Excel Export', '3 Team Members'],
           },
           {
             name: 'Business',
             price: 'Rp 600,000/mo',
             description: 'Complete solution for agencies and businesses.',
-            features: ['15 Websites', '180-day data', '60 AI queries/day', '300 Keyword Rankings', '10 SEO Audits/month', 'Custom Report Schedule', '10 Team Members'],
+            features: ['15 Websites', '180-day data', '60 AI queries per day', '300 Keyword Rankings', '10 SEO Audits per month', 'Custom Report Schedule', '10 Team Members'],
           },
           {
             name: 'Enterprise',
             price: 'Rp 1,500,000/mo',
             description: 'Manage multiple clients with full features.',
-            features: ['30 Websites', '365-day data', '150 AI queries/day', '500 Keyword Rankings', '20 SEO Audits/month', 'API Access', '25 Team Members', 'Priority Support'],
+            features: ['30 Websites', '365-day data', '150 AI queries per day', '500 Keyword Rankings', '20 SEO Audits per month', 'API Access', '25 Team Members', 'Priority Support'],
           },
           {
             name: 'Self-Hosted',
@@ -1664,51 +1670,52 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
   },
   services: {
     jasaPembuatanWebsite: {
-      title: 'Professional Web Development Services Jakarta - From Rp 3M',
-      description: 'Professional website development for businesses, SMEs, and corporations in Jakarta and across Indonesia. Landing pages, company profiles, e-commerce, and custom web apps from Rp 3 million.',
+      title: 'Professional Web Development Jakarta',
+      description: 'Website development for businesses in Jakarta and across Indonesia. Landing page from Rp 3 million, company profile, e-commerce, and custom web app.',
       kicker: 'Web Development',
       hero: {
-        title: 'Professional web development that <span class="ca-gradient-text">builds credibility</span> for your business',
-        subtitle: 'CoreAsia is your trusted web development partner in Indonesia. Fast, SEO-ready websites designed for conversions — from company profiles to custom web applications.',
+        title: 'Website development for <span class="ca-gradient-text">businesses in Indonesia</span>',
+        subtitle: 'CoreAsia builds websites in Indonesia, from company profiles to custom web applications. Fast to load and prepared for search engine indexing.',
         ctaPrimary: 'Free Consultation',
         ctaSecondary: 'View Portfolio',
+        ctaTertiary: 'See Cost Estimates',
       },
       whyUs: {
         title: 'Why Choose CoreAsia for Your Web Development?',
-        subtitle: 'Not just affordable website development — we are your technology partner for business growth across Indonesia.',
+        subtitle: 'More than affordable website development. We stay on as your technology partner, from planning to post-launch support, across Indonesia.',
         items: [
-          { icon: 'lucide:palette', title: 'Custom & Responsive Design', description: 'Every website is designed specifically for your brand and business needs. Looks perfect on all devices.' },
-          { icon: 'lucide:zap', title: 'High Performance & Speed', description: 'Built with modern technology for optimal loading speed and smooth user experience.' },
-          { icon: 'lucide:search', title: 'SEO-Ready from Day One', description: 'Code structure, meta tags, and performance optimized so your website is easily found on Google.' },
-          { icon: 'lucide:shield-check', title: 'Security & Maintenance', description: 'SSL, automatic backups, and security monitoring ensure your website stays safe and stable.' },
-          { icon: 'lucide:settings', title: 'Modern Technology', description: 'Using cutting-edge stack like Nuxt.js, Vue, Go, and PostgreSQL for scalable results.' },
+          { icon: 'lucide:palette', title: 'Custom & Responsive Design', description: 'Every website is designed specifically for your brand and business needs, then tested on common desktop, tablet, and phone screen sizes.' },
+          { icon: 'lucide:zap', title: 'Page Speed', description: 'Modern rendering, compressed images, and minified assets so pages open quickly.' },
+          { icon: 'lucide:search', title: 'SEO Basics Included', description: 'Code structure, meta tags, sitemap, and page speed are set up so search engines can crawl and index your pages.' },
+          { icon: 'lucide:shield-check', title: 'Security & Maintenance', description: 'SSL, scheduled backups, and security monitoring to reduce risk and keep your website stable.' },
+          { icon: 'lucide:settings', title: 'Modern Technology', description: 'We use Nuxt.js, Vue, Go, and PostgreSQL, a stack that stays maintainable as your traffic and features grow.' },
           { icon: 'lucide:headphones', title: 'Ongoing Support', description: 'Our technical team is ready to help after launch. You won\'t be left alone after handover.' },
         ],
       },
       serviceTypes: {
         title: 'Types of Websites We Build',
-        subtitle: 'Web development solutions for every business need.',
+        subtitle: 'The kinds of website and web application work we take on.',
         items: [
-          { icon: 'lucide:building-2', title: 'Company Profile Website', description: 'Showcase your company professionally. Perfect for SMEs, startups, and corporations building their digital presence.', keywords: 'company profile website development' },
-          { icon: 'lucide:shopping-cart', title: 'Online Store & E-Commerce', description: 'E-commerce website with payment system, product management, and shipping integration. Ready to sell from day one.', keywords: 'e-commerce website development' },
-          { icon: 'lucide:rocket', title: 'Landing Page & Promotions', description: 'Dedicated pages for marketing campaigns, product launches, or business promotions. Optimized for high conversion.', keywords: 'landing page development' },
-          { icon: 'lucide:layout-dashboard', title: 'Custom Web Application', description: 'Web apps tailored to your specific business needs — dashboards, management systems, portals, and more.', keywords: 'custom web app development' },
+          { icon: 'lucide:building-2', title: 'Company Profile Website', description: 'Showcase your company professionally. A common fit for SMEs, startups, and corporations building their digital presence.', keywords: 'company profile website development' },
+          { icon: 'lucide:shopping-cart', title: 'Online Store & E-Commerce', description: 'E-commerce website with payment system, product management, and shipping integration, handed over ready for your first product upload.', keywords: 'e-commerce website development' },
+          { icon: 'lucide:rocket', title: 'Landing Page & Promotions', description: 'Dedicated pages for marketing campaigns, product launches, or business promotions, built around one clear call to action.', keywords: 'landing page development' },
+          { icon: 'lucide:layout-dashboard', title: 'Custom Web Application', description: 'Web apps tailored to your specific business needs, such as dashboards, management systems, and internal portals.', keywords: 'custom web app development' },
         ],
       },
       serviceAreas: {
         title: 'Serving All of Indonesia',
         subtitle: 'Our team works remotely and serves clients from various cities across Indonesia.',
         cities: ['Jakarta', 'Surabaya', 'Bandung', 'Tangerang', 'Bekasi', 'Makassar', 'Semarang', 'Yogyakarta', 'Medan', 'Bali'],
-        description: 'No location restrictions — consultation and development are done online. Get professional web development services from anywhere in Indonesia.',
+        description: 'No location restrictions, because consultation and development are done online. You can work with our team from anywhere in Indonesia.',
       },
       pricing: {
         title: 'Website Development Cost Estimates',
         subtitle: 'Web development costs vary by type, features, and complexity. Here is a general overview:',
         items: [
-          { type: 'Landing Page', range: 'From IDR 3M', description: 'Single-page promotion, responsive, SEO-ready.' },
-          { type: 'Company Profile', range: 'From IDR 5M', description: '3-7 pages, custom design, basic content management.' },
-          { type: 'Online Store', range: 'From IDR 10M', description: 'Product catalog, cart, payment, shipping integration.' },
-          { type: 'Custom Web App', range: 'From IDR 25M', description: 'Dashboard, management system, custom features as needed.' },
+          { type: 'Landing Page', range: 'From Rp 3,000,000', lowPrice: '3000000', description: 'Single-page promotion, responsive, SEO-ready.' },
+          { type: 'Company Profile', range: 'From Rp 5,000,000', lowPrice: '5000000', description: '3-7 pages, custom design, basic content management.' },
+          { type: 'Online Store', range: 'From Rp 10,000,000', lowPrice: '10000000', description: 'Product catalog, cart, payment, shipping integration.' },
+          { type: 'Custom Web App', range: 'From Rp 25,000,000', lowPrice: '25000000', description: 'Dashboard, management system, custom features as needed.' },
         ],
         note: 'Prices above are estimates. Contact us for a quote tailored to your specific needs.',
       },
@@ -1719,19 +1726,19 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
           { step: '01', title: 'Consultation & Brief', description: 'Discuss your needs, target audience, and website goals.' },
           { step: '02', title: 'Design & Wireframe', description: 'Create visual concepts and page structure before development.' },
           { step: '03', title: 'Development', description: 'Coding with modern tech, responsive, and SEO-optimized.' },
-          { step: '04', title: 'Testing & Launch', description: 'Thorough testing across all devices and browsers, then deploy.' },
+          { step: '04', title: 'Testing & Launch', description: 'Tested on common screen sizes and browsers, then deployed.' },
         ],
       },
       faq: {
-        title: 'FAQ — Web Development Services',
+        title: 'FAQ about Web Development Services',
         items: [
           { question: 'How long does it take to build a website?', answer: 'Depending on complexity, typically 2-6 weeks for company profile websites, and 4-12 weeks for custom web apps.' },
-          { question: 'How much does a company profile website cost?', answer: 'Company profile web development starts from IDR 5 million, depending on the number of pages, features, and design complexity. Contact us for a tailored quote.' },
-          { question: 'Does CoreAsia serve clients outside Jakarta?', answer: 'Yes, we serve clients across Indonesia — Jakarta, Surabaya, Bandung, Tangerang, Bekasi, Makassar, and more. Everything is done online.' },
-          { question: 'Can I request design revisions?', answer: 'Yes, design revisions are included in the package. We ensure the final result meets your needs.' },
+          { question: 'How much does a company profile website cost?', answer: 'Company profile web development starts from Rp 5 million, depending on the number of pages, features, and design complexity. Contact us for a tailored quote.' },
+          { question: 'Does CoreAsia serve clients outside Jakarta?', answer: 'Yes, we serve clients across Indonesia, including Jakarta, Surabaya, Bandung, Tangerang, Bekasi, and Makassar. Everything is done online.' },
+          { question: 'Can I request design revisions?', answer: 'Yes. Each package includes a set number of design revision rounds, and that number is agreed in writing before work starts.' },
           { question: 'Does it include hosting and domain?', answer: 'We help set up hosting and domain. Hosting and domain costs are separate and customizable.' },
-          { question: 'Is the website mobile-friendly?', answer: 'Yes, all websites we build are responsive and look optimal on desktop, tablet, and smartphone.' },
-          { question: 'Are there affordable web development packages for SMEs?', answer: 'We offer landing page packages starting from IDR 3 million, perfect for SMEs and small businesses. Still professional and SEO-ready.' },
+          { question: 'Is the website mobile-friendly?', answer: 'Yes, all websites we build are responsive and tested on desktop, tablet, and smartphone screen sizes before handover.' },
+          { question: 'Are there affordable web development packages for SMEs?', answer: 'We offer landing page packages starting from Rp 3 million, a common fit for SMEs and small businesses. Responsive and SEO-ready.' },
           { question: 'What about maintenance after launch?', answer: 'We provide monthly maintenance packages covering updates, backups, and technical support.' },
         ],
       },
@@ -1739,6 +1746,17 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
         title: 'Ready for a professional website?',
         subtitle: 'Discuss your web development needs with the CoreAsia team. Free, no commitment.',
         button: 'Contact Us Now',
+      },
+      relatedProduct: {
+        kicker: 'Related Product',
+        title: 'Build by CoreAsia',
+        description: 'Our website and custom web application delivery service. See the process, the stack, and how we work.',
+        ctaPrimary: 'Explore Build',
+        ctaSecondary: 'Custom Web App Service',
+      },
+      schema: {
+        serviceName: 'Professional Web Development Services',
+        offerCatalogName: 'Web Development Packages',
       },
     },
     webMonitoringDashboard: {
@@ -1771,7 +1789,7 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
         ],
       },
       faq: {
-        title: 'FAQ — Web Monitoring Dashboard',
+        title: 'FAQ Web Monitoring Dashboard',
         items: [
           { question: 'Do I need to install software?', answer: 'No. Pantau is a web-based SaaS, just log in from your browser to access your dashboard.' },
           { question: 'How many websites can I monitor?', answer: 'Depends on the plan. Starter supports 1 website, Professional up to 5, and Enterprise unlimited.' },
@@ -1786,8 +1804,8 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
       },
     },
     jasaPembuatanAplikasiWeb: {
-      title: 'Custom Web Application Development Indonesia - CRM, LMS, ERP',
-      description: 'Custom web application development for businesses and enterprises in Indonesia. CRM, LMS, ERP, dashboards, and internal systems — built with modern technology by CoreAsia.',
+      title: 'Custom Web App Development',
+      description: 'Custom web application development in Indonesia by CoreAsia. CRM, LMS, ERP, dashboards, and internal systems for businesses and enterprises.',
       kicker: 'Web App Development',
       hero: {
         title: 'Custom web apps that <span class="ca-gradient-text">truly fit</span> your business needs',
@@ -1808,15 +1826,15 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
       },
       techStack: {
         title: 'Technologies We Use',
-        items: ['Vue.js / Nuxt', 'Go (Golang)', 'PostgreSQL', 'Docker', 'Tailwind CSS', 'REST API', 'MinIO / S3', 'Redis'],
+        items: ['Vue.js and Nuxt', 'Go (Golang)', 'PostgreSQL', 'Docker', 'Tailwind CSS', 'REST API', 'MinIO or S3', 'Redis'],
       },
       faq: {
-        title: 'FAQ — Web Application Development',
+        title: 'FAQ about Web Application Development',
         items: [
           { question: 'How much does web app development cost?', answer: 'Cost depends on complexity. We provide estimates after consultation and requirements scoping.' },
-          { question: 'Can it be developed in phases?', answer: 'Yes, we support MVP (Minimum Viable Product) approach — launch core features first, then iterate based on feedback.' },
+          { question: 'Can it be developed in phases?', answer: 'Yes, we support the MVP (Minimum Viable Product) approach. Launch core features first, then iterate based on feedback.' },
           { question: 'What about the source code?', answer: 'Source code becomes fully yours after project completion and full payment.' },
-          { question: 'Is there a warranty?', answer: 'Yes, we provide a bug-fix warranty after launch. Warranty duration is adjusted based on project scope.' },
+          { question: 'Is there a warranty?', answer: 'Yes, we provide a bug-fix warranty after launch. The warranty period is set per project scope and written in the agreement.' },
         ],
       },
       cta: {
@@ -1880,7 +1898,7 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
         label: 'General',
         items: [
           { question: 'What is CoreAsia?', answer: 'CoreAsia Teknologi is a digital agency and software house based in Jakarta that builds digital products, provides web development services, and offers a website monitoring dashboard (Pantau).' },
-          { question: 'Does CoreAsia serve clients outside Jakarta?', answer: 'Yes, we serve clients across Indonesia — Surabaya, Bandung, Semarang, Yogyakarta, Medan, Makassar, Bali, and more. All processes are conducted online.' },
+          { question: 'Does CoreAsia serve clients outside Jakarta?', answer: 'Yes, we serve clients across Indonesia, from Surabaya, Bandung, Semarang, Yogyakarta, Medan, and Makassar to Bali. All processes are conducted online.' },
           { question: 'How do I get started?', answer: 'Contact us via WhatsApp or our contact page for a free consultation. We will discuss your needs and provide a suitable proposal.' },
         ],
       },
@@ -1896,7 +1914,7 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
         label: 'Web Monitoring (Pantau)',
         items: [
           { question: 'What is Pantau?', answer: 'Pantau is a website monitoring dashboard by CoreAsia that combines Google Analytics 4, Search Console, keyword ranking, SEO audit, and AI assistant in one place.' },
-          { question: 'Is Pantau free?', answer: 'Yes, the Starter plan is free forever for 1 website with 7-day data, 3 AI queries/day, and 15 keyword rankings.' },
+          { question: 'Is Pantau free?', answer: 'Yes, the Starter plan is free forever for 1 website with 7-day data, 3 AI queries per day, and 15 keyword rankings.' },
           { question: 'How much does Pantau cost?', answer: 'Professional Rp 250,000/mo (5 websites), Business Rp 600,000/mo (15 websites), Enterprise Rp 1,500,000/mo (30 websites). Self-Hosted option also available.' },
         ],
       },
@@ -1913,7 +1931,7 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
     title: 'Portfolio & Case Studies - CoreAsia Digital Projects',
     description: 'See CoreAsia digital project portfolio: web monitoring dashboard, professional websites, and custom web applications for businesses in Indonesia.',
     heading: 'Projects We Have Built',
-    subtitle: 'From concept to production — here are some projects showcasing CoreAsia capabilities.',
+    subtitle: 'From concept to production, here are some projects showcasing CoreAsia capabilities.',
     items: [
       {
         title: 'Pantau by CoreAsia',
@@ -1921,19 +1939,19 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
         description: 'A complete website monitoring dashboard combining Google Analytics 4, Search Console, keyword ranking, SEO audit, AI assistant, and automated PDF reports.',
         tech: ['Go', 'Nuxt 3', 'PostgreSQL', 'Redis', 'Docker', 'Xendit', 'GA4 API', 'GSC API'],
         link: 'https://pantau.coreasia.id',
-        highlights: ['4 pricing tiers (free — enterprise)', 'Xendit VA + QRIS integration', 'AI assistant (Dexter)', 'Automated PDF reports'],
+        highlights: ['4 pricing tiers (free to enterprise)', 'Xendit VA + QRIS integration', 'AI assistant (Dexter)', 'Automated PDF reports'],
       },
       {
         title: 'CoreAsia Landing & CMS',
         category: 'Company Website',
-        description: 'CoreAsia company profile and landing page with article CMS, multi-language (ID/EN), and SEO-optimized. Built with Nuxt 4 SSR + Go API Gateway.',
+        description: 'CoreAsia company profile and landing page with article CMS, Indonesian and English content, and SEO-optimized. Built with Nuxt 4 SSR + Go API Gateway.',
         tech: ['Nuxt 4', 'Go', 'PostgreSQL', 'Tailwind CSS', 'Docker'],
-        highlights: ['Multi-language ID/EN', 'Rich text article CMS', 'Complete schema.org SEO', 'Prerender + SSR hybrid'],
+        highlights: ['Indonesian and English', 'Rich text article CMS', 'Complete schema.org SEO', 'Prerender + SSR hybrid'],
       },
       {
         title: 'Certification LMS',
         category: 'Custom Web App',
-        description: 'Learning Management System for digital certification — online CBT, participant management, exam scheduling, and BNSP integration.',
+        description: 'Learning Management System for digital certification, covering online CBT, participant management, exam scheduling, and BNSP integration.',
         tech: ['Go', 'Vue 3', 'PostgreSQL', 'MinIO', 'Docker'],
         highlights: ['Online CBT with timer', 'Digital certificate management', 'Multi-tenant', 'BNSP export'],
       },
@@ -2436,6 +2454,7 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
         products: 'Products',
         partnerships: 'Engagement Models',
         contact: 'Contact',
+        services: 'Services',
         terms: 'Terms',
       },
       productLinks: [

@@ -176,10 +176,10 @@ const ID_CONTENT = {
     services: {
       kicker: 'Layanan Kami',
       title: 'Butuh website atau aplikasi web?',
-      subtitle: 'Selain produk digital, kami juga menyediakan jasa pembuatan web profesional untuk berbagai kebutuhan bisnis.',
+      subtitle: 'Selain produk digital, kami juga mengerjakan pembuatan website dan aplikasi web untuk bisnis.',
       items: [
-        { label: 'Jasa Pembuatan Website', description: 'Company profile, toko online, landing page — custom & SEO-ready.', to: '/layanan/jasa-pembuatan-website' },
-        { label: 'Jasa Pembuatan Aplikasi Web', description: 'Dashboard, portal, sistem manajemen — sesuai kebutuhan bisnis.', to: '/layanan/jasa-pembuatan-aplikasi-web' },
+        { label: 'Jasa Pembuatan Website', description: 'Company profile, toko online, dan landing page yang dibangun khusus dan siap SEO.', to: '/layanan/jasa-pembuatan-website' },
+        { label: 'Jasa Pembuatan Aplikasi Web', description: 'Dashboard, portal, dan sistem manajemen sesuai kebutuhan bisnis.', to: '/layanan/jasa-pembuatan-aplikasi-web' },
         { label: 'Web Monitoring Dashboard', description: 'Pantau performa website dari satu dashboard yang mudah dipahami.', to: '/layanan/web-monitoring-dashboard' },
       ],
     },
@@ -513,26 +513,26 @@ const ID_CONTENT = {
             name: 'Starter',
             price: 'Gratis',
             description: 'Mulai pantau performa website Anda.',
-            features: ['1 Website', 'Data 7 hari', '3 AI query/hari', '15 Keyword Ranking', 'Dashboard Analytics'],
+            features: ['1 Website', 'Data 7 hari', '3 kueri AI per hari', '15 Keyword Ranking', 'Dashboard Analytics'],
           },
           {
             name: 'Professional',
             price: 'Rp 250.000/bln',
             description: 'Analitik mendalam untuk profesional.',
             popular: true,
-            features: ['5 Website', 'Data 90 hari', 'GA4 Lengkap + GSC', '30 AI query/hari', '100 Keyword Ranking', '3 SEO Audit/bulan', 'Ekspor PDF & Excel', '3 Anggota Tim'],
+            features: ['5 Website', 'Data 90 hari', 'GA4 Lengkap + GSC', '30 kueri AI per hari', '100 Keyword Ranking', '3 SEO Audit per bulan', 'Ekspor PDF & Excel', '3 Anggota Tim'],
           },
           {
             name: 'Business',
             price: 'Rp 600.000/bln',
             description: 'Solusi lengkap untuk agensi dan bisnis.',
-            features: ['15 Website', 'Data 180 hari', '60 AI query/hari', '300 Keyword Ranking', '10 SEO Audit/bulan', 'Jadwal Laporan Kustom', '10 Anggota Tim'],
+            features: ['15 Website', 'Data 180 hari', '60 kueri AI per hari', '300 Keyword Ranking', '10 SEO Audit per bulan', 'Jadwal Laporan Kustom', '10 Anggota Tim'],
           },
           {
             name: 'Enterprise',
             price: 'Rp 1.500.000/bln',
             description: 'Kelola banyak klien dengan fitur lengkap.',
-            features: ['30 Website', 'Data 365 hari', '150 AI query/hari', '500 Keyword Ranking', '20 SEO Audit/bulan', 'API Access', '25 Anggota Tim', 'Prioritas Support'],
+            features: ['30 Website', 'Data 365 hari', '150 kueri AI per hari', '500 Keyword Ranking', '20 SEO Audit per bulan', 'API Access', '25 Anggota Tim', 'Prioritas Support'],
           },
           {
             name: 'Self-Hosted',
@@ -1505,9 +1505,9 @@ const ID_CONTENT = {
   },
   // Pricing page
   pricing: {
-    title: 'Harga & Paket CoreAsia - Jasa Website & Web App Mulai Rp 3 Juta',
+    title: 'Harga & Paket Langganan Produk',
     description:
-      'Bandingkan harga dan paket layanan CoreAsia: jasa pembuatan website mulai Rp 3 juta, web app custom, dan LMS enterprise. Konsultasi gratis.',
+      'Bandingkan paket langganan produk CoreAsia. Estimasi biaya jasa pembuatan website dan aplikasi web tersedia di halaman layanan. Konsultasi gratis.',
     kicker: 'Pricing',
     hero: {
       title: 'Pilih plan yang tepat <span class="ca-gradient-text">untuk kebutuhan Anda</span>',
@@ -1549,6 +1549,12 @@ const ID_CONTENT = {
     },
     allPlansInclude:
       'Semua plan termasuk SSL, backup rutin, dan support teknis untuk kebutuhan operasional dasar.',
+    services: {
+      title: 'Mencari harga jasa pembuatan website?',
+      description: 'Paket di atas adalah langganan produk CoreAsia. Estimasi biaya jasa pembuatan website dan aplikasi web ada di halaman layanan berikut.',
+      websiteCta: 'Estimasi Biaya Website',
+      webAppCta: 'Jasa Aplikasi Web Custom',
+    },
     cta: {
       title: 'Siap digitalisasi sertifikasi Anda?',
       subtitle:
@@ -1673,43 +1679,44 @@ const ID_CONTENT = {
   // Keyword-targeted SEO pages
   services: {
     jasaPembuatanWebsite: {
-      title: 'Jasa Pembuatan Website Profesional Jakarta - Mulai Rp 3 Juta',
-      description: 'Jasa pembuatan website profesional untuk bisnis, UMKM, dan korporasi di Jakarta dan seluruh Indonesia. Landing page, company profile, toko online, dan web app custom dengan harga terjangkau mulai Rp 3 juta.',
+      title: 'Jasa Pembuatan Website Jakarta',
+      description: 'Jasa pembuatan website bisnis di Jakarta dan seluruh Indonesia. Harga mulai Rp 3 juta landing page, Rp 5 juta company profile, Rp 10 juta toko online.',
       kicker: 'Jasa Pembuatan Web',
       hero: {
-        title: 'Jasa pembuatan web profesional yang <span class="ca-gradient-text">membangun kredibilitas</span> bisnis Anda',
-        subtitle: 'CoreAsia adalah mitra pembuatan website terpercaya di Indonesia. Website cepat, SEO-ready, dan dirancang untuk menghasilkan konversi — mulai dari company profile hingga web app custom.',
+        title: 'Jasa pembuatan website untuk <span class="ca-gradient-text">bisnis di Indonesia</span>',
+        subtitle: 'CoreAsia membangun website untuk bisnis di berbagai kota di Indonesia. Website cepat, SEO-ready, dan disusun agar pengunjung mudah menghubungi Anda, mulai dari company profile hingga web app custom.',
         ctaPrimary: 'Konsultasi Gratis',
         ctaSecondary: 'Lihat Portofolio',
+        ctaTertiary: 'Lihat Estimasi Biaya',
       },
       whyUs: {
         title: 'Mengapa Pilih CoreAsia untuk Pembuatan Web Anda?',
-        subtitle: 'Bukan sekadar jasa pembuatan website murah — kami adalah mitra teknologi untuk pertumbuhan bisnis Anda di seluruh Indonesia.',
+        subtitle: 'Bukan sekadar jasa pembuatan website murah. Kami mitra teknologi untuk pertumbuhan bisnis Anda di seluruh Indonesia.',
         items: [
           {
             icon: 'lucide:palette',
             title: 'Design Custom & Responsif',
-            description: 'Setiap website dirancang khusus sesuai brand dan kebutuhan bisnis Anda. Tampil sempurna di semua perangkat.',
+            description: 'Setiap website dirancang khusus sesuai brand dan kebutuhan bisnis Anda, dengan tata letak yang menyesuaikan layar desktop, tablet, dan ponsel.',
           },
           {
             icon: 'lucide:zap',
-            title: 'Performa & Kecepatan Tinggi',
-            description: 'Dibangun dengan teknologi modern untuk kecepatan loading optimal dan pengalaman pengguna yang smooth.',
+            title: 'Kecepatan Halaman',
+            description: 'Dibangun dengan rendering modern, gambar terkompresi, dan aset yang diminimalkan agar halaman terbuka cepat.',
           },
           {
             icon: 'lucide:search',
             title: 'SEO-Ready dari Awal',
-            description: 'Struktur kode, meta tags, dan performa dioptimasi agar website Anda mudah ditemukan di Google.',
+            description: 'Struktur heading, meta tag, sitemap, dan data terstruktur disiapkan sejak awal agar mesin pencari mudah membaca isi halaman.',
           },
           {
             icon: 'lucide:shield-check',
             title: 'Keamanan & Maintenance',
-            description: 'SSL, backup otomatis, dan monitoring keamanan memastikan website Anda selalu aman dan stabil.',
+            description: 'Kami menyiapkan SSL, backup terjadwal, dan pemantauan agar gangguan cepat terdeteksi dan website bisa segera dipulihkan.',
           },
           {
             icon: 'lucide:settings',
             title: 'Teknologi Modern',
-            description: 'Menggunakan stack terkini seperti Nuxt.js, Vue, Go, dan PostgreSQL untuk hasil yang scalable.',
+            description: 'Kami memakai Nuxt.js, Vue, Go, dan PostgreSQL, teknologi yang sama dengan yang kami pakai untuk produk sendiri.',
           },
           {
             icon: 'lucide:headphones',
@@ -1720,7 +1727,7 @@ const ID_CONTENT = {
       },
       serviceTypes: {
         title: 'Jenis Website yang Kami Buat',
-        subtitle: 'Solusi pembuatan web untuk berbagai kebutuhan bisnis Anda.',
+        subtitle: 'Jenis pengerjaan website dan aplikasi web yang kami tangani.',
         items: [
           {
             icon: 'lucide:building-2',
@@ -1731,19 +1738,19 @@ const ID_CONTENT = {
           {
             icon: 'lucide:shopping-cart',
             title: 'Toko Online & E-Commerce',
-            description: 'Website toko online dengan sistem pembayaran, manajemen produk, dan integrasi pengiriman. Siap jualan dari hari pertama.',
+            description: 'Website toko online dengan sistem pembayaran, manajemen produk, dan integrasi pengiriman. Diserahkan dalam kondisi siap menerima pesanan.',
             keywords: 'jasa pembuatan web toko online',
           },
           {
             icon: 'lucide:rocket',
             title: 'Landing Page & Promosi',
-            description: 'Halaman khusus untuk kampanye marketing, peluncuran produk, atau promosi bisnis. Dioptimasi untuk konversi tinggi.',
+            description: 'Halaman khusus untuk kampanye marketing, peluncuran produk, atau promosi bisnis. Disusun ringkas dengan satu ajakan bertindak yang jelas.',
             keywords: 'jasa pembuatan landing page',
           },
           {
             icon: 'lucide:layout-dashboard',
             title: 'Web Application Custom',
-            description: 'Aplikasi web sesuai kebutuhan spesifik bisnis Anda — dashboard, sistem manajemen, portal, dan lainnya.',
+            description: 'Aplikasi web sesuai kebutuhan spesifik bisnis Anda, mulai dashboard, sistem manajemen, hingga portal.',
             keywords: 'jasa pembuatan web app custom',
           },
         ],
@@ -1752,16 +1759,16 @@ const ID_CONTENT = {
         title: 'Melayani Seluruh Indonesia',
         subtitle: 'Tim kami bekerja secara remote dan melayani klien dari berbagai kota di Indonesia.',
         cities: ['Jakarta', 'Surabaya', 'Bandung', 'Tangerang', 'Bekasi', 'Makassar', 'Semarang', 'Yogyakarta', 'Medan', 'Bali'],
-        description: 'Tidak terbatas lokasi — konsultasi dan pengerjaan dilakukan secara online. Anda bisa mendapatkan jasa pembuatan web profesional dari mana saja di Indonesia.',
+        description: 'Tidak terbatas lokasi. Konsultasi dan pengerjaan dilakukan secara online. Anda bisa mendapatkan jasa pembuatan web profesional dari mana saja di Indonesia.',
       },
       pricing: {
         title: 'Estimasi Biaya Pembuatan Website',
         subtitle: 'Biaya pembuatan web bervariasi tergantung jenis, fitur, dan kompleksitas. Berikut gambaran umum:',
         items: [
-          { type: 'Landing Page', range: 'Mulai Rp 3 juta', description: 'Satu halaman promosi, responsif, SEO-ready.' },
-          { type: 'Company Profile', range: 'Mulai Rp 5 juta', description: '3-7 halaman, design custom, konten manajemen dasar.' },
-          { type: 'Toko Online', range: 'Mulai Rp 10 juta', description: 'Katalog produk, keranjang, pembayaran, integrasi pengiriman.' },
-          { type: 'Web App Custom', range: 'Mulai Rp 25 juta', description: 'Dashboard, sistem manajemen, fitur khusus sesuai kebutuhan.' },
+          { type: 'Landing Page', range: 'Mulai Rp 3 juta', lowPrice: '3000000', description: 'Satu halaman promosi, responsif, SEO-ready.' },
+          { type: 'Company Profile', range: 'Mulai Rp 5 juta', lowPrice: '5000000', description: '3-7 halaman, design custom, konten manajemen dasar.' },
+          { type: 'Toko Online', range: 'Mulai Rp 10 juta', lowPrice: '10000000', description: 'Katalog produk, keranjang, pembayaran, integrasi pengiriman.' },
+          { type: 'Web App Custom', range: 'Mulai Rp 25 juta', lowPrice: '25000000', description: 'Dashboard, sistem manajemen, fitur khusus sesuai kebutuhan.' },
         ],
         note: 'Harga di atas adalah estimasi. Hubungi kami untuk penawaran sesuai kebutuhan spesifik Anda.',
       },
@@ -1772,18 +1779,18 @@ const ID_CONTENT = {
           { step: '01', title: 'Konsultasi & Brief', description: 'Diskusi kebutuhan, target audiens, dan tujuan website Anda.' },
           { step: '02', title: 'Design & Wireframe', description: 'Pembuatan konsep visual dan struktur halaman sebelum development.' },
           { step: '03', title: 'Development', description: 'Coding dengan teknologi modern, responsif, dan SEO-optimized.' },
-          { step: '04', title: 'Testing & Launch', description: 'Pengujian menyeluruh di semua device dan browser, lalu deploy.' },
+          { step: '04', title: 'Testing & Launch', description: 'Pengujian di ukuran layar dan peramban yang umum dipakai, lalu deploy.' },
         ],
       },
       faq: {
-        title: 'FAQ — Jasa Pembuatan Website',
+        title: 'FAQ Jasa Pembuatan Website',
         items: [
           { question: 'Berapa lama proses pembuatan website?', answer: 'Tergantung kompleksitas, umumnya 2-6 minggu untuk website company profile, dan 4-12 minggu untuk web app custom.' },
           { question: 'Berapa biaya pembuatan web company profile?', answer: 'Biaya pembuatan web company profile mulai dari Rp 5 juta, tergantung jumlah halaman, fitur, dan kompleksitas design. Hubungi kami untuk penawaran yang sesuai.' },
-          { question: 'Apakah jasa pembuatan web CoreAsia melayani di luar Jakarta?', answer: 'Ya, kami melayani klien dari seluruh Indonesia — Jakarta, Surabaya, Bandung, Tangerang, Bekasi, Makassar, dan kota lainnya. Semua proses dilakukan secara online.' },
-          { question: 'Apakah bisa request revisi design?', answer: 'Ya, revisi design termasuk dalam paket. Kami memastikan hasil akhir sesuai dengan kebutuhan Anda.' },
+          { question: 'Apakah jasa pembuatan web CoreAsia melayani di luar Jakarta?', answer: 'Ya, kami melayani klien dari seluruh Indonesia, mulai Jakarta, Surabaya, Bandung, Tangerang, Bekasi, Makassar, dan kota lainnya. Semua proses dilakukan secara online.' },
+          { question: 'Apakah bisa request revisi design?', answer: 'Bisa. Jumlah putaran revisi desain disepakati di awal dan dicantumkan pada penawaran, sehingga lingkupnya jelas untuk kedua pihak.' },
           { question: 'Apakah website sudah termasuk hosting dan domain?', answer: 'Kami membantu setup hosting dan domain. Biaya hosting dan domain terpisah dan bisa disesuaikan.' },
-          { question: 'Apakah website mobile-friendly?', answer: 'Ya, semua website yang kami buat responsif dan tampil optimal di desktop, tablet, dan smartphone.' },
+          { question: 'Apakah website mobile-friendly?', answer: 'Ya, semua website yang kami buat responsif. Tata letaknya menyesuaikan ukuran layar desktop, tablet, dan smartphone.' },
           { question: 'Apakah ada jasa pembuatan web murah untuk UMKM?', answer: 'Kami menyediakan paket landing page mulai dari Rp 3 juta yang cocok untuk UMKM dan bisnis kecil. Tetap profesional dan SEO-ready.' },
           { question: 'Bagaimana dengan maintenance setelah launch?', answer: 'Kami menyediakan paket maintenance bulanan yang mencakup update, backup, dan support teknis.' },
         ],
@@ -1792,6 +1799,17 @@ const ID_CONTENT = {
         title: 'Siap punya website profesional?',
         subtitle: 'Konsultasikan kebutuhan pembuatan web Anda dengan tim CoreAsia. Gratis, tanpa komitmen.',
         button: 'Hubungi Kami Sekarang',
+      },
+      relatedProduct: {
+        kicker: 'Produk Terkait',
+        title: 'Build by CoreAsia',
+        description: 'Layanan pembuatan website dan aplikasi web custom kami. Lihat detail proses, teknologi, dan cara kerja kami.',
+        ctaPrimary: 'Pelajari Build',
+        ctaSecondary: 'Jasa Aplikasi Web Custom',
+      },
+      schema: {
+        serviceName: 'Jasa Pembuatan Website Profesional',
+        offerCatalogName: 'Paket Jasa Pembuatan Website',
       },
     },
     webMonitoringDashboard: {
@@ -1848,7 +1866,7 @@ const ID_CONTENT = {
         ],
       },
       faq: {
-        title: 'FAQ — Web Monitoring Dashboard',
+        title: 'FAQ Web Monitoring Dashboard',
         items: [
           { question: 'Apakah perlu install software?', answer: 'Tidak. Pantau adalah web-based SaaS, cukup login dari browser untuk mengakses dashboard Anda.' },
           { question: 'Berapa website yang bisa dimonitor?', answer: 'Tergantung paket. Paket Starter mendukung 1 website, paket Professional hingga 5, dan Enterprise unlimited.' },
@@ -1863,8 +1881,8 @@ const ID_CONTENT = {
       },
     },
     jasaPembuatanAplikasiWeb: {
-      title: 'Jasa Pembuatan Aplikasi Web Custom Indonesia - CRM, LMS, ERP',
-      description: 'Jasa pembuatan aplikasi web custom untuk bisnis dan enterprise di Indonesia. CRM, LMS, ERP, dashboard, dan sistem internal — dibangun dengan teknologi modern oleh CoreAsia.',
+      title: 'Jasa Pembuatan Aplikasi Web Custom',
+      description: 'Jasa pembuatan aplikasi web custom di Indonesia: CRM, LMS, ERP, dashboard, dan sistem internal sesuai proses kerja bisnis Anda.',
       kicker: 'Web App Development',
       hero: {
         title: 'Aplikasi web custom yang <span class="ca-gradient-text">benar-benar sesuai</span> kebutuhan bisnis',
@@ -1885,15 +1903,15 @@ const ID_CONTENT = {
       },
       techStack: {
         title: 'Teknologi yang Kami Gunakan',
-        items: ['Vue.js / Nuxt', 'Go (Golang)', 'PostgreSQL', 'Docker', 'Tailwind CSS', 'REST API', 'MinIO / S3', 'Redis'],
+        items: ['Vue.js dan Nuxt', 'Go (Golang)', 'PostgreSQL', 'Docker', 'Tailwind CSS', 'REST API', 'MinIO atau S3', 'Redis'],
       },
       faq: {
-        title: 'FAQ — Jasa Pembuatan Aplikasi Web',
+        title: 'FAQ Jasa Pembuatan Aplikasi Web',
         items: [
           { question: 'Berapa biaya pembuatan aplikasi web?', answer: 'Biaya tergantung kompleksitas. Kami menyediakan estimasi setelah sesi konsultasi dan scoping kebutuhan.' },
-          { question: 'Apakah bisa dikembangkan bertahap?', answer: 'Ya, kami mendukung pendekatan MVP (Minimum Viable Product) — launch fitur inti dulu, lalu iterasi berdasarkan feedback.' },
+          { question: 'Apakah bisa dikembangkan bertahap?', answer: 'Ya, kami mendukung pengerjaan bertahap. Fitur inti dirilis lebih dulu, lalu dikembangkan berdasarkan masukan pengguna.' },
           { question: 'Bagaimana dengan source code?', answer: 'Source code menjadi milik Anda sepenuhnya setelah proyek selesai dan pembayaran lunas.' },
-          { question: 'Apakah ada garansi?', answer: 'Ya, kami memberikan garansi bug-fix setelah launch. Durasi garansi disesuaikan dengan lingkup proyek.' },
+          { question: 'Apakah ada garansi?', answer: 'Ya, kami memberikan garansi perbaikan bug setelah peluncuran. Durasinya ditetapkan bersama lingkup proyek dan ditulis pada kontrak sebelum pengerjaan dimulai.' },
         ],
       },
       cta: {
@@ -1960,7 +1978,7 @@ const ID_CONTENT = {
         label: 'Umum',
         items: [
           { question: 'Apa itu CoreAsia?', answer: 'CoreAsia Teknologi adalah digital agency dan software house di Jakarta yang membangun produk digital, menyediakan jasa pembuatan website & aplikasi web, serta dashboard monitoring website (Pantau).' },
-          { question: 'Apakah CoreAsia melayani di luar Jakarta?', answer: 'Ya, kami melayani klien dari seluruh Indonesia — Surabaya, Bandung, Tangerang, Bekasi, Semarang, Yogyakarta, Medan, Makassar, dan Bali. Semua proses dilakukan secara online.' },
+          { question: 'Apakah CoreAsia melayani di luar Jakarta?', answer: 'Ya, kami melayani klien dari seluruh Indonesia, mulai Surabaya, Bandung, Tangerang, Bekasi, Semarang, Yogyakarta, Medan, Makassar, hingga Bali. Semua proses dilakukan secara online.' },
           { question: 'Bagaimana cara memulai kerja sama?', answer: 'Hubungi kami via WhatsApp atau halaman kontak untuk konsultasi gratis. Kami akan membahas kebutuhan Anda dan memberikan proposal yang sesuai.' },
           { question: 'Apakah data saya aman?', answer: 'Ya. Setiap tenant dipisahkan secara logis, dilindungi kontrol akses, dan backup dilakukan secara berkala.' },
         ],
@@ -1981,7 +1999,7 @@ const ID_CONTENT = {
         label: 'Aplikasi Web Custom',
         items: [
           { question: 'Aplikasi web apa saja yang bisa dibuat?', answer: 'CRM, LMS, ERP, dashboard internal, portal pelanggan, sistem inventory, dan berbagai sistem custom lainnya.' },
-          { question: 'Teknologi apa yang digunakan?', answer: 'Kami menggunakan Go, Vue/Nuxt, React/Next.js, PostgreSQL, Redis, Docker — dipilih sesuai kebutuhan project.' },
+          { question: 'Teknologi apa yang digunakan?', answer: 'Kami menggunakan Go, Vue atau Nuxt, React atau Next.js, PostgreSQL, Redis, Docker, dipilih sesuai kebutuhan project.' },
           { question: 'Apakah bisa integrasi dengan sistem yang sudah ada?', answer: 'Ya, kami berpengalaman mengintegrasikan dengan berbagai API dan sistem existing.' },
         ],
       },
@@ -1989,7 +2007,7 @@ const ID_CONTENT = {
         label: 'Web Monitoring (Pantau)',
         items: [
           { question: 'Apa itu Pantau?', answer: 'Pantau adalah dashboard monitoring website buatan CoreAsia yang menggabungkan Google Analytics 4, Search Console, keyword ranking, SEO audit, dan AI assistant dalam satu tempat.' },
-          { question: 'Apakah Pantau gratis?', answer: 'Ya, paket Starter gratis untuk 1 website dengan data 7 hari, 3 AI query/hari, dan 15 keyword ranking.' },
+          { question: 'Apakah Pantau gratis?', answer: 'Ya, paket Starter gratis untuk 1 website dengan data 7 hari, 3 kueri AI per hari, dan 15 keyword ranking.' },
           { question: 'Berapa harga paket Pantau?', answer: 'Professional Rp 250.000/bln (5 website), Business Rp 600.000/bln (15 website), Enterprise Rp 1.500.000/bln (30 website). Ada juga opsi Self-Hosted.' },
           { question: 'Apakah Pantau bisa diakses di mobile?', answer: 'Ya, dashboard Pantau responsif dan bisa diakses dari browser di perangkat apa saja.' },
         ],
@@ -1999,7 +2017,7 @@ const ID_CONTENT = {
         items: [
           { question: 'Apakah ada trial gratis?', answer: 'Untuk Pantau, paket Starter sudah gratis selamanya. Untuk jasa website, kami menyediakan konsultasi gratis sebelum Anda memutuskan.' },
           { question: 'Apa metode pembayaran yang diterima?', answer: 'Transfer bank, Virtual Account (BCA, BNI, Mandiri, BRI, Permata), QRIS, dan opsi lainnya melalui payment gateway.' },
-          { question: 'Bisakah bayar secara bertahap?', answer: 'Ya, untuk project jasa pembuatan website/web app, pembayaran bisa dicicil sesuai milestone yang disepakati.' },
+          { question: 'Bisakah bayar secara bertahap?', answer: 'Ya, untuk project jasa pembuatan website atau web app, pembayaran bisa dicicil sesuai milestone yang disepakati.' },
         ],
       },
     },
@@ -2010,7 +2028,7 @@ const ID_CONTENT = {
     description: 'Lihat portfolio proyek digital CoreAsia: web monitoring dashboard, website profesional, dan aplikasi web custom untuk bisnis di Indonesia.',
     kicker: 'Portfolio',
     heading: 'Proyek yang Sudah Kami Bangun',
-    subtitle: 'Dari konsep hingga production — berikut beberapa proyek yang menunjukkan kemampuan tim CoreAsia.',
+    subtitle: 'Dari konsep hingga production, berikut beberapa proyek yang menunjukkan kemampuan tim CoreAsia.',
     items: [
       {
         title: 'Pantau by CoreAsia',
@@ -2018,19 +2036,19 @@ const ID_CONTENT = {
         description: 'Dashboard monitoring website lengkap yang menggabungkan Google Analytics 4, Search Console, keyword ranking, SEO audit, AI assistant, dan laporan PDF otomatis. Digunakan untuk memantau performa SEO dan analytics dari satu tempat.',
         tech: ['Go', 'Nuxt 3', 'PostgreSQL', 'Redis', 'Docker', 'Xendit', 'GA4 API', 'GSC API'],
         link: 'https://pantau.coreasia.id',
-        highlights: ['4 paket harga (gratis — enterprise)', 'Integrasi Xendit VA + QRIS', 'AI assistant (Dexter)', 'Laporan PDF otomatis'],
+        highlights: ['4 paket harga (gratis sampai enterprise)', 'Integrasi Xendit VA + QRIS', 'AI assistant (Dexter)', 'Laporan PDF otomatis'],
       },
       {
         title: 'CoreAsia Landing & CMS',
         category: 'Company Website',
-        description: 'Website company profile dan landing page CoreAsia dengan CMS artikel, multi-bahasa (ID/EN), dan SEO-optimized. Built dengan Nuxt 4 SSR + Go API Gateway.',
+        description: 'Website company profile dan landing page CoreAsia dengan CMS artikel, multi-bahasa (Indonesia dan Inggris), dan SEO-optimized. Built dengan Nuxt 4 SSR + Go API Gateway.',
         tech: ['Nuxt 4', 'Go', 'PostgreSQL', 'Tailwind CSS', 'Docker'],
-        highlights: ['Multi-bahasa ID/EN', 'CMS artikel dengan editor rich text', 'SEO schema.org lengkap', 'Prerender + SSR hybrid'],
+        highlights: ['Multi-bahasa Indonesia dan Inggris', 'CMS artikel dengan editor rich text', 'SEO schema.org lengkap', 'Prerender + SSR hybrid'],
       },
       {
         title: 'LMS Sertifikasi',
         category: 'Custom Web App',
-        description: 'Learning Management System untuk sertifikasi digital — CBT online, manajemen peserta, penjadwalan ujian, dan integrasi BNSP.',
+        description: 'Learning Management System untuk sertifikasi digital, mencakup CBT online, manajemen peserta, penjadwalan ujian, dan integrasi BNSP.',
         tech: ['Go', 'Vue 3', 'PostgreSQL', 'MinIO', 'Docker'],
         highlights: ['CBT online dengan timer', 'Manajemen sertifikat digital', 'Multi-tenant', 'BNSP export'],
       },
@@ -2538,7 +2556,7 @@ const ID_CONTENT = {
       ariaLabel: 'Chat WhatsApp dengan tim CoreAsia',
       tooltip: 'Chat WhatsApp',
       message:
-        'Halo CoreAsia, saya datang dari situs coreasia.id. Saya ingin berkonsultasi soal produk dan layanan yang cocok untuk bisnis saya.',
+        'Halo CoreAsia, saya ingin berkonsultasi soal produk dan layanan yang cocok untuk bisnis saya.',
     },
     footer: {
       copyright: 'All rights reserved.',
@@ -2549,6 +2567,7 @@ const ID_CONTENT = {
         products: 'Produk',
         partnerships: 'Kerja Sama',
         contact: 'Kontak',
+        services: 'Layanan',
         privacy: 'Privacy Policy',
         terms: 'TOS',
       },

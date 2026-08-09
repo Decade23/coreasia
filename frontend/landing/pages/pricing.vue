@@ -255,6 +255,35 @@ onMounted(async () => {
       </div>
     </section>
 
+    <!-- Jembatan ke harga jasa: paket di atas berasal dari API dan isinya langganan
+         produk, bukan biaya pembuatan website. Pengunjung yang mencari harga jasa
+         diarahkan ke halaman layanan yang memang merender angkanya. -->
+    <section class="ca-section pt-0">
+      <div class="ca-container">
+        <div class="ca-card p-6 sm:p-8">
+          <div class="grid gap-6 md:grid-cols-2 md:items-center">
+            <div>
+              <h2 class="text-xl font-display font-bold text-[var(--ca-text)]">
+                {{ t('pricing.services.title') }}
+              </h2>
+              <p class="mt-2 text-sm leading-relaxed text-[var(--ca-muted)]">
+                {{ t('pricing.services.description') }}
+              </p>
+            </div>
+            <div class="flex flex-col gap-3 sm:flex-row md:justify-end">
+              <NuxtLink to="/layanan/jasa-pembuatan-website#paket-harga" class="ca-btn-primary">
+                {{ t('pricing.services.websiteCta') }}
+                <Icon name="lucide:arrow-right" class="h-4 w-4" />
+              </NuxtLink>
+              <NuxtLink to="/layanan/jasa-pembuatan-aplikasi-web" class="ca-btn-secondary">
+                {{ t('pricing.services.webAppCta') }}
+              </NuxtLink>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <section id="faq" class="ca-section pt-0">
       <div class="ca-container">
         <div ref="faqSection" class="ca-card p-6 sm:p-8">

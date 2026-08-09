@@ -1,5 +1,10 @@
 <script setup lang="ts">
-import { LINKS } from '~/utils/constants'
+import { useWhatsAppLink } from '~/composables/useWhatsAppLink'
+
+// Tautan WhatsApp membawa nama halaman asal, karena kliknya tidak pernah
+// tercatat sebagai konversi Google Ads. Lihat composables/useWhatsAppLink.ts.
+const { buildContextualUrl } = useWhatsAppLink()
+const waUrl = computed(() => buildContextualUrl())
 
 const { t } = useCoreI18n()
 const { useReveal, revealRef } = useScrollReveal()
@@ -100,7 +105,7 @@ const faqItems = computed(() => (t('services.jasaPembuatanAplikasiWeb.faq.items'
     </section>
 
     <!-- Capabilities -->
-    <section class="ca-section">
+    <section id="kemampuan" class="ca-section">
       <div class="ca-container">
         <div ref="capabilitiesHeader" class="mb-8 text-center">
           <h2 class="ca-title">{{ t('services.jasaPembuatanAplikasiWeb.capabilities.title') }}</h2>
@@ -118,7 +123,7 @@ const faqItems = computed(() => (t('services.jasaPembuatanAplikasiWeb.faq.items'
     </section>
 
     <!-- Tech Stack -->
-    <section class="ca-section pt-0">
+    <section id="teknologi" class="ca-section pt-0">
       <div class="ca-container">
         <div ref="techStackSection" class="ca-card p-5 sm:p-6">
           <h2 class="text-xl font-display font-bold text-[var(--ca-text)]">
@@ -162,7 +167,7 @@ const faqItems = computed(() => (t('services.jasaPembuatanAplikasiWeb.faq.items'
     </section>
 
     <!-- FAQ -->
-    <section class="ca-section pt-0">
+    <section id="faq" class="ca-section pt-0">
       <div class="ca-container">
         <div ref="faqSection" class="ca-card p-6 sm:p-8">
           <h2 class="ca-title mb-6">{{ t('services.jasaPembuatanAplikasiWeb.faq.title') }}</h2>
@@ -191,7 +196,7 @@ const faqItems = computed(() => (t('services.jasaPembuatanAplikasiWeb.faq.items'
               {{ t('services.jasaPembuatanAplikasiWeb.cta.button') }}
               <Icon name="lucide:arrow-right" class="h-4 w-4" />
             </NuxtLink>
-            <a :href="LINKS.whatsapp" target="_blank" rel="noopener noreferrer" class="ca-btn-secondary">
+            <a :href="waUrl" target="_blank" rel="noopener noreferrer" class="ca-btn-secondary">
               <Icon name="lucide:message-circle" class="h-4 w-4" />
               WhatsApp
             </a>

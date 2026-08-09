@@ -1,8 +1,14 @@
 <script setup lang="ts">
 import { LINKS, CONTACT, COMPANY } from '~/utils/constants'
 import { useCoreI18n } from '~/composables/useCoreI18n'
+import { useWhatsAppLink } from '~/composables/useWhatsAppLink'
 
 const { t } = useCoreI18n()
+
+// Tautan WhatsApp membawa nama halaman asal, karena kliknya tidak pernah
+// tercatat sebagai konversi Google Ads. Lihat composables/useWhatsAppLink.ts.
+const { buildContextualUrl } = useWhatsAppLink()
+const waUrl = computed(() => buildContextualUrl())
 
 const productLinks = computed(() => (t('components.footer.productLinks') as Array<{ label: string; to: string }>) || [])
 const partnershipLinks = computed(
@@ -82,7 +88,9 @@ const serviceLinks = computed(() => (t('components.footer.serviceLinks') as Arra
                 </div>
 
                 <div v-if="serviceLinks.length">
-                    <h3 class="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--ca-muted)]">Layanan</h3>
+                    <h3 class="text-sm font-semibold uppercase tracking-[0.14em] text-[var(--ca-muted)]">
+                        {{ t('components.footer.links.services') }}
+                    </h3>
                     <ul class="mt-4 space-y-2 text-sm text-[var(--ca-muted)]">
                         <li v-for="item in serviceLinks" :key="item.to">
                             <NuxtLink :to="item.to" class="transition hover:text-brand-primary">
@@ -108,7 +116,7 @@ const serviceLinks = computed(() => (t('components.footer.serviceLinks') as Arra
                         </li>
                         <li>
                             <a
-                                :href="LINKS.whatsapp"
+                                :href="waUrl"
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 class="inline-flex items-center gap-2 transition hover:text-brand-secondary"
@@ -158,34 +166,12 @@ const serviceLinks = computed(() => (t('components.footer.serviceLinks') as Arra
                 </NuxtLink>
             </div>
 
-            <!-- Geographic Keywords for SEO -->
-            <div class="mt-4 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-[var(--ca-muted)]/60">
-                <NuxtLink to="/layanan/jasa-pembuatan-website" class="hover:text-brand-primary transition">
-                    Jasa Pembuatan Website Jakarta
-                </NuxtLink>
-                <span class="select-none">&middot;</span>
-                <NuxtLink to="/layanan/jasa-pembuatan-website" class="hover:text-brand-primary transition">
-                    Web Development Surabaya
-                </NuxtLink>
-                <span class="select-none">&middot;</span>
-                <NuxtLink to="/layanan/jasa-pembuatan-website" class="hover:text-brand-primary transition">
-                    Jasa Web App Bandung
-                </NuxtLink>
-                <span class="select-none">&middot;</span>
-                <NuxtLink to="/layanan/jasa-pembuatan-aplikasi-web" class="hover:text-brand-primary transition">
-                    Jasa Aplikasi Web Custom
-                </NuxtLink>
-                <span class="select-none">&middot;</span>
-                <NuxtLink to="/layanan/web-monitoring-dashboard" class="hover:text-brand-primary transition">
-                    Dashboard Monitoring Website
-                </NuxtLink>
-                <span class="select-none">&middot;</span>
-                <NuxtLink to="/products/pantau" class="hover:text-brand-primary transition">
-                    SEO Monitoring Indonesia
-                </NuxtLink>
-                <span class="select-none">&middot;</span>
-                <NuxtLink to="/artikel" class="hover:text-brand-primary transition">Artikel Digital Marketing</NuxtLink>
-            </div>
+            <!-- Baris kata kunci berembel kota dihapus: seluruh labelnya menuju satu
+                 halaman layanan yang sama dan tidak ada halaman per kota, sehingga
+                 label seperti "Web Development Surabaya" menjanjikan halaman yang
+                 tidak pernah ada. Tautan layanannya sendiri sudah tersedia di kolom
+                 Layanan di atas, dan cakupan kota tetap disebut di bagian Melayani
+                 Seluruh Indonesia, FAQ, serta areaServed pada JSON-LD halaman layanan. -->
 
             <div
                 class="mt-10 border-t border-[color:var(--ca-border)] pt-5 text-xs text-[var(--ca-muted)] sm:flex sm:items-center sm:justify-between"
