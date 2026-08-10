@@ -2025,11 +2025,35 @@ const ID_CONTENT = {
   // Portfolio page
   portfolio: {
     title: 'Portfolio & Studi Kasus - Proyek Digital CoreAsia',
-    description: 'Lihat portfolio proyek digital CoreAsia: web monitoring dashboard, website profesional, dan aplikasi web custom untuk bisnis di Indonesia.',
+    description: 'Portfolio proyek CoreAsia: CRM multi-workspace, dashboard monitoring website, LMS sertifikasi, aplikasi desktop macOS, dan website profesional.',
     kicker: 'Portfolio',
     heading: 'Proyek yang Sudah Kami Bangun',
-    subtitle: 'Dari konsep hingga production, berikut beberapa proyek yang menunjukkan kemampuan tim CoreAsia.',
+    subtitle: 'Dari konsep hingga production. Enam proyek berikut mencakup SaaS, aplikasi web custom, aplikasi desktop macOS, dan website perusahaan.',
     items: [
+      {
+        title: 'LeadKu by CoreAsia',
+        category: 'SaaS Product',
+        description: 'CRM multi-workspace untuk tim sales, dibangun sebagai 11 microservice Go dengan isolasi data per tenant di level skema PostgreSQL. Mencakup pipeline deal, penawaran dan faktur, portal dokumen publik tanpa akun, cakupan data per peran, serta AI Sales Copilot bernama Leo.',
+        tech: ['Go', 'Nuxt 3', 'PostgreSQL', 'Redis', 'NATS', 'Gotenberg', 'Xendit', 'Docker'],
+        link: 'https://leadku.coreasia.id',
+        highlights: ['Isolasi data satu skema per tenant', 'AI Sales Copilot dengan jawaban mengalir', 'Penawaran dan faktur PDF dirender di server', 'Pembayaran Xendit mode LIVE'],
+      },
+      {
+        title: 'CoreAsia Downloader',
+        category: 'Aplikasi Desktop',
+        description: 'Aplikasi desktop macOS untuk mengunduh video dan audio dari lebih dari 1.000 situs. Antarmuka web premium berjalan di dalam window native, dengan mesin yt-dlp dan ffmpeg di belakangnya. Lisensinya ditandatangani Ed25519 lewat gerbang api.coreasia.id.',
+        tech: ['Python 3', 'pywebview', 'WKWebView', 'yt-dlp', 'ffmpeg', 'Go', 'Ed25519'],
+        link: 'https://coreasia.id/products/downloader',
+        highlights: ['Antrian unduhan paralel yang bertahan setelah aplikasi ditutup', 'Pemilih format dan subtitle langsung dari sumber', 'Ekstensi peramban Chrome, Brave, dan Firefox', 'Lisensi ditandatangani dan diverifikasi di server'],
+      },
+      {
+        title: 'CoreAsia Mounter',
+        category: 'Aplikasi Desktop',
+        description: 'Utilitas menu bar macOS yang membuat drive NTFS bisa ditulis di Apple Silicon, tanpa memasang ekstensi kernel dan tanpa mengubah pengaturan keamanan Mac. Dibangun di atas fork DarwinFUSE sendiri sehingga bebas dari ketergantungan lisensi komersial pihak ketiga.',
+        tech: ['Swift', 'SwiftUI', 'SwiftPM', 'XPC', 'SMAppService', 'DarwinFUSE', 'ntfs-3g', 'Ed25519'],
+        link: 'https://coreasia.id/products/mounter',
+        highlights: ['Tanpa ekstensi kernel dan tanpa reduced security', 'Drive dikenali dan ter-mount otomatis saat dicolok', 'Helper root terpisah yang berkomunikasi lewat XPC', 'Membaca NTFS gratis, menulis dengan lisensi'],
+      },
       {
         title: 'Pantau by CoreAsia',
         category: 'SaaS Product',

@@ -1934,6 +1934,30 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
     subtitle: 'From concept to production, here are some projects showcasing CoreAsia capabilities.',
     items: [
       {
+        title: 'LeadKu by CoreAsia',
+        category: 'SaaS Product',
+        description: 'A multi-workspace sales CRM built as 11 Go microservices with per-tenant data isolation at the PostgreSQL schema level. Covers deal pipelines, quotes and invoices, a public account-free document portal, per-role data scope, and an AI Sales Copilot named Leo.',
+        tech: ['Go', 'Nuxt 3', 'PostgreSQL', 'Redis', 'NATS', 'Gotenberg', 'Xendit', 'Docker'],
+        link: 'https://leadku.coreasia.id',
+        highlights: ['One schema per tenant for data isolation', 'AI Sales Copilot with streaming answers', 'Server-rendered PDF quotes and invoices', 'Xendit payments running in LIVE mode'],
+      },
+      {
+        title: 'CoreAsia Downloader',
+        category: 'Desktop App',
+        description: 'A macOS desktop app for downloading video and audio from more than 1,000 sites. A premium web interface runs inside a native window, powered by yt-dlp and ffmpeg. Licences are Ed25519-signed through the api.coreasia.id gateway.',
+        tech: ['Python 3', 'pywebview', 'WKWebView', 'yt-dlp', 'ffmpeg', 'Go', 'Ed25519'],
+        link: 'https://coreasia.id/products/downloader',
+        highlights: ['Parallel download queue that survives app restarts', 'Format and subtitle picker read from the source', 'Browser extension for Chrome, Brave, and Firefox', 'Licences signed and verified server-side'],
+      },
+      {
+        title: 'CoreAsia Mounter',
+        category: 'Desktop App',
+        description: 'A macOS menu-bar utility that makes NTFS drives writable on Apple Silicon, without installing a kernel extension and without changing the Mac security settings. Built on an in-house DarwinFUSE fork, so it carries no third-party commercial licence dependency.',
+        tech: ['Swift', 'SwiftUI', 'SwiftPM', 'XPC', 'SMAppService', 'DarwinFUSE', 'ntfs-3g', 'Ed25519'],
+        link: 'https://coreasia.id/products/mounter',
+        highlights: ['No kernel extension and no reduced security', 'Drives detected and mounted automatically on plug-in', 'Separate root helper talking over XPC', 'Free NTFS reading, licensed writing'],
+      },
+      {
         title: 'Pantau by CoreAsia',
         category: 'SaaS Product',
         description: 'A complete website monitoring dashboard combining Google Analytics 4, Search Console, keyword ranking, SEO audit, AI assistant, and automated PDF reports.',
