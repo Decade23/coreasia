@@ -18,6 +18,7 @@ type Config struct {
 	Midtrans MidtransConfig `yaml:"midtrans"`
 	Email    EmailConfig    `yaml:"email"`
 	Payments PaymentsConfig `yaml:"payments"`
+	CRM      CRMConfig      `yaml:"crm"`
 	CAD      CADConfig      `yaml:"cad"`
 	Mounter  MounterConfig  `yaml:"mounter"`
 }
@@ -82,6 +83,14 @@ type EmailConfig struct {
 	APIKey                string `yaml:"api_key" env:"RESEND_API_KEY"`
 	From                  string `yaml:"from" env:"EMAIL_FROM" env-default:"CoreAsia <noreply@coreasia.id>"`
 	LeadNotificationEmail string `yaml:"lead_notification_email" env:"LEAD_NOTIFICATION_EMAIL" env-default:"hello@coreasia.id"`
+}
+
+// CRMConfig menyambungkan lead formulir kontak ke pipeline LeadKu di workspace
+// CoreAsia. Kosongkan URL atau token untuk mematikan penerusan sepenuhnya; lead
+// tetap tersimpan dan email tetap terkirim, hanya tidak masuk CRM.
+type CRMConfig struct {
+	LeadKuLeadURL     string `yaml:"leadku_lead_url" env:"LEADKU_LEAD_URL"`
+	LeadKuIngestToken string `yaml:"leadku_ingest_token" env:"LEADKU_INGEST_TOKEN"`
 }
 
 // PaymentsConfig holds shared secrets for inbound payment webhooks (Mayar, dst)
