@@ -199,6 +199,13 @@ interface CreateLeadResponse {
     status: string;
 }
 
+// Kembali ke formulir kosong tanpa memuat ulang halaman. URL WhatsApp ikut
+// dikosongkan supaya brief berikutnya tidak mewarisi pesan brief sebelumnya.
+const startNewBrief = () => {
+    formState.isSuccess = false;
+    formState.successWhatsAppUrl = "";
+};
+
 const handleSubmit = async () => {
     formState.isSubmitting = true;
     formState.isSuccess = false;
@@ -274,20 +281,53 @@ const handleSubmit = async () => {
             throw new Error("Lead API returned an invalid success response");
         }
 
-        // A form submission becomes a conversion only after the lead is durably
-        // accepted by the API. Failed requests must never inflate ad results.
+        // Sebuah pengiriman baru menjadi konversi setelah lead benar-benar
+        // diterima API. Permintaan yang gagal tidak boleh menggelembungkan angka
+        // iklan.
         formState.isSuccess = true;
         formState.successWhatsAppUrl = buildWhatsAppUrl(body);
-        trackLeadSaved(response.lead_id, 'contact_brief', {
-            subject: form.subject,
-            plan: selectedPlan.value || undefined,
-        })
-        trackLeadConversion(response.lead_id)
+
+        // Subjek disalin sebelum formulir dikosongkan, karena pelacakan di bawah
+        // masih membutuhkannya.
+        const subjekTerkirim = form.subject;
+        resetForm();
+
+        // Pelacakan dijalankan lebih dahulu dan tidak boleh menunggu apa pun yang
+        // berkaitan dengan gambar layar. Ia juga dibungkus sendiri: lead sudah
+        // tersimpan, jadi kegagalan gtag, misalnya karena diblokir pemblokir iklan,
+        // tidak boleh melompat ke blok catch dan mengubah pengiriman yang berhasil
+        // menjadi tampak gagal. Pesan galatnya pun tidak akan terlihat, sebab ia
+        // dirender di dalam formulir yang baru saja digantikan panel konfirmasi.
+        try {
+            trackLeadSaved(response.lead_id, 'contact_brief', {
+                subject: subjekTerkirim,
+                plan: selectedPlan.value || undefined,
+            });
+            trackLeadConversion(response.lead_id);
+        } catch (e) {
+            console.error('Pelacakan lead gagal:', e);
+        }
+
+        // Panel konfirmasi menggantikan isi kartu, jadi kartunya ditarik ke tengah
+        // layar. Dua frame, bukan sekadar nextTick: pertukaran v-if mengubah tinggi
+        // kartu dari setinggi formulir menjadi setinggi panel, dan menggulir sebelum
+        // tinggi barunya terpasang justru melempar bagian atas panel ke luar layar.
+        //
+        // Sengaja tidak ditunggu. requestAnimationFrame berhenti berdetak saat tab
+        // tidak terlihat, sehingga menunggunya akan menahan seluruh sisa alur ini
+        // setiap kali seseorang berpindah tab tepat setelah menekan kirim.
+        void nextTick().then(() => {
+            requestAnimationFrame(() =>
+                requestAnimationFrame(() => {
+                    contactForm.value?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }),
+            );
+        });
 
         if (import.meta.client) {
             try {
                 const confetti = (await import('canvas-confetti')).default;
-                
+
                 confetti({
                     particleCount: 150,
                     spread: 70,
@@ -295,11 +335,9 @@ const handleSubmit = async () => {
                     zIndex: 9999
                 });
             } catch (e) {
-                console.error("Failed to load confetti:", e);
+                console.error('Gagal memuat confetti:', e);
             }
         }
-        
-        resetForm();
     } catch {
         formState.errorMessage = t('contact.form.error') as string;
         formState.hasSubmissionError = true;
@@ -460,6 +498,57 @@ useSchemaOrg([
                     </aside>
 
                     <article ref="contactForm" class="ca-card p-5 sm:p-6 lg:p-7">
+                        <!--
+                            Saat berhasil, panel konfirmasi menggantikan SELURUH isi
+                            kartu, bukan menempel di bawah tombol kirim. Tombol kirim
+                            biasanya sudah menyentuh batas bawah layar, sehingga pesan
+                            yang lahir di bawahnya tidak pernah terlihat. Ditambah
+                            formulir yang dikosongkan pada saat yang sama, layar justru
+                            terbaca sebagai pengiriman yang gagal.
+                        -->
+                        <div
+                            v-if="formState.isSuccess"
+                            class="flex flex-col items-center py-6 text-center sm:py-10"
+                            role="status"
+                            aria-live="polite"
+                        >
+                            <span
+                                class="flex h-14 w-14 items-center justify-center rounded-full"
+                                :style="{ background: 'var(--ca-emerald-bg)', color: 'var(--ca-emerald-text)' }"
+                            >
+                                <Icon name="lucide:check" class="h-7 w-7" />
+                            </span>
+
+                            <h2 class="mt-5 text-2xl font-display font-bold text-[var(--ca-text)]">
+                                {{ t('contact.form.successTitle') }}
+                            </h2>
+                            <p class="mt-3 max-w-md text-sm leading-relaxed text-[var(--ca-muted)]">
+                                {{ t('contact.form.successBody') }}
+                            </p>
+
+                            <a
+                                v-if="formState.successWhatsAppUrl"
+                                :href="formState.successWhatsAppUrl"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                data-analytics-ignore="true"
+                                class="ca-btn-primary mt-7 w-full sm:w-auto"
+                                @click="trackWhatsAppClick('contact_form_success')"
+                            >
+                                <Icon name="lucide:message-circle" class="h-4 w-4" />
+                                {{ t('contact.form.whatsappContinue') }}
+                            </a>
+
+                            <button
+                                type="button"
+                                class="mt-4 text-sm font-medium text-[var(--ca-muted)] underline underline-offset-4 transition-colors hover:text-[var(--ca-text)]"
+                                @click="startNewBrief"
+                            >
+                                {{ t('contact.form.sendAnother') }}
+                            </button>
+                        </div>
+
+                        <template v-else>
                         <div class="mb-6">
                             <h2
                                 class="text-2xl font-display font-bold text-[var(--ca-text)]"
@@ -569,28 +658,6 @@ useSchemaOrg([
                             </button>
 
                             <p
-                                v-if="formState.isSuccess"
-                                class="ca-status-success"
-                                role="status"
-                                aria-live="polite"
-                            >
-                                {{ t('contact.form.success') }}
-                            </p>
-
-                            <a
-                                v-if="formState.isSuccess && formState.successWhatsAppUrl"
-                                :href="formState.successWhatsAppUrl"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                data-analytics-ignore="true"
-                                class="ca-btn-secondary w-full"
-                                @click="trackWhatsAppClick('contact_form_success')"
-                            >
-                                <Icon name="lucide:message-circle" class="h-4 w-4" />
-                                {{ t('contact.form.whatsappContinue') }}
-                            </a>
-
-                            <p
                                 v-if="formState.errorMessage"
                                 class="ca-status-danger"
                                 role="alert"
@@ -611,6 +678,7 @@ useSchemaOrg([
                                 {{ t('contact.form.whatsappFallback') }}
                             </a>
                         </form>
+                        </template>
                     </article>
                 </div>
             </div>

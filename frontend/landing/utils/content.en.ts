@@ -1608,7 +1608,7 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
     },
     form: {
       title: 'Send a Short Brief',
-      subtitle: 'Your brief is saved first, then WhatsApp opens so the team can follow up faster.',
+      subtitle: 'Tell us briefly what you need. Your brief is saved first, then you can continue on WhatsApp for a faster reply.',
       fields: {
         name: 'Full name',
         email: 'Email',
@@ -1651,6 +1651,9 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
       submit: 'Send Brief',
       submitting: 'Processing...',
       success: 'Your brief has been saved. WhatsApp is ready so you can continue the conversation.',
+      successTitle: 'Your brief is on its way',
+      successBody: 'We have received your brief and it is queued for the team. We reply during working hours, Monday to Friday, 09.00 to 17.00 WIB. If you need a faster answer, continue on WhatsApp.',
+      sendAnother: 'Send another brief',
       error: 'Your brief was not saved because of a connection or server problem. Your data has not been sent. Please try again or continue via WhatsApp.',
       whatsappContinue: 'Continue the conversation on WhatsApp',
       whatsappFallback: 'Continue via WhatsApp',
