@@ -1441,8 +1441,17 @@ const ID_CONTENT = {
         email: 'Email',
         phone: 'No. WhatsApp',
         subject: 'Subjek',
+        budgetRange: 'Perkiraan Anggaran (opsional)',
         message: 'Pesan',
         consent: 'Saya menyetujui data ini digunakan untuk tindak lanjut konsultasi.',
+      },
+      budgetRanges: {
+        under_5jt: 'Di bawah Rp5 juta',
+        '5_10jt': 'Rp5 juta sampai Rp10 juta',
+        '10_25jt': 'Rp10 juta sampai Rp25 juta',
+        '25_50jt': 'Rp25 juta sampai Rp50 juta',
+        above_50jt: 'Di atas Rp50 juta',
+        not_set: 'Belum ada anggaran',
       },
       subjects: {
         website: 'Jasa Pembuatan Website',
@@ -1460,6 +1469,7 @@ const ID_CONTENT = {
         email: 'nama@email.com',
         phone: '+62 xxx xxxx xxxx',
         subject: 'Pilih subjek',
+        budgetRange: 'Pilih rentang anggaran',
         message: 'Ceritakan kebutuhan utama Anda',
       },
       messages: {

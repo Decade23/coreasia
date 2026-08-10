@@ -156,6 +156,7 @@ func contactLeadHTML(lead *model.ContactLead) string {
       <tr><td style="padding:5px 12px 5px 0;color:#6b7280;">Email</td><td>%s</td></tr>
       <tr><td style="padding:5px 12px 5px 0;color:#6b7280;">WhatsApp</td><td>%s</td></tr>
       <tr><td style="padding:5px 12px 5px 0;color:#6b7280;">Subjek</td><td>%s</td></tr>
+      <tr><td style="padding:5px 12px 5px 0;color:#6b7280;">Anggaran</td><td><strong>%s</strong></td></tr>
       <tr><td style="padding:5px 12px 5px 0;color:#6b7280;">Diterima</td><td>%s</td></tr>
     </table>
     <h2 style="font-size:15px;margin:24px 0 8px;">Kebutuhan</h2>
@@ -179,6 +180,7 @@ func contactLeadHTML(lead *model.ContactLead) string {
 		html.EscapeString(lead.Email),
 		value(lead.Phone),
 		html.EscapeString(lead.Subject),
+		html.EscapeString(budgetLabel(lead.BudgetRange)),
 		html.EscapeString(createdAt),
 		html.EscapeString(lead.Message),
 		value(lead.UTMSource),
@@ -191,6 +193,20 @@ func contactLeadHTML(lead *model.ContactLead) string {
 		value(lead.LandingPage),
 		value(lead.Referrer),
 	)
+}
+
+// budgetLabel mengubah kunci rentang anggaran menjadi teks yang dibaca tim
+// sales. Kunci tak dikenal dikembalikan apa adanya agar data tetap terlihat
+// bila daftar pilihan di formulir bertambah lebih dulu daripada gateway.
+func budgetLabel(input *string) string {
+	if input == nil || strings.TrimSpace(*input) == "" {
+		return "Tidak diisi"
+	}
+	key := strings.TrimSpace(*input)
+	if label, ok := model.BudgetRangeLabels[key]; ok {
+		return label
+	}
+	return key
 }
 
 func contactLeadText(lead *model.ContactLead) string {
@@ -212,6 +228,7 @@ Nama: %s
 Email: %s
 WhatsApp: %s
 Subjek: %s
+Anggaran: %s
 Diterima: %s
 
 Kebutuhan:
@@ -231,6 +248,7 @@ Referrer: %s`,
 		lead.Email,
 		value(lead.Phone),
 		lead.Subject,
+		budgetLabel(lead.BudgetRange),
 		createdAt,
 		lead.Message,
 		value(lead.UTMSource),

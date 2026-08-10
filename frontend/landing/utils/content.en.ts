@@ -1614,8 +1614,17 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
         email: 'Email',
         phone: 'WhatsApp number',
         subject: 'Subject',
+        budgetRange: 'Estimated Budget (optional)',
         message: 'Message',
         consent: 'I agree that this data may be used for consultation follow-up.',
+      },
+      budgetRanges: {
+        under_5jt: 'Under Rp5 million',
+        '5_10jt': 'Rp5 million to Rp10 million',
+        '10_25jt': 'Rp10 million to Rp25 million',
+        '25_50jt': 'Rp25 million to Rp50 million',
+        above_50jt: 'Above Rp50 million',
+        not_set: 'No budget set yet',
       },
       subjects: {
         website: 'Website Development',
@@ -1632,6 +1641,7 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
         name: 'Your name',
         email: 'name@email.com',
         subject: 'Choose a subject',
+        budgetRange: 'Choose a budget range',
         message: 'Tell us your main requirement',
       },
       messages: {

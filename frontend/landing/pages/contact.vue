@@ -27,6 +27,7 @@ interface ContactForm {
     email: string;
     phone: string;
     subject: string;
+    budgetRange: string;
     message: string;
     consent: boolean;
 }
@@ -39,11 +40,20 @@ const subjectOptions = computed(() => {
     }))
 })
 
+const budgetOptions = computed(() => {
+    const ranges = t('contact.form.budgetRanges') as Record<string, string>
+    return Object.entries(ranges).map(([value, label]) => ({
+        value,
+        label: label as string,
+    }))
+})
+
 const form = reactive<ContactForm>({
     name: "",
     email: "",
     phone: "",
     subject: "",
+    budgetRange: "",
     message: "",
     consent: false,
 });
@@ -153,6 +163,7 @@ const resetForm = () => {
     form.email = "";
     form.phone = "";
     form.subject = "";
+    form.budgetRange = "";
     form.message = "";
     form.consent = false;
     hasTrackedFormStart.value = false;
@@ -244,6 +255,7 @@ const handleSubmit = async () => {
                 email: form.email.trim().toLowerCase(),
                 phone: cleanPhone,
                 subject: form.subject.trim(),
+                budget_range: form.budgetRange || undefined,
                 message: form.message.trim(),
                 consent: form.consent,
                 utm_source: attribution?.utm_source || "",
@@ -498,6 +510,20 @@ useSchemaOrg([
                                     required
                                     :disabled="formState.isSubmitting"
                                     :placeholder="t('contact.form.placeholders.subject') as string"
+                                />
+
+                                <!-- Anggaran sengaja TIDAK wajib. Pada kampanye berbayar
+                                     bervolume kecil, kolom wajib tambahan menukar lead nyata
+                                     dengan kerapian data. Pilihan "Belum ada anggaran"
+                                     disediakan supaya yang sedang riset tetap menjawab jujur
+                                     alih-alih melewatinya. -->
+                                <SearchSelect
+                                    id="budget-range"
+                                    v-model="form.budgetRange"
+                                    :options="budgetOptions"
+                                    :label="t('contact.form.fields.budgetRange') as string"
+                                    :disabled="formState.isSubmitting"
+                                    :placeholder="t('contact.form.placeholders.budgetRange') as string"
                                 />
                             </div>
 

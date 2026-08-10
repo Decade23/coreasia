@@ -61,6 +61,7 @@ func (h *ContactLeadHandler) Create(c fiber.Ctx) error {
 		Message:     req.Message,
 		Consent:     req.Consent,
 		Status:      model.ContactLeadStatusNew,
+		BudgetRange: optionalString(req.BudgetRange),
 		UTMSource:   optionalString(req.UTMSource),
 		UTMMedium:   optionalString(req.UTMMedium),
 		UTMCampaign: optionalString(req.UTMCampaign),
@@ -105,6 +106,7 @@ func normalizeContactLeadRequest(req *model.CreateContactLeadRequest) {
 	req.Email = strings.ToLower(strings.TrimSpace(req.Email))
 	req.Phone = strings.TrimSpace(req.Phone)
 	req.Subject = strings.TrimSpace(req.Subject)
+	req.BudgetRange = strings.TrimSpace(req.BudgetRange)
 	req.Message = strings.TrimSpace(req.Message)
 	req.UTMSource = strings.TrimSpace(req.UTMSource)
 	req.UTMMedium = strings.TrimSpace(req.UTMMedium)

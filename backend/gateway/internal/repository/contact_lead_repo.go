@@ -21,13 +21,13 @@ func NewContactLeadRepo(pool *pgxpool.Pool) *ContactLeadRepo {
 func (r *ContactLeadRepo) Create(ctx context.Context, lead *model.ContactLead) error {
 	const query = `
 		INSERT INTO public.contact_leads (
-			name, email, phone, subject, message, consent, status,
+			name, email, phone, subject, message, consent, status, budget_range,
 			utm_source, utm_medium, utm_campaign, utm_content, utm_term,
 			gclid, fbclid, landing_page, referrer
 		) VALUES (
-			$1, $2, $3, $4, $5, $6, $7,
-			$8, $9, $10, $11, $12,
-			$13, $14, $15, $16
+			$1, $2, $3, $4, $5, $6, $7, $8,
+			$9, $10, $11, $12, $13,
+			$14, $15, $16, $17
 		)
 		RETURNING id, status, consented_at, created_at, updated_at
 	`
@@ -40,6 +40,7 @@ func (r *ContactLeadRepo) Create(ctx context.Context, lead *model.ContactLead) e
 		lead.Message,
 		lead.Consent,
 		lead.Status,
+		lead.BudgetRange,
 		lead.UTMSource,
 		lead.UTMMedium,
 		lead.UTMCampaign,
