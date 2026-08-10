@@ -89,7 +89,7 @@ func (s *EmailService) SendContactLeadNotification(ctx context.Context, lead *mo
 		return nil
 	}
 
-	subject := strings.ReplaceAll(strings.ReplaceAll(lead.Subject, "\r", " "), "\n", " ")
+	subject := strings.ReplaceAll(strings.ReplaceAll(model.SubjectLabel(lead.Subject), "\r", " "), "\n", " ")
 	reqBody := resendEmailRequest{
 		From:    s.cfg.From,
 		To:      []string{recipient},
@@ -179,7 +179,7 @@ func contactLeadHTML(lead *model.ContactLead) string {
 		html.EscapeString(lead.Name),
 		html.EscapeString(lead.Email),
 		value(lead.Phone),
-		html.EscapeString(lead.Subject),
+		html.EscapeString(model.SubjectLabel(lead.Subject)),
 		html.EscapeString(budgetLabel(lead.BudgetRange)),
 		html.EscapeString(createdAt),
 		html.EscapeString(lead.Message),
@@ -247,7 +247,7 @@ Referrer: %s`,
 		lead.Name,
 		lead.Email,
 		value(lead.Phone),
-		lead.Subject,
+		model.SubjectLabel(lead.Subject),
 		budgetLabel(lead.BudgetRange),
 		createdAt,
 		lead.Message,

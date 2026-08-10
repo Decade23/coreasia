@@ -87,8 +87,11 @@ func TestPushContactLead_MengirimTokenDanPayload(t *testing.T) {
 	// Atribusi iklan WAJIB ikut. Tanpa gclid dan campaign, lead di CRM tidak
 	// bisa dihubungkan kembali ke belanja iklan yang menghasilkannya.
 	for kunci, mau := range map[string]string{
-		"name":         "Budi Santoso",
-		"email":        "budi@contoh.co.id",
+		"name":  "Budi Santoso",
+		"email": "budi@contoh.co.id",
+		// Subjek dikirim sebagai label, bukan kunci: nilai ini dipakai LeadKu
+		// sebagai judul deal, dan "website" tidak berarti apa-apa di pipeline.
+		"subject":      "Jasa Pembuatan Website",
 		"budget_range": "10_25jt",
 		"utm_source":   "google",
 		"utm_medium":   "cpc",

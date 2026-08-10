@@ -31,6 +31,32 @@ var BudgetRangeLabels = map[string]string{
 	BudgetRangeUndecided: "Belum ada anggaran",
 }
 
+// SubjectLabels menerjemahkan kunci subjek formulir menjadi nama layanan yang
+// terbaca. Kuncinya cocok dengan daftar di frontend (utils/content.id.ts).
+// Subjek yang tidak dikenal sengaja diteruskan apa adanya, bukan diganti teks
+// "lainnya": subjek baru biasanya lahir di frontend lebih dulu, dan menampilkan
+// kunci mentah jauh lebih menolong daripada menyembunyikannya.
+var SubjectLabels = map[string]string{
+	"website":    "Jasa Pembuatan Website",
+	"webapp":     "Jasa Pembuatan Aplikasi Web",
+	"lms":        "CoreAsia LMS",
+	"pantau":     "Pantau by CoreAsia",
+	"leadku":     "LeadKu by CoreAsia",
+	"pricing":    "Informasi Pricing",
+	"venture":    "Venture Partnership",
+	"enterprise": "Custom Enterprise Solution",
+	"support":    "Technical Support",
+}
+
+// SubjectLabel mengembalikan label subjek yang terbaca, atau kuncinya sendiri
+// bila belum terdaftar.
+func SubjectLabel(key string) string {
+	if label, ok := SubjectLabels[key]; ok {
+		return label
+	}
+	return key
+}
+
 // CreateContactLeadRequest is the public contact form payload. Attribution
 // values are captured at submission time so a later qualified lead or sale can
 // be connected back to its originating campaign.

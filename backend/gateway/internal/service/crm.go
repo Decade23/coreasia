@@ -81,7 +81,9 @@ func (s *CRMService) PushContactLead(ctx context.Context, lead *model.ContactLea
 		Name:        lead.Name,
 		Email:       lead.Email,
 		Phone:       deref(lead.Phone),
-		Subject:     lead.Subject,
+		// Label, bukan kunci mentah: nilai ini menjadi judul deal di CRM, dan
+		// "Website (website)" tidak memberi tahu apa pun kepada tim sales.
+		Subject:     model.SubjectLabel(lead.Subject),
 		Message:     lead.Message,
 		BudgetRange: deref(lead.BudgetRange),
 		UTMSource:   deref(lead.UTMSource),
