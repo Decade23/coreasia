@@ -1,119 +1,115 @@
 # Aktivasi kampanye Google Ads: langkah demi langkah
 
 Panduan urut untuk membuka kampanye `CoreAsia Search Jasa Website Jakarta`.
-Ditulis 10 Agustus 2026, setelah pemeriksaan langsung ke akun
-`586-398-5692 PT INTI ASIA TEKNOLOGI`.
+Ditulis 10 Agustus 2026, **direvisi besar 11 Agustus 2026** setelah pemeriksaan
+ulang ke akun `586-398-5692 PT INTI ASIA TEKNOLOGI`.
 
-Kerjakan berurutan. Tahap 1 sengaja didahulukan sebelum uang masuk, karena kalau
-dibalik, klik pertama sudah terbeli sementara belum ada yang mencatat hasilnya.
-
----
-
-## Keadaan saat pemeriksaan
-
-| Hal | Keadaan | Sumber |
-| --- | --- | --- |
-| Status kampanye | Dijeda | Kampanye, kolom Status |
-| Anggaran harian | Rp54.000 | Kampanye, kolom Anggaran |
-| Strategi bid | Maksimalkan klik | Kampanye |
-| Dana tersedia | **Rp0**, belum pernah ada pembayaran | Penagihan, Ringkasan |
-| Tindakan konversi | **Tidak ada** | Sasaran, Konversi, Ringkasan |
-| Konversi yang disempurnakan | Belum dikonfigurasikan | Sasaran, Konversi, Setelan |
-
-Situs sudah menembakkan `AW-18379615354/3qtKCPCF094cEPrYirxE` setiap kali sebuah
-lead tersimpan, tetapi tidak ada tindakan konversi di akun ini yang menampungnya.
-Kemungkinannya dua: ID itu milik akun Google Ads lain, atau pembuatannya dulu
-tidak pernah selesai. Keduanya berakhir sama, yaitu kolom Konversi tetap nol.
-
-Yang perlu diluruskan supaya harapannya pas: **iklan tetap tayang dan tetap
-menghasilkan klik tanpa tindakan konversi**, sebab strategi bid Maksimalkan klik
-tidak memerlukan data konversi. Lead pun tetap masuk ke basis data dan ke
-pipeline LeadKu lengkap dengan GCLID. Yang hilang hanya kemampuan Google memberi
-tahu kata kunci mana yang menghasilkan lead. Pada anggaran Rp600.000 dengan
-perkiraan 62 sampai 76 klik, itu selisih antara tahu dan menebak.
+> **Revisi 11 Agustus 2026.** Versi pertama panduan ini menyimpulkan bahwa
+> tindakan konversi belum ada, lalu menyusun dua tahap untuk membuatnya dan
+> mencocokkan ID. **Kesimpulan itu salah.** Tindakan konversinya sudah ada sejak
+> 9 Agustus 2026 dan ID serta labelnya sudah cocok persis dengan yang dikirim
+> situs. Pemeriksaan pertama membaca kartu ringkasan yang tabelnya belum selesai
+> dirender, jadi barisnya terbaca kosong. Dua tahap itu dihapus dari panduan ini.
 
 ---
 
-## Tahap 1: buat tindakan konversi
+## Keadaan kampanye
 
-Buka **Sasaran** di menu kiri, lalu **Konversi**, lalu **Ringkasan**.
+| Hal | Keadaan |
+| --- | --- |
+| Status kampanye | Dijeda |
+| Anggaran harian | Rp54.000 |
+| Strategi bid | Maksimalkan klik |
+| Jaringan | Jaringan Penelusuran Google saja |
+| Tanggal mulai | 9 Agustus 2026 |
+| Tanggal akhir | Belum ditetapkan (ditunda atas keputusan Dedi, 11 Agustus 2026) |
+| Dana tersedia | **Rp0**, belum pernah ada pembayaran |
 
-1. Klik **+ Tindakan konversi baru** (di layar sempit, tombolnya bisa berada di
-   dalam menu tiga titik).
-2. Pilih sumber **Situs**.
-3. Masukkan domain `coreasia.id` lalu **Pindai**. Google akan menawarkan
-   penyiapan otomatis. **Jangan pakai yang otomatis.** Pilih
-   **Tambahkan tindakan konversi secara manual** di bagian bawah hasil pindai.
-4. Isi seperti ini:
+### Penargetan
 
-| Kolom | Isi | Alasan |
-| --- | --- | --- |
-| Kategori sasaran | **Kirim formulir prospek** | Ini memang formulir brief, bukan pembelian |
-| Nama tindakan konversi | `Lead Formulir Kontak` | Muncul di laporan, buat jelas |
-| Nilai | **Jangan gunakan nilai** | Nilai lead belum diketahui saat submit. Angka karangan akan merusak laporan nanti |
-| Hitungan | **Satu** | Satu orang mengirim brief dua kali tetap satu prospek |
-| Periode konversi klik | 30 hari | Siklus keputusan jasa website memang panjang |
-| Sertakan di "Konversi" | **Ya** | Wajib, supaya terhitung sebagai konversi utama |
-| Model atribusi | Berbasis data, atau Klik terakhir bila belum tersedia | Berbasis data butuh volume; kalau ditolak, klik terakhir sudah cukup |
+| Dimensi | Isi |
+| --- | --- |
+| Lokasi | Daerah Khusus Ibukota Jakarta, satu lokasi saja |
+| Opsi lokasi | **Kehadiran**, bukan kehadiran atau minat |
+| Pengecualian lokasi | Kosong |
+| Bahasa | Indonesia |
+| Usia | 18-24 sampai 65+ dan Tidak diketahui, semua aktif |
+| Gender | Perempuan, Laki-laki, Tidak diketahui, semua aktif |
+| Pendapatan rumah tangga | 10% teratas sampai Di bawah 50% dan Tidak diketahui, semua aktif |
+| Segmen audiens | Belum ada, dan tidak ada pengecualian segmen |
+| Perangkat | Semua |
+| Jadwal iklan | Sepanjang hari |
 
-5. Klik **Selesai**, lalu **Simpan dan lanjutkan**.
+Penyempitannya hanya dua, yaitu kata kunci dan wilayah Jakarta. Demografi
+sengaja dibiarkan terbuka. Pada perkiraan 62 sampai 76 klik, mengecualikan
+kelompok usia atau pendapatan akan memotong volume sebelum ada data yang cukup
+untuk membuktikan kelompok mana yang memang buruk. Ditambah lagi, porsi
+"Tidak diketahui" di kampanye Penelusuran biasanya besar, sehingga pengecualian
+apa pun berisiko ikut membuang trafik yang sah.
 
-Di halaman berikutnya Google menawarkan cara memasang tag. Pilih
-**Pasang tag sendiri** atau **Gunakan Tag Google yang sudah ada**. Situs sudah
-memuat gtag, jadi tidak ada yang perlu ditempel lagi.
-
-**Yang wajib Anda catat di layar ini:**
-
-```
-ID konversi   : AW-__________          (contoh bentuk: AW-18379615354)
-Label konversi: ______________         (contoh bentuk: 3qtKCPCF094cEPrYirxE)
-```
-
-Kalau layarnya sudah terlanjur tertutup, keduanya bisa dilihat lagi lewat
-Sasaran, Konversi, klik nama tindakannya, lalu **Siapkan tag**, dan pilih
-**Pasang tag sendiri**. Cuplikan yang muncul memuat `send_to: 'AW-xxx/label'`.
-
----
-
-## Tahap 2: cocokkan ID dan label di situs
-
-Bandingkan hasil Tahap 1 dengan yang sekarang dipakai situs:
-
-```
-AW-18379615354 / 3qtKCPCF094cEPrYirxE
-```
-
-**Kalau sama persis,** berarti tindakan konversinya memang sudah ada sejak dulu
-dan hanya belum tampil karena sesuatu. Lewati tahap ini, langsung ke Tahap 3.
-
-**Kalau berbeda,** ada dua jalan. Pilih salah satu.
-
-### Jalan A, lewat kode (disarankan, saya yang kerjakan)
-
-Kirim ID dan label barunya ke saya. Nilainya ada sebagai bawaan di
-`frontend/landing/nuxt.config.ts` sekitar baris 239 sampai 247. Saya ubah, uji,
-push, dan Vercel akan menayangkannya sekitar dua menit. Tidak perlu Anda buka
-dasbor mana pun.
-
-### Jalan B, lewat Vercel
-
-Buka proyek landing di Vercel, **Settings**, **Environment Variables**, lalu isi
-untuk environment Production:
-
-```
-NUXT_PUBLIC_GOOGLE_ADS_CONVERSION_ID          = AW-__________
-NUXT_PUBLIC_GOOGLE_ADS_LEAD_CONVERSION_LABEL  = ______________
-```
-
-Setelah disimpan, jalankan **Redeploy**. Variabel `NUXT_PUBLIC_*` dipanggang saat
-build, jadi menyimpan saja tidak cukup, harus ada build baru.
+Opsi **Kehadiran** adalah setelan yang menahan kebocoran terbesar. Bawaan Google
+adalah "Kehadiran atau minat", yang ikut menayangkan iklan kepada orang di luar
+Jakarta yang kebetulan mengetik "jasa website Jakarta". Jangan diubah.
 
 ---
 
-## Tahap 3: pastikan konversinya benar-benar tercatat
+## Pengukuran: sudah beres, tidak ada yang perlu dikerjakan
 
-Jangan lewati bagian ini. Inilah satu-satunya cara membedakan "tag terpasang"
-dari "konversi tercatat".
+Diverifikasi langsung di akun pada 11 Agustus 2026.
+
+| Hal | Keadaan |
+| --- | --- |
+| Nama tindakan konversi | `CoreAsia - Lead Form Saved` |
+| Tanggal dibuat | 9 Agustus 2026 |
+| Sumber | Situs |
+| Pengoptimalan tindakan | Mengirim formulir lead, **Tindakan utama** |
+| Disertakan dalam sasaran tingkat akun | Ya |
+| Hitung | Satu konversi |
+| Periode konversi klik | 90 hari |
+| Nilai | Rp1 |
+| Atribusi | Berbasis data, saluran berbayar Google |
+| Konversi yang Disempurnakan | Tidak dikonfigurasi |
+| Status pelacakan | Tidak ada konversi terbaru |
+
+**Pencocokan ID dan label sudah dilakukan dan hasilnya sama persis.** Cuplikan
+tag yang Google hasilkan sendiri untuk tindakan konversi ini berbunyi:
+
+```js
+gtag('event', 'conversion', {
+  'send_to': 'AW-18379615354/3qtKCPCF094cEPrYirxE',
+  'event_callback': callback
+});
+```
+
+Nilai itu identik dengan yang dipanggang di `frontend/landing/nuxt.config.ts`.
+Selain itu, `AW-18379615354` terbukti merupakan Tag Google milik akun
+`586-398-5692` ini, bukan akun lain. Pada halaman produksi `coreasia.id/contact`
+yang dimuat tanpa pemblokir iklan, `gtag` terpasang dan `dataLayer` memuat
+`["config","AW-18379615354"]`, jadi tidak ada yang tertahan CSP.
+
+Dua catatan kecil, keduanya boleh dibiarkan:
+
+- **Nilai Rp1.** Strategi bid Maksimalkan klik tidak memakai nilai konversi, jadi
+  angka ini tidak mempengaruhi lelang. Efeknya hanya kolom "Nilai konv." di
+  laporan akan berisi kelipatan Rp1, yang bisa membingungkan bila dibaca sebagai
+  rupiah sungguhan. Boleh diganti ke "Jangan gunakan nilai" kapan saja.
+- **Konversi yang Disempurnakan belum dikonfigurasi.** Ini menaikkan akurasi
+  pencocokan dengan mengirim email pengirim formulir dalam bentuk ter-hash.
+  Bermanfaat, tetapi bukan prasyarat, dan menambah kewajiban persetujuan data.
+
+**Yang belum terbukti hanyalah satu hal**, yaitu apakah sebuah pengiriman brief
+sungguhan benar-benar mendaratkan konversi di akun. Tag Google akun ini masih
+berlabel "Tidak ada data" dan tab Halaman pada tindakan konversi masih kosong.
+Itu wajar: bug `requestAnimationFrame` yang menggantung di tab latar (diperbaiki
+pada commit 84a3d99) sempat membuat pemanggilan pelacakan terlewat, sehingga
+lead uji sebelum perbaikan itu memang tidak pernah menembakkan konversi.
+Karena itu Tahap 1 di bawah tidak boleh dilewati.
+
+---
+
+## Tahap 1: pastikan konversinya benar-benar tercatat
+
+Inilah satu-satunya cara membedakan "tag terpasang" dari "konversi tercatat".
 
 1. Buka `https://coreasia.id/contact?subject=website` di peramban biasa, bukan
    mode penyamaran, dan **matikan pemblokir iklan** untuk domain ini.
@@ -121,19 +117,22 @@ dari "konversi tercatat".
    Anda kenali, lalu kirim sampai muncul panel "Brief Anda terkirim".
 3. Tunggu. **Google Ads menampilkan konversi dengan jeda 3 sampai 24 jam.**
    Jangan menyimpulkan gagal di menit pertama.
-4. Besoknya, buka Sasaran, Konversi, Ringkasan. Tindakan `Lead Formulir Kontak`
-   harus berstatus **Aktif** dan angkanya minimal 1.
+4. Besoknya, buka Sasaran, Konversi, Ringkasan, lalu klik
+   **Lihat semua tindakan konversi**. Baris `CoreAsia - Lead Form Saved` harus
+   menunjukkan angka minimal 1, dan Status pelacakan berubah dari
+   "Tidak ada konversi terbaru".
 
 Kalau setelah 24 jam masih nol, kabari saya. Yang saya periksa berikutnya adalah
-apakah label yang dikirim situs sudah sama dengan label di akun, dan apakah
-permintaan ke `googleadservices.com` benar-benar lolos CSP.
+apakah permintaan ke `googleadservices.com` benar-benar keluar saat submit, dan
+apakah `trackLeadConversion` terpanggil sebelum alur sukses menyelesaikan
+animasinya.
 
 Baris uji itu boleh dihapus kapan saja dari basis data. Bilang saja, saya
 bersihkan sekalian dengan yang di LeadKu.
 
 ---
 
-## Tahap 4: isi dana
+## Tahap 2: isi dana
 
 Buka **Penagihan**, **Ringkasan**, klik **Tambah dana**.
 
@@ -143,26 +142,19 @@ Buka **Penagihan**, **Ringkasan**, klik **Tambah dana**.
 - Kalau Google menawarkan pembayaran otomatis dengan kartu, **jangan diaktifkan**
   dulu. Prabayar membuat batas belanja bersifat fisik, bukan sekadar setelan.
 
----
-
-## Tahap 5: pasang tanggal berakhir kampanye
-
-Ini pengaman kedua, dan sering dilupakan.
-
-Buka **Kampanye**, klik nama kampanye, lalu **Setelan**, buka
-**Setelan tambahan**, lalu **Tanggal mulai dan berakhir**.
-
-Isi tanggal berakhir **11 hari setelah tanggal mulai**. Dasarnya: Rp600.000
-dibagi Rp54.000 per hari sama dengan 11,1 hari.
-
 Perlu diketahui, Google boleh membelanjakan sampai dua kali anggaran harian pada
-hari tertentu, asal rata-rata sebulan tetap terjaga. Jadi dana bisa habis lebih
-cepat dari 11 hari. Tanggal berakhir ini menjaga dari sisi waktu, dana prabayar
-menjaga dari sisi uang. Dua-duanya dipasang.
+hari tertentu, asal rata-rata sebulan tetap terjaga. Rp600.000 dibagi Rp54.000
+per hari sama dengan 11,1 hari, jadi dana bisa habis lebih cepat dari 11 hari.
+
+**Tanggal akhir kampanye sengaja tidak dipasang** atas keputusan Dedi pada
+11 Agustus 2026. Konsekuensinya, satu-satunya rem yang aktif adalah dana
+prabayar. Itu memadai selama pembayaran otomatis tidak diaktifkan. Kalau suatu
+saat kartu dipasang untuk pembayaran otomatis, tanggal akhir wajib dipasang di
+hari yang sama, karena tanpa keduanya belanja jadi tidak berujung.
 
 ---
 
-## Tahap 6: aktifkan
+## Tahap 3: aktifkan
 
 Buka **Kampanye**, klik titik status di sebelah kiri nama kampanye, pilih
 **Aktifkan**. Periksa juga grup iklannya ikut aktif, karena kampanye aktif dengan
@@ -198,13 +190,26 @@ seluruh dasbor.
 
 ---
 
+## Catatan cara membaca dasbor ini
+
+Dua jebakan yang sudah memakan waktu dan sebaiknya tidak terulang.
+
+1. **Tabel Google Ads dirender belakangan.** Kartu ringkasan bisa tampak kosong
+   sementara penghitung barisnya sudah menulis "1 - 1 dari 1". Selalu percayai
+   penghitung baris, bukan badan tabel, dan beri waktu sampai selesai memuat.
+2. **Dialog "Turn off ad blockers" selalu ada di DOM.** Google menyimpannya
+   sebagai elemen tersembunyi di setiap halaman, jadi menemukannya lewat
+   pembacaan DOM bukan bukti bahwa ada pemblokir yang aktif.
+
+---
+
 ## Ringkasan centang
 
-- [ ] Tindakan konversi `Lead Formulir Kontak` dibuat, kategori Kirim formulir prospek, hitungan Satu, disertakan di Konversi
-- [ ] ID dan label dicatat
-- [ ] ID dan label cocok dengan yang dikirim situs, lewat kode atau lewat Vercel
+- [x] Tindakan konversi `CoreAsia - Lead Form Saved` ada, Tindakan utama, hitungan Satu, disertakan di sasaran akun
+- [x] ID dan label cocok dengan yang dikirim situs (`AW-18379615354/3qtKCPCF094cEPrYirxE`)
+- [x] Tag Google terbukti milik akun `586-398-5692`, dan termuat di produksi tanpa terhalang CSP
 - [ ] Lead uji dikirim, konversinya muncul dalam 24 jam
 - [ ] Dana Rp600.000 masuk
-- [ ] Tanggal berakhir dipasang, 11 hari setelah tanggal mulai
 - [ ] Kampanye dan grup iklan diaktifkan
 - [ ] Jeda manual dijadwalkan untuk 15 sampai 17 Agustus
+- [ ] (ditunda) Tanggal akhir kampanye, hanya wajib bila pembayaran otomatis diaktifkan
