@@ -265,6 +265,22 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
         ctaLabel: 'Explore Mounter',
         to: '/products/mounter',
       },
+      {
+        name: 'CoreAsia Beres',
+        badge: 'Live',
+        icon: 'lucide:file-check-2',
+        tagline: 'File & Contact Tools',
+        description:
+          'Four tools for tidying up files and phone numbers. Photo and PDF compression is free with no account, plus BerkasKilat for complete CPNS, SNBT, and SPMB application files.',
+        features: [
+          'Photo and PDF compression, free with no limits',
+          'BerkasKilat: official size presets per institution',
+          'RapiKontak: WhatsApp numbers normalised to the 62 format',
+          'One QRIS payment, no account and no subscription',
+        ],
+        ctaLabel: 'Explore Beres',
+        to: '/products/beres',
+      },
     ],
     highlights: {
       title: 'A faster way to choose the right product',
@@ -1251,6 +1267,161 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
         note: 'Purchases are processed by Gumroad as the merchant of record. IDR pricing appears automatically at checkout.',
       },
     },
+    beres: {
+      title: 'CoreAsia Beres - Compress Application Files & Clean Up WhatsApp Numbers',
+      description:
+        'Four tools for tidying up files and phone numbers. Photo and PDF compression is free with no account, plus BerkasKilat for complete CPNS, SNBT, and SPMB application files.',
+      kicker: 'CoreAsia Beres',
+      hero: {
+        title: 'Upload rejected because the <span class="ca-gradient-text">file size is wrong</span>?',
+        subtitle:
+          'Four tools for tidying up your files and phone numbers. Two are free forever, two are a single QRIS payment. None of them ask you to create an account.',
+        ctaPrimary: 'Open CoreAsia Beres',
+        ctaSecondary: 'See pricing',
+        chips: [
+          'No account needed',
+          'Pay by QRIS, no subscription',
+          'Files deleted automatically',
+        ],
+      },
+      pain: {
+        label: 'Problems it solves',
+        title: 'The upload failures that happen most',
+        items: [
+          {
+            title: 'A 3.4 MB photo against a 200 KB limit',
+            description:
+              'Compress it carelessly and it turns blocky and gets rejected again. What you need is just under the target, at a quality that still passes.',
+          },
+          {
+            title: 'Every institution sets its own rules',
+            description:
+              'Diplomas, transcripts, and ID cards each carry their own size limits. Adjusting them one by one takes time, and announcements are sometimes revised midway.',
+          },
+          {
+            title: 'A messy list of numbers',
+            description:
+              'A mix of 08xx, +62, and stray spaces, duplicates included. Import it into WhatsApp and half of it fails.',
+          },
+        ],
+      },
+      tools: {
+        label: 'What is inside',
+        title: 'Four tools, two of them free',
+        subtitle:
+          'The free tools have no usage limit and will not turn paid. Payment only covers bulk work.',
+        items: [
+          {
+            name: 'Photo Compression',
+            price: 'Free',
+            audience: 'Anyone, no account',
+            description:
+              'ID photos or scanned cards brought just under the KB target without turning blocky.',
+          },
+          {
+            name: 'PDF Compression',
+            price: 'Free',
+            audience: 'Anyone, no account',
+            description:
+              'Scanned diplomas or transcripts shrunk until they clear the institution upload limit.',
+          },
+          {
+            name: 'BerkasKilat',
+            price: 'Rp15,000 for 3 day access',
+            audience: 'CPNS, SNBT, and SPMB applicants',
+            description:
+              'A complete set of application files adjusted in one pass using official institution presets. You get a single ZIP holding the files, a checklist, and a per-file report. Repeat as often as you like while access lasts.',
+          },
+          {
+            name: 'RapiKontak',
+            price: 'Rp10,000 for 1 credit',
+            audience: 'Sellers and group admins',
+            description:
+              'Phone lists normalised to the 62 format, duplicates and invalid numbers removed, exported as CSV and VCF ready to import. One credit covers up to 10,000 numbers.',
+          },
+        ],
+      },
+      workflow: {
+        label: 'How it works',
+        title: 'Three steps, no surprises',
+        steps: [
+          {
+            title: 'Pick a tool, then pay',
+            description:
+              'Scan the QRIS code from any e-wallet or mobile banking app. No account to create and no card number to enter.',
+          },
+          {
+            title: 'Your activation code appears',
+            description:
+              'The moment payment lands, the code shows on screen. Keep it, that is your proof of purchase.',
+          },
+          {
+            title: 'Paste the code and start',
+            description:
+              'Access is counted from when the code is redeemed, not from when payment arrives. Pay today and redeem next week, and you still get the full period.',
+          },
+        ],
+      },
+      pricing: {
+        label: 'Pricing',
+        title: 'Pay once, no subscription',
+        subtitle:
+          'No card is stored, there is no monthly bill, and nothing runs quietly in the background. Every purchase stands on its own.',
+        plans: [
+          {
+            name: 'BerkasKilat',
+            price: 'Rp15,000',
+            unit: '3 day access',
+            description: 'Application files, with size presets per institution.',
+          },
+          {
+            name: 'RapiKontak',
+            price: 'Rp10,000',
+            unit: '1 credit, or Rp40,000 for 5 credits',
+            description: 'Up to 10,000 numbers per run. Credits do not expire monthly.',
+          },
+          {
+            name: 'Bulk Compression',
+            price: 'Rp5,000',
+            unit: '30 files',
+            description: 'Dozens of photos or PDFs at once, delivered as one ZIP.',
+          },
+        ],
+        note: 'If you only have one file, there is no reason to pay. Use the free compression tool.',
+      },
+      faq: {
+        label: 'Questions',
+        title: 'What people ask before paying',
+        items: [
+          {
+            question: 'Why is BerkasKilat sold per day instead of per run?',
+            answer:
+              'Because preparing application files rarely finishes on the first try. Institution announcements are sometimes revised mid-season, and you may need to redo everything at a different size. Priced per run, you would hesitate to try again, and trying again is exactly what you need.',
+          },
+          {
+            question: 'How many numbers does one RapiKontak credit cover?',
+            answer:
+              'One credit covers one run, and one run holds up to 10,000 numbers. A list of 8,000 rows still counts as a single credit.',
+          },
+          {
+            question: 'Is there a subscription or auto-renewal?',
+            answer:
+              'No. No card is stored and there is no monthly bill. Every purchase stands on its own.',
+          },
+          {
+            question: 'How long are my files kept?',
+            answer:
+              'Files are deleted automatically once processing finishes. The tools work without an account, so no upload history is attached to your identity.',
+          },
+        ],
+      },
+      cta: {
+        title: 'Need your files sorted right now?',
+        subtitle:
+          'The free compression tools work immediately without an account. The paid ones take a single QRIS payment.',
+        button: 'Open CoreAsia Beres',
+      },
+    },
     custom: {
       title: 'Build by CoreAsia - Custom Web Development & Web App Services',
       description:
@@ -1969,6 +2140,14 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
         tech: ['Swift', 'SwiftUI', 'SwiftPM', 'XPC', 'SMAppService', 'DarwinFUSE', 'ntfs-3g', 'Ed25519'],
         link: 'https://coreasia.id/products/mounter',
         highlights: ['No kernel extension and no reduced security', 'Drives detected and mounted automatically on plug-in', 'Separate root helper talking over XPC', 'Free NTFS reading, licensed writing'],
+      },
+      {
+        title: 'CoreAsia Beres',
+        category: 'SaaS Product',
+        description: 'Four web-based tools for tidying up files and contact numbers. Photo and PDF compression is free with no account, BerkasKilat adjusts a complete set of CPNS, SNBT, and SPMB application files using official institution presets, and RapiKontak normalises WhatsApp number lists to the 62 format.',
+        tech: ['Nuxt', 'Go', 'PostgreSQL', 'Xendit QRIS', 'Docker'],
+        link: 'https://tools.coreasia.id',
+        highlights: ['Two free tools with no usage limit', 'One-off QRIS payment, no account and no subscription', 'Files deleted automatically once processing finishes'],
       },
       {
         title: 'Pantau by CoreAsia',

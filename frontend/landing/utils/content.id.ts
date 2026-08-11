@@ -238,6 +238,22 @@ const ID_CONTENT = {
         ctaLabel: 'Pelajari Mounter',
         to: '/products/mounter',
       },
+      {
+        name: 'CoreAsia Beres',
+        badge: 'Live',
+        icon: 'lucide:file-check-2',
+        tagline: 'Alat Berkas & Kontak',
+        description:
+          'Empat alat untuk merapikan berkas dan nomor. Kompres foto dan PDF gratis tanpa akun, plus BerkasKilat untuk seluruh berkas pendaftaran CPNS, SNBT, dan SPMB.',
+        features: [
+          'Kompres foto dan PDF, gratis tanpa batas',
+          'BerkasKilat: preset ukuran resmi per instansi',
+          'RapiKontak: nomor WhatsApp diseragamkan ke format 62',
+          'Bayar QRIS sekali, tanpa akun dan tanpa langganan',
+        ],
+        ctaLabel: 'Pelajari Beres',
+        to: '/products/beres',
+      },
     ],
     highlights: {
       title: 'Cara cepat memilih produk yang tepat',
@@ -1057,6 +1073,161 @@ const ID_CONTENT = {
         ctaPrimary: 'Unduh Gratis untuk macOS',
         ctaSecondary: 'support@coreasia.id',
         note: 'Pembelian diproses oleh Gumroad sebagai merchant of record. Harga IDR muncul otomatis saat checkout.',
+      },
+    },
+    beres: {
+      title: 'CoreAsia Beres - Kompres Berkas Pendaftaran & Rapikan Nomor WhatsApp',
+      description:
+        'Empat alat untuk merapikan berkas dan nomor. Kompres foto dan PDF gratis tanpa akun, plus BerkasKilat untuk seluruh berkas pendaftaran CPNS, SNBT, dan SPMB.',
+      kicker: 'CoreAsia Beres',
+      hero: {
+        title: 'Berkas ditolak karena <span class="ca-gradient-text">ukurannya salah</span>?',
+        subtitle:
+          'Empat alat untuk merapikan berkas dan nomor Anda. Dua gratis selamanya, dua lagi sekali bayar lewat QRIS. Tidak ada satu pun yang meminta Anda membuat akun.',
+        ctaPrimary: 'Buka CoreAsia Beres',
+        ctaSecondary: 'Lihat harga',
+        chips: [
+          'Tanpa daftar akun',
+          'Bayar QRIS, tanpa langganan',
+          'Berkas dihapus otomatis',
+        ],
+      },
+      pain: {
+        label: 'Masalah yang diselesaikan',
+        title: 'Kegagalan unggah yang paling sering terjadi',
+        items: [
+          {
+            title: 'Pas foto 3,4 MB, batasnya 200 KB',
+            description:
+              'Dikompres asal-asalan jadi pecah dan ditolak lagi. Yang dibutuhkan adalah tepat di bawah target, dengan mutu yang masih layak.',
+          },
+          {
+            title: 'Tiap instansi beda ketentuan',
+            description:
+              'Ijazah, transkrip, dan KTP punya batas ukuran sendiri-sendiri. Menyesuaikan satu per satu memakan waktu, dan pengumuman kadang direvisi di tengah jalan.',
+          },
+          {
+            title: 'Daftar nomor berantakan',
+            description:
+              'Campuran 08xx, +62, dan spasi di mana-mana, lengkap dengan duplikat. Diimpor ke WhatsApp separuhnya gagal.',
+          },
+        ],
+      },
+      tools: {
+        label: 'Isi produk',
+        title: 'Empat alat, dua di antaranya gratis',
+        subtitle:
+          'Alat gratis tidak dibatasi pemakaian dan tidak akan berubah jadi berbayar. Yang berbayar hanya untuk pekerjaan borongan.',
+        items: [
+          {
+            name: 'Kompres Foto',
+            price: 'Gratis',
+            audience: 'Siapa saja, tanpa akun',
+            description:
+              'Pas foto atau hasil pindai KTP diperkecil sampai persis di bawah target KB, tanpa jadi pecah.',
+          },
+          {
+            name: 'Kompres PDF',
+            price: 'Gratis',
+            audience: 'Siapa saja, tanpa akun',
+            description:
+              'Ijazah atau transkrip hasil pindai diperkecil sampai lolos batas unggah instansi.',
+          },
+          {
+            name: 'BerkasKilat',
+            price: 'Rp15.000 untuk akses 3 hari',
+            audience: 'Pendaftar CPNS, SNBT, dan SPMB',
+            description:
+              'Seluruh berkas pendaftaran disesuaikan sekali jalan memakai preset resmi instansi. Hasilnya satu ZIP berisi berkas, checklist, dan laporan per berkas. Boleh diulang sepuasnya selama masa aktif.',
+          },
+          {
+            name: 'RapiKontak',
+            price: 'Rp10.000 untuk 1 kredit',
+            audience: 'Penjual dan admin grup',
+            description:
+              'Daftar nomor diseragamkan ke format 62, duplikat dan nomor tidak valid dibuang, hasilnya CSV dan VCF siap impor. Satu kredit menampung sampai 10.000 nomor.',
+          },
+        ],
+      },
+      workflow: {
+        label: 'Cara kerjanya',
+        title: 'Tiga langkah, tidak ada kejutan',
+        steps: [
+          {
+            title: 'Pilih alat, lalu bayar',
+            description:
+              'Pindai QRIS dari e-wallet atau m-banking mana pun. Tidak perlu membuat akun dan tidak perlu memasukkan nomor kartu.',
+          },
+          {
+            title: 'Kode aktivasi keluar',
+            description:
+              'Begitu pembayaran masuk, kode langsung tampil di layar. Simpan kodenya, itu bukti pembelian Anda.',
+          },
+          {
+            title: 'Tempel kode, langsung pakai',
+            description:
+              'Masa aktif dihitung sejak kode ditukarkan, bukan sejak pembayaran diterima. Membayar hari ini dan menukarkan minggu depan tetap dapat masa aktif penuh.',
+          },
+        ],
+      },
+      pricing: {
+        label: 'Harga',
+        title: 'Sekali bayar, tanpa langganan',
+        subtitle:
+          'Tidak ada kartu yang tersimpan, tidak ada tagihan bulanan, dan tidak ada yang berjalan diam-diam. Setiap pembelian berdiri sendiri.',
+        plans: [
+          {
+            name: 'BerkasKilat',
+            price: 'Rp15.000',
+            unit: 'akses 3 hari',
+            description: 'Berkas pendaftaran, dengan preset ukuran per instansi.',
+          },
+          {
+            name: 'RapiKontak',
+            price: 'Rp10.000',
+            unit: '1 kredit, atau Rp40.000 untuk 5 kredit',
+            description: 'Sampai 10.000 nomor per proses. Kredit tidak hangus bulanan.',
+          },
+          {
+            name: 'Kompres Banyak',
+            price: 'Rp5.000',
+            unit: '30 berkas',
+            description: 'Puluhan foto atau PDF sekaligus, hasilnya satu ZIP.',
+          },
+        ],
+        note: 'Kalau berkas Anda hanya satu, tidak ada alasan membayar. Pakai alat kompres gratis.',
+      },
+      faq: {
+        label: 'Pertanyaan',
+        title: 'Yang biasanya ditanyakan sebelum membayar',
+        items: [
+          {
+            question: 'Kenapa BerkasKilat dijual per hari, bukan per proses?',
+            answer:
+              'Karena menyiapkan berkas pendaftaran jarang selesai sekali percobaan. Pengumuman instansi kadang direvisi di tengah masa pendaftaran, dan Anda mungkin perlu mengulang dengan ukuran berbeda. Kalau dihitung per proses, Anda akan ragu mencoba lagi, padahal justru mencoba lagi itu yang Anda butuhkan.',
+          },
+          {
+            question: 'Satu kredit RapiKontak itu berapa nomor?',
+            answer:
+              'Satu kredit dipakai untuk satu kali proses, dan satu proses menampung sampai 10.000 nomor. Daftar 8.000 baris tetap terhitung satu kredit.',
+          },
+          {
+            question: 'Ada langganan atau perpanjangan otomatis?',
+            answer:
+              'Tidak ada. Tidak ada kartu yang tersimpan dan tidak ada tagihan bulanan. Setiap pembelian berdiri sendiri.',
+          },
+          {
+            question: 'Berkas saya disimpan berapa lama?',
+            answer:
+              'Berkas dihapus otomatis setelah proses selesai. Alat ini dipakai tanpa akun, jadi tidak ada riwayat unggahan yang menempel pada identitas Anda.',
+          },
+        ],
+      },
+      cta: {
+        title: 'Berkas Anda perlu dirapikan sekarang?',
+        subtitle:
+          'Alat kompres gratis bisa langsung dipakai tanpa membuat akun. Yang berbayar cukup sekali bayar lewat QRIS.',
+        button: 'Buka CoreAsia Beres',
       },
     },
     custom: {
@@ -2066,6 +2237,14 @@ const ID_CONTENT = {
         tech: ['Swift', 'SwiftUI', 'SwiftPM', 'XPC', 'SMAppService', 'DarwinFUSE', 'ntfs-3g', 'Ed25519'],
         link: 'https://coreasia.id/products/mounter',
         highlights: ['Tanpa ekstensi kernel dan tanpa reduced security', 'Drive dikenali dan ter-mount otomatis saat dicolok', 'Helper root terpisah yang berkomunikasi lewat XPC', 'Membaca NTFS gratis, menulis dengan lisensi'],
+      },
+      {
+        title: 'CoreAsia Beres',
+        category: 'SaaS Product',
+        description: 'Empat alat berbasis web untuk merapikan berkas dan nomor kontak. Kompres foto dan PDF gratis tanpa akun, BerkasKilat menyesuaikan seluruh berkas pendaftaran CPNS, SNBT, dan SPMB dengan preset resmi instansi, serta RapiKontak menyeragamkan daftar nomor WhatsApp ke format 62.',
+        tech: ['Nuxt', 'Go', 'PostgreSQL', 'Xendit QRIS', 'Docker'],
+        link: 'https://tools.coreasia.id',
+        highlights: ['Dua alat gratis tanpa batas pemakaian', 'Pembayaran QRIS sekali bayar, tanpa akun dan tanpa langganan', 'Berkas dihapus otomatis setelah proses selesai'],
       },
       {
         title: 'Pantau by CoreAsia',
