@@ -132,19 +132,53 @@ bersihkan sekalian dengan yang di LeadKu.
 
 ---
 
-## Tahap 2: isi dana
+## Tahap 2: isi dana, dua tahap
+
+Diputuskan pada 11 Agustus 2026: dana diisi **Rp300.000 dulu**, lalu ditambah
+lagi saat menipis, dengan total sasaran tetap Rp600.000.
 
 Buka **Penagihan**, **Ringkasan**, klik **Tambah dana**.
 
-- Nominal: **Rp600.000**, pas, jangan lebih.
-- Akun ini prabayar. Iklan berhenti sendiri saat dana habis, dan itu memang rem
-  yang kita inginkan untuk percobaan pertama.
+- Isi pertama: **Rp300.000**.
 - Kalau Google menawarkan pembayaran otomatis dengan kartu, **jangan diaktifkan**
   dulu. Prabayar membuat batas belanja bersifat fisik, bukan sekadar setelan.
 
-Perlu diketahui, Google boleh membelanjakan sampai dua kali anggaran harian pada
-hari tertentu, asal rata-rata sebulan tetap terjaga. Rp600.000 dibagi Rp54.000
-per hari sama dengan 11,1 hari, jadi dana bisa habis lebih cepat dari 11 hari.
+### Aturan isi ulang: jangan tunggu saldo nol
+
+Akun ini memakai **Pembayaran manual**, dan sampai 11 Agustus 2026 belum pernah
+ada pembayaran sama sekali (Penagihan, Setelan). Dua akibatnya:
+
+1. Pencairan tidak selalu seketika, apalagi lewat transfer bank.
+2. Pembayaran pertama pada akun yang belum pernah bayar kadang masih lewat
+   verifikasi.
+
+Karena itu, **isi ulang saat saldo tersisa sekitar Rp100.000**. Menunggu nol
+berarti iklan mati dan jedanya bisa berhari-hari, bukan berjam-jam. Email
+peringatan saldo menipis dari Google boleh dipakai, tetapi jangan bergantung
+hanya pada itu, periksa sendiri di Penagihan, Ringkasan.
+
+### Durasi
+
+| Nominal | Durasi di Rp54.000 per hari | Perkiraan klik |
+| --- | --- | --- |
+| Rp300.000 | 5,5 hari | 31 sampai 38 |
+| Rp600.000 | 11,1 hari | 62 sampai 76 |
+
+Google boleh membelanjakan sampai dua kali anggaran harian pada hari tertentu,
+asal rata-rata sebulan tetap terjaga, jadi 5,5 hari bisa menjadi 4 hari nyata.
+
+**Jangan menurunkan anggaran harian ke Rp27.000 supaya Rp300.000 bertahan lebih
+lama.** Angka Rp54.000 diturunkan dari perkiraan CPC agar kampanye menang lelang
+cukup sering. Dipotong setengah, kampanye akan terus berstatus "Dibatasi oleh
+anggaran" dan hanya menang di irisan paling murah, yang justru bukan cerminan
+pasar sebenarnya. Lebih baik durasinya pendek tetapi datanya jujur.
+
+### Perkiraan kalender
+
+Mulai 12 Agustus, jatah terbakar 12 sampai 14 Agustus, lalu jeda manual 15 sampai
+17 Agustus (saldo tidak terpakai selama dijeda), lanjut 18 Agustus, dan habis
+sekitar 20 Agustus. Jeda Kemerdekaan itu justru memberi ruang aman untuk mengisi
+ulang tanpa kehilangan tayangan.
 
 **Tanggal akhir kampanye sengaja tidak dipasang** atas keputusan Dedi pada
 11 Agustus 2026. Konsekuensinya, satu-satunya rem yang aktif adalah dana
@@ -177,6 +211,12 @@ mana pun. Mulai saja di hari kerja berikutnya. Satu-satunya catatan kalender:
 Jangan mengutak-atik apa pun di 72 jam pertama. Data sekecil ini akan menyesatkan
 kalau ditanggapi terburu-buru.
 
+Yang lebih penting lagi: **tranche Rp300.000 pertama adalah uji mesin, bukan uji
+hasil.** Dengan 31 sampai 38 klik, hasilnya kemungkinan nol sampai dua lead, dan
+angka sekecil itu tidak bisa membedakan "kanalnya jelek" dari "kebetulan sepi".
+Yang dinilai di tahap ini hanya empat baris di tabel bawah. Penilaian apakah
+kanal ini layak dilanjutkan ditunda sampai belanja total menembus Rp600.000.
+
 | Yang dilihat | Sehat bila | Bertindak bila |
 | --- | --- | --- |
 | Tayangan | Mulai muncul dalam 24 jam | Nol setelah 24 jam, berarti bid atau anggaran terlalu rendah |
@@ -208,8 +248,10 @@ Dua jebakan yang sudah memakan waktu dan sebaiknya tidak terulang.
 - [x] Tindakan konversi `CoreAsia - Lead Form Saved` ada, Tindakan utama, hitungan Satu, disertakan di sasaran akun
 - [x] ID dan label cocok dengan yang dikirim situs (`AW-18379615354/3qtKCPCF094cEPrYirxE`)
 - [x] Tag Google terbukti milik akun `586-398-5692`, dan termuat di produksi tanpa terhalang CSP
-- [ ] Lead uji dikirim, konversinya muncul dalam 24 jam
-- [ ] Dana Rp600.000 masuk
+- [x] Lead uji dikirim 11 Agustus 2026 pukul 14.16 WIB, beacon `pagead/conversion/18379615354` terbukti berangkat, contact dan deal masuk ke workspace `coreasia`
+- [ ] Konversinya muncul di Google Ads dalam 24 jam
+- [ ] Dana tahap pertama Rp300.000 masuk
+- [ ] Isi ulang saat saldo tersisa sekitar Rp100.000, jangan tunggu nol
 - [ ] Kampanye dan grup iklan diaktifkan
 - [ ] Jeda manual dijadwalkan untuk 15 sampai 17 Agustus
 - [ ] (ditunda) Tanggal akhir kampanye, hanya wajib bila pembayaran otomatis diaktifkan
