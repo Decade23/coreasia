@@ -1,21 +1,29 @@
 /**
  * Pembungkus RPC admin CashFlow — satu tempat untuk semua panggilan ke Supabase.
  *
- * Tiga jenis kegagalan dibedakan supaya halaman bisa menjawab dengan benar:
- *   'totp'        42501 hint mfa-wajib → sesi bukan identitas konsol dan belum aal2;
- *                                        halaman menyambung ulang lewat /masuk
- *   'bukan-admin' 42501 lainnya        → identitas sesi ini bukan admin CashFlow
- *   'alasan'      22023                → alasan audit kurang panjang
+ * Jenis kegagalan dibedakan supaya halaman bisa menjawab dengan benar:
+ *   'sesi'        tidak ada sesi Supabase di tab ini, atau 42501 hint
+ *                 sesi-konsol/mfa-wajib (sesi tidak dikenal server) → sambung
+ *                 ulang lewat /masuk
+ *   'totp'        (lama) diperlakukan sama dengan 'sesi'
+ *   'bukan-admin' 42501 lainnya → identitas sesi ini bukan admin CashFlow
+ *   'alasan'      alasan kurang dari 8 aksara (diperiksa DI SINI sebelum
+ *                 awalan pelaku ditambahkan, supaya awalan tidak memenuhi
+ *                 syarat panjang atas nama pengguna) atau 22023 dari server
  *   'lain'        sisanya
+ *
+ * SESI HILANG DI TENGAH HALAMAN. sessionStorage bisa kosong (tab dipulihkan,
+ * refresh token ditolak). rpc() memeriksa sesi dulu; kalau tidak ada, minta
+ * server mencetak lagi SEKALI lalu lanjut — pengguna tidak melihat apa-apa.
  *
  * RPC yang membuka data pribadi WAJIB menerima `alasan` di sini — tanda tangan
  * TypeScript-nya yang memaksa, supaya tidak ada halaman baru yang lupa.
  *
  * PELAKU. Sesi Supabase-nya milik identitas konsol bersama (lihat
- * server/api/cashflow/sesi.post.ts), jadi kolom admin_id di admin_audit selalu
- * identitas itu. Manusia di baliknya dicatat lewat awalan "[email console]"
- * yang disisipkan otomatis ke SETIAP p_alasan di sini — ikut tersimpan di
- * admin_audit.reason, dan tidak bisa dilupakan halaman mana pun.
+ * server/api/cashflow/sesi.post.ts), jadi admin_id di admin_audit selalu
+ * identitas itu. Bukti siapa manusianya ada di SERVER: admin_audit.pelaku
+ * diisi trigger dari admin_konsol_sesi (migrasi 0078). Awalan "[email]" pada
+ * p_alasan di sini hanya keterangan yang enak dibaca di daftar audit.
  */
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type {
@@ -23,7 +31,7 @@ import type {
   RuangDTO, DetailPenggunaDTO,
 } from '~/adapters/cashflow'
 
-export type JenisGalat = 'totp' | 'bukan-admin' | 'alasan' | 'konfigurasi' | 'lain'
+export type JenisGalat = 'sesi' | 'totp' | 'bukan-admin' | 'alasan' | 'konfigurasi' | 'lain'
 export class GalatAdmin extends Error {
   constructor(public jenis: JenisGalat, pesan: string) { super(pesan) }
 }
@@ -32,7 +40,7 @@ function petakanGalat(e: any): GalatAdmin {
   const kode = e?.code ?? ''
   const hint = e?.hint ?? ''
   const pesan = e?.message ?? 'Gagal memanggil server.'
-  if (kode === '42501' && hint === 'mfa-wajib') return new GalatAdmin('totp', pesan)
+  if (kode === '42501' && (hint === 'mfa-wajib' || hint === 'sesi-konsol')) return new GalatAdmin('sesi', pesan)
   if (kode === '42501') return new GalatAdmin('bukan-admin', pesan)
   if (kode === '22023') return new GalatAdmin('alasan', pesan)
   return new GalatAdmin('lain', pesan)
@@ -55,15 +63,42 @@ export const useCashflowAdmin = () => {
   const sb = $cashflowSupabase as SupabaseClient | null
 
   const { user: adminConsole } = useAdminAuth()
+  const sesiKonsol = useCashflowSesi()
+
+  /** Pastikan tab ini punya sesi; kalau tidak, cetak sekali. */
+  async function pastikanSesi(): Promise<void> {
+    if (!sb) throw new GalatAdmin('konfigurasi', 'Modul CashFlow belum dikonfigurasi.')
+    const { data } = await sb.auth.getSession()
+    if (data.session) return
+    const h = await sesiKonsol.sambung()
+    if (!h.ok) throw new GalatAdmin('sesi', h.sebab)
+  }
 
   async function rpc<T>(nama: string, args?: Record<string, unknown>): Promise<T> {
-    if (!sb) throw new GalatAdmin('konfigurasi', 'Modul CashFlow belum dikonfigurasi.')
+    await pastikanSesi()
     const a: Record<string, unknown> = { ...(args ?? {}) }
     if (typeof a.p_alasan === 'string') {
-      a.p_alasan = `[${adminConsole.value?.email ?? 'console'}] ${a.p_alasan}`
+      const asli = a.p_alasan.trim()
+      if (asli.length < 8) throw new GalatAdmin('alasan', 'Alasan minimal 8 aksara.')
+      const siapa = sesiKonsol.pelaku.value || adminConsole.value?.email || 'console'
+      a.p_alasan = `[${siapa}] ${asli}`
     }
-    const { data, error } = await sb.rpc(nama, a)
-    if (error) throw petakanGalat(error)
+    const { data, error } = await sb!.rpc(nama, a)
+    if (error) {
+      const g = petakanGalat(error)
+      // Sesi ditolak server (dicabut, atau tab memegang sesi basi): cetak
+      // ulang sekali dan coba lagi — kalau masih ditolak, biar halaman yang bicara.
+      if (g.jenis === 'sesi') {
+        await sb!.auth.signOut({ scope: 'local' }).catch(() => {})
+        const h = await sesiKonsol.sambung()
+        if (h.ok) {
+          const ulang = await sb!.rpc(nama, a)
+          if (!ulang.error) return ulang.data as T
+          throw petakanGalat(ulang.error)
+        }
+      }
+      throw g
+    }
     return data as T
   }
 

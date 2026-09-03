@@ -9,7 +9,7 @@ onMounted(async () => {
   try { rows.value = await api.daftarRuang(200, 0) }
   catch (e: any) {
     galat.value = e?.jenis === 'bukan-admin' ? tcf('umum.bukanAdmin') : (e?.message ?? tcf('umum.gagal'))
-    if (e?.jenis === 'totp') navigateTo({ path: '/console/cashflow/masuk', query: { sebab: 'totp', ke: '/console/cashflow/ruang' } })
+    if (e?.jenis === 'totp' || e?.jenis === 'sesi') navigateTo({ path: '/console/cashflow/masuk', query: { sebab: 'sesi', ke: '/console/cashflow/ruang' } })
   } finally { memuat.value = false }
 })
 const columns = computed(() => [

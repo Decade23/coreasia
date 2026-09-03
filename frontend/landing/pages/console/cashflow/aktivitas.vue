@@ -9,7 +9,7 @@ onMounted(async () => {
   try { rows.value = await api.aktivitasTerbaru(150) }
   catch (e: any) {
     galat.value = e?.jenis === 'bukan-admin' ? tcf('umum.bukanAdmin') : (e?.message ?? tcf('umum.gagal'))
-    if (e?.jenis === 'totp') navigateTo({ path: '/console/cashflow/masuk', query: { sebab: 'totp', ke: '/console/cashflow/aktivitas' } })
+    if (e?.jenis === 'totp' || e?.jenis === 'sesi') navigateTo({ path: '/console/cashflow/masuk', query: { sebab: 'sesi', ke: '/console/cashflow/aktivitas' } })
   } finally { memuat.value = false }
 })
 const jam = (iso: string) => new Date(iso).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })

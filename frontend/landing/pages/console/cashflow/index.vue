@@ -23,7 +23,7 @@ onMounted(async () => {
     stats.value = s; keberhasilan.value = k; corong.value = c; retensi.value = r
   } catch (e: any) {
     galat.value = { jenis: e?.jenis ?? 'lain', pesan: e?.message ?? '' }
-    if (e?.jenis === 'totp') navigateTo({ path: '/console/cashflow/masuk', query: { sebab: 'totp', ke: '/console/cashflow' } })
+    if (e?.jenis === 'totp' || e?.jenis === 'sesi') navigateTo({ path: '/console/cashflow/masuk', query: { sebab: 'sesi', ke: '/console/cashflow' } })
   } finally { memuat.value = false }
 })
 

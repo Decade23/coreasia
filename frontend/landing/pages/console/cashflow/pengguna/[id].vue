@@ -36,7 +36,7 @@ const buka = async (a: string) => {
     detail.value = d; aktivitas.value = ak; transaksi.value = tx
   } catch (e: any) {
     galat.value = e?.jenis === 'bukan-admin' ? tcf('umum.bukanAdmin') : e?.jenis === 'alasan' ? tcf('alasan.pendek') : (e?.message ?? tcf('umum.gagal'))
-    if (e?.jenis === 'totp') navigateTo({ path: '/console/cashflow/masuk', query: { sebab: 'totp', ke: route.fullPath } })
+    if (e?.jenis === 'totp' || e?.jenis === 'sesi') navigateTo({ path: '/console/cashflow/masuk', query: { sebab: 'sesi', ke: route.fullPath } })
   } finally { memuat.value = false }
 }
 

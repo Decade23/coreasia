@@ -10,7 +10,7 @@ const { tcf } = useCashflowI18n()
 const route = useRoute()
 const sesi = useCashflowSesi()
 
-const SEBAB_DIKENAL = ['konfigurasi', 'belum-konfigurasi', 'tanpa-cookie', 'cookie-ditolak', 'tanpa-izin', 'mint-gagal', 'jaringan', 'sesi', 'totp']
+const SEBAB_DIKENAL = ['konfigurasi', 'belum-konfigurasi', 'tanpa-cookie', 'cookie-ditolak', 'gateway-gagal', 'tanpa-izin', 'mint-gagal', 'lintas-situs', 'jaringan', 'sesi', 'totp', 'sibuk']
 const sebab = ref(typeof route.query.sebab === 'string' ? route.query.sebab : '')
 const pesan = computed(() => tcf(`masuk.sebab.${SEBAB_DIKENAL.includes(sebab.value) ? sebab.value : 'lain'}`))
 
@@ -22,6 +22,12 @@ const tujuan = computed(() => {
 })
 
 const coba = async () => {
+  // Sesi yang masih sah tidak perlu dicetak ulang — langsung kembali.
+  if (sesi.sb) {
+    const { data } = await sesi.sb.auth.getSession()
+    if (data.session && sebab.value !== 'sesi' && sebab.value !== 'totp') return navigateTo(tujuan.value)
+    if (data.session) await sesi.sb.auth.signOut({ scope: 'local' }).catch(() => {})
+  }
   const h = await sesi.sambung()
   if (h.ok) return navigateTo(tujuan.value)
   sebab.value = h.sebab

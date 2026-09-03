@@ -14,8 +14,14 @@ interface AdminUser {
 export const useAdminAuth = () => {
   const api = useAdminApi()
   const { tc } = useConsoleI18n()
-  const token = useCookie('auth_admin_token', { path: '/' })
-  const refreshToken = useCookie('refresh_admin_token', { path: '/' })
+  /* Cookie dipasang dari JS (gateway memulangkan token di badan jawaban), jadi
+     HttpOnly mustahil dari sini. Yang bisa: SameSite=Lax supaya cookie tidak
+     ikut permintaan lintas situs yang dipicu halaman lain, dan Secure di
+     produksi. Secure dimatikan di dev karena localhost berjalan lewat http
+     dan peramban membuang cookie Secure di sana. */
+  const opsiCookie = { path: '/', sameSite: 'lax' as const, secure: !import.meta.dev }
+  const token = useCookie('auth_admin_token', opsiCookie)
+  const refreshToken = useCookie('refresh_admin_token', opsiCookie)
 
   const user = useState<AdminUser | null>('admin_user', () => null)
   const loginError = ref('')
@@ -69,6 +75,11 @@ export const useAdminAuth = () => {
   }
 
   const logout = async () => {
+    // Sesi modul CashFlow (Supabase) ikut dicabut di server — tanpa ini token
+    // di sessionStorage tetap hidup sampai tab ditutup walau console sudah keluar.
+    try {
+      await useCashflowSesi().keluar()
+    } catch { /* modul tidak terkonfigurasi atau sudah tidak ada sesi */ }
     try {
       await api.post('/admin/auth/logout')
     } catch { /* ignore */ }

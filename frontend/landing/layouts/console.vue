@@ -50,10 +50,10 @@ const menuItems = computed(() => [
   { label: tc('layout.cad'), icon: 'lucide:download-cloud', to: '/console/cad' },
   { label: tc('layout.users'), icon: 'lucide:users', to: '/console/users' },
   { label: tc('layout.auditLog'), icon: 'lucide:scroll-text', to: '/console/audit-log' },
-  /* Modul produk. Izin `cashflow:view` (usePermissions, cermin rbac/permissions.go
-     di gateway) hanya membuka MENU dan cangkang halamannya. Ini gerbang pertama;
-     datanya dijaga sesi Supabase ber-TOTP di tiap halaman modul — cookie console
-     tidak pernah cukup untuk data keuangan orang. */
+  /* Modul produk. Izin `cashflow:view` (utils/rbac.ts, cermin rbac/permissions.go
+     di gateway) membuka menu ini; izin yang sama diperiksa ulang server Nitro
+     sebelum ia mencetak sesi Supabase modul dari cookie console
+     (server/api/cashflow/sesi.post.ts). Satu login, dua pemeriksaan. */
   ...(can('cashflow:view')
     ? [{ label: tc('layout.cashflow'), icon: 'lucide:wallet', to: '/console/cashflow' }]
     : []),

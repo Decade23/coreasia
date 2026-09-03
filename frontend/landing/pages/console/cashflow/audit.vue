@@ -18,7 +18,7 @@ const muat = async () => {
     rows.value = r; aksi.value = a
   } catch (e: any) {
     galat.value = e?.jenis === 'bukan-admin' ? tcf('umum.bukanAdmin') : (e?.message ?? tcf('umum.gagal'))
-    if (e?.jenis === 'totp') navigateTo({ path: '/console/cashflow/masuk', query: { sebab: 'totp', ke: '/console/cashflow/audit' } })
+    if (e?.jenis === 'totp' || e?.jenis === 'sesi') navigateTo({ path: '/console/cashflow/masuk', query: { sebab: 'sesi', ke: '/console/cashflow/audit' } })
   } finally { memuat.value = false }
 }
 onMounted(muat); watch(filter, muat)

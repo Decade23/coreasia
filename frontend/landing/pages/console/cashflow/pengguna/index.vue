@@ -22,7 +22,7 @@ const muat = async () => {
     semua.value = rows.map(kePengguna)
   } catch (e: any) {
     galat.value = e?.jenis === 'bukan-admin' ? tcf('umum.bukanAdmin') : (e?.message ?? tcf('umum.gagal'))
-    if (e?.jenis === 'totp') navigateTo({ path: '/console/cashflow/masuk', query: { sebab: 'totp', ke: '/console/cashflow/pengguna' } })
+    if (e?.jenis === 'totp' || e?.jenis === 'sesi') navigateTo({ path: '/console/cashflow/masuk', query: { sebab: 'sesi', ke: '/console/cashflow/pengguna' } })
   } finally { memuat.value = false }
 }
 onMounted(muat)

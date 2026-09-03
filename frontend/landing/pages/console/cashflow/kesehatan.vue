@@ -15,7 +15,7 @@ onMounted(async () => {
     kesehatan.value = k; yatim.value = y; ocr.value = o; telemetri.value = t
   } catch (e: any) {
     galat.value = e?.jenis === 'bukan-admin' ? tcf('umum.bukanAdmin') : (e?.message ?? tcf('umum.gagal'))
-    if (e?.jenis === 'totp') navigateTo({ path: '/console/cashflow/masuk', query: { sebab: 'totp', ke: '/console/cashflow/kesehatan' } })
+    if (e?.jenis === 'totp' || e?.jenis === 'sesi') navigateTo({ path: '/console/cashflow/masuk', query: { sebab: 'sesi', ke: '/console/cashflow/kesehatan' } })
   } finally { memuat.value = false }
 })
 const ukuranYatim = computed(() => yatim.value.reduce((s, f) => s + Number(f.ukuran || 0), 0))
