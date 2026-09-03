@@ -15,6 +15,14 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 
 export type HasilSambung = { ok: true } | { ok: false; sebab: string }
 
+/* Satu pencetakan untuk semua pemanggil. Halaman Ringkasan memanggil empat RPC
+   sekaligus (Promise.all); kalau sesi kebetulan hilang, keempatnya meminta
+   sesi pada saat yang sama. Tanpa ini, yang pertama mencetak dan tiga lainnya
+   gagal "sibuk" — halaman menampilkan galat untuk sesi yang sebenarnya sedang
+   dibuat. Promise yang sedang berjalan dibagikan; modul ini hanya hidup di
+   peramban (plugin .client), jadi lingkup modul aman. */
+let pencetakanBerjalan: Promise<HasilSambung> | null = null
+
 export const useCashflowSesi = () => {
   const { $cashflowSupabase } = useNuxtApp()
   const sb = $cashflowSupabase as SupabaseClient | null
@@ -23,9 +31,8 @@ export const useCashflowSesi = () => {
   const pelaku = useState<string>('cf_pelaku', () => '')
   const terkonfigurasi = computed(() => !!sb)
 
-  const sambung = async (): Promise<HasilSambung> => {
+  const cetak = async (): Promise<HasilSambung> => {
     if (!sb) return { ok: false, sebab: 'konfigurasi' }
-    if (sibuk.value) return { ok: false, sebab: 'sibuk' }
     sibuk.value = true
     try {
       const r = await $fetch<{ access_token: string; refresh_token: string; pelaku?: string }>(
@@ -41,6 +48,13 @@ export const useCashflowSesi = () => {
     } finally {
       sibuk.value = false
     }
+  }
+
+  const sambung = (): Promise<HasilSambung> => {
+    if (!pencetakanBerjalan) {
+      pencetakanBerjalan = cetak().finally(() => { pencetakanBerjalan = null })
+    }
+    return pencetakanBerjalan
   }
 
   const keluar = async () => {
