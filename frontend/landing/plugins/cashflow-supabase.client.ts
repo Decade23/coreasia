@@ -1,20 +1,20 @@
 /**
- * Klien Supabase untuk modul CashFlow di /console/cashflow — SESI KEDUA.
+ * Klien Supabase untuk modul CashFlow di /console/cashflow.
  *
  * Console masuk lewat gateway Go (cookie auth_admin_token). Data CashFlow hidup
- * di Supabase dan setiap RPC admin-nya menuntut sesi Supabase ber-TOTP (aal2)
- * dari akun yang terdaftar di admin_users CashFlow. Cookie console tidak pernah
- * cukup — dan itu disengaja: data keuangan orang tidak boleh terbuka hanya
- * dengan kata sandi. Jadi modul ini membawa sesinya sendiri.
+ * di Supabase dan setiap RPC admin-nya menuntut sesi Supabase asli dari akun
+ * yang terdaftar di admin_users — RLS dan kolom pelaku di admin_audit
+ * bergantung padanya. Sesi itu TIDAK diminta dari pengguna: server Nitro
+ * membuatkannya dari cookie console yang sudah tervalidasi
+ * (server/api/cashflow/sesi.post.ts, dipanggil middleware cashflow-admin).
+ * Klien ini hanya wadahnya.
  *
  * KENAPA sessionStorage, BUKAN localStorage (bawaan supabase-js)
  *
- * localStorage bertahan lintas tab dan lintas restart peramban; sesi admin yang
- * bisa membuka data keuangan 16 orang tidak boleh bertahan selama itu di mesin
- * yang mungkin dipakai bersama. sessionStorage mati bersama tab. Harganya: tab
- * baru = masuk lagi (email + sandi + TOTP). Untuk satu admin yang memakainya
- * setiap hari, itu harga yang wajar; kalau terlalu menyebalkan, alternatifnya
- * cookie Secure; SameSite=Strict berumur pendek — bukan localStorage.
+ * localStorage bertahan lintas tab dan lintas restart peramban; sesi yang bisa
+ * membuka data keuangan orang tidak perlu bertahan selama itu di mesin yang
+ * mungkin dipakai bersama. sessionStorage mati bersama tab, dan karena sesinya
+ * dibuat ulang otomatis, harganya bagi pengguna nol.
  *
  * `.client.ts`: klien ini hanya ada di peramban. Di SSR tidak ada sessionStorage,
  * dan tidak ada halaman modul yang dirender dengan data di server.

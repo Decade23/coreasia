@@ -2,13 +2,20 @@
  * Pembungkus RPC admin CashFlow — satu tempat untuk semua panggilan ke Supabase.
  *
  * Tiga jenis kegagalan dibedakan supaya halaman bisa menjawab dengan benar:
- *   'totp'        42501 hint mfa-wajib → sesi ada tapi belum aal2; arahkan ke /masuk
- *   'bukan-admin' 42501 lainnya        → akun console ini bukan admin CashFlow
+ *   'totp'        42501 hint mfa-wajib → sesi bukan identitas konsol dan belum aal2;
+ *                                        halaman menyambung ulang lewat /masuk
+ *   'bukan-admin' 42501 lainnya        → identitas sesi ini bukan admin CashFlow
  *   'alasan'      22023                → alasan audit kurang panjang
  *   'lain'        sisanya
  *
  * RPC yang membuka data pribadi WAJIB menerima `alasan` di sini — tanda tangan
  * TypeScript-nya yang memaksa, supaya tidak ada halaman baru yang lupa.
+ *
+ * PELAKU. Sesi Supabase-nya milik identitas konsol bersama (lihat
+ * server/api/cashflow/sesi.post.ts), jadi kolom admin_id di admin_audit selalu
+ * identitas itu. Manusia di baliknya dicatat lewat awalan "[email console]"
+ * yang disisipkan otomatis ke SETIAP p_alasan di sini — ikut tersimpan di
+ * admin_audit.reason, dan tidak bisa dilupakan halaman mana pun.
  */
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type {
@@ -47,9 +54,15 @@ export const useCashflowAdmin = () => {
   const { $cashflowSupabase } = useNuxtApp()
   const sb = $cashflowSupabase as SupabaseClient | null
 
+  const { user: adminConsole } = useAdminAuth()
+
   async function rpc<T>(nama: string, args?: Record<string, unknown>): Promise<T> {
     if (!sb) throw new GalatAdmin('konfigurasi', 'Modul CashFlow belum dikonfigurasi.')
-    const { data, error } = await sb.rpc(nama, args ?? {})
+    const a: Record<string, unknown> = { ...(args ?? {}) }
+    if (typeof a.p_alasan === 'string') {
+      a.p_alasan = `[${adminConsole.value?.email ?? 'console'}] ${a.p_alasan}`
+    }
+    const { data, error } = await sb.rpc(nama, a)
     if (error) throw petakanGalat(error)
     return data as T
   }

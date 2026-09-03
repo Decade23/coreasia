@@ -234,13 +234,21 @@ export default defineNuxtConfig({
         formats: ['webp', 'avif'],
     },
     runtimeConfig: {
+        /* HANYA di server Nitro (tidak pernah masuk bundle klien — Nuxt hanya
+           mengekspos `public`). Dipakai server/api/cashflow/sesi.post.ts untuk
+           membuatkan sesi Supabase modul CashFlow dari cookie console yang
+           sudah divalidasi ke gateway. Tanpa kunci ini modul menampilkan
+           keadaan "belum dikonfigurasi", bukan galat. */
+        cashflowSupabaseServiceKey: process.env.NUXT_CASHFLOW_SUPABASE_SERVICE_KEY || '',
+        cashflowKonsolEmail: process.env.NUXT_CASHFLOW_KONSOL_EMAIL || 'konsol@coreasia.id',
         public: {
             /* Modul CashFlow di /console/cashflow berbicara LANGSUNG ke Supabase
                CashFlow dari peramban, bukan lewat gateway — datanya dijaga RPC
-               ber-penjaga is_platform_admin() yang menuntut sesi Supabase ber-TOTP,
-               dan gateway sengaja tidak pernah memegang kunci Supabase. Anon key
-               memang publik (tertanam di setiap APK); yang menjaga adalah RLS
-               dan sesi, bukan kerahasiaan kunci ini. */
+               ber-penjaga is_platform_admin() dan RLS. Sesinya dibuatkan server
+               Nitro dari cookie console (lihat kunci non-public di atas); gateway
+               sendiri tidak pernah memegang kunci Supabase. Anon key memang
+               publik (tertanam di setiap APK); yang menjaga adalah RLS dan sesi,
+               bukan kerahasiaan kunci ini. */
             cashflowSupabaseUrl: process.env.NUXT_PUBLIC_CASHFLOW_SUPABASE_URL || '',
             cashflowSupabaseAnonKey: process.env.NUXT_PUBLIC_CASHFLOW_SUPABASE_ANON_KEY || '',
             gatewayUrl: process.env.GATEWAY_URL || 'http://localhost:8081/api',
