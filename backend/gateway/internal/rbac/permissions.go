@@ -8,15 +8,23 @@ const (
 	DashboardView Permission = "dashboard:view"
 )
 
+// CashFlow — modul produk di dalam console. Izin ini hanya membuka MENU dan
+// halaman cangkangnya; datanya sendiri dijaga gerbang kedua di Supabase
+// (is_platform_admin: terdaftar di admin_users CashFlow DAN sesi ber-TOTP).
+// Dua gerbang sengaja: cookie console tidak pernah cukup untuk data keuangan orang.
+const (
+	CashflowView Permission = "cashflow:view"
+)
+
 // Articles
 const (
-	ArticlesList   Permission = "articles:list"
-	ArticlesView   Permission = "articles:view"
-	ArticlesCreate Permission = "articles:create"
-	ArticlesUpdate Permission = "articles:update"
-	ArticlesDelete Permission = "articles:delete"
+	ArticlesList    Permission = "articles:list"
+	ArticlesView    Permission = "articles:view"
+	ArticlesCreate  Permission = "articles:create"
+	ArticlesUpdate  Permission = "articles:update"
+	ArticlesDelete  Permission = "articles:delete"
 	ArticlesPublish Permission = "articles:publish"
-	ArticlesStats  Permission = "articles:stats"
+	ArticlesStats   Permission = "articles:stats"
 )
 
 // Users
@@ -94,34 +102,35 @@ const (
 // Keep in sync with frontend: composables/usePermissions.ts
 var RolePermissions = map[string]map[Permission]bool{
 	"super_admin": {
-		DashboardView:   true,
-		ArticlesList:    true,
-		ArticlesView:    true,
-		ArticlesCreate:  true,
-		ArticlesUpdate:  true,
-		ArticlesDelete:  true,
-		ArticlesPublish: true,
-		ArticlesStats:   true,
-		UsersList:       true,
-		UsersCreate:     true,
-		UsersUpdate:     true,
-		UsersDelete:     true,
-		BotsList:        true,
-		BotsView:        true,
-		BotsCreate:      true,
-		BotsUpdate:      true,
-		BotsDelete:      true,
-		BotsTrigger:     true,
-		AIGenerate:      true,
-		AIModels:        true,
-		AISettingsView:  true,
-		AISettingsUpdate: true,
-		APIKeysList:     true,
-		APIKeysView:     true,
-		APIKeysCreate:   true,
-		APIKeysUpdate:   true,
-		APIKeysDelete:   true,
-		APIKeysCopy:     true,
+		DashboardView:     true,
+		CashflowView:      true,
+		ArticlesList:      true,
+		ArticlesView:      true,
+		ArticlesCreate:    true,
+		ArticlesUpdate:    true,
+		ArticlesDelete:    true,
+		ArticlesPublish:   true,
+		ArticlesStats:     true,
+		UsersList:         true,
+		UsersCreate:       true,
+		UsersUpdate:       true,
+		UsersDelete:       true,
+		BotsList:          true,
+		BotsView:          true,
+		BotsCreate:        true,
+		BotsUpdate:        true,
+		BotsDelete:        true,
+		BotsTrigger:       true,
+		AIGenerate:        true,
+		AIModels:          true,
+		AISettingsView:    true,
+		AISettingsUpdate:  true,
+		APIKeysList:       true,
+		APIKeysView:       true,
+		APIKeysCreate:     true,
+		APIKeysUpdate:     true,
+		APIKeysDelete:     true,
+		APIKeysCopy:       true,
 		KeywordsList:      true,
 		KeywordsView:      true,
 		KeywordsCreate:    true,
@@ -142,18 +151,18 @@ var RolePermissions = map[string]map[Permission]bool{
 		CADAnalyticsView:  true,
 	},
 	"admin": {
-		DashboardView:  true,
-		ArticlesList:   true,
-		ArticlesView:   true,
-		ArticlesCreate: true,
-		ArticlesUpdate: true,
-		ArticlesStats:  true,
-		UsersList:      true,
-		BotsList:       true,
-		BotsView:       true,
-		AIGenerate:     true,
-		AIModels:       true,
-		AISettingsView: true,
+		DashboardView:     true,
+		ArticlesList:      true,
+		ArticlesView:      true,
+		ArticlesCreate:    true,
+		ArticlesUpdate:    true,
+		ArticlesStats:     true,
+		UsersList:         true,
+		BotsList:          true,
+		BotsView:          true,
+		AIGenerate:        true,
+		AIModels:          true,
+		AISettingsView:    true,
 		KeywordsList:      true,
 		KeywordsView:      true,
 		KeywordsAISuggest: true,
@@ -161,11 +170,11 @@ var RolePermissions = map[string]map[Permission]bool{
 		APIKeysView:       true,
 		UploadCreate:      true,
 		AuditList:         true,
-		CADLicensesList:  true,
-		CADLicensesView:  true,
-		CADDevicesList:   true,
-		CADDevicesManage: true,
-		CADAnalyticsView: true,
+		CADLicensesList:   true,
+		CADLicensesView:   true,
+		CADDevicesList:    true,
+		CADDevicesManage:  true,
+		CADAnalyticsView:  true,
 	},
 }
 
