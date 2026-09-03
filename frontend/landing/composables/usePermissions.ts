@@ -4,6 +4,7 @@ type Permission = string
 const ROLE_PERMISSIONS: Record<string, Permission[]> = {
   super_admin: [
     'dashboard:view',
+    'cashflow:view',
     'articles:list', 'articles:view', 'articles:create', 'articles:update',
     'articles:delete', 'articles:publish', 'articles:stats',
     'users:list', 'users:create', 'users:update', 'users:delete',

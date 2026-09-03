@@ -15,6 +15,9 @@ export default defineNuxtConfig({
         browserDevtoolsTiming: false,
     },
     modules: ['@nuxtjs/seo', '@nuxt/eslint', '@nuxt/fonts', '@nuxt/icon', '@nuxt/image', '@pinia/nuxt'],
+    // Composable modul CashFlow hidup di subfolder sendiri supaya tidak
+    // bercampur dengan composable console; Nuxt hanya memindai satu tingkat.
+    imports: { dirs: ['composables/cashflow'] },
     // Blok `i18n: {...}` dihapus dari sini: @nuxtjs/i18n tidak terpasang (tidak ada di
     // modules maupun package.json), jadi konfigurasi itu tak pernah dibaca siapa pun dan
     // hanya menyesatkan — locale ditangani composables/useCoreI18n.ts.
@@ -232,6 +235,14 @@ export default defineNuxtConfig({
     },
     runtimeConfig: {
         public: {
+            /* Modul CashFlow di /console/cashflow berbicara LANGSUNG ke Supabase
+               CashFlow dari peramban, bukan lewat gateway — datanya dijaga RPC
+               ber-penjaga is_platform_admin() yang menuntut sesi Supabase ber-TOTP,
+               dan gateway sengaja tidak pernah memegang kunci Supabase. Anon key
+               memang publik (tertanam di setiap APK); yang menjaga adalah RLS
+               dan sesi, bukan kerahasiaan kunci ini. */
+            cashflowSupabaseUrl: process.env.NUXT_PUBLIC_CASHFLOW_SUPABASE_URL || '',
+            cashflowSupabaseAnonKey: process.env.NUXT_PUBLIC_CASHFLOW_SUPABASE_ANON_KEY || '',
             gatewayUrl: process.env.GATEWAY_URL || 'http://localhost:8081/api',
             gatewayPublicUrl: process.env.GATEWAY_PUBLIC_URL || process.env.GATEWAY_URL || 'http://localhost:8084/api',
             siteUrl: process.env.NUXT_PUBLIC_SITE_URL || process.env.SITE_URL || 'https://coreasia.id',

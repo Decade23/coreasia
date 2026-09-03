@@ -8,6 +8,7 @@ import {
 const { theme, setTheme } = useCoreTheme()
 const toggleTheme = () => setTheme(theme.value === 'dark' ? 'light' : 'dark')
 const { user, logout } = useAdminAuth()
+const { can } = usePermissions()
 const { tc } = useConsoleI18n()
 const route = useRoute()
 
@@ -49,6 +50,13 @@ const menuItems = computed(() => [
   { label: tc('layout.cad'), icon: 'lucide:download-cloud', to: '/console/cad' },
   { label: tc('layout.users'), icon: 'lucide:users', to: '/console/users' },
   { label: tc('layout.auditLog'), icon: 'lucide:scroll-text', to: '/console/audit-log' },
+  /* Modul produk. Izin `cashflow:view` (usePermissions, cermin rbac/permissions.go
+     di gateway) hanya membuka MENU dan cangkang halamannya. Ini gerbang pertama;
+     datanya dijaga sesi Supabase ber-TOTP di tiap halaman modul — cookie console
+     tidak pernah cukup untuk data keuangan orang. */
+  ...(can('cashflow:view')
+    ? [{ label: tc('layout.cashflow'), icon: 'lucide:wallet', to: '/console/cashflow' }]
+    : []),
 ])
 
 const isActive = (path: string) => {

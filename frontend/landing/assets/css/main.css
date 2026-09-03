@@ -656,6 +656,13 @@ summary {
         box-shadow: 0 8px 24px rgba(217, 119, 6, 0.35);
     }
 
+    /* Bidang isian console — satu kelas supaya input, select, dan textarea
+       di modul mana pun (CashFlow, dan produk berikutnya) seragam dan ikut
+       tema lewat var(--ca-*). */
+    .ca-input {
+        @apply rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] px-3 py-2 text-sm text-[var(--ca-text)] outline-none transition-colors placeholder:text-[var(--ca-subtle)] focus:border-amber-500 disabled:opacity-60;
+    }
+
     .ca-btn-primary-emerald {
         @apply inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-300 via-emerald-400 to-emerald-500 px-5 py-3 text-sm font-extrabold !text-slate-950 transition-all duration-300 hover:-translate-y-0.5 sm:px-6 tracking-tight;
         box-shadow: 0 10px 25px -5px rgba(16, 185, 129, 0.3);
