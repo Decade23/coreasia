@@ -3,8 +3,9 @@
  *
  * Dipanggil saat admin keluar dari console (useAdminAuth.logout) atau saat
  * modul CashFlow ditinggalkan dengan sengaja. Dua hal dilakukan:
- *   1. admin_konsol_sesi.dicabut diisi → is_platform_admin() menolak sesi ini
- *      seketika, sekalipun access token-nya masih belum kedaluwarsa;
+ *   1. semua catatan sesi milik orang yang sama dicabut (0080) → tab lain
+ *      orang itu ikut mati, dan is_platform_admin() menolak seketika walau
+ *      access token-nya belum kedaluwarsa;
  *   2. refresh token-nya dicabut di GoTrue (signOut scope 'local' — hanya sesi
  *      ini, bukan sesi tab/admin lain yang memakai identitas konsol yang sama).
  *
@@ -40,7 +41,13 @@ export default defineEventHandler(async (event) => {
 
   const sessionId = klaimJwt(token)?.session_id
   if (typeof sessionId === 'string') {
-    const { error } = await admin.rpc('admin_konsol_sesi_cabut', { p_session: sessionId })
+    // Siapa pemilik sesi ini? Semua sesi orang yang sama ikut dicabut —
+    // sessionStorage per tab berarti tab lain tidak tahu tab ini sudah keluar.
+    const { data: baris } = await admin
+      .from('admin_konsol_sesi').select('pelaku').eq('session_id', sessionId).maybeSingle()
+    const { error } = baris?.pelaku
+      ? await admin.rpc('admin_konsol_sesi_cabut_pelaku', { p_email: baris.pelaku })
+      : await admin.rpc('admin_konsol_sesi_cabut', { p_session: sessionId })
     if (error) {
       // Tanpa pencabutan di tabel, access token ini masih diterima
       // is_platform_admin() sampai kedaluwarsa — jangan pura-pura berhasil.

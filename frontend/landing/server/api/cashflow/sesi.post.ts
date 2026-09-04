@@ -7,9 +7,11 @@
  * non-public). Peramban hanya menerima access + refresh token sesi biasa.
  *
  * Urutan:
- *   0. permintaan harus dari halaman kita sendiri: header X-CF-Sesi (fetch
- *      lintas situs tidak bisa memasangnya tanpa preflight yang pasti gagal)
- *      dan Sec-Fetch-Site bukan cross-site.
+ *   0. permintaan harus dari halaman kita sendiri: header X-CF-Sesi dan
+ *      Sec-Fetch-Site bukan cross-site. Aturan '/api/**' { cors: true } memang
+ *      memasang Allow-Origin: * pada rute ini, tapi TANPA Allow-Credentials —
+ *      peramban menolak permintaan ber-cookie lintas asal, dan tanpa cookie
+ *      rute ini menjawab 401. Jangan pernah menambahkan allow-credentials.
  *   1. cookie auth_admin_token → GET {gateway}/admin/auth/me. Gateway yang
  *      memutuskan siapa pemegang cookie; rute ini tidak mem-parse JWT sendiri.
  *      401/403 dari gateway = cookie ditolak; gagal lain = gateway bermasalah,

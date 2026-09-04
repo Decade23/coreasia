@@ -275,10 +275,13 @@ export default defineNuxtConfig({
         },
     },
     routeRules: {
-        /* Rute pencetak sesi CashFlow bukan API publik: tanpa CORS sama sekali,
-           supaya pagar X-CF-Sesi + Sec-Fetch-Site tidak bergantung pada detail
-           Nitro tidak memasang allow-credentials di aturan '/api/**'. */
-        '/api/cashflow/**': { cors: false },
+        /* Catatan untuk /api/cashflow/**: aturan '/api/**' { cors: true } di
+           bawah ikut memasang Access-Control-Allow-Origin: * pada rute pencetak
+           sesi, dan `cors: false` pada pola yang lebih spesifik TIDAK
+           mencabutnya (Nitro sudah menormalkannya jadi headers saat konfigurasi
+           — diuji di dev). Ini aman karena tanpa Allow-Credentials peramban
+           menolak permintaan ber-cookie lintas asal, dan tanpa cookie rutenya
+           menjawab 401. JANGAN pernah menambahkan allow-credentials di sini. */
         // Default security headers
         '/**': {
             headers: {
