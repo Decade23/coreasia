@@ -40,8 +40,15 @@ export default defineEventHandler(async (event) => {
 
   const sessionId = klaimJwt(token)?.session_id
   if (typeof sessionId === 'string') {
-    await admin.rpc('admin_konsol_sesi_cabut', { p_session: sessionId })
+    const { error } = await admin.rpc('admin_konsol_sesi_cabut', { p_session: sessionId })
+    if (error) {
+      // Tanpa pencabutan di tabel, access token ini masih diterima
+      // is_platform_admin() sampai kedaluwarsa — jangan pura-pura berhasil.
+      console.error('[cashflow/sesi] cabut gagal:', error.message)
+      throw createError({ statusCode: 502, statusMessage: 'cabut-gagal' })
+    }
   }
-  await admin.auth.admin.signOut(token, 'local').catch(() => {})
+  const { error: eKeluar } = await admin.auth.admin.signOut(token, 'local')
+  if (eKeluar) console.error('[cashflow/sesi] signOut gagal:', eKeluar.message)
   return { ok: true }
 })

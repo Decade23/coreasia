@@ -47,7 +47,12 @@ const waktu = (iso: string) => new Date(iso).toLocaleString('id-ID', { day: '2-d
           <tr v-for="r in rows" :key="r.id" class="border-t border-[color:var(--ca-border)] text-[var(--ca-text)]">
             <td class="px-4 py-1.5 whitespace-nowrap text-xs text-[var(--ca-subtle)]">{{ waktu(r.created_at) }}</td>
             <td class="px-4 py-1.5"><span class="rounded-full bg-[var(--ca-panel-bg-strong)] px-2 font-mono text-xs">{{ r.action }}</span></td>
-            <td class="px-4 py-1.5 font-mono text-xs">{{ r.admin_email }}</td>
+            <td class="px-4 py-1.5 font-mono text-xs">
+              <!-- pelaku = email admin console yang memegang sesi, diisi server (0078);
+                   admin_email = identitas Supabase yang menjalankan RPC. -->
+              <span v-if="r.pelaku" :title="r.admin_email">{{ r.pelaku }}</span>
+              <span v-else>{{ r.admin_email }}</span>
+            </td>
             <td class="px-4 py-1.5 font-mono text-xs">{{ r.target_email ? samarkanEmail(r.target_email) : (r.target_id?.slice(0, 8) || '—') }}</td>
             <td class="px-4 py-1.5 text-xs text-[var(--ca-muted)]">{{ r.reason || '—' }}</td>
           </tr>

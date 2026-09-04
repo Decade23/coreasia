@@ -17,9 +17,10 @@ export const useAdminAuth = () => {
   /* Cookie dipasang dari JS (gateway memulangkan token di badan jawaban), jadi
      HttpOnly mustahil dari sini. Yang bisa: SameSite=Lax supaya cookie tidak
      ikut permintaan lintas situs yang dipicu halaman lain, dan Secure di
-     produksi. Secure dimatikan di dev karena localhost berjalan lewat http
-     dan peramban membuang cookie Secure di sana. */
-  const opsiCookie = { path: '/', sameSite: 'lax' as const, secure: !import.meta.dev }
+     saat halaman disajikan lewat https. Di http (dev, `nuxt preview` lokal)
+     peramban membuang cookie Secure, jadi ia mengikuti protokol yang dipakai. */
+  const aman = import.meta.client ? window.location.protocol === 'https:' : !import.meta.dev
+  const opsiCookie = { path: '/', sameSite: 'lax' as const, secure: aman }
   const token = useCookie('auth_admin_token', opsiCookie)
   const refreshToken = useCookie('refresh_admin_token', opsiCookie)
 

@@ -21,7 +21,7 @@ onMounted(muat)
 
 const buat = async () => {
   galat.value = ''
-  if (!f.judul.trim() || !f.isi.trim() || f.alasan.trim().length < 5) { galat.value = tcf('alasan.pendek'); return }
+  if (!f.judul.trim() || !f.isi.trim() || f.alasan.trim().length < 8) { galat.value = tcf('alasan.pendek'); return }
   try {
     await api.buatPengumuman(f.judul.trim(), f.isi.trim(), f.level, new Date(f.mulai).toISOString(), f.sampai ? new Date(f.sampai).toISOString() : null, f.alasan.trim())
     bukaForm.value = false; Object.assign(f, { judul: '', isi: '', alasan: '' }); await muat()
@@ -29,7 +29,7 @@ const buat = async () => {
 }
 const hentikan = async (id: string) => {
   const a = window.prompt(tcf('sakelar.alasanUbah'))
-  if (!a || a.trim().length < 5) return
+  if (!a || a.trim().length < 8) return
   try { await api.hentikanPengumuman(id, a.trim()); await muat() } catch (e: any) { galat.value = e?.message ?? tcf('umum.gagal') }
 }
 const aktif = (p: PengumumanDTO) => !p.sampai || new Date(p.sampai).getTime() > Date.now()

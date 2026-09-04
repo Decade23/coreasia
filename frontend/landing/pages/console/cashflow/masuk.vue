@@ -23,10 +23,11 @@ const tujuan = computed(() => {
 
 const coba = async () => {
   // Sesi yang masih sah tidak perlu dicetak ulang — langsung kembali.
-  if (sesi.sb) {
-    const { data } = await sesi.sb.auth.getSession()
+  const sb = await sesi.ambil()
+  if (sb) {
+    const { data } = await sb.auth.getSession()
     if (data.session && sebab.value !== 'sesi' && sebab.value !== 'totp') return navigateTo(tujuan.value)
-    if (data.session) await sesi.sb.auth.signOut({ scope: 'local' }).catch(() => {})
+    if (data.session) await sb.auth.signOut({ scope: 'local' }).catch(() => {})
   }
   const h = await sesi.sambung()
   if (h.ok) return navigateTo(tujuan.value)

@@ -68,6 +68,7 @@ export default defineEventHandler(async (event) => {
     const r = await $fetch<JawabanMe>(`${config.public.gatewayUrl}/admin/auth/me`, {
       headers: { Authorization: `Bearer ${cookie}` },
       timeout: 8000,
+      retry: 0, // ofetch mengulang sendiri; dua kali 8 detik terlalu lama untuk satu klik
     })
     me = r?.data ?? null
   } catch (e: any) {
@@ -106,19 +107,28 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 503, statusMessage: 'belum-konfigurasi' })
   }
 
-  // 4. Cetak sesi.
-  const { data: tautan, error: eTautan } = await admin.auth.admin.generateLink({ type: 'magiclink', email })
-  const tokenHash = tautan?.properties?.hashed_token
-  if (eTautan || !tokenHash) {
-    // Pesan galat Supabase aman dicatat; yang tidak boleh tercatat adalah kuncinya.
-    console.error('[cashflow/sesi] generateLink gagal:', eTautan?.message ?? 'tanpa hashed_token')
-    throw createError({ statusCode: 502, statusMessage: 'mint-gagal' })
-  }
+  // 4. Cetak sesi. GoTrue menyimpan SATU token pemulihan per pengguna, jadi dua
+  //    pencetakan yang bersamaan (dua tab, dua admin) saling menimpa dan salah
+  //    satunya gagal di verifyOtp. Jendelanya ratusan milidetik; tiga percobaan
+  //    dengan jeda acak kecil menutupnya tanpa perlu kunci lintas instans.
   const klien = createClient(url, anon, { auth: { persistSession: false, autoRefreshToken: false } })
-  const { data: hasil, error: eSesi } = await klien.auth.verifyOtp({ token_hash: tokenHash, type: 'magiclink' })
-  const sesi = hasil?.session
-  if (eSesi || !sesi) {
-    console.error('[cashflow/sesi] verifyOtp gagal:', eSesi?.message ?? 'tanpa sesi')
+  let sesi: { access_token: string; refresh_token: string; expires_at?: number } | null = null
+  let sebabTerakhir = ''
+  for (let percobaan = 1; percobaan <= 3 && !sesi; percobaan++) {
+    const { data: tautan, error: eTautan } = await admin.auth.admin.generateLink({ type: 'magiclink', email })
+    const tokenHash = tautan?.properties?.hashed_token
+    if (eTautan || !tokenHash) {
+      // Pesan galat Supabase aman dicatat; yang tidak boleh tercatat adalah kuncinya.
+      sebabTerakhir = `generateLink: ${eTautan?.message ?? 'tanpa hashed_token'}`
+    } else {
+      const { data: hasil, error: eSesi } = await klien.auth.verifyOtp({ token_hash: tokenHash, type: 'magiclink' })
+      if (!eSesi && hasil?.session) { sesi = hasil.session; break }
+      sebabTerakhir = `verifyOtp: ${eSesi?.message ?? 'tanpa sesi'}`
+    }
+    await new Promise((r) => setTimeout(r, 120 + Math.floor(Math.random() * 280)))
+  }
+  if (!sesi) {
+    console.error('[cashflow/sesi] pencetakan gagal 3x:', sebabTerakhir)
     throw createError({ statusCode: 502, statusMessage: 'mint-gagal' })
   }
 
@@ -134,6 +144,13 @@ export default defineEventHandler(async (event) => {
     await admin.auth.admin.signOut(sesi.access_token, 'local').catch(() => {})
     throw createError({ statusCode: 502, statusMessage: 'mint-gagal' })
   }
+
+  // Rumah tangga: cabut catatan yang lewat umur (12 jam) dan buang yang > 7
+  // hari. Dijalankan sesudah tiap pencetakan supaya tabelnya tidak tumbuh
+  // tanpa batas; hasilnya tidak ditunggu dan kegagalannya tidak menghalangi.
+  admin.rpc('admin_konsol_sesi_bersihkan').then(({ error }) => {
+    if (error) console.error('[cashflow/sesi] bersihkan gagal:', error.message)
+  }).catch(() => {})
 
   return {
     access_token: sesi.access_token,

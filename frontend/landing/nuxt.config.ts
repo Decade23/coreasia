@@ -275,6 +275,10 @@ export default defineNuxtConfig({
         },
     },
     routeRules: {
+        /* Rute pencetak sesi CashFlow bukan API publik: tanpa CORS sama sekali,
+           supaya pagar X-CF-Sesi + Sec-Fetch-Site tidak bergantung pada detail
+           Nitro tidak memasang allow-credentials di aturan '/api/**'. */
+        '/api/cashflow/**': { cors: false },
         // Default security headers
         '/**': {
             headers: {

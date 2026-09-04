@@ -11,27 +11,23 @@
  * dengan kalimat manusia. Urutan pembacaannya: e.data.statusMessage (badan
  * JSON Nitro) → e.statusMessage (statusText; kosong di HTTP/2) → http-N → jaringan.
  */
-import type { SupabaseClient } from '@supabase/supabase-js'
-
 export type HasilSambung = { ok: true } | { ok: false; sebab: string }
 
 /* Satu pencetakan untuk semua pemanggil. Halaman Ringkasan memanggil empat RPC
    sekaligus (Promise.all); kalau sesi kebetulan hilang, keempatnya meminta
    sesi pada saat yang sama. Tanpa ini, yang pertama mencetak dan tiga lainnya
-   gagal "sibuk" — halaman menampilkan galat untuk sesi yang sebenarnya sedang
-   dibuat. Promise yang sedang berjalan dibagikan; modul ini hanya hidup di
-   peramban (plugin .client), jadi lingkup modul aman. */
+   gagal — halaman menampilkan galat untuk sesi yang sebenarnya sedang dibuat.
+   Promise yang sedang berjalan dibagikan; hanya berjalan di peramban. */
 let pencetakanBerjalan: Promise<HasilSambung> | null = null
 
 export const useCashflowSesi = () => {
-  const { $cashflowSupabase } = useNuxtApp()
-  const sb = $cashflowSupabase as SupabaseClient | null
+  const { ambil, terkonfigurasi } = useCashflowSupabase()
   const sibuk = useState<boolean>('cf_sibuk_sesi', () => false)
   /** Email admin console yang sesinya dibuat — untuk tampilan; buktinya di server. */
   const pelaku = useState<string>('cf_pelaku', () => '')
-  const terkonfigurasi = computed(() => !!sb)
 
   const cetak = async (): Promise<HasilSambung> => {
+    const sb = await ambil()
     if (!sb) return { ok: false, sebab: 'konfigurasi' }
     sibuk.value = true
     try {
@@ -58,6 +54,7 @@ export const useCashflowSesi = () => {
   }
 
   const keluar = async () => {
+    const sb = await ambil()
     if (!sb) return
     try {
       const { data } = await sb.auth.getSession()
@@ -72,5 +69,5 @@ export const useCashflowSesi = () => {
     }
   }
 
-  return { sb, sibuk, pelaku, terkonfigurasi, sambung, keluar }
+  return { ambil, sibuk, pelaku, terkonfigurasi, sambung, keluar }
 }

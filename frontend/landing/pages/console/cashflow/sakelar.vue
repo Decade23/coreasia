@@ -36,7 +36,7 @@ const pengecualian = computed<string[]>(() => {
 })
 
 const simpan = async (key: string, value: unknown, publik: boolean, note: string) => {
-  if (alasan.value.trim().length < 5) { galat.value = tcf('alasan.pendek'); return }
+  if (alasan.value.trim().length < 8) { galat.value = tcf('alasan.pendek'); return }
   galat.value = ''; sukses.value = ''
   try {
     await api.setConfig(key, value, publik, note, alasan.value.trim())

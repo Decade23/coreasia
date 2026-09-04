@@ -25,7 +25,6 @@
  * diisi trigger dari admin_konsol_sesi (migrasi 0078). Awalan "[email]" pada
  * p_alasan di sini hanya keterangan yang enak dibaca di daftar audit.
  */
-import type { SupabaseClient } from '@supabase/supabase-js'
 import type {
   StatsDTO, PenggunaDTO, CorongDTO, KeberhasilanDTO, RetensiDTO, AktivitasDTO,
   RuangDTO, DetailPenggunaDTO,
@@ -47,7 +46,7 @@ function petakanGalat(e: any): GalatAdmin {
 }
 
 export interface AuditDTO {
-  id: number; admin_id: string; admin_email: string; action: string; target_type: string
+  id: number; admin_id: string; admin_email: string; pelaku: string | null; action: string; target_type: string
   target_id: string | null; target_email: string | null; detail: any; reason: string | null
   created_at: string; total_semua: number
 }
@@ -59,23 +58,23 @@ export interface ConfigDTO { key: string; value: any; is_public: boolean; note: 
 export interface PengumumanDTO { id: string; judul: string; isi: string; level: string; mulai: string; sampai: string | null; created_at: string }
 
 export const useCashflowAdmin = () => {
-  const { $cashflowSupabase } = useNuxtApp()
-  const sb = $cashflowSupabase as SupabaseClient | null
-
   const { user: adminConsole } = useAdminAuth()
   const sesiKonsol = useCashflowSesi()
 
-  /** Pastikan tab ini punya sesi; kalau tidak, cetak sekali. */
-  async function pastikanSesi(): Promise<void> {
+  /** Klien + sesi siap; kalau sesi tidak ada, cetak sekali. */
+  async function pastikanSesi() {
+    const sb = await sesiKonsol.ambil()
     if (!sb) throw new GalatAdmin('konfigurasi', 'Modul CashFlow belum dikonfigurasi.')
     const { data } = await sb.auth.getSession()
-    if (data.session) return
-    const h = await sesiKonsol.sambung()
-    if (!h.ok) throw new GalatAdmin('sesi', h.sebab)
+    if (!data.session) {
+      const h = await sesiKonsol.sambung()
+      if (!h.ok) throw new GalatAdmin('sesi', h.sebab)
+    }
+    return sb
   }
 
   async function rpc<T>(nama: string, args?: Record<string, unknown>): Promise<T> {
-    await pastikanSesi()
+    const sb = await pastikanSesi()
     const a: Record<string, unknown> = { ...(args ?? {}) }
     if (typeof a.p_alasan === 'string') {
       const asli = a.p_alasan.trim()
@@ -83,16 +82,16 @@ export const useCashflowAdmin = () => {
       const siapa = sesiKonsol.pelaku.value || adminConsole.value?.email || 'console'
       a.p_alasan = `[${siapa}] ${asli}`
     }
-    const { data, error } = await sb!.rpc(nama, a)
+    const { data, error } = await sb.rpc(nama, a)
     if (error) {
       const g = petakanGalat(error)
       // Sesi ditolak server (dicabut, atau tab memegang sesi basi): cetak
       // ulang sekali dan coba lagi — kalau masih ditolak, biar halaman yang bicara.
       if (g.jenis === 'sesi') {
-        await sb!.auth.signOut({ scope: 'local' }).catch(() => {})
+        await sb.auth.signOut({ scope: 'local' }).catch(() => {})
         const h = await sesiKonsol.sambung()
         if (h.ok) {
-          const ulang = await sb!.rpc(nama, a)
+          const ulang = await sb.rpc(nama, a)
           if (!ulang.error) return ulang.data as T
           throw petakanGalat(ulang.error)
         }
@@ -133,7 +132,7 @@ export const useCashflowAdmin = () => {
 
     // ── audit ──────────────────────────────────────────────────────────
     daftarAudit: (limit = 50, offset = 0, aksi: string | null = null) =>
-      rpc<AuditDTO[]>('admin_daftar_audit', { p_limit: limit, p_offset: offset, p_aksi: aksi, p_admin: null }),
+      rpc<AuditDTO[]>('admin_daftar_audit_v2', { p_limit: limit, p_offset: offset, p_aksi: aksi, p_admin: null }),
     aksiAudit: () => rpc<Array<{ action: string; jumlah: number }>>('admin_daftar_aksi_audit'),
 
     // ── sakelar fitur (termasuk auth.verifikasi_email) ─────────────────
