@@ -27,6 +27,8 @@ export interface PenggunaDTO {
   last_sign_in: string | null
   /** Terbaru antara masuk terakhir dan transaksi terakhir (0081). */
   aktivitas_terakhir?: string | null
+  /** true = server memulangkan email utuh (daftar dibuka dengan alasan). */
+  terbuka?: boolean
   banned_until: string | null
   jumlah_ruang: number
   jumlah_tx: number
@@ -66,6 +68,7 @@ export interface Pengguna {
   tx: number
   status: 'aktif' | 'ditangguhkan'
   hariAktif: number         // aktivitas terakhir − daftar, dalam hari
+  hariSejakAktif: number    // hari ini − aktivitas terakhir; Infinity bila belum pernah
 }
 export interface LangkahCorong { urut: number; kunci: string; jumlah: number; persenDariSebelumnya: number | null }
 export interface SelKohort { kohort: string; mendaftar: number; pernahCatat: number; catat30: number; berjalan: boolean; persen: number }
@@ -81,12 +84,16 @@ export function tanggalPendek(iso: string | null | undefined): string {
   return `${d.getDate()} ${BULAN[d.getMonth()]} ${d.getFullYear()}`
 }
 
-/** 'ded***@gmail.com' — tiga aksara pertama, domain utuh. Domain bukan PII
- *  yang berarti (gmail.com), dan tiga aksara cukup untuk membedakan baris. */
+/** 'ded***@gmail.com' — paling banyak tiga aksara pertama dan selalu
+ *  menyembunyikan minimal dua ('edi@x' → 'e***@x'); domain utuh. Aturannya
+ *  SAMA dengan public.samar_email() di server (0082) supaya bentuk tersamar
+ *  dari dua jalur identik, dan idempoten bila dipanggil pada yang sudah tersamar. */
 export function samarkanEmail(email: string | null | undefined): string {
   if (!email || !email.includes('@')) return '—'
   const [lokal, domain] = email.split('@')
-  return `${lokal.slice(0, 3)}***@${domain}`
+  if (lokal.endsWith('***')) return email
+  const tampak = Math.min(3, Math.max(1, lokal.length - 2))
+  return `${lokal.slice(0, tampak)}***@${domain}`
 }
 
 /** Nama ruang buatan pengguna bisa memuat rahasia ("catatan rahasia", nama
@@ -118,10 +125,11 @@ export function kePengguna(d: PenggunaDTO): Pengguna {
   const aktifIso = d.aktivitas_terakhir ?? d.last_sign_in
   const aktif = aktifIso ? new Date(aktifIso) : null
   const hariAktif = aktif ? Math.max(0, Math.round((aktif.getTime() - daftar.getTime()) / 864e5)) : 0
+  const hariSejakAktif = aktif ? Math.max(0, Math.round((Date.now() - aktif.getTime()) / 864e5)) : Number.POSITIVE_INFINITY
   const ditangguhkan = !!d.banned_until && new Date(d.banned_until).getTime() > Date.now()
-  // Server yang menyamarkan; '***' berarti tersamar. samarkanEmail pada email
-  // yang sudah tersamar memulangkan bentuk yang sama, jadi aman dipanggil ganda.
-  const terbuka = !!d.email && !d.email.includes('***')
+  // Server yang menyamarkan dan server pula yang bilang (kolom `terbuka`);
+  // tebakan lewat '***' hanya cadangan untuk respons tanpa kolom itu.
+  const terbuka = d.terbuka === true || (d.terbuka === undefined && !!d.email && !d.email.includes('***'))
   return {
     id: d.user_id,
     emailTersamar: samarkanEmail(d.email),
@@ -133,6 +141,7 @@ export function kePengguna(d: PenggunaDTO): Pengguna {
     tx: Number(d.jumlah_tx) || 0,
     status: ditangguhkan ? 'ditangguhkan' : 'aktif',
     hariAktif,
+    hariSejakAktif,
   }
 }
 

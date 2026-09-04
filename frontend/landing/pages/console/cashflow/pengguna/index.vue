@@ -24,30 +24,52 @@ const alasanBuka = ref<string | null>(null)
 const gerbang = ref(false)
 const terbuka = computed(() => alasanBuka.value !== null)
 
+/* Penjaga urutan: dua muat yang bersilangan (ketikan cepat, lalu "Samarkan
+   lagi") tidak boleh membiarkan respons lama menimpa yang baru. */
+let urutan = 0
 const muat = async () => {
+  const id = ++urutan
   memuat.value = true; galat.value = ''
   try {
-    const rows = await api.daftarPengguna(200, 0, cari.value, alasanBuka.value)
+    const rows = await api.daftarPengguna(500, 0, terbuka.value ? '' : cari.value, alasanBuka.value)
+    if (id !== urutan) return
     semua.value = rows.map(kePengguna)
   } catch (e: any) {
+    if (id !== urutan) return
     galat.value = e?.jenis === 'bukan-admin' ? tcf('umum.bukanAdmin') : e?.jenis === 'alasan' ? tcf('alasan.pendek') : (e?.message ?? tcf('umum.gagal'))
     if (e?.jenis === 'totp' || e?.jenis === 'sesi') navigateTo({ path: '/console/cashflow/masuk', query: { sebab: 'sesi', ke: '/console/cashflow/pengguna' } })
   } finally { memuat.value = false }
 }
 onMounted(muat)
 let t: ReturnType<typeof setTimeout> | undefined
-watch(cari, () => { clearTimeout(t); t = setTimeout(muat, 350) })
+/* Saat daftar terbuka, pencarian disaring DI KLIEN: seluruh daftar (≤ 500)
+   sudah ada di memori, dan memuat ulang dengan alasan yang sama berarti satu
+   baris audit per ketikan. Saat tersamar, server yang mencari (pada bentuk
+   tersamar + nama tampilan). */
+watch(cari, () => { if (terbuka.value) return; clearTimeout(t); t = setTimeout(muat, 350) })
 
 const toggleEmail = () => {
-  if (terbuka.value) { alasanBuka.value = null; muat(); return }
+  if (terbuka.value) {
+    // Samarkan lagi tanpa jaringan: bentuk tersamar sudah dihitung adapter,
+    // jadi tidak ada jalur gagal yang meninggalkan email utuh di layar.
+    alasanBuka.value = null
+    semua.value = semua.value.map(p => ({ ...p, emailPenuh: null }))
+    if (cari.value) muat()
+    return
+  }
   gerbang.value = true
 }
 const bukaDaftar = (alasan: string) => { gerbang.value = false; alasanBuka.value = alasan; muat() }
 
 const data = computed(() => semua.value.filter(p => {
+  if (terbuka.value && cari.value.trim()) {
+    const q = cari.value.trim().toLowerCase()
+    if (!(p.emailPenuh ?? p.emailTersamar).toLowerCase().includes(q)) return false
+  }
   if (segmen.value === 'belum') return p.tx === 0
   if (segmen.value === 'ditangguhkan') return p.status === 'ditangguhkan'
-  if (segmen.value === 'catat7') return p.tx > 0 && p.hariAktif <= 7 // pendekatan: aktif ≤ 7 hari & pernah mencatat
+  // "Mencatat 7 hari" = pernah mencatat DAN masih aktif dalam 7 hari terakhir.
+  if (segmen.value === 'catat7') return p.tx > 0 && p.hariSejakAktif <= 7
   return true
 }))
 
