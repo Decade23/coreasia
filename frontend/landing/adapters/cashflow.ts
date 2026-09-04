@@ -145,14 +145,18 @@ export function kePengguna(d: PenggunaDTO): Pengguna {
   }
 }
 
+/** Persen dihitung terhadap PENDAFTAR (langkah 1), bukan langkah sebelumnya:
+ *  langkah-langkah corong dihitung masing-masing, tidak bersarang (0083), jadi
+ *  "menyiapkan" bisa lebih besar dari "masuk lagi" dan persen 113% hanya
+ *  membingungkan. "Berapa persen pendaftar yang sampai ke sini" selalu jujur. */
 export function keCorong(rows: CorongDTO[]): LangkahCorong[] {
   const urut = [...rows].sort((a, b) => a.urut - b.urut)
+  const dasar = urut.length ? Number(urut[0].jumlah) : 0
   return urut.map((r, i) => {
-    const sebelum = i === 0 ? null : Number(urut[i - 1].jumlah)
     const j = Number(r.jumlah)
     return {
       urut: r.urut, kunci: r.langkah, jumlah: j,
-      persenDariSebelumnya: sebelum == null ? null : sebelum === 0 ? 0 : Math.round((j / sebelum) * 100),
+      persenDariSebelumnya: i === 0 ? null : dasar === 0 ? 0 : Math.round((j / dasar) * 100),
     }
   })
 }
