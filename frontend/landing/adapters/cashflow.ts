@@ -20,10 +20,13 @@ export interface StatsDTO {
 }
 export interface PenggunaDTO {
   user_id: string
+  /** Tersamar oleh server (ded***@gmail.com) kecuali daftar dibuka dengan alasan. */
   email: string
   display_name: string | null
   created_at: string
   last_sign_in: string | null
+  /** Terbaru antara masuk terakhir dan transaksi terakhir (0081). */
+  aktivitas_terakhir?: string | null
   banned_until: string | null
   jumlah_ruang: number
   jumlah_tx: number
@@ -54,12 +57,15 @@ export interface DetailPenggunaDTO {
 export interface Pengguna {
   id: string
   emailTersamar: string
-  daftar: string          // 'DD Mon YYYY'
-  masukTerakhir: string   // 'DD Mon YYYY' | '—'
+  /** Hanya terisi bila server memulangkan email utuh (daftar dibuka dengan alasan). */
+  emailPenuh: string | null
+  daftar: string            // 'DD Mon YYYY'
+  masukTerakhir: string     // 'DD Mon YYYY' | '—'
+  aktivitasTerakhir: string // 'DD Mon YYYY' | '—'
   ruang: number
   tx: number
   status: 'aktif' | 'ditangguhkan'
-  hariAktif: number       // masuk terakhir − daftar, dalam hari
+  hariAktif: number         // aktivitas terakhir − daftar, dalam hari
 }
 export interface LangkahCorong { urut: number; kunci: string; jumlah: number; persenDariSebelumnya: number | null }
 export interface SelKohort { kohort: string; mendaftar: number; pernahCatat: number; catat30: number; berjalan: boolean; persen: number }
@@ -109,14 +115,20 @@ export function angka(v: number | string | null | undefined): string {
 // ── Konversi ─────────────────────────────────────────────────────────────
 export function kePengguna(d: PenggunaDTO): Pengguna {
   const daftar = new Date(d.created_at)
-  const masuk = d.last_sign_in ? new Date(d.last_sign_in) : null
-  const hariAktif = masuk ? Math.max(0, Math.round((masuk.getTime() - daftar.getTime()) / 864e5)) : 0
+  const aktifIso = d.aktivitas_terakhir ?? d.last_sign_in
+  const aktif = aktifIso ? new Date(aktifIso) : null
+  const hariAktif = aktif ? Math.max(0, Math.round((aktif.getTime() - daftar.getTime()) / 864e5)) : 0
   const ditangguhkan = !!d.banned_until && new Date(d.banned_until).getTime() > Date.now()
+  // Server yang menyamarkan; '***' berarti tersamar. samarkanEmail pada email
+  // yang sudah tersamar memulangkan bentuk yang sama, jadi aman dipanggil ganda.
+  const terbuka = !!d.email && !d.email.includes('***')
   return {
     id: d.user_id,
     emailTersamar: samarkanEmail(d.email),
+    emailPenuh: terbuka ? d.email : null,
     daftar: tanggalPendek(d.created_at),
     masukTerakhir: tanggalPendek(d.last_sign_in),
+    aktivitasTerakhir: tanggalPendek(aktifIso),
     ruang: Number(d.jumlah_ruang) || 0,
     tx: Number(d.jumlah_tx) || 0,
     status: ditangguhkan ? 'ditangguhkan' : 'aktif',

@@ -115,8 +115,10 @@ export const useCashflowAdmin = () => {
     telemetri: (hari = 30) => rpc<TelemetriDTO[]>('admin_telemetri_ringkas', { p_hari: hari }),
 
     // ── daftar tersamar (adapter yang menyamarkan) ─────────────────────
-    daftarPengguna: (limit = 50, offset = 0, cari = '') =>
-      rpc<PenggunaDTO[]>('admin_daftar_pengguna', { p_limit: limit, p_offset: offset, p_cari: cari }),
+    /** Tersamar oleh server; `alasan` (≥ 8 aksara) membuka email utuh dan
+     *  menulis SATU baris audit untuk seluruh daftar (0081). */
+    daftarPengguna: (limit = 50, offset = 0, cari = '', alasan: string | null = null) =>
+      rpc<PenggunaDTO[]>('admin_daftar_pengguna_v2', { p_limit: limit, p_offset: offset, p_cari: cari || null, p_alasan: alasan }),
     daftarRuang: (limit = 50, offset = 0) =>
       rpc<RuangDTO[]>('admin_daftar_ruang', { p_limit: limit, p_offset: offset }),
 

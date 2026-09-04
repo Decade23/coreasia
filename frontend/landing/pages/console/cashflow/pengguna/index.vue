@@ -1,8 +1,11 @@
 <script setup lang="ts">
 /**
- * Daftar pengguna — TERSAMAR secara bawaan (adapter yang menyamarkan).
- * Membuka satu baris = alasan → detail. Segmen "Tidak pernah mencatat" adalah
- * daftar yang perlu ditelepon: hari ini 10 orang.
+ * Daftar pengguna — TERSAMAR secara bawaan, dan yang menyamarkan SERVER
+ * (admin_daftar_pengguna_v2): tanpa alasan, email utuh tidak pernah sampai ke
+ * peramban. Tombol "Tampilkan email lengkap" membuka seluruh daftar dengan
+ * satu alasan yang tercatat sebagai satu baris audit; "Samarkan lagi" memuat
+ * ulang versi tersamar. Membuka satu baris = alasan → detail. Segmen "Tidak
+ * pernah mencatat" adalah daftar yang perlu ditelepon.
  */
 definePageMeta({ layout: 'console', middleware: ['console', 'cashflow-admin'] })
 import { kePengguna, type Pengguna } from '~/adapters/cashflow'
@@ -14,20 +17,32 @@ const galat = ref('')
 const semua = ref<Pengguna[]>([])
 const cari = ref('')
 const segmen = ref<'semua' | 'catat7' | 'belum' | 'ditangguhkan'>('semua')
+/** Alasan pembukaan daftar; null = tersamar. Dipegang selama halaman hidup
+ *  supaya pencarian ulang tidak memaksa mengetik alasan lagi (dan tetap
+ *  tercatat sebagai pembukaan baru di audit tiap kali memuat). */
+const alasanBuka = ref<string | null>(null)
+const gerbang = ref(false)
+const terbuka = computed(() => alasanBuka.value !== null)
 
 const muat = async () => {
   memuat.value = true; galat.value = ''
   try {
-    const rows = await api.daftarPengguna(200, 0, cari.value)
+    const rows = await api.daftarPengguna(200, 0, cari.value, alasanBuka.value)
     semua.value = rows.map(kePengguna)
   } catch (e: any) {
-    galat.value = e?.jenis === 'bukan-admin' ? tcf('umum.bukanAdmin') : (e?.message ?? tcf('umum.gagal'))
+    galat.value = e?.jenis === 'bukan-admin' ? tcf('umum.bukanAdmin') : e?.jenis === 'alasan' ? tcf('alasan.pendek') : (e?.message ?? tcf('umum.gagal'))
     if (e?.jenis === 'totp' || e?.jenis === 'sesi') navigateTo({ path: '/console/cashflow/masuk', query: { sebab: 'sesi', ke: '/console/cashflow/pengguna' } })
   } finally { memuat.value = false }
 }
 onMounted(muat)
 let t: ReturnType<typeof setTimeout> | undefined
 watch(cari, () => { clearTimeout(t); t = setTimeout(muat, 350) })
+
+const toggleEmail = () => {
+  if (terbuka.value) { alasanBuka.value = null; muat(); return }
+  gerbang.value = true
+}
+const bukaDaftar = (alasan: string) => { gerbang.value = false; alasanBuka.value = alasan; muat() }
 
 const data = computed(() => semua.value.filter(p => {
   if (segmen.value === 'belum') return p.tx === 0
@@ -37,14 +52,18 @@ const data = computed(() => semua.value.filter(p => {
 }))
 
 const columns = computed(() => [
-  { key: 'emailTersamar', label: tcf('pengguna.email'), type: 'text' as const, class: 'font-mono text-[var(--ca-text)]' },
+  { key: 'emailTampil', label: tcf('pengguna.email'), type: 'text' as const, class: 'font-mono text-[var(--ca-text)]' },
   { key: 'daftar', label: tcf('pengguna.daftar'), type: 'text' as const, width: '120px' },
-  { key: 'masukTerakhir', label: tcf('pengguna.masuk'), type: 'text' as const, width: '120px' },
+  { key: 'aktivitasTerakhir', label: tcf('pengguna.aktifTerakhir'), type: 'text' as const, width: '130px' },
   { key: 'ruang', label: tcf('pengguna.ruang'), type: 'text' as const, width: '70px', class: 'tabular-nums text-right' },
   { key: 'tx', label: tcf('pengguna.tx'), type: 'text' as const, width: '90px', class: 'tabular-nums text-right' },
   { key: 'statusLabel', label: tcf('pengguna.status'), type: 'status' as const, width: '110px' },
 ])
-const tableData = computed(() => data.value.map(p => ({ ...p, statusLabel: p.status === 'aktif' ? tcf('pengguna.aktif') : tcf('pengguna.ditangguhkan') })))
+const tableData = computed(() => data.value.map(p => ({
+  ...p,
+  emailTampil: p.emailPenuh ?? p.emailTersamar,
+  statusLabel: p.status === 'aktif' ? tcf('pengguna.aktif') : tcf('pengguna.ditangguhkan'),
+})))
 const segmenOpsi = computed(() => [
   { kunci: 'semua', label: tcf('umum.semua') },
   { kunci: 'catat7', label: tcf('pengguna.catat7') },
@@ -71,16 +90,31 @@ const segmenOpsi = computed(() => [
         >{{ s.label }}</button>
       </div>
       <span class="text-xs text-[var(--ca-subtle)] tabular-nums">{{ data.length }} / {{ semua.length }}</span>
+      <button
+        type="button"
+        class="ml-auto rounded-full border px-3 py-1 text-sm transition"
+        :class="terbuka
+          ? 'border-amber-500 bg-amber-500/10 text-[var(--ca-text)]'
+          : 'border-[color:var(--ca-border)] text-[var(--ca-muted)] hover:text-[var(--ca-text)]'"
+        :aria-pressed="terbuka"
+        @click="toggleEmail"
+      >{{ terbuka ? tcf('pengguna.samarkanEmail') : tcf('pengguna.tampilkanEmail') }}</button>
     </div>
 
+    <p v-if="terbuka" class="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-xs text-[var(--ca-text)]">
+      {{ tcf('pengguna.terbukaKet') }}
+    </p>
     <p v-if="galat" class="text-sm text-rose-600">{{ galat }}</p>
+
+    <CashflowReasonGate :show="gerbang" @close="gerbang = false" @konfirmasi="bukaDaftar" />
 
     <div class="ca-console-dialog overflow-hidden">
       <DataTable :columns="columns" :data="tableData" :loading="memuat" empty-icon="lucide:users" :empty-text="tcf('umum.kosong')">
-        <template #cell-emailTersamar="{ row }">
-          <NuxtLink :to="`/console/cashflow/pengguna/${row.id}`" class="font-mono text-[var(--ca-text)] underline-offset-2 hover:underline">{{ row.emailTersamar }}</NuxtLink>
+        <template #cell-emailTampil="{ row }">
+          <NuxtLink :to="`/console/cashflow/pengguna/${row.id}`" class="font-mono text-[var(--ca-text)] underline-offset-2 hover:underline">{{ row.emailTampil }}</NuxtLink>
         </template>
       </DataTable>
     </div>
+    <p class="text-xs text-[var(--ca-subtle)]">{{ tcf('pengguna.aktifTerakhirKet') }}</p>
   </div>
 </template>
