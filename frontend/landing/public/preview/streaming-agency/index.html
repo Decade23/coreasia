@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<meta name="description" content="Gambaran alur sistem dan rancangan tampilan untuk Sistem Manajemen Transaksi Terpusat — lampiran proposal CoreAsia 103/QUO/CA/IX/2026.">
+<link rel="icon" href="/favicon.ico">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<style>html{color-scheme:light dark}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>Antrean Transaksi Terpusat</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+  :root{
+    --paper:#F7F8FA; --card:#FFFFFF; --ink:#141B33; --ink-2:#3B4463; --slate:#69718D;
+    --hair:#E1E4EC; --hair-2:#EDEFF4; --rail:#F2F4F8;
+    --gold:#B8790A; --gold-bg:#FDF3DE; --gold-line:#EBC97F;
+    --teal:#0B7A61; --teal-bg:#E4F5EF; --teal-line:#9BD9C6;
+    --blue:#2A4FB8; --blue-bg:#E8EDFB; --blue-line:#A9BCEC;
+    --amber:#9A6300; --amber-bg:#FCF0DA; --amber-line:#E9C888;
+    --red:#B23325; --red-bg:#FBE9E6; --red-line:#EFB3A9;
+    --shadow:0 1px 2px rgba(20,27,51,.05), 0 8px 24px -12px rgba(20,27,51,.18);
+    --fs-display:'Archivo', system-ui, sans-serif;
+    --fs-body:'IBM Plex Sans', system-ui, sans-serif;
+    --fs-mono:'IBM Plex Mono', ui-monospace, monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#0D1120; --card:#151B2E; --ink:#E9ECF5; --ink-2:#B6BDD2; --slate:#8A93AD;
+      --hair:#2A3247; --hair-2:#212840; --rail:#1B2236;
+      --gold:#F0BC55; --gold-bg:#332811; --gold-line:#6B5320;
+      --teal:#4FD6B0; --teal-bg:#0F2E27; --teal-line:#1F5F4E;
+      --blue:#8AA6F0; --blue-bg:#1A2246; --blue-line:#2E4283;
+      --amber:#EDB55E; --amber-bg:#31250F; --amber-line:#63491C;
+      --red:#F0917F; --red-bg:#371B16; --red-line:#6E332A;
+      --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -14px rgba(0,0,0,.7);
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#0D1120; --card:#151B2E; --ink:#E9ECF5; --ink-2:#B6BDD2; --slate:#8A93AD;
+    --hair:#2A3247; --hair-2:#212840; --rail:#1B2236;
+    --gold:#F0BC55; --gold-bg:#332811; --gold-line:#6B5320;
+    --teal:#4FD6B0; --teal-bg:#0F2E27; --teal-line:#1F5F4E;
+    --blue:#8AA6F0; --blue-bg:#1A2246; --blue-line:#2E4283;
+    --amber:#EDB55E; --amber-bg:#31250F; --amber-line:#63491C;
+    --red:#F0917F; --red-bg:#371B16; --red-line:#6E332A;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 28px -14px rgba(0,0,0,.7);
+  }
+
+  *{box-sizing:border-box}
+  body{ background:var(--paper); color:var(--ink); font-family:var(--fs-body);
+    font-size:16px; line-height:1.62; -webkit-font-smoothing:antialiased; }
+
+  .wrap{ max-width:1080px; margin:0 auto; padding:0 20px 88px; }
+  .col{ max-width:68ch; }
+
+  /* ── kop ── */
+  .kop{ border-bottom:1px solid var(--hair); padding:34px 0 26px; margin-bottom:38px; }
+  .brandline{ display:flex; align-items:center; gap:10px; margin-bottom:22px; }
+  .brandline svg{ width:26px; height:26px; border-radius:6px; display:block; }
+  .brandline .n{ font-family:var(--fs-display); font-weight:700; font-size:15px; letter-spacing:-.01em; }
+  .brandline .n em{ font-style:normal; color:var(--gold); }
+  .brandline .sep{ color:var(--hair); }
+  .brandline .m{ font-size:12.5px; color:var(--slate); }
+  h1{ font-family:var(--fs-display); font-weight:700; font-size:clamp(30px,5.2vw,44px);
+    line-height:1.08; letter-spacing:-.025em; margin:0 0 14px; text-wrap:balance; }
+  .kop .sub{ font-size:16.5px; color:var(--ink-2); max-width:60ch; margin:0; }
+  .tags{ display:flex; flex-wrap:wrap; gap:7px; margin-top:20px; }
+  .tag{ font-family:var(--fs-mono); font-size:11px; font-weight:500; letter-spacing:.02em;
+    padding:4px 9px; border-radius:5px; background:var(--rail); color:var(--slate); border:1px solid var(--hair); }
+  .tag.f1{ background:var(--teal-bg); color:var(--teal); border-color:var(--teal-line); }
+  .tag.f2{ background:var(--blue-bg); color:var(--blue); border-color:var(--blue-line); }
+
+  /* ── seksi ── */
+  section{ margin-top:56px; scroll-margin-top:20px; }
+  .snum{ font-family:var(--fs-mono); font-size:11.5px; font-weight:600; color:var(--gold);
+    letter-spacing:.14em; text-transform:uppercase; display:block; margin-bottom:7px; }
+  h2{ font-family:var(--fs-display); font-weight:600; font-size:clamp(21px,3.2vw,27px);
+    letter-spacing:-.018em; line-height:1.2; margin:0 0 12px; text-wrap:balance; }
+  h3{ font-family:var(--fs-display); font-weight:600; font-size:16.5px; letter-spacing:-.01em;
+    margin:30px 0 9px; }
+  p{ margin:0 0 14px; color:var(--ink-2); }
+  p strong, li strong{ color:var(--ink); font-weight:600; }
+  ul{ margin:0 0 14px; padding-left:20px; color:var(--ink-2); }
+  li{ margin-bottom:6px; }
+
+  /* ── figure ── */
+  figure{ margin:24px 0 26px; }
+  .fbox{ background:var(--card); border:1px solid var(--hair); border-radius:12px;
+    padding:22px 20px 16px; overflow-x:auto; box-shadow:var(--shadow); }
+  figure svg{ display:block; width:100%; height:auto; min-width:520px; color:var(--ink); }
+  figcaption{ font-size:13px; color:var(--slate); margin-top:11px; line-height:1.55; max-width:68ch; }
+
+  /* ── callout ── */
+  .note{ border-left:3px solid var(--gold); background:var(--gold-bg); border-radius:0 9px 9px 0;
+    padding:14px 17px; margin:20px 0; }
+  .note .h{ font-family:var(--fs-display); font-weight:600; font-size:14px; color:var(--ink); margin-bottom:5px; }
+  .note p{ margin:0; font-size:14.5px; color:var(--ink-2); }
+  .note.tl{ border-left-color:var(--teal); background:var(--teal-bg); }
+
+  /* ── wireframe ── */
+  .wf{ background:var(--card); border:1px solid var(--hair); border-radius:12px; overflow:hidden;
+    box-shadow:var(--shadow); margin:22px 0 8px; }
+  .wf-bar{ display:flex; align-items:center; gap:8px; padding:9px 14px; background:var(--rail);
+    border-bottom:1px solid var(--hair); }
+  .wf-bar .dots{ display:flex; gap:5px; }
+  .wf-bar .dots i{ width:8px; height:8px; border-radius:50%; background:var(--hair); display:block; }
+  .wf-bar .url{ font-family:var(--fs-mono); font-size:11px; color:var(--slate); }
+  .wf-bar .who{ margin-left:auto; font-size:11px; color:var(--slate); font-family:var(--fs-mono); }
+  .wf-body{ padding:16px; overflow-x:auto; }
+
+  .wf-head{ display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; margin-bottom:14px; }
+  .wf-head .t{ font-family:var(--fs-display); font-weight:600; font-size:16px; }
+  .wf-head .c{ font-family:var(--fs-mono); font-size:11.5px; color:var(--slate); }
+
+  .kpis{ display:grid; grid-template-columns:repeat(auto-fit,minmax(132px,1fr)); gap:10px; margin-bottom:16px; }
+  .kpi{ background:var(--rail); border:1px solid var(--hair-2); border-radius:9px; padding:11px 13px; }
+  .kpi .l{ font-size:10.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--slate); font-weight:600; }
+  .kpi .v{ font-family:var(--fs-display); font-weight:700; font-size:22px; margin-top:4px;
+    font-variant-numeric:tabular-nums; letter-spacing:-.02em; }
+  .kpi .v.warn{ color:var(--amber); } .kpi .v.ok{ color:var(--teal); }
+
+  .filters{ display:flex; gap:7px; flex-wrap:wrap; margin-bottom:12px; }
+  .chip{ font-size:12px; padding:5px 11px; border-radius:20px; border:1px solid var(--hair);
+    background:var(--card); color:var(--slate); }
+  .chip.on{ background:var(--ink); color:var(--paper); border-color:var(--ink); font-weight:600; }
+
+  table{ width:100%; border-collapse:collapse; font-size:13.5px; min-width:660px; }
+  th{ text-align:left; font-size:10.5px; letter-spacing:.07em; text-transform:uppercase;
+    color:var(--slate); font-weight:600; padding:0 10px 8px; border-bottom:1px solid var(--hair); }
+  td{ padding:10px; border-bottom:1px solid var(--hair-2); color:var(--ink-2); vertical-align:middle; }
+  td.id{ font-family:var(--fs-mono); font-size:12px; color:var(--slate); white-space:nowrap; }
+  td.amt{ font-family:var(--fs-mono); font-weight:500; color:var(--ink); text-align:right;
+    font-variant-numeric:tabular-nums; white-space:nowrap; }
+  tr.locked td{ background:var(--rail); }
+
+  .st{ display:inline-flex; align-items:center; gap:5px; font-size:11.5px; font-weight:600;
+    padding:3px 9px; border-radius:20px; white-space:nowrap; }
+  .st::before{ content:""; width:6px; height:6px; border-radius:50%; background:currentColor; }
+  .st.wait{ background:var(--amber-bg); color:var(--amber); }
+  .st.proc{ background:var(--blue-bg); color:var(--blue); }
+  .st.done{ background:var(--teal-bg); color:var(--teal); }
+  .st.prob{ background:var(--red-bg); color:var(--red); }
+
+  .btn{ font-size:12px; font-weight:600; padding:5px 12px; border-radius:7px; border:1px solid var(--ink);
+    background:var(--ink); color:var(--paper); white-space:nowrap; }
+  .btn.ghost{ background:transparent; color:var(--slate); border-color:var(--hair); font-weight:500; }
+  .plat{ font-family:var(--fs-mono); font-size:11px; padding:2px 7px; border-radius:5px;
+    background:var(--rail); border:1px solid var(--hair); color:var(--slate); }
+
+  .form-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:13px; margin-bottom:14px; }
+  .fld .l{ font-size:11px; letter-spacing:.05em; text-transform:uppercase; color:var(--slate);
+    font-weight:600; margin-bottom:5px; }
+  .fld .i{ border:1px solid var(--hair); border-radius:8px; padding:9px 11px; background:var(--rail);
+    font-size:13.5px; color:var(--ink); }
+  .fld .i.ph{ color:var(--slate); }
+
+  .track{ display:flex; align-items:flex-start; gap:0; margin:6px 0 4px; }
+  .track .n{ flex:1; text-align:center; position:relative; }
+  .track .n .d{ position:relative; z-index:1; width:13px; height:13px; border-radius:50%; background:var(--hair); margin:0 auto 7px;
+    border:2px solid var(--card); box-shadow:0 0 0 1px var(--hair); }
+  .track .n.on .d{ background:var(--teal); box-shadow:0 0 0 1px var(--teal); }
+  .track .n.now .d{ background:var(--blue); box-shadow:0 0 0 3px var(--blue-bg), 0 0 0 4px var(--blue); }
+  .track .n .t{ font-size:11.5px; font-weight:600; color:var(--slate); line-height:1.35; }
+  .track .n.on .t, .track .n.now .t{ color:var(--ink); }
+  .track .n::after{ content:""; position:absolute; top:6px; left:50%; width:100%; height:1.5px;
+    background:var(--hair); z-index:0; }
+  .track .n:last-child::after{ display:none; }
+  .track-wrap{ position:relative; z-index:0; }
+
+  .legend{ display:flex; flex-wrap:wrap; gap:14px; font-size:12px; color:var(--slate); margin-top:10px; }
+  .legend span{ display:inline-flex; align-items:center; gap:6px; }
+  .legend i{ width:11px; height:11px; border-radius:3px; display:block; }
+
+  .grid2{ display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:14px; margin:18px 0; }
+  .rolecard{ background:var(--card); border:1px solid var(--hair); border-radius:11px; padding:15px 17px; }
+  .rolecard .r{ font-family:var(--fs-display); font-weight:600; font-size:15px; margin-bottom:3px; }
+  .rolecard .s{ font-size:12px; color:var(--slate); margin-bottom:10px; }
+  .rolecard ul{ margin:0; padding-left:17px; font-size:13.5px; }
+  .rolecard li{ margin-bottom:4px; }
+  .yes{ color:var(--teal); font-weight:600; }
+  .no{ color:var(--slate); }
+
+  .foot{ margin-top:64px; padding-top:22px; border-top:1px solid var(--hair);
+    font-size:13px; color:var(--slate); display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+
+  @media (max-width:640px){
+    body{ font-size:15.5px; }
+    .wf-body{ padding:12px; }
+    .track .n .t{ font-size:10.5px; }
+  }
+  @media (prefers-reduced-motion:reduce){ *{ animation:none !important; transition:none !important; } }
+</style>
+
+<div class="wrap">
+
+  <header class="kop">
+    <div class="brandline">
+      <svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="CoreAsia">
+        <defs>
+          <linearGradient id="cg" x1="58" y1="48" x2="456" y2="460" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#FFD670"/><stop offset="0.55" stop-color="#FFBE3D"/><stop offset="1" stop-color="#1BC49E"/>
+          </linearGradient>
+        </defs>
+        <rect width="512" height="512" rx="116" fill="#1A2445"/>
+        <path d="M387.5 150.4C355.5 120.7 310.8 102 258.8 102C162.7 102 99.7 168 99.7 256C99.7 343.9 162.7 410 258.8 410C311.7 410 356.5 391.4 388.2 361.5L339.7 315.1C319.2 333.2 291.7 344.7 259.7 344.7C204.5 344.7 168.9 307.6 168.9 256C168.9 204.3 204.5 167.3 259.7 167.3C291.7 167.3 319.2 178.7 339.7 196.8L387.5 150.4Z" fill="url(#cg)"/>
+        <circle cx="339" cy="256" r="31" fill="#E8FDF6" fill-opacity="0.92"/>
+      </svg>
+      <span class="n">Core<em>Asia</em></span>
+      <span class="sep">·</span>
+      <span class="m">Lampiran proposal 103/QUO/CA/IX/2026 · 5 September 2026</span>
+    </div>
+
+    <h1>Antrean Transaksi Terpusat</h1>
+    <p class="sub">Gambaran alur sistem dan rancangan tampilan untuk menggantikan proses top up
+      dan withdraw yang sekarang berjalan lewat WhatsApp. Halaman ini melengkapi proposal, dibuat
+      supaya kamu bisa periksa sendiri sebelum satu baris kode ditulis. Kalau ada yang kurang pas,
+      lebih enak diubah sekarang.</p>
+
+    <div class="tags">
+      <span class="tag f1">Portal Pelanggan · Rp 19 juta</span>
+      <span class="tag f2">Dashboard Admin · Rp 10 juta</span>
+      <span class="tag">Nama dan angka pada contoh tampilan cuma karangan</span>
+    </div>
+  </header>
+
+  <!-- ══ 1 ══ -->
+  <section id="topup">
+    <div class="col">
+      <span class="snum">Alur 1 dari 2</span>
+      <h2>Perjalanan satu permintaan top up</h2>
+      <p>Sekarang pelanggan kirim pesan, admin membacanya di antara puluhan chat lain, lalu
+        mengeksekusi tanpa ada yang tahu siapa sedang mengerjakan apa. Di sistem ini setiap permintaan
+        punya nomor, punya pemilik, dan punya jejak.</p>
+    </div>
+
+    <figure>
+      <div class="fbox">
+        <svg viewBox="0 0 900 250" role="img" aria-label="Alur top up: pelanggan mengajukan, permintaan masuk antrean, admin mengambil dan terkunci, admin mengeksekusi di platform lalu mengunggah bukti, status berubah menjadi selesai dan pelanggan diberi tahu.">
+          <defs>
+            <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+            </marker>
+          </defs>
+
+          <!-- baris pelaku -->
+          <text x="14" y="34" font-size="11" font-weight="600" fill="currentColor" opacity=".55" font-family="IBM Plex Mono, monospace">PELANGGAN</text>
+          <text x="14" y="118" font-size="11" font-weight="600" fill="currentColor" opacity=".55" font-family="IBM Plex Mono, monospace">SISTEM</text>
+          <text x="14" y="212" font-size="11" font-weight="600" fill="currentColor" opacity=".55" font-family="IBM Plex Mono, monospace">ADMIN</text>
+          <line x1="14" y1="46" x2="886" y2="46" stroke="currentColor" opacity=".1"/>
+          <line x1="14" y1="130" x2="886" y2="130" stroke="currentColor" opacity=".1"/>
+
+          <!-- node 1 pelanggan -->
+          <rect x="110" y="8" width="150" height="42" rx="8" fill="none" stroke="currentColor" opacity=".85"/>
+          <text x="185" y="27" font-size="12.5" text-anchor="middle" fill="currentColor" font-weight="600">Ajukan top up</text>
+          <text x="185" y="42" font-size="11" text-anchor="middle" fill="currentColor" opacity=".6">pilih platform + nominal</text>
+
+          <!-- panah turun -->
+          <line x1="185" y1="50" x2="185" y2="84" stroke="currentColor" marker-end="url(#ar)" opacity=".8"/>
+          <text x="193" y="70" font-size="10.5" fill="currentColor" opacity=".65">tersimpan</text>
+
+          <!-- node 2 sistem -->
+          <rect x="110" y="86" width="150" height="42" rx="8" fill="none" stroke="currentColor" opacity=".85"/>
+          <text x="185" y="105" font-size="12.5" text-anchor="middle" fill="currentColor" font-weight="600">Masuk antrean</text>
+          <text x="185" y="120" font-size="11" text-anchor="middle" fill="currentColor" opacity=".6">status: Menunggu</text>
+
+          <line x1="260" y1="107" x2="322" y2="107" stroke="currentColor" marker-end="url(#ar)" opacity=".8"/>
+          <text x="291" y="99" font-size="10.5" text-anchor="middle" fill="currentColor" opacity=".65">tampil</text>
+
+          <!-- node 3 sistem: klaim -->
+          <rect x="324" y="86" width="168" height="42" rx="8" fill="none" stroke="#B8790A" stroke-width="1.8"/>
+          <text x="408" y="105" font-size="12.5" text-anchor="middle" fill="currentColor" font-weight="600">Dikunci untuk 1 admin</text>
+          <text x="408" y="120" font-size="11" text-anchor="middle" fill="#B8790A" font-weight="600">status: Diproses</text>
+
+          <!-- admin mengambil -->
+          <rect x="324" y="168" width="168" height="42" rx="8" fill="none" stroke="currentColor" opacity=".85"/>
+          <text x="408" y="187" font-size="12.5" text-anchor="middle" fill="currentColor" font-weight="600">Admin menekan Ambil</text>
+          <text x="408" y="202" font-size="11" text-anchor="middle" fill="currentColor" opacity=".6">satu admin saja yang berhasil</text>
+          <line x1="408" y1="166" x2="408" y2="134" stroke="currentColor" marker-end="url(#ar)" opacity=".8"/>
+
+          <!-- eksekusi -->
+          <line x1="492" y1="189" x2="554" y2="189" stroke="currentColor" marker-end="url(#ar)" opacity=".8"/>
+          <rect x="556" y="168" width="164" height="42" rx="8" fill="none" stroke="currentColor" opacity=".85"/>
+          <text x="638" y="187" font-size="12.5" text-anchor="middle" fill="currentColor" font-weight="600">Eksekusi di platform</text>
+          <text x="638" y="202" font-size="11" text-anchor="middle" fill="currentColor" opacity=".6">lalu unggah bukti</text>
+
+          <line x1="638" y1="166" x2="638" y2="134" stroke="currentColor" marker-end="url(#ar)" opacity=".8"/>
+          <text x="646" y="152" font-size="10.5" fill="currentColor" opacity=".65">bukti tersimpan</text>
+
+          <!-- selesai -->
+          <rect x="556" y="86" width="164" height="42" rx="8" fill="none" stroke="#0B7A61" stroke-width="1.8"/>
+          <text x="638" y="105" font-size="12.5" text-anchor="middle" fill="currentColor" font-weight="600">Ditutup dan dicatat</text>
+          <text x="638" y="120" font-size="11" text-anchor="middle" fill="#0B7A61" font-weight="600">status: Selesai</text>
+
+          <line x1="720" y1="107" x2="756" y2="107" stroke="currentColor" marker-end="url(#ar)" opacity=".8"/>
+          <line x1="822" y1="84" x2="822" y2="52" stroke="currentColor" marker-end="url(#ar)" opacity=".8"/>
+
+          <rect x="758" y="86" width="128" height="42" rx="8" fill="none" stroke="currentColor" opacity=".85"/>
+          <text x="822" y="112" font-size="12" text-anchor="middle" fill="currentColor" font-weight="600">Notifikasi</text>
+
+          <rect x="758" y="8" width="128" height="42" rx="8" fill="none" stroke="currentColor" opacity=".85"/>
+          <text x="822" y="27" font-size="12.5" text-anchor="middle" fill="currentColor" font-weight="600">Pelanggan</text>
+          <text x="822" y="42" font-size="11" text-anchor="middle" fill="currentColor" opacity=".6">pantau sendiri</text>
+        </svg>
+      </div>
+      <figcaption>Tiga baris menandai siapa yang bertindak. Perhatikan bahwa admin tidak pernah menyentuh
+        antrean secara langsung — ia meminta sistem, dan sistemlah yang memutuskan siapa mendapat transaksi itu.</figcaption>
+    </figure>
+  </section>
+
+  <!-- ══ 2 ══ -->
+  <section id="antidobel">
+    <div class="col">
+      <span class="snum">Mekanisme inti</span>
+      <h2>Kenapa dua admin tidak mungkin memegang transaksi yang sama</h2>
+      <p>Ini bagian yang paling menentukan, dan yang paling sering dikerjakan asal-asalan.
+        Cara yang biasa dipakai adalah menyembunyikan tombol di layar ketika transaksi sudah diambil orang lain.
+        Cara itu <strong>tidak aman</strong>: layar admin kedua belum tentu sudah tahu, dan kalau keduanya
+        menekan dalam selisih milidetik, dua-duanya lolos.</p>
+      <p>Kami menyelesaikannya satu lapis lebih dalam, di basis data. Gambar berikut menunjukkan
+        apa yang terjadi ketika dua admin benar-benar menekan tombol pada saat yang sama.</p>
+    </div>
+
+    <figure>
+      <div class="fbox">
+        <svg viewBox="0 0 900 290" role="img" aria-label="Dua admin menekan tombol ambil bersamaan. Basis data mengunci baris transaksi untuk admin pertama; permintaan admin kedua melewati baris terkunci dan menerima transaksi berikutnya.">
+          <defs>
+            <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+            </marker>
+            <marker id="ar2g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="#B8790A"/>
+            </marker>
+          </defs>
+
+          <text x="14" y="20" font-size="11" font-weight="600" fill="currentColor" opacity=".55" font-family="IBM Plex Mono, monospace">DETIK YANG SAMA</text>
+
+          <!-- admin A -->
+          <rect x="14" y="44" width="176" height="48" rx="9" fill="none" stroke="currentColor" opacity=".85"/>
+          <text x="102" y="64" font-size="13" text-anchor="middle" fill="currentColor" font-weight="600">Admin Rina</text>
+          <text x="102" y="80" font-size="11" text-anchor="middle" fill="currentColor" opacity=".6">menekan Ambil · TRX-8842</text>
+
+          <!-- admin B -->
+          <rect x="14" y="188" width="176" height="48" rx="9" fill="none" stroke="currentColor" opacity=".85"/>
+          <text x="102" y="208" font-size="13" text-anchor="middle" fill="currentColor" font-weight="600">Admin Bagus</text>
+          <text x="102" y="224" font-size="11" text-anchor="middle" fill="currentColor" opacity=".6">menekan Ambil · TRX-8842</text>
+
+          <line x1="190" y1="68" x2="266" y2="112" stroke="currentColor" marker-end="url(#ar2)" opacity=".8"/>
+          <line x1="190" y1="212" x2="266" y2="168" stroke="currentColor" marker-end="url(#ar2)" opacity=".8"/>
+
+          <!-- kotak db -->
+          <rect x="268" y="86" width="230" height="108" rx="10" fill="none" stroke="#B8790A" stroke-width="1.8"/>
+          <text x="383" y="110" font-size="12.5" text-anchor="middle" fill="currentColor" font-weight="700">Basis data mengunci baris</text>
+          <text x="383" y="132" font-size="11.5" text-anchor="middle" fill="#B8790A" font-family="IBM Plex Mono, monospace" font-weight="600">SELECT ... FOR UPDATE</text>
+          <text x="383" y="149" font-size="11.5" text-anchor="middle" fill="#B8790A" font-family="IBM Plex Mono, monospace" font-weight="600">SKIP LOCKED</text>
+          <text x="383" y="172" font-size="11" text-anchor="middle" fill="currentColor" opacity=".62">satu operasi, tidak bisa disela</text>
+
+          <!-- keluaran A -->
+          <line x1="498" y1="112" x2="574" y2="76" stroke="#0B7A61" stroke-width="1.6" marker-end="url(#ar2)" opacity=".95"/>
+          <rect x="576" y="46" width="304" height="60" rx="9" fill="none" stroke="#0B7A61" stroke-width="1.8"/>
+          <text x="596" y="70" font-size="12.5" fill="currentColor" font-weight="600">Rina mendapat TRX-8842</text>
+          <text x="596" y="88" font-size="11.5" fill="currentColor" opacity=".65">baris terkunci; admin lain tidak melihatnya lagi</text>
+
+          <!-- keluaran B -->
+          <line x1="498" y1="168" x2="574" y2="204" stroke="currentColor" stroke-width="1.6" marker-end="url(#ar2)" opacity=".85"/>
+          <rect x="576" y="174" width="304" height="60" rx="9" fill="none" stroke="currentColor" opacity=".85"/>
+          <text x="596" y="198" font-size="12.5" fill="currentColor" font-weight="600">Bagus langsung mendapat TRX-8843</text>
+          <text x="596" y="216" font-size="11.5" fill="currentColor" opacity=".65">bukan pesan gagal, langsung antrean berikutnya</text>
+
+          <!-- catatan bawah -->
+          <line x1="14" y1="258" x2="886" y2="258" stroke="currentColor" opacity=".12"/>
+          <text x="14" y="278" font-size="11.5" fill="currentColor" opacity=".7">Kalau Rina tidak menyelesaikan dalam batas waktu yang kamu tentukan, TRX-8842 otomatis kembali ke antrean dan bisa diambil admin lain.</text>
+        </svg>
+      </div>
+      <figcaption>Yang berhasil bukan yang jaringannya lebih cepat, melainkan yang lebih dulu sampai
+        ke basis data — dan hanya satu yang bisa. Admin kedua tidak dibiarkan menunggu atau melihat
+        pesan gagal; ia langsung diberi transaksi berikutnya.</figcaption>
+    </figure>
+
+    <div class="note tl">
+      <div class="h">Kenapa ini penting bagi kamu, bukan hanya bagi programmer</div>
+      <p>Satu transfer withdraw yang terkirim dua kali bisa menghapus keuntungan operasional berhari-hari,
+        dan uang yang sudah keluar hampir mustahil ditarik kembali. Mekanisme ini yang membuat kejadian itu
+        tidak mungkin terjadi karena kesalahan sistem.</p>
+    </div>
+  </section>
+
+  <!-- ══ 3 ══ -->
+  <section id="status">
+    <div class="col">
+      <span class="snum">Perjalanan status</span>
+      <h2>Empat status, dan siapa yang boleh memindahkannya</h2>
+      <p>Status tidak bisa melompat sembarangan. Setiap perpindahan tercatat lengkap dengan pelakunya,
+        waktunya, dan alamat IP-nya, dalam catatan yang hanya bisa ditambah — tidak bisa diubah,
+        tidak bisa dihapus, termasuk oleh pemilik.</p>
+    </div>
+
+    <figure>
+      <div class="fbox">
+        <svg viewBox="0 0 900 200" role="img" aria-label="Diagram status: dari Menunggu ke Diproses saat admin mengambil, kembali ke Menunggu bila batas waktu terlampaui, dari Diproses ke Selesai setelah bukti diunggah, atau ke Bermasalah dengan alasan tertulis, dan dari Bermasalah kembali ke Diproses.">
+          <defs>
+            <marker id="ar3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+            </marker>
+          </defs>
+
+          <rect x="20" y="66" width="150" height="52" rx="26" fill="none" stroke="#9A6300" stroke-width="1.8"/>
+          <text x="95" y="90" font-size="13.5" text-anchor="middle" fill="currentColor" font-weight="700">Menunggu</text>
+          <text x="95" y="106" font-size="10.5" text-anchor="middle" fill="currentColor" opacity=".6">belum ada pemilik</text>
+
+          <line x1="170" y1="80" x2="286" y2="80" stroke="currentColor" marker-end="url(#ar3)" opacity=".85"/>
+          <text x="228" y="72" font-size="11" text-anchor="middle" fill="currentColor" opacity=".72">admin mengambil</text>
+
+          <path d="M286 106 C250 128, 206 128, 172 106" fill="none" stroke="currentColor" marker-end="url(#ar3)" opacity=".55" stroke-dasharray="4 3"/>
+          <text x="228" y="142" font-size="11" text-anchor="middle" fill="currentColor" opacity=".6">batas waktu terlampaui</text>
+
+          <rect x="288" y="66" width="150" height="52" rx="26" fill="none" stroke="#2A4FB8" stroke-width="1.8"/>
+          <text x="363" y="90" font-size="13.5" text-anchor="middle" fill="currentColor" font-weight="700">Diproses</text>
+          <text x="363" y="106" font-size="10.5" text-anchor="middle" fill="currentColor" opacity=".6">terkunci untuk 1 admin</text>
+
+          <line x1="438" y1="80" x2="518" y2="80" stroke="currentColor" marker-end="url(#ar3)" opacity=".85"/>
+          <text x="478" y="72" font-size="11" text-anchor="middle" fill="currentColor" opacity=".72">bukti diunggah</text>
+
+          <rect x="520" y="66" width="146" height="52" rx="26" fill="none" stroke="#0B7A61" stroke-width="1.8"/>
+          <text x="593" y="90" font-size="13.5" text-anchor="middle" fill="currentColor" font-weight="700">Selesai</text>
+          <text x="593" y="106" font-size="10.5" text-anchor="middle" fill="currentColor" opacity=".6">tidak bisa diubah lagi</text>
+
+          <path d="M363 66 L363 28 L790 28 L790 60" fill="none" stroke="currentColor" marker-end="url(#ar3)" opacity=".85"/>
+          <text x="576" y="20" font-size="11" text-anchor="middle" fill="currentColor" opacity=".72">admin menandai bermasalah, wajib menulis alasan</text>
+
+          <rect x="712" y="64" width="164" height="52" rx="26" fill="none" stroke="#B23325" stroke-width="1.8"/>
+          <text x="794" y="88" font-size="13.5" text-anchor="middle" fill="currentColor" font-weight="700">Bermasalah</text>
+          <text x="794" y="104" font-size="10.5" text-anchor="middle" fill="currentColor" opacity=".6">butuh penanganan khusus</text>
+
+          <path d="M794 116 L794 162 L363 162 L363 122" fill="none" stroke="currentColor" marker-end="url(#ar3)" opacity=".55" stroke-dasharray="4 3"/>
+          <text x="578" y="178" font-size="11" text-anchor="middle" fill="currentColor" opacity=".6">setelah diselesaikan, dikembalikan untuk diproses ulang</text>
+        </svg>
+      </div>
+      <figcaption>Garis putus-putus artinya transaksi bisa balik ke jalur normal, jadi tidak ada yang
+        tersangkut. Status Selesai tidak bisa diubah lagi setelah ditutup.</figcaption>
+    </figure>
+  </section>
+
+  <!-- ══ 3b ══ -->
+  <section id="withdraw">
+    <div class="col">
+      <span class="snum">Alur 2 dari 2</span>
+      <h2>Withdraw tetap manual, tapi tercatat</h2>
+      <p>Kamu bilang withdraw sekarang masih dikerjakan manual lewat WhatsApp. Kami tidak mengubah itu.
+        Transfer tetap kamu lakukan sendiri dari rekening seperti biasa. Yang kami tambahkan cuma
+        pembungkusnya: antreannya rapi, ada penanggung jawabnya, dan ada buktinya.</p>
+    </div>
+
+    <figure>
+      <div class="fbox">
+        <svg viewBox="0 0 900 210" role="img" aria-label="Alur withdraw: pelanggan mengajukan lewat portal, masuk antrean withdraw terpisah, admin mengambil dan terkunci, admin transfer manual lewat mobile banking, mengunggah bukti transfer, lalu sistem menutup transaksi dan memberi tahu pelanggan.">
+          <defs>
+            <marker id="arw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+            </marker>
+          </defs>
+
+          <text x="14" y="18" font-size="11" font-weight="600" fill="currentColor" opacity=".5" font-family="IBM Plex Mono, monospace">DI DALAM SISTEM</text>
+          <rect x="10" y="26" width="620" height="72" rx="12" fill="none" stroke="currentColor" opacity=".14" stroke-dasharray="5 4"/>
+
+          <rect x="26" y="42" width="150" height="42" rx="9" fill="none" stroke="currentColor" opacity=".85"/>
+          <text x="101" y="61" font-size="12.5" text-anchor="middle" fill="currentColor" font-weight="600">Pelanggan ajukan</text>
+          <text x="101" y="76" font-size="11" text-anchor="middle" fill="currentColor" opacity=".6">nominal + rekening tujuan</text>
+          <line x1="178" y1="63" x2="216" y2="63" stroke="currentColor" marker-end="url(#arw)" opacity=".8"/>
+
+          <rect x="218" y="42" width="160" height="42" rx="9" fill="none" stroke="currentColor" opacity=".85"/>
+          <text x="298" y="61" font-size="12.5" text-anchor="middle" fill="currentColor" font-weight="600">Antrean withdraw</text>
+          <text x="298" y="76" font-size="11" text-anchor="middle" fill="currentColor" opacity=".6">terpisah dari top up</text>
+          <line x1="380" y1="63" x2="418" y2="63" stroke="currentColor" marker-end="url(#arw)" opacity=".8"/>
+
+          <rect x="420" y="42" width="194" height="42" rx="9" fill="none" stroke="#B8790A" stroke-width="1.8"/>
+          <text x="517" y="61" font-size="12.5" text-anchor="middle" fill="currentColor" font-weight="600">Admin ambil, langsung terkunci</text>
+          <text x="517" y="76" font-size="10.5" text-anchor="middle" fill="#B8790A" font-weight="600">admin lain tidak bisa ambil</text>
+
+          <text x="656" y="18" font-size="11" font-weight="600" fill="currentColor" opacity=".5" font-family="IBM Plex Mono, monospace">DI LUAR SISTEM</text>
+          <rect x="652" y="26" width="238" height="72" rx="12" fill="none" stroke="#9A6300" opacity=".45" stroke-dasharray="5 4"/>
+          <line x1="616" y1="63" x2="654" y2="63" stroke="currentColor" marker-end="url(#arw)" opacity=".8"/>
+
+          <rect x="668" y="42" width="206" height="42" rx="9" fill="none" stroke="currentColor" opacity=".85"/>
+          <text x="771" y="61" font-size="12.5" text-anchor="middle" fill="currentColor" font-weight="600">Transfer manual seperti biasa</text>
+          <text x="771" y="76" font-size="10.5" text-anchor="middle" fill="currentColor" opacity=".6">lewat mobile banking kamu</text>
+
+          <path d="M771 100 L771 126 L400 126 L400 148" fill="none" stroke="currentColor" marker-end="url(#arw)" opacity=".8"/>
+          <text x="586" y="120" font-size="11" text-anchor="middle" fill="currentColor" opacity=".68">kembali ke sistem</text>
+
+          <rect x="288" y="150" width="224" height="42" rx="9" fill="none" stroke="#B23325" stroke-width="1.6"/>
+          <text x="400" y="169" font-size="12.5" text-anchor="middle" fill="currentColor" font-weight="600">Unggah bukti transfer</text>
+          <text x="400" y="184" font-size="11" text-anchor="middle" fill="#B23325" font-weight="600">wajib, sebelum bisa ditutup</text>
+
+          <line x1="512" y1="171" x2="562" y2="171" stroke="currentColor" marker-end="url(#arw)" opacity=".8"/>
+          <rect x="564" y="150" width="220" height="42" rx="9" fill="none" stroke="#0B7A61" stroke-width="1.8"/>
+          <text x="674" y="169" font-size="12.5" text-anchor="middle" fill="currentColor" font-weight="600">Selesai dan tercatat</text>
+          <text x="674" y="184" font-size="11" text-anchor="middle" fill="#0B7A61" font-weight="600">pelanggan langsung diberi tahu</text>
+        </svg>
+      </div>
+      <figcaption>Kotak garis putus di sebelah kanan adalah bagian yang tetap kamu kerjakan sendiri di luar
+        sistem. Sistem menjaga pintu masuk dan pintu keluarnya, jadi tidak ada withdraw yang selesai tanpa
+        bukti dan tanpa nama admin yang mengerjakannya.</figcaption>
+    </figure>
+
+    <div class="note">
+      <div class="h">Kalau nanti mau otomatis</div>
+      <p>Pencairan bisa dibuat otomatis lewat payment gateway berizin Bank Indonesia, biayanya sekitar
+        Rp 2.500 per transaksi. Itu pekerjaan terpisah dan kami hitung tersendiri. Untuk sekarang sistem
+        mengikuti cara kerja yang sudah jalan.</p>
+    </div>
+  </section>
+
+  <!-- ══ 4 ══ -->
+  <section id="wf-admin">
+    <div class="col">
+      <span class="snum">Rancangan tampilan 1</span>
+      <h2>Dashboard admin — layar yang dipakai sepanjang hari</h2>
+      <p>Inilah layar yang menggantikan puluhan percakapan WhatsApp. Satu daftar, terurut,
+        dengan tombol yang hanya bisa ditekan satu kali oleh satu orang.</p>
+    </div>
+
+    <div class="wf">
+      <div class="wf-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="url">/admin/antrean</span>
+        <span class="who">Rina · Admin Transaksi</span>
+      </div>
+      <div class="wf-body">
+        <div class="wf-head">
+          <span class="t">Antrean transaksi</span>
+          <span class="c">diperbarui otomatis · 5 Sep 2026, 14:07</span>
+        </div>
+
+        <div class="kpis">
+          <div class="kpi"><div class="l">Menunggu</div><div class="v warn">23</div></div>
+          <div class="kpi"><div class="l">Sedang saya proses</div><div class="v">2</div></div>
+          <div class="kpi"><div class="l">Selesai hari ini</div><div class="v ok">147</div></div>
+          <div class="kpi"><div class="l">Bermasalah</div><div class="v">4</div></div>
+          <div class="kpi"><div class="l">Rata-rata proses</div><div class="v">6m 40d</div></div>
+        </div>
+
+        <div class="filters">
+          <span class="chip on">Semua platform</span>
+          <span class="chip">Platform A</span>
+          <span class="chip">Platform B</span>
+          <span class="chip on">Menunggu</span>
+          <span class="chip">Diproses</span>
+          <span class="chip">Bermasalah</span>
+          <span class="chip">Top up</span>
+          <span class="chip">Withdraw</span>
+        </div>
+
+        <table>
+          <thead>
+            <tr><th>Nomor</th><th>Pelanggan</th><th>Platform</th><th>Jenis</th><th style="text-align:right">Nominal</th><th>Status</th><th>Tindakan</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="id">TRX-8842</td><td>Rina Astuti</td><td><span class="plat">Platform A</span></td>
+              <td>Top up 1.500 koin</td><td class="amt">Rp 250.000</td>
+              <td><span class="st wait">Menunggu</span></td><td><span class="btn">Ambil</span></td>
+            </tr>
+            <tr>
+              <td class="id">TRX-8843</td><td>Bagus Pratomo</td><td><span class="plat">Platform B</span></td>
+              <td>Withdraw</td><td class="amt">Rp 1.750.000</td>
+              <td><span class="st wait">Menunggu</span></td><td><span class="btn">Ambil</span></td>
+            </tr>
+            <tr class="locked">
+              <td class="id">TRX-8839</td><td>Sinta Maharani</td><td><span class="plat">Platform A</span></td>
+              <td>Top up 500 koin</td><td class="amt">Rp 85.000</td>
+              <td><span class="st proc">Diproses · Dimas</span></td><td><span class="btn ghost">Terkunci</span></td>
+            </tr>
+            <tr class="locked">
+              <td class="id">TRX-8836</td><td>Yoga Ramadhan</td><td><span class="plat">Platform B</span></td>
+              <td>Withdraw</td><td class="amt">Rp 620.000</td>
+              <td><span class="st proc">Diproses · saya</span></td><td><span class="btn">Selesaikan</span></td>
+            </tr>
+            <tr>
+              <td class="id">TRX-8830</td><td>Nadia Prameswari</td><td><span class="plat">Platform A</span></td>
+              <td>Penukaran</td><td class="amt">Rp 410.000</td>
+              <td><span class="st prob">Bermasalah</span></td><td><span class="btn ghost">Lihat catatan</span></td>
+            </tr>
+            <tr>
+              <td class="id">TRX-8824</td><td>Fajar Nugroho</td><td><span class="plat">Platform B</span></td>
+              <td>Top up 3.000 koin</td><td class="amt">Rp 495.000</td>
+              <td><span class="st done">Selesai</span></td><td><span class="btn ghost">Lihat bukti</span></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="legend">
+          <span><i style="background:var(--rail);border:1px solid var(--hair)"></i> Baris berlatar abu berarti sedang dipegang admin lain — tombolnya mati</span>
+        </div>
+      </div>
+    </div>
+    <p class="col" style="font-size:13px;color:var(--slate)">Nama, nomor, dan nominal di atas adalah contoh karangan
+      untuk menggambarkan tampilan. Nama kedua platform akan disesuaikan setelah kamu beri tahu.</p>
+  </section>
+
+  <!-- ══ 5 ══ -->
+  <section id="wf-pelanggan">
+    <div class="col">
+      <span class="snum">Rancangan tampilan 2</span>
+      <h2>Portal pelanggan — supaya admin berhenti ditanya "sudah masuk belum?"</h2>
+      <p>Satu halaman, dua tombol besar, dan status yang bergerak sendiri di layar pelanggan.
+        Setiap pertanyaan yang tidak jadi dikirim ke WhatsApp adalah menit yang kembali ke tim admin.</p>
+    </div>
+
+    <div class="wf">
+      <div class="wf-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="url">/akun/ajukan</span>
+        <span class="who">Rina Astuti · Pelanggan</span>
+      </div>
+      <div class="wf-body">
+        <div class="wf-head"><span class="t">Ajukan top up</span><span class="c">saldo dan riwayat ada di halaman yang sama</span></div>
+
+        <div class="form-grid">
+          <div class="fld"><div class="l">Platform</div><div class="i">Platform A</div></div>
+          <div class="fld"><div class="l">Jenis transaksi</div><div class="i">Top up koin</div></div>
+          <div class="fld"><div class="l">Jumlah koin</div><div class="i">1.500</div></div>
+          <div class="fld"><div class="l">Yang harus dibayar</div><div class="i">Rp 250.000</div></div>
+          <div class="fld"><div class="l">ID akun di platform</div><div class="i ph">contoh: 8823-4410</div></div>
+          <div class="fld"><div class="l">Bukti pembayaran</div><div class="i ph">unggah tangkapan layar</div></div>
+        </div>
+
+        <div style="display:flex;gap:9px;margin-bottom:22px">
+          <span class="btn">Kirim pengajuan</span>
+          <span class="btn ghost">Batal</span>
+        </div>
+
+        <div class="wf-head" style="margin-top:6px"><span class="t" style="font-size:14.5px">Pengajuan berjalan</span>
+          <span class="c">TRX-8842 · diajukan 14:03</span></div>
+
+        <div class="track-wrap">
+          <div class="track">
+            <div class="n on"><div class="d"></div><div class="t">Diajukan<br>14:03</div></div>
+            <div class="n on"><div class="d"></div><div class="t">Masuk antrean<br>14:03</div></div>
+            <div class="n now"><div class="d"></div><div class="t">Sedang diproses<br>14:07</div></div>
+            <div class="n"><div class="d"></div><div class="t">Selesai<br>—</div></div>
+          </div>
+        </div>
+        <p style="font-size:13px;color:var(--slate);margin:14px 0 0">
+          Titik biru bergerak sendiri saat admin mengubah status. Pelanggan tidak perlu memuat ulang halaman,
+          dan tidak perlu bertanya.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ 6 ══ -->
+  <section id="wf-owner">
+    <div class="col">
+      <span class="snum">Rancangan tampilan 3</span>
+      <h2>Dashboard pemilik — melihat semuanya tanpa bertanya ke siapa pun</h2>
+      <p>Ringkasan harian ini sudah termasuk dalam paket dashboard admin. Laporan yang lebih lengkap
+        dengan grafik dan ekspor ke Excel bisa ditambahkan nanti kalau memang dibutuhkan. Kami tampilkan
+        sekarang supaya kamu bisa bilang dari awal, angka apa saja yang benar-benar ingin kamu pantau.</p>
+    </div>
+
+    <div class="wf">
+      <div class="wf-bar">
+        <span class="dots"><i></i><i></i><i></i></span>
+        <span class="url">/owner/ringkasan</span>
+        <span class="who">Pemilik · akses penuh</span>
+      </div>
+      <div class="wf-body">
+        <div class="wf-head"><span class="t">Ringkasan hari ini</span><span class="c">5 September 2026 · bandingkan dengan kemarin</span></div>
+
+        <div class="kpis">
+          <div class="kpi"><div class="l">Total transaksi</div><div class="v">176</div></div>
+          <div class="kpi"><div class="l">Nilai top up</div><div class="v" style="font-size:18px">Rp 41,2 jt</div></div>
+          <div class="kpi"><div class="l">Nilai withdraw</div><div class="v" style="font-size:18px">Rp 28,7 jt</div></div>
+          <div class="kpi"><div class="l">Belum tertangani</div><div class="v warn">23</div></div>
+          <div class="kpi"><div class="l">Admin aktif</div><div class="v ok">4</div></div>
+        </div>
+
+        <div class="wf-head" style="margin-top:18px"><span class="t" style="font-size:14.5px">Kinerja admin hari ini</span></div>
+        <table style="min-width:520px">
+          <thead><tr><th>Admin</th><th style="text-align:right">Ditangani</th><th style="text-align:right">Rata-rata proses</th><th style="text-align:right">Bermasalah</th><th>Terakhir aktif</th></tr></thead>
+          <tbody>
+            <tr><td>Dimas</td><td class="amt">52</td><td class="amt">4m 10d</td><td class="amt">1</td><td class="id">14:06</td></tr>
+            <tr><td>Rina</td><td class="amt">44</td><td class="amt">6m 40d</td><td class="amt">0</td><td class="id">14:07</td></tr>
+            <tr><td>Bagus</td><td class="amt">31</td><td class="amt">9m 05d</td><td class="amt">2</td><td class="id">13:58</td></tr>
+            <tr><td>Wulan</td><td class="amt">20</td><td class="amt">7m 22d</td><td class="amt">1</td><td class="id">12:40</td></tr>
+          </tbody>
+        </table>
+        <div class="legend"><span>Laporan harian, mingguan, dan bulanan bisa diunduh sebagai Excel atau PDF.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ══ 7 ══ -->
+  <section id="akses">
+    <div class="col">
+      <span class="snum">Hak akses</span>
+      <h2>Tiga peran, dengan batas yang tegas</h2>
+      <p>Enam orang tidak seharusnya punya kunci yang sama. Pembagian di bawah ini adalah usulan awal
+        dan bisa disesuaikan pada sesi diskusi teknis.</p>
+    </div>
+
+    <div class="grid2">
+      <div class="rolecard">
+        <div class="r">Pemilik</div>
+        <div class="s">Super admin, akses penuh</div>
+        <ul>
+          <li><span class="yes">Bisa</span> melihat seluruh transaksi dan laporan</li>
+          <li><span class="yes">Bisa</span> menambah dan menonaktifkan akun admin</li>
+          <li><span class="yes">Bisa</span> mengubah pengaturan platform dan batas nominal</li>
+          <li><span class="yes">Bisa</span> membaca jejak audit lengkap</li>
+          <li><span class="no">Tidak bisa</span> menghapus jejak audit — tidak ada yang bisa</li>
+        </ul>
+      </div>
+      <div class="rolecard">
+        <div class="r">Admin Transaksi</div>
+        <div class="s">Empat sampai lima orang, kerja harian</div>
+        <ul>
+          <li><span class="yes">Bisa</span> mengambil dan memproses top up dan withdraw</li>
+          <li><span class="yes">Bisa</span> menandai transaksi bermasalah dengan alasan</li>
+          <li><span class="yes">Bisa</span> mengunggah bukti transfer</li>
+          <li><span class="no">Tidak bisa</span> mengubah transaksi yang sudah selesai</li>
+          <li><span class="no">Tidak bisa</span> melihat laporan keuangan menyeluruh</li>
+        </ul>
+      </div>
+      <div class="rolecard">
+        <div class="r">Customer Service</div>
+        <div class="s">Menjawab pelanggan, tidak menyentuh dana</div>
+        <ul>
+          <li><span class="yes">Bisa</span> mencari transaksi dan melihat statusnya</li>
+          <li><span class="yes">Bisa</span> menambahkan catatan pada transaksi</li>
+          <li><span class="no">Tidak bisa</span> mengambil atau mengeksekusi transaksi</li>
+          <li><span class="no">Tidak bisa</span> mengeksekusi withdraw dalam bentuk apa pun</li>
+          <li><span class="no">Tidak bisa</span> mengubah pengaturan sistem</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="note">
+      <div class="h">Yang belum ditentukan, dan sengaja kami tanyakan lebih dulu</div>
+      <p>Batas nominal per admin, lama waktu sebelum transaksi kembali ke antrean, dan apakah withdraw
+        di atas nominal tertentu perlu persetujuan orang kedua — tiga hal ini bergantung pada besaran
+        transaksi kamu sehari-hari. Kami menanyakannya sebelum mengunci ruang lingkup, bukan menebaknya.</p>
+    </div>
+  </section>
+
+  <!-- ══ 8 ══ -->
+  <section id="biaya">
+    <div class="col">
+      <span class="snum">Ringkasan biaya</span>
+      <h2>Angkanya, supaya tidak perlu bolak-balik buka PDF</h2>
+      <p>Rinciannya ada di proposal halaman 7. Ini versi ringkasnya.</p>
+    </div>
+
+    <div class="wf">
+      <div class="wf-body">
+        <table style="min-width:560px">
+          <thead><tr><th>Komponen</th><th>Isinya</th><th style="text-align:right">Nilai</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Portal Pelanggan</strong></td>
+              <td>Registrasi dan login, pengajuan top up dan withdraw, pemilihan platform, riwayat, status langsung, pemberitahuan, tampilan mobile</td>
+              <td class="amt">Rp 19.000.000</td></tr>
+            <tr><td><strong>Dashboard Admin</strong></td>
+              <td>Kotak masuk dua platform, antrean, ambil dengan penguncian, empat status dan bukti wajib, penyaringan, pencarian, tiga level hak akses, catatan aktivitas, ringkasan pemilik</td>
+              <td class="amt">Rp 10.000.000</td></tr>
+            <tr><td><strong>Server masa pengembangan</strong></td>
+              <td>Supaya kamu bisa mencoba sistemnya di tautan sendiri sejak minggu kedua</td>
+              <td class="amt">Rp 1.000.000</td></tr>
+            <tr><td style="border-top:2px solid var(--ink)"><strong>Total pengembangan</strong></td>
+              <td style="border-top:2px solid var(--ink)">Sekali bayar · 4 minggu · termin 50 / 30 / 20</td>
+              <td class="amt" style="border-top:2px solid var(--ink);font-size:15px;color:var(--gold)"><strong>Rp 30.000.000</strong></td></tr>
+            <tr><td><strong>Operasional bulanan</strong></td>
+              <td>Server, domain, SSL, cadangan harian dengan pemulihan titik waktu, uji pulih tiap tiga bulan, pembaruan keamanan, pemantauan 24 jam, perbaikan bug, dukungan teknis jam kerja</td>
+              <td class="amt">Rp 5.500.000<span style="color:var(--slate);font-weight:400"> / bln</span></td></tr>
+          </tbody>
+        </table>
+        <div class="legend"><span>Biaya bulanan baru berjalan saat sistem dipakai di produksi, bukan selama pengembangan.</span></div>
+      </div>
+    </div>
+
+    <div class="note tl">
+      <div class="h">Langkah berikutnya</div>
+      <p>Kalau arahnya sudah pas, kami usul ngobrol teknis 30 sampai 45 menit untuk memetakan alur transaksi
+        kamu langkah demi langkah dan mengunci daftar fitur. Setelah itu kami kirim kontrak beserta rancangan
+        tampilan untuk disetujui.</p>
+    </div>
+  </section>
+
+  <div class="foot">
+    <span>PT Inti Asia Teknologi · CoreAsia · Jl. Kramat Pulo Dalam II, DKI Jakarta 10450</span>
+    <span>hello@coreasia.id · +62 851-2153-3395 · coreasia.id</span>
+  </div>
+</div>
+
+</body>
+</html>

@@ -23,7 +23,7 @@ export default defineNuxtConfig({
     // hanya menyesatkan — locale ditangani composables/useCoreI18n.ts.
     ogImage: { enabled: true },
     robots: {
-        disallow: ['/console', '/console/', '/register', '/maintenance', '/404', '/500'],
+        disallow: ['/console', '/console/', '/register', '/maintenance', '/404', '/500', '/preview', '/preview/'],
         allow: [
             '/favicon.ico',
             '/logo.svg',
@@ -37,7 +37,7 @@ export default defineNuxtConfig({
         ],
     },
     sitemap: {
-        exclude: ['/console', '/console/**', '/blog', '/blog/**', '/404', '/500', '/maintenance', '/register'],
+        exclude: ['/console', '/console/**', '/blog', '/blog/**', '/404', '/500', '/maintenance', '/register', '/preview', '/preview/**'],
         defaults: {
             changefreq: 'weekly' as const,
             priority: 0.7,
@@ -323,6 +323,54 @@ export default defineNuxtConfig({
                 // itu dan hanya menyentuh worker.
                 'Content-Security-Policy': `default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://www.googleadservices.com https://googleads.g.doubleclick.net; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' http://localhost:8084 https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://ad.doubleclick.net https://stats.g.doubleclick.net https://www.google.com https://www.google.co.id https://www.google.com.sg https://www.google.com.my https://www.google.com.au https://*.coreasia.id https://api.coreasia.id https://fjoiivcyrznawbbnkkmn.supabase.co; frame-src 'self' https://www.googletagmanager.com https://td.doubleclick.net; frame-ancestors 'self'`,
                 'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+            },
+        },
+        /* Halaman pratinjau untuk calon klien (lampiran proposal). Berdiri
+           sendiri sebagai HTML statis di public/preview/, tidak ditautkan dari
+           navigasi mana pun, dan sengaja tidak diindeks. CSP di sini melonggarkan
+           style-src ke Google Fonts KHUSUS untuk path ini — halaman utama tetap
+           memakai kebijakan ketat di '/**'. */
+        /* JANGAN tambahkan routeRule redirect '/preview/streaming-agency' ke
+           versi bergaris miring. Dua alasan, dua-duanya sudah diuji pada build:
+           1. Tidak perlu. Penangan aset statis Nitro memotong garis miring akhir
+              lalu mencoba `<path>/index.html`, jadi bentuk dengan dan tanpa
+              garis miring sama-sama menemukan berkasnya.
+           2. Merusak. matchAll pada matcher routeRules mengumpulkan aturan dari
+              SEMUA leluhur path, sehingga kunci statis '/preview/streaming-agency'
+              ikut cocok untuk '/preview/streaming-agency/' — permintaan bergaris
+              miring dijawab 301 ke dirinya sendiri dan halaman jadi loop tak
+              berujung. Terlihat sebagai ERR_TOO_MANY_REDIRECTS di peramban. */
+        /* Header keamanan di bawah sengaja diulang dari '/**'. Di Vercel aturan
+           header TIDAK digabung seperti di Nitro lokal: rute pertama yang cocok
+           di .vercel/output/config.json menang dan routing berhenti di situ.
+           Terbukti di produksi — `curl -I https://coreasia.id/favicon.ico` hanya
+           mengembalikan Cache-Control miliknya sendiri, tanpa satu pun header
+           dari '/**'. Tanpa pengulangan ini, /preview justru jadi path paling
+           longgar di seluruh situs. */
+        '/preview/**': {
+            headers: {
+                'X-Frame-Options': 'SAMEORIGIN',
+                'X-Content-Type-Options': 'nosniff',
+                'Referrer-Policy': 'strict-origin-when-cross-origin',
+                'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+                'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+                'X-Robots-Tag': 'noindex, nofollow, noarchive',
+                'Cache-Control': 'public, max-age=300, must-revalidate',
+                /* script-src 'self', BUKAN 'none'. Halaman ini memang nol tag
+                   <script>, jadi 'none' terlihat lebih benar — tapi coreasia.id
+                   ada di belakang Cloudflare, dan Email Address Obfuscation
+                   (Scrape Shield) menulis ulang alamat email TEKS POLOS di HTML
+                   menjadi <a class="__cf_email__">[email protected]</a>, lalu
+                   memulihkannya lewat skrip satu-asal
+                   /cdn-cgi/scripts/<hash>/cloudflare-static/email-decode.min.js.
+                   Halaman ini memuat 'hello@coreasia.id' sebagai teks polos di
+                   baris kontaknya. Dengan 'none' skrip pemulih itu diblokir dan
+                   calon klien membaca "[email protected]" di lampiran proposal.
+                   Cacat ini TIDAK muncul saat uji lokal maupun lewat
+                   *.vercel.app, karena Cloudflare tidak ada di jalur itu.
+                   'self' tanpa 'unsafe-inline' tetap memblokir seluruh skrip
+                   sebaris dan seluruh host pihak ketiga. */
+                'Content-Security-Policy': `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data:; font-src 'self' https://fonts.gstatic.com; connect-src 'none'; frame-ancestors 'self'`,
             },
         },
         // Immutable cache for built assets
