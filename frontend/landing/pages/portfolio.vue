@@ -15,9 +15,11 @@ interface PortfolioItem {
   title: string
   category: string
   description: string
-  tech: string[]
   link?: string
   highlights: string[]
+  // Fakta yang bisa ditelusuri sumbernya (periode, ukuran tim, tanggal pemeriksaan).
+  // Sengaja bukan daftar teknologi: halaman ini tidak menampilkan kolom teknologi.
+  meta?: string[]
 }
 
 const items = computed(() => (t('portfolio.items') as PortfolioItem[]) || [])
@@ -67,14 +69,14 @@ const items = computed(() => (t('portfolio.items') as PortfolioItem[]) || [])
                 </div>
               </div>
 
-              <!-- Tech Stack -->
-              <div class="mt-5 flex flex-wrap gap-1.5">
+              <!-- Fakta yang bisa ditelusuri -->
+              <div v-if="item.meta?.length" class="mt-5 flex flex-wrap gap-1.5">
                 <span
-                  v-for="tech in item.tech"
-                  :key="tech"
-                  class="rounded-md border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] px-2 py-0.5 text-[11px] font-medium text-[var(--ca-subtle)]"
+                  v-for="fact in item.meta"
+                  :key="fact"
+                  class="rounded-md border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] px-2 py-0.5 text-[11px] font-medium text-[var(--ca-muted)]"
                 >
-                  {{ tech }}
+                  {{ fact }}
                 </span>
               </div>
 
@@ -86,7 +88,7 @@ const items = computed(() => (t('portfolio.items') as PortfolioItem[]) || [])
                   rel="noopener noreferrer"
                   class="inline-flex items-center gap-1.5 text-sm font-semibold ca-link-accent"
                 >
-                  Lihat Proyek
+                  {{ t('portfolio.viewProject') }}
                   <Icon name="lucide:external-link" class="h-3.5 w-3.5" />
                 </a>
               </div>
