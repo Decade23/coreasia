@@ -37,15 +37,18 @@ var BudgetRangeLabels = map[string]string{
 // "lainnya": subjek baru biasanya lahir di frontend lebih dulu, dan menampilkan
 // kunci mentah jauh lebih menolong daripada menyembunyikannya.
 var SubjectLabels = map[string]string{
-	"website":    "Jasa Pembuatan Website",
-	"webapp":     "Jasa Pembuatan Aplikasi Web",
-	"lms":        "CoreAsia LMS",
-	"pantau":     "Pantau by CoreAsia",
-	"leadku":     "LeadKu by CoreAsia",
-	"pricing":    "Informasi Pricing",
-	"venture":    "Venture Partnership",
-	"enterprise": "Custom Enterprise Solution",
-	"support":    "Technical Support",
+	"website":     "Jasa Pembuatan Website",
+	"webapp":      "Jasa Pembuatan Aplikasi Web",
+	"k3":          "Sistem Pelaporan K3",
+	"klinik":      "Sistem Informasi Klinik",
+	"operasional": "Sistem Manajemen Transaksi",
+	"lms":         "CoreAsia LMS",
+	"pantau":      "Pantau by CoreAsia",
+	"leadku":      "LeadKu by CoreAsia",
+	"pricing":     "Informasi Pricing",
+	"venture":     "Venture Partnership",
+	"enterprise":  "Custom Enterprise Solution",
+	"support":     "Technical Support",
 }
 
 // SubjectLabel mengembalikan label subjek yang terbaca, atau kuncinya sendiri

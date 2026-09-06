@@ -29,6 +29,18 @@ const PAGE_LABELS: Record<string, { id: string, en: string }> = {
         id: 'Web Monitoring Dashboard',
         en: 'Web Monitoring Dashboard',
     },
+    '/layanan/sistem-pelaporan-k3': {
+        id: 'Sistem Pelaporan K3',
+        en: 'Safety Reporting System',
+    },
+    '/layanan/sistem-informasi-klinik': {
+        id: 'Sistem Informasi Klinik',
+        en: 'Clinic Information System',
+    },
+    '/layanan/sistem-manajemen-transaksi': {
+        id: 'Sistem Manajemen Transaksi',
+        en: 'Transaction Management System',
+    },
     '/layanan': { id: 'Layanan', en: 'Services' },
     '/pricing': { id: 'Harga', en: 'Pricing' },
     '/portfolio': { id: 'Portfolio', en: 'Portfolio' },
