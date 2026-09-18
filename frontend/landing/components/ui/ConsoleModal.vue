@@ -33,6 +33,9 @@ const handleKeydown = (event: KeyboardEvent) => {
   close()
 }
 
+// immediate: modal yang dipasang sudah terbuka (gerbang alasan di detail
+// pengguna) tidak pernah melihat show berubah, jadi Esc-nya dulu mati.
+// Modal yang mulai tertutup hanya memanggil removeEventListener tanpa efek.
 watch(() => props.show, (show) => {
   if (!import.meta.client) return
 
@@ -41,7 +44,7 @@ watch(() => props.show, (show) => {
   } else {
     document.removeEventListener('keydown', handleKeydown)
   }
-})
+}, { immediate: true })
 
 onBeforeUnmount(() => {
   if (!import.meta.client) return

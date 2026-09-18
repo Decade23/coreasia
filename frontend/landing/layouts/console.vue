@@ -4,6 +4,7 @@ import {
   SYSTEM_THEME_MEDIA_QUERY,
   THEME_COOKIE_KEY,
 } from '~/composables/useCoreTheme'
+import type { Remah } from '~/composables/useConsoleRemah'
 
 const { theme, setTheme } = useCoreTheme()
 const toggleTheme = () => setTheme(theme.value === 'dark' ? 'light' : 'dark')
@@ -68,8 +69,12 @@ const isSidebarOpen = ref(false)
 const showUserMenu = ref(false)
 
 /* ── Breadcrumb ── */
+/* Halaman yang memasang remahnya sendiri (useConsoleRemah) menang; halaman
+   lain tetap memakai tebakan dari path di bawah, tanpa perubahan. */
+const { aktif: remahHalaman } = useConsoleRemah()
 const breadcrumbs = computed(() => {
-  const crumbs: { label: string; to?: string }[] = [{ label: tc('layout.kicker'), to: '/console' }]
+  const crumbs: Remah[] = [{ label: tc('layout.kicker'), to: '/console' }]
+  if (remahHalaman.value) return [...crumbs, ...remahHalaman.value]
   const path = route.path
 
   const matched = menuItems.value.find(m => m.to !== '/console' && path.startsWith(m.to))
@@ -83,6 +88,13 @@ const breadcrumbs = computed(() => {
 
   return crumbs
 })
+
+const router = useRouter()
+const klikRemah = (e: MouseEvent, crumb: Remah) => {
+  if (!crumb.aksi || !klikBiasa(e)) return
+  e.preventDefault()
+  crumb.aksi()
+}
 
 const currentPageLabel = computed(() => breadcrumbs.value.at(-1)?.label || tc('layout.dashboard'))
 
@@ -190,8 +202,18 @@ const handleLogout = () => {
             <nav class="hidden rounded-full border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] px-3 py-2 sm:flex items-center gap-1.5 text-xs shadow-[var(--ca-card-soft-shadow)]">
               <template v-for="(crumb, i) in breadcrumbs" :key="i">
                 <span v-if="i > 0" class="text-[var(--ca-subtle)]">/</span>
+                <!-- Remah ber-aksi (opt-in, useConsoleRemah): halaman yang memutuskan
+                     mundur atau mengganti entri riwayat; remah lain NuxtLink seperti dulu. -->
+                <a
+                  v-if="crumb.to && crumb.aksi && i < breadcrumbs.length - 1"
+                  :href="router.resolve(crumb.to).href"
+                  class="text-[var(--ca-muted)] hover:text-[var(--ca-text)] transition"
+                  @click="klikRemah($event, crumb)"
+                >
+                  {{ crumb.label }}
+                </a>
                 <NuxtLink
-                  v-if="crumb.to && i < breadcrumbs.length - 1"
+                  v-else-if="crumb.to && i < breadcrumbs.length - 1"
                   :to="crumb.to"
                   class="text-[var(--ca-muted)] hover:text-[var(--ca-text)] transition"
                 >

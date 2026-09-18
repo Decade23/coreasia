@@ -7,10 +7,19 @@
  *                 ulang lewat /masuk
  *   'totp'        (lama) diperlakukan sama dengan 'sesi'
  *   'bukan-admin' 42501 lainnya → identitas sesi ini bukan admin CashFlow
- *   'alasan'      alasan kurang dari 8 aksara (diperiksa DI SINI sebelum
- *                 awalan pelaku ditambahkan, supaya awalan tidak memenuhi
- *                 syarat panjang atas nama pengguna) atau 22023 dari server
+ *   'alasan'      alasan kurang dari 8 aksara — HANYA yang diperiksa DI SINI
+ *                 sebelum awalan pelaku ditambahkan (supaya awalan tidak
+ *                 memenuhi syarat panjang atas nama pengguna)
+ *   'argumen'     22023 dari server. Server memakai kode itu untuk argumen apa
+ *                 pun yang ditolak (jendela pengumuman terbalik, level tak
+ *                 dikenal, kunci konfigurasi kosong, alasan), jadi kalimatnya
+ *                 diambil dari server — "alasan terlalu pendek" untuk tanggal
+ *                 yang terbalik menyuruh admin memperbaiki hal yang salah
+ *   'tidak-ada'   P0002 — mis. UUID yang ditempel di palet bukan pengguna
  *   'lain'        sisanya
+ *
+ * Halaman tidak menulis blok catch sendiri: useCashflowMuat yang mengubah
+ * jenis ini menjadi kalimat dan mengarahkan ke /masuk bila sesi hilang.
  *
  * SESI HILANG DI TENGAH HALAMAN. sessionStorage bisa kosong (tab dipulihkan,
  * refresh token ditolak). rpc() memeriksa sesi dulu; kalau tidak ada, minta
@@ -27,21 +36,24 @@
  */
 import type {
   StatsDTO, PenggunaDTO, CorongDTO, KeberhasilanDTO, RetensiDTO, AktivitasDTO,
-  RuangDTO, DetailPenggunaDTO,
+  RuangDTO, DetailPenggunaDTO, TransaksiLamaDTO, PengumumanDTO, KesehatanDTO,
 } from '~/adapters/cashflow'
 
-export type JenisGalat = 'sesi' | 'totp' | 'bukan-admin' | 'alasan' | 'konfigurasi' | 'lain'
+export type JenisGalat = 'sesi' | 'totp' | 'bukan-admin' | 'alasan' | 'argumen' | 'konfigurasi' | 'tidak-ada' | 'lain'
 export class GalatAdmin extends Error {
   constructor(public jenis: JenisGalat, pesan: string) { super(pesan) }
 }
 
-function petakanGalat(e: any): GalatAdmin {
+/** Galat PostgREST/jaringan → GalatAdmin. GalatAdmin yang sudah jadi dipulangkan apa adanya. */
+export function petakanGalat(e: any): GalatAdmin {
+  if (e instanceof GalatAdmin) return e
   const kode = e?.code ?? ''
   const hint = e?.hint ?? ''
   const pesan = e?.message ?? 'Gagal memanggil server.'
   if (kode === '42501' && (hint === 'mfa-wajib' || hint === 'sesi-konsol')) return new GalatAdmin('sesi', pesan)
   if (kode === '42501') return new GalatAdmin('bukan-admin', pesan)
-  if (kode === '22023') return new GalatAdmin('alasan', pesan)
+  if (kode === '22023') return new GalatAdmin('argumen', pesan)
+  if (kode === 'P0002') return new GalatAdmin('tidak-ada', pesan)
   return new GalatAdmin('lain', pesan)
 }
 
@@ -50,12 +62,10 @@ export interface AuditDTO {
   target_id: string | null; target_email: string | null; detail: any; reason: string | null
   created_at: string; total_semua: number
 }
-export interface KesehatanDTO { ukuran_db: string; tabel: Array<{ tabel: string; baris: number; ukuran: string }> }
 export interface FotoYatimDTO { bucket: string; jalur: string; ukuran: number; dibuat: string; sebab: string }
 export interface OcrDTO { status: string; jumlah: number }
 export interface TelemetriDTO { jenis: string; layar: string; jumlah: number; pengguna: number }
 export interface ConfigDTO { key: string; value: any; is_public: boolean; note: string | null; updated_by: string | null; updated_at: string }
-export interface PengumumanDTO { id: string; judul: string; isi: string; level: string; mulai: string; sampai: string | null; created_at: string }
 
 export const useCashflowAdmin = () => {
   const { user: adminConsole } = useAdminAuth()
@@ -115,8 +125,9 @@ export const useCashflowAdmin = () => {
     telemetri: (hari = 30) => rpc<TelemetriDTO[]>('admin_telemetri_ringkas', { p_hari: hari }),
 
     // ── daftar tersamar (adapter yang menyamarkan) ─────────────────────
-    /** Tersamar oleh server; `alasan` (≥ 8 aksara) membuka email utuh dan
-     *  menulis SATU baris audit untuk seluruh daftar (0081). */
+    /** Tersamar oleh server bila `alasan` null — tanpa baris audit, dan
+     *  display_name dikirim kosong (0082). `alasan` (≥ 8 aksara) membuka email
+     *  utuh dan menulis SATU baris audit untuk seluruh daftar (0081). */
     daftarPengguna: (limit = 50, offset = 0, cari = '', alasan: string | null = null) =>
       rpc<PenggunaDTO[]>('admin_daftar_pengguna_v2', { p_limit: limit, p_offset: offset, p_cari: cari || null, p_alasan: alasan }),
     daftarRuang: (limit = 50, offset = 0) =>
@@ -130,7 +141,7 @@ export const useCashflowAdmin = () => {
     aktivitasPengguna: (user: string, alasan: string, limit = 200) =>
       rpc<AktivitasDTO[]>('admin_aktivitas_pengguna', { p_user: user, p_alasan: alasan, p_limit: limit }),
     transaksiPengguna: (user: string, alasan: string, limit = 200) =>
-      rpc<any[]>('admin_baca_transaksi', { p_user: user, p_alasan: alasan, p_limit: limit }),
+      rpc<TransaksiLamaDTO[]>('admin_baca_transaksi', { p_user: user, p_alasan: alasan, p_limit: limit }),
 
     // ── audit ──────────────────────────────────────────────────────────
     daftarAudit: (limit = 50, offset = 0, aksi: string | null = null) =>

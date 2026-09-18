@@ -10,11 +10,14 @@
  */
 import type { SelKohort } from '~/adapters/cashflow'
 defineProps<{ baris: SelKohort[] }>()
+const { tcf } = useCashflowI18n()
 
+/* Intensitas dari token hijau yang sama di terang dan gelap (color-mix), bukan
+   palet Tailwind mentah — di tema terang emerald-500 terlalu menyala. */
 const nada = (persen: number) => {
-  if (persen >= 60) return 'bg-emerald-500/30'
-  if (persen >= 30) return 'bg-emerald-500/18'
-  if (persen > 0) return 'bg-emerald-500/8'
+  if (persen >= 60) return 'bg-[color-mix(in_srgb,var(--ca-emerald-text)_30%,transparent)]'
+  if (persen >= 30) return 'bg-[color-mix(in_srgb,var(--ca-emerald-text)_18%,transparent)]'
+  if (persen > 0) return 'bg-[var(--ca-emerald-bg)]'
   return 'bg-[var(--ca-panel-bg-strong)]'
 }
 </script>
@@ -24,18 +27,18 @@ const nada = (persen: number) => {
     <table class="w-full text-sm">
       <thead>
         <tr class="text-left text-xs uppercase tracking-wide text-[var(--ca-muted)]">
-          <th class="py-2 pr-3 font-semibold">Kohort</th>
-          <th class="py-2 px-3 text-right font-semibold">Daftar</th>
-          <th class="py-2 px-3 text-right font-semibold">Pernah mencatat</th>
-          <th class="py-2 px-3 text-right font-semibold">Masih 30 hari</th>
-          <th class="py-2 pl-3 text-right font-semibold">Retensi</th>
+          <th class="py-2 pr-3 font-semibold">{{ tcf('ringkasan.kohortKolom.kohort') }}</th>
+          <th class="py-2 px-3 text-right font-semibold">{{ tcf('ringkasan.kohortKolom.daftar') }}</th>
+          <th class="py-2 px-3 text-right font-semibold">{{ tcf('ringkasan.kohortKolom.pernah') }}</th>
+          <th class="py-2 px-3 text-right font-semibold">{{ tcf('ringkasan.kohortKolom.masih') }}</th>
+          <th class="py-2 pl-3 text-right font-semibold">{{ tcf('ringkasan.kohortKolom.retensi') }}</th>
         </tr>
       </thead>
       <tbody>
         <tr v-for="k in baris" :key="k.kohort" class="border-t border-[color:var(--ca-border)]">
           <td class="py-2 pr-3 text-[var(--ca-text)]">
             {{ k.kohort }}
-            <span v-if="k.berjalan" class="ml-1 rounded-full border border-[color:var(--ca-border)] px-1.5 text-[0.65rem] text-[var(--ca-subtle)]">berjalan</span>
+            <span v-if="k.berjalan" class="ml-1 rounded-full border border-[color:var(--ca-border)] px-1.5 text-[0.65rem] text-[var(--ca-subtle)]">{{ tcf('ringkasan.berjalan') }}</span>
           </td>
           <td class="py-2 px-3 text-right tabular-nums text-[var(--ca-text)]">{{ k.mendaftar }}</td>
           <td class="py-2 px-3 text-right tabular-nums text-[var(--ca-text)]">{{ k.pernahCatat }}</td>

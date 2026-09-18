@@ -22,7 +22,7 @@ const dasar = computed(() => Math.max(1, props.baris[0]?.nilai ?? 1))
       <span class="h-2.5 overflow-hidden rounded-full bg-[var(--ca-panel-bg-strong)]">
         <span
           class="block h-full rounded-full transition-[width]"
-          :style="{ width: `${Math.max(2, Math.round((b.nilai / dasar) * 100))}%`, background: warna || 'var(--ca-accent, #d97706)' }"
+          :style="{ width: `${Math.max(2, Math.round((b.nilai / dasar) * 100))}%`, background: warna || 'var(--ca-accent)' }"
         />
       </span>
       <span class="whitespace-nowrap text-right tabular-nums">

@@ -9,23 +9,17 @@ import { keCorong, keKohort, keSeri30Hari, angka } from '~/adapters/cashflow'
 import type { StatsDTO, KeberhasilanDTO, RetensiDTO, CorongDTO } from '~/adapters/cashflow'
 const { tcf } = useCashflowI18n()
 const api = useCashflowAdmin()
+const { memuat, galat, pesanGalat, muat } = useCashflowMuat({ awal: true })
 
-const memuat = ref(true)
-const galat = ref<{ jenis: string; pesan: string } | null>(null)
 const stats = ref<StatsDTO | null>(null)
 const keberhasilan = ref<KeberhasilanDTO | null>(null)
 const corong = ref<CorongDTO[]>([])
 const retensi = ref<RetensiDTO[]>([])
 
-onMounted(async () => {
-  try {
-    const [s, k, c, r] = await Promise.all([api.stats(), api.ukuranKeberhasilan(), api.corong(90), api.retensi(6)])
-    stats.value = s; keberhasilan.value = k; corong.value = c; retensi.value = r
-  } catch (e: any) {
-    galat.value = { jenis: e?.jenis ?? 'lain', pesan: e?.message ?? '' }
-    if (e?.jenis === 'totp' || e?.jenis === 'sesi') navigateTo({ path: '/console/cashflow/masuk', query: { sebab: 'sesi', ke: '/console/cashflow' } })
-  } finally { memuat.value = false }
-})
+onMounted(() => muat(async () => {
+  const [s, k, c, r] = await Promise.all([api.stats(), api.ukuranKeberhasilan(), api.corong(90), api.retensi(6)])
+  stats.value = s; keberhasilan.value = k ?? null; corong.value = c; retensi.value = r
+}))
 
 const seri = computed(() => stats.value ? keSeri30Hari(stats.value.transaksi_per_hari) : [])
 const titikIsi = computed(() => seri.value.filter(v => v > 0).length)
@@ -44,8 +38,8 @@ const kohort = computed(() => keKohort(retensi.value))
     <p v-if="memuat" class="text-sm text-[var(--ca-muted)]">{{ tcf('umum.memuat') }}</p>
 
     <div v-else-if="galat" class="ca-console-dialog p-6 text-sm">
-      <p class="font-semibold text-rose-600">{{ galat.jenis === 'bukan-admin' ? tcf('umum.bukanAdmin') : galat.jenis === 'konfigurasi' ? tcf('umum.belumKonfigurasi') : tcf('umum.gagal') }}</p>
-      <p class="mt-1 text-[var(--ca-subtle)]">{{ galat.pesan }}</p>
+      <p class="font-semibold ca-tone-danger">{{ pesanGalat }}</p>
+      <p v-if="galat.message && galat.message !== pesanGalat" class="mt-1 text-[var(--ca-subtle)]">{{ galat.message }}</p>
     </div>
 
     <template v-else-if="stats && keberhasilan">

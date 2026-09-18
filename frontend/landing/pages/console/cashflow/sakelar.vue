@@ -11,23 +11,17 @@
  */
 definePageMeta({ layout: 'console', middleware: ['console', 'cashflow-admin'] })
 import type { ConfigDTO } from '~/composables/cashflow/useCashflowAdmin'
-const { tcf } = useCashflowI18n()
+const { tcf, formatTanggal } = useCashflowI18n()
 const api = useCashflowAdmin()
+const toast = useToast()
+const { memuat, pesanGalat, muat, aksi } = useCashflowMuat({ awal: true })
 
-const memuat = ref(true); const galat = ref(''); const sukses = ref('')
 const config = ref<ConfigDTO[]>([])
 const alasan = ref('')
 const emailBaru = ref('')
 
-const muat = async () => {
-  memuat.value = true; galat.value = ''
-  try { config.value = await api.daftarConfig() }
-  catch (e: any) {
-    galat.value = e?.jenis === 'bukan-admin' ? tcf('umum.bukanAdmin') : (e?.message ?? tcf('umum.gagal'))
-    if (e?.jenis === 'totp' || e?.jenis === 'sesi') navigateTo({ path: '/console/cashflow/masuk', query: { sebab: 'sesi', ke: '/console/cashflow/sakelar' } })
-  } finally { memuat.value = false }
-}
-onMounted(muat)
+const muatConfig = () => muat(async () => { config.value = await api.daftarConfig() })
+onMounted(muatConfig)
 
 const nilai = (key: string) => config.value.find(c => c.key === key)?.value
 const otpLonggar = computed(() => nilai('auth.verifikasi_email') === 'longgar')
@@ -36,13 +30,9 @@ const pengecualian = computed<string[]>(() => {
 })
 
 const simpan = async (key: string, value: unknown, publik: boolean, note: string) => {
-  if (alasan.value.trim().length < 8) { galat.value = tcf('alasan.pendek'); return }
-  galat.value = ''; sukses.value = ''
-  try {
-    await api.setConfig(key, value, publik, note, alasan.value.trim())
-    sukses.value = `${key} ${tcf('umum.simpan').toLowerCase()} ✓`
-    await muat()
-  } catch (e: any) { galat.value = e?.message ?? tcf('umum.gagal') }
+  if (alasan.value.trim().length < 8) { toast.error(tcf('alasan.pendek')); return }
+  const ok = await aksi(() => api.setConfig(key, value, publik, note, alasan.value.trim()), { sukses: `${key}: ${tcf('umum.tersimpan')}` })
+  if (ok) await muatConfig()
 }
 
 const setOtp = (longgar: boolean) => simpan(
@@ -68,24 +58,23 @@ const hapusPengecualian = (e: string) =>
       <span class="text-xs font-semibold uppercase tracking-wide text-[var(--ca-muted)]">{{ tcf('sakelar.alasanUbah') }}</span>
       <input v-model="alasan" type="text" class="ca-input mt-1 w-full" :placeholder="tcf('alasan.lengkapi')" />
     </label>
-    <p v-if="galat" class="text-sm text-rose-600">{{ galat }}</p>
-    <p v-if="sukses" class="text-sm text-emerald-600">{{ sukses }}</p>
+    <p v-if="pesanGalat" class="text-sm ca-tone-danger">{{ pesanGalat }}</p>
     <p v-if="memuat" class="text-sm text-[var(--ca-muted)]">{{ tcf('umum.memuat') }}</p>
 
-    <template v-else>
+    <template v-else-if="!pesanGalat">
       <!-- Sakelar verifikasi email -->
-      <section class="ca-console-dialog p-5" :class="otpLonggar ? 'border-amber-500/60 bg-amber-500/5' : ''">
+      <section class="ca-console-dialog p-5" :class="otpLonggar ? 'border-[color:var(--ca-gold-border)] bg-[var(--ca-gold-bg)]' : ''">
         <div class="flex flex-wrap items-start justify-between gap-4">
           <div class="max-w-xl">
             <h2 class="font-display text-base font-bold text-[var(--ca-text)]">{{ tcf('sakelar.otpJudul') }}</h2>
             <p class="mt-1 text-sm text-[var(--ca-muted)]">{{ tcf('sakelar.otpKet') }}</p>
-            <p class="mt-2 text-sm font-semibold" :class="otpLonggar ? 'text-amber-600' : 'text-emerald-600'">
+            <p class="mt-2 text-sm font-semibold" :class="otpLonggar ? 'ca-tone-gold' : 'ca-tone-emerald'">
               {{ otpLonggar ? tcf('sakelar.otpAktif') : tcf('sakelar.otpNormal') }}
             </p>
           </div>
           <div class="flex rounded-full border border-[color:var(--ca-border)] p-1 text-sm">
-            <button type="button" class="rounded-full px-4 py-1.5 transition" :class="!otpLonggar ? 'bg-emerald-500/15 font-semibold text-[var(--ca-text)]' : 'text-[var(--ca-muted)]'" @click="setOtp(false)">{{ tcf('sakelar.otpWajib') }}</button>
-            <button type="button" class="rounded-full px-4 py-1.5 transition" :class="otpLonggar ? 'bg-amber-500/20 font-semibold text-[var(--ca-text)]' : 'text-[var(--ca-muted)]'" @click="setOtp(true)">{{ tcf('sakelar.otpLonggar') }}</button>
+            <button type="button" class="rounded-full px-4 py-1.5 transition" :class="!otpLonggar ? 'bg-[var(--ca-emerald-bg)] font-semibold text-[var(--ca-text)]' : 'text-[var(--ca-muted)]'" @click="setOtp(false)">{{ tcf('sakelar.otpWajib') }}</button>
+            <button type="button" class="rounded-full px-4 py-1.5 transition" :class="otpLonggar ? 'bg-[var(--ca-gold-bg)] font-semibold text-[var(--ca-text)]' : 'text-[var(--ca-muted)]'" @click="setOtp(true)">{{ tcf('sakelar.otpLonggar') }}</button>
           </div>
         </div>
       </section>
@@ -96,7 +85,7 @@ const hapusPengecualian = (e: string) =>
         <p class="mt-1 text-sm text-[var(--ca-muted)]">{{ tcf('sakelar.pengecualianKet') }}</p>
         <ul class="mt-3 flex flex-wrap gap-2">
           <li v-for="e in pengecualian" :key="e" class="inline-flex items-center gap-2 rounded-full border border-[color:var(--ca-border)] px-3 py-1 font-mono text-xs text-[var(--ca-text)]">
-            {{ e }} <button type="button" class="text-[var(--ca-subtle)] hover:text-rose-600" :aria-label="`hapus ${e}`" @click="hapusPengecualian(e)">×</button>
+            {{ e }} <button type="button" class="text-[var(--ca-subtle)] hover:text-[var(--ca-danger-text)]" :aria-label="tcf('sakelar.hapusEmail')(e)" @click="hapusPengecualian(e)">×</button>
           </li>
         </ul>
         <form class="mt-3 flex gap-2" @submit.prevent="tambahPengecualian">
@@ -108,7 +97,8 @@ const hapusPengecualian = (e: string) =>
       <!-- Semua kunci -->
       <section class="ca-console-dialog overflow-x-auto p-5">
         <h2 class="font-display text-base font-bold text-[var(--ca-text)]">{{ tcf('sakelar.semua') }}</h2>
-        <table class="mt-3 w-full text-sm">
+        <CashflowKeadaanKosong v-if="!config.length" class="mt-3" :pesan="tcf('umum.kosong')" icon="lucide:toggle-right" />
+        <table v-else class="mt-3 w-full text-sm">
           <thead><tr class="text-left text-xs uppercase tracking-wide text-[var(--ca-muted)]">
             <th class="py-2 pr-3">{{ tcf('sakelar.kunci') }}</th><th class="py-2 px-3">{{ tcf('sakelar.nilai') }}</th><th class="py-2 px-3">{{ tcf('sakelar.publik') }}</th><th class="py-2 px-3">{{ tcf('sakelar.catatan') }}</th><th class="py-2 pl-3">{{ tcf('sakelar.diperbarui') }}</th>
           </tr></thead>
@@ -118,7 +108,7 @@ const hapusPengecualian = (e: string) =>
               <td class="py-1.5 px-3 font-mono text-xs">{{ JSON.stringify(c.value) }}</td>
               <td class="py-1.5 px-3">{{ c.is_public ? tcf('umum.ya') : tcf('umum.tidak') }}</td>
               <td class="py-1.5 px-3 text-xs text-[var(--ca-muted)]">{{ c.note || '—' }}</td>
-              <td class="py-1.5 pl-3 text-xs text-[var(--ca-subtle)]">{{ c.updated_at?.slice(0, 10) }}</td>
+              <td class="py-1.5 pl-3 text-xs text-[var(--ca-subtle)] whitespace-nowrap">{{ formatTanggal(c.updated_at) }}</td>
             </tr>
           </tbody>
         </table>

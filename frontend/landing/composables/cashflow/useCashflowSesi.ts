@@ -53,7 +53,19 @@ export const useCashflowSesi = () => {
     return pencetakanBerjalan
   }
 
+  /* Jejak daftar pengguna milik admin yang keluar: alasan email lengkap,
+     indeks tersamar, posisi daftar, dan saringannya. Logout → login console
+     adalah navigasi SPA, jadi tanpa ini semuanya diwarisi admin berikutnya di
+     tab yang sama. Dijalankan juga bila modul tidak terkonfigurasi. */
+  const bersihkanJejak = () => {
+    lupakanAlasanDaftar()
+    useCashflowIndeks().kosongkan()
+    useState<string>('cf_cari_pengguna', () => '').value = ''
+    useState<Record<string, string>>('cf_saring_kolom_pengguna', () => ({})).value = {}
+  }
+
   const keluar = async () => {
+    bersihkanJejak()
     const sb = await ambil()
     if (!sb) return
     try {

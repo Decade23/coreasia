@@ -4,6 +4,7 @@ const consoleMessages = {
   id: {
     common: {
       backToWebsite: 'Kembali ke website',
+      back: 'Kembali',
       create: 'Tambah',
       createNew: 'Buat baru',
       edit: 'Edit',
@@ -606,6 +607,7 @@ const consoleMessages = {
   en: {
     common: {
       backToWebsite: 'Back to website',
+      back: 'Back',
       create: 'Create',
       createNew: 'Create new',
       edit: 'Edit',

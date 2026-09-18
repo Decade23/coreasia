@@ -49,7 +49,7 @@ onMounted(() => { if (!sebab.value) coba() })
     <div class="ca-console-dialog mt-8 p-6 text-sm sm:p-8">
       <p v-if="sesi.sibuk.value" class="text-center text-[var(--ca-muted)]">{{ tcf('masuk.menyambung') }}</p>
       <template v-else>
-        <p class="font-semibold text-rose-600">{{ pesan }}</p>
+        <p class="font-semibold ca-tone-danger">{{ pesan }}</p>
         <p v-if="sebab" class="mt-1 font-mono text-xs text-[var(--ca-subtle)]">{{ sebab }}</p>
         <button type="button" class="ca-btn-primary mt-5 w-full" @click="coba">{{ tcf('masuk.cobaLagi') }}</button>
         <NuxtLink to="/console/login" class="mt-3 block text-center text-xs text-[var(--ca-subtle)] hover:text-[var(--ca-muted)]">{{ tcf('masuk.masukUlangConsole') }}</NuxtLink>

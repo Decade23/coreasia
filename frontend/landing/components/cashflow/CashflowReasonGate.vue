@@ -9,11 +9,14 @@
  *
  * `investigasi` = varian untuk membuka catatan bebas: hanya satu preset,
  * dan aksinya dicatat sebagai baris audit terpisah oleh pemanggil.
+ * `keterangan` menggantikan kalimat pembuka bila yang dibuka bukan satu orang
+ * (mis. email lengkap seluruh daftar).
  */
 const props = withDefaults(defineProps<{
   show: boolean
   investigasi?: boolean
-}>(), { investigasi: false })
+  keterangan?: string
+}>(), { investigasi: false, keterangan: '' })
 const emit = defineEmits<{ close: []; konfirmasi: [alasan: string] }>()
 const { tcf } = useCashflowI18n()
 
@@ -44,14 +47,14 @@ const kirim = () => {
 <template>
   <ConsoleModal :show="show" :title="tcf('alasan.judul')" @close="emit('close')">
     <p class="text-sm leading-relaxed text-[var(--ca-muted)]">
-      {{ investigasi ? tcf('alasan.investigasi') : tcf('alasan.ket') }}
+      {{ keterangan || (investigasi ? tcf('alasan.investigasi') : tcf('alasan.ket')) }}
     </p>
     <div class="mt-4 flex flex-wrap gap-2">
       <button
         v-for="p in preset" :key="p.kunci" type="button"
         class="rounded-full border px-3 py-1 text-sm transition"
         :class="presetTerpilih === p.kunci
-          ? 'border-amber-500 bg-amber-500/10 text-[var(--ca-text)]'
+          ? 'border-[color:var(--ca-gold-border)] bg-[var(--ca-gold-bg)] text-[var(--ca-text)]'
           : 'border-[color:var(--ca-border)] text-[var(--ca-muted)] hover:text-[var(--ca-text)]'"
         @click="presetTerpilih = p.kunci"
       >{{ p.label }}</button>
@@ -60,12 +63,12 @@ const kirim = () => {
       <span class="text-xs font-semibold uppercase tracking-wide text-[var(--ca-muted)]">{{ tcf('umum.alasan') }}</span>
       <textarea
         v-model="tambahan" rows="3"
-        class="mt-1 w-full rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] px-3 py-2 text-sm text-[var(--ca-text)] outline-none focus:border-amber-500"
+        class="mt-1 w-full rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] px-3 py-2 text-sm text-[var(--ca-text)] outline-none focus:border-[color:var(--ca-gold-border)]"
         :placeholder="tcf('alasan.lengkapi')"
         @keydown.meta.enter.prevent="kirim"
       />
     </label>
-    <p v-if="galat" class="mt-2 text-xs text-rose-600">{{ galat }}</p>
+    <p v-if="galat" class="mt-2 text-xs ca-tone-danger">{{ galat }}</p>
     <div class="mt-5 flex justify-end gap-2">
       <button type="button" class="ca-btn-secondary" @click="emit('close')">{{ tcf('umum.batal') }}</button>
       <button type="button" class="ca-btn-primary" :disabled="!cukup" @click="kirim">{{ tcf('alasan.buka') }}</button>

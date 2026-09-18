@@ -14,8 +14,11 @@ interface Column {
   class?: string
   /** Column width */
   width?: string
-  /** Sortable */
+  /** Sortable — hanya berlaku di mode urut terkendali (prop `sort`) */
   sortable?: boolean
+  /** Kelas untuk <th> (opt-in). Pasangan `class` milik <td>: kolom yang
+   *  disembunyikan di layar sempit menyembunyikan kepalanya juga. */
+  headerClass?: string
 }
 
 interface Props {
@@ -24,24 +27,61 @@ interface Props {
   loading?: boolean
   emptyIcon?: string
   emptyText?: string
+  /** OPT-IN: urut terkendali. Bila diisi (termasuk null), kepala kolom
+   *  `sortable` bisa diklik dan tabel HANYA memancarkan `sort`; pemanggil yang
+   *  mengurutkan seluruh baris sebelum memotongnya per halaman. Tanpa prop ini
+   *  tabel tampil persis seperti sebelumnya. */
+  sort?: { key: string; arah: 'asc' | 'desc' } | null
+  /** OPT-IN: saringan kolom terkendali (v-model:filters). Bila diisi, tabel
+   *  tidak menyaring `data` sendiri — pemanggil menyaring SEMUA baris, bukan
+   *  hanya halaman yang tampil. */
+  filters?: Record<string, string>
+  /** Baris "n dari m entri" di bawah tabel. */
+  showCount?: boolean
 }
 
 const props = withDefaults(defineProps<Props>(), {
   loading: false,
   emptyIcon: 'lucide:inbox',
   emptyText: 'Tidak ada data',
+  sort: undefined,
+  filters: undefined,
+  showCount: true,
 })
 const { tc } = useConsoleI18n()
 const { formatDateTime } = useConsoleDateTime()
 
 const emit = defineEmits<{
   'row-click': [row: any]
+  'sort': [key: string]
+  'update:filters': [filters: Record<string, string>]
 }>()
 
+const modeUrut = computed(() => props.sort !== undefined)
+const saringTerkendali = computed(() => props.filters !== undefined)
+const ariaSort = (key: string) => {
+  if (!modeUrut.value) return undefined
+  if (props.sort?.key !== key) return 'none'
+  return props.sort.arah === 'asc' ? 'ascending' : 'descending'
+}
+
 // Per-column filters
-const columnFilters = ref<Record<string, string>>({})
+const columnFilters = ref<Record<string, string>>({ ...(props.filters ?? {}) })
 const activeFilter = ref<string | null>(null)
 const filterRef = ref<HTMLElement | null>(null)
+
+// Mode terkendali: isian kolom tetap di columnFilters (template tidak berubah),
+// dicerminkan dua arah dengan prop `filters`. Mode lama tidak menyentuh ini.
+watch(columnFilters, (v) => {
+  if (!saringTerkendali.value) return
+  const bersih = Object.fromEntries(Object.entries(v).filter(([, isi]) => !!isi))
+  if (JSON.stringify(bersih) !== JSON.stringify(props.filters ?? {})) emit('update:filters', bersih)
+}, { deep: true })
+watch(() => props.filters, (v) => {
+  if (!saringTerkendali.value) return
+  const kini = Object.fromEntries(Object.entries(columnFilters.value).filter(([, isi]) => !!isi))
+  if (JSON.stringify(kini) !== JSON.stringify(v ?? {})) columnFilters.value = { ...(v ?? {}) }
+}, { deep: true })
 
 const toggleFilter = (key: string) => {
   activeFilter.value = activeFilter.value === key ? null : key
@@ -65,6 +105,7 @@ if (import.meta.client) {
 
 // Filtered data
 const filteredData = computed(() => {
+  if (saringTerkendali.value) return props.data
   let result = [...props.data]
   for (const [key, value] of Object.entries(columnFilters.value)) {
     if (!value) continue
@@ -138,10 +179,26 @@ const formatDate = (d: string) => formatDateTime(d)
               v-for="col in columns"
               :key="col.key"
               class="relative"
+              :class="col.headerClass"
               :style="col.width ? { width: col.width } : undefined"
+              :aria-sort="ariaSort(col.key)"
             >
               <div class="flex items-center gap-1.5">
-                <span>{{ col.label }}</span>
+                <button
+                  v-if="modeUrut && col.sortable"
+                  type="button"
+                  class="inline-flex items-center gap-1 uppercase transition hover:text-[var(--ca-text)]"
+                  :class="sort?.key === col.key ? 'text-[var(--ca-text)]' : ''"
+                  @click.stop="emit('sort', col.key)"
+                >
+                  {{ col.label }}
+                  <Icon
+                    :name="sort?.key !== col.key ? 'lucide:chevrons-up-down' : sort.arah === 'asc' ? 'lucide:arrow-up' : 'lucide:arrow-down'"
+                    class="h-3 w-3"
+                    :class="sort?.key === col.key ? '' : 'opacity-40'"
+                  />
+                </button>
+                <span v-else>{{ col.label }}</span>
                 <!-- Column filter trigger -->
                 <CaTooltip :text="`Filter ${col.label}`">
                   <button
@@ -249,7 +306,7 @@ const formatDate = (d: string) => formatDateTime(d)
       </table>
 
       <!-- Result count -->
-      <div class="mt-3 px-4 text-xs text-[var(--ca-subtle)]">
+      <div v-if="showCount" class="mt-3 px-4 text-xs text-[var(--ca-subtle)]">
         {{ filteredData.length }} dari {{ data.length }} entri
       </div>
     </div>

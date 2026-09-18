@@ -14,7 +14,7 @@ const props = withDefaults(defineProps<{
   tinggi?: number
   label?: string
   warna?: string
-}>(), { tinggi: 56, label: '', warna: 'var(--ca-accent, #d97706)' })
+}>(), { tinggi: 56, label: '', warna: 'var(--ca-accent)' })
 
 const LEBAR = 300
 const titikAktif = ref<number | null>(null)
@@ -39,9 +39,11 @@ const pilih = (e: MouseEvent) => {
   const r = svg.getBoundingClientRect()
   const x = ((e.clientX - r.left) / r.width) * LEBAR
   let terdekat = 0
-  koordinat.value.forEach((p, i) => { if (Math.abs(p.x - x) < Math.abs(koordinat.value[terdekat].x - x)) terdekat = i })
+  let jarak = Number.POSITIVE_INFINITY
+  koordinat.value.forEach((p, i) => { if (Math.abs(p.x - x) < jarak) { jarak = Math.abs(p.x - x); terdekat = i } })
   titikAktif.value = terdekat
 }
+const titik = computed(() => (titikAktif.value == null ? null : koordinat.value[titikAktif.value] ?? null))
 </script>
 
 <template>
@@ -57,17 +59,17 @@ const pilih = (e: MouseEvent) => {
     >
       <path v-if="area" :d="area" :fill="warna" fill-opacity="0.12" />
       <path v-if="jalur" :d="jalur" fill="none" :stroke="warna" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
-      <template v-if="titikAktif != null && koordinat[titikAktif]">
-        <line :x1="koordinat[titikAktif].x" :x2="koordinat[titikAktif].x" y1="0" :y2="tinggi" stroke="var(--ca-border)" stroke-dasharray="2 3" />
-        <circle :cx="koordinat[titikAktif].x" :cy="koordinat[titikAktif].y" r="3.5" :fill="warna" />
+      <template v-if="titik">
+        <line :x1="titik.x" :x2="titik.x" y1="0" :y2="tinggi" stroke="var(--ca-border)" stroke-dasharray="2 3" />
+        <circle :cx="titik.x" :cy="titik.y" r="3.5" :fill="warna" />
       </template>
     </svg>
     <div
-      v-if="titikAktif != null && koordinat[titikAktif]"
+      v-if="titik"
       class="pointer-events-none absolute -top-6 rounded-md border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg-strong)] px-2 py-0.5 text-xs tabular-nums text-[var(--ca-text)]"
-      :style="{ left: `calc(${(koordinat[titikAktif].x / LEBAR) * 100}% - 1.25rem)` }"
+      :style="{ left: `calc(${(titik.x / LEBAR) * 100}% - 1.25rem)` }"
     >
-      {{ koordinat[titikAktif].v }}
+      {{ titik.v }}
     </div>
   </div>
 </template>
