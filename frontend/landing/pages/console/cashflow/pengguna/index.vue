@@ -1,20 +1,20 @@
 <script setup lang="ts">
 /**
- * Daftar pengguna — TERSAMAR secara bawaan (K1, 18 Sep 2026; membalik
- * keputusan 5 Sep).
+ * Daftar pengguna — TERSAMAR secara bawaan, dibuka dengan SATU ketukan.
  *
- * Kenapa dibalik: dengan email utuh sebagai bawaan, setiap kunjungan membuka
- * email semua orang dengan alasan berupa konstanta di kode. Itu bertentangan
- * dengan janji "tidak ada mode sekadar melihat-lihat" di kebijakan privasi,
- * dan baris auditnya tidak menunjuk siapa pun. Sekarang:
  * - bawaan: admin_daftar_pengguna_v2 tanpa alasan → server menyamarkan dan
  *   tidak menulis audit (0082);
- * - "Tampilkan email lengkap" meminta alasan yang DIKETIK (≥ 8 aksara) → satu
- *   baris audit per muat. Alasannya diingat 30 menit di memori tab
- *   (useCashflowAlasanDaftar), jadi kembali dari detail tidak bertanya lagi,
- *   tapi tetap tercatat. Lewat 30 menit, layar kembali tersamar sendiri;
- * - "Samarkan lagi" melupakan alasan dan membuang email utuh dari memori,
- *   tanpa jaringan.
+ * - sakelar "Email lengkap" (keputusan Master 18 Sep 2026: harus langsung
+ *   bekerja, tanpa modal alasan) memuat ulang dengan alasan tetap
+ *   ALASAN_SAKELAR → satu baris audit per muat, lengkap dengan detail.ids
+ *   orang yang emailnya dikirim utuh (0087), jadi setiap pembukaan tetap
+ *   muncul di riwayat akses orangnya. Keadaan terbuka diingat 30 menit di
+ *   memori tab (useCashflowAlasanDaftar) supaya kembali dari detail tidak
+ *   menutupnya; lewat 30 menit layar tersamar lagi sendiri;
+ * - mematikan sakelar membuang email utuh dari memori, tanpa jaringan.
+ *
+ * Mulai Fase 1 (0089) server hanya melayani jalur ini untuk sesi console yang
+ * memegang izin cashflow:pii (login ber-TOTP); sakelarnya tetap satu ketukan.
  *
  * Saring, urut, dan paginasi di KLIEN atas ≤ 500 baris, berurutan saring →
  * urut (nilai mentah) → potong per halaman. Pencarian tidak dikirim ke
@@ -59,7 +59,8 @@ const total = ref(0)
 const cari = useState('cf_cari_pengguna', () => '')
 const kolomCari = ref<HTMLInputElement | null>(null)
 const filterKolom = useState<Record<string, string>>('cf_saring_kolom_pengguna', () => ({}))
-const gerbang = ref(false)
+/** Alasan audit untuk sakelar — tetap, karena pembukaan ini satu ketukan. */
+const ALASAN_SAKELAR = 'Sakelar Email lengkap di daftar pengguna console'
 const terbuka = ref<AlasanDaftar | null>(null)
 
 /** Buang email utuh dari memori, tanpa jaringan (samarkanEmail idempoten). */
@@ -83,9 +84,8 @@ const muatDaftar = (alasan: AlasanDaftar | null) => muat(async (terbaru) => {
 })
 onMounted(() => muatDaftar(alasanDaftar.ambil()))
 
-const bukaDenganAlasan = async (a: string) => {
-  gerbang.value = false
-  if (!(await muatDaftar(alasanDaftar.ingat(a)))) alasanDaftar.lupakan()
+const buka = async () => {
+  if (!(await muatDaftar(alasanDaftar.ingat(ALASAN_SAKELAR)))) alasanDaftar.lupakan()
 }
 const samarkan = () => {
   alasanDaftar.lupakan()
@@ -194,8 +194,6 @@ useCashflowPintasan([{ kunci: '/', aksi: () => kolomCari.value?.focus() }])
     </ConsolePageHeader>
     <p class="text-sm text-[var(--ca-muted)]">{{ tcf('pengguna.ket') }}</p>
 
-    <CashflowReasonGate :show="gerbang" :keterangan="tcf('pengguna.alasanDaftarKet')" @close="gerbang = false" @konfirmasi="bukaDenganAlasan" />
-
     <div class="flex flex-wrap items-center gap-3">
       <input ref="kolomCari" v-model="cari" type="search" class="ca-input w-full sm:w-64" :placeholder="tcf('umum.cari')" />
       <div class="flex flex-wrap gap-1 rounded-full border border-[color:var(--ca-border)] p-1 text-sm">
@@ -209,23 +207,31 @@ useCashflowPintasan([{ kunci: '/', aksi: () => kolomCari.value?.focus() }])
       </div>
       <span class="text-xs text-[var(--ca-subtle)] tabular-nums">{{ terurut.length }} / {{ semua.length }}</span>
 
-      <!-- Email lengkap: alasan diketik, tercatat; menyamarkan lagi tanpa jaringan. -->
+      <!-- Sakelar email lengkap: satu ketukan, tercatat di audit; mematikannya
+           menyamarkan lagi tanpa jaringan. -->
       <button
-        v-if="terbuka" type="button" class="ca-btn-secondary ml-auto inline-flex items-center gap-2 text-sm"
-        @click="samarkan"
+        type="button" role="switch" :aria-checked="!!terbuka"
+        class="ml-auto inline-flex items-center gap-3 rounded-full border border-[color:var(--ca-border)] py-1.5 pl-4 pr-1.5 text-sm font-semibold text-[var(--ca-text)] transition hover:bg-[var(--ca-panel-bg-strong)] disabled:cursor-not-allowed disabled:opacity-60"
+        :disabled="memuat" @click="terbuka ? samarkan() : buka()"
       >
-        <Icon name="lucide:eye-off" class="h-4 w-4" />{{ tcf('pengguna.samarkanLagi') }}
-      </button>
-      <button
-        v-else type="button" class="ca-btn-secondary ml-auto inline-flex items-center gap-2 text-sm"
-        :disabled="memuat" @click="gerbang = true"
-      >
-        <Icon name="lucide:eye" class="h-4 w-4" />{{ tcf('pengguna.tampilkanEmail') }}
+        <Icon :name="terbuka ? 'lucide:eye' : 'lucide:eye-off'" class="h-4 w-4 text-[var(--ca-muted)]" />
+        {{ tcf('pengguna.emailPenuh') }}
+        <span
+          class="relative inline-flex h-6 w-11 shrink-0 rounded-full border transition-colors duration-200"
+          :class="terbuka ? 'border-[color:var(--ca-brand-deep)] bg-[var(--ca-brand)]' : 'border-[color:var(--ca-border)] bg-[var(--ca-toggle-track)]'"
+          aria-hidden="true"
+        >
+          <span
+            class="absolute top-0.5 h-[1.125rem] w-[1.125rem] rounded-full transition-transform duration-200"
+            :style="{ background: 'var(--ca-toggle-thumb)', boxShadow: 'var(--ca-toggle-thumb-shadow)' }"
+            :class="terbuka ? 'translate-x-[1.35rem]' : 'translate-x-0.5'"
+          />
+        </span>
       </button>
     </div>
 
     <p v-if="terbuka" class="rounded-xl border border-[color:var(--ca-gold-border)] bg-[var(--ca-gold-bg)] px-4 py-2 text-xs text-[var(--ca-text)]">
-      {{ tcf('pengguna.terbukaDengan')(terbuka.alasan, formatJam(new Date(terbuka.sampai))) }}
+      {{ tcf('pengguna.terbukaSampai')(formatJam(new Date(terbuka.sampai))) }}
     </p>
 
     <p v-if="pesanGalat" class="text-sm ca-tone-danger">{{ pesanGalat }}</p>
