@@ -70,8 +70,10 @@ const tanpaEmailUtuh = (rows: PenggunaDTO[]) => rows.map(d => ({ ...d, email: sa
    sudah null padahal server memulangkan email utuh — tabel terbuka tanpa
    spanduk dan tanpa pengatur waktu. Dengan salinan, pengatur waktu tetap
    dipasang dan langsung menyamarkan bila batasnya sudah lewat. */
-const muatDaftar = (alasan: AlasanDaftar | null) => muat(async () => {
+const muatDaftar = (alasan: AlasanDaftar | null) => muat(async (terbaru) => {
   const rows = await api.daftarPengguna(MAKS, 0, '', alasan?.alasan ?? null)
+  // Muatan tersamar awal yang tiba SESUDAH daftar dibuka tidak boleh menimpanya.
+  if (!terbaru()) return
   // Dimuat tanpa alasan = tidak boleh ada email utuh, apa pun jawabannya.
   mentah.value = alasan ? rows : tanpaEmailUtuh(rows)
   total.value = rows.length ? Number(rows[0]?.total_semua ?? rows.length) : 0

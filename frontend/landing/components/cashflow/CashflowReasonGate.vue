@@ -11,12 +11,18 @@
  * dan aksinya dicatat sebagai baris audit terpisah oleh pemanggil.
  * `keterangan` menggantikan kalimat pembuka bila yang dibuka bukan satu orang
  * (mis. email lengkap seluruh daftar).
+ * `preset` menggantikan preset bawaan (alasan membuka data pengguna) bila
+ * yang dibuka hal lain — mis. daftar pengecualian di /sakelar. Label preset
+ * ikut masuk ke teks alasan di audit, jadi label yang tidak cocok dengan
+ * tindakannya membuat jejak audit berbohong.
  */
 const props = withDefaults(defineProps<{
   show: boolean
   investigasi?: boolean
   keterangan?: string
-}>(), { investigasi: false, keterangan: '' })
+  /** kunci → label; kosong/tidak diisi = preset bawaan alasan.preset. */
+  preset?: Record<string, string> | null
+}>(), { investigasi: false, keterangan: '', preset: null })
 const emit = defineEmits<{ close: []; konfirmasi: [alasan: string] }>()
 const { tcf } = useCashflowI18n()
 
@@ -24,14 +30,17 @@ const presetTerpilih = ref<string>('')
 const tambahan = ref('')
 const galat = ref('')
 
-const preset = computed<Array<{ kunci: string; label: string }>>(() => {
+const pilihan = computed<Array<{ kunci: string; label: string }>>(() => {
+  if (props.preset && Object.keys(props.preset).length) {
+    return Object.entries(props.preset).map(([kunci, label]) => ({ kunci, label }))
+  }
   const p = tcf('alasan.preset') as Record<string, string>
   const semua = Object.entries(p).map(([kunci, label]) => ({ kunci, label }))
   return props.investigasi ? semua.filter(x => x.kunci === 'galat' || x.kunci === 'penyalahgunaan') : semua
 })
 
 const alasanLengkap = computed(() => {
-  const label = preset.value.find(p => p.kunci === presetTerpilih.value)?.label ?? ''
+  const label = pilihan.value.find(p => p.kunci === presetTerpilih.value)?.label ?? ''
   return [label, tambahan.value.trim()].filter(Boolean).join(' — ')
 })
 const cukup = computed(() => !!presetTerpilih.value && tambahan.value.trim().length >= 8)
@@ -51,7 +60,7 @@ const kirim = () => {
     </p>
     <div class="mt-4 flex flex-wrap gap-2">
       <button
-        v-for="p in preset" :key="p.kunci" type="button"
+        v-for="p in pilihan" :key="p.kunci" type="button"
         class="rounded-full border px-3 py-1 text-sm transition"
         :class="presetTerpilih === p.kunci
           ? 'border-[color:var(--ca-gold-border)] bg-[var(--ca-gold-bg)] text-[var(--ca-text)]'

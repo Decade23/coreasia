@@ -6,8 +6,20 @@
  * aktivitas, transaksi). Tidak ada cache alasan: komentar lama menjanjikan
  * cache 15 menit per pengguna, tapi itu tidak pernah dibuat. Penggantinya
  * bukan cache di peramban melainkan KASUS di Fase 1 — dicatat server, terikat
- * pelaku, berumur 30 menit. Catatan bebas transaksi tetap tersembunyi sampai
- * alasan tingkat investigasi, yang tercatat sebagai aksi audit terpisah.
+ * pelaku, berumur 30 menit.
+ *
+ * CATATAN BEBAS (Fase 0b). Transaksi datang dari admin_baca_transaksi_v2, yang
+ * TIDAK mengirim `note` sama sekali — hanya `ada_catatan`. Dulu v1 selalu
+ * mengirim note dan gerbang INVESTIGASI hanya menyembunyikannya di layar
+ * (terbaca di tab Network). Kini gerbang itu memanggil
+ * admin_baca_catatan_transaksi HANYA untuk id ber-ada_catatan di halaman yang
+ * tampil (≤ 100 = BATAS), dan server mencatat id mana saja yang dibuka.
+ * Transaksi tidak dimuat ulang — kecuali sebagian sudah berubah/dihapus sejak
+ * dimuat (42501 bukan-milik-subjek: tidak satu pun dibuka). Untuk itu ada
+ * tombol "Muat ulang transaksi": satu baris audit baca_transaksi dengan
+ * alasan yang sama, atas klik admin. Kaki transfer (transfer_group) ditandai
+ * beserta arahnya (keluar/masuk), karena itulah yang dicari pada keluhan
+ * saldo dompet.
  *
  * Angka ubin diambil dari jumlah{} server: yang DICATAT orang ini di semua
  * ruang, termasuk kaki transfer — labelnya menyebut itu. Angka per ruang
@@ -15,8 +27,9 @@
  */
 definePageMeta({ layout: 'console', middleware: ['console', 'cashflow-admin'] })
 import {
-  keDetailPengguna, rupiah, angka, samarkanEmail, jedaDaftarKeCatatan, keArahUang,
-  type DetailPenggunaDTO, type AktivitasDTO, type TransaksiLamaDTO, type ArahUang,
+  keDetailPengguna, keTransaksi, tempelCatatan, idBercatatan, BATAS_CATATAN,
+  rupiah, angka, samarkanEmail, jedaDaftarKeCatatan, keArahUang,
+  type DetailPenggunaDTO, type AktivitasDTO, type Transaksi, type ArahUang,
 } from '~/adapters/cashflow'
 const { tcf, bahasa, formatTanggal, formatJam } = useCashflowI18n()
 const { tc } = useConsoleI18n()
@@ -27,7 +40,9 @@ const indeks = useCashflowIndeks()
 const { memuat, galat, pesanGalat, muat, aksi } = useCashflowMuat()
 const id = computed(() => String(route.params.id))
 
-const BATAS = 100
+/* = batas satu panggilan admin_baca_catatan_transaksi: satu halaman
+   transaksi, satu pembukaan catatan. */
+const BATAS = BATAS_CATATAN
 const gerbang = ref(true)
 const gerbangInvestigasi = ref(false)
 const alasan = ref('')
@@ -36,8 +51,16 @@ const alasanPada = ref<Date | null>(null)
 const detailMentah = shallowRef<DetailPenggunaDTO | null>(null)
 const detail = computed(() => (detailMentah.value ? keDetailPengguna(detailMentah.value, bahasa.value) : null))
 const aktivitas = ref<AktivitasDTO[]>([])
-const transaksi = ref<TransaksiLamaDTO[]>([])
+const transaksi = shallowRef<Transaksi[]>([])
 const tampilkanCatatan = ref(false)
+/* Sibuk: membuka catatan menulis audit permanen berisi seluruh id — klik ganda
+   = dua baris. Selama berjalan tombolnya nonaktif dan panggilan ulang diabaikan. */
+const membukaCatatan = ref(false)
+const memuatUlangTx = ref(false)
+/** Daftar transaksi basi (bukan-milik-subjek): catatan tidak bisa dibuka sebelum dimuat ulang. */
+const txBasi = ref(false)
+const bercatatan = computed(() => transaksi.value.filter(t => t.adaCatatan).length)
+const catatanTerbuka = computed(() => transaksi.value.filter(t => t.catatan !== null).length)
 
 const buka = async (a: string) => {
   gerbang.value = false
@@ -57,21 +80,51 @@ const buka = async (a: string) => {
     ])
     detailMentah.value = d
     aktivitas.value = ak
-    transaksi.value = tx
+    transaksi.value = tx.map(keTransaksi)
+    tampilkanCatatan.value = false
+    txBasi.value = false
   })
   // Alasan ditolak (klien, atau 22023 server): buka gerbang lagi alih-alih
   // meninggalkan halaman buntu. Kalimat server tetap tampil di halaman.
   if (!ok && (galat.value?.jenis === 'alasan' || galat.value?.jenis === 'argumen')) gerbang.value = true
 }
 
-/** Catatan bebas: alasan kedua, dicatat server sebagai baca_transaksi ulang
- *  dengan alasan bertingkat "INVESTIGASI — …" supaya terlihat jelas di audit. */
+/** Catatan bebas: alasan kedua (di audit "[pelaku] INVESTIGASI — …"). Hanya
+ *  id ber-ada_catatan yang dikirim — id tanpa catatan tidak perlu dibuka, dan
+ *  setiap id yang dikirim tercatat sebagai catatan yang dibuka. */
 const bukaCatatan = async (a: string) => {
   gerbangInvestigasi.value = false
-  await aksi(async () => {
-    transaksi.value = await api.transaksiPengguna(id.value, `INVESTIGASI — ${a}`, BATAS)
-    tampilkanCatatan.value = true
-  })
+  if (membukaCatatan.value) return
+  const ids = idBercatatan(transaksi.value, BATAS)
+  if (!ids.length) { tampilkanCatatan.value = true; return }
+  membukaCatatan.value = true
+  try {
+    await aksi(async () => {
+      // Awalan INVESTIGASI dipasang api.catatanTransaksi.
+      const isi = await api.catatanTransaksi(id.value, a, ids)
+      transaksi.value = tempelCatatan(transaksi.value, isi)
+      tampilkanCatatan.value = true
+    }, { gagal: (g) => { if (g.hint === 'bukan-milik-subjek') txBasi.value = true } })
+  } finally {
+    membukaCatatan.value = false
+  }
+}
+
+/** Sesudah bukan-milik-subjek: baca ulang transaksi dengan alasan pembukaan
+ *  yang sama (satu baris audit baca_transaksi), lalu catatan bisa dibuka lagi. */
+const muatUlangTransaksi = async () => {
+  if (memuatUlangTx.value || !alasan.value) return
+  memuatUlangTx.value = true
+  try {
+    await aksi(async () => {
+      const tx = await api.transaksiPengguna(id.value, alasan.value, BATAS)
+      transaksi.value = tx.map(keTransaksi)
+      tampilkanCatatan.value = false
+      txBasi.value = false
+    })
+  } finally {
+    memuatUlangTx.value = false
+  }
 }
 
 const kembali = computed(() => indeks.daftarTerakhir.value)
@@ -114,8 +167,8 @@ useConsoleRemah().pasang(() => [
 const jedaLengkap = computed(() => !!detail.value && transaksi.value.length >= detail.value.jumlah.transaksi)
 const jeda = computed(() => {
   if (!detail.value || !jedaLengkap.value) return null
-  const pertama = [...transaksi.value].sort((a, b) => String(a.created_at).localeCompare(String(b.created_at)))[0]
-  return jedaDaftarKeCatatan(detail.value.daftarIso, pertama?.created_at ?? null)
+  const pertama = [...transaksi.value].sort((a, b) => String(a.dibuatIso).localeCompare(String(b.dibuatIso)))[0]
+  return jedaDaftarKeCatatan(detail.value.daftarIso, pertama?.dibuatIso ?? null)
 })
 const teksJeda = computed(() => {
   if (!detail.value) return ''
@@ -127,6 +180,13 @@ const teksJeda = computed(() => {
    transactions.kind). Membandingkan dengan 'masuk' membuat semua pemasukan
    merah — dan nominal tampil tanpa tanda, jadi terbaca pengeluaran. */
 const nada = (a: ArahUang | null) => (a === 'masuk' ? 'ca-tone-emerald' : a === 'keluar' ? 'ca-tone-danger' : 'ca-tone-info')
+/* Kaki transfer bukan uang masuk/keluar sungguhan: nada info, apa pun kind-nya.
+   Arahnya tetap terbaca di pilnya — kaki mana yang keluar dari dompet mana. */
+const nadaTransaksi = (t: Transaksi) => (t.transfer ? 'ca-tone-info' : nada(t.arah))
+const labelTransfer = (t: Transaksi) =>
+  tcf(t.arah === 'keluar' ? 'pengguna.transferKeluar' : t.arah === 'masuk' ? 'pengguna.transferMasuk' : 'pengguna.transfer')
+const ikonTransfer = (t: Transaksi) =>
+  (t.arah === 'keluar' ? 'lucide:arrow-up-right' : t.arah === 'masuk' ? 'lucide:arrow-down-left' : 'lucide:arrow-left-right')
 const tanpaAngka = (v: number | null) => (v == null ? '—' : angka(v))
 const tanpaRupiah = (v: number | null) => (v == null ? '—' : rupiah(v))
 </script>
@@ -141,7 +201,10 @@ const tanpaRupiah = (v: number | null) => (v == null ? '—' : rupiah(v))
     </ConsolePageHeader>
 
     <CashflowReasonGate :show="gerbang" @close="tutupGerbang" @konfirmasi="buka" />
-    <CashflowReasonGate :show="gerbangInvestigasi" investigasi @close="gerbangInvestigasi = false" @konfirmasi="bukaCatatan" />
+    <CashflowReasonGate
+      :show="gerbangInvestigasi" investigasi :keterangan="tcf('pengguna.investigasiKet')(bercatatan)"
+      @close="gerbangInvestigasi = false" @konfirmasi="bukaCatatan"
+    />
 
     <p v-if="pesanGalat" class="text-sm ca-tone-danger">{{ pesanGalat }}</p>
     <p v-else-if="memuat" class="text-sm text-[var(--ca-muted)]">{{ tcf('umum.memuat') }}</p>
@@ -209,9 +272,28 @@ const tanpaRupiah = (v: number | null) => (v == null ? '—' : rupiah(v))
       <section class="ca-console-dialog overflow-x-auto p-5">
         <div class="flex items-center justify-between gap-3">
           <h3 class="font-display text-base font-bold text-[var(--ca-text)]">{{ tcf('pengguna.transaksi') }}</h3>
-          <button v-if="!tampilkanCatatan && transaksi.length" type="button" class="ca-btn-secondary text-xs" @click="gerbangInvestigasi = true">{{ tcf('pengguna.tampilkanCatatan') }}</button>
+          <button
+            v-if="!tampilkanCatatan && bercatatan && !txBasi" type="button" class="ca-btn-secondary inline-flex items-center gap-1.5 text-xs"
+            :disabled="membukaCatatan" @click="gerbangInvestigasi = true"
+          >
+            <template v-if="membukaCatatan"><Icon name="lucide:loader-2" class="h-3.5 w-3.5 animate-spin" />{{ tcf('pengguna.membukaCatatan') }}</template>
+            <template v-else>{{ tcf('pengguna.tampilkanCatatan') }}</template>
+          </button>
+          <button
+            v-else-if="txBasi" type="button" class="ca-btn-secondary inline-flex items-center gap-1.5 text-xs"
+            :disabled="memuatUlangTx" @click="muatUlangTransaksi"
+          >
+            <Icon :name="memuatUlangTx ? 'lucide:loader-2' : 'lucide:refresh-cw'" class="h-3.5 w-3.5" :class="{ 'animate-spin': memuatUlangTx }" />{{ tcf('pengguna.muatUlangTx') }}
+          </button>
         </div>
-        <p v-if="!tampilkanCatatan" class="mt-1 text-xs text-[var(--ca-subtle)]">{{ tcf('pengguna.catatanTersembunyi') }}</p>
+        <p v-if="txBasi" class="mt-1 text-xs ca-tone-gold">{{ tcf('pengguna.txBasi') }}</p>
+        <template v-if="transaksi.length">
+          <p v-if="tampilkanCatatan" class="mt-1 text-xs ca-tone-gold">{{ tcf('pengguna.catatanDibuka')(catatanTerbuka) }}</p>
+          <p v-else-if="bercatatan" class="mt-1 text-xs text-[var(--ca-subtle)]">
+            {{ tcf('pengguna.bercatatan')(bercatatan) }} {{ tcf('pengguna.catatanTersembunyi') }}
+          </p>
+          <p v-else class="mt-1 text-xs text-[var(--ca-subtle)]">{{ tcf('pengguna.tanpaCatatan') }}</p>
+        </template>
         <!-- Hanya BATAS terbaru yang dimuat; totalnya dari jumlah{} server. -->
         <p v-if="transaksi.length < detail.jumlah.transaksi" class="mt-1 text-xs ca-tone-gold">
           {{ tcf('pengguna.txPotong')(transaksi.length, detail.jumlah.transaksi) }}
@@ -225,10 +307,21 @@ const tanpaRupiah = (v: number | null) => (v == null ? '—' : rupiah(v))
           </tr></thead>
           <tbody>
             <tr v-for="t in transaksi" :key="t.id" class="border-t border-[color:var(--ca-border)] text-[var(--ca-text)]">
-              <td class="py-1.5 pr-3 whitespace-nowrap">{{ formatTanggal(t.occurred_at) }}</td>
-              <td class="py-1.5 px-3">{{ t.workspace }}</td><td class="py-1.5 px-3">{{ t.wallet }}</td><td class="py-1.5 px-3">{{ t.category || '—' }}</td>
-              <td v-if="tampilkanCatatan" class="py-1.5 px-3 text-[var(--ca-muted)]">{{ t.note || '—' }}</td>
-              <td class="py-1.5 pl-3 text-right tabular-nums" :class="nada(keArahUang(t.kind))">{{ rupiah(t.amount) }}</td>
+              <td class="py-1.5 pr-3 whitespace-nowrap">{{ formatTanggal(t.tanggal) }}</td>
+              <td class="py-1.5 px-3">{{ t.ruang }}</td><td class="py-1.5 px-3">{{ t.dompet }}</td>
+              <td class="py-1.5 px-3">
+                <span class="inline-flex flex-wrap items-center gap-1.5">
+                  {{ t.kategori || '—' }}
+                  <span v-if="t.transfer" class="ca-pill-info" :title="tcf('pengguna.transferKet')">
+                    <Icon :name="ikonTransfer(t)" class="h-3 w-3" aria-hidden="true" />{{ labelTransfer(t) }}
+                  </span>
+                  <span v-if="t.adaCatatan && !tampilkanCatatan" class="ca-pill-muted" :title="tcf('pengguna.adaCatatan')">
+                    <Icon name="lucide:sticky-note" class="h-3 w-3" aria-hidden="true" />{{ tcf('pengguna.catatanPil') }}
+                  </span>
+                </span>
+              </td>
+              <td v-if="tampilkanCatatan" class="py-1.5 px-3 text-[var(--ca-muted)]">{{ t.catatan || '—' }}</td>
+              <td class="py-1.5 pl-3 text-right tabular-nums" :class="nadaTransaksi(t)">{{ rupiah(t.nominal) }}</td>
             </tr>
           </tbody>
         </table>

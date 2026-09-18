@@ -38,8 +38,9 @@ const rows = ref<AuditDTO[]>([])
 const total = ref(0)
 const aksi = ref<Array<{ action: string; jumlah: number }>>([])
 
-const muatAudit = () => muat(async () => {
+const muatAudit = () => muat(async (terbaru) => {
   const [r, a] = await Promise.all([api.daftarAudit(MAKS, 0, q.value.aksi || null), api.aksiAudit()])
+  if (!terbaru()) return // saringan aksi sudah berganti lagi
   rows.value = r
   total.value = r.length ? Number(r[0]?.total_semua ?? r.length) : 0
   aksi.value = a

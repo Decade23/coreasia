@@ -106,6 +106,18 @@ export function fungsiTerakhir(nama: string): { berkas: string; kepala: string; 
   return temu
 }
 
+/** Parameter definisi TERAKHIR sebuah fungsi, urut sesuai server. `bawaan` =
+ *  punya default (boleh tidak dikirim). Parameter OUT tidak ikut: PostgREST
+ *  mencocokkan panggilan hanya dengan parameter masukan. */
+export function parameterFungsi(nama: string): Array<{ nama: string; bawaan: boolean }> {
+  const { kepala } = fungsiTerakhir(nama)
+  return argumen(kepala, kepala.indexOf('('))
+    .filter(a => a.length > 0)
+    .map(a => /^(?:(in|out|inout|variadic)\s+)?(\w+)/i.exec(a))
+    .filter((m): m is RegExpExecArray => !!m && m[1]?.toLowerCase() !== 'out')
+    .map(m => ({ nama: m[2]!, bawaan: /\bdefault\b|=/i.test(m.input) }))
+}
+
 /** Kolom sebuah tabel: create table terakhir + add/drop column sesudahnya. */
 export function kolomTabel(tabel: string): { kolom: string[]; definisi: Record<string, string> } {
   const buat = new RegExp(`create\\s+table\\s+(?:if\\s+not\\s+exists\\s+)?public\\.${tabel}\\s*\\(`, 'gi')
@@ -126,3 +138,18 @@ export function kolomTabel(tabel: string): { kolom: string[]; definisi: Record<s
   }
   return { kolom: [...definisi.keys()].sort(), definisi: Object.fromEntries(definisi) }
 }
+
+/** Kolom `returns table (…)` definisi TERAKHIR sebuah fungsi, urut sesuai server. */
+export function kolomKembalian(nama: string): string[] {
+  const { kepala } = fungsiTerakhir(nama)
+  const m = /returns\s+table\s*\(/i.exec(kepala)
+  if (!m) throw new Error(`${nama} tidak memulangkan table (…)`)
+  return argumen(kepala, m.index + m[0].length - 1).map((a) => {
+    const kolom = /^(\w+)/.exec(a)?.[1]
+    if (!kolom) throw new Error(`Kolom tak terbaca di ${nama}: ${a}`)
+    return kolom
+  })
+}
+
+/** Folder toko/ repo CashFlow (alat & uji SQL produksi), saudara folder migrasi. */
+export const DIR_TOKO = process.env.CASHFLOW_TOKO ?? resolve(DIR_MIGRASI, '../../toko')

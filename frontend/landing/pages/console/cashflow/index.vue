@@ -3,22 +3,27 @@
  * Ringkasan — menjawab "produk ini hidup atau tidak" dalam lima detik.
  * Satu angka terbesar: ukuran keberhasilan yang disepakati. Semua agregat,
  * tanpa PII, jadi tanpa alasan audit.
+ *
+ * Ukuran keberhasilan dari admin_ukuran_keberhasilan_v2 (0087): v1 ikut
+ * memulangkan email utuh daftar pengecualian — keluarga/rekan pemilik — ke
+ * setiap sesi console tanpa alasan, walau halaman ini tidak menampilkannya.
+ * v2 hanya mengirim banyaknya; daftar utuhnya dibuka di Sakelar, dengan alasan.
  */
 definePageMeta({ layout: 'console', middleware: ['console', 'cashflow-admin'] })
-import { keCorong, keKohort, keSeri30Hari, angka } from '~/adapters/cashflow'
-import type { StatsDTO, KeberhasilanDTO, RetensiDTO, CorongDTO } from '~/adapters/cashflow'
+import { keCorong, keKohort, keSeri30Hari, keKeberhasilan, angka } from '~/adapters/cashflow'
+import type { StatsDTO, Keberhasilan, RetensiDTO, CorongDTO } from '~/adapters/cashflow'
 const { tcf } = useCashflowI18n()
 const api = useCashflowAdmin()
 const { memuat, galat, pesanGalat, muat } = useCashflowMuat({ awal: true })
 
 const stats = ref<StatsDTO | null>(null)
-const keberhasilan = ref<KeberhasilanDTO | null>(null)
+const keberhasilan = ref<Keberhasilan | null>(null)
 const corong = ref<CorongDTO[]>([])
 const retensi = ref<RetensiDTO[]>([])
 
 onMounted(() => muat(async () => {
   const [s, k, c, r] = await Promise.all([api.stats(), api.ukuranKeberhasilan(), api.corong(90), api.retensi(6)])
-  stats.value = s; keberhasilan.value = k ?? null; corong.value = c; retensi.value = r
+  stats.value = s; keberhasilan.value = keKeberhasilan(k); corong.value = c; retensi.value = r
 }))
 
 const seri = computed(() => stats.value ? keSeri30Hari(stats.value.transaksi_per_hari) : [])
@@ -47,8 +52,8 @@ const kohort = computed(() => keKohort(retensi.value))
         <CashflowStatTile
           utama icon="lucide:target" warna="emerald"
           :label="tcf('ringkasan.keberhasilan')"
-          :nilai="keberhasilan.jumlah" :nilai-mentah="keberhasilan.jumlah" :pembanding="keberhasilan.pembanding"
-          :keterangan="tcf('ringkasan.keberhasilanKet')"
+          :nilai="angka(keberhasilan.jumlah)" :nilai-mentah="keberhasilan.jumlah" :pembanding="keberhasilan.pembanding"
+          :keterangan="tcf('ringkasan.keberhasilanKet')(keberhasilan.pengecualian)"
         />
         <CashflowStatTile icon="lucide:users" warna="amber" :label="tcf('ringkasan.pengguna')" :nilai="angka(stats.total_pengguna)" />
         <CashflowStatTile icon="lucide:layers" warna="sky" :label="tcf('ringkasan.ruang')" :nilai="angka(stats.total_ruang)" />

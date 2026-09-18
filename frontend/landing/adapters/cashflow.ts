@@ -8,7 +8,11 @@
  * secara bawaan (kebijakan privasi: pembukaan data pribadi harus beralasan dan
  * tercatat). Kalau penyamaran ada di komponen tabel, satu komponen baru yang
  * lupa menyamarkan = kebocoran. Di adapter, data yang sampai ke UI memang
- * sudah tersamar; email utuh hanya datang lewat admin_buka_email (beraudit).
+ * sudah tersamar. Sejak Fase 0b (migrasi 0087/0088) server pun menyamarkan
+ * sendiri, dan email utuh hanya datang lewat jalur beralasan yang menulis
+ * audit: admin_daftar_pengguna_v2 dengan alasan, admin_detail_pengguna_v2,
+ * dan admin_config_buka. Penyamaran di sini tetap dijalankan sebagai sabuk
+ * kedua — samarkanEmail/samarkanNamaRuang idempoten atas bentuk server.
  *
  * Waktu (WIB) hidup di cashflowWaktu.ts dan diekspor ulang dari sini, supaya
  * `import { tanggalPendek } from '~/adapters/cashflow'` yang lama tetap jalan.
@@ -46,7 +50,11 @@ export interface PenggunaDTO {
   total_semua: number
 }
 export interface CorongDTO { urut: number; langkah: string; jumlah: number }
-export interface KeberhasilanDTO { jumlah: number; pembanding: number; pengecualian: string[] }
+/** Nilai jsonb apa adanya (app_config.value, admin_audit.detail, admin_config_buka). */
+export type NilaiJson = string | number | boolean | null | NilaiJson[] | { [kunci: string]: NilaiJson }
+/** admin_ukuran_keberhasilan_v2 (M/0087 §4) — satu baris. Tanpa daftar email:
+ *  hanya BANYAKNYA email berbeda yang dikecualikan (daftar di Sakelar ∪ admin). */
+export interface KeberhasilanDTO { jumlah: number; pembanding: number; jumlah_pengecualian: number }
 export interface RetensiDTO { kohort: string; mendaftar: number; pernah_catat: number; catat_30hari: number; bulan_berjalan: boolean }
 /** Nilai CHECK peristiwa.arah (M/0053:81). admin_aktivitas_pengguna meneruskan
  *  kolom itu apa adanya (M/0076:102) — Inggris, bukan 'masuk'/'keluar'. */
@@ -57,14 +65,46 @@ export interface AktivitasDTO {
   tanggal: string; pada: string; pada_perangkat?: string | null; ruang?: string | null
   rentang_nominal?: string; ruang_pendek?: string
 }
-/** admin_baca_transaksi (M/0017:283-294): transaksi yang DICATAT p_user, terbaru dulu. */
-export interface TransaksiLamaDTO {
-  id: string; workspace: string; wallet: string; category: string; kind: string // 'income' | 'expense'
-  amount: number | string; note: string | null; occurred_at: string; occurred_time: string | null; created_at: string
+/** admin_baca_transaksi_v2 (M/0087 §2): transaksi yang DICATAT p_user, terbaru
+ *  dulu, maks. 200. SENGAJA tanpa `note` — server hanya mengirim `ada_catatan`;
+ *  isinya dibuka per id lewat admin_baca_catatan_transaksi. Ruang/dompet bisa
+ *  null (left join: ruangnya sudah tiada); kategori '' bila tanpa kategori. */
+export interface TransaksiDTO {
+  id: string; workspace: string | null; wallet: string | null; category: string
+  kind: string // 'income' | 'expense' — kaki transfer juga, dibedakan transfer_group
+  amount: number | string; occurred_at: string; occurred_time: string | null; created_at: string
+  transfer_group: string | null; group_id: string | null; schedule_id: string | null; installment_no: number | null
+  product_id: string | null; qty: number | string | null; updated_at: string | null
+  ada_catatan: boolean
 }
+/** admin_baca_catatan_transaksi (M/0087 §3): isi catatan untuk id yang diminta. */
+export interface CatatanTransaksiDTO { id: string; note: string | null }
+/** Nilai CHECK workspaces_jenis (M/0019:48) = penjaga p_jenis admin_daftar_ruang_v2. */
+export const JENIS_RUANG = ['pribadi', 'usaha'] as const
+export type JenisRuang = typeof JENIS_RUANG[number]
+/** admin_daftar_ruang_v2 (M/0087 §5): nama dan pemilik SUDAH tersamar di server;
+ *  pemilik null bila akunnya sudah tiada (left join). */
 export interface RuangDTO {
-  workspace_id: string; nama: string; pemilik_email: string; jumlah_anggota: number
-  jumlah_tx: number; undangan_aktif: number; created_at: string; total_semua: number
+  workspace_id: string; nama: string | null; pemilik_email: string | null; jenis: string
+  jumlah_anggota: number; jumlah_tx: number; undangan_aktif: number; created_at: string; total_semua: number
+}
+/** admin_daftar_config_v2 (M/0087 §6). admin.pengecualian_email dikirim sebagai
+ *  larik bentuk tersamar tanpa '@' ('ded*** · gmail.com'); nilai lain yang
+ *  memuat '@' diganti penanda teks, begitu pula catatan. `tersamar` = baris ini
+ *  bukan nilai aslinya dan TIDAK boleh disimpan balik. */
+export interface ConfigDTO {
+  key: string; value: NilaiJson; is_public: boolean; note: string | null
+  updated_by: string | null; updated_at: string; tersamar: boolean
+}
+/** admin_audit.detail: selalu dibangun jsonb_build_object (atau null). Sengaja
+ *  TIDAK rekursif seperti NilaiJson: ref<AuditDTO[]> di halaman membuat
+ *  UnwrapRef Vue menjelajahi tipe rekursif sampai TS2589. */
+export type ObjekJson = { [kunci: string]: unknown }
+/** admin_daftar_audit_v2 (M/0087 §8): target_email tersamar, detail tersamar bila memuat '@'. */
+export interface AuditDTO {
+  id: number; admin_id: string; admin_email: string; pelaku: string | null; action: string; target_type: string
+  target_id: string | null; target_email: string | null; detail: ObjekJson | null; reason: string | null
+  created_at: string; total_semua: number
 }
 /* Bentuk jsonb admin_detail_pengguna_bangun (M/0082:145-171). Dulu DTO ini
    mengharapkan angka di ruang[] — kolom yang tidak pernah dikirim server —
@@ -170,6 +210,44 @@ export interface Pengumuman {
   mulai: string             // ISO; diformat di halaman sesuai bahasa
   sampai: string | null     // null = tanpa akhir
   dibuat: string
+}
+
+export interface Keberhasilan { jumlah: number; pembanding: number; pengecualian: number }
+
+export interface Transaksi {
+  id: string
+  ruang: string             // '—' bila ruangnya sudah tiada
+  dompet: string            // '—' bila dompetnya sudah tiada
+  kategori: string          // '' bila tanpa kategori
+  arah: ArahUang | null
+  nominal: number
+  tanggal: string           // occurred_at: kolom date 'YYYY-MM-DD', diformat di halaman
+  dibuatIso: string
+  /** Kaki transfer antardompet (transfer_group terisi): bukan pemasukan/pengeluaran sungguhan. */
+  transfer: boolean
+  adaCatatan: boolean
+  /** null = belum dibuka; teks = isi catatan yang dibuka dengan alasan investigasi. */
+  catatan: string | null
+}
+
+export interface Ruang {
+  id: string
+  nama: string              // tersamar (server), '—' bila kosong
+  pemilik: string           // tersamar (server), '—' bila akunnya sudah tiada
+  jenis: JenisRuang | null  // null = nilai yang tidak dikenal
+  anggota: number
+  tx: number
+  undangan: number
+  dibuatIso: string
+}
+
+export interface Config {
+  kunci: string
+  nilai: NilaiJson
+  publik: boolean
+  catatan: string | null
+  diperbaruiIso: string
+  tersamar: boolean
 }
 
 // ── Pembantu ─────────────────────────────────────────────────────────────
@@ -374,3 +452,146 @@ export async function sidik(teks: string): Promise<string> {
   return [...new Uint8Array(hash)].map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 10)
 }
 export const POLA_SIDIK = /^[0-9a-f]{10}$/
+
+// ── Fase 0b: jawaban RPC v2 (M/0087) ─────────────────────────────────────
+const angkaAtauNol = (v: number | string | null | undefined): number => {
+  const x = Number(v ?? 0)
+  return Number.isFinite(x) ? x : 0
+}
+
+/** admin_ukuran_keberhasilan_v2 memulangkan SATU baris (returns table); tanpa baris → null. */
+export function keKeberhasilan(d: KeberhasilanDTO | null | undefined): Keberhasilan | null {
+  if (!d) return null
+  return { jumlah: angkaAtauNol(d.jumlah), pembanding: angkaAtauNol(d.pembanding), pengecualian: angkaAtauNol(d.jumlah_pengecualian) }
+}
+
+/** Batas server admin_baca_catatan_transaksi (p_ids ≤ 100) — dan banyaknya
+ *  transaksi yang dimuat detail pengguna, jadi satu halaman = satu panggilan. */
+export const BATAS_CATATAN = 100
+/** Awalan alasan tingkat investigasi: supaya pembukaan catatan bebas menonjol
+ *  di daftar audit, terpisah dari pembukaan detail biasa.
+ *
+ *  BENTUK DI AUDIT. rpc() (useCashflowAdmin) menambahkan "[pelaku] " di depan
+ *  SETIAP alasan, jadi admin_audit.reason berbentuk
+ *  "[admin@coreasia.id] INVESTIGASI — Investigasi galat — tiket 42", bukan
+ *  "INVESTIGASI — …". Saring baris investigasi dengan
+ *  action = 'baca_catatan_transaksi'; bila perlu pola teks, pakai
+ *  POLA_AUDIT_INVESTIGASI (dipakai juga oleh toko/uji-console-rpc.sql #41). */
+export const AWALAN_INVESTIGASI = 'INVESTIGASI — '
+/** Pola LIKE Postgres untuk admin_audit.reason sebuah pembukaan catatan dari console. */
+export const POLA_AUDIT_INVESTIGASI = '[%] INVESTIGASI — %'
+
+/** Awalan investigasi (satu atau berulang, spasi longgar) di depan alasan. */
+const AWALAN_INVESTIGASI_RE = /^(?:INVESTIGASI\s*—\s*)+/
+/** Bagian alasan yang DITULIS ORANG: tanpa awalan investigasi. Syarat panjang
+ *  diukur di sini — awalan tidak boleh memenuhi syarat atas nama pengguna. */
+export function intiAlasan(alasan: string): string {
+  return alasan.trim().replace(AWALAN_INVESTIGASI_RE, '').trim()
+}
+
+export function alasanInvestigasi(alasan: string): string {
+  return `${AWALAN_INVESTIGASI}${intiAlasan(alasan)}`
+}
+
+export function keTransaksi(d: TransaksiDTO): Transaksi {
+  return {
+    id: d.id,
+    ruang: d.workspace?.trim() || '—',
+    dompet: d.wallet?.trim() || '—',
+    kategori: d.category ?? '',
+    arah: keArahUang(d.kind),
+    nominal: angkaAtauNol(d.amount),
+    tanggal: d.occurred_at,
+    dibuatIso: d.created_at,
+    transfer: !!d.transfer_group,
+    adaCatatan: d.ada_catatan === true,
+    catatan: null,
+  }
+}
+
+/** Id yang catatannya boleh diminta: HANYA baris ber-ada_catatan yang belum
+ *  dibuka, paling banyak `batas`. Id tanpa catatan tidak dikirim — setiap id
+ *  yang dikirim tercatat di audit sebagai catatan yang dibuka. */
+export function idBercatatan(daftar: readonly Transaksi[], batas: number = BATAS_CATATAN): string[] {
+  return daftar.filter(t => t.adaCatatan && t.catatan === null).slice(0, Math.max(0, batas)).map(t => t.id)
+}
+
+/** Tempel isi catatan ke barisnya (larik baru; baris lain tidak disentuh). */
+export function tempelCatatan(daftar: readonly Transaksi[], catatan: readonly CatatanTransaksiDTO[]): Transaksi[] {
+  const peta = new Map(catatan.map(c => [c.id, c.note]))
+  return daftar.map(t => (peta.has(t.id) ? { ...t, catatan: peta.get(t.id) ?? null } : t))
+}
+
+const JENIS_RUANG_SET: ReadonlySet<string> = new Set(JENIS_RUANG)
+export function keRuang(d: RuangDTO): Ruang {
+  return {
+    id: d.workspace_id,
+    // Server sudah menyamarkan; keduanya idempoten atas bentuk server.
+    nama: samarkanNamaRuang(d.nama),
+    pemilik: samarkanEmail(d.pemilik_email),
+    jenis: JENIS_RUANG_SET.has(d.jenis) ? (d.jenis as JenisRuang) : null,
+    anggota: angkaAtauNol(d.jumlah_anggota),
+    tx: angkaAtauNol(d.jumlah_tx),
+    undangan: angkaAtauNol(d.undangan_aktif),
+    dibuatIso: d.created_at,
+  }
+}
+
+/** Kunci daftar email yang dikecualikan dari ukuran keberhasilan (M/0087 §6). */
+export const KUNCI_PENGECUALIAN = 'admin.pengecualian_email'
+
+export function keConfig(d: ConfigDTO): Config {
+  return {
+    kunci: d.key, nilai: d.value, publik: !!d.is_public, catatan: d.note ?? null,
+    diperbaruiIso: d.updated_at, tersamar: d.tersamar === true,
+  }
+}
+
+/** Larik teks dari nilai jsonb; bukan larik → []. */
+export function daftarTeks(v: NilaiJson | undefined): string[] {
+  return Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : []
+}
+
+/** Nilai UTUH admin.pengecualian_email (dari admin_config_buka) → draf.
+ *  `asing` = yang tersimpan BUKAN larik teks murni (bukan larik, atau ada
+ *  entri bukan teks — admin-next bisa menulis JSON apa pun ke kunci ini).
+ *  Draf hanya memuat teksnya, jadi menyimpannya membuang sisanya: halaman
+ *  wajib memperingatkan dan meminta persetujuan dulu. */
+export function bacaDaftarEmail(v: NilaiJson | undefined): { daftar: string[]; asing: boolean } {
+  const daftar = daftarTeks(v)
+  return { daftar, asing: !Array.isArray(v) || daftar.length !== v.length }
+}
+
+/** Keadaan daftar pengecualian dari admin_daftar_config_v2 (bentuk tersamar):
+ *  'tiada'  kunci belum ada;
+ *  'kosong' larik kosong — server memetakan entri satu-satu, jadi nilai
+ *           utuhnya pasti [] juga: tidak ada yang perlu dibuka dengan alasan;
+ *  'isi'    larik berisi (tersamar);
+ *  'lain'   bukan larik — isinya tidak diketahui sampai dibuka. */
+export type KeadaanPengecualian = 'tiada' | 'kosong' | 'isi' | 'lain'
+export function keadaanPengecualian(baris: Pick<Config, 'nilai'> | null | undefined): KeadaanPengecualian {
+  if (!baris) return 'tiada'
+  if (!Array.isArray(baris.nilai)) return 'lain'
+  return baris.nilai.length ? 'isi' : 'kosong'
+}
+
+/** Penanda tersamar yang DITOLAK admin_set_config (22023 nilai-tersamar, M/0087
+ *  §7a). Diperiksa di sini juga supaya admin tidak menunggu jaringan untuk
+ *  tahu bahwa yang di tangannya bentuk tersamar — penentunya tetap server. */
+export const PENANDA_NILAI_TERSAMAR = '(tersamar; buka dengan alasan)'
+export function nilaiMasihTersamar(kunci: string, nilai: NilaiJson): boolean {
+  const teks = JSON.stringify(nilai) ?? ''
+  return (kunci.trim() === KUNCI_PENGECUALIAN && teks.includes('***')) || teks.includes(PENANDA_NILAI_TERSAMAR)
+}
+
+export type GalatEmailPengecualian = 'bukan-email' | 'tersamar' | 'ganda'
+/** Email baru untuk daftar pengecualian. Bentuk tersamar ('ded***@…',
+ *  'ded*** · gmail.com') bukan email — menyimpannya menambah entri yang tidak
+ *  pernah cocok dengan siapa pun, dan server menolak '***' pada kunci ini. */
+export function periksaEmailPengecualian(email: string, daftar: readonly string[]): GalatEmailPengecualian | null {
+  const e = email.trim().toLowerCase()
+  if (e.includes('***') || e.includes('·')) return 'tersamar'
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) return 'bukan-email'
+  if (daftar.some(x => x.trim().toLowerCase() === e)) return 'ganda'
+  return null
+}
