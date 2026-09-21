@@ -35,7 +35,10 @@ export const useCashflowSupabase = () => {
             autoRefreshToken: true,
             detectSessionInUrl: false,
             storage: window.sessionStorage,
-            storageKey: 'cf-console-sesi',
+            // Kunci yang sama dihapus plugins/konsol-isolasi.client.ts di setiap
+            // dokumen publik, supaya skrip halaman publik di tab ini tidak bisa
+            // membaca token CashFlow yang tertinggal dari console.
+            storageKey: KUNCI_SESI_CASHFLOW,
           },
         })
         return klien

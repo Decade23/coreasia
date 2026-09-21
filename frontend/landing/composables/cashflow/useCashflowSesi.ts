@@ -31,14 +31,16 @@ export const useCashflowSesi = () => {
     if (!sb) return { ok: false, sebab: 'konfigurasi' }
     sibuk.value = true
     try {
+      // Token ikatan dokumen console wajib (server menolak tanpa itu, 403 'ikatan').
       const r = await $fetch<{ access_token: string; refresh_token: string; pelaku?: string }>(
-        '/api/cashflow/sesi', { method: 'POST', headers: { 'X-CF-Sesi': '1' } },
+        '/api/cashflow/sesi', { method: 'POST', headers: { 'X-CF-Sesi': '1', ...headerIkatan() } },
       )
       const { error } = await sb.auth.setSession({ access_token: r.access_token, refresh_token: r.refresh_token })
       if (error) return { ok: false, sebab: 'sesi' }
       pelaku.value = r.pelaku ?? ''
       return { ok: true }
     } catch (e: any) {
+      pulihkanIkatan(e)
       const sebab: string = e?.data?.statusMessage || e?.statusMessage || (e?.status ? `http-${e.status}` : 'jaringan')
       return { ok: false, sebab }
     } finally {

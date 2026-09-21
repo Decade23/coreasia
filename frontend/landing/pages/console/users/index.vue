@@ -1,8 +1,8 @@
 <script setup lang="ts">
 definePageMeta({ layout: 'console', middleware: 'console' })
 
-const { items, loading, saving, error, totalItems, fetchUsers, createUser, updateUser, deleteUser } = useAdminUsers()
-const { user: currentAdmin } = useAdminAuth()
+const { items, loading, saving, error, galat, totalItems, fetchUsers, createUser, updateUser, deleteUser } = useAdminUsers()
+const { user: currentAdmin, sesiDiakhiri } = useAdminAuth()
 const { can } = usePermissions()
 const { tc } = useConsoleI18n()
 
@@ -11,11 +11,25 @@ const showDeleteConfirm = ref(false)
 const editingUser = ref<any>(null)
 const deletingUser = ref<any>(null)
 
-const formData = ref({ email: '', full_name: '', role: 'admin' })
+/* password & confirm_password hanya untuk "Tambah user" (gateway mewajibkan password). */
+const formData = ref({ email: '', full_name: '', role: 'admin', password: '', confirm_password: '' })
+const formError = ref('')
 const showPasswordModal = ref(false)
 const passwordTarget = ref<any>(null)
-const passwordForm = ref({ password: '', confirm_password: '' })
+const passwordForm = ref({ current_password: '', password: '', confirm_password: '' })
 const passwordError = ref('')
+
+/* Ganti password akun sendiri: gateway mewajibkan password saat ini
+   (CURRENT_PASSWORD_REQUIRED), lalu mengakhiri SEMUA sesi akun ini. */
+const gantiSandiSendiri = computed(() => !!passwordTarget.value && passwordTarget.value.id === currentAdmin.value?.id)
+
+/** Kekuatan password sama dengan validasi gateway (password_strength). */
+const passwordLemah = (pwd: string) => pwd.length < 8 || !/[A-Z]/.test(pwd) || !/[a-z]/.test(pwd) || !/[0-9]/.test(pwd)
+
+/** 409 saat update: baris berubah sejak dimuat, tidak ada yang ditulis. */
+const muatUlangBilaBerubah = () => {
+  if (galat.value?.status === 409) fetchUsers()
+}
 
 const roleOptions = computed(() => [
   { label: tc('users.roleAdmin'), value: 'admin' },
@@ -26,33 +40,55 @@ onMounted(() => fetchUsers())
 
 const openCreate = () => {
   editingUser.value = null
-  formData.value = { email: '', full_name: '', role: 'admin' }
+  formData.value = { email: '', full_name: '', role: 'admin', password: '', confirm_password: '' }
+  formError.value = ''
+  error.value = ''
   showFormModal.value = true
 }
 
 const openEdit = (u: any) => {
   editingUser.value = u
-  formData.value = { email: u.email, full_name: u.full_name, role: u.role }
+  formData.value = { email: u.email, full_name: u.full_name, role: u.role, password: '', confirm_password: '' }
+  formError.value = ''
+  error.value = ''
   showFormModal.value = true
 }
 
 const openPasswordChange = (u: any) => {
   passwordTarget.value = u
-  passwordForm.value = { password: '', confirm_password: '' }
+  passwordForm.value = { current_password: '', password: '', confirm_password: '' }
   passwordError.value = ''
+  error.value = ''
   showPasswordModal.value = true
 }
 
+const tutupPassword = () => {
+  showPasswordModal.value = false
+  passwordForm.value = { current_password: '', password: '', confirm_password: '' }
+}
+
 const handleSubmit = async () => {
-  const data: Record<string, any> = { email: formData.value.email, full_name: formData.value.full_name, role: formData.value.role }
+  formError.value = ''
+  const data = { email: formData.value.email, full_name: formData.value.full_name, role: formData.value.role }
   let ok: boolean
   if (editingUser.value) {
     ok = await updateUser(editingUser.value.id, data)
+    if (!ok) muatUlangBilaBerubah()
   } else {
-    ok = await createUser(data)
+    if (passwordLemah(formData.value.password)) {
+      formError.value = tc('users.passwordMin')
+      return
+    }
+    if (formData.value.password !== formData.value.confirm_password) {
+      formError.value = tc('users.passwordMismatch')
+      return
+    }
+    ok = await createUser({ ...data, password: formData.value.password })
   }
   if (ok) {
     showFormModal.value = false
+    formData.value.password = ''
+    formData.value.confirm_password = ''
     fetchUsers()
   }
 }
@@ -60,7 +96,11 @@ const handleSubmit = async () => {
 const handlePasswordChange = async () => {
   passwordError.value = ''
   const pwd = passwordForm.value.password
-  if (pwd.length < 8 || !/[A-Z]/.test(pwd) || !/[a-z]/.test(pwd) || !/[0-9]/.test(pwd)) {
+  if (gantiSandiSendiri.value && !passwordForm.value.current_password) {
+    passwordError.value = tc('users.errors.currentPasswordRequired')
+    return
+  }
+  if (passwordLemah(pwd)) {
     passwordError.value = tc('users.passwordMin')
     return
   }
@@ -68,11 +108,23 @@ const handlePasswordChange = async () => {
     passwordError.value = tc('users.passwordMismatch')
     return
   }
-  const ok = await updateUser(passwordTarget.value.id, { password: passwordForm.value.password })
-  if (ok) {
-    showPasswordModal.value = false
-    fetchUsers()
+  const sendiri = gantiSandiSendiri.value
+  const body: Record<string, string> = { password: pwd }
+  if (sendiri) body.current_password = passwordForm.value.current_password
+  const ok = await updateUser(passwordTarget.value.id, body)
+  if (!ok) {
+    passwordForm.value.current_password = ''
+    muatUlangBilaBerubah()
+    return
   }
+  tutupPassword()
+  if (sendiri) {
+    // Gateway sudah mencabut semua sesi akun ini (proxy ikut menghapus cookie
+    // dan sesi CashFlow-nya): masuk lagi dengan password baru.
+    await sesiDiakhiri('sandi-diganti')
+    return
+  }
+  fetchUsers()
 }
 
 const handleDelete = (u: any) => {
@@ -171,6 +223,11 @@ const confirmDelete = async () => {
           :label="tc('users.role')"
           :options="roleOptions"
         />
+        <template v-if="!editingUser">
+          <BasePasswordInput id="u-pass" v-model="formData.password" :label="tc('users.password')" :placeholder="tc('users.passwordMin')" autocomplete="new-password" required />
+          <BasePasswordInput id="u-pass-confirm" v-model="formData.confirm_password" :label="tc('users.confirmPassword')" :placeholder="tc('users.confirmPassword')" autocomplete="new-password" required />
+        </template>
+        <p v-if="formError" class="text-sm text-rose-400">{{ formError }}</p>
         <p v-if="error" class="text-sm text-rose-400">{{ error }}</p>
         <div class="flex justify-end gap-3 pt-2">
           <button type="button" class="ca-btn-secondary" @click="showFormModal = false">{{ tc('common.cancel') }}</button>
@@ -194,16 +251,26 @@ const confirmDelete = async () => {
     <ConsoleModal
       :show="showPasswordModal"
       :title="tc('users.passwordTitle')"
-      @close="showPasswordModal = false"
+      @close="tutupPassword"
     >
       <p class="mb-4 text-sm text-[var(--ca-muted)]">{{ tc('users.passwordDescription', { name: passwordTarget?.full_name || '-', email: passwordTarget?.email || '-' }) }}</p>
+      <p v-if="gantiSandiSendiri" class="mb-4 text-sm text-[var(--ca-muted)]">{{ tc('users.passwordSelfNote') }}</p>
       <form class="space-y-3" @submit.prevent="handlePasswordChange">
-        <BasePasswordInput id="pw-new" v-model="passwordForm.password" :label="tc('users.newPassword')" :placeholder="tc('users.passwordMin')" required />
-        <BasePasswordInput id="pw-confirm" v-model="passwordForm.confirm_password" :label="tc('users.confirmPassword')" :placeholder="tc('users.confirmPassword')" required />
+        <BasePasswordInput
+          v-if="gantiSandiSendiri"
+          id="pw-current"
+          v-model="passwordForm.current_password"
+          :label="tc('users.currentPassword')"
+          :placeholder="tc('users.currentPassword')"
+          autocomplete="current-password"
+          required
+        />
+        <BasePasswordInput id="pw-new" v-model="passwordForm.password" :label="tc('users.newPassword')" :placeholder="tc('users.passwordMin')" autocomplete="new-password" required />
+        <BasePasswordInput id="pw-confirm" v-model="passwordForm.confirm_password" :label="tc('users.confirmPassword')" :placeholder="tc('users.confirmPassword')" autocomplete="new-password" required />
         <p v-if="passwordError" class="text-sm text-rose-400">{{ passwordError }}</p>
         <p v-if="error" class="text-sm text-rose-400">{{ error }}</p>
         <div class="flex justify-end gap-3 pt-2">
-          <button type="button" class="ca-btn-secondary" @click="showPasswordModal = false">{{ tc('common.cancel') }}</button>
+          <button type="button" class="ca-btn-secondary" @click="tutupPassword">{{ tc('common.cancel') }}</button>
           <button type="submit" class="ca-btn-primary" :disabled="saving">{{ saving ? tc('common.processing') : tc('users.savePassword') }}</button>
         </div>
       </form>

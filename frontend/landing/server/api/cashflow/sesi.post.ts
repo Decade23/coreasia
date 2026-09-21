@@ -7,15 +7,19 @@
  * non-public). Peramban hanya menerima access + refresh token sesi biasa.
  *
  * Urutan:
- *   0. permintaan harus dari halaman kita sendiri: header X-CF-Sesi dan
- *      Sec-Fetch-Site bukan cross-site. Aturan '/api/**' { cors: true } memang
- *      memasang Allow-Origin: * pada rute ini, tapi TANPA Allow-Credentials —
- *      peramban menolak permintaan ber-cookie lintas asal, dan tanpa cookie
- *      rute ini menjawab 401. Jangan pernah menambahkan allow-credentials.
- *   1. cookie auth_admin_token → GET {gateway}/admin/auth/me. Gateway yang
- *      memutuskan siapa pemegang cookie; rute ini tidak mem-parse JWT sendiri.
- *      401/403 dari gateway = cookie ditolak; gagal lain = gateway bermasalah,
- *      dan pengguna tidak disuruh masuk ulang untuk kesalahan yang bukan miliknya.
+ *   0. permintaan harus dari halaman kita sendiri: header X-CF-Sesi DAN
+ *      Sec-Fetch-Site: same-origin. Tanpa Sec-Fetch-Site (curl, klien bukan
+ *      peramban) → 403 (Fase 0c; dulu header yang hilang diloloskan). Aturan
+ *      '/api/**' { cors: true } memang memasang Allow-Origin: * pada rute ini,
+ *      tapi TANPA Allow-Credentials — peramban menolak permintaan ber-cookie
+ *      lintas asal. Jangan pernah menambahkan allow-credentials.
+ *   1. cookie HttpOnly sesi console (BFF, lib/konsol/cookie.ts) → GET
+ *      {gateway}/admin/auth/me lewat inti proxy yang sama dengan /api/gw/**:
+ *      akses kedaluwarsa + refresh sah → refresh sekali, cookie diperbarui.
+ *      Gateway yang memutuskan siapa pemegang cookie (typ, token_version,
+ *      is_active); rute ini tidak mem-parse JWT sendiri. 401/403 dari gateway
+ *      = cookie ditolak; gagal lain = gateway bermasalah, dan pengguna tidak
+ *      disuruh masuk ulang untuk kesalahan yang bukan miliknya.
  *   2. peran pemegangnya harus punya izin cashflow:view — peta yang sama
  *      dengan sidebar (utils/rbac.ts).
  *   3. identitas konsol harus ADA dan bertanda admin_users.lewat_konsol — kalau
@@ -31,10 +35,13 @@
  *
  * Kode gagal (statusMessage) dibaca halaman /console/cashflow/masuk:
  *   tanpa-cookie · cookie-ditolak · gateway-gagal · tanpa-izin ·
- *   belum-konfigurasi · mint-gagal · lintas-situs
+ *   belum-konfigurasi · mint-gagal · lintas-situs · ikatan
  */
 import { createClient } from '@supabase/supabase-js'
 import { peranBoleh } from '~/utils/rbac'
+import { bacaCookie, catat, hapusCookie, ipKlien, pasangToken, wajibIkatan } from '../../lib/konsol/h3'
+import { rakitTujuan } from '../../lib/konsol/jalur'
+import { teruskan } from '../../lib/konsol/proxy'
 
 interface JawabanMe {
   data?: { id: string; email: string; role: string; is_active: boolean } | null
@@ -55,30 +62,33 @@ function klaimJwt(token: string): Record<string, unknown> | null {
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig(event)
 
-  // 0. Hanya dari halaman kita.
-  const situs = getHeader(event, 'sec-fetch-site')
-  if (getHeader(event, 'x-cf-sesi') !== '1' || (situs && situs !== 'same-origin' && situs !== 'none')) {
+  // 0. Hanya dari halaman kita. Sec-Fetch-Site WAJIB ada dan same-origin.
+  if (getHeader(event, 'x-cf-sesi') !== '1' || getHeader(event, 'sec-fetch-site') !== 'same-origin') {
     throw createError({ statusCode: 403, statusMessage: 'lintas-situs' })
   }
+  wajibIkatan(event)
 
-  const cookie = getCookie(event, 'auth_admin_token')
-  if (!cookie) throw createError({ statusCode: 401, statusMessage: 'tanpa-cookie' })
+  const akses = bacaCookie(event, 'akses')
+  const segar = bacaCookie(event, 'segar')
+  if (!akses && !segar) throw createError({ statusCode: 401, statusMessage: 'tanpa-cookie' })
 
-  // 1. Gateway memutuskan siapa pemegang cookie.
-  let me: JawabanMe['data'] = null
-  try {
-    const r = await $fetch<JawabanMe>(`${config.public.gatewayUrl}/admin/auth/me`, {
-      headers: { Authorization: `Bearer ${cookie}` },
-      timeout: 8000,
-      retry: 0, // ofetch mengulang sendiri; dua kali 8 detik terlalu lama untuk satu klik
-    })
-    me = r?.data ?? null
-  } catch (e: any) {
-    const status = Number(e?.status ?? e?.statusCode ?? e?.response?.status ?? 0)
-    if (status === 401 || status === 403) throw createError({ statusCode: 401, statusMessage: 'cookie-ditolak' })
-    console.error('[cashflow/sesi] gateway tidak menjawab:', status || e?.message)
+  // 1. Gateway memutuskan siapa pemegang cookie (refresh sekali bila perlu).
+  const gatewayUrl = config.public.gatewayUrl as string
+  const tujuan = rakitTujuan(gatewayUrl, 'admin/auth/me', '')
+  if (!tujuan) throw createError({ statusCode: 502, statusMessage: 'gateway-gagal' })
+  const hasil = await teruskan(
+    { metode: 'GET', jalur: 'admin/auth/me', tujuan, header: new Headers({ accept: 'application/json' }), akses, segar },
+    { gatewayUrl, fetch, timeoutMs: 8000, klienIp: ipKlien(event) },
+  )
+  if (hasil.hapusCookie) hapusCookie(event, ['akses', 'segar'])
+  else if (hasil.tokenBaru) pasangToken(event, hasil.tokenBaru)
+  const status = hasil.respons.status
+  if (status === 401 || status === 403) throw createError({ statusCode: 401, statusMessage: 'cookie-ditolak' })
+  if (!hasil.respons.ok) {
+    console.error('[cashflow/sesi] gateway tidak menjawab:', status)
     throw createError({ statusCode: 502, statusMessage: 'gateway-gagal' })
   }
+  const me: JawabanMe['data'] = ((await hasil.respons.json().catch(() => null)) as JawabanMe | null)?.data ?? null
   if (!me || !me.is_active) throw createError({ statusCode: 401, statusMessage: 'cookie-ditolak' })
 
   // 2. Peran yang boleh melihat pintunya = peran yang boleh masuk.
@@ -150,6 +160,7 @@ export default defineEventHandler(async (event) => {
   // Rumah tangga: cabut catatan yang lewat umur (12 jam) dan buang yang > 7
   // hari. Dijalankan sesudah tiap pencetakan supaya tabelnya tidak tumbuh
   // tanpa batas; hasilnya tidak ditunggu dan kegagalannya tidak menghalangi.
+  catat(event, 'cashflow-sesi', { email: me.email })
   admin.rpc('admin_konsol_sesi_bersihkan').then(({ error }) => {
     if (error) console.error('[cashflow/sesi] bersihkan gagal:', error.message)
   }).catch(() => {})

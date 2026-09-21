@@ -16,6 +16,12 @@ const styleMap: Record<string, { accent: string; bg: string; icon: string }> = {
   warning: { accent: '#f59e0b', bg: 'border-amber-500/25', icon: 'text-amber-400' },
 }
 
+/* Aksi ditekan pengguna sendiri (mis. "Muat ulang"); toastnya ikut ditutup. */
+const jalankan = (t: { id: string; aksi?: { jalankan: () => void } }) => {
+  removeToast(t.id)
+  t.aksi?.jalankan()
+}
+
 const titleMap = computed<Record<string, string>>(() => ({
   success: tc('common.success'),
   error: tc('common.failure'),
@@ -40,13 +46,14 @@ const titleMap = computed<Record<string, string>>(() => ({
             <Icon :name="iconMap[t.type]" class="h-5 w-5 shrink-0 mt-0.5" :class="styleMap[t.type].icon" />
             <div class="flex-1 min-w-0">
               <p class="text-[0.8125rem] font-bold text-[var(--ca-text)] leading-tight">{{ titleMap[t.type] }}</p>
-              <p class="mt-0.5 text-xs text-[var(--ca-muted)] leading-relaxed">{{ t.message }}</p>
+              <p class="mt-0.5 text-xs text-[var(--ca-muted)] leading-relaxed">{{ t.kunci ? tc(t.kunci) : t.message }}</p>
+              <button v-if="t.aksi" type="button" class="ca-toast-aksi" @click="jalankan(t)">{{ tc(t.aksi.kunci) }}</button>
             </div>
             <button type="button" class="shrink-0 rounded-md p-1 text-[var(--ca-subtle)] hover:text-[var(--ca-text)] transition" @click="removeToast(t.id)">
               <Icon name="lucide:x" class="h-3.5 w-3.5" />
             </button>
           </div>
-          <div class="ca-toast-track"><div class="ca-toast-progress" :style="{ background: styleMap[t.type].accent, animationDuration: t.duration + 'ms' }" /></div>
+          <div v-if="t.duration > 0" class="ca-toast-track"><div class="ca-toast-progress" :style="{ background: styleMap[t.type].accent, animationDuration: t.duration + 'ms' }" /></div>
         </div>
       </TransitionGroup>
     </div>
@@ -58,6 +65,8 @@ const titleMap = computed<Record<string, string>>(() => ({
 .ca-toast { position: relative; display: flex; flex-direction: column; overflow: hidden; border-radius: 1rem; border: 1px solid; background: color-mix(in srgb, var(--ca-toast-bg, #1a1b23) 92%, transparent); box-shadow: 0 18px 44px rgba(15, 23, 42, 0.18); backdrop-filter: blur(16px); pointer-events: auto; }
 .ca-toast-bar { position: absolute; top: 0; left: 0; bottom: 0; width: 3px; }
 .ca-toast-inner { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.9rem 1rem 0.75rem 1.05rem; }
+.ca-toast-aksi { margin-top: 0.5rem; border-radius: 0.5rem; border: 1px solid var(--ca-border); padding: 0.3rem 0.7rem; font-size: 0.75rem; font-weight: 600; color: var(--ca-text); transition: background-color .15s ease; }
+.ca-toast-aksi:hover { background: var(--ca-panel-bg-strong); }
 .ca-toast-track { height: 3px; background: color-mix(in srgb, var(--ca-border) 78%, transparent); margin: 0 1rem 0.65rem 1.05rem; border-radius: 999px; overflow: hidden; }
 .ca-toast-progress { height: 100%; border-radius: 999px; animation: ca-shrink linear forwards; }
 @keyframes ca-shrink { from { width: 100%; } to { width: 0%; } }

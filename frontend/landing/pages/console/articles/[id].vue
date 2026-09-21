@@ -5,7 +5,7 @@ const route = useRoute()
 const id = route.params.id as string
 const { currentItem, loading, saving, error, fetchArticle, updateArticle, publishArticle, unpublishArticle } = useArticles()
 const { can } = usePermissions()
-const { uploadImage, uploading } = useImageUpload()
+const { uploadImage, uploading, error: uploadError } = useImageUpload()
 const toast = useToast()
 const { tc } = useConsoleI18n()
 const { formatDateTime } = useConsoleDateTime()
@@ -22,6 +22,12 @@ const form = ref({
   featured_image: '',
   seo_title: '',
   seo_description: '',
+})
+
+/* Isian yang belum tersimpan dititipkan di sessionStorage tab ini
+   (useDrafKonsol): sesi habis atau ikatan basi bisa memuat ulang dokumen. */
+const draf = useDrafKonsol(`artikel:${id}`, () => form.value, (isi) => {
+  form.value = { ...form.value, ...isi }
 })
 
 const showPublishConfirm = ref(false)
@@ -43,12 +49,14 @@ onMounted(async () => {
       seo_title: currentItem.value.seo_title || '',
       seo_description: currentItem.value.seo_description || '',
     }
+    draf.mulai()
   }
 })
 
 const handleImageUpload = async (file: File) => {
   const url = await uploadImage(file)
   if (url) form.value.featured_image = url
+  else if (uploadError.value) toast.error(uploadError.value)
 }
 
 const handleSubmit = async () => {
@@ -61,6 +69,7 @@ const handleSubmit = async () => {
   }
   const ok = await updateArticle(id, data)
   if (ok) {
+    draf.tandaiTersimpan()
     await fetchArticle(id)
     toast.success(tc('feedback.articleUpdated'))
   }
@@ -280,7 +289,7 @@ const articleTimeline = computed(() => {
           <p v-if="error" class="mt-3 text-sm text-rose-400">{{ error }}</p>
 
           <div class="mt-6 flex justify-end gap-3">
-            <NuxtLink to="/console/articles" class="ca-btn-secondary">{{ tc('common.cancel') }}</NuxtLink>
+            <NuxtLink to="/console/articles" class="ca-btn-secondary" @click="draf.buang()">{{ tc('common.cancel') }}</NuxtLink>
             <button type="submit" class="ca-btn-primary" :disabled="saving">
               {{ saving ? tc('common.processing') : tc('common.saveChanges') }}
             </button>

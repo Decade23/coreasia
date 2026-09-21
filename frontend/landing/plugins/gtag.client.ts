@@ -10,9 +10,11 @@ export default defineNuxtPlugin((nuxtApp) => {
   if (!id) return
 
   const router = useRouter()
-  const isConsolePath = (path: string) => path === '/console' || path.startsWith('/console/')
+  // jalurKonsol (utils/konsol.ts) tidak peka huruf/encoding: vue-router juga
+  // tidak, jadi /Console/login tetap halaman login console.
+  const isConsolePath = jalurKonsol
 
-  if (isConsolePath(router.currentRoute.value.path)) {
+  if (isConsolePath(router.currentRoute.value.path) || isConsolePath(window.location.pathname)) {
     return
   }
 

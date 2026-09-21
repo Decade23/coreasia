@@ -10,7 +10,7 @@ const { tcf } = useCashflowI18n()
 const route = useRoute()
 const sesi = useCashflowSesi()
 
-const SEBAB_DIKENAL = ['konfigurasi', 'belum-konfigurasi', 'tanpa-cookie', 'cookie-ditolak', 'gateway-gagal', 'tanpa-izin', 'mint-gagal', 'lintas-situs', 'jaringan', 'sesi', 'totp', 'sibuk']
+const SEBAB_DIKENAL = ['konfigurasi', 'belum-konfigurasi', 'tanpa-cookie', 'cookie-ditolak', 'gateway-gagal', 'tanpa-izin', 'mint-gagal', 'lintas-situs', 'ikatan', 'jaringan', 'sesi', 'totp', 'sibuk']
 const sebab = ref(typeof route.query.sebab === 'string' ? route.query.sebab : '')
 const pesan = computed(() => tcf(`masuk.sebab.${SEBAB_DIKENAL.includes(sebab.value) ? sebab.value : 'lain'}`))
 

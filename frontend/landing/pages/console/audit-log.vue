@@ -26,6 +26,12 @@ const actionOptions = computed(() => [
   { label: tc('audit.actions.ai_generate'), value: 'ai_generate', class: 'ca-pill-gold' },
   { label: tc('audit.actions.trigger'), value: 'trigger', class: 'ca-pill-gold' },
   { label: tc('audit.actions.copy'), value: 'copy', class: 'ca-pill-info' },
+  { label: tc('audit.actions.logout_all'), value: 'logout_all', class: 'ca-pill-gold' },
+  { label: tc('audit.actions.revoke_sessions'), value: 'revoke_sessions', class: 'ca-pill-danger' },
+  { label: tc('audit.actions.totp_setup'), value: 'totp_setup', class: 'ca-pill-info' },
+  { label: tc('audit.actions.totp_enable'), value: 'totp_enable', class: 'ca-pill-emerald' },
+  { label: tc('audit.actions.totp_disable'), value: 'totp_disable', class: 'ca-pill-danger' },
+  { label: tc('audit.actions.totp_reset'), value: 'totp_reset', class: 'ca-pill-danger' },
 ])
 
 const columns = computed(() => [
@@ -143,6 +149,12 @@ const handleRowClick = (row: any) => {
           <div class="rounded-lg border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-3">
             <p class="text-[0.65rem] font-semibold uppercase tracking-widest text-[var(--ca-subtle)]">{{ tc('audit.ipAddress') }}</p>
             <p class="mt-1 font-mono text-sm text-[var(--ca-text)]">{{ selectedLog.ip_address || '-' }}</p>
+            <!-- Aksi lewat proxy console: gateway melihat IP keluar Vercel; IP peramban
+                 hanya dilaporkan BFF (X-Konsol-Klien-IP), tidak diverifikasi gateway. -->
+            <template v-if="selectedLog.reported_client_ip">
+              <p class="mt-2 text-[0.65rem] font-semibold uppercase tracking-widest text-[var(--ca-subtle)]">{{ tc('audit.reportedIp') }}</p>
+              <p class="mt-1 font-mono text-sm text-[var(--ca-text)]">{{ selectedLog.reported_client_ip }}</p>
+            </template>
           </div>
           <div class="rounded-lg border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] p-3">
             <p class="text-[0.65rem] font-semibold uppercase tracking-widest text-[var(--ca-subtle)]">{{ tc('audit.time') }}</p>

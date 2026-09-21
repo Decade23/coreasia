@@ -11,11 +11,8 @@ export default defineNuxtPlugin(() => {
   const router = useRouter()
   const path = router.currentRoute.value.path
 
-  if (
-    !conversionId
-    || path === '/console'
-    || path.startsWith('/console/')
-  ) {
+  // jalurKonsol (utils/konsol.ts) tidak peka huruf/encoding, sama dengan vue-router.
+  if (!conversionId || jalurKonsol(path) || jalurKonsol(window.location.pathname)) {
     return
   }
 

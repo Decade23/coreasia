@@ -3,7 +3,7 @@ definePageMeta({ layout: 'console', middleware: 'console' })
 
 const { createArticle, publishArticle, saving, error } = useArticles()
 const { generateArticle, generating, error: aiError } = useAIGenerate()
-const { uploadImage, uploading } = useImageUpload()
+const { uploadImage, uploading, error: uploadError } = useImageUpload()
 const toast = useToast()
 const { tc } = useConsoleI18n()
 
@@ -26,6 +26,20 @@ const showAIModal = ref(false)
 const aiPreview = ref<any>(null)
 const aiPreviewCategory = ref('general')
 
+/* Isian + hasil AI yang belum diterapkan dititipkan di sessionStorage tab ini
+   (useDrafKonsol): sesi habis atau ikatan basi bisa memuat ulang dokumen. */
+const draf = useDrafKonsol(
+  'artikel:baru',
+  () => ({ form: form.value, ai: aiPreview.value, aiKategori: aiPreviewCategory.value }),
+  (isi) => {
+    form.value = { ...form.value, ...isi.form }
+    aiPreview.value = isi.ai ?? null
+    aiPreviewCategory.value = isi.aiKategori || 'general'
+    if (aiPreview.value) showAIModal.value = true
+  },
+)
+onMounted(draf.mulai)
+
 const slugify = (text: string) => text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 
 watch(() => form.value.title, (val) => {
@@ -37,6 +51,7 @@ watch(() => form.value.title, (val) => {
 const handleImageUpload = async (file: File) => {
   const url = await uploadImage(file)
   if (url) form.value.featured_image = url
+  else if (uploadError.value) toast.error(uploadError.value)
 }
 
 // AI modal featured image
@@ -45,6 +60,7 @@ const handleAIImageUpload = async (file: File) => {
   aiImageUploading.value = true
   const url = await uploadImage(file)
   if (url) form.value.featured_image = url
+  else if (uploadError.value) toast.error(uploadError.value)
   aiImageUploading.value = false
 }
 
@@ -87,7 +103,9 @@ const buildFormData = () => ({
 
 const handleSubmit = async () => {
   const ok = await createArticle(buildFormData())
-  if (ok) navigateTo('/console/articles')
+  if (!ok) return
+  draf.tandaiTersimpan()
+  navigateTo('/console/articles')
 }
 
 const handleSaveAndPublish = async () => {
@@ -97,6 +115,7 @@ const handleSaveAndPublish = async () => {
   try {
     const res = await api.post<{ id: string }>('/admin/articles', data)
     if (res.data?.id) {
+      draf.tandaiTersimpan()
       await publishArticle(res.data.id)
       toast.success(tc('feedback.articleCreatedAndPublished'))
       navigateTo('/console/articles')
@@ -215,7 +234,7 @@ watch(showAIModal, (show) => {
         <p v-if="error" class="mt-3 text-sm text-rose-400">{{ error }}</p>
 
         <div class="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
-          <NuxtLink to="/console/articles" class="ca-btn-secondary">{{ tc('common.cancel') }}</NuxtLink>
+          <NuxtLink to="/console/articles" class="ca-btn-secondary" @click="draf.buang()">{{ tc('common.cancel') }}</NuxtLink>
           <button type="submit" class="ca-btn-secondary" :disabled="saving">
             <Icon name="lucide:save" class="h-4 w-4" />
             {{ saving ? tc('articles.savingDraft') : tc('articles.saveDraft') }}

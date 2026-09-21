@@ -153,7 +153,11 @@ watch(
   () => props.modelValue,
   (val) => {
     if (editor.value && editor.value.getHTML() !== val) {
-      editor.value.commands.setContent(val, false)
+      // Tiptap 3: opsi berbentuk objek. `false` (gaya Tiptap 2) diabaikan dan
+      // setContent memancarkan update, sehingga isi dari server/draf langsung
+      // ditulis ulang (mis. '' → '<p></p>') dan form tampak berubah padahal
+      // belum disentuh (useDrafKonsol).
+      editor.value.commands.setContent(val, { emitUpdate: false })
       syncEditorState()
     }
   },

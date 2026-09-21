@@ -1,94 +1,216 @@
 /**
- * Admin authentication composable.
- * Manages login/logout, token cookies, and current user state.
+ * Autentikasi console (Fase 0c).
+ *
+ * Login dua langkah, dikirim peramban LANGSUNG ke gateway publik (seperti
+ * sebelum 0c), supaya pembatas per IP dan audit gateway melihat IP admin yang
+ * asli, bukan IP keluar Vercel:
+ *   login(email, sandi) → POST {gateway}/admin/auth/login
+ *     → 'masuk' : token langsung diserahkan ke BFF (POST /api/admin/sesi), yang
+ *                 memvalidasinya ke gateway lalu memasang cookie HttpOnly;
+ *     → 'mfa'   : admin ber-TOTP; tantangan MFA disimpan di VARIABEL closure
+ *                 ini saja (bukan state reaktif, bukan storage), lanjut
+ *                 verifikasiTotp(kode) → POST {gateway}/admin/auth/totp/verify
+ *                 → serah terima yang sama;
+ *     → 'gagal' : galat di `galat` (status, kode, pesan, tunggu, sumber).
+ * Token tidak pernah disimpan di storage atau cookie JS; setelah serah terima,
+ * halaman login memuat dokumen console baru sehingga memorinya ikut dibuang.
+ *
+ * Sesudah masuk, token gateway tidak pernah menyentuh JS: refresh, proxy, dan
+ * logout ditangani rute server /api/admin/* dan /api/gw/**. Klien hanya
+ * menyimpan data pengguna (useState) untuk tampilan; siapa yang boleh apa
+ * tetap diputuskan gateway di setiap panggilan. Setiap panggilan BFF membawa
+ * token ikatan dokumen console (useKonsolIkatan).
  */
+import type { GalatKonsol } from '~/utils/konsol'
 
-interface AdminUser {
+export interface AdminUser {
   id: string
   email: string
   full_name: string
   role: string
   is_active: boolean
+  /** Dari /me: sesi ini lolos TOTP. */
+  mfa?: boolean
+  /** Dari /me: TOTP akun ini aktif. */
+  totp_enabled?: boolean
+  totp_enabled_at?: string | null
+}
+
+/** Bentuk galat seragam (utils/konsol.ts galatDari, galatJaringan, menitTunggu). */
+export type GalatAuth = GalatKonsol
+
+export type HasilLogin = 'masuk' | 'mfa' | 'gagal'
+
+const HEADER_TULIS = { 'X-Console': '1' } as const
+
+/** Base gateway publik untuk login langsung dari peramban. */
+const gatewayPublik = (): string =>
+  String(useRuntimeConfig().public.gatewayPublicUrl || '').replace(/\/+$/, '')
+
+interface JawabanToken {
+  access_token?: unknown
+  refresh_token?: unknown
+  mfa_required?: unknown
+  challenge?: unknown
 }
 
 export const useAdminAuth = () => {
-  const api = useAdminApi()
   const { tc } = useConsoleI18n()
-  /* Cookie dipasang dari JS (gateway memulangkan token di badan jawaban), jadi
-     HttpOnly mustahil dari sini. Yang bisa: SameSite=Lax supaya cookie tidak
-     ikut permintaan lintas situs yang dipicu halaman lain, dan Secure di
-     saat halaman disajikan lewat https. Di http (dev, `nuxt preview` lokal)
-     peramban membuang cookie Secure, jadi ia mengikuti protokol yang dipakai. */
-  const aman = import.meta.client ? window.location.protocol === 'https:' : !import.meta.dev
-  const opsiCookie = { path: '/', sameSite: 'lax' as const, secure: aman }
-  const token = useCookie('auth_admin_token', opsiCookie)
-  const refreshToken = useCookie('refresh_admin_token', opsiCookie)
 
   const user = useState<AdminUser | null>('admin_user', () => null)
   const loginError = ref('')
+  const galat = ref<GalatAuth | null>(null)
   const pending = ref(false)
 
-  const isAuthenticated = computed(() => !!token.value && !!user.value)
+  const isAuthenticated = computed(() => !!user.value)
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  /* Tantangan MFA dari gateway: hanya di closure ini (halaman login), bukan
+     ref/useState (tidak ikut payload/devtools) dan bukan storage. */
+  let tantangan: string | null = null
+  const lupakanTantangan = () => { tantangan = null }
+
+  const catatGalat = (err: unknown, cadangan: string, sumber: GalatAuth['sumber']): GalatAuth => {
+    const g = { ...galatDari(err), sumber }
+    galat.value = g
+    loginError.value = g.pesan || cadangan
+    return g
+  }
+
+  /** POST JSON ke gateway publik. credentials:'omit': cookie domain gateway
+   *  tidak dikirim dan Set-Cookie gateway diabaikan (sesi hanya milik BFF). */
+  const keGateway = (jalur: string, badan: Record<string, string>) =>
+    $fetch<{ data?: JawabanToken | null }>(`${gatewayPublik()}${jalur}`, {
+      method: 'POST',
+      body: badan,
+      credentials: 'omit',
+      retry: 0,
+      timeout: 20_000,
+    })
+
+  /**
+   * Serahkan token hasil login ke BFF. `data` sengaja tidak disimpan di mana
+   * pun: sesudah fungsi ini tidak ada rujukan ke token, dan halaman login
+   * memuat dokumen console baru.
+   */
+  const serahkan = async (data: JawabanToken | null | undefined): Promise<boolean> => {
+    if (typeof data?.access_token !== 'string' || typeof data?.refresh_token !== 'string') {
+      galat.value = { status: 502, kode: 'JAWABAN_LOGIN', pesan: '', tunggu: null, sumber: 'gateway' }
+      return false
+    }
+    try {
+      const res = await $fetch<{ data: { user?: AdminUser | null } }>('/api/admin/sesi', {
+        method: 'POST',
+        headers: { ...HEADER_TULIS, ...headerIkatan() },
+        body: { access_token: data.access_token, refresh_token: data.refresh_token },
+        retry: 0,
+      })
+      user.value = res?.data?.user ?? null
+      return !!user.value
+    } catch (err) {
+      pulihkanIkatan(err)
+      catatGalat(err, tc('login.sesiGagal'), 'console')
+      return false
+    }
+  }
+
+  const login = async (email: string, password: string): Promise<HasilLogin> => {
     loginError.value = ''
+    galat.value = null
+    tantangan = null
     pending.value = true
     try {
-      const res = await api.post<{
-        access_token: string
-        refresh_token: string
-        expires_at: string
-        user: AdminUser
-      }>('/admin/auth/login', { email, password })
-
-      if (res.errors) {
-        loginError.value = res.errors.message
-        return false
+      let res: { data?: JawabanToken | null } | null
+      try {
+        res = await keGateway('/admin/auth/login', { email, password })
+      } catch (err) {
+        catatGalat(err, tc('feedback.loginFailed'), 'gateway')
+        return 'gagal'
       }
-
-      token.value = res.data.access_token
-      refreshToken.value = res.data.refresh_token
-      user.value = res.data.user
-      return true
-    } catch (err: any) {
-      loginError.value = err?.data?.errors?.message || tc('feedback.loginFailed')
-      return false
+      if (res?.data?.mfa_required === true && typeof res.data.challenge === 'string' && res.data.challenge) {
+        tantangan = res.data.challenge
+        return 'mfa'
+      }
+      return (await serahkan(res?.data)) ? 'masuk' : 'gagal'
     } finally {
       pending.value = false
     }
   }
 
-  const fetchMe = async (): Promise<boolean> => {
-    if (!token.value) return false
-    try {
-      const res = await api.get<AdminUser>('/admin/auth/me')
-      if (res.data) {
-        user.value = res.data
-        return true
-      }
+  const verifikasiTotp = async (kode: string): Promise<boolean> => {
+    loginError.value = ''
+    galat.value = null
+    if (!tantangan) {
+      galat.value = { status: 401, kode: 'MFA_CHALLENGE_INVALID', pesan: '', tunggu: null, sumber: 'gateway' }
       return false
-    } catch {
-      token.value = null
-      refreshToken.value = null
+    }
+    pending.value = true
+    try {
+      let res: { data?: JawabanToken | null } | null
+      try {
+        res = await keGateway('/admin/auth/totp/verify', { challenge: tantangan, code: kode })
+      } catch (err) {
+        if (catatGalat(err, tc('login.totpFailed'), 'gateway').kode === 'MFA_CHALLENGE_INVALID') tantangan = null
+        return false
+      }
+      // Tantangan sekali pakai: sesudah kode diterima tidak disimpan lagi.
+      tantangan = null
+      return await serahkan(res?.data)
+    } finally {
+      pending.value = false
+    }
+  }
+
+  /** Muat ulang data pengguna dari gateway (/me: termasuk mfa & totp_enabled). */
+  const fetchMe = async (): Promise<boolean> => {
+    try {
+      const res = await $fetch<{ data: AdminUser | null }>(`${KONSOL_API_BASE}/admin/auth/me`, { headers: headerIkatan() })
+      user.value = res?.data ?? null
+      return !!user.value
+    } catch (err) {
+      pulihkanIkatan(err)
       user.value = null
       return false
     }
   }
 
-  const logout = async () => {
+  /** Hapus jejak sesi di tab ini (CashFlow + data pengguna). Cookie dihapus server. */
+  const bersihkanLokal = async () => {
     // Sesi modul CashFlow (Supabase) ikut dicabut di server — tanpa ini token
     // di sessionStorage tetap hidup sampai tab ditutup walau console sudah keluar.
     try {
       await useCashflowSesi().keluar()
     } catch { /* modul tidak terkonfigurasi atau sudah tidak ada sesi */ }
-    try {
-      await api.post('/admin/auth/logout')
-    } catch { /* ignore */ }
-    token.value = null
-    refreshToken.value = null
     user.value = null
-    navigateTo('/console/login')
   }
 
-  return { user, token, isAuthenticated, loginError, pending, login, fetchMe, logout }
+  /**
+   * Keluar di server DULU. Bila gagal (5xx, jaringan, 403), admin tetap di
+   * console dan pemanggil menampilkan galat: pindah ke /console/login dengan
+   * cookie yang masih hidup hanya membuat halaman login mengembalikannya ke
+   * console, sehingga tombol Keluar tampak tidak bekerja.
+   */
+  const logout = async (): Promise<boolean> => {
+    galat.value = null
+    try {
+      await $fetch('/api/admin/logout', { method: 'POST', headers: HEADER_TULIS })
+    } catch (err) {
+      galat.value = galatDari(err)
+      return false
+    }
+    await bersihkanLokal()
+    await navigateTo('/console/login')
+    return true
+  }
+
+  /**
+   * Dipanggil sesudah gateway mengakhiri semua sesi admin ini (logout-all,
+   * TOTP diaktifkan/dimatikan). Proxy sudah menghapus cookie dan mencabut
+   * sesi CashFlow di server; di sini jejak lokal dibersihkan lalu ke login.
+   */
+  const sesiDiakhiri = async (sebab: 'semua-perangkat' | 'totp-aktif' | 'totp-mati' | 'sandi-diganti') => {
+    await bersihkanLokal()
+    await navigateTo({ path: '/console/login', query: { info: sebab } })
+  }
+
+  return { user, isAuthenticated, loginError, galat, pending, login, verifikasiTotp, lupakanTantangan, fetchMe, logout, sesiDiakhiri }
 }

@@ -11,6 +11,9 @@ export interface AuditLogDomain {
   resource_id: string | null
   description: string | null
   ip_address: string | null
+  /** IP peramban yang DILAPORKAN BFF console untuk aksi lewat proxy (tidak
+   *  diverifikasi gateway). null untuk aksi langsung ke gateway (login). */
+  reported_client_ip?: string | null
   created_at: string
 }
 

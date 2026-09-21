@@ -1,4 +1,9 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+/* Header keamanan dasar + header console (X-Frame-Options DENY, COOP
+   same-origin, noindex). Alasannya ada di berkas itu; diuji di
+   tests/konsol/csp.test.ts. */
+import { HEADER_KEAMANAN_DASAR, HEADER_KONSOL } from './server/lib/konsol/header'
+
 const ASSET_VERSION = '20260522-1'
 const SITE_URL = process.env.NUXT_PUBLIC_SITE_URL || process.env.SITE_URL || 'https://coreasia.id'
 const asset = (path: string): string => `${path}?v=${ASSET_VERSION}`
@@ -244,6 +249,10 @@ export default defineNuxtConfig({
            keadaan "belum dikonfigurasi", bukan galat. */
         cashflowSupabaseServiceKey: process.env.NUXT_CASHFLOW_SUPABASE_SERVICE_KEY || '',
         cashflowKonsolEmail: process.env.NUXT_CASHFLOW_KONSOL_EMAIL || 'konsol@coreasia.id',
+        /* Kunci HMAC ikatan dokumen console (server/lib/konsol/ikatan.ts),
+           minimal 32 aksara acak. Kosong → diturunkan dari kunci service-role
+           CashFlow; keduanya kosong → kunci acak per proses (hanya layak dev). */
+        konsolIkatKunci: process.env.NUXT_KONSOL_IKAT_KUNCI || '',
         public: {
             /* Modul CashFlow di /console/cashflow berbicara LANGSUNG ke Supabase
                CashFlow dari peramban, bukan lewat gateway — datanya dijaga RPC
@@ -271,6 +280,12 @@ export default defineNuxtConfig({
         },
     },
     nitro: {
+        /* Fungsi Vercel di Singapura, dekat pengunjung, gateway (VPS Indonesia),
+           dan Supabase CashFlow. Tanpa ini fungsi jalan di iad1 (Washington):
+           sejak 0c setiap panggilan console lewat fungsi, jadi dua kali
+           menyeberang Pasifik (terukur ±0,4 s per panggilan hanya untuk hop
+           fungsi). Hanya dibaca preset vercel (.vc-config.json). */
+        vercel: { functions: { regions: ['sin1'] } },
         compressPublicAssets: { gzip: true, brotli: true },
         timing: false,
         prerender: {
@@ -288,10 +303,7 @@ export default defineNuxtConfig({
         // Default security headers
         '/**': {
             headers: {
-                'X-Frame-Options': 'SAMEORIGIN',
-                'X-Content-Type-Options': 'nosniff',
-                'Referrer-Policy': 'strict-origin-when-cross-origin',
-                'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+                ...HEADER_KEAMANAN_DASAR,
                 // CSP wajib mengizinkan host pencatat konversi Google Ads, bukan
                 // hanya Tag Manager dan Analytics.
                 //
@@ -325,7 +337,6 @@ export default defineNuxtConfig({
                 // eskalasi XSS yang klasik; membatasinya di worker-src menutup risiko
                 // itu dan hanya menyentuh worker.
                 'Content-Security-Policy': `default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://www.googleadservices.com https://googleads.g.doubleclick.net; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' http://localhost:8084 https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://ad.doubleclick.net https://stats.g.doubleclick.net https://www.google.com https://www.google.co.id https://www.google.com.sg https://www.google.com.my https://www.google.com.au https://*.coreasia.id https://api.coreasia.id https://fjoiivcyrznawbbnkkmn.supabase.co; frame-src 'self' https://www.googletagmanager.com https://td.doubleclick.net; frame-ancestors 'self'`,
-                'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
             },
         },
         /* Halaman pratinjau untuk calon klien (lampiran proposal). Berdiri
@@ -430,8 +441,10 @@ export default defineNuxtConfig({
         '/blog': { redirect: { to: '/artikel', statusCode: 301 } },
         '/artikel': { ssr: true },
         '/artikel/**': { ssr: true },
-        '/console': { ssr: false, index: false, robots: false },
-        '/console/**': { ssr: false, index: false, robots: false },
+        /* Console: SPA, tidak diindeks, header keamanan disalin (HEADER_KONSOL),
+           CSP ketat dari server/plugins/konsol-csp.ts. */
+        '/console': { ssr: false, index: false, robots: false, headers: HEADER_KONSOL },
+        '/console/**': { ssr: false, index: false, robots: false, headers: HEADER_KONSOL },
         '/register': { ssr: true },
         // API routes shouldn't be cached
         '/api/**': { cors: true },

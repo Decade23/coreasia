@@ -1,5 +1,11 @@
 <template>
-    <NuxtLayout name="default">
+    <!--
+      Galat di dalam dokumen console TIDAK memakai layout publik: layout itu
+      menyisipkan <noscript><iframe googletagmanager> dan skrip tema sebaris,
+      dan satu-satunya penahannya di sana tinggal CSP console.
+    -->
+    <NuxtLayout :name="diKonsol ? false : 'default'">
+      <div :class="diKonsol ? 'ca-console-shell flex min-h-screen items-center' : undefined">
         <FallbackState
             :status-label="activeState.statusLabel"
             :title="activeState.pageTitle"
@@ -44,6 +50,7 @@
                 </div>
             </template>
         </FallbackState>
+      </div>
     </NuxtLayout>
 </template>
 
@@ -75,6 +82,12 @@ const props = defineProps<{
 }>()
 
 const { locale, t } = useCoreI18n()
+const route = useRoute()
+const diKonsol = computed(() => jalurKonsol(route.path))
+
+/* Tanpa layout publik, atribut tema dipasang di sini (tanpa skrip sebaris). */
+const { theme } = useCoreTheme()
+useHead(() => (diKonsol.value ? { htmlAttrs: { 'data-theme': theme.value } } : {}))
 
 const statusCode = computed(() => Number(props.error?.statusCode || 500))
 const isNotFound = computed(() => statusCode.value === 404)
@@ -116,7 +129,7 @@ useSeoMeta({
 })
 
 const goHome = () => {
-    clearError({ redirect: '/' })
+    clearError({ redirect: diKonsol.value ? '/console' : '/' })
 }
 
 const reloadPage = () => {

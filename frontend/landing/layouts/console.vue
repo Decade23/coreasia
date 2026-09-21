@@ -1,10 +1,8 @@
 <script setup lang="ts">
-import {
-  DEFAULT_THEME,
-  SYSTEM_THEME_MEDIA_QUERY,
-  THEME_COOKIE_KEY,
-} from '~/composables/useCoreTheme'
 import type { Remah } from '~/composables/useConsoleRemah'
+
+// GTM/iklan yang terlanjur termuat di dokumen ini → muat ulang penuh (Fase 0c).
+useKonsolBersih()
 
 const { theme, setTheme } = useCoreTheme()
 const toggleTheme = () => setTheme(theme.value === 'dark' ? 'light' : 'dark')
@@ -13,32 +11,12 @@ const { can } = usePermissions()
 const { tc } = useConsoleI18n()
 const route = useRoute()
 
-/* ── Theme bootstrap ── */
-const themeBootstrapScript = `(() => {
-  try {
-    const allowedThemes = ['dark', 'light']
-    const cookieTheme = document.cookie
-      .split('; ')
-      .find((entry) => entry.startsWith('${THEME_COOKIE_KEY}='))
-      ?.split('=')
-      .slice(1)
-      .join('=')
-    const storedTheme = cookieTheme ? decodeURIComponent(cookieTheme) : null
-    const resolvedTheme = allowedThemes.includes(storedTheme ?? '')
-      ? storedTheme
-      : window.matchMedia('${SYSTEM_THEME_MEDIA_QUERY}').matches
-        ? 'dark'
-        : 'light'
-    document.documentElement.setAttribute('data-theme', resolvedTheme || '${DEFAULT_THEME}')
-  } catch (_error) {
-    document.documentElement.setAttribute('data-theme', '${DEFAULT_THEME}')
-  }
-})()`
-
+/* Tema: console selalu SPA (ssr:false), jadi skrip bootstrap tema sebaris
+   yang dulu ada di sini baru berjalan bersamaan dengan htmlAttrs di bawah —
+   tidak menambah apa pun, dan CSP console (tanpa 'unsafe-inline') menolaknya. */
 useHead(() => ({
   htmlAttrs: { 'data-theme': theme.value },
   bodyAttrs: { class: 'ca-console-page' },
-  script: [{ innerHTML: themeBootstrapScript, tagPosition: 'head' }],
 }))
 
 const menuItems = computed(() => [
@@ -107,10 +85,11 @@ if (import.meta.client) {
   onBeforeUnmount(() => document.removeEventListener('click', onClickOutside))
 }
 
+const toast = useToast()
 const showLogoutConfirm = ref(false)
-const handleLogout = () => {
+const handleLogout = async () => {
   showLogoutConfirm.value = false
-  logout()
+  if (!(await logout())) toast.error(tc('feedback.logoutFailed'))
 }
 </script>
 
@@ -260,6 +239,14 @@ const handleLogout = () => {
                     <span class="mt-1 inline-block rounded-full bg-amber-500/10 px-2 py-0.5 text-[0.6rem] font-bold uppercase text-amber-400">{{ user?.role }}</span>
                   </div>
                   <div class="h-px bg-[var(--ca-border)] my-1" />
+                  <NuxtLink
+                    to="/console/keamanan"
+                    class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-[var(--ca-text)] transition hover:bg-[var(--ca-panel-bg-strong)]"
+                    @click="showUserMenu = false"
+                  >
+                    <Icon name="lucide:shield-check" class="h-3.5 w-3.5 text-[var(--ca-muted)]" />
+                    {{ tc('layout.security') }}
+                  </NuxtLink>
                   <button
                     type="button"
                     class="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-xs font-medium text-rose-400 transition hover:bg-rose-500/10"
