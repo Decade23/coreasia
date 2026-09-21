@@ -67,7 +67,8 @@ func (h *AdminUserHandler) now() time.Time {
 const roleSuperAdmin = "super_admin"
 
 // mfaEnrollmentGrace: umur minimal akun dan pendaftaran TOTP pelaku untuk sesi
-// kuat. SAMA dengan masa tenggang Nitro untuk izin CashFlow T1+.
+// kuat. Hanya untuk sesi kuat: izin CashFlow T1+ di Nitro TIDAK memakai masa
+// tenggang (keputusan Master 21 Sep 2026; landing utils/rbac.ts).
 const mfaEnrollmentGrace = 24 * time.Hour
 
 // errMFARequired: 403. Frontend menampilkan pesannya; login ulang memakai TOTP

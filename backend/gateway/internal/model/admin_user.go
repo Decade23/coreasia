@@ -86,9 +86,9 @@ type TOTPSetupResponse struct {
 
 // MeResponse = AdminUserResponse + status MFA. MFA berasal dari klaim token
 // (sesi ini lolos TOTP dan belum lebih tua dari auth.MFAMaxAge), TOTPEnabled
-// dari DB (akun ini mewajibkan TOTP). TOTPEnabledAt (null bila TOTP mati)
-// memungkinkan Nitro menahan izin T1+ untuk pendaftaran TOTP yang masih baru
-// (lihat README, "Pendaftaran TOTP"). MFAAt (null bila mfa=false) = saat kode
+// dari DB (akun ini mewajibkan TOTP). TOTPEnabledAt (null bila TOTP mati):
+// Nitro hanya membaca keberadaannya untuk izin CashFlow T1+ (TOTP masih aktif),
+// tanpa masa tenggang (keputusan Master 21 Sep 2026). MFAAt (null bila mfa=false) = saat kode
 // TOTP sesi ini diverifikasi, untuk menuntut kesegaran MFA di izin T1+.
 type MeResponse struct {
 	AdminUserResponse

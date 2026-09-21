@@ -8,12 +8,26 @@ const (
 	DashboardView Permission = "dashboard:view"
 )
 
-// CashFlow — modul produk di dalam console. Izin ini hanya membuka MENU dan
-// halaman cangkangnya; datanya sendiri dijaga gerbang kedua di Supabase
-// (is_platform_admin: terdaftar di admin_users CashFlow DAN sesi ber-TOTP).
-// Dua gerbang sengaja: cookie console tidak pernah cukup untuk data keuangan orang.
+// CashFlow — modul produk di dalam console. Gateway tidak pernah membaca data
+// CashFlow; izin di sini dibaca Nitro landing (server/api/cashflow/sesi.post.ts,
+// cermin di utils/rbac.ts) saat mencetak sesi Supabase console, lalu ditulis
+// ke admin_konsol_sesi.izin. Penegaknya Postgres (konsol_boleh, migrasi 0089):
+//
+//	CashflowView         T0: menu, agregat, daftar & kepala tersamar, audit.
+//	CashflowPII          T1/T2: membuka kasus (akun, buku), email utuh, cari.
+//	CashflowInvestigasi  T3: kasus anak — teks bebas (catatan, merchant, judul).
+//	CashflowTindak       tangguhkan/pulihkan akun (Fase 5).
+//	CashflowEkspor       ekspor daftar tersamar & salinan subjek (Fase 5).
+//
+// Empat selain View hanya ditulis ke sesi bila login gateway ber-MFA (klaim
+// mfa di /admin/auth/me) — keputusan Nitro, bukan di sini.
+// K11: super_admin memegang semuanya; peran lain PALING JAUH View + PII.
 const (
-	CashflowView Permission = "cashflow:view"
+	CashflowView        Permission = "cashflow:view"
+	CashflowPII         Permission = "cashflow:pii"
+	CashflowInvestigasi Permission = "cashflow:investigasi"
+	CashflowTindak      Permission = "cashflow:tindak"
+	CashflowEkspor      Permission = "cashflow:ekspor"
 )
 
 // Articles
@@ -99,56 +113,61 @@ const (
 
 // RolePermissions maps each role to its allowed permissions.
 // To add a new role, add an entry here. To grant/revoke a permission, edit the map.
-// Keep in sync with frontend: composables/usePermissions.ts
+// Keep in sync with frontend: utils/rbac.ts (landing; paritasnya diuji vitest
+// tests/cashflow/rbac-paritas.test.ts dan permissions_test.go).
 var RolePermissions = map[string]map[Permission]bool{
 	"super_admin": {
-		DashboardView:     true,
-		CashflowView:      true,
-		ArticlesList:      true,
-		ArticlesView:      true,
-		ArticlesCreate:    true,
-		ArticlesUpdate:    true,
-		ArticlesDelete:    true,
-		ArticlesPublish:   true,
-		ArticlesStats:     true,
-		UsersList:         true,
-		UsersCreate:       true,
-		UsersUpdate:       true,
-		UsersDelete:       true,
-		BotsList:          true,
-		BotsView:          true,
-		BotsCreate:        true,
-		BotsUpdate:        true,
-		BotsDelete:        true,
-		BotsTrigger:       true,
-		AIGenerate:        true,
-		AIModels:          true,
-		AISettingsView:    true,
-		AISettingsUpdate:  true,
-		APIKeysList:       true,
-		APIKeysView:       true,
-		APIKeysCreate:     true,
-		APIKeysUpdate:     true,
-		APIKeysDelete:     true,
-		APIKeysCopy:       true,
-		KeywordsList:      true,
-		KeywordsView:      true,
-		KeywordsCreate:    true,
-		KeywordsUpdate:    true,
-		KeywordsDelete:    true,
-		KeywordsAISuggest: true,
-		UploadCreate:      true,
-		AuditList:         true,
-		CADLicensesList:   true,
-		CADLicensesView:   true,
-		CADLicensesCreate: true,
-		CADLicensesUpdate: true,
-		CADLicensesDelete: true,
-		CADLicensesCopy:   true,
-		CADLicensesImport: true,
-		CADDevicesList:    true,
-		CADDevicesManage:  true,
-		CADAnalyticsView:  true,
+		DashboardView:       true,
+		CashflowView:        true,
+		CashflowPII:         true,
+		CashflowInvestigasi: true,
+		CashflowTindak:      true,
+		CashflowEkspor:      true,
+		ArticlesList:        true,
+		ArticlesView:        true,
+		ArticlesCreate:      true,
+		ArticlesUpdate:      true,
+		ArticlesDelete:      true,
+		ArticlesPublish:     true,
+		ArticlesStats:       true,
+		UsersList:           true,
+		UsersCreate:         true,
+		UsersUpdate:         true,
+		UsersDelete:         true,
+		BotsList:            true,
+		BotsView:            true,
+		BotsCreate:          true,
+		BotsUpdate:          true,
+		BotsDelete:          true,
+		BotsTrigger:         true,
+		AIGenerate:          true,
+		AIModels:            true,
+		AISettingsView:      true,
+		AISettingsUpdate:    true,
+		APIKeysList:         true,
+		APIKeysView:         true,
+		APIKeysCreate:       true,
+		APIKeysUpdate:       true,
+		APIKeysDelete:       true,
+		APIKeysCopy:         true,
+		KeywordsList:        true,
+		KeywordsView:        true,
+		KeywordsCreate:      true,
+		KeywordsUpdate:      true,
+		KeywordsDelete:      true,
+		KeywordsAISuggest:   true,
+		UploadCreate:        true,
+		AuditList:           true,
+		CADLicensesList:     true,
+		CADLicensesView:     true,
+		CADLicensesCreate:   true,
+		CADLicensesUpdate:   true,
+		CADLicensesDelete:   true,
+		CADLicensesCopy:     true,
+		CADLicensesImport:   true,
+		CADDevicesList:      true,
+		CADDevicesManage:    true,
+		CADAnalyticsView:    true,
 	},
 	"admin": {
 		DashboardView:     true,

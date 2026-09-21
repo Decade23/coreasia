@@ -80,7 +80,7 @@ dari refresh terakhir.
   memakai sandi + TOTP.
 - Tanpa batas ini, setiap `/refresh` menerbitkan refresh token baru 30 hari yang
   mewarisi `mfa=true`. Refresh token Master yang bocor sekali menjadi sesi `mfa=true`
-  selamanya, dan masa tenggang Nitro tidak berlaku karena pendaftaran Master sudah lama.
+  selamanya.
 - Refresh token lama yang sudah dirotasi tetap sah sampai `exp`-nya. Untuk sesi
   ber-MFA, `exp` itu paling lama 12 jam sejak TOTP. Deteksi pakai-ulang (jti) tidak
   dipasang: BFF bisa merefresh paralel, dan deteksi itu akan mencabut sesi sah.
@@ -144,6 +144,12 @@ RFC 6238: SHA1, 6 digit, periode 30 detik, toleransi ±1 langkah.
 - `mfa_at`: saat TOTP diverifikasi (`null` bila `mfa=false`). Nitro bisa menuntut
   kesegaran yang lebih ketat untuk izin T1+;
 - `totp_enabled` dan `totp_enabled_at` (dari DB; `null` bila TOTP mati).
+  Nitro memberi izin CashFlow T1+ (`pii`, `investigasi`, `tindak`, `ekspor`)
+  **langsung** untuk sesi `mfa=true` yang TOTP-nya masih aktif, tanpa masa
+  tenggang sejak TOTP dipasang (keputusan Master 21 Sep 2026). Risiko sisa yang
+  disadari: pemegang sandi bocor super admin tanpa TOTP bisa memasang TOTP
+  sendiri lalu langsung membuka data CashFlow (tercatat di audit `totp_setup`,
+  `totp_enable`, dan audit kasus CashFlow).
 
 #### Sesi kuat: mengelola admin ber-TOTP dan kredensial super admin
 
@@ -159,7 +165,7 @@ TOTP Master hanya berarti bila sesi yang lebih lemah tidak bisa melucutinya,
 - sesi `mfa=true` yang masih segar (≤ 12 jam);
 - milik admin yang TOTP-nya aktif;
 - **akun dan pendaftaran TOTP pelaku lebih tua dari 24 jam.** Masa tenggang ini
-  sama dengan masa tenggang Nitro untuk izin T1+.
+  hanya untuk sesi kuat; izin CashFlow T1+ di Nitro tidak memakainya.
 
 Tindakan yang butuh sesi kuat:
 
@@ -243,8 +249,15 @@ miliknya untuk admin yang belum ber-TOTP, lalu login dengan `mfa=true`. Penangka
     baru pun tidak bisa.
 - Nitro (`sesi.post.ts`, Fase 1) memberi `pii`/`investigasi`/`tindak`/`ekspor` hanya bila:
   - `mfa=true`, **dan**
-  - `totp_enabled_at` lebih tua dari masa tenggang (24 jam, sama dengan gateway).
-  - Nitro juga bisa menuntut `mfa_at` yang lebih segar.
+  - TOTP akunnya masih aktif (`totp_enabled_at` ada). Umurnya **tidak** dihitung:
+    izin aktif langsung, tanpa masa tenggang (keputusan Master 21 Sep 2026, menolak
+    usulan tinjauan). Risiko sisa yang disadari: pemegang sandi bocor super admin
+    yang belum ber-TOTP bisa memasang TOTP sendiri lalu langsung membuka data.
+    Penangkalnya tetap butir pertama di atas (semua pemegang izin T1+ ber-TOTP).
+  - Batas izin itu `mfa_at` + 12 jam (`MFAMaxAge`), ditulis ke `admin_konsol_sesi.izin_sampai`
+    dan ditegakkan `konsol_boleh` (migrasi CashFlow 0089): sesi CashFlow yang dicetak di menit
+    terakhir MFA tidak memegang pii 12 jam lagi. Konstantanya diuji setara di
+    `frontend/landing/tests/cashflow/rbac-paritas.test.ts`.
 - Setiap pendaftaran tercatat di audit (`totp_setup`, `totp_enable`). Admin yang
   tidak merasa mendaftar: super admin menjalankan reset di bawah, lalu mengganti sandinya.
 
