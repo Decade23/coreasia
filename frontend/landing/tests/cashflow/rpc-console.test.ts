@@ -1,12 +1,14 @@
 /**
- * Daftar RPC console = daftar RPC yang diuji di atas 0088.
+ * Daftar RPC console = daftar RPC yang diuji di atas 0088 → 0091.
  *
  * cashflow/toko/uji-console-rpc.sql memanggil SETIAP RPC console dengan sesi
- * console palsu di atas migrasi 0088 (yang menolak sesi console di v1 dan
- * mencabut dua RPC). Uji itu hanya berarti bila daftarnya sama dengan yang
- * benar-benar dipanggil useCashflowAdmin.ts. Di sini keduanya dibandingkan,
- * supaya RPC baru di fase berikutnya tidak lupa ikut diuji — dan RPC yang
- * dicabut 0088 tidak kembali lewat halaman mana pun.
+ * console Fase 1 palsu (izin seperti yang dicetak sesi.post.ts untuk
+ * super_admin ber-TOTP) di atas migrasi 0088–0091 (0088 menolak sesi console
+ * di v1 dan mencabut dua RPC; 0091 mencabut lima RPC 0b). Uji itu hanya
+ * berarti bila daftarnya sama dengan yang benar-benar dipanggil
+ * useCashflowAdmin.ts. Di sini keduanya dibandingkan, supaya RPC baru di fase
+ * berikutnya tidak lupa ikut diuji — dan RPC yang dicabut 0088/0091 tidak
+ * kembali lewat halaman mana pun.
  *
  * Berkas uji SQL ada di repo CashFlow (bukan repo ini); bila tidak ditemukan,
  * perbandingannya DILEWATI dan terlihat "skipped". Penjaga RPC terlarang
@@ -24,7 +26,10 @@ import { join, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { adaMigrasi, DIR_TOKO, fungsiTerakhir, parameterFungsi } from './migrasi'
-import { POLA_AUDIT_INVESTIGASI } from '../../adapters/cashflow'
+import { izinSesiCashflow } from '../../utils/rbac'
+import {
+  alasanOtomatis, alasanT3Otomatis, SKENARIO_OTOMATIS, PRESET_OTOMATIS, PRESET_T3_OTOMATIS, RANAH_FASE1,
+} from '../../adapters/cashflowKasus'
 
 const AKAR = resolve(fileURLToPath(new URL('.', import.meta.url)), '../..')
 const ADMIN = readFileSync(join(AKAR, 'composables/cashflow/useCashflowAdmin.ts'), 'utf8')
@@ -125,6 +130,16 @@ describe('useCashflowAdmin ↔ toko/uji-console-rpc.sql', () => {
     expect(UJI.trimEnd().endsWith('rollback;')).toBe(true)
   })
 
+  it.skipIf(!adaUji)('uji memakai sesi console Fase 1 ber-izin (= sesi.post.ts, super_admin ber-TOTP) dan mengenali 0091', () => {
+    const m = /c_izin\s+constant\s+text\[\]\s*:=\s*array\[([^\]]*)\]/.exec(UJI)
+    const izinUji = [...(m?.[1] ?? '').matchAll(/'([^']+)'/g)].map(x => x[1]!)
+    const kini = Date.now()
+    const sah = { mfa: true, mfa_at: new Date(kini - 3_600_000).toISOString(), totp_enabled_at: new Date(kini - 72 * 3_600_000).toISOString() }
+    expect(izinUji).toEqual([...izinSesiCashflow('super_admin', sah, kini)])
+    expect(UJI).toMatch(/insert into public\.admin_konsol_sesi \(session_id, pelaku, dibuat, izin\) values \(v_sesi, c_pelaku, now\(\), c_izin\)/)
+    expect(UJI).toMatch(/DICABUT 0091/)
+  })
+
   it.skipIf(!adaMigrasi)('setiap RPC console ada di migrasi (bukan salah ketik)', () => {
     for (const nama of namaRpcAdmin()) expect(() => fungsiTerakhir(nama), nama).not.toThrow()
   })
@@ -144,21 +159,43 @@ describe('useCashflowAdmin ↔ toko/uji-console-rpc.sql', () => {
     expect(() => panggilanRpc(`rpc<X>('admin_stats', args)`)).toThrow(/objek literal/)
   })
 
-  it.skipIf(!adaUji)('uji SQL #41 menyaring audit investigasi dengan pola yang sama dengan adapter', () => {
-    expect(UJI).toContain(`like '${POLA_AUDIT_INVESTIGASI}'`)
-    // …dan mengirim alasan berbentuk rpc(): "[pelaku] INVESTIGASI — …", bukan tanpa pelaku.
-    expect(UJI).toMatch(/c_investigasi\s+constant\s+text\s*:=\s*'\['\|\|c_pelaku\|\|'\] INVESTIGASI — '/)
-    expect(UJI).not.toMatch(/'INVESTIGASI — '\s*\|\|\s*c_alasan/)
+  it.skipIf(!adaUji)('alasan kasus dikirim TANPA awalan pelaku (alasanKasus), alasan 0b dengan awalan', () => {
+    expect(UJI).toMatch(/c_alasan\s+constant\s+text\s*:=\s*'\['\|\|c_pelaku\|\|'\] '\|\|c_inti/)
+    expect(ADMIN).toMatch(/'admin_kasus_buka',[\s\S]*?\{ tanpaPelaku: true \}/)
+    expect(ADMIN).toMatch(/'admin_kasus_investigasi',[\s\S]*?\{ tanpaPelaku: true \}/)
+  })
+
+  /* Keputusan Master 21 Sep 2026: console membuka kasus OTOMATIS. Uji SQL
+     wajib memakai isian yang sama persis (kecuali cap waktu alasan dan
+     lingkup: uji hanya 'bisnis'), supaya "semua RPC console lulus" berarti
+     lulus dengan bentuk panggilan console yang sebenarnya. */
+  it.skipIf(!adaUji)('kasus di uji SQL = isian otomatis console (skenario, preset, ranah, alasan, preset T3)', () => {
+    const teks = (nama: string) => new RegExp(`${nama}\\s+constant\\s+text\\s*:=\\s*'([^']*)'`).exec(UJI)?.[1]
+    const tanpaCap = (a: string) => a.slice(0, a.lastIndexOf(' · '))
+    const cap = new Date('2026-09-21T15:00:00Z')
+    expect(tanpaCap(teks('c_alasan_kasus') ?? '')).toBe(tanpaCap(alasanOtomatis(cap)))
+    expect(tanpaCap(teks('c_alasan_anak') ?? '')).toBe(tanpaCap(alasanT3Otomatis(cap)))
+    expect(teks('c_skenario')).toBe(SKENARIO_OTOMATIS)
+    expect(teks('c_preset')).toBe(PRESET_OTOMATIS)
+    expect(teks('c_preset_anak')).toBe(PRESET_T3_OTOMATIS)
+    const ranah = /c_ranah\s+constant\s+text\[\]\s*:=\s*array\[([^\]]*)\]/.exec(UJI)?.[1] ?? ''
+    expect([...ranah.matchAll(/'([^']+)'/g)].map(m => m[1])).toEqual([...RANAH_FASE1])
+    expect(UJI).toMatch(/admin_kasus_buka\(%L, %L, %L, %L, %L::text\[\], %L::uuid\[\], %L\)[^\n]*\n[^\n]*c_skenario, c_preset, c_ranah/)
+    expect(UJI).toMatch(/admin_kasus_investigasi\(:kasus, %L::text\[\], %L, %L\)[^\n]*c_preset_anak, c_alasan_anak/)
   })
 })
 
 /* 0088: sesi console ditolak di enam v1 ini (42501 pakai-versi-baru), dan
    admin_ukuran_keberhasilan v1 + admin_buka_email dicabut dari authenticated.
+   0091 (sejak 0089 untuk sesi ber-izin): lima RPC 0b tanpa kasus dicabut.
    Nama yang dikutip ('admin_x' / "admin_x" / `admin_x`) = nama yang dikirim
    sebagai RPC; komentar yang menyebutnya tanpa kutip tidak dihitung. */
 const TERLARANG = [
   'admin_baca_transaksi', 'admin_detail_pengguna', 'admin_ekspor_pengguna', 'admin_daftar_ruang',
   'admin_daftar_config', 'admin_daftar_audit', 'admin_ukuran_keberhasilan', 'admin_buka_email',
+  // 0091
+  'admin_detail_pengguna_v2', 'admin_aktivitas_pengguna', 'admin_baca_transaksi_v2',
+  'admin_baca_catatan_transaksi', 'admin_daftar_audit_v2',
 ]
 const DIR_SUMBER = ['pages', 'components', 'composables', 'server', 'adapters', 'middleware', 'layouts', 'plugins', 'utils', 'stores']
 
@@ -172,7 +209,7 @@ function jelajah(dir: string, hasil: string[] = []): string[] {
   return hasil
 }
 
-describe('tidak ada panggilan console ke RPC yang ditutup 0088', () => {
+describe('tidak ada panggilan console ke RPC yang ditutup 0088 / 0091', () => {
   it('useCashflowAdmin tidak memanggil v1 maupun RPC yang dicabut', () => {
     for (const nama of namaRpcAdmin()) expect(TERLARANG).not.toContain(nama)
   })

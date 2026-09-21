@@ -39,25 +39,23 @@ describe('kaki transfer: arah terbaca di kedua bahasa', () => {
   })
 })
 
-/* Label preset gerbang alasan ikut masuk ke teks alasan audit. Membuka daftar
-   pengecualian di /sakelar dengan preset bawaan ("Keluhan pengguna", …)
-   memaksa admin memilih label yang keliru — lalu label itu tercatat di audit
-   buka_config DAN set_config (alasan pembukaan mengisi alasan perubahan). */
-describe('gerbang /sakelar memakai preset tindakannya sendiri', () => {
-  it('sakelar.bukaPreset: kunci sama di ID/EN, tidak meminjam label alasan.preset', () => {
-    const id = KAMUS_CASHFLOW.id.sakelar.bukaPreset
-    const en = KAMUS_CASHFLOW.en.sakelar.bukaPreset
-    expect(Object.keys(en)).toEqual(Object.keys(id))
-    expect(Object.keys(id).length).toBeGreaterThan(0)
-    for (const b of ['id', 'en'] as const) {
-      const bawaan = new Set<string>(Object.values(KAMUS_CASHFLOW[b].alasan.preset))
-      for (const label of Object.values(KAMUS_CASHFLOW[b].sakelar.bukaPreset)) expect(bawaan.has(label)).toBe(false)
-    }
+/* Keputusan Master 21 Sep 2026: membuka data = satu klik, tanpa dialog
+   "Kenapa data ini dibuka?". /sakelar membuka daftar pengecualian dengan
+   alasan otomatis yang menamai tindakannya (audit buka_config), dan alasan
+   perubahannya terisi kalimat yang menamai tindakan UBAH — bukan alasan
+   pembukaan. */
+describe('/sakelar membuka daftar pengecualian satu klik', () => {
+  const src = readFileSync(fileURLToPath(new URL('../../pages/console/cashflow/sakelar.vue', import.meta.url)), 'utf8')
+  it('tanpa dialog alasan; bukaConfig memakai alasan otomatis', () => {
+    expect(src).not.toMatch(/<CashflowReasonGate\b|<ConsoleModal\b/)
+    expect(src).toMatch(/api\.bukaConfig\(KUNCI_PENGECUALIAN, ALASAN_BUKA\)/)
+    const buka = /const ALASAN_BUKA = '([^']+)'/.exec(src)?.[1] ?? ''
+    const ubah = /const ALASAN_UBAH = '([^']+)'/.exec(src)?.[1] ?? ''
+    expect(buka.length).toBeGreaterThanOrEqual(8)
+    expect(ubah.length).toBeGreaterThanOrEqual(8)
+    expect(buka).not.toBe(ubah)
   })
-  it('setiap CashflowReasonGate di sakelar.vue diberi :preset', () => {
-    const src = readFileSync(fileURLToPath(new URL('../../pages/console/cashflow/sakelar.vue', import.meta.url)), 'utf8')
-    const gerbang = [...src.matchAll(/<CashflowReasonGate\b[^>]*>/g)].map(m => m[0])
-    expect(gerbang.length).toBeGreaterThan(0)
-    for (const g of gerbang) expect(g).toMatch(/:preset="tcf\('sakelar\.bukaPreset'\)"/)
+  it('kamus tidak lagi memuat judul "Kenapa data ini dibuka?"', () => {
+    expect(JSON.stringify(KAMUS_CASHFLOW)).not.toMatch(/Kenapa data ini dibuka|Why is this data being opened/)
   })
 })

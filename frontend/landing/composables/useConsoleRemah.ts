@@ -10,6 +10,11 @@
  * Remah terikat ke path halaman yang memasangnya. Saat pindah halaman, route
  * sudah berubah sebelum halaman lama dilepas; tanpa ikatan ini remah halaman
  * lama sempat tampil di halaman baru.
+ *
+ * `{ awalan: true }` (OPT-IN) untuk halaman INDUK rute bersarang (mis.
+ * pengguna/[id].vue dengan tab anak): remahnya berlaku di path-nya sendiri
+ * DAN di setiap path anaknya (`path/…`), karena induk tetap terpasang saat
+ * tab berganti.
  */
 import type { MaybeRefOrGetter } from 'vue'
 
@@ -29,20 +34,23 @@ export const klikBiasa = (e: MouseEvent) =>
 
 export const useConsoleRemah = () => {
   const route = useRoute()
-  const simpanan = useState<{ path: string; items: Remah[] } | null>('console_remah', () => null)
+  const simpanan = useState<{ path: string; awalan?: boolean; items: Remah[] } | null>('console_remah', () => null)
 
   /** Untuk halaman. Label boleh reaktif (mis. email tersamar yang baru dimuat). */
-  const pasang = (items: MaybeRefOrGetter<Remah[]>) => {
+  const pasang = (items: MaybeRefOrGetter<Remah[]>, opsi: { awalan?: boolean } = {}) => {
     const path = route.path
-    watchEffect(() => { simpanan.value = { path, items: toValue(items) } })
+    watchEffect(() => { simpanan.value = { path, awalan: opsi.awalan, items: toValue(items) } })
     onBeforeUnmount(() => {
       if (simpanan.value?.path === path) simpanan.value = null
     })
   }
 
+  const cocok = (s: { path: string; awalan?: boolean }, kini: string) =>
+    s.path === kini || (!!s.awalan && kini.startsWith(`${s.path}/`))
+
   /** Untuk layout: remah milik halaman aktif, atau null (pakai tebakan lama). */
   const aktif = computed<Remah[] | null>(() =>
-    simpanan.value && simpanan.value.path === route.path ? simpanan.value.items : null)
+    simpanan.value && cocok(simpanan.value, route.path) ? simpanan.value.items : null)
 
   return { pasang, aktif }
 }

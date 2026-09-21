@@ -6,7 +6,12 @@
  *   1. semua catatan sesi milik orang yang sama dicabut (0080) → tab lain
  *      orang itu ikut mati, dan is_platform_admin() menolak seketika walau
  *      access token-nya belum kedaluwarsa;
- *   2. refresh token-nya dicabut di GoTrue (signOut scope 'local' — hanya sesi
+ *   2. semua kasus (Fase 1, migrasi 0089) milik orang itu ditutup
+ *      (admin_kasus_tutup_pelaku). Server sudah menolak kasus yang dibuka
+ *      sebelum pencabutan sesi pelakunya; penutupan ini membuat /kasus jujur
+ *      ("ditutup", bukan "aktif" yang tak bisa dipakai). Gagal = dicatat saja;
+ *      pencabutan di langkah 1 yang menutup aksesnya;
+ *   3. refresh token-nya dicabut di GoTrue (signOut scope 'local' — hanya sesi
  *      ini, bukan sesi tab/admin lain yang memakai identitas konsol yang sama).
  *
  * Token dibawa di Authorization: Bearer — bukan cookie — dan diverifikasi ke
@@ -53,6 +58,10 @@ export default defineEventHandler(async (event) => {
       // is_platform_admin() sampai kedaluwarsa — jangan pura-pura berhasil.
       console.error('[cashflow/sesi] cabut gagal:', error.message)
       throw createError({ statusCode: 502, statusMessage: 'cabut-gagal' })
+    }
+    if (baris?.pelaku) {
+      const { error: eKasus } = await admin.rpc('admin_kasus_tutup_pelaku', { p_pelaku: baris.pelaku })
+      if (eKasus) console.error('[cashflow/sesi] tutup kasus gagal:', eKasus.message)
     }
   }
   const { error: eKeluar } = await admin.auth.admin.signOut(token, 'local')

@@ -339,6 +339,28 @@ export const gambarTerlaluBesar = (ukuran: number): boolean => ukuran > UKURAN_M
 /** Kunci sessionStorage sesi Supabase modul CashFlow (useCashflowSupabase). */
 export const KUNCI_SESI_CASHFLOW = 'cf-console-sesi'
 
+/** Kunci sessionStorage tempat reloadNuxtApp({ persistState: true }) menyalin
+ *  SELURUH payload.state (useState console: id kasus, nominal saringan, teks
+ *  cari, kepala Pengguna 360, admin_user). Aplikasi ini tidak pernah
+ *  menulisnya (plugins/muat-ulang-bersih.client.ts) dan menghapusnya di
+ *  setiap dokumen serta saat keluar — salinan dari build lama yang masih
+ *  terbuka saat rilis pun tidak tertinggal. */
+export const KUNCI_STATE_MUAT_ULANG = 'nuxt:reload:state'
+
+/** Hapus salinan state muat-ulang Nuxt dari storage. `ambil` dipanggil di
+ *  dalam try: membaca window.sessionStorage pun bisa melempar bila diblokir. */
+export function hapusStateMuatUlang(ambil: () => { removeItem: (k: string) => void } | null | undefined): void {
+  try {
+    ambil()?.removeItem(KUNCI_STATE_MUAT_ULANG)
+  } catch {
+    // penyimpanan diblokir: tidak ada yang tertinggal
+  }
+}
+
+/** Jalur muat ulang = joinURL(app.baseURL, fullPath) bawaan Nuxt; fullPath diawali '/'. */
+export const jalurMuatUlang = (baseURL: string, fullPath: string): string =>
+  `${baseURL.replace(/\/+$/, '')}/${fullPath.replace(/^\/+/, '')}`
+
 /* ───────────── isolasi dari GTM / Google Ads ───────────── */
 
 interface JendelaMinimal {

@@ -20,6 +20,9 @@
  *
  * Server memotong di p_limit (maks. 500). Kalau total_semua lebih besar,
  * layar mengatakannya.
+ *
+ * Anggota, transaksi, dan undangan aktif dikirim server HANYA ke sesi ber-pii
+ * (M/0089 §15 (d)); selain itu null → tabel menulis "—" (butuh TOTP), bukan 0.
  */
 definePageMeta({ layout: 'console', middleware: ['console', 'cashflow-admin'] })
 import { keRuang, JENIS_RUANG, type RuangDTO, type JenisRuang } from '~/adapters/cashflow'
@@ -69,6 +72,8 @@ const data = computed(() => mentah.value.map(keRuang).map(r => ({
   anggota: r.anggota, tx: r.tx, undangan: r.undangan, dibuat: formatTanggal(r.dibuatIso),
 })))
 const terpotong = computed(() => total.value > mentah.value.length)
+/** Server menahan hitungan per ruang (sesi tanpa pii). */
+const tanpaHitungan = computed(() => data.value.length > 0 && data.value.every(r => r.anggota === null && r.tx === null))
 </script>
 
 <template>
@@ -96,13 +101,19 @@ const terpotong = computed(() => total.value > mentah.value.length)
 
     <p v-if="pesanGalat" class="text-sm ca-tone-danger">{{ pesanGalat }}</p>
     <p v-if="terpotong" class="text-xs ca-tone-gold">{{ tcf('umum.potong')(mentah.length, total) }}</p>
+    <p v-if="tanpaHitungan" class="text-xs text-[var(--ca-subtle)]">{{ tcf('umum.hitunganButuhTotp') }}</p>
     <!-- Muat gagal tanpa baris = galat saja; "Belum ada data." di bawahnya terbaca
          seolah produk tidak punya ruang. -->
     <div v-if="!pesanGalat || mentah.length" class="ca-console-dialog overflow-hidden">
       <DataTable
         :columns="columns" :data="data" :loading="memuat" empty-icon="lucide:layers"
         :empty-text="cari.trim() || q.jenis !== 'semua' ? tcf('umum.kosongSaring') : tcf('umum.kosong')"
-      />
+      >
+        <template v-for="k in (['anggota', 'tx', 'undangan'] as const)" :key="k" #[`cell-${k}`]="{ value }">
+          <span v-if="value === null" :title="tcf('umum.butuhTotp')">—<span class="sr-only"> ({{ tcf('umum.butuhTotp') }})</span></span>
+          <template v-else>{{ value }}</template>
+        </template>
+      </DataTable>
     </div>
   </div>
 </template>

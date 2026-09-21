@@ -18,6 +18,12 @@ export default defineNuxtConfig({
     },
     experimental: {
         browserDevtoolsTiming: false,
+        // 'manual': app:chunkError tetap dipancarkan, tetapi plugin bawaan
+        // nuxt:chunk-reload (reloadNuxtApp persistState:true = SELURUH
+        // payload.state, termasuk useState console, disalin ke sessionStorage)
+        // tidak dipasang. Penggantinya plugins/muat-ulang-bersih.client.ts
+        // (persistState:false). Dijaga tests/cashflow/muat-ulang-bersih.test.ts.
+        emitRouteChunkError: 'manual',
     },
     modules: ['@nuxtjs/seo', '@nuxt/eslint', '@nuxt/fonts', '@nuxt/icon', '@nuxt/image', '@pinia/nuxt'],
     // Composable modul CashFlow hidup di subfolder sendiri supaya tidak

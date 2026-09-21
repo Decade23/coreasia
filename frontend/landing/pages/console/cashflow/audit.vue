@@ -1,29 +1,30 @@
 <script setup lang="ts">
 /**
- * Audit CashFlow — dibaca LANGSUNG dari Supabase admin_audit dengan sesi
- * CashFlow. Tidak disalin ke gateway_audit_logs: target_id dan reason bisa
- * memuat nama; menyalinnya ke basis data kedua = PII di dua tempat.
+ * Audit CashFlow — admin_daftar_audit_v3 (0089), dibaca LANGSUNG dari
+ * Supabase dengan sesi CashFlow. Tidak disalin ke gateway_audit_logs:
+ * target_id dan reason bisa memuat nama; menyalinnya = PII di dua tempat.
  *
- * Saringan di URL (?aksi&pelaku&hal, replace) supaya refresh dan tautan yang
- * dibagikan membuka tampilan yang sama. `aksi` disaring server; `pelaku`
- * disaring di klien karena semua baris dijalankan satu identitas konsol —
- * yang membedakan manusianya hanya kolom pelaku (0078), bukan admin_id.
- * Server memulangkan paling banyak 500 baris; lebih dari itu dikatakan.
+ * v3 (T0): target SELALU tersamar (juga untuk pemegang pii — 500 baris tanpa
+ * kasus tidak boleh jadi direktori email), alasan terpotong 10 aksara kecuali
+ * untuk pemegang pii atau baris milik sendiri, `pelaku` = email admin console
+ * (bukti server), ditambah kolom ranah, kasus, dan jumlah terdampak.
  *
- * ?pelaku= berisi SIDIK email pelaku (sha256, 10 aksara), bukan emailnya:
- * URL yang dimuat penuh tercatat di riwayat peramban dan log Vercel, dan ikut
- * ke ?ke= saat sambung ulang. Sidik dipetakan balik ke email dari baris yang
- * sudah dimuat; tautan dengan sidik yang tidak ada di baris ini menyaring
- * menjadi kosong, bukan mengabaikan saringannya.
+ * Saringan di URL (?aksi&pelaku&hal, replace). `aksi` disaring server;
+ * `pelaku` disaring di klien — ?pelaku= berisi SIDIK email (sha256, 10
+ * aksara), bukan emailnya: URL yang dimuat penuh tercatat di riwayat peramban
+ * dan log Vercel. Saringan kasus (klik id kasus) disaring server tapi TIDAK
+ * di URL — id kasus tidak pernah masuk URL/storage (useState saja).
  */
 definePageMeta({ layout: 'console', middleware: ['console', 'cashflow-admin'] })
-import type { AuditDTO } from '~/composables/cashflow/useCashflowAdmin'
 import type { SkemaQuery } from '~/adapters/cashflowQuery'
-import { samarkanEmail, sidik, POLA_SIDIK } from '~/adapters/cashflow'
+import { sidik, POLA_SIDIK } from '~/adapters/cashflow'
+import { keBarisAudit, type AuditV3DTO, type BarisAudit } from '~/adapters/cashflowKasus'
 import { potongHalaman, halamanAman, jumlahHalaman } from '~/adapters/cashflowDaftar'
+
 const { tcf, formatWaktu } = useCashflowI18n()
+const { tc } = useConsoleI18n()
 const api = useCashflowAdmin()
-const { memuat, pesanGalat, muat } = useCashflowMuat({ awal: true })
+const { memuat, galat, pesanGalat, muat } = useCashflowMuat({ awal: true })
 
 const MAKS = 500
 const PER = 25
@@ -33,22 +34,22 @@ const SKEMA = {
   hal: { jenis: 'halaman', bawaan: 1 },
 } as const satisfies SkemaQuery
 const { nilai: q, setel } = useCashflowQuery(SKEMA)
+/** Saringan kasus: memori tab saja (bukan URL). */
+const kasusSaring = useState<string | null>('cf_audit_kasus', () => null)
 
-const rows = ref<AuditDTO[]>([])
+const mentah = shallowRef<AuditV3DTO[]>([])
+const rows = computed<BarisAudit[]>(() => mentah.value.map(keBarisAudit))
 const total = ref(0)
 const aksi = ref<Array<{ action: string; jumlah: number }>>([])
 
 const muatAudit = () => muat(async (terbaru) => {
-  const [r, a] = await Promise.all([api.daftarAudit(MAKS, 0, q.value.aksi || null), api.aksiAudit()])
-  if (!terbaru()) return // saringan aksi sudah berganti lagi
-  rows.value = r
+  const [r, a] = await Promise.all([api.daftarAudit(MAKS, 0, q.value.aksi || null, kasusSaring.value), api.aksiAudit()])
+  if (!terbaru()) return // saringan sudah berganti lagi
+  mentah.value = r
   total.value = r.length ? Number(r[0]?.total_semua ?? r.length) : 0
   aksi.value = a
 })
-onMounted(muatAudit)
-watch(() => q.value.aksi, muatAudit)
-
-const pelakuDari = (r: AuditDTO) => r.pelaku || r.admin_email
+watch(() => [q.value.aksi, kasusSaring.value], muatAudit, { immediate: true })
 
 /* sidik → email, dihitung ulang tiap baris berganti (crypto.subtle asinkron).
    `petaSiap` menahan saringan dan penjepitan ?hal sampai peta selesai. */
@@ -58,7 +59,7 @@ watch(rows, async (r) => {
   petaSiap.value = false
   let peta = new Map<string, string>()
   try {
-    const email = [...new Set(r.map(pelakuDari).filter(Boolean))]
+    const email = [...new Set(r.map(x => x.pelaku).filter(p => p && p !== '—'))]
     peta = new Map(await Promise.all(email.map(async e => [await sidik(e), e] as const)))
   } catch {
     // crypto.subtle tidak ada (bukan konteks aman): saringan pelaku kosong, halaman tetap jalan.
@@ -76,7 +77,7 @@ const opsiPelaku = computed(() => {
 const tersaring = computed(() => {
   if (!q.value.pelaku) return rows.value
   const email = petaSidik.value.get(q.value.pelaku)
-  return email ? rows.value.filter(r => pelakuDari(r) === email) : []
+  return email ? rows.value.filter(r => r.pelaku === email) : []
 })
 const menunggu = computed(() => memuat.value || (!!q.value.pelaku && !petaSiap.value))
 const hal = computed(() => (menunggu.value ? q.value.hal : halamanAman(q.value.hal, tersaring.value.length, PER)))
@@ -87,8 +88,13 @@ const terpotong = computed(() => total.value > rows.value.length)
 // Mengganti saringan = kembali ke halaman 1.
 const pilihAksi = (v: string) => setel({ aksi: v, hal: 1 })
 const pilihPelaku = (v: string) => setel({ pelaku: v, hal: 1 })
+const pilihKasus = (k: string | null) => { kasusSaring.value = k; setel({ hal: 1 }) }
 
-// Pindah halaman: kembali ke kepala tabel, bukan tetap di pager di bawah.
+useConsoleRemah().pasang(() => [
+  { label: tc('layout.cashflow'), to: '/console/cashflow' },
+  { label: tcf('nav.audit') },
+])
+
 const { wadah: wadahDaftar, keKepala } = useCashflowGulirDaftar()
 const gantiHalaman = async (h: number) => {
   await setel({ hal: h })
@@ -109,8 +115,12 @@ const gantiHalaman = async (h: number) => {
         <option value="">{{ tcf('audit.semuaPelaku') }}</option>
         <option v-for="p in opsiPelaku" :key="p.nilai" :value="p.nilai">{{ p.label }}</option>
       </select>
+      <button v-if="kasusSaring" type="button" class="ca-pill-info text-xs" @click="pilihKasus(null)">
+        {{ tcf('audit.kasus') }}: {{ kasusSaring.slice(0, 8) }} ×
+      </button>
     </div>
-    <p v-if="pesanGalat" class="text-sm ca-tone-danger">{{ pesanGalat }}</p>
+    <CashflowIzinKurang v-if="galat?.jenis === 'izin'" />
+    <p v-else-if="pesanGalat" class="text-sm ca-tone-danger">{{ pesanGalat }}</p>
     <p v-else-if="menunggu" class="text-sm text-[var(--ca-muted)]">{{ tcf('umum.memuat') }}</p>
     <template v-else>
       <p v-if="terpotong" class="text-xs ca-tone-gold">{{ tcf('umum.potong')(rows.length, total) }}</p>
@@ -118,32 +128,38 @@ const gantiHalaman = async (h: number) => {
         <CashflowKeadaanKosong v-if="!barisHalaman.length" class="m-5" :pesan="rows.length ? tcf('umum.kosongSaring') : tcf('umum.kosong')" icon="lucide:scroll-text" />
         <table v-else class="w-full text-sm">
           <thead><tr class="text-left text-xs uppercase tracking-wide text-[var(--ca-muted)]">
-            <th class="px-4 py-2">{{ tcf('audit.waktu') }}</th><th class="px-4 py-2">{{ tcf('audit.aksi') }}</th><th class="px-4 py-2">{{ tcf('audit.admin') }}</th><th class="px-4 py-2">{{ tcf('audit.target') }}</th><th class="px-4 py-2">{{ tcf('audit.alasan') }}</th>
+            <th class="px-4 py-2">{{ tcf('audit.waktu') }}</th>
+            <th class="px-4 py-2">{{ tcf('audit.aksi') }}</th>
+            <th class="hidden px-4 py-2 md:table-cell">{{ tcf('audit.admin') }}</th>
+            <th class="px-4 py-2">{{ tcf('audit.target') }}</th>
+            <th class="hidden px-4 py-2 lg:table-cell">{{ tcf('audit.ranah') }}</th>
+            <th class="hidden px-4 py-2 sm:table-cell">{{ tcf('audit.alasan') }}</th>
           </tr></thead>
           <tbody>
-            <tr v-for="r in barisHalaman" :key="r.id" class="border-t border-[color:var(--ca-border)] text-[var(--ca-text)]">
-              <td class="px-4 py-1.5 whitespace-nowrap text-xs text-[var(--ca-subtle)] tabular-nums">{{ formatWaktu(r.created_at) }}</td>
-              <td class="px-4 py-1.5"><span class="rounded-full bg-[var(--ca-panel-bg-strong)] px-2 font-mono text-xs">{{ r.action }}</span></td>
-              <td class="px-4 py-1.5 font-mono text-xs">
-                <!-- pelaku = email admin console yang memegang sesi, diisi server (0078);
-                     admin_email = identitas Supabase yang menjalankan RPC. -->
-                <span v-if="r.pelaku" :title="r.admin_email">{{ r.pelaku }}</span>
-                <span v-else>{{ r.admin_email }}</span>
+            <tr v-for="r in barisHalaman" :key="r.id" class="border-t border-[color:var(--ca-border)] align-top text-[var(--ca-text)]">
+              <td class="whitespace-nowrap px-4 py-1.5 text-xs text-[var(--ca-subtle)] tabular-nums">{{ formatWaktu(r.waktuIso) }}</td>
+              <td class="px-4 py-1.5">
+                <span class="rounded-full bg-[var(--ca-panel-bg-strong)] px-2 font-mono text-xs">{{ r.aksi }}</span>
+                <button v-if="r.kasus" type="button" class="ml-1 font-mono text-[0.7rem] text-[var(--ca-subtle)] underline-offset-2 hover:underline" :title="tcf('audit.saringKasus')" @click="pilihKasus(r.kasus)">#{{ r.kasus.slice(0, 8) }}</button>
               </td>
+              <td class="hidden px-4 py-1.5 font-mono text-xs md:table-cell">{{ r.pelaku }}</td>
               <td class="px-4 py-1.5 font-mono text-xs">
-                <!-- Target pengguna menuju detail (yang tetap meminta alasan); target lain teks saja.
-                     target_email null pada target 'user' = akunnya sudah hilang (left join
-                     auth.users). Tanpa tautan: detailnya hanya berujung "tidak ditemukan"
-                     sesudah admin mengetik alasan. -->
+                <!-- Target pengguna menuju kepala T0 (datanya tetap di balik kasus); target_email
+                     null pada target 'user' = akunnya sudah hilang. -->
                 <NuxtLink
-                  v-if="r.target_type === 'user' && r.target_id && r.target_email"
-                  :to="`/console/cashflow/pengguna/${r.target_id}`"
-                  class="underline-offset-2 hover:underline"
-                >{{ samarkanEmail(r.target_email) }}</NuxtLink>
-                <span v-else-if="r.target_type === 'user' && r.target_id" class="text-[var(--ca-subtle)]">{{ tcf('audit.akunHilang') }} · {{ r.target_id.slice(0, 8) }}</span>
-                <span v-else>{{ r.target_email ? samarkanEmail(r.target_email) : (r.target_id?.slice(0, 8) || '—') }}</span>
+                  v-if="r.targetTipe === 'user' && r.targetId && r.targetLabel"
+                  :to="`/console/cashflow/pengguna/${r.targetId}`" class="underline-offset-2 hover:underline"
+                >{{ r.targetLabel }}</NuxtLink>
+                <span v-else-if="r.targetTipe === 'user' && r.targetId" class="text-[var(--ca-subtle)]">{{ tcf('audit.akunHilang') }} · {{ r.targetId.slice(0, 8) }}</span>
+                <span v-else>{{ r.targetLabel || r.targetId?.slice(0, 8) || '—' }}</span>
+                <span v-if="r.terdampak" class="block text-[0.7rem] text-[var(--ca-subtle)]">{{ tcf('kasus.terdampak')(r.terdampak) }}</span>
               </td>
-              <td class="px-4 py-1.5 text-xs text-[var(--ca-muted)]">{{ r.reason || '—' }}</td>
+              <td class="hidden px-4 py-1.5 lg:table-cell">
+                <span class="flex flex-wrap gap-1"><span v-for="x in r.ranah" :key="x" class="ca-pill-emerald text-[0.7rem]">{{ tcf(`ranah.${x}`) }}</span></span>
+              </td>
+              <td class="hidden px-4 py-1.5 text-xs text-[var(--ca-muted)] sm:table-cell">
+                {{ r.alasan || '—' }}<span v-if="r.alasan && !r.alasanUtuh" class="text-[var(--ca-subtle)]"> ({{ tcf('kasus.alasanTerpotong') }})</span>
+              </td>
             </tr>
           </tbody>
         </table>

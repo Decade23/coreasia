@@ -13,6 +13,9 @@
  *                  `terbaru()` untuk menahan tulisan datanya sendiri — pencarian
  *                  per ketikan menembak beberapa permintaan sekaligus, dan yang
  *                  lama bisa tiba (atau gagal) paling akhir;
+ * - `batal()`      halaman dilepas: `muat` yang masih berjalan menjadi basi
+ *                  (`terbaru()` = false) — jawabannya tidak menulis apa pun,
+ *                  termasuk keadaan global yang dibagi halaman berikutnya;
  * - `aksi(kerja)`  untuk tombol (simpan, hentikan, buka catatan): galat jadi
  *                  toast, isi halaman tetap; `gagal` (opsional) menerima
  *                  galatnya bila halaman perlu membereskan keadaannya sendiri;
@@ -34,9 +37,16 @@ export const useCashflowMuat = (opsi: { awal?: boolean } = {}) => {
        "buka dulu nilai utuhnya", bukan sekadar "argumen ditolak" (M/0087 §7). */
     if (g.hint === 'nilai-tersamar') return tcf('galat.nilaiTersamar')
     if (g.hint === 'nilai-pribadi-publik') return tcf('galat.nilaiPribadiPublik')
-    // admin_baca_catatan_transaksi: kalimat server hanya berbahasa Indonesia.
-    if (g.hint === 'bukan-milik-subjek') return tcf('galat.bukanMilikSubjek')
+    // Hint 22023 Fase 1 — kalimat server hanya berbahasa Indonesia.
+    if (g.hint === 'batas-2jam') return tcf('galat.batas2jam')
+    if (g.hint === 'kueri-tidak-didukung') return tcf('galat.kueriTidakDidukung')
+    if (g.hint === 'kursor') return tcf('galat.kursor')
     switch (g.jenis) {
+      case 'kasus': return tcf('galat.kasusHabis')
+      case 'ranah': return tcf('galat.diLuarRanah')
+      case 'lingkup': return tcf('galat.diLuarLingkup')
+      case 'izin': return tcf('galat.izinKurang')
+      case 'batas': return tcf('galat.batasInvestigasi')
       case 'bukan-admin': return tcf('umum.bukanAdmin')
       case 'konfigurasi': return tcf('umum.belumKonfigurasi')
       case 'alasan': return tcf('alasan.pendek')
@@ -44,6 +54,10 @@ export const useCashflowMuat = (opsi: { awal?: boolean } = {}) => {
       case 'argumen': return g.message || tcf('umum.gagal')
       case 'tidak-ada': return tcf('umum.tidakAda')
       case 'versi-lama': return tcf('galat.versiLama')
+      // Biasanya tidak sempat terbaca (keMasukBilaSesi sudah mengarahkan ke
+      // /masuk), tapi jangan pernah menampilkan kode mentah ('cookie-ditolak').
+      case 'sesi':
+      case 'totp': return tcf('galat.sesiBerakhir')
       default: return g.message || tcf('umum.gagal')
     }
   }
@@ -81,6 +95,13 @@ export const useCashflowMuat = (opsi: { awal?: boolean } = {}) => {
     }
   }
 
+  /** Semua `muat` yang sedang berjalan menjadi basi (panggil di onBeforeUnmount):
+   *  jawabannya tidak menulis data, memuat, maupun galat. */
+  const batal = () => {
+    giliran++
+    memuat.value = false
+  }
+
   /** Aksi tombol. Galat → toast; `sukses` (opsional) → toast berhasil. */
   const aksi = async (
     kerja: () => Promise<void>,
@@ -98,5 +119,5 @@ export const useCashflowMuat = (opsi: { awal?: boolean } = {}) => {
     }
   }
 
-  return { memuat, galat, pesanGalat, pesanUntuk, muat, aksi }
+  return { memuat, galat, pesanGalat, pesanUntuk, keMasukBilaSesi, muat, batal, aksi }
 }

@@ -76,6 +76,41 @@ export function pohonJsonb(sql: string): PohonKunci {
   return pohon
 }
 
+/** SEMUA jsonb_build_object tingkat teratas di `sql`, berurutan. Yang bersarang
+ *  di nilai objek lain ikut di dalam pohon induknya, bukan sebagai entri
+ *  sendiri. Untuk fungsi yang membangun beberapa objek (kepala, 360, rinci). */
+export function semuaPohonJsonb(sql: string): PohonKunci[] {
+  const hasil: PohonKunci[] = []
+  const pola = /jsonb_build_object\s*\(/gi
+  let m: RegExpExecArray | null
+  let batas = 0
+  while ((m = pola.exec(sql))) {
+    if (m.index < batas) continue
+    const buka = m.index + m[0].length - 1
+    hasil.push(pohonJsonb(sql.slice(m.index)))
+    batas = tutupKurung(sql, buka)
+    pola.lastIndex = batas
+  }
+  return hasil
+}
+
+/** Pohon pertama yang memuat SEMUA kunci penanda. */
+export function pohonDengan(sql: string, ...penanda: string[]): PohonKunci {
+  const p = semuaPohonJsonb(sql).find(t => penanda.every(k => k in t))
+  if (!p) throw new Error(`Tidak ada jsonb_build_object dengan kunci ${penanda.join(', ')}`)
+  return p
+}
+
+/** Kunci objek yang dirakit sebagai TEKS SQL dinamis (execute '…'):
+ *  ''kunci'', nilai — kunci selalu diikuti koma. Hanya bagian antara `awal`
+ *  dan `akhir` (penanda teks di badan) yang dibaca. */
+export function kunciDinamis(badan: string, awal: string, akhir: string): string[] {
+  const a = badan.indexOf(awal)
+  const b = badan.indexOf(akhir, a + awal.length)
+  if (a < 0 || b < 0) throw new Error(`Penanda tidak ditemukan: ${awal} … ${akhir}`)
+  return [...badan.slice(a, b).matchAll(/''([a-z_]+)'',/g)].map(m => m[1]!)
+}
+
 /** Pohon kunci dari contoh JSON (larik → bentuk elemen pertamanya). */
 export function pohonContoh(nilai: unknown): PohonKunci | null {
   if (Array.isArray(nilai)) return nilai.length ? pohonContoh(nilai[0]) : null

@@ -5,8 +5,7 @@
  * 'alasan' dan tampil sebagai "Alasan masih terlalu pendek."
  */
 import { describe, expect, it } from 'vitest'
-import { GalatAdmin, petakanGalat, alasanBerpelaku } from '~/composables/cashflow/useCashflowAdmin'
-import { alasanInvestigasi, POLA_AUDIT_INVESTIGASI } from '~/adapters/cashflow'
+import { GalatAdmin, petakanGalat, alasanBerpelaku, alasanKasus } from '~/composables/cashflow/useCashflowAdmin'
 
 describe('petakanGalat', () => {
   it('22023 server → argumen, dengan kalimat server', () => {
@@ -24,10 +23,13 @@ describe('petakanGalat', () => {
     expect(g.jenis).toBe('versi-lama')
     expect(g.hint).toBe('pakai-versi-baru')
   })
-  it('42501 bukan-milik-subjek (catatan transaksi) → argumen dengan kalimat server', () => {
-    const g = petakanGalat({ code: '42501', hint: 'bukan-milik-subjek', message: 'Tidak satu pun dibuka.' })
-    expect(g.jenis).toBe('argumen')
-    expect(g.message).toBe('Tidak satu pun dibuka.')
+  it('hint 42501 Fase 1 dipetakan SEBELUM "42501 lainnya → bukan-admin"', () => {
+    expect(petakanGalat({ code: '42501', hint: 'kasus-kedaluwarsa' }).jenis).toBe('kasus')
+    expect(petakanGalat({ code: '42501', hint: 'kasus-ranah' }).jenis).toBe('ranah')
+    expect(petakanGalat({ code: '42501', hint: 'kasus-lingkup' }).jenis).toBe('lingkup')
+    expect(petakanGalat({ code: '42501', hint: 'izin-kurang' }).jenis).toBe('izin')
+    expect(petakanGalat({ code: '42501', hint: 'batas-investigasi' }).jenis).toBe('batas')
+    expect(petakanGalat({ code: '42501', hint: 'hint-baru-tak-dikenal' }).jenis).toBe('bukan-admin')
   })
   it('hint server ikut dibawa (22023 nilai-tersamar)', () => {
     const g = petakanGalat({ code: '22023', hint: 'nilai-tersamar', message: 'Nilai yang dikirim masih tersamar.' })
@@ -44,25 +46,25 @@ describe('petakanGalat', () => {
   })
 })
 
-/** LIKE Postgres ('%' = apa saja) → RegExp, untuk membandingkan dengan pola uji SQL. */
-const dariLike = (pola: string) =>
-  new RegExp(`^${pola.split('%').map(b => b.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('.*')}$`)
-
-describe('alasanBerpelaku (p_alasan yang dikirim rpc())', () => {
+describe('alasanBerpelaku (p_alasan RPC 0b yang dikirim rpc())', () => {
   it('awalan pelaku di depan setiap alasan', () => {
     expect(alasanBerpelaku('admin@coreasia.id', '  Keluhan pengguna — tiket 42 ')).toBe('[admin@coreasia.id] Keluhan pengguna — tiket 42')
   })
-  it('alasan investigasi tersimpan sebagai "[pelaku] INVESTIGASI — …" dan cocok dengan POLA_AUDIT_INVESTIGASI', () => {
-    const kirim = alasanBerpelaku('admin@coreasia.id', alasanInvestigasi('Investigasi galat — tiket 42'))
-    expect(kirim).toBe('[admin@coreasia.id] INVESTIGASI — Investigasi galat — tiket 42')
-    expect(kirim).toMatch(dariLike(POLA_AUDIT_INVESTIGASI))
-    expect('INVESTIGASI — tiket 42').not.toMatch(dariLike(POLA_AUDIT_INVESTIGASI))
-  })
-  it('awalan INVESTIGASI tidak memenuhi syarat 8 aksara atas nama pengguna', () => {
-    for (const a of [alasanInvestigasi(''), alasanInvestigasi('pendek'), 'INVESTIGASI —', '   ']) {
+  it('syarat 8 aksara diukur SEBELUM awalan pelaku ditambahkan', () => {
+    for (const a of ['', 'pendek', '   ', 'tiket 4 ']) {
       expect(() => alasanBerpelaku('admin@coreasia.id', a), a).toThrow(GalatAdmin)
       try { alasanBerpelaku('x', a) } catch (e) { expect((e as GalatAdmin).jenis).toBe('alasan') }
     }
-    expect(() => alasanBerpelaku('x', alasanInvestigasi('tiket 4242'))).not.toThrow()
+    expect(() => alasanBerpelaku('x', 'tiket 4242')).not.toThrow()
+  })
+})
+
+describe('alasanKasus (p_alasan kasus: TANPA awalan pelaku)', () => {
+  it('dikirim apa adanya (dipangkas): potongan 10 aksara T0 berisi nomor tiket, bukan email admin', () => {
+    expect(alasanKasus('  Tiket #4242 saldo ')).toBe('Tiket #4242 saldo')
+  })
+  it('kurang dari 8 aksara → galat alasan sebelum jaringan', () => {
+    expect(() => alasanKasus('tiket 1')).toThrow(GalatAdmin)
+    try { alasanKasus('  ') } catch (e) { expect((e as GalatAdmin).jenis).toBe('alasan') }
   })
 })

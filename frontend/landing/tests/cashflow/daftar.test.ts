@@ -55,7 +55,7 @@ describe('urut lintas halaman', () => {
     const hari = String((i % 30) + 1).padStart(2, '0')
     const bulan = i < 30 ? '08' : '09'
     return kePengguna(dto(i, `2026-${bulan}-${hari}T05:00:00+00:00`, null, i))
-  }).sort((a, b) => a.id.localeCompare(b.id) * (a.tx % 2 ? 1 : -1))
+  }).sort((a, b) => a.id.localeCompare(b.id) * ((a.tx ?? 0) % 2 ? 1 : -1))
   const aturan: AturanUrut<typeof semua[number]> = { jenis: 'waktu', nilai: p => p.daftarIso }
 
   it('halaman 1 memuat 25 terbaru dari SEMUA baris, halaman 2 melanjutkannya', () => {

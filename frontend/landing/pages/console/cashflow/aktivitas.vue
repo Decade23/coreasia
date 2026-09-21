@@ -1,5 +1,6 @@
 <script setup lang="ts">
-/** Denyut produk lintas ruang — tanpa PII, jadi tanpa alasan. */
+/** Denyut produk lintas ruang — tanpa PII, jadi tanpa alasan. Sejak 0089 §20
+ *  server mengirim waktu (pada) dan ruang_pendek sebagai null: kolomnya '—'. */
 definePageMeta({ layout: 'console', middleware: ['console', 'cashflow-admin'] })
 import type { AktivitasDTO } from '~/adapters/cashflow'
 const { tcf, formatTanggal, formatJam } = useCashflowI18n()
@@ -28,7 +29,7 @@ onMounted(() => muat(async () => { rows.value = await api.aktivitasTerbaru(150) 
             <td class="px-4 py-1.5 tabular-nums text-[var(--ca-subtle)]">{{ formatJam(r.pada) }}</td>
             <td class="px-4 py-1.5"><span class="rounded-full bg-[var(--ca-panel-bg-strong)] px-2 text-xs">{{ r.jenis }}</span></td>
             <td class="px-4 py-1.5 tabular-nums">{{ r.rentang_nominal }}</td>
-            <td class="px-4 py-1.5 font-mono text-xs text-[var(--ca-subtle)]">{{ r.ruang_pendek }}</td>
+            <td class="px-4 py-1.5 font-mono text-xs text-[var(--ca-subtle)]">{{ r.ruang_pendek ?? '—' }}</td>
           </tr>
         </tbody>
       </table>

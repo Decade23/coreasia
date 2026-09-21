@@ -11,14 +11,16 @@
  *
  * DAFTAR PENGECUALIAN (Fase 0b). Daftar dimuat lewat admin_daftar_config_v2:
  * admin.pengecualian_email tiba TERSAMAR ('ded*** · gmail.com') — email
- * keluarga/rekan pemilik tidak dikirim ke setiap sesi console tanpa alasan.
- * Menyunting = "Buka untuk menyunting" → alasan → admin_config_buka (audit
- * buka_config) memulangkan nilai utuh → sunting draf → Simpan daftar
- * (admin_set_config). Nilai utuh hanya hidup di `draf` selama penyuntingan;
+ * keluarga/rekan pemilik tidak dikirim ke setiap sesi console tanpa audit.
+ * Menyunting = "Buka untuk menyunting" (SATU KLIK, keputusan Master 21 Sep
+ * 2026: tanpa dialog "Kenapa data ini dibuka?") → admin_config_buka dengan
+ * alasan otomatis ALASAN_BUKA (audit buka_config tetap tertulis; sejak 0089
+ * butuh cashflow:pii = login ber-TOTP) memulangkan nilai utuh → sunting draf
+ * → Simpan daftar (admin_set_config). Nilai utuh hanya hidup di `draf` selama penyuntingan;
  * Simpan atau Tutup membuangnya. Menyimpan bentuk tersamar ditolak server
  * (22023 nilai-tersamar) — halaman juga memeriksanya lebih dulu.
  * Kunci yang belum ada, atau larik kosong, tidak punya apa pun untuk dibuka:
- * draf kosong dimulai tanpa gerbang dan tanpa audit buka_config.
+ * draf kosong dimulai tanpa audit buka_config.
  *
  * MENIMPA TANPA SADAR. admin_set_config menimpa nilai apa adanya (belum ada
  * pemeriksaan versi di server; Fase 1). Dua penjaga di sini:
@@ -29,12 +31,11 @@
  *   apa pun) tidak bisa diwakili draf; Simpan menunggu persetujuan eksplisit.
  *
  * ALASAN. Sakelar OTP dan daftar punya kolom alasannya sendiri-sendiri.
- * Kolom daftar ada di panel sunting, terisi alasan pembukaan (terlihat, bisa
+ * Kolom daftar ada di panel sunting, terisi ALASAN_UBAH (terlihat, bisa
  * diganti) dan dikosongkan saat panel ditutup — sakelar OTP tidak pernah
- * memakai alasan yang ditulis untuk tindakan lain. Gerbang pembukaan memakai
- * preset sakelar.bukaPreset, bukan preset bawaan (keluhan, pembayaran, …):
- * labelnya masuk ke audit buka_config DAN set_config, jadi harus menamai
- * tindakan yang sebenarnya.
+ * memakai alasan yang ditulis untuk tindakan lain. Kedua alasan otomatis
+ * menamai tindakan yang sebenarnya (membuka vs mengubah), karena keduanya
+ * masuk audit.
  *
  * SIBUK. Setiap aksi di halaman ini menulis audit yang tidak bisa dihapus;
  * selama satu berjalan, semua pemicunya nonaktif dan panggilan ulang diabaikan.
@@ -51,6 +52,10 @@ const toast = useToast()
 const { memuat, pesanGalat, muat, aksi } = useCashflowMuat({ awal: true })
 
 const CATATAN_PENGECUALIAN = 'Email yang dikecualikan dari ukuran keberhasilan.'
+/** Alasan audit otomatis — pembukaan satu klik (bahasa Indonesia apa pun bahasa layar). */
+const ALASAN_BUKA = 'Buka daftar pengecualian dari console CashFlow (Sakelar)'
+/** Isian awal alasan perubahan daftar; bisa diganti sebelum Simpan. */
+const ALASAN_UBAH = 'Perbarui daftar pengecualian dari console CashFlow (Sakelar)'
 
 const mentah = shallowRef<ConfigDTO[]>([])
 const config = computed(() => mentah.value.map(keConfig))
@@ -97,7 +102,6 @@ const setOtp = (longgar: boolean) => jalankan('otp', () => simpan(
 ))
 
 // ── Penyuntingan daftar pengecualian ──────────────────────────────────
-const gerbangBuka = ref(false)
 /** null = tertutup (hanya bentuk tersamar di layar); larik = nilai utuh terbuka. */
 const draf = ref<string[] | null>(null)
 const aslinya = ref<string[]>([])
@@ -132,37 +136,28 @@ const tutupSunting = () => {
 }
 const kosongAtauTiada = (k: string) => k === 'tiada' || k === 'kosong'
 
-/* Kunci yang belum ada (admin_config_buka menjawab P0002) atau larik kosong
-   tidak punya nilai untuk dibuka — draf kosong dimulai tanpa gerbang. Yang
-   dimuat bersama halaman bisa basi, jadi "kosong" dipastikan ke server dulu. */
+/* Satu klik. Kunci yang belum ada (admin_config_buka menjawab P0002) atau
+   larik kosong tidak punya nilai untuk dibuka — draf kosong dimulai tanpa
+   audit buka_config. Versi dicatat SEBELUM nilai dibuka (baca ulang dulu):
+   simpanan orang lain sesudah titik ini membuat Simpan menolak, bukan
+   menimpa diam-diam — dan "kosong" yang dimuat bersama halaman bisa basi. */
 const mintaBuka = () => jalankan('buka', () => aksi(async () => {
-  if (!kosongAtauTiada(keadaan.value)) { gerbangBuka.value = true; return }
   const b = await segarkan()
-  if (!kosongAtauTiada(keadaanPengecualian(b))) { gerbangBuka.value = true; return }
-  mulaiSunting({ daftar: [], asing: false }, b?.diperbaruiIso ?? null, '')
+  const k = keadaanPengecualian(b)
+  if (k === 'tiada' || k === 'kosong') { mulaiSunting({ daftar: [], asing: false }, b?.diperbaruiIso ?? null, ALASAN_UBAH); return }
+  if (!b) return
+  let utuh: NilaiJson
+  try {
+    utuh = await api.bukaConfig(KUNCI_PENGECUALIAN, ALASAN_BUKA)
+  } catch (e) {
+    // P0002: dihapus di antara baca ulang dan buka. Chip lama jangan dibiarkan.
+    if (petakanGalat(e).jenis !== 'tidak-ada') throw e
+    toast.error(tcf('sakelar.kunciHilang'))
+    await segarkan()
+    return
+  }
+  mulaiSunting(bacaDaftarEmail(utuh), b.diperbaruiIso, ALASAN_UBAH)
 }))
-
-const bukaUntukSunting = (a: string) => {
-  gerbangBuka.value = false
-  return jalankan('buka', () => aksi(async () => {
-    // Versi dicatat SEBELUM nilai dibuka: simpanan orang lain sesudah titik ini
-    // membuat Simpan menolak, bukan menimpa diam-diam.
-    const b = await segarkan()
-    if (!b) { toast.error(tcf('sakelar.kunciHilang')); return }
-    if (keadaanPengecualian(b) === 'kosong') { mulaiSunting({ daftar: [], asing: false }, b.diperbaruiIso, a); return }
-    let utuh: NilaiJson
-    try {
-      utuh = await api.bukaConfig(KUNCI_PENGECUALIAN, a)
-    } catch (e) {
-      // P0002: dihapus di antara baca ulang dan buka. Chip lama jangan dibiarkan.
-      if (petakanGalat(e).jenis !== 'tidak-ada') throw e
-      toast.error(tcf('sakelar.kunciHilang'))
-      await segarkan()
-      return
-    }
-    mulaiSunting(bacaDaftarEmail(utuh), b.diperbaruiIso, a)
-  }))
-}
 
 const tambahPengecualian = () => {
   if (!draf.value || sibuk.value) return
@@ -201,11 +196,6 @@ onBeforeUnmount(tutupSunting)
   <div class="space-y-6">
     <ConsolePageHeader :title="tcf('sakelar.judul')" kicker="CashFlow"><template #meta><CashflowNav /></template></ConsolePageHeader>
     <p class="text-sm text-[var(--ca-muted)]">{{ tcf('sakelar.ket') }}</p>
-
-    <CashflowReasonGate
-      :show="gerbangBuka" :keterangan="tcf('sakelar.bukaKet')" :preset="tcf('sakelar.bukaPreset')"
-      @close="gerbangBuka = false" @konfirmasi="bukaUntukSunting"
-    />
 
     <p v-if="pesanGalat" class="text-sm ca-tone-danger">{{ pesanGalat }}</p>
     <p v-if="memuat" class="text-sm text-[var(--ca-muted)]">{{ tcf('umum.memuat') }}</p>

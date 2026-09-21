@@ -4,8 +4,9 @@
  * seksi; satu item "CashFlow" di sana, dan navigasi bagian ada di sini —
  * supaya sidebar tidak jadi 15 item begitu produk kedua masuk.
  *
- * Palet (Cmd/Ctrl+K) ikut dipasang di sini karena komponen ini ada di setiap
- * halaman modul: layout console dipakai modul lain dan tidak disentuh.
+ * Palet (Cmd/Ctrl+K) dan pintasan pindah halaman (g p, g r, g a, g k) ikut
+ * dipasang di sini karena komponen ini ada di setiap halaman modul: layout
+ * console dipakai modul lain dan tidak disentuh.
  *
  * Tab Pengguna menuju daftarTerakhir, jadi ?seg/urut/arah/hal ikut kembali
  * seperti panah dan remah. `aksiDaftar` (OPT-IN, dari detail pengguna)
@@ -27,6 +28,7 @@ const item = computed(() => [
   { kunci: 'kesehatan', to: '/console/cashflow/kesehatan' },
   { kunci: 'sakelar', to: '/console/cashflow/sakelar' },
   { kunci: 'pengumuman', to: '/console/cashflow/pengumuman' },
+  { kunci: 'kasus', to: '/console/cashflow/kasus' },
   { kunci: 'audit', to: '/console/cashflow/audit' },
 ])
 const aktif = (jalur: string) => jalur === '/console/cashflow' ? route.path === jalur : route.path.startsWith(jalur)
@@ -40,7 +42,16 @@ const klikDaftar = (e: MouseEvent) => {
 }
 
 const paletBuka = ref(false)
-useCashflowPintasan([{ kunci: 'k', meta: true, aksi: () => { paletBuka.value = true } }])
+/* Daftar lewat aksiDaftar bila ada (lihat RIWAYAT di pengguna/[id].vue). */
+const keDaftar = () => (props.aksiDaftar ? props.aksiDaftar() : navigateTo(indeks.daftarTerakhir.value))
+useCashflowPintasan([
+  { kunci: 'k', meta: true, aksi: () => { paletBuka.value = true } },
+  // g p / g r / g a / g k — Pengguna, Ruang, Audit, Kasus.
+  { kunci: 'p', awalan: 'g', aksi: () => { keDaftar() } },
+  { kunci: 'r', awalan: 'g', aksi: () => { navigateTo('/console/cashflow/ruang') } },
+  { kunci: 'a', awalan: 'g', aksi: () => { navigateTo('/console/cashflow/audit') } },
+  { kunci: 'k', awalan: 'g', aksi: () => { navigateTo('/console/cashflow/kasus') } },
+])
 /* Label tombol mengikuti mesin: ⌘ di Apple, Ctrl di lainnya. Dibaca setelah
    terpasang supaya tidak ada selisih antara render awal dan hidrasi. */
 const tombolMeta = ref('Ctrl')

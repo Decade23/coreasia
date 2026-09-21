@@ -7,6 +7,11 @@
  * tapi itu hanya jalan bila tab itu kebetulan memegang sesi CashFlow. Dari sini
  * sesi di tab/perangkat lain ikut mati tanpa menunggu umur 12 jamnya habis.
  *
+ * Kasus (Fase 1, migrasi 0089) milik pelaku itu ikut ditutup
+ * (admin_kasus_tutup_pelaku). Aksesnya sudah mati begitu sesinya dicabut —
+ * server menolak kasus yang dibuka sebelum pencabutan sesi pelakunya — jadi
+ * kegagalan menutup kasus hanya dicatat dan tidak mengubah hasil.
+ *
  * Tidak pernah melempar: kegagalan dicatat, keluar dari console tetap jalan.
  */
 import { createClient } from '@supabase/supabase-js'
@@ -26,6 +31,8 @@ export async function cabutSesiCashflowPelaku(
       console.error('[konsol] cabut sesi CashFlow gagal:', error.message)
       return 'gagal'
     }
+    const { error: eKasus } = await admin.rpc('admin_kasus_tutup_pelaku', { p_pelaku: pelaku })
+    if (eKasus) console.error('[konsol] tutup kasus CashFlow gagal:', eKasus.message)
     return 'dicabut'
   } catch (e) {
     console.error('[konsol] cabut sesi CashFlow gagal:', (e as Error)?.message)

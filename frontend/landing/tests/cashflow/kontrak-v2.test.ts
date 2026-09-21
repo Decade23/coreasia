@@ -8,107 +8,26 @@
  * menyimpang dari server membuat uji merah, bukan diam-diam dipercaya.
  *
  * Yang dikunci di sini (celah 0087):
- * - admin_baca_transaksi_v2 TIDAK punya kolom `note`; isi catatan hanya lewat
- *   admin_baca_catatan_transaksi, per id, maks. 100 — dan hanya untuk id
- *   ber-ada_catatan;
  * - admin_ukuran_keberhasilan_v2 tanpa daftar email (jumlah_pengecualian);
  * - admin_daftar_ruang_v2 sudah tersamar di server, adapter idempoten di atasnya;
  * - admin_daftar_config_v2 mengirim bentuk tersamar yang TIDAK boleh disimpan
  *   balik — penanda yang diperiksa adapter = penanda yang ditolak server.
+ *
+ * Kontrak RPC yang dicabut 0091 (admin_baca_transaksi_v2,
+ * admin_baca_catatan_transaksi, admin_daftar_audit_v2) sudah pindah ke
+ * penggantinya di tests/cashflow/kontrak-fase1.test.ts.
  */
 import { describe, expect, it } from 'vitest'
 import {
-  keTransaksi, idBercatatan, tempelCatatan, alasanInvestigasi, intiAlasan, keKeberhasilan, keRuang, keConfig,
+  keKeberhasilan, keRuang, keConfig,
   daftarTeks, bacaDaftarEmail, keadaanPengecualian, nilaiMasihTersamar, periksaEmailPengecualian,
-  BATAS_CATATAN, AWALAN_INVESTIGASI, JENIS_RUANG, KUNCI_PENGECUALIAN, PENANDA_NILAI_TERSAMAR,
-  type TransaksiDTO, type CatatanTransaksiDTO, type KeberhasilanDTO, type RuangDTO, type ConfigDTO, type AuditDTO,
+  JENIS_RUANG, KUNCI_PENGECUALIAN, PENANDA_NILAI_TERSAMAR,
+  type KeberhasilanDTO, type RuangDTO, type ConfigDTO,
 } from '../../adapters/cashflow'
 import { adaMigrasi, fungsiTerakhir, kolomKembalian } from './migrasi'
 
 const urut = (xs: string[]) => [...xs].sort()
 const kunci = (teks: string) => urut(Object.keys((JSON.parse(teks) as unknown[])[0] as object))
-
-// ── admin_baca_transaksi_v2 ──────────────────────────────────────────────
-const TRANSAKSI = `[
-  {"id": "11111111-1111-4111-8111-111111111111", "workspace": "Bisnis", "wallet": "Kas", "category": "Penjualan",
-   "kind": "income", "amount": 150000, "occurred_at": "2026-09-17", "occurred_time": "14:05:00",
-   "created_at": "2026-09-17T07:05:12.345678+00:00", "transfer_group": null, "group_id": null, "schedule_id": null,
-   "installment_no": null, "product_id": null, "qty": null, "updated_at": "2026-09-17T07:05:12.345678+00:00", "ada_catatan": true},
-  {"id": "22222222-2222-4222-8222-222222222222", "workspace": "Bisnis", "wallet": "Bank", "category": "",
-   "kind": "expense", "amount": "275000.50", "occurred_at": "2026-09-16", "occurred_time": null,
-   "created_at": "2026-09-16T01:00:00+00:00", "transfer_group": "99999999-9999-4999-8999-999999999999", "group_id": null,
-   "schedule_id": null, "installment_no": null, "product_id": null, "qty": null, "updated_at": null, "ada_catatan": false},
-  {"id": "33333333-3333-4333-8333-333333333333", "workspace": null, "wallet": null, "category": "Makan",
-   "kind": "expense", "amount": 42000, "occurred_at": "2026-09-15", "occurred_time": null,
-   "created_at": "2026-09-15T01:00:00+00:00", "transfer_group": null, "group_id": "44444444-4444-4444-8444-444444444444",
-   "schedule_id": null, "installment_no": 2, "product_id": null, "qty": 1.5, "updated_at": null, "ada_catatan": true}
-]`
-const transaksi = () => (JSON.parse(TRANSAKSI) as TransaksiDTO[]).map(keTransaksi)
-const CATATAN = `[{"id": "11111111-1111-4111-8111-111111111111", "note": "Titip Bu Sri"}]`
-
-describe('kontrak TransaksiDTO ↔ admin_baca_transaksi_v2', () => {
-  it.skipIf(!adaMigrasi)('contoh memuat persis kolom returns table', () => {
-    expect(kunci(TRANSAKSI)).toEqual(urut(kolomKembalian('admin_baca_transaksi_v2')))
-  })
-  it.skipIf(!adaMigrasi)('server tidak mengirim note — hanya ada_catatan', () => {
-    const kolom = kolomKembalian('admin_baca_transaksi_v2')
-    expect(kolom).not.toContain('note')
-    expect(kolom).toContain('ada_catatan')
-    expect(fungsiTerakhir('admin_baca_transaksi_v2').badan).not.toMatch(/\bt\.note\s*,/i)
-  })
-  it.skipIf(!adaMigrasi)('CatatanTransaksiDTO = kolom admin_baca_catatan_transaksi', () => {
-    expect(kunci(CATATAN)).toEqual(urut(kolomKembalian('admin_baca_catatan_transaksi')))
-  })
-  it.skipIf(!adaMigrasi)(`BATAS_CATATAN (${BATAS_CATATAN}) = batas p_ids di server`, () => {
-    expect(fungsiTerakhir('admin_baca_catatan_transaksi').badan).toMatch(new RegExp(`cardinality\\(p_ids\\)\\s*>\\s*${BATAS_CATATAN}\\b`))
-  })
-})
-
-describe('keTransaksi', () => {
-  it('kaki transfer ditandai dari transfer_group, bukan dari kind', () => {
-    const [biasa, transfer] = transaksi()
-    expect(biasa).toMatchObject({ transfer: false, arah: 'masuk', nominal: 150000, kategori: 'Penjualan' })
-    expect(transfer).toMatchObject({ transfer: true, arah: 'keluar', nominal: 275000.5, kategori: '' })
-  })
-  it('ruang/dompet yang sudah tiada tampil "—"; catatan belum dibuka = null', () => {
-    const [, , yatim] = transaksi()
-    expect(yatim).toMatchObject({ ruang: '—', dompet: '—', adaCatatan: true, catatan: null, tanggal: '2026-09-15' })
-  })
-  it('tidak ada kunci note di domain sebelum dibuka', () => {
-    for (const t of transaksi()) expect(t.catatan).toBeNull()
-  })
-})
-
-describe('catatan bebas: hanya id ber-ada_catatan, maks. 100', () => {
-  it('idBercatatan melewatkan baris tanpa catatan', () => {
-    expect(idBercatatan(transaksi())).toEqual(['11111111-1111-4111-8111-111111111111', '33333333-3333-4333-8333-333333333333'])
-  })
-  it('idBercatatan dipotong di batas dan melewatkan yang sudah dibuka', () => {
-    const banyak = Array.from({ length: 150 }, (_, i) => ({ ...transaksi()[0]!, id: `id-${i}` }))
-    expect(idBercatatan(banyak)).toHaveLength(BATAS_CATATAN)
-    const dibuka = tempelCatatan(transaksi(), JSON.parse(CATATAN) as CatatanTransaksiDTO[])
-    expect(idBercatatan(dibuka)).toEqual(['33333333-3333-4333-8333-333333333333'])
-  })
-  it('tempelCatatan hanya mengisi baris yang dikirim server, larik baru', () => {
-    const asal = transaksi()
-    const hasil = tempelCatatan(asal, JSON.parse(CATATAN) as CatatanTransaksiDTO[])
-    expect(hasil).not.toBe(asal)
-    expect(hasil[0]!.catatan).toBe('Titip Bu Sri')
-    expect(hasil[2]!.catatan).toBeNull()
-    expect(asal[0]!.catatan).toBeNull()
-  })
-  it('alasan investigasi selalu berawalan INVESTIGASI — , tidak ganda', () => {
-    expect(alasanInvestigasi('  Investigasi galat — tiket 42 ')).toBe(`${AWALAN_INVESTIGASI}Investigasi galat — tiket 42`)
-    expect(alasanInvestigasi(`${AWALAN_INVESTIGASI}tiket 42`)).toBe(`${AWALAN_INVESTIGASI}tiket 42`)
-    expect(alasanInvestigasi(`${AWALAN_INVESTIGASI}${AWALAN_INVESTIGASI}tiket 42`)).toBe(`${AWALAN_INVESTIGASI}tiket 42`)
-  })
-  it('intiAlasan: bagian yang ditulis orang, tanpa awalan investigasi (juga yang terpangkas spasinya)', () => {
-    expect(intiAlasan(alasanInvestigasi(''))).toBe('')
-    expect(intiAlasan('INVESTIGASI —')).toBe('')
-    expect(intiAlasan(' INVESTIGASI—INVESTIGASI — tiket 42 ')).toBe('tiket 42')
-    expect(intiAlasan('Investigasi galat — tiket 42')).toBe('Investigasi galat — tiket 42')
-  })
-})
 
 // ── admin_ukuran_keberhasilan_v2 ─────────────────────────────────────────
 const KEBERHASILAN = `[{"jumlah": 3, "pembanding": 2, "jumlah_pengecualian": 7}]`
@@ -243,22 +162,5 @@ describe('sakelar: nilai tersamar tidak pernah dikirim balik', () => {
     expect(periksaEmailPengecualian('dedi', [])).toBe('bukan-email')
     expect(periksaEmailPengecualian(' Dedi@Gmail.com ', ['dedi@gmail.com'])).toBe('ganda')
     expect(periksaEmailPengecualian('siti@contoh.id', ['dedi@gmail.com'])).toBeNull()
-  })
-})
-
-// ── admin_daftar_audit_v2 (AuditDTO pindah ke adapter, detail bertipe) ────
-const AUDIT = `[{"id": 812, "admin_id": "3f0c2a4e-8b1d-4c6a-9e2f-1a2b3c4d5e6f", "admin_email": "konsol@coreasia.id",
-  "pelaku": "admin@coreasia.id", "action": "baca_catatan_transaksi", "target_type": "user",
-  "target_id": "7c8d9e0f-1a2b-4c3d-9e4f-5a6b7c8d9e0f", "target_email": "ded***@gmail.com",
-  "detail": {"ids": ["11111111-1111-4111-8111-111111111111"], "jumlah": 1}, "reason": "[admin@coreasia.id] INVESTIGASI — tiket 42",
-  "created_at": "2026-09-18T08:12:45.123456+00:00", "total_semua": 1}]`
-
-describe('kontrak AuditDTO ↔ admin_daftar_audit_v2', () => {
-  it.skipIf(!adaMigrasi)('contoh memuat persis kolom returns table', () => {
-    expect(kunci(AUDIT)).toEqual(urut(kolomKembalian('admin_daftar_audit_v2')))
-  })
-  it('detail jsonb terbaca tanpa any', () => {
-    const [a] = JSON.parse(AUDIT) as AuditDTO[]
-    expect(a!.detail?.jumlah).toBe(1)
   })
 })

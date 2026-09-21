@@ -1,30 +1,35 @@
 /**
  * Pembungkus RPC admin CashFlow — satu tempat untuk semua panggilan ke Supabase.
  *
- * Jenis kegagalan dibedakan supaya halaman bisa menjawab dengan benar:
+ * Jenis kegagalan dibedakan supaya halaman bisa menjawab dengan benar. Hint
+ * server dipetakan LEBIH DULU daripada aturan "42501 lainnya → bukan-admin":
  *   'sesi'        tidak ada sesi Supabase di tab ini, atau 42501 hint
  *                 sesi-konsol/mfa-wajib (sesi tidak dikenal server) → sambung
  *                 ulang lewat /masuk
  *   'totp'        (lama) diperlakukan sama dengan 'sesi'
+ *   'versi-lama'  42501 pakai-versi-baru: RPC lama yang ditutup untuk sesi
+ *                 console (0088; lima RPC 0b sejak 0089 untuk sesi ber-izin).
+ *                 Halaman ini tidak memanggilnya lagi; yang melihat galat ini
+ *                 memegang bundel lama → muat ulang
+ *   'kasus'       42501 kasus-kedaluwarsa / kasus-tidak-dikenal: kasus habis,
+ *                 ditutup, dicabut, atau bukan milik pelaku ini → data ranah
+ *                 dibuang lalu kasus dibuka lagi otomatis (useCashflowKasus)
+ *   'ranah'       42501 kasus-ranah: ranah itu tidak ada di kasus → "di luar
+ *                 kasus: tambah ranah"
+ *   'lingkup'     42501 kasus-lingkup: ruang/id di luar lingkup kasus
+ *   'izin'        42501 izin-kurang: sesi tanpa cashflow:pii/investigasi →
+ *                 "butuh login console ber-TOTP" (/console/keamanan)
+ *   'batas'       42501 batas-investigasi (batas-akses TIDAK dilempar server:
+ *                 admin_kasus_buka memulangkannya sebagai jsonb 200)
  *   'bukan-admin' 42501 lainnya → identitas sesi ini bukan admin CashFlow
- *   'alasan'      alasan kurang dari 8 aksara — diperiksa DI SINI
- *                 (alasanBerpelaku) sebelum awalan pelaku ditambahkan, dan
- *                 TANPA awalan "INVESTIGASI — ": tidak satu awalan pun boleh
- *                 memenuhi syarat panjang atas nama pengguna
- *   'argumen'     22023 dari server. Server memakai kode itu untuk argumen apa
- *                 pun yang ditolak (jendela pengumuman terbalik, level tak
- *                 dikenal, kunci konfigurasi kosong, alasan), jadi kalimatnya
- *                 diambil dari server — "alasan terlalu pendek" untuk tanggal
- *                 yang terbalik menyuruh admin memperbaiki hal yang salah.
- *                 Juga 42501 hint bukan-milik-subjek (catatan transaksi):
- *                 kalimatnya dilokalkan useCashflowMuat lewat hint-nya
- *   'tidak-ada'   P0002 — mis. UUID yang ditempel di palet bukan pengguna
- *   'versi-lama'  42501 hint pakai-versi-baru: RPC v1 yang ditutup 0088 untuk
- *                 sesi console. Halaman ini tidak memanggilnya lagi; yang
- *                 melihat galat ini memegang bundel lama → muat ulang
+ *   'alasan'      alasan kurang dari 8 aksara — diperiksa DI SINI sebelum
+ *                 dikirim
+ *   'argumen'     22023 dari server (argumen apa pun yang ditolak:
+ *                 batas-2jam, kursor, saringan, kueri-tidak-didukung…) —
+ *                 kalimatnya dari server, useCashflowMuat melokalkan hint yang
+ *                 dikenal
+ *   'tidak-ada'   P0002 — pengguna/transaksi/dompet tidak ada
  *   'lain'        sisanya
- * `hint` server ikut dibawa (mis. nilai-tersamar, nilai-pribadi-publik) supaya
- * useCashflowMuat bisa memberi kalimat yang menyuruh hal yang benar.
  *
  * Halaman tidak menulis blok catch sendiri: useCashflowMuat yang mengubah
  * jenis ini menjadi kalimat dan mengarahkan ke /masuk bila sesi hilang.
@@ -33,25 +38,24 @@
  * refresh token ditolak). rpc() memeriksa sesi dulu; kalau tidak ada, minta
  * server mencetak lagi SEKALI lalu lanjut — pengguna tidak melihat apa-apa.
  *
- * RPC yang membuka data pribadi WAJIB menerima `alasan` di sini — tanda tangan
- * TypeScript-nya yang memaksa, supaya tidak ada halaman baru yang lupa.
- *
- * HANYA RPC v2 (Fase 0b). Sesudah migrasi 0088, sesi console ditolak di
- * admin_baca_transaksi, admin_detail_pengguna, admin_ekspor_pengguna,
- * admin_daftar_ruang, admin_daftar_config, dan admin_daftar_audit v1
- * (42501 pakai-versi-baru), dan admin_ukuran_keberhasilan v1 serta
- * admin_buka_email dicabut dari authenticated. Setiap nama RPC di berkas ini
- * WAJIB juga ada di cashflow/toko/uji-console-rpc.sql, yang memanggil semuanya
- * dengan sesi console di atas 0088 — tests/cashflow/rpc-console.test.ts
+ * DAFTAR RPC. Fase 1: data pengguna hanya lewat KASUS (0089/0090). Lima RPC
+ * yang dicabut 0091 (admin_detail_pengguna_v2, admin_aktivitas_pengguna,
+ * admin_baca_transaksi_v2, admin_baca_catatan_transaksi,
+ * admin_daftar_audit_v2) tidak dipanggil lagi — sesi ber-izin sudah ditolak
+ * kelimanya sejak 0089. Setiap nama RPC di berkas ini WAJIB juga ada di
+ * cashflow/toko/uji-console-rpc.sql, yang memanggil semuanya dengan sesi
+ * console Fase 1 di atas 0088→0091 — tests/cashflow/rpc-console.test.ts
  * membandingkan kedua daftar itu.
  *
- * PELAKU. Sesi Supabase-nya milik identitas konsol bersama (lihat
+ * PELAKU & ALASAN. Sesi Supabase-nya milik identitas konsol bersama (lihat
  * server/api/cashflow/sesi.post.ts), jadi admin_id di admin_audit selalu
- * identitas itu. Bukti siapa manusianya ada di SERVER: admin_audit.pelaku
- * diisi trigger dari admin_konsol_sesi (migrasi 0078). Awalan "[email]" pada
- * p_alasan di sini hanya keterangan yang enak dibaca di daftar audit — tapi ia
- * ada di depan SETIAP alasan, termasuk "[email] INVESTIGASI — …" (lihat
- * AWALAN_INVESTIGASI di adapter).
+ * identitas itu; manusianya dicatat SERVER (admin_audit.pelaku, admin_kasus.
+ * pelaku dari admin_konsol_sesi). Untuk RPC 0b beralasan (daftar pengguna
+ * terbuka, config, pengumuman, entitlement) rpc() masih menambahkan awalan
+ * "[email] " pada p_alasan sebagai keterangan yang enak dibaca. Alasan KASUS
+ * dikirim apa adanya (`tanpaPelaku`): pelakunya sudah kolom sendiri, dan
+ * potongan 10 aksara alasan yang tampil di T0 (potong_alasan) harus berisi
+ * nomor tiket, bukan email admin.
  *
  * NAMA ARGUMEN. PostgREST memilih fungsi menurut nama argumen, bukan urutan:
  * kunci p_* yang salah ketik baru gagal di produksi (PGRST202). Kunci setiap
@@ -60,16 +64,26 @@
  */
 import type {
   StatsDTO, PenggunaDTO, CorongDTO, KeberhasilanDTO, RetensiDTO, AktivitasDTO,
-  RuangDTO, DetailPenggunaDTO, TransaksiDTO, CatatanTransaksiDTO, PengumumanDTO, KesehatanDTO,
-  AuditDTO, ConfigDTO, NilaiJson, JenisRuang,
+  RuangDTO, PengumumanDTO, KesehatanDTO, ConfigDTO, NilaiJson, JenisRuang,
 } from '~/adapters/cashflow'
-import { alasanInvestigasi, intiAlasan } from '~/adapters/cashflow'
+import type {
+  KasusDTO, KasusAktifDTO, KasusBukaDTO, DaftarKasusDTO, RiwayatAksesDTO, AuditV3DTO,
+  PresetKasus, PresetInvestigasi, KursorAkses,
+} from '~/adapters/cashflowKasus'
+import { MIN_ALASAN } from '~/adapters/cashflowKasus'
+import type {
+  KepalaPenggunaDTO, Pengguna360DTO, TransaksiCariDTO, TransaksiRinciDTO, TeksDTO, CariDTO,
+  KursorTransaksi, SaringTransaksi, JenisTeks,
+} from '~/adapters/cashflowBuku'
+import type { JejakDTO, KursorJejak, SaringJejak } from '~/adapters/cashflowJejak'
 
-/* DTO audit & sakelar pindah ke adapter (bertipe, tanpa any); diekspor ulang
+/* DTO sakelar pindah ke adapter (bertipe, tanpa any); diekspor ulang
    supaya impor lama dari berkas ini tetap jalan. */
-export type { AuditDTO, ConfigDTO } from '~/adapters/cashflow'
+export type { ConfigDTO } from '~/adapters/cashflow'
 
-export type JenisGalat = 'sesi' | 'totp' | 'bukan-admin' | 'alasan' | 'argumen' | 'konfigurasi' | 'tidak-ada' | 'versi-lama' | 'lain'
+export type JenisGalat =
+  | 'sesi' | 'totp' | 'bukan-admin' | 'alasan' | 'argumen' | 'konfigurasi' | 'tidak-ada' | 'versi-lama'
+  | 'kasus' | 'ranah' | 'lingkup' | 'izin' | 'batas' | 'lain'
 export class GalatAdmin extends Error {
   constructor(public jenis: JenisGalat, pesan: string, public hint: string = '') { super(pesan) }
 }
@@ -78,6 +92,20 @@ export class GalatAdmin extends Error {
 interface GalatMentah { code?: unknown; hint?: unknown; message?: unknown }
 const teks = (v: unknown): string => (typeof v === 'string' ? v : '')
 
+/** Hint 42501 → jenis. Dicek SEBELUM "42501 lainnya → bukan-admin". */
+export const HINT_42501: Readonly<Record<string, JenisGalat>> = {
+  'mfa-wajib': 'sesi',
+  'sesi-konsol': 'sesi',
+  'pakai-versi-baru': 'versi-lama',
+  'kasus-kedaluwarsa': 'kasus',
+  'kasus-tidak-dikenal': 'kasus',
+  'kasus-ranah': 'ranah',
+  'kasus-lingkup': 'lingkup',
+  'izin-kurang': 'izin',
+  'batas-investigasi': 'batas',
+  'batas-akses': 'batas',
+}
+
 /** Galat PostgREST/jaringan → GalatAdmin. GalatAdmin yang sudah jadi dipulangkan apa adanya. */
 export function petakanGalat(e: unknown): GalatAdmin {
   if (e instanceof GalatAdmin) return e
@@ -85,24 +113,25 @@ export function petakanGalat(e: unknown): GalatAdmin {
   const kode = teks(g.code)
   const hint = teks(g.hint)
   const pesan = teks(g.message) || 'Gagal memanggil server.'
-  if (kode === '42501' && (hint === 'mfa-wajib' || hint === 'sesi-konsol')) return new GalatAdmin('sesi', pesan, hint)
-  if (kode === '42501' && hint === 'pakai-versi-baru') return new GalatAdmin('versi-lama', pesan, hint)
-  // admin_baca_catatan_transaksi: id milik orang lain → seluruh panggilan ditolak.
-  // Itu argumen yang ditolak, bukan "identitas konsol bukan admin".
-  if (kode === '42501' && hint === 'bukan-milik-subjek') return new GalatAdmin('argumen', pesan, hint)
-  if (kode === '42501') return new GalatAdmin('bukan-admin', pesan, hint)
+  if (kode === '42501') return new GalatAdmin(HINT_42501[hint] ?? 'bukan-admin', pesan, hint)
   if (kode === '22023') return new GalatAdmin('argumen', pesan, hint)
   if (kode === 'P0002') return new GalatAdmin('tidak-ada', pesan, hint)
   return new GalatAdmin('lain', pesan, hint)
 }
 
-/** p_alasan yang dikirim: "[pelaku] alasan". Syarat 8 aksara diukur pada
- *  bagian yang ditulis orang (intiAlasan: tanpa awalan INVESTIGASI) SEBELUM
- *  awalan pelaku ditambahkan — tidak satu awalan pun memenuhinya. */
+/** p_alasan RPC 0b yang dikirim: "[pelaku] alasan". Syarat 8 aksara diukur
+ *  pada bagian yang ditulis orang, SEBELUM awalan pelaku ditambahkan. */
 export function alasanBerpelaku(siapa: string, alasan: string): string {
   const asli = alasan.trim()
-  if (intiAlasan(asli).length < 8) throw new GalatAdmin('alasan', 'Alasan minimal 8 aksara.')
+  if (asli.length < MIN_ALASAN) throw new GalatAdmin('alasan', 'Alasan minimal 8 aksara.')
   return `[${siapa}] ${asli}`
+}
+
+/** p_alasan kasus: apa adanya (dipangkas), minimal 8 aksara. */
+export function alasanKasus(alasan: string): string {
+  const asli = alasan.trim()
+  if (asli.length < MIN_ALASAN) throw new GalatAdmin('alasan', 'Alasan minimal 8 aksara.')
+  return asli
 }
 
 export interface FotoYatimDTO { bucket: string; jalur: string; ukuran: number; dibuat: string; sebab: string }
@@ -125,12 +154,15 @@ export const useCashflowAdmin = () => {
     return sb
   }
 
-  async function rpc<T>(nama: string, args?: Record<string, unknown>): Promise<T> {
-    const sb = await pastikanSesi()
+  /** `tanpaPelaku`: alasan kasus dikirim apa adanya (lihat PELAKU & ALASAN). */
+  async function rpc<T>(nama: string, args?: Record<string, unknown>, opsi: { tanpaPelaku?: boolean } = {}): Promise<T> {
     const a: Record<string, unknown> = { ...(args ?? {}) }
     if (typeof a.p_alasan === 'string') {
-      a.p_alasan = alasanBerpelaku(sesiKonsol.pelaku.value || adminConsole.value?.email || 'console', a.p_alasan)
+      a.p_alasan = opsi.tanpaPelaku
+        ? alasanKasus(a.p_alasan)
+        : alasanBerpelaku(sesiKonsol.pelaku.value || adminConsole.value?.email || 'console', a.p_alasan)
     }
+    const sb = await pastikanSesi()
     const { data, error } = await sb.rpc(nama, a)
     if (error) {
       const g = petakanGalat(error)
@@ -175,24 +207,62 @@ export const useCashflowAdmin = () => {
     daftarRuang: (limit = 50, offset = 0, cari = '', jenis: JenisRuang | null = null) =>
       rpc<RuangDTO[]>('admin_daftar_ruang_v2', { p_limit: limit, p_offset: offset, p_cari: cari.trim() || null, p_jenis: jenis }),
 
-    // ── membuka data pribadi: alasan WAJIB, audit ditulis server ───────
-    detailPengguna: (user: string, alasan: string) =>
-      rpc<DetailPenggunaDTO>('admin_detail_pengguna_v2', { p_user: user, p_alasan: alasan }),
-    aktivitasPengguna: (user: string, alasan: string, limit = 200) =>
-      rpc<AktivitasDTO[]>('admin_aktivitas_pengguna', { p_user: user, p_alasan: alasan, p_limit: limit }),
-    /** v2: TANPA note — hanya ada_catatan (server membatasi limit 1..200). */
-    transaksiPengguna: (user: string, alasan: string, limit = 100) =>
-      rpc<TransaksiDTO[]>('admin_baca_transaksi_v2', { p_user: user, p_alasan: alasan, p_limit: limit }),
-    /** Isi catatan untuk id terpilih (1..100, semuanya milik `user`); server
-     *  mencatat id mana saja yang dibuka. Satu id asing = seluruhnya ditolak
-     *  (42501 bukan-milik-subjek). Awalan INVESTIGASI dipasang DI SINI, jadi
-     *  halaman mengirim alasan yang diketik apa adanya. */
-    catatanTransaksi: (user: string, alasan: string, ids: readonly string[]) =>
-      rpc<CatatanTransaksiDTO[]>('admin_baca_catatan_transaksi', { p_user: user, p_alasan: alasanInvestigasi(alasan), p_ids: ids }),
+    // ── kasus (0089): buka, pulihkan, tambah, perpanjang, tutup ─────────
+    /** Kasus aktif milik pelaku atas subjek ini (+ anak investigasi aktif).
+     *  T0, tanpa audit — cara memulihkan kasus sesudah refresh/tab baru. */
+    kasusAktif: (subjek: string) => rpc<KasusAktifDTO>('admin_kasus_aktif', { p_subjek: subjek }),
+    /** Butuh pii. Batas laju → {ditolak:true, hint:'batas-akses'} (jsonb 200). */
+    kasusBuka: (subjek: string, skenario: string | null, preset: PresetKasus, ranah: readonly string[], ruang: readonly string[], alasan: string) =>
+      rpc<KasusBukaDTO>('admin_kasus_buka', {
+        p_subjek_tipe: 'user', p_subjek: subjek, p_skenario: skenario, p_preset: preset,
+        p_ranah: [...ranah], p_ruang: [...ruang], p_alasan: alasan,
+      }, { tanpaPelaku: true }),
+    /** Kasus anak T3 (10 menit, ranah teks), alasan BARU, butuh investigasi. */
+    kasusInvestigasi: (induk: string, preset: PresetInvestigasi, alasan: string) =>
+      rpc<KasusDTO>('admin_kasus_investigasi', { p_induk: induk, p_ranah: ['teks'], p_preset: preset, p_alasan: alasan }, { tanpaPelaku: true }),
+    /** Tambah ranah T1/T2 dan/atau ruang; alasan diwarisi. */
+    kasusTambah: (kasus: string, ranah: readonly string[], ruang: readonly string[]) =>
+      rpc<KasusDTO>('admin_kasus_tambah', { p_kasus: kasus, p_ranah: [...ranah], p_ruang: [...ruang] }),
+    kasusPerpanjang: (kasus: string) => rpc<KasusDTO>('admin_kasus_perpanjang', { p_kasus: kasus }),
+    kasusTutup: (kasus: string) => rpc<KasusDTO>('admin_kasus_tutup', { p_kasus: kasus }),
+    /** /kasus — subjek selalu tersamar; alasan utuh hanya pii / milik sendiri. */
+    daftarKasus: (limit = 200, offset = 0, pelaku: string | null = null, subjek: string | null = null) =>
+      rpc<DaftarKasusDTO[]>('admin_daftar_kasus', { p_limit: limit, p_offset: offset, p_pelaku: pelaku, p_subjek: subjek }),
+
+    // ── Pengguna 360 (0090): kepala T0, lalu data lewat kasus ───────────
+    /** T0: email tersamar, hitungan; ruang[] hanya untuk pii. Audit lihat_kepala. */
+    kepalaPengguna: (user: string) => rpc<KepalaPenggunaDTO>('admin_pengguna_kepala', { p_user: user }),
+    /** Ranah akun: akun, hitung{}, total bersih, ruang[]. Audit baca_akun. */
+    pengguna360: (kasus: string, user: string) => rpc<Pengguna360DTO>('admin_pengguna_360', { p_kasus: kasus, p_user: user }),
+    /** Ranah transaksi, keyset, TANPA note. Audit baca_transaksi per halaman. */
+    transaksiCari: (kasus: string, user: string, s: SaringTransaksi, kursor: KursorTransaksi | null, limit = 100) =>
+      rpc<TransaksiCariDTO>('admin_transaksi_cari', {
+        p_kasus: kasus, p_user: user, p_ws: s.ruang, p_mode: 'pengguna',
+        p_dompet: s.dompet, p_kategori: s.kategori, p_jenis: s.jenis,
+        p_dari: s.dari, p_sampai: s.sampai, p_min: s.min, p_maks: s.maks,
+        p_cek: s.cek, p_termasuk_sampah: s.sampah, p_kursor: kursor, p_limit: limit,
+      }),
+    /** Laci ?tx= — jatuh ke sampah bila id tidak hidup. Audit baca_transaksi_rinci. */
+    transaksiRinci: (kasus: string, tx: string) => rpc<TransaksiRinciDTO>('admin_transaksi_rinci', { p_kasus: kasus, p_tx: tx }),
+    /** Ranah jejak: peristiwa yang dilakukan subjek. Audit baca_jejak. */
+    jejak: (kasus: string, aktor: string, s: SaringJejak, kursor: KursorJejak | null, limit = 100) =>
+      rpc<JejakDTO>('admin_jejak', {
+        p_kasus: kasus, p_ws: s.ruang, p_aktor: aktor, p_jenis: s.jenis,
+        p_dari: s.dari, p_sampai: s.sampai, p_kursor: kursor, p_limit: limit,
+      }),
+    /** T3 (kasus ANAK): teks bebas untuk ≤ 100 id. Audit baca_teks {jenis, ids}. */
+    teks: (kasusAnak: string, jenis: JenisTeks, ids: readonly string[]) =>
+      rpc<TeksDTO>('admin_teks', { p_kasus_anak: kasusAnak, p_jenis: jenis, p_ids: [...ids] }),
+    /** Palet (Enter): butuh pii; email lengkap / uuid / awalan ≥ 8 hex; ≤ 20. Audit cari. */
+    cari: (q: string) => rpc<CariDTO>('admin_cari', { p_q: q }),
+    /** Siapa melihat data orang ini — T0, tanpa audit. */
+    riwayatAkses: (target: string, kursor: KursorAkses | null, limit = 50) =>
+      rpc<RiwayatAksesDTO>('admin_riwayat_akses', { p_target: target, p_kursor: kursor, p_limit: limit }),
 
     // ── audit ──────────────────────────────────────────────────────────
-    daftarAudit: (limit = 50, offset = 0, aksi: string | null = null) =>
-      rpc<AuditDTO[]>('admin_daftar_audit_v2', { p_limit: limit, p_offset: offset, p_aksi: aksi, p_admin: null }),
+    /** v3: target tersamar, alasan terpotong kecuali pii / milik sendiri; + ranah, kasus, terdampak. */
+    daftarAudit: (limit = 50, offset = 0, aksi: string | null = null, kasus: string | null = null) =>
+      rpc<AuditV3DTO[]>('admin_daftar_audit_v3', { p_limit: limit, p_offset: offset, p_aksi: aksi, p_pelaku: null, p_target: null, p_kasus: kasus }),
     aksiAudit: () => rpc<Array<{ action: string; jumlah: number }>>('admin_daftar_aksi_audit'),
 
     // ── sakelar fitur (termasuk auth.verifikasi_email) ─────────────────

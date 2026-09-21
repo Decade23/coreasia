@@ -21,30 +21,56 @@
  *      = cookie ditolak; gagal lain = gateway bermasalah, dan pengguna tidak
  *      disuruh masuk ulang untuk kesalahan yang bukan miliknya.
  *   2. peran pemegangnya harus punya izin cashflow:view — peta yang sama
- *      dengan sidebar (utils/rbac.ts).
+ *      dengan sidebar (utils/rbac.ts). Izin sesi (Fase 1, migrasi 0089)
+ *      dihitung izinSesiCashflow(role, /me): cashflow:view bila perannya
+ *      boleh; pii/investigasi/tindak/ekspor HANYA bila /me menjawab mfa=true
+ *      (login ber-TOTP yang masih segar), TOTP akunnya masih aktif
+ *      (totp_enabled_at ada), DAN perannya memegang izin itu. Aktif LANGSUNG,
+ *      TANPA masa tenggang sejak TOTP dipasang (keputusan Master 21 Sep 2026;
+ *      risiko sisa: pemegang sandi bocor super admin tanpa TOTP bisa memasang
+ *      TOTP sendiri lalu langsung membuka data — utils/rbac.ts). Batas waktunya
+ *      (mfa_at + 12 jam = umur MFA gateway) ditulis ke `izin_sampai`:
+ *      konsol_boleh menolak izin selain view sesudahnya, walaupun sesi
+ *      CashFlow-nya sendiri masih hidup (umurnya 12 jam sejak DICETAK).
  *   3. identitas konsol harus ADA dan bertanda admin_users.lewat_konsol — kalau
  *      env salah ketik, generateLink bisa diam-diam membuat pengguna baru;
  *      cek ini menutupnya.
  *   4. service-role → generateLink(magiclink) → verifyOtp(token_hash) dengan
  *      anon key → sesi asli. Tidak ada email yang dikirim.
  *   5. session_id dari JWT dicatat ke admin_konsol_sesi bersama email admin
- *      console (migrasi 0078). is_platform_admin() HANYA menerima sesi yang
- *      tercatat di sana — sesi atas nama identitas yang sama dari jalur lain
- *      (reset sandi, magic-link email, kata sandi) ditolak. Pelaku manusianya
- *      pun jadi bukti server: admin_audit.pelaku diisi trigger dari tabel ini.
+ *      console (migrasi 0078) DAN izinnya (kolom `izin` + `izin_sampai`,
+ *      migrasi 0089).
+ *      is_platform_admin() HANYA menerima sesi yang tercatat di sana — sesi
+ *      atas nama identitas yang sama dari jalur lain (reset sandi, magic-link
+ *      email, kata sandi) ditolak. Pelaku manusianya pun jadi bukti server:
+ *      admin_audit.pelaku diisi trigger dari tabel ini; konsol_boleh() membaca
+ *      `izin`.
+ *
+ * URUTAN RILIS (Fase 1). Kolom `izin` baru ada sesudah migrasi 0089. Sengaja
+ * TANPA jalan mundur: bila 0089 belum diterapkan, INSERT ini gagal, sesi
+ * dimatikan lagi, dan console berhenti di /masuk ('mint-gagal') — lebih baik
+ * daripada diam-diam mencetak sesi tanpa izin. Terapkan 0089 + 0090 DULU,
+ * baru tayangkan landing ini (rencana Fase 1, "Urutan rilis").
  *
  * Kode gagal (statusMessage) dibaca halaman /console/cashflow/masuk:
  *   tanpa-cookie · cookie-ditolak · gateway-gagal · tanpa-izin ·
  *   belum-konfigurasi · mint-gagal · lintas-situs · ikatan
  */
 import { createClient } from '@supabase/supabase-js'
-import { peranBoleh } from '~/utils/rbac'
+import { batasIzinMfa, izinSesiCashflow } from '~/utils/rbac'
 import { bacaCookie, catat, hapusCookie, ipKlien, pasangToken, wajibIkatan } from '../../lib/konsol/h3'
 import { rakitTujuan } from '../../lib/konsol/jalur'
 import { teruskan } from '../../lib/konsol/proxy'
 
 interface JawabanMe {
-  data?: { id: string; email: string; role: string; is_active: boolean } | null
+  /** mfa: sesi gateway ini lolos TOTP kurang dari 12 jam lalu (Fase 0c).
+   *  mfa_at: saat kodenya diverifikasi; totp_enabled_at: saat TOTP akun ini
+   *  diaktifkan (keduanya RFC 3339, null bila tidak ada — gateway MeResponse;
+   *  hanya keberadaannya yang dibaca, bukan umurnya). */
+  data?: {
+    id: string; email: string; role: string; is_active: boolean
+    mfa?: unknown; mfa_at?: unknown; totp_enabled_at?: unknown
+  } | null
 }
 
 /** Klaim JWT tanpa verifikasi tanda tangan — cukup, karena token ini baru saja
@@ -91,8 +117,15 @@ export default defineEventHandler(async (event) => {
   const me: JawabanMe['data'] = ((await hasil.respons.json().catch(() => null)) as JawabanMe | null)?.data ?? null
   if (!me || !me.is_active) throw createError({ statusCode: 401, statusMessage: 'cookie-ditolak' })
 
-  // 2. Peran yang boleh melihat pintunya = peran yang boleh masuk.
-  if (!peranBoleh(me.role, 'cashflow:view')) {
+  // 2. Peran yang boleh melihat pintunya = peran yang boleh masuk. Izin
+  //    sesi: view untuk peran yang boleh, empat lainnya hanya bila ber-MFA
+  //    segar (langsung, tanpa masa tenggang pendaftaran TOTP) — berlaku
+  //    sampai izinSampai (mfa_at + 12 jam), bukan 12 jam sejak dicetak.
+  const sekarang = Date.now()
+  const izin = izinSesiCashflow(me.role, me, sekarang)
+  const batas = batasIzinMfa(me, sekarang)
+  const izinSampai = batas !== null && izin.some(i => i !== 'cashflow:view') ? new Date(batas).toISOString() : null
+  if (!izin.includes('cashflow:view')) {
     throw createError({ statusCode: 403, statusMessage: 'tanpa-izin' })
   }
 
@@ -149,7 +182,7 @@ export default defineEventHandler(async (event) => {
   //    dimatikan lagi supaya tidak ada token setengah jadi di peramban.
   const sessionId = klaimJwt(sesi.access_token)?.session_id
   const { error: eCatat } = typeof sessionId === 'string'
-    ? await admin.from('admin_konsol_sesi').insert({ session_id: sessionId, pelaku: me.email })
+    ? await admin.from('admin_konsol_sesi').insert({ session_id: sessionId, pelaku: me.email, izin, izin_sampai: izinSampai })
     : { error: { message: 'JWT tanpa session_id' } }
   if (eCatat) {
     console.error('[cashflow/sesi] pencatatan sesi gagal:', eCatat.message)
@@ -160,7 +193,7 @@ export default defineEventHandler(async (event) => {
   // Rumah tangga: cabut catatan yang lewat umur (12 jam) dan buang yang > 7
   // hari. Dijalankan sesudah tiap pencetakan supaya tabelnya tidak tumbuh
   // tanpa batas; hasilnya tidak ditunggu dan kegagalannya tidak menghalangi.
-  catat(event, 'cashflow-sesi', { email: me.email })
+  catat(event, 'cashflow-sesi', { email: me.email, izin: izin.join(' '), izin_sampai: izinSampai ?? '-' })
   admin.rpc('admin_konsol_sesi_bersihkan').then(({ error }) => {
     if (error) console.error('[cashflow/sesi] bersihkan gagal:', error.message)
   }).catch(() => {})
@@ -171,5 +204,7 @@ export default defineEventHandler(async (event) => {
     expires_at: sesi.expires_at ?? null,
     /** Email admin console yang meminta — ditampilkan klien; buktinya ada di server. */
     pelaku: me.email,
+    /** Izin yang tercatat untuk sesi ini — petunjuk tampilan saja; Postgres yang menegakkan. */
+    izin,
   }
 })

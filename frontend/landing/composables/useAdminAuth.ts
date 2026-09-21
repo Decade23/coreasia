@@ -31,6 +31,8 @@ export interface AdminUser {
   is_active: boolean
   /** Dari /me: sesi ini lolos TOTP. */
   mfa?: boolean
+  /** Dari /me: saat kode TOTP sesi ini diverifikasi (null bila mfa=false). */
+  mfa_at?: string | null
   /** Dari /me: TOTP akun ini aktif. */
   totp_enabled?: boolean
   totp_enabled_at?: string | null
@@ -188,8 +190,10 @@ export const useAdminAuth = () => {
    * console dan pemanggil menampilkan galat: pindah ke /console/login dengan
    * cookie yang masih hidup hanya membuat halaman login mengembalikannya ke
    * console, sehingga tombol Keluar tampak tidak bekerja.
+   * `ke` (opsional, jalur /console…): halaman login mengembalikan ke sana
+   * sesudah masuk lagi — dipakai "Masuk ulang dengan TOTP".
    */
-  const logout = async (): Promise<boolean> => {
+  const logout = async (ke?: string): Promise<boolean> => {
     galat.value = null
     try {
       await $fetch('/api/admin/logout', { method: 'POST', headers: HEADER_TULIS })
@@ -198,7 +202,7 @@ export const useAdminAuth = () => {
       return false
     }
     await bersihkanLokal()
-    await navigateTo('/console/login')
+    await navigateTo(ke ? { path: '/console/login', query: { ke } } : '/console/login')
     return true
   }
 

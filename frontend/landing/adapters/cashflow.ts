@@ -10,9 +10,16 @@
  * lupa menyamarkan = kebocoran. Di adapter, data yang sampai ke UI memang
  * sudah tersamar. Sejak Fase 0b (migrasi 0087/0088) server pun menyamarkan
  * sendiri, dan email utuh hanya datang lewat jalur beralasan yang menulis
- * audit: admin_daftar_pengguna_v2 dengan alasan, admin_detail_pengguna_v2,
- * dan admin_config_buka. Penyamaran di sini tetap dijalankan sebagai sabuk
- * kedua — samarkanEmail/samarkanNamaRuang idempoten atas bentuk server.
+ * audit: admin_daftar_pengguna_v2 dengan alasan (butuh cashflow:pii sejak
+ * 0089), admin_config_buka, dan admin_pengguna_360 di balik kasus. Penyamaran
+ * di sini tetap dijalankan sebagai sabuk kedua — samarkanEmail/
+ * samarkanNamaRuang idempoten atas bentuk server.
+ *
+ * Fase 1 dipecah per domain: cashflowKasus.ts (kasus, riwayat akses, audit
+ * v3), cashflowBuku.ts (kepala, 360, transaksi, laci, teks, cari), dan
+ * cashflowJejak.ts. Bentuk RPC yang dicabut 0091 (detail_pengguna_v2,
+ * aktivitas_pengguna, baca_transaksi_v2, baca_catatan_transaksi,
+ * daftar_audit_v2) sudah tidak ada di sini.
  *
  * Waktu (WIB) hidup di cashflowWaktu.ts dan diekspor ulang dari sini, supaya
  * `import { tanggalPendek } from '~/adapters/cashflow'` yang lama tetap jalan.
@@ -45,8 +52,10 @@ export interface PenggunaDTO {
   /** true = server memulangkan email utuh (daftar dibuka dengan alasan). */
   terbuka?: boolean
   banned_until: string | null
-  jumlah_ruang: number
-  jumlah_tx: number
+  /** null = sesi tanpa cashflow:pii (M/0089 §15 (d)): hitungan per orang yang
+   *  di-poll bersama hitungan per ruang menyusun graf keanggotaan. */
+  jumlah_ruang: number | null
+  jumlah_tx: number | null
   total_semua: number
 }
 export interface CorongDTO { urut: number; langkah: string; jumlah: number }
@@ -60,25 +69,14 @@ export interface RetensiDTO { kohort: string; mendaftar: number; pernah_catat: n
  *  kolom itu apa adanya (M/0076:102) — Inggris, bukan 'masuk'/'keluar'. */
 export const ARAH_PERISTIWA = ['income', 'expense'] as const
 export type ArahPeristiwa = typeof ARAH_PERISTIWA[number]
+/** admin_aktivitas_terbaru v1: sejak 0089 §20 `pada` dan `ruang_pendek` SELALU
+ *  null (kolomnya tetap ada) — waktu presisi dan awalan workspace_id adalah
+ *  kunci penggabung feed ↔ daftar tersamar. UI menulis '—'. */
 export interface AktivitasDTO {
   jenis: string; judul?: string | null; nominal?: number | string | null; arah?: ArahPeristiwa | null
-  tanggal: string; pada: string; pada_perangkat?: string | null; ruang?: string | null
-  rentang_nominal?: string; ruang_pendek?: string
+  tanggal: string; pada: string | null; pada_perangkat?: string | null; ruang?: string | null
+  rentang_nominal?: string; ruang_pendek?: string | null
 }
-/** admin_baca_transaksi_v2 (M/0087 §2): transaksi yang DICATAT p_user, terbaru
- *  dulu, maks. 200. SENGAJA tanpa `note` — server hanya mengirim `ada_catatan`;
- *  isinya dibuka per id lewat admin_baca_catatan_transaksi. Ruang/dompet bisa
- *  null (left join: ruangnya sudah tiada); kategori '' bila tanpa kategori. */
-export interface TransaksiDTO {
-  id: string; workspace: string | null; wallet: string | null; category: string
-  kind: string // 'income' | 'expense' — kaki transfer juga, dibedakan transfer_group
-  amount: number | string; occurred_at: string; occurred_time: string | null; created_at: string
-  transfer_group: string | null; group_id: string | null; schedule_id: string | null; installment_no: number | null
-  product_id: string | null; qty: number | string | null; updated_at: string | null
-  ada_catatan: boolean
-}
-/** admin_baca_catatan_transaksi (M/0087 §3): isi catatan untuk id yang diminta. */
-export interface CatatanTransaksiDTO { id: string; note: string | null }
 /** Nilai CHECK workspaces_jenis (M/0019:48) = penjaga p_jenis admin_daftar_ruang_v2. */
 export const JENIS_RUANG = ['pribadi', 'usaha'] as const
 export type JenisRuang = typeof JENIS_RUANG[number]
@@ -86,7 +84,9 @@ export type JenisRuang = typeof JENIS_RUANG[number]
  *  pemilik null bila akunnya sudah tiada (left join). */
 export interface RuangDTO {
   workspace_id: string; nama: string | null; pemilik_email: string | null; jenis: string
-  jumlah_anggota: number; jumlah_tx: number; undangan_aktif: number; created_at: string; total_semua: number
+  /** Ketiga hitungan null untuk sesi tanpa cashflow:pii (M/0089 §15 (d)). */
+  jumlah_anggota: number | null; jumlah_tx: number | null; undangan_aktif: number | null
+  created_at: string; total_semua: number
 }
 /** admin_daftar_config_v2 (M/0087 §6). admin.pengecualian_email dikirim sebagai
  *  larik bentuk tersamar tanpa '@' ('ded*** · gmail.com'); nilai lain yang
@@ -97,32 +97,9 @@ export interface ConfigDTO {
   updated_by: string | null; updated_at: string; tersamar: boolean
 }
 /** admin_audit.detail: selalu dibangun jsonb_build_object (atau null). Sengaja
- *  TIDAK rekursif seperti NilaiJson: ref<AuditDTO[]> di halaman membuat
- *  UnwrapRef Vue menjelajahi tipe rekursif sampai TS2589. */
+ *  TIDAK rekursif seperti NilaiJson: ref<…[]> di halaman membuat UnwrapRef
+ *  Vue menjelajahi tipe rekursif sampai TS2589. */
 export type ObjekJson = { [kunci: string]: unknown }
-/** admin_daftar_audit_v2 (M/0087 §8): target_email tersamar, detail tersamar bila memuat '@'. */
-export interface AuditDTO {
-  id: number; admin_id: string; admin_email: string; pelaku: string | null; action: string; target_type: string
-  target_id: string | null; target_email: string | null; detail: ObjekJson | null; reason: string | null
-  created_at: string; total_semua: number
-}
-/* Bentuk jsonb admin_detail_pengguna_bangun (M/0082:145-171). Dulu DTO ini
-   mengharapkan angka di ruang[] — kolom yang tidak pernah dikirim server —
-   sehingga ubin detail selalu 0. Angkanya ada di jumlah{}, dan itu jumlah
-   yang DICATAT pengguna ini (t.user_id) di semua ruang, termasuk kaki
-   transfer. Angka per ruang baru datang bersama admin_pengguna_360 (Fase 1). */
-export interface DetailRuangDTO {
-  workspace_id: string; nama: string; peran: string; pemilik: boolean; anggota: number
-}
-export interface JumlahPenggunaDTO {
-  transaksi: number; pemasukan: number | string; pengeluaran: number | string; dompet: number; jadwal: number
-}
-export interface DetailPenggunaDTO {
-  user_id: string; email: string; display_name: string | null; created_at: string
-  last_sign_in: string | null; banned_until: string | null
-  ruang: DetailRuangDTO[]
-  jumlah: JumlahPenggunaDTO
-}
 /* Baris public.announcements apa adanya: admin_daftar_pengumuman memulangkan
    `setof public.announcements` (M/0022:36-45, 72-83) — nama kolom Inggris.
    Halaman dulu membaca judul/isi/mulai/sampai langsung dari jawaban ini,
@@ -155,8 +132,9 @@ export interface Pengguna {
   daftarIso: string
   masukTerakhirIso: string | null
   aktivitasTerakhirIso: string | null
-  ruang: number
-  tx: number
+  /** null = server tidak mengirim hitungan (sesi tanpa pii) — bukan 0. */
+  ruang: number | null
+  tx: number | null
   status: 'aktif' | 'ditangguhkan'
   hariAktif: number         // aktivitas terakhir − daftar, dalam hari
   hariSejakAktif: number    // hari ini − aktivitas terakhir; Infinity bila belum pernah
@@ -164,32 +142,6 @@ export interface Pengguna {
 export interface LangkahCorong { urut: number; kunci: string; jumlah: number; persenDariSebelumnya: number | null }
 export interface SelKohort { kohort: string; mendaftar: number; pernahCatat: number; catat30: number; berjalan: boolean; persen: number }
 
-export interface RuangPengguna {
-  id: string
-  nama: string
-  peran: string
-  pemilik: boolean
-  anggota: number
-  /* null = server belum mengirim angka per ruang; tampil "—", BUKAN 0. Nol
-     yang palsu terbaca "orang ini tidak mencatat apa pun di ruang ini". */
-  transaksi: number | null
-  pemasukan: number | null
-  pengeluaran: number | null
-  dompet: number | null
-  jadwal: number | null
-}
-export interface DetailPengguna {
-  id: string
-  email: string
-  namaTampil: string        // '—' bila kosong
-  daftarIso: string
-  daftar: string            // 'DD Mon YYYY' (WIB)
-  masukTerakhir: string
-  ditangguhkan: boolean
-  ruang: RuangPengguna[]
-  /** Dicatat olehnya di semua ruang, termasuk kaki transfer (M/0082:163-168). */
-  jumlah: { transaksi: number; pemasukan: number; pengeluaran: number; dompet: number; jadwal: number }
-}
 export type JedaCatatan = { satuan: 'menit' | 'jam' | 'hari'; n: number } | null
 export type ArahUang = 'masuk' | 'keluar'
 export interface TabelKesehatan { tabel: string; baris: number; ukuran: number }
@@ -214,30 +166,15 @@ export interface Pengumuman {
 
 export interface Keberhasilan { jumlah: number; pembanding: number; pengecualian: number }
 
-export interface Transaksi {
-  id: string
-  ruang: string             // '—' bila ruangnya sudah tiada
-  dompet: string            // '—' bila dompetnya sudah tiada
-  kategori: string          // '' bila tanpa kategori
-  arah: ArahUang | null
-  nominal: number
-  tanggal: string           // occurred_at: kolom date 'YYYY-MM-DD', diformat di halaman
-  dibuatIso: string
-  /** Kaki transfer antardompet (transfer_group terisi): bukan pemasukan/pengeluaran sungguhan. */
-  transfer: boolean
-  adaCatatan: boolean
-  /** null = belum dibuka; teks = isi catatan yang dibuka dengan alasan investigasi. */
-  catatan: string | null
-}
-
 export interface Ruang {
   id: string
   nama: string              // tersamar (server), '—' bila kosong
   pemilik: string           // tersamar (server), '—' bila akunnya sudah tiada
   jenis: JenisRuang | null  // null = nilai yang tidak dikenal
-  anggota: number
-  tx: number
-  undangan: number
+  /* null = server tidak mengirim hitungan (sesi tanpa pii) — bukan 0. */
+  anggota: number | null
+  tx: number | null
+  undangan: number | null
   dibuatIso: string
 }
 
@@ -332,8 +269,8 @@ export function kePengguna(d: PenggunaDTO, bahasa: BahasaWaktu = 'id'): Pengguna
     daftarIso: d.created_at,
     masukTerakhirIso: d.last_sign_in,
     aktivitasTerakhirIso: aktifIso ?? null,
-    ruang: Number(d.jumlah_ruang) || 0,
-    tx: Number(d.jumlah_tx) || 0,
+    ruang: angkaAtauNull(d.jumlah_ruang),
+    tx: angkaAtauNull(d.jumlah_tx),
     status: ditangguhkan ? 'ditangguhkan' : 'aktif',
     hariAktif,
     hariSejakAktif,
@@ -363,33 +300,6 @@ export function keKohort(rows: RetensiDTO[]): SelKohort[] {
     berjalan: !!r.bulan_berjalan,
     persen: Number(r.mendaftar) ? Math.round((Number(r.catat_30hari) / Number(r.mendaftar)) * 100) : 0,
   }))
-}
-
-/** Detail satu orang. Angka ubin diambil dari jumlah{} server apa adanya;
- *  angka per ruang null sampai server mengirimnya (lihat DetailRuangDTO). */
-export function keDetailPengguna(d: DetailPenggunaDTO, bahasa: BahasaWaktu = 'id'): DetailPengguna {
-  const n = (v: number | string | null | undefined) => {
-    const x = Number(v ?? 0)
-    return Number.isFinite(x) ? x : 0
-  }
-  const j = d.jumlah
-  return {
-    id: d.user_id,
-    email: d.email,
-    namaTampil: d.display_name?.trim() || '—',
-    daftarIso: d.created_at,
-    daftar: tanggalPendek(d.created_at, bahasa),
-    masukTerakhir: tanggalPendek(d.last_sign_in, bahasa),
-    ditangguhkan: !!d.banned_until && new Date(d.banned_until).getTime() > Date.now(),
-    ruang: (d.ruang ?? []).map(r => ({
-      id: r.workspace_id, nama: r.nama, peran: r.peran, pemilik: !!r.pemilik, anggota: n(r.anggota),
-      transaksi: null, pemasukan: null, pengeluaran: null, dompet: null, jadwal: null,
-    })),
-    jumlah: {
-      transaksi: n(j?.transaksi), pemasukan: n(j?.pemasukan), pengeluaran: n(j?.pengeluaran),
-      dompet: n(j?.dompet), jadwal: n(j?.jadwal),
-    },
-  }
 }
 
 /** Sparkline dari transaksi_per_hari — pastikan 30 hari terisi (hari tanpa
@@ -458,68 +368,18 @@ const angkaAtauNol = (v: number | string | null | undefined): number => {
   const x = Number(v ?? 0)
   return Number.isFinite(x) ? x : 0
 }
+/** Hitungan yang server boleh tahan (null untuk sesi tanpa pii, M/0089 §15 (d)):
+ *  null tetap null supaya tabel menulis '-', bukan "0" yang terbaca sebagai fakta. */
+const angkaAtauNull = (v: number | string | null | undefined): number | null => {
+  if (v == null || v === '') return null
+  const x = Number(v)
+  return Number.isFinite(x) ? x : null
+}
 
 /** admin_ukuran_keberhasilan_v2 memulangkan SATU baris (returns table); tanpa baris → null. */
 export function keKeberhasilan(d: KeberhasilanDTO | null | undefined): Keberhasilan | null {
   if (!d) return null
   return { jumlah: angkaAtauNol(d.jumlah), pembanding: angkaAtauNol(d.pembanding), pengecualian: angkaAtauNol(d.jumlah_pengecualian) }
-}
-
-/** Batas server admin_baca_catatan_transaksi (p_ids ≤ 100) — dan banyaknya
- *  transaksi yang dimuat detail pengguna, jadi satu halaman = satu panggilan. */
-export const BATAS_CATATAN = 100
-/** Awalan alasan tingkat investigasi: supaya pembukaan catatan bebas menonjol
- *  di daftar audit, terpisah dari pembukaan detail biasa.
- *
- *  BENTUK DI AUDIT. rpc() (useCashflowAdmin) menambahkan "[pelaku] " di depan
- *  SETIAP alasan, jadi admin_audit.reason berbentuk
- *  "[admin@coreasia.id] INVESTIGASI — Investigasi galat — tiket 42", bukan
- *  "INVESTIGASI — …". Saring baris investigasi dengan
- *  action = 'baca_catatan_transaksi'; bila perlu pola teks, pakai
- *  POLA_AUDIT_INVESTIGASI (dipakai juga oleh toko/uji-console-rpc.sql #41). */
-export const AWALAN_INVESTIGASI = 'INVESTIGASI — '
-/** Pola LIKE Postgres untuk admin_audit.reason sebuah pembukaan catatan dari console. */
-export const POLA_AUDIT_INVESTIGASI = '[%] INVESTIGASI — %'
-
-/** Awalan investigasi (satu atau berulang, spasi longgar) di depan alasan. */
-const AWALAN_INVESTIGASI_RE = /^(?:INVESTIGASI\s*—\s*)+/
-/** Bagian alasan yang DITULIS ORANG: tanpa awalan investigasi. Syarat panjang
- *  diukur di sini — awalan tidak boleh memenuhi syarat atas nama pengguna. */
-export function intiAlasan(alasan: string): string {
-  return alasan.trim().replace(AWALAN_INVESTIGASI_RE, '').trim()
-}
-
-export function alasanInvestigasi(alasan: string): string {
-  return `${AWALAN_INVESTIGASI}${intiAlasan(alasan)}`
-}
-
-export function keTransaksi(d: TransaksiDTO): Transaksi {
-  return {
-    id: d.id,
-    ruang: d.workspace?.trim() || '—',
-    dompet: d.wallet?.trim() || '—',
-    kategori: d.category ?? '',
-    arah: keArahUang(d.kind),
-    nominal: angkaAtauNol(d.amount),
-    tanggal: d.occurred_at,
-    dibuatIso: d.created_at,
-    transfer: !!d.transfer_group,
-    adaCatatan: d.ada_catatan === true,
-    catatan: null,
-  }
-}
-
-/** Id yang catatannya boleh diminta: HANYA baris ber-ada_catatan yang belum
- *  dibuka, paling banyak `batas`. Id tanpa catatan tidak dikirim — setiap id
- *  yang dikirim tercatat di audit sebagai catatan yang dibuka. */
-export function idBercatatan(daftar: readonly Transaksi[], batas: number = BATAS_CATATAN): string[] {
-  return daftar.filter(t => t.adaCatatan && t.catatan === null).slice(0, Math.max(0, batas)).map(t => t.id)
-}
-
-/** Tempel isi catatan ke barisnya (larik baru; baris lain tidak disentuh). */
-export function tempelCatatan(daftar: readonly Transaksi[], catatan: readonly CatatanTransaksiDTO[]): Transaksi[] {
-  const peta = new Map(catatan.map(c => [c.id, c.note]))
-  return daftar.map(t => (peta.has(t.id) ? { ...t, catatan: peta.get(t.id) ?? null } : t))
 }
 
 const JENIS_RUANG_SET: ReadonlySet<string> = new Set(JENIS_RUANG)
@@ -530,9 +390,9 @@ export function keRuang(d: RuangDTO): Ruang {
     nama: samarkanNamaRuang(d.nama),
     pemilik: samarkanEmail(d.pemilik_email),
     jenis: JENIS_RUANG_SET.has(d.jenis) ? (d.jenis as JenisRuang) : null,
-    anggota: angkaAtauNol(d.jumlah_anggota),
-    tx: angkaAtauNol(d.jumlah_tx),
-    undangan: angkaAtauNol(d.undangan_aktif),
+    anggota: angkaAtauNull(d.jumlah_anggota),
+    tx: angkaAtauNull(d.jumlah_tx),
+    undangan: angkaAtauNull(d.undangan_aktif),
     dibuatIso: d.created_at,
   }
 }

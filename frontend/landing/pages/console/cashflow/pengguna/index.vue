@@ -15,6 +15,9 @@
  *
  * Mulai Fase 1 (0089) server hanya melayani jalur ini untuk sesi console yang
  * memegang izin cashflow:pii (login ber-TOTP); sakelarnya tetap satu ketukan.
+ * Tanpa izin itu server menjawab 42501 izin-kurang: daftar tetap tersamar dan
+ * halaman menjelaskan "butuh login ber-TOTP" dengan jalan ke Keamanan akun
+ * (CashflowIzinKurang) — bukan "bukan admin".
  *
  * Saring, urut, dan paginasi di KLIEN atas ≤ 500 baris, berurutan saring →
  * urut (nilai mentah) → potong per halaman. Pencarian tidak dikirim ke
@@ -24,6 +27,12 @@
  * detail kembali ke tempat yang sama. Teks cari dan saringan kolom sengaja
  * tidak di URL (isinya bisa potongan email) — keduanya di useState, supaya
  * Back mengembalikan saringan yang menjadi dasar ?hal.
+ *
+ * Jumlah ruang dan transaksi per orang dikirim server HANYA ke sesi ber-pii
+ * (M/0089 §15 (d)); selain itu null → tabel menulis "—" (butuh TOTP), dan
+ * segmen yang bergantung padanya (Tidak pernah mencatat, Mencatat 7 hari)
+ * dimatikan. Cabang tersamar juga membulatkan masuk/aktif terakhir ke awal
+ * hari WIB — halaman ini memang hanya menampilkan tanggal.
  */
 definePageMeta({ layout: 'console', middleware: ['console', 'cashflow-admin'] })
 import { kePengguna, samarkanEmail, type Pengguna, type PenggunaDTO } from '~/adapters/cashflow'
@@ -36,7 +45,7 @@ const api = useCashflowAdmin()
 const route = useRoute()
 const indeks = useCashflowIndeks()
 const alasanDaftar = useCashflowAlasanDaftar()
-const { memuat, pesanGalat, muat } = useCashflowMuat({ awal: true })
+const { memuat, galat, pesanGalat, muat } = useCashflowMuat({ awal: true })
 
 const MAKS = 500
 const PER = 25
@@ -111,7 +120,8 @@ const gantiHalaman = async (h: number) => {
 // Tombol kembali di halaman detail membawa query terakhir daftar ini.
 watch(() => route.fullPath, p => indeks.ingatDaftar(p), { immediate: true })
 
-interface Baris { id: string; email: string; daftar: string; aktif: string; ruang: number; tx: number; status: string; p: Pengguna }
+/* ruang/tx null = sesi tanpa pii: server tidak mengirim hitungan (M/0089 §15 (d)); tabel menulis '—'. */
+interface Baris { id: string; email: string; daftar: string; aktif: string; ruang: number | null; tx: number | null; status: string; p: Pengguna }
 const keBaris = (p: Pengguna): Baris => ({
   id: p.id,
   email: p.emailPenuh ?? p.emailTersamar,
@@ -152,7 +162,7 @@ const tersaring = computed(() => {
     if (q.value.seg === 'belum') return p.tx === 0
     if (q.value.seg === 'ditangguhkan') return p.status === 'ditangguhkan'
     // "Mencatat 7 hari" = pernah mencatat DAN masih aktif dalam 7 hari terakhir.
-    if (q.value.seg === 'catat7') return p.tx > 0 && p.hariSejakAktif <= 7
+    if (q.value.seg === 'catat7') return p.tx !== null && p.tx > 0 && p.hariSejakAktif <= 7
     return true
   })
   return saringKolom(lolos.map(keBaris), filterKolom.value, kolom.value)
@@ -183,6 +193,9 @@ const segmenOpsi = computed(() => [
   { kunci: 'ditangguhkan' as const, label: tcf('pengguna.ditangguhkan') },
 ])
 const terpotong = computed(() => total.value > semua.value.length)
+/** Server menahan hitungan per orang (sesi tanpa pii): segmen berbasis tx tidak bermakna. */
+const tanpaHitungan = computed(() => semua.value.length > 0 && semua.value.every(p => p.tx === null && p.ruang === null))
+const segmenButuhHitungan = (k: string) => k === 'belum' || k === 'catat7'
 
 useCashflowPintasan([{ kunci: '/', aksi: () => kolomCari.value?.focus() }])
 </script>
@@ -202,6 +215,8 @@ useCashflowPintasan([{ kunci: '/', aksi: () => kolomCari.value?.focus() }])
           class="rounded-full px-3 py-1 transition"
           :class="q.seg === s.kunci ? 'bg-[var(--ca-panel-bg-strong)] font-semibold text-[var(--ca-text)]' : 'text-[var(--ca-muted)]'"
           :aria-pressed="q.seg === s.kunci"
+          :disabled="tanpaHitungan && segmenButuhHitungan(s.kunci)"
+          :title="tanpaHitungan && segmenButuhHitungan(s.kunci) ? tcf('umum.butuhTotp') : undefined"
           @click="pilihSegmen(s.kunci)"
         >{{ s.label }}</button>
       </div>
@@ -234,7 +249,8 @@ useCashflowPintasan([{ kunci: '/', aksi: () => kolomCari.value?.focus() }])
       {{ tcf('pengguna.terbukaSampai')(formatJam(new Date(terbuka.sampai))) }}
     </p>
 
-    <p v-if="pesanGalat" class="text-sm ca-tone-danger">{{ pesanGalat }}</p>
+    <CashflowIzinKurang v-if="galat?.jenis === 'izin'" :pesan="tcf('pengguna.emailButuhTotp')" />
+    <p v-else-if="pesanGalat" class="text-sm ca-tone-danger">{{ pesanGalat }}</p>
 
     <!-- Muat gagal tanpa baris = galat saja; "Belum ada data." di bawahnya terbaca
          seolah produk tidak punya pengguna. -->
@@ -250,6 +266,10 @@ useCashflowPintasan([{ kunci: '/', aksi: () => kolomCari.value?.focus() }])
         <template #cell-email="{ row }">
           <NuxtLink :to="`/console/cashflow/pengguna/${row.id}`" class="font-mono text-[var(--ca-text)] underline-offset-2 hover:underline" @click.stop>{{ row.email }}</NuxtLink>
         </template>
+        <template v-for="k in (['ruang', 'tx'] as const)" :key="k" #[`cell-${k}`]="{ value }">
+          <span v-if="value === null" :title="tcf('umum.butuhTotp')">—<span class="sr-only"> ({{ tcf('umum.butuhTotp') }})</span></span>
+          <template v-else>{{ value }}</template>
+        </template>
       </DataTable>
     </div>
 
@@ -260,6 +280,7 @@ useCashflowPintasan([{ kunci: '/', aksi: () => kolomCari.value?.focus() }])
     />
 
     <p v-if="terpotong" class="text-xs ca-tone-gold">{{ tcf('pengguna.potong')(semua.length, total) }}</p>
+    <p v-if="tanpaHitungan" class="text-xs text-[var(--ca-subtle)]">{{ tcf('umum.hitunganButuhTotp') }}</p>
     <p class="text-xs text-[var(--ca-subtle)]">{{ tcf('pengguna.aktifTerakhirKet') }}</p>
   </div>
 </template>
