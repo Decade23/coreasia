@@ -3,6 +3,7 @@ package handler
 import (
 	"fmt"
 	"log/slog"
+	"os"
 	"time"
 
 	"github.com/coreasia/gateway/internal/auth"
@@ -11,6 +12,7 @@ import (
 	"github.com/coreasia/gateway/internal/rbac"
 	"github.com/coreasia/gateway/internal/repository"
 	"github.com/coreasia/gateway/internal/service"
+	"github.com/coreasia/gateway/pkg/apperr"
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/cors"
 	"github.com/gofiber/fiber/v3/middleware/recover"
@@ -31,9 +33,11 @@ func NewServer(cfg *config.Config, pool *pgxpool.Pool, rdb *redis.Client) *Serve
 		ErrorHandler: globalErrorHandler,
 		BodyLimit:    10 * 1024 * 1024, // 10MB for file uploads
 	}
-	// Production traffic reaches Fiber through the Caddy container. Trust only
-	// internal/loopback proxies so c.IP() sees the real client from
-	// X-Forwarded-For without allowing direct clients to spoof the limiter key.
+	// Di produksi lalu lintas masuk lewat Cloudflare lalu nginx-proxy Pantau
+	// (deploy/pantau). PERHATIAN: dengan konfigurasi ini c.IP() memulangkan
+	// entri X-Forwarded-For paling KIRI, yang bisa dikarang klien. Auth admin
+	// (pembatas /login dan /totp/verify, log, audit) memakai mw.ClientIP, yang
+	// membaca XFF dari kanan. Rute lain belum.
 	if cfg.App.Env == "production" {
 		appConfig.ProxyHeader = fiber.HeaderXForwardedFor
 		appConfig.TrustProxy = true
@@ -63,6 +67,9 @@ func (s *Server) setupMiddleware() {
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Content-Type", "Accept", "Authorization"},
 		AllowCredentials: true,
+		// Halaman /console/login memanggil /admin/auth/login dan /totp/verify
+		// langsung dari peramban: tanpa ini Retry-After 429 tidak terbaca JS.
+		ExposeHeaders: []string{"Retry-After"},
 	}))
 }
 
@@ -100,22 +107,52 @@ func (s *Server) setupRoutes() {
 	if refreshTTL == 0 {
 		refreshTTL = 720 * time.Hour
 	}
-	jwtProvider := auth.NewJWTProvider(s.cfg.JWT.Secret, accessTTL, refreshTTL, s.cfg.JWT.Issuer)
+	// Auth admin hanya longgar bila APP_ENV=development di-set EKSPLISIT lewat
+	// environment. Nilai "development" dari configs/config.yaml (ikut di image)
+	// atau dari env-default tidak dihitung: .env produksi yang kehilangan
+	// APP_ENV tidak boleh diam-diam melonggarkan penjaga JWT_SECRET dan
+	// pembatas login.
+	explicitEnv, _ := os.LookupEnv("APP_ENV")
+	adminAuthDev := explicitEnv == "development"
+	jwtSecret, adminAuthReady := guardJWTSecret(s.cfg.JWT.Secret, s.cfg.App.Env, explicitEnv)
+	jwtProvider := auth.NewJWTProvider(jwtSecret, accessTTL, refreshTTL, s.cfg.JWT.Issuer)
 
 	// Rate limiters
 	aiRateLimiter := mw.NewRateLimiter(10, 1*time.Hour)
-	loginRateLimiter := mw.NewIPRateLimiter(5, 15*time.Minute, s.cfg.App.Env == "development")
+	// Pembatas per IP auth admin dikunci mw.ClientIPKey (XFF dari kanan, IPv6
+	// per /64), bukan c.IP() yang bisa dikarang klien lewat X-Forwarded-For.
+	loginRateLimiter := mw.NewIPRateLimiter(5, 15*time.Minute, adminAuthDev)
+	// Lapis kedua di depan batas per admin (5 per 15 menit, Redis): membatasi
+	// banjir /totp/verify dari satu IP, termasuk ke banyak admin sekaligus.
+	totpVerifyRateLimiter := mw.NewIPRateLimiter(10, 15*time.Minute, adminAuthDev)
 	contactLeadRateLimiter := mw.NewIPRateLimiter(10, 1*time.Hour, s.cfg.App.Env == "development")
 
 	// Handlers
 	healthHandler := NewHealthHandler(s.pool)
 	plansHandler := NewPlansHandler(planRepo)
 	onboardingHandler := NewOnboardingHandler(tenantRepo, planRepo, provisioner, midtransService)
-	authHandler := NewAuthHandler(adminUserRepo, auditLogRepo, jwtProvider)
+	// TOTP admin: rahasia dienkripsi dengan kunci turunan JWT secret; kode salah
+	// dibatasi per admin di Redis. Tanpa salah satunya, endpoint TOTP menjawab 503
+	// (gagal tertutup) dan login admin tanpa TOTP berjalan seperti biasa.
+	var totpCipher *auth.TOTPCipher
+	if adminAuthReady {
+		totpCipher, err = auth.NewTOTPCipher(jwtSecret)
+		if err != nil {
+			slog.Warn("TOTP admin dinonaktifkan", "error", err)
+			totpCipher = nil
+		}
+	}
+	var totpAttempts totpAttemptLimiter
+	var loginAttempts loginAttemptLimiter
+	if s.rdb != nil {
+		totpAttempts = auth.NewRedisTOTPLimiter(s.rdb, totpMaxFailures, totpFailureWindow, totpMaxFailuresLong, totpFailureWindowLong)
+		loginAttempts = auth.NewRedisLoginLimiter(s.rdb, loginMaxFailures, loginFailureWindow, loginOriginTTL)
+	}
+	authHandler := NewAuthHandler(adminUserRepo, auditLogRepo, jwtProvider, totpCipher, totpAttempts, loginAttempts)
 	articleHandler := NewArticleHandler(articleRepo, auditLogRepo)
 	crmService := service.NewCRMService(s.cfg.CRM)
 	contactLeadHandler := NewContactLeadHandler(contactLeadRepo, emailService, crmService)
-	adminUserHandler := NewAdminUserHandler(adminUserRepo, auditLogRepo)
+	adminUserHandler := NewAdminUserHandler(adminUserRepo, auditLogRepo, totpAttempts)
 	uploadHandler := NewUploadHandler(r2Service, auditLogRepo)
 	apiKeyRepo := repository.NewAPIKeyRepo(s.pool)
 	appSettingsRepo := repository.NewAppSettingsRepo(s.pool)
@@ -162,18 +199,26 @@ func (s *Server) setupRoutes() {
 	api.Get("/articles", articleHandler.ListPublished)
 	api.Get("/articles/:slug", articleHandler.GetBySlug)
 
-	// Admin auth routes (no auth required, login rate limited)
-	adminAuth := api.Group("/admin/auth")
-	adminAuth.Post("/login", loginRateLimiter.Middleware(), authHandler.Login)
-	adminAuth.Post("/refresh", authHandler.Refresh)
+	// JWT_SECRET ditolak (lihat guardJWTSecret): seluruh /api/admin/** menjawab
+	// 503, sedangkan rute publik (lisensi CAD, webhook pembayaran, lead) tetap
+	// berjalan. Harus terdaftar sebelum rute admin mana pun.
+	if !adminAuthReady {
+		api.Use("/admin", adminAuthDisabled)
+	}
 
-	// Protected admin routes
-	admin := api.Group("/admin", authMiddleware)
+	// Auth admin (publik + terlindung). Rute terlindung memakai grup /admin
+	// yang dikembalikan, dengan AuthMiddleware.
+	admin := registerAdminAuthRoutes(api, adminRoutes{
+		auth:        authHandler,
+		requireAuth: authMiddleware,
+		loginLimit:  loginRateLimiter.MiddlewareBy(mw.ClientIPKey),
+		verifyLimit: totpVerifyRateLimiter.MiddlewareBy(mw.ClientIPKey),
+	})
 
-	// Auth (self-service, no permission check)
-	admin.Get("/auth/me", authHandler.Me)
-	admin.Post("/auth/logout", authHandler.Logout)
-	admin.Get("/auth/permissions", authHandler.Permissions)
+	// Sesi hidup (is_active + token_version + peran dari DB) untuk rute bernilai
+	// tinggi yang jarang dipanggil: manajemen admin dan API key. Satu kueri per
+	// permintaan, hanya di rute ini.
+	liveSession := mw.RequireLiveSession(adminUserRepo)
 
 	// Article management
 	admin.Get("/articles", mw.RequirePermission(rbac.ArticlesList), articleHandler.ListAll)
@@ -196,18 +241,16 @@ func (s *Server) setupRoutes() {
 	admin.Put("/ai/settings", mw.RequirePermission(rbac.AISettingsUpdate), aiHandler.UpdateSettings)
 
 	// Admin user management
-	admin.Get("/users", mw.RequirePermission(rbac.UsersList), adminUserHandler.List)
-	admin.Post("/users", mw.RequirePermission(rbac.UsersCreate), adminUserHandler.Create)
-	admin.Put("/users/:id", mw.RequirePermission(rbac.UsersUpdate), adminUserHandler.Update)
-	admin.Delete("/users/:id", mw.RequirePermission(rbac.UsersDelete), adminUserHandler.Delete)
+	registerAdminUserRoutes(admin, adminUserHandler, liveSession)
 
-	// API key management
-	admin.Get("/api-keys", mw.RequirePermission(rbac.APIKeysList), apiKeyHandler.List)
-	admin.Get("/api-keys/:id", mw.RequirePermission(rbac.APIKeysView), apiKeyHandler.GetByID)
-	admin.Get("/api-keys/:id/copy", mw.RequirePermission(rbac.APIKeysCopy), apiKeyHandler.CopyKey)
-	admin.Post("/api-keys", mw.RequirePermission(rbac.APIKeysCreate), apiKeyHandler.Create)
-	admin.Put("/api-keys/:id", mw.RequirePermission(rbac.APIKeysUpdate), apiKeyHandler.Update)
-	admin.Delete("/api-keys/:id", mw.RequirePermission(rbac.APIKeysDelete), apiKeyHandler.Delete)
+	// API key management (menyalin kunci provider = rahasia; membuat kunci =
+	// akses yang bertahan): wajib sesi hidup.
+	admin.Get("/api-keys", liveSession, mw.RequirePermission(rbac.APIKeysList), apiKeyHandler.List)
+	admin.Get("/api-keys/:id", liveSession, mw.RequirePermission(rbac.APIKeysView), apiKeyHandler.GetByID)
+	admin.Get("/api-keys/:id/copy", liveSession, mw.RequirePermission(rbac.APIKeysCopy), apiKeyHandler.CopyKey)
+	admin.Post("/api-keys", liveSession, mw.RequirePermission(rbac.APIKeysCreate), apiKeyHandler.Create)
+	admin.Put("/api-keys/:id", liveSession, mw.RequirePermission(rbac.APIKeysUpdate), apiKeyHandler.Update)
+	admin.Delete("/api-keys/:id", liveSession, mw.RequirePermission(rbac.APIKeysDelete), apiKeyHandler.Delete)
 
 	// Keywords
 	admin.Get("/keywords", mw.RequirePermission(rbac.KeywordsList), keywordHandler.List)
@@ -251,6 +294,95 @@ func (s *Server) setupRoutes() {
 	// CAD purchase webhooks — public, secured by shared-secret token
 	api.Post("/cad/purchase/mayar", cadHandler.PurchaseWebhookMayar)
 	api.Post("/cad/purchase/gumroad", cadHandler.PurchaseWebhookGumroad)
+}
+
+// adminRoutes adalah dependensi rute auth admin. Dirakit server.go dan uji
+// handler lewat registerAdminAuthRoutes/registerAdminUserRoutes, supaya uji
+// memakai susunan rute dan middleware yang sama persis dengan produksi.
+type adminRoutes struct {
+	auth        *AuthHandler
+	requireAuth fiber.Handler // mw.AuthMiddleware
+	loginLimit  fiber.Handler // pembatas IP /login
+	verifyLimit fiber.Handler // pembatas IP /totp/verify
+}
+
+// registerAdminAuthRoutes mendaftarkan /api/admin/auth/** dan mengembalikan
+// grup /api/admin yang dilindungi AuthMiddleware.
+func registerAdminAuthRoutes(api fiber.Router, d adminRoutes) fiber.Router {
+	// IP peramban yang DILAPORKAN BFF console (X-Konsol-Klien-IP) → context,
+	// hanya untuk kolom audit reported_client_ip. Tidak tepercaya: pembatas,
+	// kunci percobaan, dan ip_address tetap dari mw.ClientIP / c.IP().
+	api.Use("/admin", mw.ReportedClientIP)
+
+	// Tanpa access token: login (dibatasi per IP), refresh, dan langkah kedua
+	// login ber-TOTP (tantangan typ=mfa + kode → token). /totp/verify dibatasi
+	// per IP di sini dan 5 percobaan per admin per 15 menit di handler (Redis,
+	// dipesan sebelum kode dievaluasi).
+	adminAuth := api.Group("/admin/auth")
+	adminAuth.Post("/login", d.loginLimit, d.auth.Login)
+	adminAuth.Post("/refresh", d.auth.Refresh)
+	adminAuth.Post("/totp/verify", d.verifyLimit, d.auth.TOTPVerify)
+
+	// Protected admin routes
+	admin := api.Group("/admin", d.requireAuth)
+
+	// Auth (self-service, no permission check)
+	admin.Get("/auth/me", d.auth.Me)
+	admin.Post("/auth/logout", d.auth.Logout)
+	admin.Get("/auth/permissions", d.auth.Permissions)
+	admin.Post("/auth/logout-all", d.auth.LogoutAll)
+	admin.Post("/auth/totp/setup", d.auth.TOTPSetup)
+	admin.Post("/auth/totp/enable", d.auth.TOTPEnable)
+	admin.Post("/auth/totp/disable", d.auth.TOTPDisable)
+	return admin
+}
+
+// registerAdminUserRoutes: manajemen admin, semuanya di belakang sesi hidup
+// (live = mw.RequireLiveSession) lalu izin dari peran terkini di DB.
+func registerAdminUserRoutes(admin fiber.Router, users *AdminUserHandler, live fiber.Handler) {
+	admin.Get("/users", live, mw.RequirePermission(rbac.UsersList), users.List)
+	admin.Post("/users", live, mw.RequirePermission(rbac.UsersCreate), users.Create)
+	admin.Put("/users/:id", live, mw.RequirePermission(rbac.UsersUpdate), users.Update)
+	admin.Delete("/users/:id", live, mw.RequirePermission(rbac.UsersDelete), users.Delete)
+	admin.Post("/users/:id/revoke-sessions", live, mw.RequirePermission(rbac.UsersUpdate), users.RevokeSessions)
+	admin.Post("/users/:id/totp/reset", live, mw.RequirePermission(rbac.UsersUpdate), users.ResetTOTP)
+}
+
+// guardJWTSecret menolak JWT_SECRET yang kosong, pendek, atau sama dengan
+// nilai yang ter-commit di repo (configs/config.yaml ikut dikapalkan di image,
+// jadi tanpa JWT_SECRET di .env nilai repo itu dipakai diam-diam). Secret yang
+// sama juga menjadi kunci HKDF enkripsi rahasia TOTP.
+//
+// explicitEnv = APP_ENV dari environment proses ("" bila tidak di-set); env =
+// hasil akhir config (termasuk default YAML), hanya untuk log.
+//
+// APP_ENV=development yang di-set eksplisit: secret lemah dibiarkan (dengan
+// peringatan), kecuali kosong. Default "development" dari config.yaml TIDAK
+// dihitung, karena itulah keadaan .env produksi yang kehilangan APP_ENV dan
+// JWT_SECRET sekaligus.
+//
+// Selain itu: proses TIDAK dimatikan, karena gateway ini juga melayani produk
+// berbayar (aktivasi lisensi, webhook pembayaran). Yang dimatikan hanya auth
+// admin: provider memakai secret acak di memori (token rakitan dari nilai
+// repo tidak sah) dan /api/admin/** menjawab 503 sampai JWT_SECRET diganti.
+func guardJWTSecret(secret, env, explicitEnv string) (string, bool) {
+	err := auth.CheckJWTSecret(secret)
+	if err == nil {
+		return secret, true
+	}
+	if explicitEnv == "development" && secret != "" {
+		slog.Warn("JWT_SECRET lemah; dibiarkan karena APP_ENV=development di-set eksplisit", "alasan", err)
+		return secret, true
+	}
+	slog.Error("JWT_SECRET ditolak: auth admin console DIMATIKAN (503) sampai JWT_SECRET di .env diganti; rute publik tetap berjalan. Lokal: jalankan dengan APP_ENV=development",
+		"alasan", err, "env", env, "app_env_eksplisit", explicitEnv, "sidik", auth.JWTSecretFingerprint(secret))
+	return auth.RandomJWTSecret(), false
+}
+
+// adminAuthDisabled menjawab semua /api/admin/** saat JWT_SECRET ditolak.
+func adminAuthDisabled(c fiber.Ctx) error {
+	return errResponse(c, apperr.NewServiceUnavailable(
+		"Login console dimatikan: JWT_SECRET server tidak aman. Operator harus mengganti JWT_SECRET di .env lalu memulai ulang gateway (lokal: jalankan dengan APP_ENV=development)."))
 }
 
 func (s *Server) Start() error {

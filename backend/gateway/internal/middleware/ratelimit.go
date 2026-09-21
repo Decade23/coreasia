@@ -47,12 +47,19 @@ func NewIPRateLimiter(limit int, window time.Duration, isDev bool) *IPRateLimite
 }
 
 func (rl *IPRateLimiter) Middleware() fiber.Handler {
+	return rl.MiddlewareBy(func(c fiber.Ctx) string { return c.IP() })
+}
+
+// MiddlewareBy sama dengan Middleware, tetapi kuncinya dari key(c). Auth admin
+// memakai ClientIPKey: c.IP() di balik proxy memulangkan entri X-Forwarded-For
+// paling kiri, yang bisa dikarang klien (lihat ClientIP).
+func (rl *IPRateLimiter) MiddlewareBy(key func(fiber.Ctx) string) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		if rl.isDev {
 			return c.Next()
 		}
 
-		ip := c.IP()
+		ip := key(c)
 
 		rl.mu.Lock()
 		entry, exists := rl.entries[ip]
