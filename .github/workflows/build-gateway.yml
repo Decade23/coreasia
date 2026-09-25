@@ -75,7 +75,8 @@ jobs:
 
       - name: Terapkan migrasi ke DB uji
         run: |
-          for f in $(ls migrations/*.up.sql | sort); do
+          # Glob bash sudah terurut, dan nomor migrasi berawalan nol.
+          for f in migrations/*.up.sql; do
             echo "== $f"
             psql -v ON_ERROR_STOP=1 -q -f "$f"
           done
