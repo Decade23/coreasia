@@ -136,6 +136,14 @@ describe('/api/gw/** — sesi berakhir mencabut sesi CashFlow per id saja (F3)',
     expect(r.status).toBe(204)
     expect(nilaiSetCookie(r, 'ca_konsol_akses')).toBe('')
     expect(sb.rpc).toEqual(RPC_PENUH)
+    expect(r.header.get('x-konsol-cashflow-cabut')).toBe('dicabut')
+  })
+
+  it('logout-all, RPC cabut sesi gagal → header gagal di jalur akun sendiri', async () => {
+    gateway.mockImplementation(async () => new Response(null, { status: 204 }))
+    sb.rpcGagal.add('admin_konsol_sesi_cabut_admin')
+    const r = await panggil(h.gw, { metode: 'POST', path: '/api/gw/admin/auth/logout-all', header: headerKonsol(), cookie: cookieKonsol() })
+    expect(r.header.get('x-konsol-cashflow-cabut')).toBe('gagal')
   })
 
   it('ganti email akun sendiri → sesi berakhir; email sama (form ubah nama) → tidak', async () => {
@@ -212,6 +220,31 @@ describe('/api/gw/** — cabut sesi / reset TOTP admin LAIN mencabut sesi CashFl
     expect(r.header.get('x-konsol-cashflow-cabut')).toBe('gagal')
   })
 
+  /** Baris log `[konsol] {...}` (h3.ts catat) untuk peristiwa itu; spy
+   *  console.info dipasang ulang tiap uji tetapi panggilannya menumpuk. */
+  beforeEach(() => vi.mocked(console.info).mockClear())
+  const logPeristiwa = (peristiwa: string) => vi.mocked(console.info).mock.calls
+    .map(([baris]) => String(baris))
+    .filter(b => b.startsWith('[konsol] '))
+    .map(b => JSON.parse(b.slice('[konsol] '.length)) as Record<string, unknown>)
+    .filter(d => d.peristiwa === peristiwa)
+
+  it.each([
+    ['dicabut', false],
+    ['gagal', true],
+  ] as const)('log Vercel "cabut-admin-lain" mencatat id admin, jalur, dan hasil %s', async (hasil, rpcGagal) => {
+    if (rpcGagal) sb.rpcGagal.add('admin_konsol_sesi_cabut_admin')
+    await kirim('DELETE', `admin/users/${LAIN}`)
+    expect(logPeristiwa('cabut-admin-lain')).toEqual([
+      expect.objectContaining({ admin_gw_id: LAIN, jalur: `admin/users/${LAIN}`, cashflow: hasil }),
+    ])
+  })
+
+  it('tanpa pencabutan (ubah nama saja) → tidak ada log cabut-admin-lain', async () => {
+    await kirim('PUT', `admin/users/${LAIN}`, { full_name: 'Nama Baru' })
+    expect(logPeristiwa('cabut-admin-lain')).toEqual([])
+  })
+
   it('revoke-sessions atas id sendiri → cookie dihapus, sesi sendiri dicabut (seperti logout-all)', async () => {
     const r = await kirim('POST', `admin/users/${ADMIN_ID}/revoke-sessions`)
     expect(nilaiSetCookie(r, 'ca_konsol_akses')).toBe('')
@@ -219,6 +252,7 @@ describe('/api/gw/** — cabut sesi / reset TOTP admin LAIN mencabut sesi CashFl
       { nama: 'admin_konsol_sesi_cabut_admin', arg: { p_admin_gw_id: ADMIN_ID } },
       { nama: 'admin_kasus_tutup_admin', arg: { p_admin_gw_id: ADMIN_ID } },
     ])
+    expect(r.header.get('x-konsol-cashflow-cabut')).toBe('dicabut')
   })
 })
 
