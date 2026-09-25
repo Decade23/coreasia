@@ -10,7 +10,7 @@ go vet ./... && go test ./...
 GATEWAY_TEST_REDIS_ADDR=localhost:6380 go test ./internal/auth/ ./internal/handler/  # pembatas percobaan TOTP dan /login, termasuk paralel (Redis DB 15)
 GATEWAY_TEST_DATABASE_URL=postgres://… go test ./internal/repository/ ./internal/handler/  # SQL admin_users (+ Redis untuk uji lapis panjang TOTP ujung ke ujung); rakitan NewServer /api-keys (hanya baca)
 # DB sekali pakai saja: uji yang membuat baris admin sementara dan database migrasi sementara
-GATEWAY_TEST_DATABASE_DISPOSABLE=1 GATEWAY_TEST_DATABASE_URL=… go test ./internal/repository/
+GATEWAY_TEST_DATABASE_DISPOSABLE=1 GATEWAY_TEST_DATABASE_URL=… go test ./internal/repository/ ./cmd/server/
 
 # menjalankan lokal dengan secret contoh configs/config.yaml: APP_ENV WAJIB eksplisit
 APP_ENV=development APP_PORT=8095 DB_PORT=5433 REDIS_PORT=6380 go run ./cmd/server
@@ -20,8 +20,8 @@ Uji repositori tidak pernah menyimpan perubahan: semantik TOTP diuji pada baris
 admin yang sudah ada, dan baris admin uji dibuat di dalam satu transaksi yang
 selalu di-ROLLBACK. Pengecualiannya hanya uji yang menuntut
 `GATEWAY_TEST_DATABASE_DISPOSABLE=1` (pesanan paralel lintas koneksi, dan
-migrasi 000016/000017 lewat golang-migrate di database sementara yang dihapus
-sesudahnya). Jangan setel variabel itu terhadap DB yang berisi data sungguhan.
+migrasi 000016/000017 lewat golang-migrate, serta pemeriksaan admin saat start
+di `cmd/server`, di database sementara yang dihapus sesudahnya). Jangan setel variabel itu terhadap DB yang berisi data sungguhan.
 
 **CI** (`.github/workflows/build-gateway.yml`, job `test`): Postgres 17 + Redis 7
 sekali pakai, semua `migrations/*.up.sql` diterapkan, satu baris admin, lalu

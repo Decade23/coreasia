@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"os"
+	"regexp"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -19,6 +21,7 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
 )
@@ -466,7 +469,74 @@ func TestMigrasi000016_000017_TidakPernahGagal(t *testing.T) {
 			if hasIndex(db) {
 				t.Fatal("down 000016 harus membuang indeks")
 			}
+			var cols int
+			if err := db.QueryRow(ctx, `SELECT count(*) FROM information_schema.columns
+			    WHERE table_schema = 'public' AND table_name = 'admin_users'
+			      AND column_name IN ('totp_gagal_panjang', 'totp_gagal_panjang_mulai')`).Scan(&cols); err != nil || cols != 0 {
+				t.Fatalf("down 000017 harus membuang kolom lapis panjang: %d kolom tersisa, %v", cols, err)
+			}
 			migrateTo(t, mdsn, 17)
 		})
 	}
+}
+
+// Dua pagar 000016 terhadap kembaran masing-masing diuji sendiri (bila hanya
+// diuji bersama, menghapus salah satunya tertutup oleh yang lain):
+//   - pemeriksaan IF EXISTS: kembaran yang sudah ada dicatat dengan pesannya
+//     sendiri dan CREATE INDEX tidak dicoba;
+//   - blok EXCEPTION unique_violation: kembaran yang lolos pemeriksaan (muncul
+//     di antara pemeriksaan dan CREATE INDEX) tidak menggagalkan migrasi. Diuji
+//     dengan salinan SQL tanpa pemeriksaan IF EXISTS.
+//
+// SQL dijalankan langsung (protokol sederhana) supaya WARNING-nya terbaca.
+func TestMigrasi000016_DuaPagarKembar(t *testing.T) {
+	pool, ctx := testPool(t)
+	testenv.DatabaseDisposable(t)
+	raw, err := os.ReadFile("../../migrations/000016_admin_email_tanpa_peka_huruf.up.sql")
+	if err != nil {
+		t.Fatal(err)
+	}
+	full := string(raw)
+	guard := regexp.MustCompile(`(?s)\n    IF EXISTS \(SELECT 1 FROM public\.admin_users.*?END IF;\n`)
+	if !guard.MatchString(full) {
+		t.Fatal("blok IF EXISTS di 000016 tidak ditemukan; perbarui uji ini")
+	}
+	tanpaGuard := guard.ReplaceAllString(full, "\n")
+
+	run := func(t *testing.T, sql string) (notices []string, hasIndex bool) {
+		dsn, mdsn := migrateDB(t, pool, ctx)
+		migrateTo(t, mdsn, 15)
+		cfg, err := pgx.ParseConfig(dsn)
+		if err != nil {
+			t.Fatal(err)
+		}
+		cfg.OnNotice = func(_ *pgconn.PgConn, n *pgconn.Notice) { notices = append(notices, n.Message) }
+		conn, err := pgx.ConnectConfig(ctx, cfg)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer conn.Close(ctx)
+		for i, e := range []string{"y@x.id", "Y@X.ID"} {
+			if _, err := conn.Exec(ctx, `INSERT INTO public.admin_users (email, password_hash, full_name) VALUES ($1, 'x', $2)`, e, fmt.Sprintf("%c", 'a'+i)); err != nil {
+				t.Fatal(err)
+			}
+		}
+		if _, err := conn.Exec(ctx, sql); err != nil {
+			t.Fatalf("000016 gagal pada data kembar: %v", err)
+		}
+		_ = conn.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'admin_users_email_lower_key')`).Scan(&hasIndex)
+		return notices, hasIndex
+	}
+	t.Run("pemeriksaan IF EXISTS", func(t *testing.T) {
+		notices, idx := run(t, full)
+		if idx || len(notices) != 1 || !strings.Contains(notices[0], "ada email kembar tanpa peka huruf") {
+			t.Fatalf("indeks=%v, notice=%q, want tanpa indeks dan satu WARNING dari pemeriksaan", idx, notices)
+		}
+	})
+	t.Run("EXCEPTION unique_violation", func(t *testing.T) {
+		notices, idx := run(t, tanpaGuard)
+		if idx || len(notices) != 1 || !strings.Contains(notices[0], "email kembar saat membuat indeks") {
+			t.Fatalf("indeks=%v, notice=%q, want tanpa indeks dan satu WARNING dari blok EXCEPTION", idx, notices)
+		}
+	})
 }

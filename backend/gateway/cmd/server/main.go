@@ -57,9 +57,7 @@ func main() {
 		return
 	}
 
-	// Auto-seed: ensure at least one admin user exists
-	ensureAdminExists(ctx, pool, cfg)
-	warnDuplicateAdminEmails(ctx, pool)
+	prepareAdmins(ctx, pool, cfg)
 
 	// Connect to Redis
 	rdb := connectRedis(ctx, cfg.Redis)
@@ -316,6 +314,14 @@ func ensureAdminExists(ctx context.Context, pool *pgxpool.Pool, cfg *config.Conf
 	}
 
 	seedAdminUser(ctx, pool, cfg)
+}
+
+// prepareAdmins: pemeriksaan admin saat start (satu fungsi supaya bisa diuji,
+// lihat main_test.go). Auto-seed bila belum ada admin sama sekali, lalu catat
+// email admin kembar (butir verifikasi rilis paket A).
+func prepareAdmins(ctx context.Context, pool *pgxpool.Pool, cfg *config.Config) {
+	ensureAdminExists(ctx, pool, cfg)
+	warnDuplicateAdminEmails(ctx, pool)
 }
 
 // warnDuplicateAdminEmails: migrasi 000016 tidak memasang indeks unik
