@@ -192,6 +192,21 @@ func TestAdminUserRepo_LapisPanjangTOTP(t *testing.T) {
 	if n, retry, _ := r.LongFailures(ctx, u.ID, window); n != 0 || retry != 0 {
 		t.Fatalf("setelah kosongkan: %d %v", n, retry)
 	}
+	// Terkunci penuh lalu jendelanya lewat: pesanan berikutnya diterima dan
+	// memulai jendela baru (satu-satunya jalan keluar tanpa pemulihan super
+	// admin; tanpa syarat "jendela lewat" di WHERE akun terkunci selamanya).
+	for i := 0; i < 3; i++ {
+		if ok, _, _, err := r.ReserveLongFailure(ctx, u.ID, 3, window); err != nil || !ok {
+			t.Fatalf("isi sampai batas, pesan ke-%d: ok=%v err=%v", i+1, ok, err)
+		}
+	}
+	if _, err := tx.Exec(ctx, `UPDATE public.admin_users SET totp_gagal_panjang_mulai = now() - interval '31 days' WHERE id = $1`, u.ID); err != nil {
+		t.Fatal(err)
+	}
+	if ok, n, retry, err := r.ReserveLongFailure(ctx, u.ID, 3, window); err != nil || !ok || n != 1 || retry <= window-time.Minute {
+		t.Fatalf("terkunci lalu jendela lewat: ok=%v n=%d retry=%v err=%v, want ok n=1", ok, n, retry, err)
+	}
+	_ = r.ClearLongFailures(ctx, u.ID)
 	// Admin tidak ada: baca = galat (pembatas gagal tertutup), pesan = false.
 	ghost := uuid.New()
 	if _, _, err := r.LongFailures(ctx, ghost, window); err == nil {
@@ -230,6 +245,13 @@ func TestRedisTOTPLimiter_PostgresSungguhan_EvictionTidakMembukaKunci(t *testing
 	res, err := lim.Take(ctx, u.ID)
 	if err != nil || !res.Locked || res.Long != 4 {
 		t.Fatalf("setelah kunci Redis dibuang: %+v %v, want Locked", res, err)
+	}
+	// Jendela 30 hari lewat: kunci terbuka sendiri tanpa pemulihan super admin.
+	if _, err := tx.Exec(ctx, `UPDATE public.admin_users SET totp_gagal_panjang_mulai = now() - interval '31 days' WHERE id = $1`, u.ID); err != nil {
+		t.Fatal(err)
+	}
+	if res, err := lim.Take(ctx, u.ID); err != nil || !res.Allowed || res.Long != 1 {
+		t.Fatalf("terkunci lalu jendela lewat: %+v %v, want Allowed Long=1", res, err)
 	}
 	// Refund (galat server) dan Clear bekerja terhadap SQL sungguhan.
 	if err := lim.Clear(ctx, u.ID); err != nil {
