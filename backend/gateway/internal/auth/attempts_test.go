@@ -285,6 +285,22 @@ func TestRedisTOTPLimiter_ImporHitunganRedisLama(t *testing.T) {
 		t.Fatal("kunci lama tidak boleh hilang sebelum hitungannya tersimpan")
 	}
 	long.down = false
+
+	// Pemulihan super admin (Clear) sebelum percobaan pertama sesudah rilis:
+	// kunci lama ikut terhapus, jadi Take berikutnya tidak mengimpor kunciannya lagi.
+	_ = l.Clear(ctx, uid)
+	rdb.Set(ctx, l.legacyLongKey(uid), 5, time.Hour)
+	_ = l.Clear(ctx, uid)
+	if r, err := l.Take(ctx, uid); err != nil || !r.Allowed || r.Long != 1 {
+		t.Fatalf("Clear lalu Take: %+v %v, want Allowed Long=1 (kunci lama ikut dihapus Clear)", r, err)
+	}
+	// Kunci lama tanpa TTL (PTTL -1): dijepit ke jendela penuh, bukan dianggap
+	// sudah lewat (yang diam-diam membuka kunci).
+	_ = l.Clear(ctx, uid)
+	rdb.Set(ctx, l.legacyLongKey(uid), 5, 0)
+	if r, err := l.Take(ctx, uid); err != nil || !r.Locked || r.Long != 5 || r.Retry <= 59*time.Minute || r.Retry > time.Hour {
+		t.Fatalf("kunci lama tanpa TTL: %+v %v, want Locked Long=5 dengan sisa ±1 jam", r, err)
+	}
 }
 
 // Paralel: tepat max pesanan per jendela pendek, dan total tepat maxLong
