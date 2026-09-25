@@ -1,0 +1,65 @@
+name: Landing Test
+
+# Uji unit landing (vitest) dan pemeriksa tag <Cashflow…> setiap kali
+# frontend/landing berubah. Tidak men-deploy apa pun: Vercel men-deploy
+# landing sendiri dari push yang sama, jadi workflow ini penanda merah/hijau
+# untuk commit itu, bukan gerbang deploy.
+#
+# Dependensi dipasang dengan bun sesuai packageManager (bun@1.3.9) dan
+# bun.lock; vitest dan pemeriksa komponen berjalan di Node (shebang bin).
+# `nuxi prepare` wajib sebelum vitest: tsconfig.json memperluas
+# .nuxt/tsconfig.json, dan pemeriksa komponen membaca .nuxt/components.d.ts.
+#
+# Uji kontrak yang membaca migrasi atau uji SQL repo CashFlow
+# (tests/cashflow/migrasi.ts: kontrak-*, rpc-console) DILEWATI di sini dan
+# terlihat "skipped" di keluaran: repo CashFlow terpisah dan tidak
+# di-checkout. Versi penuhnya dijalankan lokal dengan
+# CASHFLOW_MIGRASI=<repo cashflow>/supabase/migrations npx vitest run.
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'frontend/landing/**'
+      - '.github/workflows/landing-test.yml'
+  pull_request:
+    paths:
+      - 'frontend/landing/**'
+      - '.github/workflows/landing-test.yml'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: landing-test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  uji:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: frontend/landing
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.9
+
+      - name: Pasang dependensi (bun.lock beku)
+        run: bun install --frozen-lockfile
+
+      - name: nuxi prepare
+        run: bunx nuxi prepare
+
+      - name: Vitest
+        run: bun run test
+
+      - name: Tag <Cashflow…> terdaftar
+        run: node scripts/cek-komponen-cashflow.mjs
