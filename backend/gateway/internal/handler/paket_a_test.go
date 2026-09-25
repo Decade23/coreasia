@@ -7,12 +7,15 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/coreasia/gateway/internal/auth"
 	"github.com/coreasia/gateway/internal/config"
 	"github.com/coreasia/gateway/internal/model"
 	"github.com/coreasia/gateway/internal/repository"
+	"github.com/coreasia/gateway/internal/testenv"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 // Uji paket A (review console 24 Sep): validasi Update (F2), email admin tanpa
@@ -606,5 +609,64 @@ func TestAPIKeys_TokenDicabutDitolak(t *testing.T) {
 	}
 	if e.keys.calls.Load() != 0 {
 		t.Fatalf("handler api-keys terpanggil %d kali dengan token yang dicabut", e.keys.calls.Load())
+	}
+}
+
+// Rakitan produksi (NewServer + Postgres sungguhan): /api-keys/** di setupRoutes
+// memakai sesi hidup. Uji di atas merakit rutenya sendiri, jadi argumen yang
+// salah di server.go (mis. middleware yang meneruskan saja) tidak tertangkap
+// di sana. Token bertanda tangan sah untuk admin yang tidak ada di DB (sama
+// dengan akun yang sudah dihapus) ditolak 401 di keenam rute, sedangkan rute
+// admin tanpa sesi hidup menerimanya (token lolos AuthMiddleware). Hanya baca.
+func TestServer_APIKeysSesiHidup_RakitanProduksi(t *testing.T) {
+	dsn := testenv.DatabaseURL(t)
+	ctx := context.Background()
+	pool, err := pgxpool.New(ctx, dsn)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(pool.Close)
+	if err := pool.Ping(ctx); err != nil {
+		testenv.Unavailable(t, "postgres tidak terjangkau: %v", err)
+	}
+	t.Setenv("APP_ENV", "production")
+	cfg := &config.Config{}
+	cfg.App.Env = "production"
+	cfg.JWT.Secret = auth.RandomJWTSecret()
+	cfg.JWT.Issuer = "coreasia-gateway"
+	base := serveEnv(t, NewServer(cfg, pool, nil).App())
+	jwt := auth.NewJWTProvider(cfg.JWT.Secret, time.Hour, 720*time.Hour, cfg.JWT.Issuer)
+	pair, err := jwt.GenerateTokenPair(uuid.New(), "hantu@contoh.invalid", "super_admin", "Hantu", true, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	send := func(method, path string) int {
+		t.Helper()
+		req, _ := http.NewRequest(method, base+path, strings.NewReader("{}"))
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", "Bearer "+pair.AccessToken)
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		resp.Body.Close()
+		return resp.StatusCode
+	}
+
+	if s := send(http.MethodGet, "/api/admin/articles"); s != http.StatusOK {
+		t.Fatalf("kontrol: GET /api/admin/articles = %d, want 200 (token harus lolos AuthMiddleware)", s)
+	}
+	id := uuid.NewString()
+	for _, rt := range []struct{ method, path string }{
+		{http.MethodGet, "/api/admin/api-keys"},
+		{http.MethodGet, "/api/admin/api-keys/" + id},
+		{http.MethodGet, "/api/admin/api-keys/" + id + "/copy"},
+		{http.MethodPost, "/api/admin/api-keys"},
+		{http.MethodPut, "/api/admin/api-keys/" + id},
+		{http.MethodDelete, "/api/admin/api-keys/" + id},
+	} {
+		if s := send(rt.method, rt.path); s != http.StatusUnauthorized {
+			t.Fatalf("%s %s dengan sesi yang tidak hidup: %d, want 401", rt.method, rt.path, s)
+		}
 	}
 }

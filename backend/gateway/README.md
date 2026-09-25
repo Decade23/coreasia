@@ -8,7 +8,7 @@ tabel `gateway_schema_migrations`) + Redis. Migrasi berjalan otomatis saat start
 go vet ./... && go test ./...
 # uji opsional terhadap layanan sungguhan (tidak berjalan tanpa env ini):
 GATEWAY_TEST_REDIS_ADDR=localhost:6380 go test ./internal/auth/ ./internal/handler/  # pembatas percobaan TOTP dan /login, termasuk paralel (Redis DB 15)
-GATEWAY_TEST_DATABASE_URL=postgres://… go test ./internal/repository/                 # SQL admin_users (+ Redis untuk uji lapis panjang TOTP ujung ke ujung)
+GATEWAY_TEST_DATABASE_URL=postgres://… go test ./internal/repository/ ./internal/handler/  # SQL admin_users (+ Redis untuk uji lapis panjang TOTP ujung ke ujung); rakitan NewServer /api-keys (hanya baca)
 # DB sekali pakai saja: uji yang membuat baris admin sementara dan database migrasi sementara
 GATEWAY_TEST_DATABASE_DISPOSABLE=1 GATEWAY_TEST_DATABASE_URL=… go test ./internal/repository/
 
