@@ -104,7 +104,7 @@ export const useAdminUsers = () => {
     galat.value = null
     try {
       const jalur = aksi === 'cabut-sesi' ? 'revoke-sessions' : 'totp/reset'
-      const { headers } = await api.postDenganHeader(`/admin/users/${u.id}/${jalur}`)
+      const { headers } = await api.tulisDenganHeader('POST', `/admin/users/${u.id}/${jalur}`)
       const p = pesanAksiSesiAdmin(aksi, headers.get(HEADER_CABUT_CASHFLOW))
       const teks = tc(p.kunci, { name: u.full_name || u.email })
       if (p.jenis === 'sukses') toast.success(teks)

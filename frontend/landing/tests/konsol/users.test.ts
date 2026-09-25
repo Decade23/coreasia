@@ -132,7 +132,7 @@ describe('halaman Users — kaitan (teks sumber)', () => {
 
   it('aksi memanggil rute gateway yang benar dan membaca header hasil CashFlow', () => {
     expect(komposabel).toMatch(/aksi === 'cabut-sesi' \? 'revoke-sessions' : 'totp\/reset'/)
-    expect(komposabel).toMatch(/api\.postDenganHeader\(`\/admin\/users\/\$\{u\.id\}\/\$\{jalur\}`\)/)
+    expect(komposabel).toMatch(/api\.tulisDenganHeader\('POST', `\/admin\/users\/\$\{u\.id\}\/\$\{jalur\}`\)/)
     expect(komposabel).toMatch(/headers\.get\(HEADER_CABUT_CASHFLOW\)/)
   })
 

@@ -50,7 +50,9 @@ export const useAdminApi = () => {
   const baseURL = KONSOL_API_BASE
 
   const sesiHabis = (err: unknown, metode: string | undefined) => {
-    if (!import.meta.client) return
+    // import.meta.server, bukan !import.meta.client: sama di build Nuxt, dan
+    // di vitest (keduanya tak terdefinisi) penanganan ini ikut teruji.
+    if (import.meta.server) return
     switch (tindakanGalatSesi(metode, err)) {
       case 'muat-ulang':
         if (!pulihkanIkatan(err)) mintaMuatUlang('sesi.ikatanBaca')
@@ -66,18 +68,22 @@ export const useAdminApi = () => {
     }
   }
 
-  const panggil = async <T>(path: string, opsi: NitroFetchOptions<string>): Promise<T> => {
+  /** SATU-SATUNYA tempat header ikatan disusun dan galat sesi ditangani:
+   *  panggil() dan tulisDenganHeader() sama-sama lewat sini. */
+  const kirim = async <T>(path: string, opsi: NitroFetchOptions<string>) => {
     try {
-      const hasil: unknown = await $fetch(`${baseURL}${path}`, {
+      return await $fetch.raw<T>(`${baseURL}${path}`, {
         ...opsi,
         headers: { ...headerIkatan(), ...(opsi.headers as Record<string, string> | undefined) },
       })
-      return hasil as T
     } catch (err) {
       sesiHabis(err, opsi.method as string | undefined)
       throw err
     }
   }
+
+  const panggil = async <T>(path: string, opsi: NitroFetchOptions<string>): Promise<T> =>
+    (await kirim<T>(path, opsi))._data as T
 
   const get = <T>(path: string, params?: Record<string, any>) =>
     panggil<ApiResponse<T>>(path, { method: 'GET', params })
@@ -88,21 +94,11 @@ export const useAdminApi = () => {
   const put = <T>(path: string, body?: any) =>
     panggil<ApiResponse<T>>(path, { method: 'PUT', headers: HEADER_TULIS, body })
 
-  /** POST yang juga memulangkan header jawaban (mis. X-Konsol-Cashflow-Cabut
-   *  dari BFF sesudah sesi admin lain dicabut). Penanganan galat sesi sama
-   *  dengan panggil(). */
-  const postDenganHeader = async <T>(path: string, body?: any): Promise<{ data: ApiResponse<T> | undefined; headers: Headers }> => {
-    try {
-      const res = await $fetch.raw<ApiResponse<T>>(`${baseURL}${path}`, {
-        method: 'POST',
-        headers: { ...headerIkatan(), ...HEADER_TULIS },
-        body,
-      })
-      return { data: res._data, headers: res.headers }
-    } catch (err) {
-      sesiHabis(err, 'POST')
-      throw err
-    }
+  /** Tulis yang juga memulangkan header jawaban (mis. X-Konsol-Cashflow-Cabut
+   *  dari BFF sesudah sesi admin lain dicabut). Header & galat sesi = panggil(). */
+  const tulisDenganHeader = async <T>(metode: 'POST' | 'PUT' | 'DELETE', path: string, body?: any): Promise<{ data: ApiResponse<T> | undefined; headers: Headers }> => {
+    const res = await kirim<ApiResponse<T>>(path, { method: metode, headers: HEADER_TULIS, body })
+    return { data: res._data, headers: res.headers }
   }
 
   const del = async <T>(path: string): Promise<void> => {
@@ -115,5 +111,5 @@ export const useAdminApi = () => {
     return panggil<ApiResponse<{ url: string }>>(path, { method: 'POST', headers: HEADER_TULIS, body: formData })
   }
 
-  return { get, post, postDenganHeader, put, del, upload, baseURL }
+  return { get, post, put, del, tulisDenganHeader, upload, baseURL }
 }
