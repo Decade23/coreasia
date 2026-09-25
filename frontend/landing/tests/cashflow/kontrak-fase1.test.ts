@@ -15,7 +15,7 @@
  */
 import { describe, expect, it } from 'vitest'
 import {
-  adaMigrasi, fungsiTerakhir, kolomKembalian, kolomTabel, pohonContoh, pohonDengan, pohonJsonb, semuaPohonJsonb, urutPohon, kunciDinamis,
+  adaMigrasi, adaMigrasiNomor, fungsiTerakhir, kolomKembalian, kolomTabel, pohonContoh, pohonDengan, pohonJsonb, semuaPohonJsonb, urutPohon, kunciDinamis,
   type PohonKunci,
 } from './migrasi'
 import {
@@ -27,7 +27,7 @@ import {
   type RuangCalon,
 } from '../../adapters/cashflowKasus'
 import {
-  keKepala, ke360, keTransaksiBaris, keSampahBaris, keRinci, keTeks, keHasilCari, bisaCariServer, kursorKeUrl,
+  keKepala, ke360, keTransaksiBaris, keSampahBaris, adaSampahLebih, keRinci, keTeks, keHasilCari, bisaCariServer, kursorKeUrl,
   kursorTransaksiDariUrl, tanggalJam, terbatas, jenisUang,
   CEK_TRANSAKSI, JENIS_TEKS, RANAH_TEKS, BATAS_TEKS, BATAS_CARI,
   type KepalaPenggunaDTO, type Pengguna360DTO, type TransaksiCariDTO, type TransaksiRinciDTO, type TeksDTO, type CariDTO,
@@ -326,7 +326,9 @@ const SAMPAH_BARIS = `{"id": "44444444-4444-4444-8444-444444444444", "tx_id": "5
   "ada_foto": false, "ada_catatan": true, "pencatat": "${SUBJEK}", "dihapus_oleh": "${SUBJEK}",
   "dihapus_pada": "2026-09-11T01:00:00+00:00", "dipulihkan_oleh": null, "dipulihkan_pada": null}`
 const CARI_TX = `{"baris": [${TX_BARIS}], "kursor_berikut": {"o": "2026-09-16", "c": "2026-09-16T07:05:12.345678+00:00",
-  "i": "11111111-1111-4111-8111-111111111111"}, "total": 40, "sampah": [${SAMPAH_BARIS}], "halaman_pertama": true, "mode": "pengguna"}`
+  "i": "11111111-1111-4111-8111-111111111111"}, "total": 40, "sampah": [${SAMPAH_BARIS}], "sampah_lebih": true, "halaman_pertama": true, "mode": "pengguna"}`
+/** 0092 menambah `sampah_lebih` (kontrak 3). Sebelum 0092 ada di folder migrasi, kunci itu belum dikirim server. */
+const ADA_0092 = adaMigrasiNomor('0092')
 
 describe('kontrak TransaksiCariDTO ↔ admin_transaksi_bangun / _sampah_bangun / _cari', () => {
   it.skipIf(!adaMigrasi)('baris = kunci SQL dinamis admin_transaksi_bangun; TANPA note', () => {
@@ -345,10 +347,23 @@ describe('kontrak TransaksiCariDTO ↔ admin_transaksi_bangun / _sampah_bangun /
     expect(kunciAtas(SAMPAH_BARIS)).toEqual(urut(Object.keys(p)))
     for (const k of ['isi', 'note', 'judul']) expect(Object.keys(p)).not.toContain(k)
   })
-  it.skipIf(!adaMigrasi)('jawaban cari = bangun + {sampah, halaman_pertama, mode}', () => {
+  it.skipIf(!adaMigrasi)('jawaban cari = bangun + {sampah, sampah_lebih (0092), halaman_pertama, mode}', () => {
     const { badan } = fungsiTerakhir('admin_transaksi_cari')
     const tambahan = Object.keys(pohonJsonb(badan.slice(badan.lastIndexOf('return v ||'))))
-    expect(kunciAtas(CARI_TX)).toEqual(urut(['baris', 'kursor_berikut', 'total', ...tambahan]))
+    const contoh = ADA_0092 ? kunciAtas(CARI_TX) : kunciAtas(CARI_TX).filter(k => k !== 'sampah_lebih')
+    expect(contoh).toEqual(urut(['baris', 'kursor_berikut', 'total', ...tambahan]))
+    if (ADA_0092) expect(tambahan).toContain('sampah_lebih')
+  })
+  it('adaSampahLebih: hanya true persis; kunci hilang (server sebelum 0092) = tidak terpotong', () => {
+    const d = JSON.parse(CARI_TX) as TransaksiCariDTO
+    expect(adaSampahLebih(d)).toBe(true)
+    expect(adaSampahLebih({ ...d, sampah_lebih: false })).toBe(false)
+    const { sampah_lebih: _buang, ...tanpaKunci } = d
+    const lama: TransaksiCariDTO = tanpaKunci
+    expect(adaSampahLebih(lama)).toBe(false)
+    expect(adaSampahLebih({ sampah_lebih: null })).toBe(false)
+    expect(adaSampahLebih({ sampah_lebih: 'true' as unknown as boolean })).toBe(false)
+    expect(adaSampahLebih(null)).toBe(false)
   })
   it('keTransaksiBaris: kaki transfer, jam, numeric berteks', () => {
     const t = keTransaksiBaris(JSON.parse(TX_BARIS) as TransaksiCariDTO['baris'][number])

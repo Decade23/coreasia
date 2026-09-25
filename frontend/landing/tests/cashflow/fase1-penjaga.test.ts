@@ -86,7 +86,14 @@ describe('Fase 1: URL tab Transaksi hanya kunci struktur', () => {
     const skema = /const SKEMA = \{([\s\S]*?)\} as const satisfies SkemaQuery/.exec(isi)?.[1] ?? ''
     const kunci = [...skema.matchAll(/^\s*(\w+):\s*\{/gm)].map(m => m[1]!).sort()
     expect(kunci).toEqual(['cek', 'dari', 'dompet', 'jenis', 'kategori', 'kursor', 'ruang', 'sampah', 'sampai', 'tx'])
-    expect(isi).toMatch(/useState<\{ min: string; maks: string \}>/)
+    // Nominal di useState (bukan URL), lewat useCashflowNominal yang kembali ke
+    // halaman pertama saat nilainya berubah (temuan F9; perilakunya diuji di
+    // tests/cashflow/nominal.test.ts). Tidak ada debounce buatan sendiri lagi.
+    expect(isi).toMatch(/useState<NominalSaring>\(`cf_tx_nominal_/)
+    expect(isi).toMatch(/useCashflowNominal\(\{[\s\S]*?keAwal: \(\) => setel\(\{ kursor: '', tx: '' \}\)/)
+    // Selama URL-nya diganti, kursor lama tidak dipakai bersama nominal baru.
+    expect(isi).toMatch(/const kursor = computed\(\(\) => \(nominalKeAwal\.value \? null : kursorTransaksiDariUrl\(q\.value\.kursor\)\)\)/)
+    expect(isi).not.toMatch(/setTimeout/)
   })
 })
 

@@ -236,8 +236,11 @@ export interface TransaksiCariDTO {
   kursor_berikut: KursorTransaksi | null
   /** Hanya di halaman pertama (p_kursor null). */
   total: number | null
-  /** Hanya di halaman pertama dan bila p_termasuk_sampah. */
+  /** Hanya di halaman pertama dan bila p_termasuk_sampah. Paling banyak 50 baris. */
   sampah: SampahBarisDTO[] | null
+  /** true = ada baris sampah ke-51 yang tidak ikut (0092, kontrak 3). Server
+   *  sebelum 0092 tidak mengirimnya — dibaca toleran lewat adaSampahLebih. */
+  sampah_lebih?: boolean | null
   halaman_pertama: boolean
   mode: 'pengguna' | 'ruang'
 }
@@ -343,6 +346,11 @@ export interface SampahBaris {
   dihapusIso: string
   dipulihkanIso: string | null
 }
+
+/** Sampah terpotong di 50 baris? Hanya `true` persis yang dihitung: kunci yang
+ *  tidak ada (server sebelum 0092), null, atau nilai lain = tidak terpotong. */
+export const adaSampahLebih = (d: Pick<TransaksiCariDTO, 'sampah_lebih'> | null | undefined): boolean =>
+  d?.sampah_lebih === true
 
 export function keSampahBaris(d: SampahBarisDTO): SampahBaris {
   return {

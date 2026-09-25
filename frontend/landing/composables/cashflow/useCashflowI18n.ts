@@ -213,7 +213,8 @@ const KAMUS = {
       cicilan: (n: number) => `Cicilan ${n}`, saringIni: 'Saring dengan ini',
       kosong: 'Tidak ada transaksi yang dicatat orang ini di ruang lingkup kasus.',
       tanpaRuang: 'Orang ini tidak punya ruang, jadi tidak ada transaksi yang bisa dibuka.',
-      diSampah: (n: number) => `Di sampah (${n})`,
+      diSampah: (n: number | string) => `Di sampah (${n})`,
+      sampahLebih: 'Hanya 50 terbaru yang tampil. Persempit saringan untuk melihat sisanya.',
       dihapusPada: (w: string) => `Dihapus ${w} WIB`, olehLabel: 'oleh',
     },
     laci: {
@@ -484,7 +485,8 @@ const KAMUS = {
       cicilan: (n: number) => `Installment ${n}`, saringIni: 'Filter by this',
       kosong: 'No transactions recorded by this person in the case\'s workspaces.',
       tanpaRuang: 'This person has no workspaces, so there are no transactions to open.',
-      diSampah: (n: number) => `In trash (${n})`,
+      diSampah: (n: number | string) => `In trash (${n})`,
+      sampahLebih: 'Only the latest 50 are shown. Narrow the filters to see the rest.',
       dihapusPada: (w: string) => `Deleted ${w} WIB`, olehLabel: 'by',
     },
     laci: {

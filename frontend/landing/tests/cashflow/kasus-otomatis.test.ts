@@ -480,6 +480,73 @@ describe('jawaban basi subjek lama tidak menempel pada subjek baru (temuan fe p3
   })
 })
 
+describe('tambah() terlambat tidak memasang kasus subjek lama (temuan F11)', () => {
+  beforeEach(() => {
+    api.kasusBuka.mockImplementation(async (subjek: string, _s: unknown, _p: unknown, _r: unknown, ruang: string[]) =>
+      kasusDto({ subjek_id: subjek, ruang, jumlah_ruang: ruang.length }))
+  })
+
+  it('"Masukkan ke lingkup" untuk A dijawab SESUDAH kasus B terbuka → kasus B tetap, tidak ada perpanjangan kasus A', async () => {
+    const { k } = await siapkan([W1])
+    const kasusA = k.kasus.value!
+    let jawab!: (v: unknown) => void
+    api.kasusTambah.mockImplementationOnce(() => new Promise((r) => { jawab = r }))
+    const tambahA = k.tambah([], [W2])
+    // Staf pindah ke B lewat palet selagi tambah(A) masih berjalan.
+    await k.pulihkan(SUBJEK_B)
+    await k.aturLingkup(SUBJEK_B, [W3])
+    const kasusB = k.kasus.value!
+    expect(kasusB.subjekId).toBe(SUBJEK_B)
+    jawab({ ...kasusDto({ ruang: [W1, W2], jumlah_ruang: 2 }), id: kasusA.id })
+    await tambahA
+    expect(k.kasus.value?.id).toBe(kasusB.id)
+    expect(k.kasus.value?.subjekId).toBe(SUBJEK_B)
+    expect(k.kasus.value?.ruang).toEqual([W3])
+    // Detak berjalan sampai ambang perpanjang: yang diperpanjang kasus B, bukan A.
+    api.kasusPerpanjang.mockImplementation(async (id: string) => ({ ...kasusDto({ subjek_id: SUBJEK_B, ruang: [W3], menit: 30 }), id }))
+    pendengar.get('pointerdown')?.()
+    await vi.advanceTimersByTimeAsync(26 * MENIT)
+    expect(api.kasusPerpanjang.mock.calls.map(c => c[0])).not.toContain(kasusA.id)
+  })
+
+  it('A → B → A selagi tambah(A) berjalan: jawaban untuk kasus A yang LAMA tidak menimpa kasus A yang baru', async () => {
+    const { k } = await siapkan([W1])
+    const lama = k.kasus.value!
+    let jawab!: (v: unknown) => void
+    api.kasusTambah.mockImplementationOnce(() => new Promise((r) => { jawab = r }))
+    const tambahLama = k.tambah([], [W2])
+    await k.pulihkan(SUBJEK_B)
+    await k.aturLingkup(SUBJEK_B, [W3])
+    await k.pulihkan(SUBJEK)
+    await k.aturLingkup(SUBJEK, [W1])
+    const baru = k.kasus.value!
+    expect(baru.id).not.toBe(lama.id)
+    jawab({ ...kasusDto({ ruang: [W1, W2], jumlah_ruang: 2 }), id: lama.id })
+    await tambahLama
+    expect(k.kasus.value?.id).toBe(baru.id)
+  })
+
+  it('tambah() di subjek yang sama tetap memasang lingkup barunya', async () => {
+    const { k } = await siapkan([W1])
+    const id = k.kasus.value!.id
+    api.kasusTambah.mockImplementationOnce(async () => ({ ...kasusDto({ ruang: [W1, W2], jumlah_ruang: 2 }), id }))
+    await k.tambah([], [W2])
+    expect(k.kasus.value?.ruang).toEqual([W1, W2])
+  })
+
+  it('pasang() menolak kasus yang subjeknya bukan subjek tab ini (mis. kasus aktif salah alamat)', async () => {
+    api.kasusAktif.mockResolvedValue({ kasus: kasusDto({ subjek_id: SUBJEK_B }), investigasi: [] })
+    const k = (await modul()).useCashflowKasus()
+    lepas = k.pasangHalaman()
+    await k.pulihkan(SUBJEK)
+    expect(k.kasus.value).toBeNull()
+    // Subjek sama dengan huruf besar tetap diterima (uuid tidak peka huruf).
+    api.kasusAktif.mockResolvedValue({ kasus: kasusDto({ subjek_id: SUBJEK.toUpperCase() }), investigasi: [] })
+    await k.pulihkan(SUBJEK)
+    expect(k.kasus.value?.subjekId).toBe(SUBJEK.toUpperCase())
+  })
+})
+
 describe('kunjungan baru ke subjek yang sama mencoba lagi (temuan fe p3 #3)', () => {
   /** Induk Pengguna 360 dipasang lagi (kembali dari daftar): pasangHalaman + pulihkan + aturLingkup. */
   async function kunjungi(k: Awaited<ReturnType<typeof siapkan>>['k']) {

@@ -32,11 +32,12 @@ definePageMeta({
 })
 import { POLA_UUID } from '~/adapters/cashflow'
 import {
-  keTransaksiBaris, keSampahBaris, kursorTransaksiDariUrl, tanggalJam,
+  keTransaksiBaris, keSampahBaris, adaSampahLebih, kursorTransaksiDariUrl, tanggalJam,
   CEK_TRANSAKSI, POLA_KURSOR_URL,
   type TransaksiCariDTO, type SaringTransaksi, type TransaksiBaris,
 } from '~/adapters/cashflowBuku'
 import { tulisQuery, type SkemaQuery } from '~/adapters/cashflowQuery'
+import type { NominalSaring } from '~/composables/cashflow/useCashflowNominal'
 
 const { tcf, bahasa, formatWaktu } = useCashflowI18n()
 const api = useCashflowAdmin()
@@ -62,15 +63,15 @@ const SKEMA = {
 } as const satisfies SkemaQuery
 const { nilai: q, setel } = useCashflowQuery(SKEMA)
 
-/* Nominal: useState per subjek (tidak di URL), didebounce sebelum dipakai. */
-const nominal = useState<{ min: string; maks: string }>(`cf_tx_nominal_${id.value}`, () => ({ min: '', maks: '' }))
-const nominalStabil = ref({ ...nominal.value })
-let tundaNominal: ReturnType<typeof setTimeout> | undefined
-watch(nominal, (n) => {
-  clearTimeout(tundaNominal)
-  tundaNominal = setTimeout(() => { nominalStabil.value = { ...n } }, 300)
-}, { deep: true })
-onBeforeUnmount(() => clearTimeout(tundaNominal))
+/* Nominal: useState per subjek (tidak di URL), didebounce sebelum dipakai.
+   Mengubahnya kembali ke halaman pertama dan menutup laci, sama dengan
+   saringan lain (temuan F9, useCashflowNominal). */
+const nominal = useState<NominalSaring>(`cf_tx_nominal_${id.value}`, () => ({ min: '', maks: '' }))
+const { stabil: nominalStabil, menunggu: nominalKeAwal } = useCashflowNominal({
+  nominal,
+  perluKeAwal: () => !!(q.value.kursor || q.value.tx),
+  keAwal: () => setel({ kursor: '', tx: '' }),
+})
 const keAngka = (s: string): number | null => {
   const t = s.replace(/[^\d]/g, '')
   return t ? Number(t) : null
@@ -88,7 +89,8 @@ const saring = computed<SaringTransaksi>(() => ({
   cek: q.value.cek || null,
   sampah: q.value.sampah === '1',
 }))
-const kursor = computed(() => kursorTransaksiDariUrl(q.value.kursor))
+// Selama nominal baru menunggu URL-nya dikosongkan, kursor lama tidak dipakai.
+const kursor = computed(() => (nominalKeAwal.value ? null : kursorTransaksiDariUrl(q.value.kursor)))
 const kunciSaring = computed(() => JSON.stringify(saring.value))
 const awalanKunci = computed(() => (kasus.kunciKasus.value && kasus.punyaRanah('transaksi') ? `${kasus.kunciKasus.value}|tx|${kunciSaring.value}|` : null))
 const kunci = computed(() => (awalanKunci.value ? `${awalanKunci.value}${kursor.value ? q.value.kursor : ''}` : null))
@@ -103,6 +105,8 @@ watch(kunci, (k) => {
 
 const baris = computed(() => mentah.value?.baris.map(keTransaksiBaris) ?? [])
 const sampah = computed(() => mentah.value?.sampah?.map(keSampahBaris) ?? [])
+/* Server memotong sampah di 50 baris; sampah_lebih (0092) menandai sisanya. */
+const sampahLebih = computed(() => adaSampahLebih(mentah.value))
 /* Total hanya di halaman pertama; halaman berikutnya meminjam angka itu. */
 const total = computed(() => mentah.value?.total ?? kasus.data<TransaksiCariDTO>(awalanKunci.value)?.total ?? null)
 
@@ -296,7 +300,8 @@ const pilihBaris = (t: TransaksiBaris, i: number) => { sorot.value = i; bukaLaci
 
         <!-- Kecocokan di sampah (halaman pertama, ?sampah=1) -->
         <section v-if="sampah.length" class="ca-console-dialog p-4">
-          <h3 class="text-xs font-semibold uppercase tracking-wide text-[var(--ca-muted)]">{{ tcf('transaksi.diSampah')(sampah.length) }}</h3>
+          <h3 class="text-xs font-semibold uppercase tracking-wide text-[var(--ca-muted)]">{{ tcf('transaksi.diSampah')(sampahLebih ? `${sampah.length}+` : sampah.length) }}</h3>
+          <p v-if="sampahLebih" class="mt-1 text-xs text-[var(--ca-subtle)]">{{ tcf('transaksi.sampahLebih') }}</p>
           <ul class="mt-2 divide-y divide-[color:var(--ca-border)] text-sm">
             <li v-for="s in sampah" :key="s.id" class="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
               <button type="button" class="min-w-0 flex-1 text-left" @click="bukaLaci(s.txId)">

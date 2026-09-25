@@ -223,7 +223,19 @@ export function lupakanKasus() {
   keadaan.value = { ...awal(), versi: keadaan.value.versi + 1 }
 }
 
-function pasang(k: Kasus | null, anak: Kasus[]) {
+/** Kasus ini milik subjek yang sedang dibuka tab ini? (uuid, tanpa peka huruf) */
+const milikSubjek = (k: Kasus): boolean =>
+  !!keadaan.value.subjek && k.subjekId?.toLowerCase() === keadaan.value.subjek.toLowerCase()
+
+/**
+ * Pasang kasus aktif. Kasus milik subjek lain DITOLAK (false): jawaban yang
+ * tiba terlambat sesudah staf pindah orang tidak boleh menjadi kasus subjek
+ * baru — setiap tabnya akan ditolak server 'kasus-lingkup', dan detak terus
+ * memperpanjang kasus orang yang tidak sedang dilihat (temuan F11). Pemanggil
+ * tetap memeriksa subjek sendiri; ini sabuk terakhirnya.
+ */
+function pasang(k: Kasus | null, anak: Kasus[]): boolean {
+  if (k && !milikSubjek(k)) return false
   const lama = keadaan.value.kasus
   // Kasus yang sama dengan lingkup yang sama (ranah ditambah, diperpanjang)
   // = data boleh tinggal. Selain itu data lama tidak berhak tinggal.
@@ -236,6 +248,7 @@ function pasang(k: Kasus | null, anak: Kasus[]) {
     versi: tetap ? keadaan.value.versi : keadaan.value.versi + 1,
   }
   if (k) mulaiDetak()
+  return true
 }
 
 /**
@@ -498,10 +511,17 @@ export const useCashflowKasus = () => {
 
   const jalankan = jalankanDengan
 
-  /** Tambah ranah/ruang ke kasus (satu klik; alasan diwarisi server). */
+  /**
+   * Tambah ranah/ruang ke kasus (satu klik; alasan diwarisi server). Jawaban
+   * yang tiba sesudah staf pindah orang (atau sesudah kasusnya diganti)
+   * tidak dipasang — sama dengan buka() dan bukaOtomatis (temuan F11).
+   */
   async function tambah(ranah: readonly string[], ruang: readonly string[] = []): Promise<void> {
+    const subjek = keadaan.value.subjek
     const d = await jalankan(k => api.kasusTambah(k.id, ranah, ruang))
-    pasang(keKasus(d), keadaan.value.anak)
+    const k = keKasus(d)
+    if (keadaan.value.subjek !== subjek || keadaan.value.kasus?.id !== k.id) return
+    pasang(k, keadaan.value.anak)
   }
 
   /** Nilai tersimpan (reaktif) untuk kunci ini, atau undefined. */
