@@ -13,11 +13,13 @@ import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vitest/config'
 
 /* Alias `~` = akar landing, sama dengan Nuxt (srcDir di akar), supaya berkas
-   yang memakai `~/adapters/...` bisa diuji tanpa memuat Nuxt. */
+   yang memakai `~/adapters/...` bisa diuji tanpa memuat Nuxt. `#imports`
+   (modul virtual Nuxt, dipakai server/lib/konsol/h3.ts) diarahkan ke
+   pengganti yang meneruskan ke global tiruan uji — lihat tests/nuxt-imports.ts. */
 const akar = fileURLToPath(new URL('.', import.meta.url)).replace(/\/$/, '')
 
 export default defineConfig({
-  resolve: { alias: { '~': akar } },
+  resolve: { alias: { '~': akar, '#imports': `${akar}/tests/nuxt-imports.ts` } },
   test: {
     include: ['tests/**/*.test.ts'],
     environment: 'node',

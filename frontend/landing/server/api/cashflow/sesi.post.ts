@@ -37,20 +37,27 @@
  *      cek ini menutupnya.
  *   4. service-role → generateLink(magiclink) → verifyOtp(token_hash) dengan
  *      anon key → sesi asli. Tidak ada email yang dikirim.
- *   5. session_id dari JWT dicatat ke admin_konsol_sesi bersama email admin
- *      console (migrasi 0078) DAN izinnya (kolom `izin` + `izin_sampai`,
- *      migrasi 0089).
+ *   5. session_id dari JWT dicatat ke admin_konsol_sesi bersama id admin
+ *      gateway (`admin_gw_id` = /me id, migrasi 0092), email admin console
+ *      (`pelaku`, migrasi 0078 — sejak 0092 hanya label tampilan) DAN izinnya
+ *      (kolom `izin` + `izin_sampai`, migrasi 0089). Batas laju kasus,
+ *      kepemilikan kasus, atribusi audit, dan pencabutan memakai admin_gw_id:
+ *      email bisa diganti, id tidak (temuan F3). /me tanpa id yang sah =
+ *      502 gateway-gagal, bukan sesi yang diam-diam jatuh ke kunci email.
  *      is_platform_admin() HANYA menerima sesi yang tercatat di sana — sesi
  *      atas nama identitas yang sama dari jalur lain (reset sandi, magic-link
  *      email, kata sandi) ditolak. Pelaku manusianya pun jadi bukti server:
  *      admin_audit.pelaku diisi trigger dari tabel ini; konsol_boleh() membaca
  *      `izin`.
  *
- * URUTAN RILIS (Fase 1). Kolom `izin` baru ada sesudah migrasi 0089. Sengaja
- * TANPA jalan mundur: bila 0089 belum diterapkan, INSERT ini gagal, sesi
- * dimatikan lagi, dan console berhenti di /masuk ('mint-gagal') — lebih baik
- * daripada diam-diam mencetak sesi tanpa izin. Terapkan 0089 + 0090 DULU,
- * baru tayangkan landing ini (rencana Fase 1, "Urutan rilis").
+ * URUTAN RILIS. Kolom `izin` baru ada sesudah migrasi 0089, kolom
+ * `admin_gw_id` sesudah 0092. Sengaja TANPA jalan mundur: bila migrasinya
+ * belum diterapkan, INSERT ini gagal, sesi dimatikan lagi, dan console
+ * berhenti di /masuk ('mint-gagal') — lebih baik daripada diam-diam mencetak
+ * sesi yang batas lajunya bisa di-reset dengan mengganti email. Urutan paket
+ * A: SQL 0092 → gateway → landing ini (docs/runbook-console.md, "Cek setelah
+ * rilis"). Landing sebelumnya tetap jalan di atas 0092 (kolomnya nullable;
+ * sesinya memakai kunci email sampai kedaluwarsa, ≤ 12 jam).
  *
  * Kode gagal (statusMessage) dibaca halaman /console/cashflow/masuk:
  *   tanpa-cookie · cookie-ditolak · gateway-gagal · tanpa-izin ·
@@ -58,6 +65,7 @@
  */
 import { createClient } from '@supabase/supabase-js'
 import { batasIzinMfa, izinSesiCashflow } from '~/utils/rbac'
+import { idAdminGateway } from '../../lib/konsol/cashflow-cabut'
 import { bacaCookie, catat, hapusCookie, ipKlien, pasangToken, wajibIkatan } from '../../lib/konsol/h3'
 import { rakitTujuan } from '../../lib/konsol/jalur'
 import { teruskan } from '../../lib/konsol/proxy'
@@ -128,6 +136,13 @@ export default defineEventHandler(async (event) => {
   if (!izin.includes('cashflow:view')) {
     throw createError({ statusCode: 403, statusMessage: 'tanpa-izin' })
   }
+  // Id admin gateway = identitas admin di CashFlow (0092). Tanpanya sesi
+  // hanya bisa dikenali dari email — itu celah F3, jadi tidak dicetak.
+  const adminGwId = idAdminGateway(me.id)
+  if (!adminGwId) {
+    console.error('[cashflow/sesi] /me tanpa id admin yang sah')
+    throw createError({ statusCode: 502, statusMessage: 'gateway-gagal' })
+  }
 
   // 3. Bahan + identitas konsol yang sah.
   const url = config.public.cashflowSupabaseUrl as string
@@ -182,7 +197,7 @@ export default defineEventHandler(async (event) => {
   //    dimatikan lagi supaya tidak ada token setengah jadi di peramban.
   const sessionId = klaimJwt(sesi.access_token)?.session_id
   const { error: eCatat } = typeof sessionId === 'string'
-    ? await admin.from('admin_konsol_sesi').insert({ session_id: sessionId, pelaku: me.email, izin, izin_sampai: izinSampai })
+    ? await admin.from('admin_konsol_sesi').insert({ session_id: sessionId, admin_gw_id: adminGwId, pelaku: me.email, izin, izin_sampai: izinSampai })
     : { error: { message: 'JWT tanpa session_id' } }
   if (eCatat) {
     console.error('[cashflow/sesi] pencatatan sesi gagal:', eCatat.message)
@@ -193,7 +208,7 @@ export default defineEventHandler(async (event) => {
   // Rumah tangga: cabut catatan yang lewat umur (12 jam) dan buang yang > 7
   // hari. Dijalankan sesudah tiap pencetakan supaya tabelnya tidak tumbuh
   // tanpa batas; hasilnya tidak ditunggu dan kegagalannya tidak menghalangi.
-  catat(event, 'cashflow-sesi', { email: me.email, izin: izin.join(' '), izin_sampai: izinSampai ?? '-' })
+  catat(event, 'cashflow-sesi', { email: me.email, admin_gw_id: adminGwId, izin: izin.join(' '), izin_sampai: izinSampai ?? '-' })
   admin.rpc('admin_konsol_sesi_bersihkan').then(({ error }) => {
     if (error) console.error('[cashflow/sesi] bersihkan gagal:', error.message)
   }).catch(() => {})

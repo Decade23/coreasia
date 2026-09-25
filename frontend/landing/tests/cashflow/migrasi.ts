@@ -21,6 +21,11 @@ export const DIR_MIGRASI = process.env.CASHFLOW_MIGRASI
   ?? resolve(AKAR_LANDING, '../../../../..', 'cowork/works-in-m5/cashflow/supabase/migrations')
 export const adaMigrasi = existsSync(DIR_MIGRASI)
 
+/** Migrasi bernomor ini (mis. '0092') sudah ada di folder? Untuk uji kontrak
+ *  yang bentuknya berubah di migrasi itu: sebelum ada, bentuk lama yang diuji. */
+export const adaMigrasiNomor = (nomor: string): boolean =>
+  adaMigrasi && readdirSync(DIR_MIGRASI).some(n => n.startsWith(`${nomor}_`) && n.endsWith('.sql'))
+
 /** Semua migrasi, urut nama (= urut terap), tanpa komentar baris `--`. */
 function semuaMigrasi(): Array<{ nama: string; sql: string }> {
   return readdirSync(DIR_MIGRASI)
@@ -128,7 +133,8 @@ export function urutPohon(p: PohonKunci | null): PohonKunci | null {
 
 /** Badan (antara $$…$$) dan kepala definisi TERAKHIR sebuah fungsi. */
 export function fungsiTerakhir(nama: string): { berkas: string; kepala: string; badan: string } {
-  const pola = new RegExp(`create\\s+or\\s+replace\\s+function\\s+public\\.${nama}\\s*\\(`, 'gi')
+  // `create function` tanpa `or replace` juga dihitung (mis. 0079 membuat ulang sesudah drop).
+  const pola = new RegExp(`create\\s+(?:or\\s+replace\\s+)?function\\s+public\\.${nama}\\s*\\(`, 'gi')
   let temu: { berkas: string; kepala: string; badan: string } | null = null
   for (const { nama: berkas, sql } of semuaMigrasi()) {
     for (const m of sql.matchAll(pola)) {

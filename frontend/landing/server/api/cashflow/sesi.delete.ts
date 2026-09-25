@@ -3,14 +3,17 @@
  *
  * Dipanggil saat admin keluar dari console (useAdminAuth.logout) atau saat
  * modul CashFlow ditinggalkan dengan sengaja. Dua hal dilakukan:
- *   1. semua catatan sesi milik orang yang sama dicabut (0080) → tab lain
- *      orang itu ikut mati, dan is_platform_admin() menolak seketika walau
- *      access token-nya belum kedaluwarsa;
+ *   1. semua catatan sesi milik orang yang sama dicabut → tab lain orang itu
+ *      ikut mati, dan is_platform_admin() menolak seketika walau access
+ *      token-nya belum kedaluwarsa. "Orang yang sama" = id admin gateway
+ *      (admin_gw_id, 0092) DAN email pelakunya (sesi yang dicetak sebelum
+ *      0092) — lib/konsol/cashflow-cabut.ts;
  *   2. semua kasus (Fase 1, migrasi 0089) milik orang itu ditutup
- *      (admin_kasus_tutup_pelaku). Server sudah menolak kasus yang dibuka
- *      sebelum pencabutan sesi pelakunya; penutupan ini membuat /kasus jujur
- *      ("ditutup", bukan "aktif" yang tak bisa dipakai). Gagal = dicatat saja;
- *      pencabutan di langkah 1 yang menutup aksesnya;
+ *      (admin_kasus_tutup_admin + admin_kasus_tutup_pelaku). Server sudah
+ *      menolak kasus yang dibuka sebelum pencabutan sesi pelakunya;
+ *      penutupan ini membuat /kasus jujur ("ditutup", bukan "aktif" yang tak
+ *      bisa dipakai). Gagal = dicatat saja; pencabutan di langkah 1 yang
+ *      menutup aksesnya;
  *   3. refresh token-nya dicabut di GoTrue (signOut scope 'local' — hanya sesi
  *      ini, bukan sesi tab/admin lain yang memakai identitas konsol yang sama).
  *
@@ -19,6 +22,7 @@
  * sesi orang lain dengan menebak session_id.
  */
 import { createClient } from '@supabase/supabase-js'
+import { cabutSesiCashflowAdmin } from '../../lib/konsol/cashflow-cabut'
 
 function klaimJwt(token: string): Record<string, unknown> | null {
   try {
@@ -49,19 +53,16 @@ export default defineEventHandler(async (event) => {
     // Siapa pemilik sesi ini? Semua sesi orang yang sama ikut dicabut —
     // sessionStorage per tab berarti tab lain tidak tahu tab ini sudah keluar.
     const { data: baris } = await admin
-      .from('admin_konsol_sesi').select('pelaku').eq('session_id', sessionId).maybeSingle()
-    const { error } = baris?.pelaku
-      ? await admin.rpc('admin_konsol_sesi_cabut_pelaku', { p_email: baris.pelaku })
-      : await admin.rpc('admin_konsol_sesi_cabut', { p_session: sessionId })
-    if (error) {
+      .from('admin_konsol_sesi').select('pelaku, admin_gw_id').eq('session_id', sessionId).maybeSingle()
+    const orang = { id: baris?.admin_gw_id ?? null, email: baris?.pelaku ?? null }
+    const hasil = orang.id || orang.email
+      ? await cabutSesiCashflowAdmin({ url, service }, orang)
+      : ((await admin.rpc('admin_konsol_sesi_cabut', { p_session: sessionId })).error ? 'gagal' : 'dicabut')
+    if (hasil !== 'dicabut') {
       // Tanpa pencabutan di tabel, access token ini masih diterima
       // is_platform_admin() sampai kedaluwarsa — jangan pura-pura berhasil.
-      console.error('[cashflow/sesi] cabut gagal:', error.message)
+      console.error('[cashflow/sesi] cabut gagal:', hasil)
       throw createError({ statusCode: 502, statusMessage: 'cabut-gagal' })
-    }
-    if (baris?.pelaku) {
-      const { error: eKasus } = await admin.rpc('admin_kasus_tutup_pelaku', { p_pelaku: baris.pelaku })
-      if (eKasus) console.error('[cashflow/sesi] tutup kasus gagal:', eKasus.message)
     }
   }
   const { error: eKeluar } = await admin.auth.admin.signOut(token, 'local')

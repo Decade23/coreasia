@@ -14,11 +14,16 @@
  *   dimatikan lagi dan 502 mint-gagal: TIDAK ada jalan mundur diam-diam yang
  *   mencetak sesi tanpa izin.
  *
- * Nitro auto-import (defineEventHandler, getHeader, createError,
- * useRuntimeConfig) dipasang sebagai global tiruan; lib/konsol/h3 (cookie,
- * ikatan) dan lib/konsol/proxy (ke gateway) ditiru lewat vi.mock.
+ * - admin_gw_id = id admin gateway dari /me (temuan F3, migrasi 0092);
+ *   /me tanpa id yang sah → 502 gateway-gagal, tidak ada sesi yang dicetak.
+ *
+ * Handler dijalankan lewat h3 SUNGGUHAN (tests/konsol/bff.ts): cookie,
+ * Sec-Fetch-Site, dan token ikatan diperiksa oleh lib/konsol/h3 yang asli
+ * (dulu wajibIkatan ditiru sebagai no-op — temuan F13). Hanya
+ * lib/konsol/proxy (ke gateway) dan klien Supabase yang ditiru.
  */
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import { cookieKonsol, headerKonsol, panggil, pasangGlobalNitro } from '../konsol/bff'
 
 interface Me {
   id: string; email: string; role: string; is_active: boolean
@@ -30,14 +35,6 @@ const dicabut: string[] = []
 
 const jwt = (klaim: Record<string, unknown>) => `h.${Buffer.from(JSON.stringify(klaim)).toString('base64url')}.t`
 
-vi.mock('../../server/lib/konsol/h3', () => ({
-  bacaCookie: (_e: unknown, jenis: string) => (jenis === 'akses' ? 'akses-token' : null),
-  catat: () => {},
-  hapusCookie: () => {},
-  ipKlien: () => '127.0.0.1',
-  pasangToken: () => {},
-  wajibIkatan: () => {},
-}))
 vi.mock('../../server/lib/konsol/proxy', () => ({
   teruskan: async () => ({
     respons: new Response(JSON.stringify({ data: keadaan.me }), { status: 200, headers: { 'content-type': 'application/json' } }),
@@ -74,23 +71,19 @@ vi.mock('@supabase/supabase-js', () => ({
       }),
 }))
 
-class GalatH3 extends Error {
-  constructor(public statusCode: number, public statusMessage: string) { super(statusMessage) }
-}
-
-let handler: (e: { headers: Record<string, string> }) => Promise<{ izin: string[]; pelaku: string }>
+interface Hasil { izin: string[]; pelaku: string }
+let handler: unknown
 beforeAll(async () => {
-  vi.stubGlobal('defineEventHandler', (f: unknown) => f)
-  vi.stubGlobal('getHeader', (e: { headers: Record<string, string> }, nama: string) => e.headers[nama.toLowerCase()])
-  vi.stubGlobal('createError', (o: { statusCode: number; statusMessage: string }) => new GalatH3(o.statusCode, o.statusMessage))
-  vi.stubGlobal('useRuntimeConfig', () => ({
-    public: { gatewayUrl: 'http://gateway.uji/api', cashflowSupabaseUrl: 'https://supabase.uji', cashflowSupabaseAnonKey: 'anon' },
-    cashflowSupabaseServiceKey: 'kunci-layanan-tiruan',
-    cashflowKonsolEmail: 'konsol@coreasia.id',
-  }))
-  handler = (await import('../../server/api/cashflow/sesi.post')).default as unknown as typeof handler
+  pasangGlobalNitro()
+  handler = (await import('../../server/api/cashflow/sesi.post')).default
 })
+/** POST /api/cashflow/sesi lewat h3 asli; galat jadi { status, statusMessage }. */
+async function cetak(header: Record<string, string> = headerKonsol({ 'x-cf-sesi': '1' })) {
+  const j = await panggil(handler, { metode: 'POST', path: '/api/cashflow/sesi', header, cookie: cookieKonsol() })
+  return { ...j, isi: j.json as unknown as Hasil }
+}
 afterAll(() => { vi.useRealTimers(); vi.unstubAllGlobals() })
+const ADMIN_GW = '0b6e7c1e-2a55-4d59-9c5f-0a8d2f9d1b11'
 const KINI = Date.parse('2026-09-21T15:00:00Z')
 const JAM = 3_600_000
 const iso = (ms: number) => new Date(ms).toISOString()
@@ -104,21 +97,20 @@ beforeEach(() => {
   vi.spyOn(console, 'info').mockImplementation(() => {})
 })
 
-const acara = () => ({ headers: { 'x-cf-sesi': '1', 'sec-fetch-site': 'same-origin' } })
 /** Bawaan: login ber-TOTP 1 jam lalu, TOTP terdaftar 3 hari lalu. */
 const me = (role: string, mfa?: unknown, lain: Partial<Me> = {}): Me => ({
-  id: 'a1', email: 'admin@coreasia.id', role, is_active: true, mfa,
+  id: ADMIN_GW, email: 'admin@coreasia.id', role, is_active: true, mfa,
   mfa_at: mfa === true ? iso(KINI - JAM) : null, totp_enabled_at: iso(KINI - 72 * JAM), ...lain,
 })
 
 describe('sesi.post: izin sesi CashFlow', () => {
   it('super_admin ber-MFA → kelima izin tertulis di admin_konsol_sesi dan dikembalikan', async () => {
     keadaan.me = me('super_admin', true)
-    const r = await handler(acara())
+    const { isi: r } = await cetak()
     expect(tulis).toEqual([{
       tabel: 'admin_konsol_sesi',
       baris: {
-        session_id: 'sesi-uji-1', pelaku: 'admin@coreasia.id',
+        session_id: 'sesi-uji-1', admin_gw_id: ADMIN_GW, pelaku: 'admin@coreasia.id',
         izin: ['cashflow:view', 'cashflow:pii', 'cashflow:investigasi', 'cashflow:tindak', 'cashflow:ekspor'],
         // mfa_at (1 jam lalu) + 12 jam — bukan 12 jam sejak dicetak.
         izin_sampai: iso(KINI + 11 * JAM),
@@ -130,7 +122,7 @@ describe('sesi.post: izin sesi CashFlow', () => {
 
   it('super_admin TANPA MFA → hanya cashflow:view, izin_sampai null', async () => {
     keadaan.me = me('super_admin', false)
-    await handler(acara())
+    await cetak()
     expect(tulis[0]!.baris.izin).toEqual(['cashflow:view'])
     expect(tulis[0]!.baris.izin_sampai).toBeNull()
   })
@@ -141,7 +133,7 @@ describe('sesi.post: izin sesi CashFlow', () => {
     for (const umur of [60_000, 23 * JAM, 24 * JAM - 1000]) {
       tulis.length = 0
       keadaan.me = me('super_admin', true, { totp_enabled_at: iso(KINI - umur), mfa_at: iso(KINI - 30_000) })
-      const r = await handler(acara())
+      const { isi: r } = await cetak()
       expect(tulis[0]!.baris.izin, String(umur)).toEqual(['cashflow:view', 'cashflow:pii', 'cashflow:investigasi', 'cashflow:tindak', 'cashflow:ekspor'])
       expect(tulis[0]!.baris.izin_sampai, String(umur)).toBe(iso(KINI - 30_000 + 12 * JAM))
       expect(r.izin).toEqual(tulis[0]!.baris.izin)
@@ -153,7 +145,7 @@ describe('sesi.post: izin sesi CashFlow', () => {
       { mfa_at: null }, { mfa_at: 12345 }, { mfa_at: '' }] as Partial<Me>[]) {
       tulis.length = 0
       keadaan.me = me('super_admin', true, lain)
-      await handler(acara())
+      await cetak()
       expect(tulis[0]!.baris.izin, JSON.stringify(lain)).toEqual(['cashflow:view'])
       expect(tulis[0]!.baris.izin_sampai, JSON.stringify(lain)).toBeNull()
     }
@@ -161,14 +153,14 @@ describe('sesi.post: izin sesi CashFlow', () => {
 
   it('temuan fe p2 #2: dicetak di menit terakhir MFA → izin_sampai = mfa_at + 12 jam (±1 menit lagi), bukan 12 jam lagi', async () => {
     keadaan.me = me('super_admin', true, { mfa_at: iso(KINI - 12 * JAM + 60_000) })
-    await handler(acara())
+    await cetak()
     expect(tulis[0]!.baris.izin).toHaveLength(5)
     expect(tulis[0]!.baris.izin_sampai).toBe(iso(KINI + 60_000))
   })
 
   it('jam gateway mendahului (mfa_at di masa depan) → izin_sampai dijepit ke sekarang + 12 jam', async () => {
     keadaan.me = me('super_admin', true, { mfa_at: iso(KINI + 5 * JAM) })
-    await handler(acara())
+    await cetak()
     expect(tulis[0]!.baris.izin_sampai).toBe(iso(KINI + 12 * JAM))
   })
 
@@ -176,28 +168,49 @@ describe('sesi.post: izin sesi CashFlow', () => {
     for (const mfa of [undefined, 'true', 1]) {
       tulis.length = 0
       keadaan.me = me('super_admin', mfa)
-      await handler(acara())
+      await cetak()
       expect(tulis[0]!.baris.izin, String(mfa)).toEqual(['cashflow:view'])
     }
   })
 
   it('peran tanpa cashflow:view → 403 tanpa-izin; tidak ada sesi yang dicatat', async () => {
     keadaan.me = me('admin', true)
-    await expect(handler(acara())).rejects.toMatchObject({ statusCode: 403, statusMessage: 'tanpa-izin' })
+    expect(await cetak()).toMatchObject({ status: 403, statusMessage: 'tanpa-izin' })
     expect(tulis).toEqual([])
   })
 
   it('kolom izin belum ada (0089 belum diterapkan) → sesi dimatikan, 502 mint-gagal (tanpa jalan mundur)', async () => {
     keadaan.me = me('super_admin', true)
     keadaan.galatInsert = 'column "izin" of relation "admin_konsol_sesi" does not exist'
-    await expect(handler(acara())).rejects.toMatchObject({ statusCode: 502, statusMessage: 'mint-gagal' })
+    expect(await cetak()).toMatchObject({ status: 502, statusMessage: 'mint-gagal' })
     expect(tulis).toEqual([])
     expect(dicabut).toHaveLength(1)
   })
 
   it('tanpa Sec-Fetch-Site same-origin → 403 lintas-situs sebelum apa pun', async () => {
     keadaan.me = me('super_admin', true)
-    await expect(handler({ headers: { 'x-cf-sesi': '1' } })).rejects.toMatchObject({ statusCode: 403, statusMessage: 'lintas-situs' })
+    expect(await cetak({ 'x-cf-sesi': '1', 'x-konsol-ikat': headerKonsol()['x-konsol-ikat']! })).toMatchObject({ status: 403, statusMessage: 'lintas-situs' })
     expect(tulis).toEqual([])
+  })
+
+  it('tanpa token ikatan (skrip halaman publik satu-asal) → 403 ikatan, tidak ada sesi', async () => {
+    keadaan.me = me('super_admin', true)
+    expect(await cetak({ 'x-cf-sesi': '1', 'sec-fetch-site': 'same-origin' })).toMatchObject({ status: 403, statusMessage: 'ikatan' })
+    expect(tulis).toEqual([])
+  })
+
+  it('F3: admin_gw_id = id /me (dinormalkan huruf kecil); email hanya label', async () => {
+    keadaan.me = me('super_admin', true, { id: ADMIN_GW.toUpperCase(), email: 'Label@CoreAsia.id' })
+    await cetak()
+    expect(tulis[0]!.baris).toMatchObject({ admin_gw_id: ADMIN_GW, pelaku: 'Label@CoreAsia.id' })
+  })
+
+  it('F3: /me tanpa id yang sah (gateway lama/rusak) → 502 gateway-gagal; tidak ada sesi berkunci email saja', async () => {
+    for (const id of [undefined, '', 'a1', 42, `${ADMIN_GW}x`] as unknown[]) {
+      tulis.length = 0
+      keadaan.me = me('super_admin', true, { id: id as string })
+      expect(await cetak(), String(id)).toMatchObject({ status: 502, statusMessage: 'gateway-gagal' })
+      expect(tulis).toEqual([])
+    }
   })
 })

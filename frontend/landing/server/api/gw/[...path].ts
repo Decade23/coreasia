@@ -23,7 +23,7 @@
  *      klien, email dari klaim token).
  */
 import { metodeAman } from '../../lib/konsol/asal'
-import { cabutSesiCashflowPelaku } from '../../lib/konsol/cashflow-cabut'
+import { cabutSesiCashflowAdmin } from '../../lib/konsol/cashflow-cabut'
 import { klaimJwt } from '../../lib/konsol/cookie'
 import { bacaCookie, catat, hapusCookie, ipKlien, pasangToken, perpanjangIkat, wajibIkatan, wajibSatuAsal } from '../../lib/konsol/h3'
 import { pecahPathProxy, rakitTujuan, validasiJalur } from '../../lib/konsol/jalur'
@@ -75,10 +75,11 @@ export default defineEventHandler(async (event) => {
     pasangToken(event, hasil.tokenBaru)
     perpanjangIkat(event)
   }
-  if (hasil.emailSesiBerakhir) {
-    await cabutSesiCashflowPelaku(
+  if (hasil.pemilikSesiBerakhir) {
+    // Per id admin gateway DAN per email (sesi terbitan sebelum 0092) — cashflow-cabut.ts.
+    await cabutSesiCashflowAdmin(
       { url: config.public.cashflowSupabaseUrl as string, service: config.cashflowSupabaseServiceKey as string },
-      hasil.emailSesiBerakhir,
+      hasil.pemilikSesiBerakhir,
     )
   }
 

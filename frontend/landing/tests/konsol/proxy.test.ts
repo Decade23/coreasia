@@ -5,7 +5,7 @@
  */
 import { describe, expect, it } from 'vitest'
 import { rakitTujuan } from '../../server/lib/konsol/jalur'
-import { gantiSandiSendiri, HEADER_KLIEN_IP, saringHeaderKeluar, saringHeaderMasuk, segarkanToken, teruskan, type FetchGateway } from '../../server/lib/konsol/proxy'
+import { ubahAkunSendiri, pemilikToken, HEADER_KLIEN_IP, saringHeaderKeluar, saringHeaderMasuk, segarkanToken, teruskan, type FetchGateway } from '../../server/lib/konsol/proxy'
 
 const GW = 'http://gw.test/api'
 const jwt = (klaim: Record<string, unknown>) =>
@@ -241,14 +241,14 @@ describe('teruskan — rute pengakhir sesi', () => {
     'admin/AUTH/Totp/Enable',
     'admin/Auth/totp/DISABLE',
   ])(
-    '%s berhasil → cookie dihapus, email pemilik token dilaporkan',
+    '%s berhasil → cookie dihapus, pemilik token (id + email) dilaporkan',
     async (jalur) => {
       const gw = gatewayPalsu(() => new Response(null, { status: 204 }))
       const hasil = await teruskan(minta({ metode: 'POST', jalur, tujuan: rakitTujuan(GW, jalur, '')! }), { gatewayUrl: GW, fetch: gw.fetch })
       expect(hasil.respons.status).toBe(204)
       expect(hasil.hapusCookie).toBe(true)
       expect(hasil.tokenBaru).toBeNull()
-      expect(hasil.emailSesiBerakhir).toBe('admin@coreasia.id')
+      expect(hasil.pemilikSesiBerakhir?.email).toBe('admin@coreasia.id')
     },
   )
 
@@ -258,13 +258,13 @@ describe('teruskan — rute pengakhir sesi', () => {
     const hasil = await teruskan(minta({ metode: 'POST', jalur, tujuan: rakitTujuan(GW, jalur, '')! }), { gatewayUrl: GW, fetch: gw.fetch })
     expect(hasil.respons.status).toBe(400)
     expect(hasil.hapusCookie).toBe(false)
-    expect(hasil.emailSesiBerakhir).toBeNull()
+    expect(hasil.pemilikSesiBerakhir).toBeNull()
   })
 })
 
 describe('teruskan — ganti password akun sendiri mengakhiri sesi', () => {
   const SUB = '0b6e7c1e-2a55-4d59-9c5f-0a8d2f9d1b11'
-  const aksesMilik = jwt({ typ: 'access', sub: SUB, email: 'admin@coreasia.id', exp: 4102444800 })
+  const aksesMilik = jwt({ typ: 'access', sub: SUB, email: 'admin@coreasia.id', role: 'super_admin', exp: 4102444800 })
   const badan = (isi: unknown) => new TextEncoder().encode(JSON.stringify(isi))
   const put = (jalur: string, isi: unknown) =>
     minta({ metode: 'PUT', jalur, tujuan: rakitTujuan(GW, jalur, '')!, body: badan(isi), akses: aksesMilik })
@@ -273,32 +273,52 @@ describe('teruskan — ganti password akun sendiri mengakhiri sesi', () => {
     const gw = gatewayPalsu(() => json(200, { data: { id: SUB } }))
     const hasil = await teruskan(put(`admin/users/${SUB}`, { password: 'Baru-1234', current_password: 'x' }), { gatewayUrl: GW, fetch: gw.fetch })
     expect(hasil.hapusCookie).toBe(true)
-    expect(hasil.emailSesiBerakhir).toBe('admin@coreasia.id')
+    // F3: id admin gateway (klaim sub) ikut dilaporkan — pencabutan per id.
+    expect(hasil.pemilikSesiBerakhir).toEqual({ id: SUB, email: 'admin@coreasia.id' })
+  })
+
+  it('F3: ganti email / peran akun sendiri, atau menonaktifkannya → sesi berakhir', async () => {
+    for (const isi of [{ email: 'baru@coreasia.id' }, { role: 'admin' }, { is_active: false }]) {
+      const gw = gatewayPalsu(() => json(200, { data: { id: SUB } }))
+      const hasil = await teruskan(put(`admin/users/${SUB}`, isi), { gatewayUrl: GW, fetch: gw.fetch })
+      expect(hasil.hapusCookie, JSON.stringify(isi)).toBe(true)
+      expect(hasil.pemilikSesiBerakhir, JSON.stringify(isi)).toEqual({ id: SUB, email: 'admin@coreasia.id' })
+    }
   })
 
   it('bukan akhir sesi: admin lain, tanpa password, gagal, atau metode lain', async () => {
     const ok = () => gatewayPalsu(() => json(200, { data: {} }))
     const kasus = [
       put('admin/users/admin-lain', { password: 'Baru-1234' }),
-      put(`admin/users/${SUB}`, { full_name: 'Nama', role: 'admin' }),
+      put(`admin/users/${SUB}`, { full_name: 'Nama', role: 'super_admin' }),
+      // Form ubah selalu mengirim email: nilai yang sama (beda huruf) tidak mengakhiri sesi.
+      put(`admin/users/${SUB}`, { full_name: 'Nama', email: 'ADMIN@coreasia.id', is_active: true }),
       put(`admin/users/${SUB}`, { password: '' }),
       minta({ metode: 'POST', jalur: `admin/users/${SUB}`, tujuan: rakitTujuan(GW, `admin/users/${SUB}`, '')!, body: badan({ password: 'x' }), akses: aksesMilik }),
     ]
     for (const k of kasus) {
       const hasil = await teruskan(k, { gatewayUrl: GW, fetch: ok().fetch })
       expect(hasil.hapusCookie).toBe(false)
-      expect(hasil.emailSesiBerakhir).toBeNull()
+      expect(hasil.pemilikSesiBerakhir).toBeNull()
     }
     const gagal = gatewayPalsu(() => json(400, { errors: { code: 'PASSWORD_INVALID' } }))
     const hasil = await teruskan(put(`admin/users/${SUB}`, { password: 'Baru-1234' }), { gatewayUrl: GW, fetch: gagal.fetch })
     expect(hasil.hapusCookie).toBe(false)
   })
 
-  it('gantiSandiSendiri: id tidak peka huruf, badan rusak aman', () => {
-    expect(gantiSandiSendiri({ metode: 'put', jalur: `admin/USERS/${SUB.toUpperCase()}`, body: badan({ password: 'x' }) }, aksesMilik)).toBe(true)
-    expect(gantiSandiSendiri({ metode: 'PUT', jalur: `admin/users/${SUB}`, body: new TextEncoder().encode('{rusak') }, aksesMilik)).toBe(false)
-    expect(gantiSandiSendiri({ metode: 'PUT', jalur: `admin/users/${SUB}/x`, body: badan({ password: 'x' }) }, aksesMilik)).toBe(false)
-    expect(gantiSandiSendiri({ metode: 'PUT', jalur: `admin/users/${SUB}`, body: badan({ password: 'x' }) }, null)).toBe(false)
+  it('pemilikToken: id dari user_id (cadangan sub) yang berbentuk uuid, huruf kecil', () => {
+    expect(pemilikToken(jwt({ user_id: SUB.toUpperCase(), sub: 'lain', email: ' a@b.id ' }))).toEqual({ id: SUB, email: 'a@b.id' })
+    expect(pemilikToken(jwt({ sub: SUB }))).toEqual({ id: SUB, email: null })
+    expect(pemilikToken(jwt({ sub: 'bukan-uuid', email: 'a@b.id' }))).toEqual({ id: null, email: 'a@b.id' })
+    expect(pemilikToken(jwt({ sub: 'bukan-uuid' }))).toBeNull()
+    expect(pemilikToken(null)).toBeNull()
+  })
+
+  it('ubahAkunSendiri: id tidak peka huruf, badan rusak aman', () => {
+    expect(ubahAkunSendiri({ metode: 'put', jalur: `admin/USERS/${SUB.toUpperCase()}`, body: badan({ password: 'x' }) }, aksesMilik)).toBe(true)
+    expect(ubahAkunSendiri({ metode: 'PUT', jalur: `admin/users/${SUB}`, body: new TextEncoder().encode('{rusak') }, aksesMilik)).toBe(false)
+    expect(ubahAkunSendiri({ metode: 'PUT', jalur: `admin/users/${SUB}/x`, body: badan({ password: 'x' }) }, aksesMilik)).toBe(false)
+    expect(ubahAkunSendiri({ metode: 'PUT', jalur: `admin/users/${SUB}`, body: badan({ password: 'x' }) }, null)).toBe(false)
   })
 })
 

@@ -12,10 +12,11 @@
  *      ulangi permintaan. Refresh ditolak (4xx) → cookie dihapus, 401 asli
  *      diteruskan. Refresh gagal karena gateway (5xx/jaringan) → cookie
  *      dibiarkan, 401 asli diteruskan.
- *   4. Rute pengakhir sesi (logout-all, totp enable/disable, dan mengganti
- *      sandi akun sendiri) yang berhasil → cookie dihapus dan email pemilik
- *      token dilaporkan untuk pencabutan sesi CashFlow. Email diambil dari
- *      token yang BARU SAJA diterima gateway.
+ *   4. Rute pengakhir sesi (logout-all, totp enable/disable, dan perubahan
+ *      akun sendiri yang mencabut sesi di gateway — lihat ubahAkunSendiri)
+ *      yang berhasil → cookie dihapus dan pemilik token (id admin gateway +
+ *      email) dilaporkan untuk pencabutan sesi CashFlow (cashflow-cabut.ts).
+ *      Keduanya diambil dari token yang BARU SAJA diterima gateway.
  *   5. IP klien (dari header Vercel, lib/konsol/batas.ts) dikirim di
  *      X-Konsol-Klien-IP. Gateway hanya MENCATATNYA di audit sebagai IP yang
  *      dilaporkan BFF; pembatas dan keputusan keamanan gateway tidak
@@ -25,6 +26,7 @@
  * Jawaban gateway diteruskan dengan status aslinya; Set-Cookie gateway tidak
  * pernah diteruskan (cookie sesi hanya milik BFF).
  */
+import { idAdminGateway, type PemilikSesi } from './cashflow-cabut'
 import { klaimJwt, type PasanganToken } from './cookie'
 import { PENGAKHIR_SESI, ruteGateway } from './jalur'
 
@@ -135,8 +137,8 @@ export interface HasilProxy {
   tokenBaru: PasanganToken | null
   /** true = hapus cookie akses & segar (refresh ditolak, atau sesi diakhiri). */
   hapusCookie: boolean
-  /** Email admin yang sesinya baru saja diakhiri (untuk mencabut sesi CashFlow). */
-  emailSesiBerakhir: string | null
+  /** Admin yang sesinya baru saja diakhiri (untuk mencabut sesi CashFlow). */
+  pemilikSesiBerakhir: PemilikSesi | null
 }
 
 export async function teruskan(p: PermintaanProxy, ctx: KonteksGateway): Promise<HasilProxy> {
@@ -161,15 +163,15 @@ export async function teruskan(p: PermintaanProxy, ctx: KonteksGateway): Promise
   if (!akses && p.segar) {
     const hasil = await segarkan()
     if (hasil.status === 'ditolak') {
-      return { respons: jsonGalat(401, 'UNAUTHORIZED', 'Sesi sudah tidak berlaku. Silakan login ulang.'), tokenBaru: null, hapusCookie: true, emailSesiBerakhir: null }
+      return { respons: jsonGalat(401, 'UNAUTHORIZED', 'Sesi sudah tidak berlaku. Silakan login ulang.'), tokenBaru: null, hapusCookie: true, pemilikSesiBerakhir: null }
     }
     if (hasil.status === 'gagal') {
       // Gateway yang bermasalah bukan alasan menyuruh admin login ulang.
-      return { respons: jsonGalat(502, 'GATEWAY_UNREACHABLE', 'Gateway tidak dapat dihubungi.'), tokenBaru: null, hapusCookie: false, emailSesiBerakhir: null }
+      return { respons: jsonGalat(502, 'GATEWAY_UNREACHABLE', 'Gateway tidak dapat dihubungi.'), tokenBaru: null, hapusCookie: false, pemilikSesiBerakhir: null }
     }
   }
   if (!akses) {
-    return { respons: jsonGalat(401, 'UNAUTHORIZED', 'Autentikasi diperlukan'), tokenBaru: null, hapusCookie, emailSesiBerakhir: null }
+    return { respons: jsonGalat(401, 'UNAUTHORIZED', 'Autentikasi diperlukan'), tokenBaru: null, hapusCookie, pemilikSesiBerakhir: null }
   }
 
   const kirim = async (token: string): Promise<Response> => {
@@ -203,36 +205,56 @@ export async function teruskan(p: PermintaanProxy, ctx: KonteksGateway): Promise
         : jsonGalat(502, 'GATEWAY_UNREACHABLE', 'Gateway tidak dapat dihubungi.'),
       tokenBaru,
       hapusCookie,
-      emailSesiBerakhir: null,
+      pemilikSesiBerakhir: null,
     }
   }
 
-  let emailSesiBerakhir: string | null = null
-  if (respons.ok && (PENGAKHIR_SESI.has(ruteGateway(p.jalur)) || gantiSandiSendiri(p, akses))) {
-    const email = klaimJwt(akses)?.email
-    emailSesiBerakhir = typeof email === 'string' && email ? email : null
+  let pemilikSesiBerakhir: PemilikSesi | null = null
+  if (respons.ok && (PENGAKHIR_SESI.has(ruteGateway(p.jalur)) || ubahAkunSendiri(p, akses))) {
+    pemilikSesiBerakhir = pemilikToken(akses)
     hapusCookie = true
     tokenBaru = null
   }
-  return { respons, tokenBaru, hapusCookie, emailSesiBerakhir }
+  return { respons, tokenBaru, hapusCookie, pemilikSesiBerakhir }
 }
 
+/** Id admin gateway (klaim user_id, cadangan sub) dan email dari token akses. */
+export function pemilikToken(akses: string | null | undefined): PemilikSesi | null {
+  const klaim = klaimJwt(akses)
+  const id = idAdminGateway(klaim?.user_id) ?? idAdminGateway(klaim?.sub)
+  const email = typeof klaim?.email === 'string' && klaim.email.trim() ? klaim.email.trim() : null
+  return id || email ? { id, email } : null
+}
+
+const samaTeks = (a: unknown, b: unknown): boolean =>
+  typeof a === 'string' && typeof b === 'string' && a.trim().toLowerCase() === b.trim().toLowerCase()
+
 /**
- * PUT admin/users/<id milik token ini> yang membawa `password`: gateway selalu
- * menaikkan token_version saat sandi diganti, jadi SEMUA sesi admin ini (termasuk
- * yang sedang dipakai) berakhir. Sama seperti logout-all: cookie dihapus dan
- * sesi CashFlow-nya dicabut. Mengganti sandi admin LAIN tidak termasuk
- * (sesi CashFlow admin itu dicabut lewat runbook, Langkah 1).
+ * PUT admin/users/<id milik token ini> yang membuat gateway menaikkan
+ * token_version, sehingga SEMUA sesi admin ini (termasuk yang sedang dipakai)
+ * berakhir. Sama seperti logout-all: cookie dihapus dan sesi CashFlow-nya
+ * dicabut. Yang dihitung:
+ *   - `password` terisi (gateway selalu mencabut saat sandi diganti);
+ *   - `email` berbeda dari email di token (tanpa peka huruf) — email lama
+ *     tidak boleh terus menjadi label sesi CashFlow yang masih hidup (F3);
+ *   - `role` berbeda dari peran di token, atau `is_active: false`.
+ * Kolom yang dikirim tapi nilainya sama (form ubah selalu mengirim email)
+ * tidak mengakhiri apa pun. Mengubah admin LAIN tidak termasuk (sesi
+ * CashFlow admin itu dicabut lewat runbook, Langkah 1).
  */
-export function gantiSandiSendiri(p: Pick<PermintaanProxy, 'metode' | 'jalur' | 'body'>, akses: string | null): boolean {
+export function ubahAkunSendiri(p: Pick<PermintaanProxy, 'metode' | 'jalur' | 'body'>, akses: string | null): boolean {
   if (p.metode.toUpperCase() !== 'PUT' || !p.body?.byteLength) return false
   const m = /^admin\/users\/([^/]+)$/i.exec(p.jalur)
   const klaim = klaimJwt(akses)
   const milik = klaim?.sub ?? klaim?.user_id
   if (!m || typeof milik !== 'string' || m[1]!.toLowerCase() !== milik.toLowerCase()) return false
   try {
-    const isi = JSON.parse(new TextDecoder().decode(p.body)) as { password?: unknown } | null
-    return typeof isi?.password === 'string' && isi.password !== ''
+    const isi = JSON.parse(new TextDecoder().decode(p.body)) as Record<string, unknown> | null
+    if (!isi || typeof isi !== 'object') return false
+    if (typeof isi.password === 'string' && isi.password !== '') return true
+    if (typeof isi.email === 'string' && isi.email.trim() !== '' && !samaTeks(isi.email, klaim?.email)) return true
+    if (typeof isi.role === 'string' && isi.role !== '' && !samaTeks(isi.role, klaim?.role)) return true
+    return isi.is_active === false
   } catch {
     return false
   }
