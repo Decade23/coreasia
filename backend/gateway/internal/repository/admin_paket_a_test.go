@@ -123,6 +123,57 @@ func TestAdminUserRepo_EmailTanpaPekaHuruf(t *testing.T) {
 	}
 }
 
+// Data lama yang oleh 000016 dibiarkan kembar (indeks lower(btrim) tidak
+// terpasang): FindByEmail mendahulukan baris yang persis sama dengan masukan,
+// dan UNIQUE(email) peka huruf dari 000001 (admin_users_email_key) tetap
+// dipetakan ke ErrEmailTaken. Indeks dilepas di dalam transaksi uji saja.
+func TestAdminUserRepo_EmailKembarTanpaIndeks000016(t *testing.T) {
+	pool, ctx := testPool(t)
+	tx := rollbackTx(t, pool, ctx)
+	r := &AdminUserRepo{pool: tx}
+	if _, err := tx.Exec(ctx, `DROP INDEX IF EXISTS public.admin_users_email_lower_key`); err != nil {
+		t.Fatal(err)
+	}
+	before, err := r.DuplicateEmailGroups(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	lower := newTestAdmin(t, r, ctx, testEmail("kembar"))
+	upper := newTestAdmin(t, r, ctx, strings.ToUpper(lower.Email))
+	// Baris beda huruf lebih muda: urutan created_at saja akan memilih lower.
+	if _, err := tx.Exec(ctx, `UPDATE public.admin_users SET created_at = now() - interval '1 day' WHERE id = $1`, lower.ID); err != nil {
+		t.Fatal(err)
+	}
+	if got, err := r.FindByEmail(ctx, upper.Email); err != nil || got == nil || got.ID != upper.ID {
+		t.Fatalf("FindByEmail(%q) = %v %v, want baris yang persis sama (%s)", upper.Email, got, err, upper.ID)
+	}
+	if got, err := r.FindByEmail(ctx, lower.Email); err != nil || got == nil || got.ID != lower.ID {
+		t.Fatalf("FindByEmail(%q) = %v %v, want %s", lower.Email, got, err, lower.ID)
+	}
+	// Bentuk ketiga (tidak persis sama dengan keduanya): yang tertua.
+	mixed := strings.ToUpper(lower.Email[:1]) + lower.Email[1:]
+	if got, err := r.FindByEmail(ctx, mixed); err != nil || got == nil || got.ID != lower.ID {
+		t.Fatalf("FindByEmail(%q) = %v %v, want yang tertua %s", mixed, got, err, lower.ID)
+	}
+	// Tanpa indeks 000016 yang menolak adalah admin_users_email_key.
+	savepoint(t, tx, ctx, func(r *AdminUserRepo) {
+		err := r.Create(ctx, &model.AdminUser{Email: lower.Email, PasswordHash: "x", FullName: "Uji", Role: "admin"})
+		if !errors.Is(err, ErrEmailTaken) {
+			t.Fatalf("Create email persis sama: err = %v, want ErrEmailTaken", err)
+		}
+	})
+	savepoint(t, tx, ctx, func(r *AdminUserRepo) {
+		cur, _ := r.FindByID(ctx, upper.ID)
+		cur.Email = lower.Email
+		if ok, err := r.Update(ctx, cur, false); ok || !errors.Is(err, ErrEmailTaken) {
+			t.Fatalf("Update ke email persis sama: ok=%v err=%v, want ErrEmailTaken", ok, err)
+		}
+	})
+	if n, err := r.DuplicateEmailGroups(ctx); err != nil || n != before+1 {
+		t.Fatalf("DuplicateEmailGroups = %d, %v, want %d", n, err, before+1)
+	}
+}
+
 // 000017: semantik lapis panjang di SQL (pesan bersyarat, lepas, kosongkan,
 // jendela lewat, impor dari Redis lama).
 func TestAdminUserRepo_LapisPanjangTOTP(t *testing.T) {
