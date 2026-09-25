@@ -14,7 +14,9 @@
  *   (Sec-Fetch-Dest: document + Sec-Fetch-Mode: navigate);
  * - pencabutan sesi CashFlow (F3, migrasi 0092): logout, logout-all, akun
  *   sendiri diubah, dan DELETE /api/cashflow/sesi memanggil RPC per id admin
- *   gateway DAN RPC lama per email.
+ *   gateway DAN RPC lama per email untuk SESI; kasus ditutup per email hanya
+ *   bila id tidak diketahui (kasus dimiliki per id, label email bisa dipakai
+ *   admin lain).
  */
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
@@ -111,14 +113,14 @@ describe('/api/gw/** — penjaga asal & ikatan sebelum gateway', () => {
 })
 
 describe('/api/gw/** — sesi berakhir mencabut sesi CashFlow per id DAN per email (F3)', () => {
+  // Tanpa admin_kasus_tutup_pelaku: id diketahui, kasus ditutup per id saja.
   const RPC_PENUH = [
     { nama: 'admin_konsol_sesi_cabut_admin', arg: { p_admin_gw_id: ADMIN_ID } },
     { nama: 'admin_konsol_sesi_cabut_pelaku', arg: { p_email: ADMIN_EMAIL } },
     { nama: 'admin_kasus_tutup_admin', arg: { p_admin_gw_id: ADMIN_ID } },
-    { nama: 'admin_kasus_tutup_pelaku', arg: { p_pelaku: ADMIN_EMAIL } },
   ]
 
-  it('logout-all berhasil → cookie sesi dihapus, keempat RPC dipanggil', async () => {
+  it('logout-all berhasil → cookie sesi dihapus, sesi dicabut per id dan email, kasus per id', async () => {
     gateway.mockImplementation(async () => new Response(null, { status: 204 }))
     const r = await panggil(h.gw, { metode: 'POST', path: '/api/gw/admin/auth/logout-all', header: headerKonsol(), cookie: cookieKonsol() })
     expect(r.status).toBe(204)
@@ -223,7 +225,7 @@ describe('/api/admin/sesi — serah terima token login', () => {
 })
 
 describe('/api/admin/logout — cabut sesi CashFlow per id DAN per email (F3)', () => {
-  it('pemilik dari /me: id + email → empat RPC; cookie dihapus', async () => {
+  it('pemilik dari /me: id + email → sesi per id dan email, kasus per id saja; cookie dihapus', async () => {
     gateway.mockImplementation(async () => json(200, { data: { id: ADMIN_ID.toUpperCase(), email: ADMIN_EMAIL } }))
     const r = await panggil(h.logout, { metode: 'POST', path: '/api/admin/logout', header: headerKonsol(), cookie: cookieKonsol() })
     expect(r.status).toBe(200)
@@ -232,7 +234,6 @@ describe('/api/admin/logout — cabut sesi CashFlow per id DAN per email (F3)', 
       ['admin_konsol_sesi_cabut_admin', ADMIN_ID],
       ['admin_konsol_sesi_cabut_pelaku', ADMIN_EMAIL],
       ['admin_kasus_tutup_admin', ADMIN_ID],
-      ['admin_kasus_tutup_pelaku', ADMIN_EMAIL],
     ])
     expect(nilaiSetCookie(r, 'ca_konsol_akses')).toBe('')
   })
@@ -258,12 +259,12 @@ describe('DELETE /api/cashflow/sesi — semua sesi orang yang sama', () => {
     header: { authorization: `Bearer ${jwt({ session_id: '22222222-2222-4222-8222-222222222222' })}` },
   })
 
-  it('baris sesi ber-admin_gw_id → cabut per id DAN per email', async () => {
+  it('baris sesi ber-admin_gw_id → sesi dicabut per id DAN per email, kasus ditutup per id saja', async () => {
     sb.baris = { admin_gw_id: ADMIN_ID, pelaku: ADMIN_EMAIL }
     const r = await hapus()
     expect(r.status).toBe(200)
     expect(sb.rpc.map(x => x.nama)).toEqual([
-      'admin_konsol_sesi_cabut_admin', 'admin_konsol_sesi_cabut_pelaku', 'admin_kasus_tutup_admin', 'admin_kasus_tutup_pelaku',
+      'admin_konsol_sesi_cabut_admin', 'admin_konsol_sesi_cabut_pelaku', 'admin_kasus_tutup_admin',
     ])
     expect(sb.keluar).toHaveLength(1)
   })

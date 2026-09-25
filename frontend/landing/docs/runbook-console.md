@@ -87,7 +87,12 @@ urutannya dari sisi console dan modul CashFlow.
     `gateway-gagal`), bukan dicetak dengan kunci email saja.
   - Sesi yang dicetak landing sebelum 0092 tidak punya `admin_gw_id` dan
     tetap dilayani dengan kunci email sampai kedaluwarsa (≤ 12 jam). Karena
-    itu setiap jalur pencabutan memanggil kedua RPC: per id dan per email.
+    itu setiap jalur pencabutan SESI memanggil kedua RPC: per id dan per email.
+  - Kasus ditutup per id saja (`admin_kasus_tutup_admin`) bila id diketahui.
+    `admin_kasus_tutup_pelaku` hanya dipanggil untuk pemilik tanpa id (sesi
+    lama): menutup per label bisa mematikan kasus aktif admin lain yang pernah
+    memakai email itu. Kasus lama tanpa id tetap mati aksesnya lewat
+    pencabutan sesi, dan umurnya ≤ 2 jam.
 - **Tiga jenis dokumen.** Kebijakan melekat pada dokumen, jadi berpindah jenis
   selalu memuat ulang dokumen penuh (`plugins/konsol-isolasi.client.ts`).
 
@@ -377,6 +382,13 @@ rilis bersama landing" dan "Rollback rilis".
   id, batas laju kasus bisa di-reset dengan mengganti email.
 - Rollback landing paket A ke `33b4502` aman selama 0092 tetap ada. Jangan
   me-rollback 0092 selagi landing paket A tayang.
+- **Rilis berikutnya sesudah paket A: buang jalur email.** Begitu landing
+  paket A tayang lebih dari 12 jam, tidak ada lagi sesi tanpa `admin_gw_id`
+  yang hidup. Pemanggilan `admin_konsol_sesi_cabut_pelaku` dan
+  `admin_kasus_tutup_pelaku` di `server/lib/konsol/cashflow-cabut.ts` lalu
+  tidak berguna, dan cabut sesi per email masih bisa mengenai sesi admin lain
+  yang memakai email itu. Hapus keduanya dari landing (RPC-nya tetap ada di
+  SQL untuk runbook "Token console bocor").
 - Sesudah landing tayang: login console dengan TOTP, buka satu Pengguna 360,
   lalu pastikan sesinya ber-id:
   `select admin_gw_id, pelaku, dibuat from public.admin_konsol_sesi order by dibuat desc limit 3;`

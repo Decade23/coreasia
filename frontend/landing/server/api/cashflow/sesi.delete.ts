@@ -9,7 +9,8 @@
  *      (admin_gw_id, 0092) DAN email pelakunya (sesi yang dicetak sebelum
  *      0092) — lib/konsol/cashflow-cabut.ts;
  *   2. semua kasus (Fase 1, migrasi 0089) milik orang itu ditutup
- *      (admin_kasus_tutup_admin + admin_kasus_tutup_pelaku). Server sudah
+ *      (admin_kasus_tutup_admin; admin_kasus_tutup_pelaku hanya untuk sesi
+ *      lama tanpa admin_gw_id — kasus dimiliki per id). Server sudah
  *      menolak kasus yang dibuka sebelum pencabutan sesi pelakunya;
  *      penutupan ini membuat /kasus jujur ("ditutup", bukan "aktif" yang tak
  *      bisa dipakai). Gagal = dicatat saja; pencabutan di langkah 1 yang

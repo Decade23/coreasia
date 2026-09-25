@@ -11,13 +11,21 @@
  * IDENTITAS (temuan F3, migrasi 0092). Admin dikenali dari id admin gateway
  * (admin_konsol_sesi.admin_gw_id), bukan dari email: email bisa diganti,
  * jadi pencabutan per email bisa meleset ke sesi admin lain atau melewatkan
- * sesi yang dicetak dengan email lama. Kedua jalur tetap dipanggil:
+ * sesi yang dicetak dengan email lama. Jalurnya:
  *   1. per id: admin_konsol_sesi_cabut_admin + admin_kasus_tutup_admin
  *      (sesi yang dicetak landing ini, yang menulis admin_gw_id);
- *   2. per email: admin_konsol_sesi_cabut_pelaku + admin_kasus_tutup_pelaku
- *      (sesi yang dicetak SEBELUM rilis ini, tanpa admin_gw_id; umurnya
- *      ≤ 12 jam, jadi jalur ini boleh dibuang sesudah jendela itu lewat).
- * Salah satunya boleh kosong; keduanya kosong = tidak ada yang dicabut.
+ *   2. per email, SESI: admin_konsol_sesi_cabut_pelaku (sesi yang dicetak
+ *      SEBELUM rilis ini, tanpa admin_gw_id). Selalu dipanggil bila email
+ *      ada: ia juga mengenai sesi ber-id berlabel sama milik admin lain,
+ *      tetapi itu arah gagal aman (sesi mati, admin masuk lagi);
+ *   3. per email, KASUS: admin_kasus_tutup_pelaku HANYA bila id tidak
+ *      diketahui. Kasus dimiliki per id (0092); menutup per label bisa
+ *      mematikan kasus aktif admin lain yang kebetulan pernah memakai
+ *      email itu. Kasus lama tanpa id milik admin ini tetap mati aksesnya
+ *      lewat langkah 2, dan umurnya ≤ 2 jam.
+ * Jalur 2–3 hanya untuk jendela transisi (sesi lama ≤ 12 jam) dan dibuang
+ * di rilis berikutnya (runbook, "Paket A"). Id dan email boleh salah satu
+ * kosong; keduanya kosong = tidak ada yang dicabut.
  *
  * Kasus (Fase 1, migrasi 0089) milik admin itu ikut ditutup. Aksesnya sudah
  * mati begitu sesinya dicabut — server menolak kasus yang dibuka sebelum
@@ -66,7 +74,7 @@ export async function cabutSesiCashflowAdmin(
     }
     const kasus: Array<[string, Record<string, string>]> = []
     if (id) kasus.push(['admin_kasus_tutup_admin', { p_admin_gw_id: id }])
-    if (email) kasus.push(['admin_kasus_tutup_pelaku', { p_pelaku: email }])
+    if (email && !id) kasus.push(['admin_kasus_tutup_pelaku', { p_pelaku: email }])
     for (const [nama, arg] of kasus) {
       const { error } = await admin.rpc(nama, arg)
       if (error) console.error(`[konsol] tutup kasus CashFlow gagal (${nama}):`, error.message)
