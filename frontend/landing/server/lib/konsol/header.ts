@@ -16,7 +16,7 @@ export const HEADER_KEAMANAN_DASAR = {
 } as const
 
 /**
- * Console (/console/**): header dasar + noindex, dengan dua pengetatan:
+ * Console (/console/**): header dasar + noindex, dengan tiga pengetatan:
  *   - X-Frame-Options: DENY (CSP: frame-ancestors 'none'). SAMEORIGIN
  *     membolehkan halaman publik satu-asal yang memuat GTM membingkai console
  *     di iframe tersembunyi lalu membaca DOM-nya.
@@ -24,6 +24,14 @@ export const HEADER_KEAMANAN_DASAR = {
  *     COOP, jadi popup console yang dibuka dari sana (atau halaman publik yang
  *     dibuka dari console) masuk grup konteks lain: window.opener / rujukan
  *     window.open terputus dan DOM console tidak bisa dijangkau.
+ *   - Referrer-Policy: no-referrer (temuan F7). URL console membawa UUID
+ *     subjek/transaksi CashFlow dan saringan investigasi. Dengan kebijakan
+ *     dasar (strict-origin-when-cross-origin) navigasi satu-asal mengirim URL
+ *     LENGKAP, jadi dokumen publik yang dimuat sesudah console (ber-GTM)
+ *     mendapat document.referrer berisi jalur console dan meneruskannya ke
+ *     GA sebagai page_referrer. Lapis kedua ada di plugins/gtag.client.ts
+ *     (referrerAnalitik). Permintaan lintas asal console (Supabase, login ke
+ *     gateway) tetap membawa Origin untuk CORS.
  *
  * CSP-nya SENGAJA tidak di sini: kebijakan console tanpa 'unsafe-inline' dan
  * tanpa domain GTM memuat hash skrip sebaris Nuxt (window.__NUXT__.config)
@@ -36,5 +44,6 @@ export const HEADER_KONSOL = {
   ...HEADER_KEAMANAN_DASAR,
   'X-Frame-Options': 'DENY',
   'Cross-Origin-Opener-Policy': 'same-origin',
+  'Referrer-Policy': 'no-referrer',
   'X-Robots-Tag': 'noindex, nofollow, noarchive',
 } as const

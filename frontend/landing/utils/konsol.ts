@@ -339,6 +339,51 @@ export const gambarTerlaluBesar = (ukuran: number): boolean => ukuran > UKURAN_M
 /** Kunci sessionStorage sesi Supabase modul CashFlow (useCashflowSupabase). */
 export const KUNCI_SESI_CASHFLOW = 'cf-console-sesi'
 
+interface SimpananSesi {
+  length: number
+  key: (i: number) => string | null
+  removeItem: (k: string) => void
+}
+
+/**
+ * Buang sisa console dari sessionStorage tab ini: sesi Supabase CashFlow
+ * (akses + refresh) dan, untuk dokumen publik, draf form console. `ambil`
+ * dipanggil di dalam try: membaca window.sessionStorage pun bisa melempar.
+ */
+export function hapusSisaKonsol(ambil: () => SimpananSesi | null | undefined, draf: boolean): void {
+  try {
+    const simpan = ambil()
+    if (!simpan) return
+    simpan.removeItem(KUNCI_SESI_CASHFLOW)
+    if (draf) hapusSemuaDraf(simpan)
+  } catch {
+    // penyimpanan diblokir: tidak ada yang tertinggal
+  }
+}
+
+interface JendelaBfcache {
+  addEventListener: (jenis: 'pageshow', f: (e: { persisted?: boolean }) => void) => void
+  sessionStorage: SimpananSesi
+  location: { reload: () => void }
+}
+
+/**
+ * Dokumen publik yang DIPULIHKAN dari back/forward cache (tombol Back dari
+ * console) tidak menjalankan plugin lagi, padahal sessionStorage tab ini bisa
+ * sudah berisi token CashFlow yang ditulis console sesudahnya — dan GTM di
+ * dokumen itu masih hidup (temuan F8). Saat pageshow persisted: sisa console
+ * dibuang lalu dokumen dimuat ulang (plugin berjalan dari awal, GTM baru).
+ * Pendengar ini didaftarkan saat plugin berjalan, sebelum skrip GTM
+ * disisipkan, jadi ia berjalan lebih dulu dari pendengar pageshow milik GTM.
+ */
+export function pasangPembersihBfcache(w: JendelaBfcache): void {
+  w.addEventListener('pageshow', (e) => {
+    if (!e.persisted) return
+    hapusSisaKonsol(() => w.sessionStorage, true)
+    w.location.reload()
+  })
+}
+
 /** Kunci sessionStorage tempat reloadNuxtApp({ persistState: true }) menyalin
  *  SELURUH payload.state (useState console: id kasus, nominal saringan, teks
  *  cari, kepala Pengguna 360, admin_user). Aplikasi ini tidak pernah
@@ -389,6 +434,24 @@ export function pihakKetigaTermuat(w: JendelaMinimal): boolean {
     return !!w.document?.querySelector(SELEKTOR_SKRIP_PIHAK_KETIGA)
   } catch {
     return false
+  }
+}
+
+/**
+ * Referrer yang boleh dikirim ke analitik (page_referrer) — temuan F7. URL
+ * console (UUID subjek/transaksi CashFlow, saringan, ?ke=) tidak boleh sampai
+ * ke GTM/GA. Console sudah ber-Referrer-Policy no-referrer
+ * (server/lib/konsol/header.ts); ini lapis kedua untuk dokumen yang dimuat
+ * dari jawaban lama/cache atau peramban yang mengabaikan kebijakan itu.
+ * Jalur console di origin mana pun dikosongkan (www/apex, pratinjau); URL
+ * rusak ikut dikosongkan.
+ */
+export function referrerAnalitik(referrer: string | null | undefined): string {
+  if (!referrer) return ''
+  try {
+    return jalurKonsol(new URL(referrer).pathname) ? '' : referrer
+  } catch {
+    return ''
   }
 }
 

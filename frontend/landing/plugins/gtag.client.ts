@@ -37,7 +37,8 @@ export default defineNuxtPlugin((nuxtApp) => {
   })
 
   let lastTrackedLocation = ''
-  let previousPageLocation = document.referrer || ''
+  // Referrer dari console (UUID subjek, saringan) tidak dikirim ke GA — utils/konsol.ts referrerAnalitik (temuan F7).
+  let previousPageLocation = referrerAnalitik(document.referrer)
 
   const trackCurrentPage = () => {
     const currentPath = router.currentRoute.value.fullPath || '/'

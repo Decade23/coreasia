@@ -157,7 +157,8 @@ describe('pemakaian di klien console', () => {
   })
 
   it('dokumen publik membuang draf console sebelum GTM', () => {
-    expect(baca('plugins/konsol-isolasi.client.ts')).toMatch(/hapusSemuaDraf\(window\.sessionStorage\)/)
+    // Perilakunya (termasuk pemulihan bfcache, F8) diuji di tests/konsol/isolasi.test.ts.
+    expect(baca('plugins/konsol-isolasi.client.ts')).toMatch(/hapusSisaKonsol\(\(\) => window\.sessionStorage, jenis === 'publik'\)/)
   })
 
   it('kalimat sesi & draf ada di ID dan EN', () => {

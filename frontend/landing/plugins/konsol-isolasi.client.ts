@@ -15,6 +15,13 @@
  *     ulang console dan halaman login;
  *   - cookie token lama (sebelum 0c) yang dulu dipasang dari JS dihapus.
  *
+ * Dokumen publik yang dipulihkan dari back/forward cache (Back dari console)
+ * tidak memuat ulang plugin ini, padahal console di tab yang sama bisa sudah
+ * menulis token CashFlow ke sessionStorage. Karena itu dokumen publik juga
+ * memasang pendengar pageshow (persisted → sisa console dibuang, dokumen
+ * dimuat ulang), sebelum GTM termuat (utils/konsol.ts pasangPembersihBfcache,
+ * temuan F8).
+ *
  * Navigasi SPA yang berpindah jenis dokumen (utils/konsol.ts jenisDokumen)
  * selalu jadi muat ulang dokumen penuh, karena kebijakannya melekat pada
  * dokumen:
@@ -31,6 +38,9 @@
  * sesi → /console/login). Lapis kedua ada di layout console & halaman login
  * (useKonsolBersih).
  */
+import { ikatanKonsol } from '~/composables/useKonsolIkatan'
+import { hapusCookieLama, hapusSisaKonsol, jenisDokumen, pasangPembersihBfcache } from '~/utils/konsol'
+
 export default defineNuxtPlugin(() => {
   hapusCookieLama(document, window.location.protocol === 'https:')
 
@@ -38,12 +48,8 @@ export default defineNuxtPlugin(() => {
   const jenis = jenisDokumen(window.location.pathname)
 
   if (jenis !== 'publik') ikatanKonsol()
-  if (jenis !== 'konsol') {
-    try {
-      window.sessionStorage.removeItem(KUNCI_SESI_CASHFLOW)
-      if (jenis === 'publik') hapusSemuaDraf(window.sessionStorage)
-    } catch { /* penyimpanan diblokir: tidak ada yang tertinggal */ }
-  }
+  if (jenis !== 'konsol') hapusSisaKonsol(() => window.sessionStorage, jenis === 'publik')
+  if (jenis === 'publik') pasangPembersihBfcache(window)
 
   const router = useRouter()
   router.beforeEach((to) => {

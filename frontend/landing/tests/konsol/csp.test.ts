@@ -5,7 +5,7 @@
 import { webcrypto } from 'node:crypto'
 import { describe, expect, it } from 'vitest'
 import { bersihkanHeadKonsol, cspKonsol, hashSkrip, skripSebaris } from '../../server/lib/konsol/csp'
-import { originHttp } from '../../utils/konsol'
+import { originHttp, referrerAnalitik } from '../../utils/konsol'
 import { HEADER_KEAMANAN_DASAR, HEADER_KONSOL } from '../../server/lib/konsol/header'
 
 /** Hash lewat WebCrypto (jalur implementasi berbeda dari node:crypto createHash). */
@@ -124,6 +124,9 @@ describe('bersihkanHeadKonsol', () => {
 describe('HEADER_KONSOL (routeRules /console/**)', () => {
   it('menyalin semua header dasar /** (di Vercel aturan pertama yang cocok menang)', () => {
     for (const nama of Object.keys(HEADER_KEAMANAN_DASAR)) expect(HEADER_KONSOL).toHaveProperty(nama)
+    // Tidak ada nama ganda beda huruf (Referrer-Policy vs referrer-policy): peramban bisa memakai yang longgar.
+    const kecil = Object.keys(HEADER_KONSOL).map(k => k.toLowerCase())
+    expect(new Set(kecil).size).toBe(kecil.length)
     expect(HEADER_KONSOL['Strict-Transport-Security']).toBe(HEADER_KEAMANAN_DASAR['Strict-Transport-Security'])
   })
 
@@ -137,8 +140,35 @@ describe('HEADER_KONSOL (routeRules /console/**)', () => {
     expect(Object.keys(HEADER_KONSOL).map((k) => k.toLowerCase())).not.toContain('content-security-policy')
   })
 
+  it('F7: URL console (UUID subjek, saringan) tidak pernah jadi referrer — no-referrer', () => {
+    expect(HEADER_KONSOL['Referrer-Policy']).toBe('no-referrer')
+  })
+
   it('header dasar halaman publik tidak ikut diperketat', () => {
+    expect(HEADER_KEAMANAN_DASAR['Referrer-Policy']).toBe('strict-origin-when-cross-origin')
     expect(HEADER_KEAMANAN_DASAR['X-Frame-Options']).toBe('SAMEORIGIN')
     expect(HEADER_KEAMANAN_DASAR).not.toHaveProperty('Cross-Origin-Opener-Policy')
+  })
+})
+
+describe('referrerAnalitik (plugins/gtag.client.ts page_referrer, F7 lapis kedua)', () => {
+  it('jalur console di origin mana pun → kosong', () => {
+    for (const r of [
+      'https://coreasia.id/console/cashflow/pengguna/3f2a9c1e-0000-4000-8000-000000000001/transaksi?tx=9b1d0000-0000-4000-8000-000000000002&cek=anomali',
+      'https://www.coreasia.id/console/login?ke=%2Fconsole%2Fcashflow%2Fpengguna%2Fabc',
+      'https://coreasia.id/Console/users',
+      'https://coreasia.id/%63onsole/cashflow',
+      'https://pratinjau.vercel.app/console',
+    ]) expect(referrerAnalitik(r), r).toBe('')
+  })
+  it('halaman publik dan situs lain tetap dikirim apa adanya', () => {
+    expect(referrerAnalitik('https://coreasia.id/blog/konsol-baru')).toBe('https://coreasia.id/blog/konsol-baru')
+    expect(referrerAnalitik('https://www.google.com/')).toBe('https://www.google.com/')
+    expect(referrerAnalitik('https://coreasia.id/consoles')).toBe('https://coreasia.id/consoles')
+  })
+  it('kosong atau rusak → kosong', () => {
+    expect(referrerAnalitik('')).toBe('')
+    expect(referrerAnalitik(null)).toBe('')
+    expect(referrerAnalitik('bukan url')).toBe('')
   })
 })
