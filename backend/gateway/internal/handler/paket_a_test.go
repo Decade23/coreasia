@@ -389,6 +389,101 @@ func TestTOTPDisableEnable_GalatServerTidakMemakanJatah(t *testing.T) {
 	}
 }
 
+// totpWriteErrStore: kode benar, tetapi DB gagal menulis EnableTOTP/DisableTOTP.
+type totpWriteErrStore struct{ *fakeAdminStore }
+
+func (totpWriteErrStore) EnableTOTP(context.Context, uuid.UUID, string, int64) (bool, error) {
+	return false, errors.New("koneksi DB putus")
+}
+func (totpWriteErrStore) DisableTOTP(context.Context, uuid.UUID, int64) (bool, error) {
+	return false, errors.New("koneksi DB putus")
+}
+
+// Setiap cabang galat server sesudah pemesanan jatah di verify, enable, dan
+// disable: rahasia tersegel rusak (terbuka, tetapi bukan base32 sah) dan DB
+// gagal menulis. Semuanya 500, jatah pendek dan panjang kembali, satu baris
+// totp_error dengan tahap dan sebabnya, tanpa totp_failed.
+func TestTOTP_GalatServerPerTahapTidakMemakanJatah(t *testing.T) {
+	type kasus struct {
+		nama, tahap, sebab string
+		dbGagal            bool
+		// jalan menyiapkan admin lalu mengirim permintaan dengan kode benar.
+		jalan func(t *testing.T, e *authEnv) (uuid.UUID, reply)
+	}
+	rusak := func(t *testing.T, e *authEnv, id uuid.UUID) string {
+		enc, err := e.cipher.Seal(id, "!!!bukan-base32!!!")
+		if err != nil {
+			t.Fatal(err)
+		}
+		return enc
+	}
+	verify := func(corrupt bool) func(t *testing.T, e *authEnv) (uuid.UUID, reply) {
+		return func(t *testing.T, e *authEnv) (uuid.UUID, reply) {
+			u, secret := e.addTOTPAdmin(t, "mfa@coreasia.id")
+			ch := e.challenge(t, "mfa@coreasia.id")
+			if corrupt {
+				enc := rusak(t, e, u.ID)
+				e.store.users[u.ID].TOTPSecretEnc = &enc
+			}
+			return u.ID, e.verify(t, ch, e.code(t, secret))
+		}
+	}
+	enable := func(corrupt bool) func(t *testing.T, e *authEnv) (uuid.UUID, reply) {
+		return func(t *testing.T, e *authEnv) (uuid.UUID, reply) {
+			u := e.addAdmin(t, "baru@coreasia.id", "admin")
+			secret, _, err := auth.NewTOTPKey(u.Email)
+			if err != nil {
+				t.Fatal(err)
+			}
+			pending, _ := e.cipher.Seal(u.ID, secret)
+			if corrupt {
+				pending = rusak(t, e, u.ID)
+			}
+			e.store.users[u.ID].TOTPPendingEnc = &pending
+			return u.ID, e.do(t, http.MethodPost, "/api/admin/auth/totp/enable", e.tokens(t, u, false).AccessToken, map[string]string{"code": e.code(t, secret)})
+		}
+	}
+	disable := func(corrupt bool) func(t *testing.T, e *authEnv) (uuid.UUID, reply) {
+		return func(t *testing.T, e *authEnv) (uuid.UUID, reply) {
+			u, secret := e.addTOTPAdmin(t, "mfa@coreasia.id")
+			if corrupt {
+				enc := rusak(t, e, u.ID)
+				e.store.users[u.ID].TOTPSecretEnc = &enc
+			}
+			return u.ID, e.do(t, http.MethodPost, "/api/admin/auth/totp/disable", e.tokens(t, u, true).AccessToken, map[string]string{"code": e.code(t, secret)})
+		}
+	}
+	for _, k := range []kasus{
+		{"verify rahasia rusak", "login", causeSecretCorrupt, false, verify(true)},
+		{"enable rahasia rusak", "enable", causeSecretCorrupt, false, enable(true)},
+		{"enable DB gagal", "enable", causeDBWrite, true, enable(false)},
+		{"disable rahasia rusak", "disable", causeSecretCorrupt, false, disable(true)},
+		{"disable DB gagal", "disable", causeDBWrite, true, disable(false)},
+	} {
+		t.Run(k.nama, func(t *testing.T) {
+			o := envOpts{}
+			if k.dbGagal {
+				o.wrap = func(f *fakeAdminStore) adminUserStore { return totpWriteErrStore{f} }
+			}
+			e := newAuthEnvWith(t, o)
+			id, r := k.jalan(t, e)
+			if r.status != http.StatusInternalServerError {
+				t.Fatalf("%d %s %v, want 500", r.status, r.errCode(), r.body)
+			}
+			if n, l := e.limiter.count(id), e.limiter.longCount(id); n != 0 || l != 0 {
+				t.Fatalf("jatah: pendek %d, panjang %d, want 0/0", n, l)
+			}
+			d := e.audit.descsOf("totp_error")
+			if len(d) != 1 || !strings.Contains(d[0], "tahap "+k.tahap+": "+k.sebab) {
+				t.Fatalf("audit totp_error: %q, want satu baris tahap %s: %s", d, k.tahap, k.sebab)
+			}
+			if e.audit.has("totp_failed") || e.audit.has("totp_locked") {
+				t.Fatalf("galat server bukan kode salah: %v", e.audit.actions)
+			}
+		})
+	}
+}
+
 // Hash sandi tersimpan rusak (bukan bcrypt) di /totp/setup dan ganti sandi
 // sendiri: galat server, bukan sandi salah. Jatah kembali, tanpa totp_failed.
 func TestSandiKonfirmasi_HashRusakTidakMemakanJatah(t *testing.T) {
