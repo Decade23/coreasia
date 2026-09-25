@@ -79,4 +79,19 @@ describe('kontrak server/ ↔ migrasi CashFlow (0092)', () => {
     expect(kolom).toContain('admin_gw_id')
     expect(kolomTabel('admin_konsol_sesi').kolom).toEqual(expect.arrayContaining(kolom))
   })
+
+  it.skipIf(!ADA_0092)('kolom yang DIBACA server/ dari admin_konsol_sesi ada; DELETE /api/cashflow/sesi membaca admin_gw_id', () => {
+    // Salah ketik nama kolom di select() = PostgREST menjawab galat, handler
+    // membaca baris kosong, dan pencabutan per id (F3) diam-diam tidak jalan.
+    const ada = new Set(kolomTabel('admin_konsol_sesi').kolom)
+    const dibaca: Array<{ f: string; kolom: string[] }> = []
+    for (const { f, isi } of SERVER) {
+      for (const m of isi.matchAll(/from\('admin_konsol_sesi'\)\s*\.select\('([^']*)'\)/g)) {
+        dibaca.push({ f, kolom: m[1]!.split(',').map(k => k.trim()).filter(Boolean) })
+      }
+    }
+    const hapus = dibaca.find(x => x.f.endsWith('api/cashflow/sesi.delete.ts'))
+    expect(hapus?.kolom).toEqual(expect.arrayContaining(['admin_gw_id', 'pelaku']))
+    for (const x of dibaca) for (const k of x.kolom) expect(ada.has(k), `${x.f}: ${k}`).toBe(true)
+  })
 })

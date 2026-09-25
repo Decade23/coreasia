@@ -36,7 +36,18 @@ vi.mock('@supabase/supabase-js', () => ({
       sb.rpc.push({ nama, arg })
       return sb.rpcGagal.has(nama) ? { data: null, error: { message: `${nama} gagal` } } : { data: null, error: null }
     },
-    from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: sb.baris, error: null }) }) }) }),
+    // select(kolom) memproyeksikan baris ke kolom yang DIMINTA saja, seperti
+    // PostgREST: kolom yang lupa dipilih = undefined, bukan ikut terbawa.
+    from: () => ({
+      select: (kolom: string) => ({
+        eq: () => ({
+          maybeSingle: async () => ({
+            data: sb.baris && Object.fromEntries(kolom.split(',').map(k => k.trim()).filter(k => k in sb.baris!).map(k => [k, sb.baris![k]])),
+            error: null,
+          }),
+        }),
+      }),
+    }),
     auth: {
       getUser: async () => ({ data: { user: { id: 'identitas-konsol' } }, error: null }),
       admin: { signOut: async (t: string) => { sb.keluar.push(t); return { error: null } } },
@@ -208,6 +219,14 @@ describe('/api/admin/sesi — serah terima token login', () => {
     expect(ikatBaru).not.toBe(IKAT)
   })
 
+  it('/me menyatakan admin NONAKTIF (id = sub) → 401, tidak ada cookie sesi', async () => {
+    gateway.mockImplementation(async () => json(200, { data: { id: ADMIN_ID, email: ADMIN_EMAIL, is_active: false } }))
+    const r = await kirim(headerKonsol())
+    expect(r.status).toBe(401)
+    expect(nilaiSetCookie(r, 'ca_konsol_akses')).toBeUndefined()
+    expect(nilaiSetCookie(r, 'ca_konsol_ikat')).toBeUndefined()
+  })
+
   it('/me milik admin lain (id ≠ sub token) → 401, tidak ada cookie sesi', async () => {
     gateway.mockImplementation(async () => json(200, { data: { id: '11111111-1111-4111-8111-111111111111', email: 'lain@coreasia.id', is_active: true } }))
     const r = await kirim(headerKonsol())
@@ -245,11 +264,29 @@ describe('/api/admin/logout — cabut sesi CashFlow per id DAN per email (F3)', 
     expect(sb.rpc.map(x => x.nama)).toContain('admin_konsol_sesi_cabut_pelaku')
   })
 
-  it('RPC per id gagal → cashflow: gagal (tetap keluar, 200)', async () => {
+  it('/me 200 tanpa id maupun email → pemilik dari refresh, bukan menyerah', async () => {
+    gateway.mockImplementation(async (url: string) => url.endsWith('/admin/auth/me')
+      ? json(200, { data: {} })
+      : json(200, { data: { access_token: AKSES, refresh_token: AKSES, user: { id: ADMIN_ID, email: ADMIN_EMAIL } } }))
+    const r = await panggil(h.logout, { metode: 'POST', path: '/api/admin/logout', header: headerKonsol(), cookie: cookieKonsol() })
+    expect(gateway.mock.calls.map(([u]) => u)).toEqual(['http://gateway.uji/api/admin/auth/me', 'http://gateway.uji/api/admin/auth/refresh'])
+    expect(r.json).toMatchObject({ data: { cashflow: 'dicabut' } })
+    expect(sb.rpc.map(x => x.nama)).toEqual(['admin_konsol_sesi_cabut_admin', 'admin_konsol_sesi_cabut_pelaku', 'admin_kasus_tutup_admin'])
+  })
+
+  it.each(['admin_konsol_sesi_cabut_admin', 'admin_konsol_sesi_cabut_pelaku'])('RPC cabut sesi %s gagal → cashflow: gagal (tetap keluar, 200)', async (rpc) => {
     gateway.mockImplementation(async () => json(200, { data: { id: ADMIN_ID, email: ADMIN_EMAIL } }))
-    sb.rpcGagal.add('admin_konsol_sesi_cabut_admin')
+    sb.rpcGagal.add(rpc)
     const r = await panggil(h.logout, { metode: 'POST', path: '/api/admin/logout', header: headerKonsol(), cookie: cookieKonsol() })
     expect(r).toMatchObject({ status: 200, json: { data: { cashflow: 'gagal' } } })
+    expect(nilaiSetCookie(r, 'ca_konsol_akses')).toBe('')
+  })
+
+  it('tutup kasus gagal → tetap dicabut (akses kasus sudah mati bersama sesinya)', async () => {
+    gateway.mockImplementation(async () => json(200, { data: { id: ADMIN_ID, email: ADMIN_EMAIL } }))
+    sb.rpcGagal.add('admin_kasus_tutup_admin')
+    const r = await panggil(h.logout, { metode: 'POST', path: '/api/admin/logout', header: headerKonsol(), cookie: cookieKonsol() })
+    expect(r).toMatchObject({ status: 200, json: { data: { cashflow: 'dicabut' } } })
   })
 })
 
@@ -275,16 +312,33 @@ describe('DELETE /api/cashflow/sesi — semua sesi orang yang sama', () => {
     expect(sb.rpc.map(x => x.nama)).toEqual(['admin_konsol_sesi_cabut_pelaku', 'admin_kasus_tutup_pelaku'])
   })
 
-  it('pencabutan per id gagal → 502 cabut-gagal (tidak pura-pura berhasil)', async () => {
+  it.each(['admin_konsol_sesi_cabut_admin', 'admin_konsol_sesi_cabut_pelaku'])('pencabutan sesi %s gagal → 502 cabut-gagal (tidak pura-pura berhasil)', async (rpc) => {
     sb.baris = { admin_gw_id: ADMIN_ID, pelaku: ADMIN_EMAIL }
-    sb.rpcGagal.add('admin_konsol_sesi_cabut_admin')
+    sb.rpcGagal.add(rpc)
     const r = await hapus()
     expect(r).toMatchObject({ status: 502, statusMessage: 'cabut-gagal' })
+    expect(sb.keluar).toEqual([])
+  })
+
+  it('tutup kasus gagal → tetap 200 (sesi sudah dicabut)', async () => {
+    sb.baris = { admin_gw_id: ADMIN_ID, pelaku: ADMIN_EMAIL }
+    sb.rpcGagal.add('admin_kasus_tutup_admin')
+    const r = await hapus()
+    expect(r.status).toBe(200)
+    expect(sb.keluar).toHaveLength(1)
   })
 
   it('tanpa baris → sesi ini saja', async () => {
-    await hapus()
-    expect(sb.rpc.map(x => x.nama)).toEqual(['admin_konsol_sesi_cabut'])
+    const r = await hapus()
+    expect(r.status).toBe(200)
+    expect(sb.rpc).toEqual([{ nama: 'admin_konsol_sesi_cabut', arg: { p_session: '22222222-2222-4222-8222-222222222222' } }])
+  })
+
+  it('tanpa baris, pencabutan sesi ini gagal → 502 cabut-gagal', async () => {
+    sb.rpcGagal.add('admin_konsol_sesi_cabut')
+    const r = await hapus()
+    expect(r).toMatchObject({ status: 502, statusMessage: 'cabut-gagal' })
+    expect(sb.keluar).toEqual([])
   })
 })
 

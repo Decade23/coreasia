@@ -205,8 +205,14 @@ describe('sesi.post: izin sesi CashFlow', () => {
     expect(tulis[0]!.baris).toMatchObject({ admin_gw_id: ADMIN_GW, pelaku: 'Label@CoreAsia.id' })
   })
 
+  it('F3: id /me berspasi di tepi tetap sah → dirapikan (tanpa spasi, huruf kecil)', async () => {
+    keadaan.me = me('super_admin', true, { id: ` ${ADMIN_GW.toUpperCase()} ` })
+    await cetak()
+    expect(tulis[0]!.baris).toMatchObject({ admin_gw_id: ADMIN_GW })
+  })
+
   it('F3: /me tanpa id yang sah (gateway lama/rusak) → 502 gateway-gagal; tidak ada sesi berkunci email saja', async () => {
-    for (const id of [undefined, '', 'a1', 42, `${ADMIN_GW}x`] as unknown[]) {
+    for (const id of [undefined, '', 'a1', 42, `${ADMIN_GW}x`, `x${ADMIN_GW}`, `${ADMIN_GW}\n${ADMIN_GW}`] as unknown[]) {
       tulis.length = 0
       keadaan.me = me('super_admin', true, { id: id as string })
       expect(await cetak(), String(id)).toMatchObject({ status: 502, statusMessage: 'gateway-gagal' })
