@@ -55,10 +55,12 @@ urutannya dari sisi console dan modul CashFlow.
     peran) yang berhasil lewat proxy mencabut sesi CashFlow admin itu **per id
     saja** (`admin_konsol_sesi_cabut_admin` + `admin_kasus_tutup_admin`, id dari
     jalur). Cookie pemanggil tidak disentuh. Hasilnya dilaporkan di header
-    `X-Konsol-Cashflow-Cabut` (`dicabut`, `gagal`, `tak-terkonfigurasi`); bila
-    bukan `dicabut`, halaman Users menampilkan peringatan yang menetap untuk
-    menjalankan Langkah 1. Form "Edit user" hanya mengirim email dan peran bila
-    berubah, jadi mengganti nama tidak mencabut apa pun.
+    `X-Konsol-Cashflow-Cabut` (`dicabut`, `gagal`, `tak-terkonfigurasi`). Untuk
+    keempat tindakan itu (tombol Cabut semua sesi, Reset TOTP, Hapus, dan
+    simpan form/ganti password yang membawa kolom di atas), bila header `gagal`
+    atau tidak ada, halaman Users menampilkan peringatan yang menetap (bukan
+    toast sukses) untuk menjalankan Langkah 1. Form "Edit user" hanya mengirim
+    email dan peran bila berubah, jadi mengganti nama tidak mencabut apa pun.
   - Proxy meneruskan IP peramban di `X-Konsol-Klien-IP`. Gateway mencatatnya di
     `gateway_audit_logs.reported_client_ip`, bukan di `ip_address`.
 - **Ikatan dokumen.** Setiap panggilan BFF (kecuali logout) wajib membawa

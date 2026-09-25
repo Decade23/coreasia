@@ -6,7 +6,10 @@
  * `galat` menyimpan galat terakhir supaya halaman bisa bereaksi (mis. 409).
  */
 import type { GalatAuth } from './useAdminAuth'
-import { HEADER_CABUT_CASHFLOW, pesanAksiSesiAdmin, type AksiSesiAdmin } from '~/utils/konsol'
+import {
+  HEADER_CABUT_CASHFLOW, peringatanCabutCashflow, pesanAksiSesiAdmin, ubahMengakhiriSesi,
+  type AksiSesiAdmin, type KonfirmasiSesiAdmin,
+} from '~/utils/konsol'
 
 export interface AdminUserDomain {
   id: string
@@ -19,6 +22,7 @@ export interface AdminUserDomain {
 }
 
 type AksiAdmin = 'create' | 'update' | 'delete'
+type SasaranAdmin = Pick<AdminUserDomain, 'id' | 'email' | 'full_name'>
 
 export const useAdminUsers = () => {
   const api = useAdminApi()
@@ -75,13 +79,27 @@ export const useAdminUsers = () => {
     }
   }
 
-  const updateUser = async (id: string, data: Record<string, any>): Promise<boolean> => {
+  /** Nama untuk pesan: nama lengkap, cadangan email. */
+  const namaAdmin = (u: SasaranAdmin) => u.full_name || u.email
+
+  /**
+   * Sukses di gateway, lalu hasil pencabutan sesi CashFlow dari header BFF:
+   * peringatan MENETAP (durasi 0) bila sesi CashFlow admin itu belum tentu
+   * ikut dicabut (runbook console, Langkah 1); selain itu toast sukses biasa.
+   */
+  const laporTulis = (u: SasaranAdmin, aksi: 'ubah' | 'hapus', headers: Headers, diharapkan: boolean, sukses: string) => {
+    const kunci = peringatanCabutCashflow(aksi, headers.get(HEADER_CABUT_CASHFLOW), diharapkan)
+    if (kunci) toast.warning(tc(kunci, { name: namaAdmin(u) }), 0)
+    else toast.success(tc(sukses))
+  }
+
+  const updateUser = async (u: SasaranAdmin, data: Record<string, any>): Promise<boolean> => {
     saving.value = true
     error.value = ''
     galat.value = null
     try {
-      await api.put(`/admin/users/${id}`, data)
-      toast.success(tc('feedback.userUpdated'))
+      const { headers } = await api.tulisDenganHeader('PUT', `/admin/users/${u.id}`, data)
+      laporTulis(u, 'ubah', headers, ubahMengakhiriSesi(data), 'feedback.userUpdated')
       return true
     } catch (err) {
       gagal(err, 'update', tc('feedback.userUpdateFailed'))
@@ -98,7 +116,7 @@ export const useAdminUsers = () => {
    * sesi kuat untuk reset TOTP (target ber-TOTP) diputuskan gateway; 403-nya
    * dipetakan pesanKelolaAdmin.
    */
-  const aksiSesi = async (u: Pick<AdminUserDomain, 'id' | 'email' | 'full_name'>, aksi: AksiSesiAdmin): Promise<boolean> => {
+  const aksiSesi = async (u: SasaranAdmin, aksi: AksiSesiAdmin): Promise<boolean> => {
     saving.value = true
     error.value = ''
     galat.value = null
@@ -106,7 +124,7 @@ export const useAdminUsers = () => {
       const jalur = aksi === 'cabut-sesi' ? 'revoke-sessions' : 'totp/reset'
       const { headers } = await api.tulisDenganHeader('POST', `/admin/users/${u.id}/${jalur}`)
       const p = pesanAksiSesiAdmin(aksi, headers.get(HEADER_CABUT_CASHFLOW))
-      const teks = tc(p.kunci, { name: u.full_name || u.email })
+      const teks = tc(p.kunci, { name: namaAdmin(u) })
       if (p.jenis === 'sukses') toast.success(teks)
       else toast.warning(teks, 0)
       return true
@@ -118,13 +136,35 @@ export const useAdminUsers = () => {
     }
   }
 
-  const deleteUser = async (id: string): Promise<boolean> => {
+  /* Modal konfirmasi cabut sesi / reset TOTP: satu langkah, tanpa alasan.
+     Tertutup hanya bila aksi berhasil; bila gagal, pesan galat tetap di modal. */
+  const konfirmasiSesi = ref<KonfirmasiSesiAdmin | null>(null)
+
+  const bukaKonfirmasiSesi = (aksi: AksiSesiAdmin, u: SasaranAdmin) => {
+    error.value = ''
+    konfirmasiSesi.value = { aksi, user: u }
+  }
+
+  const tutupKonfirmasiSesi = () => {
+    konfirmasiSesi.value = null
+  }
+
+  const jalankanKonfirmasiSesi = async (): Promise<boolean> => {
+    const k = konfirmasiSesi.value
+    if (!k) return false
+    const ok = await aksiSesi(k.user, k.aksi)
+    if (ok && konfirmasiSesi.value === k) konfirmasiSesi.value = null
+    return ok
+  }
+
+  /** Hapus admin: BFF selalu mencabut sesi CashFlow-nya (adminDiakhiri DELETE). */
+  const deleteUser = async (u: SasaranAdmin): Promise<boolean> => {
     saving.value = true
     error.value = ''
     galat.value = null
     try {
-      await api.del(`/admin/users/${id}`)
-      toast.success(tc('feedback.userDeleted'))
+      const { headers } = await api.tulisDenganHeader('DELETE', `/admin/users/${u.id}`)
+      laporTulis(u, 'hapus', headers, true, 'feedback.userDeleted')
       return true
     } catch (err) {
       gagal(err, 'delete', tc('feedback.userDeleteFailed'))
@@ -134,5 +174,8 @@ export const useAdminUsers = () => {
     }
   }
 
-  return { items, loading, saving, error, galat, totalItems, fetchUsers, createUser, updateUser, deleteUser, aksiSesi }
+  return {
+    items, loading, saving, error, galat, totalItems, fetchUsers, createUser, updateUser, deleteUser, aksiSesi,
+    konfirmasiSesi, bukaKonfirmasiSesi, tutupKonfirmasiSesi, jalankanKonfirmasiSesi,
+  }
 }

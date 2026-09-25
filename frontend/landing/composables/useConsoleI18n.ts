@@ -611,6 +611,8 @@ export const consoleMessages = {
         resetOk: 'TOTP {{name}} direset dan semua sesinya dicabut, termasuk sesi CashFlow.',
         resetOkTanpaCashflow: 'TOTP {{name}} direset dan semua sesinya dicabut.',
         resetCashflowGagal: 'TOTP {{name}} direset dan sesi console-nya dicabut, tetapi sesi CashFlow-nya belum tentu ikut. Cabut lewat SQL: runbook console, Langkah 1.',
+        ubahCashflowGagal: 'Perubahan {{name}} tersimpan dan sesi console-nya dicabut, tetapi sesi CashFlow-nya belum tentu ikut. Cabut lewat SQL: runbook console, Langkah 1.',
+        hapusCashflowGagal: '{{name}} dihapus, tetapi sesi CashFlow-nya belum tentu ikut dicabut. Cabut lewat SQL: runbook console, Langkah 1.',
       },
       errors: {
         currentPasswordRequired: 'Masukkan password saat ini untuk mengganti password akun sendiri.',
@@ -1261,6 +1263,8 @@ export const consoleMessages = {
         resetOk: 'TOTP for {{name}} was reset and all their sessions were revoked, including CashFlow.',
         resetOkTanpaCashflow: 'TOTP for {{name}} was reset and all their sessions were revoked.',
         resetCashflowGagal: 'TOTP for {{name}} was reset and their console sessions were revoked, but their CashFlow sessions may still be alive. Revoke them with SQL: console runbook, Step 1.',
+        ubahCashflowGagal: 'Changes to {{name}} were saved and their console sessions were revoked, but their CashFlow sessions may still be alive. Revoke them with SQL: console runbook, Step 1.',
+        hapusCashflowGagal: '{{name}} was deleted, but their CashFlow sessions may still be alive. Revoke them with SQL: console runbook, Step 1.',
       },
       errors: {
         currentPasswordRequired: 'Enter your current password to change your own password.',

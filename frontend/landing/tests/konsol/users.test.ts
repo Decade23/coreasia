@@ -4,8 +4,10 @@
  * berubah (BFF memakai kehadiran kolom itu untuk mencabut sesi CashFlow admin
  * lain, lihat tests/konsol/proxy.test.ts).
  *
- * vitest proyek ini hanya node (tanpa @nuxt/test-utils): perilaku diuji di
- * fungsi murni, dan kaitan di halaman dijaga lewat teks sumber.
+ * vitest proyek ini hanya node (tanpa @nuxt/test-utils): keputusan diuji di
+ * fungsi murni di sini, komposabel dijalankan dengan global tiruan
+ * (users-aksi.test.ts, admin-api.test.ts). Blok "tripwire" di bawah hanya
+ * mencocokkan teks halaman .vue: penanda kaitan, BUKAN bukti perilaku.
  */
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
@@ -13,8 +15,10 @@ import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { consoleMessages } from '../../composables/useConsoleI18n'
 import {
-  bidangUbahAdmin, HEADER_CABUT_CASHFLOW, perluMuatUlangAdmin, pesanAksiSesiAdmin, pesanKelolaAdmin,
+  bidangUbahAdmin, HEADER_CABUT_CASHFLOW, perluMuatUlangAdmin, peringatanCabutCashflow, pesanAksiSesiAdmin, pesanKelolaAdmin,
+  tampilanKonfirmasiSesi, ubahMengakhiriSesi,
 } from '../../utils/konsol'
+import { adminDiakhiri } from '../../server/lib/konsol/proxy'
 import { sesiKuat, TENGGANG_SESI_KUAT_MS, UMUR_MFA_MAKS_MS } from '../../utils/rbac'
 
 const AKAR = resolve(fileURLToPath(new URL('.', import.meta.url)), '../..')
@@ -23,6 +27,10 @@ const g = (status: number, kode: string, pesan = '') => ({ status, kode, pesan, 
 
 const ambil = (bahasa: 'id' | 'en', jalur: string): unknown =>
   jalur.split('.').reduce<unknown>((a, k) => (a && typeof a === 'object' ? (a as Record<string, unknown>)[k] : undefined), consoleMessages[bahasa])
+
+/** Himpunan placeholder {{…}} di teks kunci itu, terurut. */
+const placeholder = (bahasa: 'id' | 'en', jalur: string): string[] =>
+  [...new Set([...String(ambil(bahasa, jalur)).matchAll(/\{\{(.*?)\}\}/g)].map(m => m[1]!.trim()))].sort()
 
 describe('409 EMAIL_TAKEN di form admin', () => {
   it('ubah → pesan email dipakai admin lain (bukan "data berubah"); tambah → email terdaftar', () => {
@@ -115,7 +123,102 @@ describe('sesiKuat — petunjuk syarat reset TOTP admin ber-TOTP', () => {
   })
 })
 
-describe('halaman Users — kaitan (teks sumber)', () => {
+describe('ubahMengakhiriSesi — cermin adminDiakhiri untuk badan PUT', () => {
+  const LAIN = '7a1d2c3b-4e5f-4a6b-8c7d-9e0f1a2b3c4d'
+  const BADAN: Array<Record<string, unknown>> = [
+    { full_name: 'Budi' }, { password: 'Baru-1234' }, { password: '  ' }, { password: 'Baru-1234', current_password: 'x' },
+    { is_active: false }, { is_active: true }, { email: 'b@coreasia.id' }, { email: '' }, { role: 'admin' },
+    { full_name: 'B', role: ' ' }, { is_active: 0 }, { email: 5 },
+  ]
+
+  it.each(BADAN.map(b => [JSON.stringify(b), b] as const))('%s: klien dan BFF sepakat', (_n, badan) => {
+    const bff = adminDiakhiri({ metode: 'PUT', jalur: `admin/users/${LAIN}`, body: new TextEncoder().encode(JSON.stringify(badan)) })
+    expect(ubahMengakhiriSesi(badan)).toBe(bff === LAIN)
+  })
+
+  it('kontrol: kasus yang mencabut dan yang tidak sama-sama ada', () => {
+    expect(BADAN.filter(ubahMengakhiriSesi).length).toBeGreaterThan(2)
+    expect(BADAN.filter(b => !ubahMengakhiriSesi(b)).length).toBeGreaterThan(2)
+  })
+})
+
+describe('peringatanCabutCashflow — hapus / ubah admin', () => {
+  it('dicabut / tak-terkonfigurasi → tanpa peringatan', () => {
+    for (const aksi of ['ubah', 'hapus'] as const) {
+      for (const d of [true, false]) {
+        expect(peringatanCabutCashflow(aksi, 'dicabut', d)).toBeNull()
+        expect(peringatanCabutCashflow(aksi, 'tak-terkonfigurasi', d)).toBeNull()
+      }
+    }
+  })
+
+  it('gagal → peringatan, diharapkan atau tidak', () => {
+    expect(peringatanCabutCashflow('hapus', 'gagal', true)).toBe('users.hasil.hapusCashflowGagal')
+    expect(peringatanCabutCashflow('ubah', 'gagal', false)).toBe('users.hasil.ubahCashflowGagal')
+  })
+
+  it('header hilang → peringatan hanya bila BFF seharusnya mencabut', () => {
+    for (const h of [null, undefined, '']) {
+      expect(peringatanCabutCashflow('ubah', h, true)).toBe('users.hasil.ubahCashflowGagal')
+      expect(peringatanCabutCashflow('ubah', h, false)).toBeNull()
+      expect(peringatanCabutCashflow('hapus', h, true)).toBe('users.hasil.hapusCashflowGagal')
+    }
+  })
+})
+
+describe('tampilanKonfirmasiSesi — isi modal cabut sesi / reset TOTP', () => {
+  const u = { id: 'b-1', email: 'budi@coreasia.id', full_name: 'Budi' }
+
+  it('judul, deskripsi, dan tombol mengikuti aksi', () => {
+    expect(tampilanKonfirmasiSesi({ aksi: 'cabut-sesi', user: u }, true)).toMatchObject({
+      judul: 'users.revokeTitle', deskripsi: 'users.revokeDescription', tombol: 'users.revokeConfirm',
+    })
+    expect(tampilanKonfirmasiSesi({ aksi: 'reset-totp', user: u }, true)).toMatchObject({
+      judul: 'users.resetTitle', deskripsi: 'users.resetDescription', tombol: 'users.resetConfirm',
+    })
+  })
+
+  it('petunjuk sesi kuat hanya untuk reset TOTP saat sesi pemanggil BELUM kuat', () => {
+    expect(tampilanKonfirmasiSesi({ aksi: 'reset-totp', user: u }, false).petunjukSesiKuat).toBe(true)
+    expect(tampilanKonfirmasiSesi({ aksi: 'reset-totp', user: u }, true).petunjukSesiKuat).toBe(false)
+    expect(tampilanKonfirmasiSesi({ aksi: 'cabut-sesi', user: u }, false).petunjukSesiKuat).toBe(false)
+  })
+
+  it('parameter nama & email, "-" bila kosong', () => {
+    expect(tampilanKonfirmasiSesi({ aksi: 'cabut-sesi', user: u }, true).param).toEqual({ name: 'Budi', email: 'budi@coreasia.id' })
+    expect(tampilanKonfirmasiSesi({ aksi: 'cabut-sesi', user: { id: 'x', email: '', full_name: '' } }, true).param).toEqual({ name: '-', email: '-' })
+  })
+
+  it('setiap kunci modal ada di ID dan EN', () => {
+    for (const aksi of ['cabut-sesi', 'reset-totp'] as const) {
+      const t = tampilanKonfirmasiSesi({ aksi, user: u }, false)
+      for (const k of [t.judul, t.deskripsi, t.tombol, 'users.resetSesiKuat']) {
+        for (const b of ['id', 'en'] as const) expect(typeof ambil(b, k), `${b} ${k}`).toBe('string')
+      }
+    }
+  })
+})
+
+describe('placeholder i18n — sama antarbahasa dan sama dengan parameter yang dikirim', () => {
+  it('users.hasil.*: hanya {{name}} (aksiSesi, hapus, ubah mengirim { name })', () => {
+    const kunci = Object.keys(consoleMessages.id.users.hasil).map(k => `users.hasil.${k}`)
+    expect(kunci.length).toBeGreaterThanOrEqual(8)
+    expect(Object.keys(consoleMessages.en.users.hasil).sort()).toEqual(Object.keys(consoleMessages.id.users.hasil).sort())
+    for (const k of kunci) {
+      for (const b of ['id', 'en'] as const) expect(placeholder(b, k), `${b} ${k}`).toEqual(['name'])
+    }
+  })
+
+  it('deskripsi modal: placeholder id = en = kunci param tampilanKonfirmasiSesi', () => {
+    for (const aksi of ['cabut-sesi', 'reset-totp'] as const) {
+      const t = tampilanKonfirmasiSesi({ aksi, user: { id: 'x', email: 'e', full_name: 'n' } }, true)
+      const param = Object.keys(t.param).sort()
+      for (const b of ['id', 'en'] as const) expect(placeholder(b, t.deskripsi), `${b} ${t.deskripsi}`).toEqual(param)
+    }
+  })
+})
+
+describe('halaman Users — tripwire teks sumber (bukan bukti perilaku)', () => {
   const halaman = baca('pages/console/users/index.vue')
   const komposabel = baca('composables/useAdminUsers.ts')
 
@@ -123,21 +226,18 @@ describe('halaman Users — kaitan (teks sumber)', () => {
     const blokLain = /<template v-if="u\.id !== currentAdmin\?\.id">([\s\S]*?)<\/template>/.exec(halaman)?.[1] ?? ''
     expect(blokLain).toMatch(/bukaKonfirmasiSesi\('cabut-sesi', u\)/)
     expect(blokLain).toMatch(/bukaKonfirmasiSesi\('reset-totp', u\)/)
-    expect(halaman).toMatch(/:show="!!konfirmasiSesi"/)
-    expect(halaman).toMatch(/@click="jalankanAksiSesi"/)
+    expect(halaman).toMatch(/:show="!!tampilanSesi"/)
+    expect(halaman).toMatch(/@click="jalankanKonfirmasiSesi"/)
+    expect(halaman).toMatch(/tampilanKonfirmasiSesi\(konfirmasiSesi\.value, sesiKuat\(currentAdmin\.value\)\)/)
     // Tanpa dialog alasan: tidak ada isian di modal konfirmasi.
-    const modal = /:show="!!konfirmasiSesi"[\s\S]*?<\/ConsoleModal>/.exec(halaman)?.[0] ?? ''
+    const modal = /:show="!!tampilanSesi"[\s\S]*?<\/ConsoleModal>/.exec(halaman)?.[0] ?? ''
     expect(modal).not.toMatch(/<(input|textarea|BaseInput|BasePasswordInput)\b/)
   })
 
-  it('aksi memanggil rute gateway yang benar dan membaca header hasil CashFlow', () => {
-    expect(komposabel).toMatch(/aksi === 'cabut-sesi' \? 'revoke-sessions' : 'totp\/reset'/)
-    expect(komposabel).toMatch(/api\.tulisDenganHeader\('POST', `\/admin\/users\/\$\{u\.id\}\/\$\{jalur\}`\)/)
-    expect(komposabel).toMatch(/headers\.get\(HEADER_CABUT_CASHFLOW\)/)
-  })
-
-  it('form ubah memakai bidangUbahAdmin, 409 lewat perluMuatUlangAdmin', () => {
-    expect(halaman).toMatch(/updateUser\(editingUser\.value\.id, bidangUbahAdmin\(editingUser\.value, data\)\)/)
+  it('form ubah memakai bidangUbahAdmin, 409 lewat perluMuatUlangAdmin; hapus/ubah mengirim baris admin (nama untuk peringatan)', () => {
+    expect(halaman).toMatch(/updateUser\(editingUser\.value, bidangUbahAdmin\(editingUser\.value, data\)\)/)
+    expect(halaman).toMatch(/updateUser\(passwordTarget\.value, body\)/)
+    expect(halaman).toMatch(/deleteUser\(deletingUser\.value\)/)
     expect(halaman).toMatch(/if \(perluMuatUlangAdmin\(galat\.value\)\) fetchUsers\(\)/)
   })
 

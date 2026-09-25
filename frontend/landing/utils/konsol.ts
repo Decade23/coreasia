@@ -387,6 +387,57 @@ export function pesanAksiSesiAdmin(aksi: AksiSesiAdmin, hasilCashflow: string | 
   return { jenis: 'peringatan', kunci: `users.hasil.${dasar}CashflowGagal` }
 }
 
+/**
+ * Badan PUT users/<id> yang membuat gateway mengakhiri SEMUA sesi admin itu,
+ * sehingga BFF ikut mencabut sesi CashFlow-nya dan memasang
+ * HEADER_CABUT_CASHFLOW. Cermin sisi klien dari adminDiakhiri
+ * (server/lib/konsol/proxy.ts) untuk badan PUT; kesamaannya dijaga uji.
+ */
+export function ubahMengakhiriSesi(data: Record<string, unknown>): boolean {
+  const terisi = (v: unknown) => typeof v === 'string' && v.trim() !== ''
+  return terisi(data.password) || data.is_active === false || terisi(data.email) || terisi(data.role)
+}
+
+/**
+ * Kunci peringatan MENETAP sesudah hapus / ubah admin (sandi, email, peran,
+ * nonaktif) bila sesi CashFlow admin itu belum tentu ikut dicabut; null =
+ * tidak perlu. 'dicabut' dan 'tak-terkonfigurasi' aman. Header yang hilang
+ * padahal BFF seharusnya mencabut (`diharapkan`) diperlakukan sebagai gagal,
+ * sama seperti pesanAksiSesiAdmin: runbook Langkah 1 tetap wajib.
+ */
+export function peringatanCabutCashflow(aksi: 'ubah' | 'hapus', hasilCashflow: string | null | undefined, diharapkan: boolean): string | null {
+  if (hasilCashflow === 'dicabut' || hasilCashflow === 'tak-terkonfigurasi') return null
+  if (!hasilCashflow && !diharapkan) return null
+  return aksi === 'hapus' ? 'users.hasil.hapusCashflowGagal' : 'users.hasil.ubahCashflowGagal'
+}
+
+export interface KonfirmasiSesiAdmin {
+  aksi: AksiSesiAdmin
+  user: { id: string; email: string; full_name: string }
+}
+
+/**
+ * Isi modal konfirmasi cabut sesi / reset TOTP (kunci i18n + parameternya).
+ * Petunjuk sesi kuat hanya untuk reset TOTP saat sesi admin yang menekan
+ * BELUM kuat (utils/rbac.ts sesiKuat); gateway tetap yang memutuskan.
+ */
+export function tampilanKonfirmasiSesi(k: KonfirmasiSesiAdmin, sesiSayaKuat: boolean): {
+  judul: string
+  deskripsi: string
+  tombol: string
+  param: { name: string; email: string }
+  petunjukSesiKuat: boolean
+} {
+  const reset = k.aksi === 'reset-totp'
+  return {
+    judul: reset ? 'users.resetTitle' : 'users.revokeTitle',
+    deskripsi: reset ? 'users.resetDescription' : 'users.revokeDescription',
+    tombol: reset ? 'users.resetConfirm' : 'users.revokeConfirm',
+    param: { name: k.user.full_name || '-', email: k.user.email || '-' },
+    petunjukSesiKuat: reset && !sesiSayaKuat,
+  }
+}
+
 /* ───────────── unggah gambar lewat proxy ───────────── */
 
 /** 4 MiB: di bawah batas badan fungsi Vercel (4,5 MB) plus overhead multipart.
