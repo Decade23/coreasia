@@ -158,6 +158,70 @@ describe('/api/gw/** — sesi berakhir mencabut sesi CashFlow per id DAN per ema
   })
 })
 
+describe('/api/gw/** — cabut sesi / reset TOTP admin LAIN mencabut sesi CashFlow-nya per id (C8)', () => {
+  const LAIN = '7a1d2c3b-4e5f-4a6b-8c7d-9e0f1a2b3c4d'
+  const RPC_LAIN = [
+    { nama: 'admin_konsol_sesi_cabut_admin', arg: { p_admin_gw_id: LAIN } },
+    { nama: 'admin_kasus_tutup_admin', arg: { p_admin_gw_id: LAIN } },
+  ]
+  const kirim = (metode: string, jalur: string, badan?: unknown) => panggil(h.gw, {
+    metode, path: `/api/gw/${jalur}`, header: headerKonsol({ 'content-type': 'application/json' }),
+    cookie: cookieKonsol(), badan: badan === undefined ? undefined : JSON.stringify(badan),
+  })
+
+  it.each(['revoke-sessions', 'totp/reset'])('%s berhasil → RPC per id admin itu SAJA, cookie pemanggil tetap, header dicabut', async (aksi) => {
+    gateway.mockImplementation(async () => json(200, { data: { id: LAIN, sessions_revoked: true } }))
+    const r = await kirim('POST', `admin/users/${LAIN}/${aksi}`)
+    expect(r.status).toBe(200)
+    expect(r.json).toMatchObject({ data: { sessions_revoked: true } })
+    // Tanpa jalur email: label email admin lain tidak diketahui dan bisa milik orang lain.
+    expect(sb.rpc).toEqual(RPC_LAIN)
+    expect(nilaiSetCookie(r, 'ca_konsol_akses')).toBeUndefined()
+    expect(r.header.get('x-konsol-cashflow-cabut')).toBe('dicabut')
+  })
+
+  it('hapus admin lain (204) dan ganti sandi admin lain → dicabut per id', async () => {
+    gateway.mockImplementation(async () => new Response(null, { status: 204 }))
+    const hapus = await kirim('DELETE', `admin/users/${LAIN}`)
+    expect(hapus.status).toBe(204)
+    expect(hapus.header.get('x-konsol-cashflow-cabut')).toBe('dicabut')
+    expect(sb.rpc).toEqual(RPC_LAIN)
+    sb.rpc.length = 0
+    gateway.mockImplementation(async () => json(200, { data: { id: LAIN } }))
+    await kirim('PUT', `admin/users/${LAIN}`, { password: 'Baru-1234' })
+    expect(sb.rpc).toEqual(RPC_LAIN)
+  })
+
+  it('ubah nama admin lain saja → tidak ada yang dicabut, tanpa header', async () => {
+    const r = await kirim('PUT', `admin/users/${LAIN}`, { full_name: 'Nama Baru' })
+    expect(r.status).toBe(200)
+    expect(sb.rpc).toEqual([])
+    expect(r.header.get('x-konsol-cashflow-cabut')).toBeNull()
+  })
+
+  it('gateway menolak (403 MFA_REQUIRED) → tidak ada yang dicabut', async () => {
+    gateway.mockImplementation(async () => json(403, { errors: { code: 'MFA_REQUIRED' } }))
+    const r = await kirim('POST', `admin/users/${LAIN}/totp/reset`)
+    expect(r.status).toBe(403)
+    expect(sb.rpc).toEqual([])
+    expect(r.header.get('x-konsol-cashflow-cabut')).toBeNull()
+  })
+
+  it('RPC cabut sesi gagal → header gagal (console meminta runbook Langkah 1), jawaban gateway tetap diteruskan', async () => {
+    sb.rpcGagal.add('admin_konsol_sesi_cabut_admin')
+    const r = await kirim('POST', `admin/users/${LAIN}/revoke-sessions`)
+    expect(r.status).toBe(200)
+    expect(r.header.get('x-konsol-cashflow-cabut')).toBe('gagal')
+  })
+
+  it('revoke-sessions atas id sendiri → cookie dihapus, sesi sendiri dicabut (seperti logout-all)', async () => {
+    const r = await kirim('POST', `admin/users/${ADMIN_ID}/revoke-sessions`)
+    expect(nilaiSetCookie(r, 'ca_konsol_akses')).toBe('')
+    expect(sb.rpc.map(x => x.nama)).toContain('admin_konsol_sesi_cabut_admin')
+    expect(sb.rpc.every(x => x.nama.startsWith('admin_kasus') || x.arg.p_admin_gw_id === ADMIN_ID || x.arg.p_email === ADMIN_EMAIL)).toBe(true)
+  })
+})
+
 describe('/api/cashflow/sesi (POST) — penjaga sebelum gateway', () => {
   const hdr = (lain: Record<string, string> = {}) => headerKonsol({ 'x-cf-sesi': '1', ...lain })
 

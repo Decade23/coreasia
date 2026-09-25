@@ -17,6 +17,10 @@
  *      yang berhasil → cookie dihapus dan pemilik token (id admin gateway +
  *      email) dilaporkan untuk pencabutan sesi CashFlow (cashflow-cabut.ts).
  *      Keduanya diambil dari token yang BARU SAJA diterima gateway.
+ *   4b. Tindakan yang mengakhiri semua sesi admin LAIN (cabut sesi, reset
+ *      TOTP, hapus, ubah sandi/email/peran/status — lihat adminDiakhiri) yang
+ *      berhasil → id admin itu (dari jalur) dilaporkan untuk pencabutan sesi
+ *      CashFlow-nya per id. Cookie pemanggil tidak disentuh.
  *   5. IP klien (dari header Vercel, lib/konsol/batas.ts) dikirim di
  *      X-Konsol-Klien-IP. Gateway hanya MENCATATNYA di audit sebagai IP yang
  *      dilaporkan BFF; pembatas dan keputusan keamanan gateway tidak
@@ -139,6 +143,9 @@ export interface HasilProxy {
   hapusCookie: boolean
   /** Admin yang sesinya baru saja diakhiri (untuk mencabut sesi CashFlow). */
   pemilikSesiBerakhir: PemilikSesi | null
+  /** Id admin gateway LAIN yang semua sesinya baru saja diakhiri gateway
+   *  (adminDiakhiri); sesi CashFlow-nya dicabut per id. */
+  adminLainBerakhir: string | null
 }
 
 export async function teruskan(p: PermintaanProxy, ctx: KonteksGateway): Promise<HasilProxy> {
@@ -163,15 +170,15 @@ export async function teruskan(p: PermintaanProxy, ctx: KonteksGateway): Promise
   if (!akses && p.segar) {
     const hasil = await segarkan()
     if (hasil.status === 'ditolak') {
-      return { respons: jsonGalat(401, 'UNAUTHORIZED', 'Sesi sudah tidak berlaku. Silakan login ulang.'), tokenBaru: null, hapusCookie: true, pemilikSesiBerakhir: null }
+      return { respons: jsonGalat(401, 'UNAUTHORIZED', 'Sesi sudah tidak berlaku. Silakan login ulang.'), tokenBaru: null, hapusCookie: true, pemilikSesiBerakhir: null, adminLainBerakhir: null }
     }
     if (hasil.status === 'gagal') {
       // Gateway yang bermasalah bukan alasan menyuruh admin login ulang.
-      return { respons: jsonGalat(502, 'GATEWAY_UNREACHABLE', 'Gateway tidak dapat dihubungi.'), tokenBaru: null, hapusCookie: false, pemilikSesiBerakhir: null }
+      return { respons: jsonGalat(502, 'GATEWAY_UNREACHABLE', 'Gateway tidak dapat dihubungi.'), tokenBaru: null, hapusCookie: false, pemilikSesiBerakhir: null, adminLainBerakhir: null }
     }
   }
   if (!akses) {
-    return { respons: jsonGalat(401, 'UNAUTHORIZED', 'Autentikasi diperlukan'), tokenBaru: null, hapusCookie, pemilikSesiBerakhir: null }
+    return { respons: jsonGalat(401, 'UNAUTHORIZED', 'Autentikasi diperlukan'), tokenBaru: null, hapusCookie, pemilikSesiBerakhir: null, adminLainBerakhir: null }
   }
 
   const kirim = async (token: string): Promise<Response> => {
@@ -206,16 +213,68 @@ export async function teruskan(p: PermintaanProxy, ctx: KonteksGateway): Promise
       tokenBaru,
       hapusCookie,
       pemilikSesiBerakhir: null,
+      adminLainBerakhir: null,
     }
   }
 
   let pemilikSesiBerakhir: PemilikSesi | null = null
-  if (respons.ok && (PENGAKHIR_SESI.has(ruteGateway(p.jalur)) || ubahAkunSendiri(p, akses))) {
-    pemilikSesiBerakhir = pemilikToken(akses)
-    hapusCookie = true
-    tokenBaru = null
+  let adminLainBerakhir: string | null = null
+  if (respons.ok) {
+    const sasaran = adminDiakhiri(p)
+    const milik = pemilikToken(akses)
+    const diriSendiri = sasaran !== null && sasaran === milik?.id
+    // Akun sendiri: PUT diputuskan ubahAkunSendiri (email/peran yang dikirim
+    // sama dengan token tidak mengakhiri apa pun). Selain PUT, hanya
+    // revoke-sessions yang diterima gateway untuk id sendiri, dan itu sama
+    // dengan logout-all: token yang sedang dipakai ikut mati.
+    const cabutSendiri = diriSendiri && p.metode.toUpperCase() !== 'PUT'
+    if (PENGAKHIR_SESI.has(ruteGateway(p.jalur)) || ubahAkunSendiri(p, akses) || cabutSendiri) {
+      pemilikSesiBerakhir = milik
+      hapusCookie = true
+      tokenBaru = null
+    } else if (sasaran && !diriSendiri) {
+      adminLainBerakhir = sasaran
+    }
   }
-  return { respons, tokenBaru, hapusCookie, pemilikSesiBerakhir }
+  return { respons, tokenBaru, hapusCookie, pemilikSesiBerakhir, adminLainBerakhir }
+}
+
+/** Jalur admin/users/<id>[/<aksi>]: id (apa adanya) dan aksi (huruf kecil, '' bila tanpa). */
+const RUTE_ADMIN_USER = /^admin\/users\/([^/]+)(?:\/(revoke-sessions|totp\/reset))?$/i
+
+/**
+ * Id admin gateway (uuid, huruf kecil) yang SEMUA sesinya diakhiri gateway
+ * bila permintaan ini berhasil, atau null. Dicocokkan tanpa peka huruf,
+ * seperti router gateway:
+ *   - POST admin/users/<id>/revoke-sessions (token_version+1);
+ *   - POST admin/users/<id>/totp/reset (TOTP dimatikan + semua sesi dicabut);
+ *   - DELETE admin/users/<id> (akun hilang; /me menolak token lamanya);
+ *   - PUT admin/users/<id> yang membawa `password` terisi, `is_active: false`,
+ *     atau `email`/`role` terisi. Gateway hanya mencabut bila email/peran
+ *     BENAR-BENAR berubah; form ubah console mengirim keduanya hanya bila
+ *     berubah (bidangUbahAdmin), jadi kiriman = perubahan. Console lama yang
+ *     selalu mengirim keduanya membuat sesi CashFlow admin itu ikut dicabut
+ *     walau hanya nama yang diubah: arah gagal aman (sesi dicetak ulang, kasus
+ *     dibuka lagi).
+ * Id milik pemanggil sendiri tetap dikembalikan; teruskan() yang memutuskan
+ * (akun sendiri ditangani seperti logout-all/ubahAkunSendiri).
+ */
+export function adminDiakhiri(p: Pick<PermintaanProxy, 'metode' | 'jalur' | 'body'>): string | null {
+  const m = RUTE_ADMIN_USER.exec(p.jalur)
+  const id = m ? idAdminGateway(m[1]) : null
+  if (!m || !id) return null
+  const metode = p.metode.toUpperCase()
+  if (m[2]) return metode === 'POST' ? id : null
+  if (metode === 'DELETE') return id
+  if (metode !== 'PUT' || !p.body?.byteLength) return null
+  try {
+    const isi = JSON.parse(new TextDecoder().decode(p.body)) as Record<string, unknown> | null
+    if (!isi || typeof isi !== 'object') return null
+    const terisi = (v: unknown) => typeof v === 'string' && v.trim() !== ''
+    return terisi(isi.password) || isi.is_active === false || terisi(isi.email) || terisi(isi.role) ? id : null
+  } catch {
+    return null
+  }
 }
 
 /** Id admin gateway (klaim user_id, cadangan sub) dan email dari token akses. */
@@ -239,8 +298,8 @@ const samaTeks = (a: unknown, b: unknown): boolean =>
  *     tidak boleh terus menjadi label sesi CashFlow yang masih hidup (F3);
  *   - `role` berbeda dari peran di token, atau `is_active: false`.
  * Kolom yang dikirim tapi nilainya sama (form ubah selalu mengirim email)
- * tidak mengakhiri apa pun. Mengubah admin LAIN tidak termasuk (sesi
- * CashFlow admin itu dicabut lewat runbook, Langkah 1).
+ * tidak mengakhiri apa pun. Mengubah admin LAIN tidak termasuk: sesi
+ * CashFlow admin itu dicabut per id (adminDiakhiri), cookie pemanggil tetap.
  */
 export function ubahAkunSendiri(p: Pick<PermintaanProxy, 'metode' | 'jalur' | 'body'>, akses: string | null): boolean {
   if (p.metode.toUpperCase() !== 'PUT' || !p.body?.byteLength) return false

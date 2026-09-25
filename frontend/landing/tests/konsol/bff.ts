@@ -77,6 +77,7 @@ export interface Jawaban {
   statusMessage: string
   json: Record<string, unknown> | null
   setCookie: string[]
+  header: Headers
 }
 
 type Handler = Parameters<ReturnType<typeof h3.createApp>['use']>[0]
@@ -98,6 +99,7 @@ export async function panggil(handler: unknown, p: Permintaan): Promise<Jawaban>
     statusMessage: res.statusText || String(json?.statusMessage ?? ''),
     json,
     setCookie: res.headers.getSetCookie(),
+    header: res.headers,
   }
 }
 

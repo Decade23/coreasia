@@ -5,7 +5,7 @@
  */
 import { describe, expect, it } from 'vitest'
 import { rakitTujuan } from '../../server/lib/konsol/jalur'
-import { ubahAkunSendiri, pemilikToken, HEADER_KLIEN_IP, saringHeaderKeluar, saringHeaderMasuk, segarkanToken, teruskan, type FetchGateway } from '../../server/lib/konsol/proxy'
+import { adminDiakhiri, ubahAkunSendiri, pemilikToken, HEADER_KLIEN_IP, saringHeaderKeluar, saringHeaderMasuk, segarkanToken, teruskan, type FetchGateway } from '../../server/lib/konsol/proxy'
 
 const GW = 'http://gw.test/api'
 const jwt = (klaim: Record<string, unknown>) =>
@@ -319,6 +319,79 @@ describe('teruskan — ganti password akun sendiri mengakhiri sesi', () => {
     expect(ubahAkunSendiri({ metode: 'PUT', jalur: `admin/users/${SUB}`, body: new TextEncoder().encode('{rusak') }, aksesMilik)).toBe(false)
     expect(ubahAkunSendiri({ metode: 'PUT', jalur: `admin/users/${SUB}/x`, body: badan({ password: 'x' }) }, aksesMilik)).toBe(false)
     expect(ubahAkunSendiri({ metode: 'PUT', jalur: `admin/users/${SUB}`, body: badan({ password: 'x' }) }, null)).toBe(false)
+  })
+})
+
+describe('teruskan — tindakan atas admin LAIN melaporkan id-nya (C8)', () => {
+  const SAYA = '0b6e7c1e-2a55-4d59-9c5f-0a8d2f9d1b11'
+  const LAIN = '7a1d2c3b-4e5f-4a6b-8c7d-9e0f1a2b3c4d'
+  const aksesSaya = jwt({ typ: 'access', sub: SAYA, user_id: SAYA, email: 'admin@coreasia.id', role: 'super_admin', exp: 4102444800 })
+  const badan = (isi: unknown) => new TextEncoder().encode(JSON.stringify(isi))
+  const kirim = (metode: string, jalur: string, isi?: unknown, status = 200) => {
+    const gw = gatewayPalsu(() => status === 204 ? new Response(null, { status }) : json(status, { data: {} }))
+    return teruskan(minta({ metode, jalur, tujuan: rakitTujuan(GW, jalur, '')!, akses: aksesSaya, body: isi === undefined ? null : badan(isi) }), { gatewayUrl: GW, fetch: gw.fetch })
+  }
+
+  it.each([
+    ['POST', `admin/users/${LAIN}/revoke-sessions`, undefined, 200],
+    ['POST', `admin/users/${LAIN}/totp/reset`, undefined, 200],
+    ['POST', `admin/USERS/${LAIN.toUpperCase()}/TOTP/Reset`, undefined, 200],
+    ['DELETE', `admin/users/${LAIN}`, undefined, 204],
+    ['PUT', `admin/users/${LAIN}`, { password: 'Baru-1234' }, 200],
+    ['PUT', `admin/users/${LAIN}`, { is_active: false }, 200],
+    ['PUT', `admin/users/${LAIN}`, { full_name: 'X', email: 'baru@coreasia.id' }, 200],
+    ['PUT', `admin/users/${LAIN}`, { full_name: 'X', role: 'admin' }, 200],
+  ] as const)('%s %s %j berhasil → adminLainBerakhir = id itu; cookie pemanggil tetap', async (metode, jalur, isi, status) => {
+    const hasil = await kirim(metode, jalur, isi, status)
+    expect(hasil.adminLainBerakhir).toBe(LAIN)
+    expect(hasil.pemilikSesiBerakhir).toBeNull()
+    expect(hasil.hapusCookie).toBe(false)
+  })
+
+  it('gateway menolak (403 MFA_REQUIRED, 404, 409) → tidak ada yang dilaporkan', async () => {
+    for (const status of [403, 404, 409]) {
+      const hasil = await kirim('POST', `admin/users/${LAIN}/totp/reset`, undefined, status)
+      expect(hasil.adminLainBerakhir, String(status)).toBeNull()
+    }
+  })
+
+  it('bukan akhir sesi admin lain: ubah nama saja, aktifkan, GET, id bukan uuid, jalur lain', async () => {
+    const kasus: Array<[string, string, unknown?]> = [
+      ['PUT', `admin/users/${LAIN}`, { full_name: 'Nama Baru' }],
+      ['PUT', `admin/users/${LAIN}`, { is_active: true, email: ' ', role: '' }],
+      ['PUT', `admin/users/${LAIN}`, { password: '' }],
+      ['GET', `admin/users/${LAIN}`],
+      ['GET', `admin/users/${LAIN}/revoke-sessions`],
+      ['POST', `admin/users/bukan-uuid/revoke-sessions`],
+      ['POST', `admin/users/${LAIN}/totp/setup`],
+      ['POST', `admin/users`, { email: 'a@b.id', password: 'Baru-1234' }],
+    ]
+    for (const [metode, jalur, isi] of kasus) {
+      const hasil = await kirim(metode, jalur, isi)
+      expect(hasil.adminLainBerakhir, `${metode} ${jalur} ${JSON.stringify(isi)}`).toBeNull()
+      expect(hasil.hapusCookie).toBe(false)
+    }
+  })
+
+  it('revoke-sessions atas id SENDIRI = logout-all: cookie dihapus, pemilik token dilaporkan', async () => {
+    const hasil = await kirim('POST', `admin/users/${SAYA}/revoke-sessions`)
+    expect(hasil.hapusCookie).toBe(true)
+    expect(hasil.pemilikSesiBerakhir).toEqual({ id: SAYA, email: 'admin@coreasia.id' })
+    expect(hasil.adminLainBerakhir).toBeNull()
+  })
+
+  it('PUT akun sendiri tetap diputuskan ubahAkunSendiri (email sama = tidak berakhir)', async () => {
+    const tetap = await kirim('PUT', `admin/users/${SAYA}`, { full_name: 'Admin', email: 'ADMIN@coreasia.id', role: 'super_admin' })
+    expect(tetap).toMatchObject({ hapusCookie: false, pemilikSesiBerakhir: null, adminLainBerakhir: null })
+    const ganti = await kirim('PUT', `admin/users/${SAYA}`, { email: 'baru@coreasia.id' })
+    expect(ganti).toMatchObject({ hapusCookie: true, adminLainBerakhir: null })
+  })
+
+  it('adminDiakhiri: badan rusak aman, id huruf kecil', () => {
+    expect(adminDiakhiri({ metode: 'PUT', jalur: `admin/users/${LAIN}`, body: new TextEncoder().encode('{rusak') })).toBeNull()
+    expect(adminDiakhiri({ metode: 'PUT', jalur: `admin/users/${LAIN}`, body: null })).toBeNull()
+    expect(adminDiakhiri({ metode: 'post', jalur: `admin/users/${LAIN.toUpperCase()}/revoke-sessions`, body: null })).toBe(LAIN)
+    expect(adminDiakhiri({ metode: 'POST', jalur: `admin/users/${LAIN}/revoke-sessions/x`, body: null })).toBeNull()
   })
 })
 

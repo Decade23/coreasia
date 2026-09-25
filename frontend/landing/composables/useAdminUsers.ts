@@ -6,6 +6,7 @@
  * `galat` menyimpan galat terakhir supaya halaman bisa bereaksi (mis. 409).
  */
 import type { GalatAuth } from './useAdminAuth'
+import { HEADER_CABUT_CASHFLOW, pesanAksiSesiAdmin, type AksiSesiAdmin } from '~/utils/konsol'
 
 export interface AdminUserDomain {
   id: string
@@ -90,6 +91,33 @@ export const useAdminUsers = () => {
     }
   }
 
+  /**
+   * Cabut semua sesi / reset TOTP admin LAIN. Gateway menaikkan token_version
+   * admin itu; BFF ikut mencabut sesi CashFlow-nya per id dan melaporkan
+   * hasilnya di header X-Konsol-Cashflow-Cabut (pesanAksiSesiAdmin). Syarat
+   * sesi kuat untuk reset TOTP (target ber-TOTP) diputuskan gateway; 403-nya
+   * dipetakan pesanKelolaAdmin.
+   */
+  const aksiSesi = async (u: Pick<AdminUserDomain, 'id' | 'email' | 'full_name'>, aksi: AksiSesiAdmin): Promise<boolean> => {
+    saving.value = true
+    error.value = ''
+    galat.value = null
+    try {
+      const jalur = aksi === 'cabut-sesi' ? 'revoke-sessions' : 'totp/reset'
+      const { headers } = await api.postDenganHeader(`/admin/users/${u.id}/${jalur}`)
+      const p = pesanAksiSesiAdmin(aksi, headers.get(HEADER_CABUT_CASHFLOW))
+      const teks = tc(p.kunci, { name: u.full_name || u.email })
+      if (p.jenis === 'sukses') toast.success(teks)
+      else toast.warning(teks, 0)
+      return true
+    } catch (err) {
+      gagal(err, 'update', tc(aksi === 'cabut-sesi' ? 'feedback.sessionsRevokeFailed' : 'feedback.totpResetFailed'))
+      return false
+    } finally {
+      saving.value = false
+    }
+  }
+
   const deleteUser = async (id: string): Promise<boolean> => {
     saving.value = true
     error.value = ''
@@ -106,5 +134,5 @@ export const useAdminUsers = () => {
     }
   }
 
-  return { items, loading, saving, error, galat, totalItems, fetchUsers, createUser, updateUser, deleteUser }
+  return { items, loading, saving, error, galat, totalItems, fetchUsers, createUser, updateUser, deleteUser, aksiSesi }
 }

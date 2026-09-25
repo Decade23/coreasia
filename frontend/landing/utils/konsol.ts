@@ -340,6 +340,53 @@ export function pesanKelolaAdmin(g: GalatKonsol, aksi: 'create' | 'update' | 'de
 export const perluMuatUlangAdmin = (g: Pick<GalatKonsol, 'status' | 'kode'> | null | undefined): boolean =>
   !!g && g.status === 409 && g.kode !== 'EMAIL_TAKEN'
 
+export interface IsianAdmin {
+  email: string
+  full_name: string
+  role: string
+}
+
+const emailBaku = (e: string | null | undefined): string => (e ?? '').trim().toLowerCase()
+
+/**
+ * Badan PUT form "Edit user": nama selalu; email dan peran HANYA bila berubah
+ * (email dibandingkan seperti gateway: huruf kecil, tanpa spasi tepi). Gateway
+ * mencabut semua sesi admin itu bila email/peran berubah, dan BFF memakai
+ * kehadiran kolom itu untuk ikut mencabut sesi CashFlow admin lain
+ * (server/lib/konsol/proxy.ts adminDiakhiri). Mengirim kolom yang tidak
+ * diubah membuat sesi CashFlow admin itu dicabut tanpa perlu.
+ */
+export function bidangUbahAdmin(lama: IsianAdmin, baru: IsianAdmin): Partial<IsianAdmin> & Pick<IsianAdmin, 'full_name'> {
+  const data: Partial<IsianAdmin> & Pick<IsianAdmin, 'full_name'> = { full_name: baru.full_name }
+  if (emailBaku(baru.email) !== emailBaku(lama.email)) data.email = baru.email
+  if (baru.role !== lama.role) data.role = baru.role
+  return data
+}
+
+/* ───────────── cabut sesi & reset TOTP admin lain (halaman Users) ───────────── */
+
+/** Header jawaban BFF /api/gw/**: hasil pencabutan sesi CashFlow sesudah
+ *  gateway mengakhiri semua sesi seorang admin (cashflow-cabut.ts HasilCabut:
+ *  'dicabut' | 'gagal' | 'tak-terkonfigurasi'). */
+export const HEADER_CABUT_CASHFLOW = 'x-konsol-cashflow-cabut'
+
+export type AksiSesiAdmin = 'cabut-sesi' | 'reset-totp'
+
+/**
+ * Toast sesudah cabut sesi / reset TOTP admin lain BERHASIL di gateway.
+ * Sesi CashFlow admin itu hanya dianggap ikut dicabut bila BFF menyatakan
+ * 'dicabut'. 'tak-terkonfigurasi' = modul CashFlow tidak dipasang (tidak ada
+ * sesi untuk dicabut). Selain itu, termasuk header yang hilang: peringatan
+ * yang menetap, karena sesi CashFlow-nya masih hidup sampai 12 jam dan harus
+ * dicabut lewat runbook (Langkah 1).
+ */
+export function pesanAksiSesiAdmin(aksi: AksiSesiAdmin, hasilCashflow: string | null | undefined): { jenis: 'sukses' | 'peringatan'; kunci: string } {
+  const dasar = aksi === 'cabut-sesi' ? 'cabut' : 'reset'
+  if (hasilCashflow === 'dicabut') return { jenis: 'sukses', kunci: `users.hasil.${dasar}Ok` }
+  if (hasilCashflow === 'tak-terkonfigurasi') return { jenis: 'sukses', kunci: `users.hasil.${dasar}OkTanpaCashflow` }
+  return { jenis: 'peringatan', kunci: `users.hasil.${dasar}CashflowGagal` }
+}
+
 /* ───────────── unggah gambar lewat proxy ───────────── */
 
 /** 4 MiB: di bawah batas badan fungsi Vercel (4,5 MB) plus overhead multipart.

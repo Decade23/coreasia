@@ -88,6 +88,23 @@ export const useAdminApi = () => {
   const put = <T>(path: string, body?: any) =>
     panggil<ApiResponse<T>>(path, { method: 'PUT', headers: HEADER_TULIS, body })
 
+  /** POST yang juga memulangkan header jawaban (mis. X-Konsol-Cashflow-Cabut
+   *  dari BFF sesudah sesi admin lain dicabut). Penanganan galat sesi sama
+   *  dengan panggil(). */
+  const postDenganHeader = async <T>(path: string, body?: any): Promise<{ data: ApiResponse<T> | undefined; headers: Headers }> => {
+    try {
+      const res = await $fetch.raw<ApiResponse<T>>(`${baseURL}${path}`, {
+        method: 'POST',
+        headers: { ...headerIkatan(), ...HEADER_TULIS },
+        body,
+      })
+      return { data: res._data, headers: res.headers }
+    } catch (err) {
+      sesiHabis(err, 'POST')
+      throw err
+    }
+  }
+
   const del = async <T>(path: string): Promise<void> => {
     await panggil<T>(path, { method: 'DELETE', headers: HEADER_TULIS })
   }
@@ -98,5 +115,5 @@ export const useAdminApi = () => {
     return panggil<ApiResponse<{ url: string }>>(path, { method: 'POST', headers: HEADER_TULIS, body: formData })
   }
 
-  return { get, post, put, del, upload, baseURL }
+  return { get, post, postDenganHeader, put, del, upload, baseURL }
 }

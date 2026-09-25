@@ -36,6 +36,8 @@ export interface AdminUser {
   /** Dari /me: TOTP akun ini aktif. */
   totp_enabled?: boolean
   totp_enabled_at?: string | null
+  /** Dari /me: akun dibuat (syarat umur "sesi kuat" gateway, utils/rbac.ts sesiKuat). */
+  created_at?: string | null
 }
 
 /** Bentuk galat seragam (utils/konsol.ts galatDari, galatJaringan, menitTunggu). */

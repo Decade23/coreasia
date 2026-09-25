@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { perluMuatUlangAdmin } from '~/utils/konsol'
+import { bidangUbahAdmin, perluMuatUlangAdmin, type AksiSesiAdmin } from '~/utils/konsol'
+import { sesiKuat } from '~/utils/rbac'
 
 definePageMeta({ layout: 'console', middleware: 'console' })
 
-const { items, loading, saving, error, galat, totalItems, fetchUsers, createUser, updateUser, deleteUser } = useAdminUsers()
+const { items, loading, saving, error, galat, totalItems, fetchUsers, createUser, updateUser, deleteUser, aksiSesi } = useAdminUsers()
 const { user: currentAdmin, sesiDiakhiri } = useAdminAuth()
 const { can } = usePermissions()
 const { tc } = useConsoleI18n()
@@ -32,6 +33,24 @@ const passwordLemah = (pwd: string) => pwd.length < 8 || !/[A-Z]/.test(pwd) || !
     409 EMAIL_TAKEN tidak: form tetap terbuka dengan isiannya. */
 const muatUlangBilaBerubah = () => {
   if (perluMuatUlangAdmin(galat.value)) fetchUsers()
+}
+
+/* Cabut semua sesi / reset TOTP admin LAIN: konfirmasi satu langkah, tanpa
+   alasan. Sesi CashFlow admin itu ikut dicabut per id di BFF. */
+const konfirmasiSesi = ref<{ aksi: AksiSesiAdmin; user: any } | null>(null)
+/** Petunjuk saja: gateway yang memutuskan (403 MFA_REQUIRED / MFA_ENROLLMENT_TOO_RECENT). */
+const sesiSayaKuat = computed(() => sesiKuat(currentAdmin.value))
+
+const bukaKonfirmasiSesi = (aksi: AksiSesiAdmin, u: any) => {
+  error.value = ''
+  konfirmasiSesi.value = { aksi, user: u }
+}
+
+const jalankanAksiSesi = async () => {
+  const k = konfirmasiSesi.value
+  if (!k) return
+  const ok = await aksiSesi(k.user, k.aksi)
+  if (ok) konfirmasiSesi.value = null
 }
 
 const roleOptions = computed(() => [
@@ -75,7 +94,8 @@ const handleSubmit = async () => {
   const data = { email: formData.value.email, full_name: formData.value.full_name, role: formData.value.role }
   let ok: boolean
   if (editingUser.value) {
-    ok = await updateUser(editingUser.value.id, data)
+    // Email & peran hanya dikirim bila berubah (utils/konsol.ts bidangUbahAdmin).
+    ok = await updateUser(editingUser.value.id, bidangUbahAdmin(editingUser.value, data))
     if (!ok) muatUlangBilaBerubah()
   } else {
     if (passwordLemah(formData.value.password)) {
@@ -200,6 +220,18 @@ const confirmDelete = async () => {
                     <Icon name="lucide:key-round" class="h-4 w-4" />
                   </button>
                 </CaTooltip>
+                <template v-if="u.id !== currentAdmin?.id">
+                  <CaTooltip :text="tc('users.revokeSessions')" position="bottom">
+                    <button type="button" class="rounded-lg p-1.5 text-[var(--ca-muted)] hover:bg-[var(--ca-panel-bg-strong)]" :aria-label="tc('users.revokeSessions')" @click="bukaKonfirmasiSesi('cabut-sesi', u)">
+                      <Icon name="lucide:log-out" class="h-4 w-4" />
+                    </button>
+                  </CaTooltip>
+                  <CaTooltip :text="tc('users.resetTotp')" position="bottom">
+                    <button type="button" class="rounded-lg p-1.5 text-amber-400 hover:bg-amber-500/10" :aria-label="tc('users.resetTotp')" @click="bukaKonfirmasiSesi('reset-totp', u)">
+                      <Icon name="lucide:shield-off" class="h-4 w-4" />
+                    </button>
+                  </CaTooltip>
+                </template>
                 <CaTooltip v-if="u.id !== currentAdmin?.id" :text="tc('common.delete')" position="bottom">
                   <button type="button" class="rounded-lg p-1.5 text-rose-400 hover:bg-rose-500/10" @click="handleDelete(u)">
                     <Icon name="lucide:trash-2" class="h-4 w-4" />
@@ -248,6 +280,24 @@ const confirmDelete = async () => {
       <div class="mt-6 flex justify-end gap-3">
         <button type="button" class="ca-btn-secondary" @click="showDeleteConfirm = false">{{ tc('common.cancel') }}</button>
         <button type="button" class="ca-btn-danger !px-4 !py-2.5" @click="confirmDelete">{{ tc('common.delete') }}</button>
+      </div>
+    </ConsoleModal>
+
+    <ConsoleModal
+      :show="!!konfirmasiSesi"
+      :title="konfirmasiSesi?.aksi === 'reset-totp' ? tc('users.resetTitle') : tc('users.revokeTitle')"
+      @close="konfirmasiSesi = null"
+    >
+      <p class="text-sm text-[var(--ca-muted)]">
+        {{ tc(konfirmasiSesi?.aksi === 'reset-totp' ? 'users.resetDescription' : 'users.revokeDescription', { name: konfirmasiSesi?.user?.full_name || '-', email: konfirmasiSesi?.user?.email || '-' }) }}
+      </p>
+      <p v-if="konfirmasiSesi?.aksi === 'reset-totp' && !sesiSayaKuat" class="mt-3 text-sm text-amber-400">{{ tc('users.resetSesiKuat') }}</p>
+      <p v-if="error" class="mt-3 text-sm text-rose-400">{{ error }}</p>
+      <div class="mt-6 flex justify-end gap-3">
+        <button type="button" class="ca-btn-secondary" @click="konfirmasiSesi = null">{{ tc('common.cancel') }}</button>
+        <button type="button" class="ca-btn-danger !px-4 !py-2.5" :disabled="saving" @click="jalankanAksiSesi">
+          {{ saving ? tc('common.processing') : (konfirmasiSesi?.aksi === 'reset-totp' ? tc('users.resetConfirm') : tc('users.revokeConfirm')) }}
+        </button>
       </div>
     </ConsoleModal>
 

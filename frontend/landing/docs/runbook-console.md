@@ -49,6 +49,16 @@ urutannya dari sisi console dan modul CashFlow.
     itu: per id admin gateway (`admin_konsol_sesi_cabut_admin`, 0092) dan per
     email (`admin_konsol_sesi_cabut_pelaku`, untuk sesi yang dicetak sebelum
     0092). Lihat "Identitas admin di CashFlow" di bawah.
+  - Tindakan atas admin LAIN yang membuat gateway mencabut semua sesinya
+    (`users/<id>/revoke-sessions`, `users/<id>/totp/reset`, `DELETE users/<id>`,
+    dan `PUT users/<id>` yang membawa sandi, `is_active: false`, email, atau
+    peran) yang berhasil lewat proxy mencabut sesi CashFlow admin itu **per id
+    saja** (`admin_konsol_sesi_cabut_admin` + `admin_kasus_tutup_admin`, id dari
+    jalur). Cookie pemanggil tidak disentuh. Hasilnya dilaporkan di header
+    `X-Konsol-Cashflow-Cabut` (`dicabut`, `gagal`, `tak-terkonfigurasi`); bila
+    bukan `dicabut`, halaman Users menampilkan peringatan yang menetap untuk
+    menjalankan Langkah 1. Form "Edit user" hanya mengirim email dan peran bila
+    berubah, jadi mengganti nama tidak mencabut apa pun.
   - Proxy meneruskan IP peramban di `X-Konsol-Klien-IP`. Gateway mencatatnya di
     `gateway_audit_logs.reported_client_ip`, bukan di `ip_address`.
 - **Ikatan dokumen.** Setiap panggilan BFF (kecuali logout) wajib membawa
@@ -162,18 +172,24 @@ Langkah 1 untuk admin itu, lalu audit jendela insiden (kueri `admin_users`,
    **Keluar dari semua perangkat** (`logout-all`). Setelah itu ganti sandi di
    halaman Users (butuh sandi saat ini). Keduanya lewat proxy, dan keduanya
    ikut menghapus cookie dan mencabut sesi CashFlow admin itu.
-2. **Super admin mencabut sesi admin lain** (belum ada tombolnya di console):
+2. **Super admin mencabut sesi admin lain:** halaman Users, tombol
+   **Cabut semua sesi** di baris admin itu (konfirmasi satu langkah). Tanpa
+   console:
    ```bash
    curl -s -X POST "$GW/admin/users/<id>/revoke-sessions" -H "Authorization: Bearer $TOKEN"
    ```
    - Pelaku yang memegang sandi masih bisa login ulang. Ganti juga sandinya dari
      halaman Users (atau `PUT $GW/admin/users/<id> {"password": …}`), yang ikut
      mencabut sesi.
-   - Authenticator dicurigai dipasang orang lain:
+   - Authenticator dicurigai dipasang orang lain: tombol **Reset TOTP** di
+     halaman Users, atau
      `curl -s -X POST "$GW/admin/users/<id>/totp/reset" -H "Authorization: Bearer $TOKEN"`.
-     Target ber-TOTP butuh sesi kuat (lihat README gateway).
-   - **Langkah 1 wajib** setiap kali yang dicabut admin lain: dari console,
-     sesi CashFlow hanya dicabut otomatis untuk akun milik pemanggil.
+     Target ber-TOTP butuh sesi kuat (lihat README gateway); tanpa itu gateway
+     menjawab 403 dan halaman menampilkan sebabnya.
+   - Lewat console, sesi CashFlow admin itu ikut dicabut per id. Peringatan
+     "sesi CashFlow-nya belum tentu ikut" berarti pencabutan itu gagal:
+     jalankan Langkah 1. **Lewat `curl` langsung ke gateway, Langkah 1 selalu
+     wajib**: BFF tidak melihat panggilan itu.
 3. **Nonaktifkan admin itu:** halaman Users, atau
    `curl -s -X PUT "$GW/admin/users/<id>" -H "Authorization: Bearer $TOKEN" -H 'content-type: application/json' -d '{"is_active": false}'`.
 4. **Console tidak bisa dipakai:** naikkan `token_version` lewat SQL di VPS
@@ -214,9 +230,11 @@ select public.admin_kasus_tutup_pelaku('<email>');
 
 `POST /api/admin/logout`, `DELETE /api/cashflow/sesi`, dan proxy (setelah
 logout-all, TOTP diaktifkan/dimatikan, atau akun sendiri diubah) sudah
-menjalankan keempat RPC itu untuk admin itu. Langkah ini tetap wajib karena
-pelaku tidak akan menekan tombol keluar, dan karena mencabut atau
-menonaktifkan admin LAIN tidak mencabut sesi CashFlow-nya.
+menjalankan keempat RPC itu untuk admin itu. Tindakan console atas admin LAIN
+(cabut sesi, reset TOTP, hapus, ubah sandi/email/peran/status) menjalankan
+versi per id-nya saja. Langkah ini tetap wajib karena pelaku tidak akan
+menekan tombol keluar, karena tindakan lewat `curl` langsung ke gateway tidak
+lewat BFF, dan karena sesi lama tanpa `admin_gw_id` hanya kena jalur per email.
 
 ### Langkah 2: pastikan pintunya tertutup
 

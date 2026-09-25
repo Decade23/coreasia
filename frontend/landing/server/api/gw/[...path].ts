@@ -20,11 +20,17 @@
  *      mencatatnya di audit sebagai IP yang DILAPORKAN BFF, di samping IP
  *      keluar Vercel yang dilihatnya sendiri;
  *   7. satu baris log per permintaan (metode, jalur tanpa query, status, IP
- *      klien, email dari klaim token).
+ *      klien, email dari klaim token);
+ *   8. gateway baru saja mengakhiri semua sesi seorang admin (akun sendiri:
+ *      logout-all dsb.; admin LAIN: cabut sesi, reset TOTP, hapus, ubah
+ *      sandi/email/peran/status) → sesi CashFlow admin itu dicabut, dan
+ *      hasilnya dilaporkan di header X-Konsol-Cashflow-Cabut supaya console
+ *      bisa meminta runbook Langkah 1 bila gagal.
  */
 import { metodeAman } from '../../lib/konsol/asal'
 import { cabutSesiCashflowAdmin } from '../../lib/konsol/cashflow-cabut'
 import { klaimJwt } from '../../lib/konsol/cookie'
+import { HEADER_CABUT_CASHFLOW } from '~/utils/konsol'
 import { bacaCookie, catat, hapusCookie, ipKlien, pasangToken, perpanjangIkat, wajibIkatan, wajibSatuAsal } from '../../lib/konsol/h3'
 import { pecahPathProxy, rakitTujuan, validasiJalur } from '../../lib/konsol/jalur'
 import { saringHeaderKeluar, saringHeaderMasuk, teruskan } from '../../lib/konsol/proxy'
@@ -75,12 +81,16 @@ export default defineEventHandler(async (event) => {
     pasangToken(event, hasil.tokenBaru)
     perpanjangIkat(event)
   }
+  const bahanCashflow = { url: config.public.cashflowSupabaseUrl as string, service: config.cashflowSupabaseServiceKey as string }
   if (hasil.pemilikSesiBerakhir) {
     // Per id admin gateway DAN per email (sesi terbitan sebelum 0092) — cashflow-cabut.ts.
-    await cabutSesiCashflowAdmin(
-      { url: config.public.cashflowSupabaseUrl as string, service: config.cashflowSupabaseServiceKey as string },
-      hasil.pemilikSesiBerakhir,
-    )
+    setResponseHeader(event, HEADER_CABUT_CASHFLOW, await cabutSesiCashflowAdmin(bahanCashflow, hasil.pemilikSesiBerakhir))
+  } else if (hasil.adminLainBerakhir) {
+    // Admin LAIN: hanya per id. Emailnya tidak diketahui dari jalur, dan
+    // mencabut per label bisa mengenai admin lain yang pernah memakainya.
+    const cf = await cabutSesiCashflowAdmin(bahanCashflow, { id: hasil.adminLainBerakhir })
+    catat(event, 'cabut-admin-lain', { admin_gw_id: hasil.adminLainBerakhir, jalur: cek.jalur, cashflow: cf })
+    setResponseHeader(event, HEADER_CABUT_CASHFLOW, cf)
   }
 
   const { respons } = hasil

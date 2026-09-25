@@ -118,6 +118,24 @@ export function batasIzinMfa(bukti: BuktiMfa | null | undefined, sekarang: numbe
   return sampai > sekarang ? sampai : null
 }
 
+/** Masa tenggang "sesi kuat" gateway (mfaEnrollmentGrace, admin_user.go). */
+export const TENGGANG_SESI_KUAT_MS = 24 * 60 * 60 * 1000
+
+/**
+ * Perkiraan klien: apakah sesi ini "sesi kuat" menurut gateway (README
+ * gateway, "Sesi kuat"): MFA segar (batasIzinMfa), TOTP aktif, dan akun serta
+ * pendaftaran TOTP berumur ≥ 24 jam. HANYA untuk petunjuk di layar (mis.
+ * sebelum reset TOTP admin lain); yang memutuskan tetap gateway (403
+ * MFA_REQUIRED / MFA_ENROLLMENT_TOO_RECENT). Data yang hilang = tidak kuat.
+ */
+export function sesiKuat(bukti: (BuktiMfa & { created_at?: unknown }) | null | undefined, sekarang: number = Date.now()): boolean {
+  if (!bukti || batasIzinMfa(bukti, sekarang) === null) return false
+  const totp = waktuMs(bukti.totp_enabled_at)
+  const dibuat = waktuMs(bukti.created_at)
+  return totp !== null && dibuat !== null
+    && sekarang - totp >= TENGGANG_SESI_KUAT_MS && sekarang - dibuat >= TENGGANG_SESI_KUAT_MS
+}
+
 /**
  * Izin yang ditulis ke admin_konsol_sesi.izin untuk sesi CashFlow baru.
  *
