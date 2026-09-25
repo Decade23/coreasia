@@ -27,7 +27,7 @@ import {
   type RuangCalon,
 } from '../../adapters/cashflowKasus'
 import {
-  keKepala, ke360, keTransaksiBaris, keSampahBaris, adaSampahLebih, keRinci, keTeks, keHasilCari, bisaCariServer, kursorKeUrl,
+  keKepala, ke360, keTransaksiBaris, keSampahBaris, adaSampahLebih, labelJumlahSampah, keRinci, keTeks, keHasilCari, bisaCariServer, kursorKeUrl,
   kursorTransaksiDariUrl, tanggalJam, terbatas, jenisUang,
   CEK_TRANSAKSI, JENIS_TEKS, RANAH_TEKS, BATAS_TEKS, BATAS_CARI,
   type KepalaPenggunaDTO, type Pengguna360DTO, type TransaksiCariDTO, type TransaksiRinciDTO, type TeksDTO, type CariDTO,
@@ -364,6 +364,11 @@ describe('kontrak TransaksiCariDTO ↔ admin_transaksi_bangun / _sampah_bangun /
     expect(adaSampahLebih({ sampah_lebih: null })).toBe(false)
     expect(adaSampahLebih({ sampah_lebih: 'true' as unknown as boolean })).toBe(false)
     expect(adaSampahLebih(null)).toBe(false)
+  })
+  it('labelJumlahSampah: "50+" bila terpotong, angka polos bila tidak', () => {
+    expect(labelJumlahSampah(50, true)).toBe('50+')
+    expect(labelJumlahSampah(50, false)).toBe('50')
+    expect(labelJumlahSampah(3, false)).toBe('3')
   })
   it('keTransaksiBaris: kaki transfer, jam, numeric berteks', () => {
     const t = keTransaksiBaris(JSON.parse(TX_BARIS) as TransaksiCariDTO['baris'][number])

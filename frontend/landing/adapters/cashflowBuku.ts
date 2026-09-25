@@ -352,6 +352,10 @@ export interface SampahBaris {
 export const adaSampahLebih = (d: Pick<TransaksiCariDTO, 'sampah_lebih'> | null | undefined): boolean =>
   d?.sampah_lebih === true
 
+/** Angka di judul "Di sampah (…)": akhiran "+" bila server memotong daftarnya,
+ *  supaya 50 baris yang tampil tidak terbaca sebagai jumlah seluruhnya. */
+export const labelJumlahSampah = (n: number, lebih: boolean): string => (lebih ? `${n}+` : `${n}`)
+
 export function keSampahBaris(d: SampahBarisDTO): SampahBaris {
   return {
     id: d.id,

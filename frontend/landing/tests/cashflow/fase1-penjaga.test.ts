@@ -98,6 +98,15 @@ describe('Fase 1: URL tab Transaksi hanya kunci struktur', () => {
     expect(isi).toMatch(/const kursor = computed\(\(\) => \(nominalKeAwal\.value \? null : kursorTransaksiDariUrl\(q\.value\.kursor\)\)\)/)
     expect(isi).not.toMatch(/setTimeout/)
   })
+
+  it('sampah terpotong (0092): judul "50+" dan kalimat penanda muncul hanya bila sampah_lebih', () => {
+    const isi = baca('pages/console/cashflow/pengguna/[id]/transaksi.vue')
+    // Bentuk label dan pembacaan sampah_lebih diuji di kontrak-fase1.test.ts;
+    // di sini: halaman benar-benar memakainya.
+    expect(isi).toMatch(/const sampahLebih = computed\(\(\) => adaSampahLebih\(mentah\.value\)\)/)
+    expect(isi).toMatch(/tcf\('transaksi\.diSampah'\)\(labelJumlahSampah\(sampah\.length, sampahLebih\)\)/)
+    expect(isi).toMatch(/<p v-if="sampahLebih"[^>]*>\{\{ tcf\('transaksi\.sampahLebih'\) \}\}<\/p>/)
+  })
 })
 
 describe('Fase 1: membuka data satu klik, tanpa dialog (keputusan Master 21 Sep 2026)', () => {

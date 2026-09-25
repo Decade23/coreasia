@@ -32,7 +32,7 @@ definePageMeta({
 })
 import { POLA_UUID } from '~/adapters/cashflow'
 import {
-  keTransaksiBaris, keSampahBaris, adaSampahLebih, kursorTransaksiDariUrl, tanggalJam,
+  keTransaksiBaris, keSampahBaris, adaSampahLebih, labelJumlahSampah, kursorTransaksiDariUrl, tanggalJam,
   CEK_TRANSAKSI, POLA_KURSOR_URL,
   type TransaksiCariDTO, type SaringTransaksi, type TransaksiBaris,
 } from '~/adapters/cashflowBuku'
@@ -296,7 +296,7 @@ const pilihBaris = (t: TransaksiBaris, i: number) => { sorot.value = i; bukaLaci
 
         <!-- Kecocokan di sampah (halaman pertama, ?sampah=1) -->
         <section v-if="sampah.length" class="ca-console-dialog p-4">
-          <h3 class="text-xs font-semibold uppercase tracking-wide text-[var(--ca-muted)]">{{ tcf('transaksi.diSampah')(sampahLebih ? `${sampah.length}+` : sampah.length) }}</h3>
+          <h3 class="text-xs font-semibold uppercase tracking-wide text-[var(--ca-muted)]">{{ tcf('transaksi.diSampah')(labelJumlahSampah(sampah.length, sampahLebih)) }}</h3>
           <p v-if="sampahLebih" class="mt-1 text-xs text-[var(--ca-subtle)]">{{ tcf('transaksi.sampahLebih') }}</p>
           <ul class="mt-2 divide-y divide-[color:var(--ca-border)] text-sm">
             <li v-for="s in sampah" :key="s.id" class="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">

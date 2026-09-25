@@ -59,3 +59,15 @@ describe('/sakelar membuka daftar pengecualian satu klik', () => {
     expect(JSON.stringify(KAMUS_CASHFLOW)).not.toMatch(/Kenapa data ini dibuka|Why is this data being opened/)
   })
 })
+
+describe('transaksi.sampahLebih: satu kalimat, paling banyak dua baris (konvensi wording)', () => {
+  it('ID dan EN: satu kalimat pendek', () => {
+    for (const b of ['id', 'en'] as const) {
+      const t = KAMUS_CASHFLOW[b].transaksi.sampahLebih
+      // Satu kalimat = satu tanda akhir, di ujung; tidak ada ". " di tengah.
+      expect(t, b).toMatch(/^[^.!?]+\.$/)
+      // Dua baris teks-xs di panel sampah ≈ 80 aksara.
+      expect(t.length, b).toBeLessThanOrEqual(80)
+    }
+  })
+})
