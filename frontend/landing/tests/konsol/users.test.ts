@@ -218,6 +218,17 @@ describe('placeholder i18n — sama antarbahasa dan sama dengan parameter yang d
   })
 })
 
+describe('kalimat modal cabut sesi — benar untuk admin nonaktif dan admin tanpa TOTP', () => {
+  it('tidak menjanjikan akun tetap aktif atau masuk dengan TOTP; menyatakan status akun tidak berubah', () => {
+    const id = String(ambil('id', 'users.revokeDescription'))
+    const en = String(ambil('en', 'users.revokeDescription'))
+    expect(id).not.toMatch(/tetap aktif|TOTP/)
+    expect(en).not.toMatch(/stays active|TOTP/)
+    expect(id).toMatch(/Status akunnya tidak berubah\./)
+    expect(en).toMatch(/account status does not change\./)
+  })
+})
+
 describe('halaman Users — tripwire teks sumber (bukan bukti perilaku)', () => {
   const halaman = baca('pages/console/users/index.vue')
   const komposabel = baca('composables/useAdminUsers.ts')
