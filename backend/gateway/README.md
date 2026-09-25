@@ -8,15 +8,28 @@ tabel `gateway_schema_migrations`) + Redis. Migrasi berjalan otomatis saat start
 go vet ./... && go test ./...
 # uji opsional terhadap layanan sungguhan (tidak berjalan tanpa env ini):
 GATEWAY_TEST_REDIS_ADDR=localhost:6380 go test ./internal/auth/ ./internal/handler/  # pembatas percobaan TOTP dan /login, termasuk paralel (Redis DB 15)
-GATEWAY_TEST_DATABASE_URL=postgres://… go test ./internal/repository/                 # SQL admin_users
+GATEWAY_TEST_DATABASE_URL=postgres://… go test ./internal/repository/                 # SQL admin_users (+ Redis untuk uji lapis panjang TOTP ujung ke ujung)
+# DB sekali pakai saja: uji yang membuat baris admin sementara dan database migrasi sementara
+GATEWAY_TEST_DATABASE_DISPOSABLE=1 GATEWAY_TEST_DATABASE_URL=… go test ./internal/repository/
 
 # menjalankan lokal dengan secret contoh configs/config.yaml: APP_ENV WAJIB eksplisit
 APP_ENV=development APP_PORT=8095 DB_PORT=5433 REDIS_PORT=6380 go run ./cmd/server
 ```
 
-Uji repositori tidak pernah membuat akun dan tidak pernah menyimpan perubahan:
-semantik TOTP diuji pada baris admin yang sudah ada, di dalam satu transaksi
-yang selalu di-ROLLBACK.
+Uji repositori tidak pernah menyimpan perubahan: semantik TOTP diuji pada baris
+admin yang sudah ada, dan baris admin uji dibuat di dalam satu transaksi yang
+selalu di-ROLLBACK. Pengecualiannya hanya uji yang menuntut
+`GATEWAY_TEST_DATABASE_DISPOSABLE=1` (pesanan paralel lintas koneksi, dan
+migrasi 000016/000017 lewat golang-migrate di database sementara yang dihapus
+sesudahnya). Jangan setel variabel itu terhadap DB yang berisi data sungguhan.
+
+**CI** (`.github/workflows/build-gateway.yml`, job `test`): Postgres 17 + Redis 7
+sekali pakai, semua `migrations/*.up.sql` diterapkan, satu baris admin, lalu
+`go vet ./...` dan `go test ./...` dengan ketiga variabel di atas. Image baru
+dibangun (dan ditarik watchtower) hanya bila job ini hijau. Di CI (`CI=true`) uji
+opt-in yang layanannya tidak tersedia **gagal**, bukan dilewati
+(`internal/testenv`): penjaga SQL dan Lua tidak boleh diam-diam tidak teruji di
+jalur rilis.
 
 ### `JWT_SECRET` wajib kuat di luar development
 
@@ -93,7 +106,8 @@ dari refresh terakhir.
 `token_version` dinaikkan oleh:
 - `POST /api/admin/auth/logout-all` (diri sendiri);
 - `POST /api/admin/users/:id/revoke-sessions` (izin `users:update` = super admin, diaudit `revoke_sessions`; boleh dari sesi `mfa=false` walau targetnya ber-TOTP, karena sifatnya defensif);
-- `PUT /api/admin/users/:id` yang menonaktifkan akun, mengganti sandi, atau mengganti peran.
+- `PUT /api/admin/users/:id` yang menonaktifkan akun, mengganti sandi, mengganti peran,
+  atau **mengganti email** (sejak paket A, lihat "Email admin").
   Perubahan dan kenaikan `token_version` terjadi dalam **satu** `UPDATE`, dan
   `UPDATE` itu hanya berlaku bila `token_version` baris masih sama dengan saat baris
   dimuat. Permintaan yang memuat baris sebelum penonaktifan/ganti sandi/ganti peran
@@ -268,12 +282,25 @@ Pengaman:
   - sandi di `/totp/setup`;
   - `current_password` saat mengganti sandi sendiri.
 
-  Jatahnya punya dua lapis (Redis, satu skrip Lua atomik):
+  Jatahnya punya dua lapis:
 
-  | Lapis | Batas | Kunci Redis | Sesudah batas |
+  | Lapis | Batas | Tempat | Sesudah batas |
   |---|---|---|---|
-  | pendek | 5 per 15 menit | `gateway:admin_totp_gagal:<id>` | 429 + `Retry-After` |
-  | panjang | **20 kegagalan per 30 hari** (jendela tetap dari kegagalan pertama) | `gateway:admin_totp_gagal_panjang:<id>` | **423 `TOTP_LOCKED`**; kode benar pun tidak dievaluasi |
+  | pendek | 5 per 15 menit | Redis `gateway:admin_totp_gagal:<id>` (skrip Lua atomik) | 429 + `Retry-After` |
+  | panjang | **20 kegagalan per 30 hari** (jendela tetap dari kegagalan pertama) | Postgres `admin_users.totp_gagal_panjang` + `totp_gagal_panjang_mulai` (migrasi 000017; `UPDATE` bersyarat atomik) | **423 `TOTP_LOCKED`**; kode benar pun tidak dievaluasi |
+
+  - **Kenapa lapis panjang di Postgres.** Redis produksi memakai `allkeys-lru`, dan
+    siapa pun bisa memenuhi memorinya lewat `/login` dengan email acak (setiap email
+    membuat satu kunci per 15 menit) sampai kunci lapis panjang milik admin yang
+    sedang diserang dibuang. Hitungan 30 harinya lalu mulai dari nol. Di Postgres
+    hitungan itu tidak bisa dibuang eviction. Lapis pendek tetap di Redis:
+    kehilangannya paling banyak membuka satu jendela 15 menit.
+  - **Pindahan dari Redis.** Hitungan lapis panjang lama (kunci
+    `gateway:admin_totp_gagal_panjang:<id>`, sebelum 000017) dipindahkan ke Postgres
+    pada percobaan pertama admin itu sesudah rilis (hitungan terbesar menang, sisa
+    TTL-nya jadi sisa jendela), lalu kuncinya dihapus. Akun yang terkunci sebelum
+    rilis tetap terkunci. Kunci lama habis sendiri paling lambat 30 hari sesudah
+    rilis; setelah itu langkah pindahan (`importLegacy`) boleh dibuang.
 
   - **Kenapa ada lapis panjang.** Jendela tetap 15 menit saja memberi pemegang sandi
     5 × 96 = 480 tebakan per hari, selamanya. Peluang tembus per tebakan ±3/10⁶
@@ -287,27 +314,37 @@ Pengaman:
     pemilik tidak menghapus jejak tebakan pelaku.
   - Percobaan yang ditahan lapis pendek tidak memakai jatah panjang. Banjir
     permintaan tidak mempercepat penguncian.
+  - **Galat server tidak memakan jatah.** Percobaan yang sudah memesan jatah lalu
+    gagal karena galat server (rahasia TOTP tidak terbuka setelah rotasi
+    `JWT_SECRET`, rahasia rusak, DB gagal menulis) mengembalikan satu jatah pendek
+    dan satu jatah panjang, dan dicatat sebagai baris audit `totp_error`. Klien
+    hanya menerima 500 `INTERNAL_ERROR` tanpa detail. Deretan `totp_error` berarti
+    masalah server (biasanya rotasi `JWT_SECRET` tanpa reset TOTP), bukan tebakan.
   - **Membuka kunci:**
     - super admin dengan sesi kuat mereset TOTP akun itu, atau mengganti sandinya.
-      Keduanya menghapus kedua kunci. Penguncian berarti sandinya dipegang orang
+      Keduanya mengosongkan kedua lapis. Penguncian berarti sandinya dipegang orang
       lain, jadi sandi memang harus diganti;
-    - atau lewat Redis:
+    - atau lewat SQL + Redis:
       ```bash
       ssh coreasia-cad
+      docker exec -i coreasia-cad-db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"' <<'SQL'
+      UPDATE public.admin_users SET totp_gagal_panjang = 0, totp_gagal_panjang_mulai = NULL WHERE id = '<id>';
+      SQL
       docker exec coreasia-cad-redis redis-cli DEL "gateway:admin_totp_gagal:<id>" "gateway:admin_totp_gagal_panjang:<id>"
       ```
   - **Risiko DoS per admin (disadari).** Kunci hanya bisa dipicu oleh pemegang sandi
     (verify butuh tantangan, dan tantangan butuh sandi benar) atau pemegang sesi yang
     sah. Dengan sandi Master, pelaku bisa mengunci verifikasi Master dalam ±1 jam.
     Master baru bisa masuk setelah dibuka lewat jalur di atas. Kalau Master
-    satu-satunya super admin ber-TOTP, jalurnya Redis `DEL` lewat SSH, lalu ganti sandi.
+    satu-satunya super admin ber-TOTP, jalurnya SQL + Redis `DEL` lewat SSH, lalu ganti sandi.
   - `/totp/verify` juga dibatasi 10 permintaan per IP per 15 menit (lihat "IP klien" di bawah).
   - **Audit** (`gateway_audit_logs`, IP dari `mw.ClientIP`):
     - `login_mfa_challenge`: sandi benar, tantangan terbit;
     - `totp_failed`: satu baris per kode atau sandi yang dievaluasi lalu ditolak.
       Jumlahnya terbatas, paling banyak 20 per admin per 30 hari. Di tahap `login`,
       deskripsinya menyebut bahwa sandinya sudah benar;
-    - `totp_locked`: saat kunci terpasang.
+    - `totp_locked`: saat kunci terpasang;
+    - `totp_error`: galat server saat memeriksa faktor kedua (jatahnya dikembalikan).
     - Percobaan yang ditahan (429/423) hanya masuk log. Kode atau sandi tidak pernah dicatat.
   - Email ke admin pemilik akun belum ada. `EmailService` tidak punya metode kirim
     umum, dan menambahnya di luar lingkup perubahan auth ini. Baris `totp_failed`
@@ -332,11 +369,11 @@ Pengaman:
   - Sisa celah: permintaan yang keluar dari rentang IP Cloudflare tanpa melalui proxy-nya (mis. Cloudflare Workers ke origin) masih bisa mengarang entri. Penutupnya di infrastruktur: origin hanya menerima Cloudflare.
   - **Login console landing langsung dari peramban.** Halaman `/console/login` memanggil `POST /api/admin/auth/login` dan `/totp/verify` di sini tanpa lewat server Nitro, jadi pembatas per IP, asal yang dikenal, dan `ip_address` audit `login`/`login_mfa_challenge`/`totp_failed` memakai IP admin yang asli. Token hasilnya lalu diserahkan peramban ke BFF (`POST /api/admin/sesi` di landing), yang memvalidasinya lewat `/auth/me` dan menyimpannya di cookie HttpOnly. CORS: origin console harus ada di `CORS_ORIGINS`; `Retry-After` diekspos (`Access-Control-Expose-Headers`) supaya menit tunggu 429 terbaca.
   - **Aksi console lewat proxy BFF** (`/api/gw/**` di Vercel) tetap tiba dari IP keluar Vercel: `ip_address` = IP Vercel. BFF mengirim IP peramban di header `X-Konsol-Klien-IP`, dan gateway mencatatnya di kolom terpisah `gateway_audit_logs.reported_client_ip` (migrasi 000015; `mw.ReportedClientIP` + `internal/auditip`). Nilai itu **dilaporkan, tidak diverifikasi**: siapa pun yang memanggil gateway langsung bisa mengarangnya. Tidak dipakai untuk pembatas, kunci percobaan, atau keputusan keamanan apa pun; `ClientIP`/`ClientIPKey` tidak membacanya. Menutupnya butuh header yang diautentikasi (rahasia bersama BFF–gateway), belum ada.
-  - Redis tidak terjangkau atau menolak tulis (putus, `READONLY`, OOM) → 503 tanpa evaluasi (gagal tertutup). Login admin tanpa TOTP tidak terpengaruh.
-  - Redis produksi memakai `allkeys-lru`: pada tekanan memori, hitungan bisa terhapus lebih awal.
+  - Redis tidak terjangkau atau menolak tulis (putus, `READONLY`, OOM), atau Postgres gagal membaca/menulis hitungan lapis panjang → 503 tanpa evaluasi (gagal tertutup). Login admin tanpa TOTP tidak terpengaruh.
+  - Redis produksi memakai `allkeys-lru`: pada tekanan memori, lapis pendek faktor kedua dan hitungan `/login` per akun bisa terhapus lebih awal (paling banyak membuka satu jendela 15 menit). Lapis panjang faktor kedua di Postgres tidak terpengaruh.
 - **Enkripsi.** Rahasia disimpan AES-256-GCM dengan format `v1:` + base64url(nonce‖ciphertext).
   - Kuncinya HKDF-SHA256 dari `JWT_SECRET` (info `coreasia-admin-totp-v1`), dan AAD mengikat ciphertext ke id admin.
-  - Konsekuensi: **rotasi `JWT_SECRET` membuat semua rahasia TOTP tidak terbaca.** Verifikasi menjawab 500 (tidak pernah melewati TOTP); lakukan reset di bawah.
+  - Konsekuensi: **rotasi `JWT_SECRET` membuat semua rahasia TOTP tidak terbaca.** Verifikasi menjawab 500 (tidak pernah melewati TOTP) tanpa memakan jatah percobaan, dan tercatat `totp_error`; lakukan reset di bawah.
 
 Reset TOTP admin lain (perangkat hilang, atau authenticator dipasang orang lain):
 
@@ -351,21 +388,74 @@ curl -X POST https://api.coreasia.id/api/admin/users/<id>/totp/reset -H "Authori
 - Tidak berlaku untuk akun sendiri (400). Pemilik akun memakai `/auth/totp/disable`, yang menuntut sesi ber-MFA dan kode sah.
 
 Jalur SQL di VPS hanya untuk keadaan tanpa super admin **bersesi kuat** yang bisa
-login, atau setelah rotasi `JWT_SECRET` (semua admin):
+login, atau setelah rotasi `JWT_SECRET` (semua admin). SQL ini juga mengosongkan
+lapis panjang jatah percobaan (Postgres), sama dengan reset lewat API:
 
 ```bash
 ssh coreasia-cad
 docker exec -i coreasia-cad-db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"' <<'SQL'
 UPDATE public.admin_users
    SET totp_secret_enc = NULL, totp_pending_enc = NULL, totp_enabled_at = NULL,
-       totp_last_step = NULL, token_version = token_version + 1, updated_at = NOW()
+       totp_last_step = NULL, totp_gagal_panjang = 0, totp_gagal_panjang_mulai = NULL,
+       token_version = token_version + 1, updated_at = NOW()
  WHERE email = 'admin@contoh.id';   -- atau hapus WHERE untuk semua admin setelah rotasi
 SQL
 ```
 
-Jalur SQL tidak menyentuh Redis. Bila akun itu terkunci (423 `TOTP_LOCKED`), hapus
-juga kedua kunci percobaannya (lihat "Batas percobaan faktor kedua"). Tanpa itu,
-pendaftaran ulang di `/totp/setup` ikut tertahan.
+Jalur SQL tidak menyentuh Redis. Setelah reset (terutama setelah rotasi, untuk
+semua admin), bersihkan juga kunci pembatas faktor kedua di Redis, termasuk kunci
+lapis panjang lama dari sebelum 000017 yang belum dipindah. Tanpa itu, jendela
+pendek yang terisi 500 sebelum rilis paket A, atau hitungan lama yang dipindah
+pada percobaan berikutnya, masih bisa menahan pendaftaran ulang di `/totp/setup`:
+
+```bash
+ssh coreasia-cad
+docker exec coreasia-cad-redis sh -c "redis-cli --scan --pattern 'gateway:admin_totp_gagal*' | xargs -r redis-cli DEL"
+```
+
+### Email admin (migrasi 000016)
+
+Email admin menjadi identitas di luar gateway: pelaku sesi console CashFlow
+(`admin_konsol_sesi.pelaku`, dibandingkan dengan `lower(btrim(...))`) dan
+pencabutan sesi per email. Karena itu:
+- Email disimpan, dicari, dan dibandingkan dalam bentuk baku: huruf kecil, tanpa
+  spasi tepi (`model.NormalizeEmail`) di `POST /users`, `PUT /users/:id`, `/login`,
+  dan seed `ADMIN_EMAIL`. Login dengan `Admin@CoreAsia.ID ` diterima.
+- `POST /users` dan `PUT /users/:id` menolak email yang sudah dipakai admin lain,
+  tanpa peka huruf: **409 `CONFLICT`** ("Email sudah terdaftar"). Balapan dua
+  permintaan ditahan indeks unik `admin_users_email_lower_key` pada
+  `lower(btrim(email))` (pelanggarannya juga dijawab 409).
+- **Mengganti email mencabut semua sesi admin itu** (`token_version` naik), termasuk
+  akun sendiri: token lama ditolak `/auth/me`, jadi landing tidak bisa mencetak sesi
+  CashFlow baru atas email baru tanpa login ulang. Email yang sama dengan huruf
+  berbeda bukan penggantian (tidak mencabut). Audit `update` menyebut email lama.
+- `PUT /users/:id` kini menjalankan validasi yang sama dengan `POST /users`: sandi
+  lemah (`password_strength`), peran di luar `admin`/`super_admin`, email tidak sah,
+  dan nama < 2 aksara ditolak **400 `VALIDATION_FAILED`** tanpa menulis apa pun.
+- `GET /api/admin/auth/me` memulangkan `data.id` (uuid admin). Landing menyimpannya
+  sebagai `admin_konsol_sesi.admin_gw_id` (CashFlow 0092): identitas yang tidak
+  berubah saat email diganti. Email tetap hanya label tampilan.
+
+Migrasi 000016 **tidak pernah gagal** (gateway berhenti bila migrasi gagal, dan itu
+mematikan seluruh api.coreasia.id):
+1. email yang bentuk bakunya tidak bertabrakan dengan admin lain dinormalkan;
+2. indeks unik hanya dipasang bila tidak ada kembaran. Bila ada, migrasi tetap
+   selesai tanpa indeks, dan setiap start gateway mencatat
+   `email admin kembar tanpa peka huruf` (level ERROR) sampai dirapikan. Selama itu,
+   pemeriksaan di `POST`/`PUT` tetap menolak kembaran baru, dan `/login` memilih
+   baris yang emailnya persis sama dengan yang diketik, lalu yang tertua.
+
+Merapikan kembaran (setelah memutuskan akun mana yang dipakai):
+```bash
+ssh coreasia-cad
+docker exec -i coreasia-cad-db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"' <<'SQL'
+SELECT lower(btrim(email)) AS baku, array_agg(id || ' ' || email || ' ' || role ORDER BY created_at)
+  FROM public.admin_users GROUP BY 1 HAVING count(*) > 1;
+-- nonaktifkan/hapus atau ganti email akun yang tidak dipakai, lalu:
+UPDATE public.admin_users SET email = lower(btrim(email)) WHERE email <> lower(btrim(email));
+CREATE UNIQUE INDEX IF NOT EXISTS admin_users_email_lower_key ON public.admin_users (lower(btrim(email)));
+SQL
+```
 
 ### Runbook "token console bocor", langkah 0: hentikan pencetakan sesi
 
@@ -373,7 +463,9 @@ Tujuannya: token curian tidak bisa lagi lolos `/auth/me`, sehingga
 `POST /api/cashflow/sesi` tidak bisa mencetak sesi Supabase baru, dan tidak
 bisa `/auth/refresh`.
 
-> **Token yang bocor milik super admin? Langsung ke opsi 4.** Sampai
+> **Token yang bocor milik super admin? Langkah pertama: rotasi `JWT_SECRET`
+> (opsi 4), sebelum opsi 1–3 dan sebelum aturan "pilih yang pertama yang
+> tersedia" di bawah.** Aturan itu hanya untuk admin biasa. Sampai
 > kedaluwarsa (≤ 60 menit), access token super admin yang sudah dicabut masih
 > lolos endpoint admin di luar `/users` dan `/api-keys`, termasuk
 > `POST /api/admin/cad/licenses/generate` dan `GET /api/admin/cad/licenses/:id/copy`.
@@ -429,8 +521,15 @@ Untuk admin biasa, pilih yang pertama yang tersedia:
    # ganti JWT_SECRET di .env (openssl rand -base64 48), lalu:
    docker compose up -d gateway
    ```
-   Semua pendaftaran TOTP ikut gugur. Jalankan reset TOTP (SQL di atas, tanpa
-   `WHERE`), lalu admin mendaftar ulang.
+   Semua pendaftaran TOTP ikut gugur. Segera:
+   1. reset TOTP semua admin (SQL di atas, tanpa `WHERE`; sekaligus mengosongkan
+      lapis panjang jatah percobaan);
+   2. bersihkan kunci pembatas faktor kedua di Redis (perintah `redis-cli --scan`
+      di atas);
+   3. admin login dengan sandi, lalu mendaftar ulang TOTP.
+
+   Di antara rotasi dan reset, verifikasi TOTP menjawab 500 dan tercatat
+   `totp_error`, tanpa memakan jatah percobaan (sejak paket A).
 
 Tanda sandi admin bocor tanpa token (TOTP menahannya):
 ```sql
@@ -477,6 +576,28 @@ tetap mati sampai gateway menyusul. Karena itu:
    ```
 3. Baru commit dan push landing.
 
+### Urutan rilis paket A (email tanpa peka huruf, lapis panjang TOTP di Postgres)
+
+Urutan wajib: **SQL CashFlow 0092 → gateway (000016/000017) → landing.**
+- Gateway paket A kompatibel dengan landing lama: `/me` sudah memulangkan `id`, dan
+  bentuk jawaban lain tidak berubah. Landing lama tetap jalan sesudah 0092.
+- Sesudah push gateway, tunggu run "Build Gateway Image" hijau (job `test` lalu
+  `build`), lalu pastikan migrasinya:
+  ```bash
+  ssh coreasia-cad
+  docker logs coreasia-cad-gateway 2>&1 | grep -E 'migrasi selesai|email admin kembar' | tail -2   # "version":17,"dirty":false; tanpa baris "kembar"
+  docker exec -i coreasia-cad-db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -At' <<'SQL'
+  SELECT indexname FROM pg_indexes WHERE indexname = 'admin_users_email_lower_key';   -- satu baris
+  SQL
+  ```
+  Tanpa indeks: lihat "Email admin (migrasi 000016)".
+- Sebelum push, periksa email kembar (baca saja), supaya tahu apakah indeks akan terpasang:
+  ```sql
+  SELECT lower(btrim(email)), count(*) FROM public.admin_users GROUP BY 1 HAVING count(*) > 1;
+  ```
+- Sesudah rilis, admin yang sedang ber-TOTP tidak terpengaruh. Hitungan kegagalan
+  30 hari yang ada di Redis dipindah ke Postgres pada percobaan berikutnya.
+
 ### Rollback rilis
 
 **Landing mundur lebih dulu, atau bersamaan.** Landing 0c tidak bisa login ke
@@ -510,3 +631,24 @@ Kolom baru boleh dibiarkan: kode lama memilih kolomnya secara eksplisit, dan saa
 maju lagi migrasi 000014/000015 (`IF NOT EXISTS`) tidak mengubah apa pun. Menjalankan
 `000014_admin_auth_keras.down.sql` menghapus semua pendaftaran TOTP;
 `000015_audit_ip_dilaporkan.down.sql` hanya membuang `reported_client_ip`.
+
+**Rollback paket A saja** (kembali ke image 0c sebelum 000016/000017; landing dan
+CashFlow 0092 tidak perlu mundur, karena `admin_gw_id` diisi landing dan sesi lama
+tanpa `admin_gw_id` tetap berjalan):
+1. Pin image gateway ke tag `sha-<7 aksara>` run terakhir sebelum paket A (seperti di atas).
+2. Turunkan versi migrasi, lalu `docker compose up -d gateway` (image lama menolak
+   start di versi 17: `no migration found for version 17`):
+   ```sql
+   UPDATE public.gateway_schema_migrations SET version = 15, dirty = false;
+   ```
+3. Akibatnya selama rollback: hitungan kegagalan TOTP 30 hari kembali ke Redis dan
+   mulai dari nol (kunci Redis lama sudah dipindah lalu dihapus); login memakai
+   pembanding email peka huruf, jadi admin harus mengetik email huruf kecil
+   (email sudah dinormalkan 000016); ganti email tidak lagi mencabut sesi.
+
+Kolom 000017 dan indeks 000016 boleh dibiarkan (kode lama tidak membacanya;
+indeks hanya membuat email kembar beda huruf ditolak dengan 500, bukan 409). Saat
+maju lagi, 000016/000017 tidak mengubah apa pun yang sudah benar. Membuang
+sepenuhnya: `000017_totp_gagal_panjang.down.sql` (hitungan 30 hari hilang) dan
+`000016_admin_email_tanpa_peka_huruf.down.sql` (hanya membuang indeks; email yang
+sudah dinormalkan tidak dikembalikan).
