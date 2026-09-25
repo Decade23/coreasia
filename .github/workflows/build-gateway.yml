@@ -1,7 +1,8 @@
 name: Build Gateway Image
 
 # Build the CoreAsia gateway (api.coreasia.id) image in CI and push to GHCR —
-# the VPS only PULLS this image (no build on the 2 GB server).
+# the VPS only PULLS this image (no build on the 2 GB server). Watchtower
+# memasang image :latest otomatis, jadi image hanya dibangun sesudah job test hijau.
 on:
   push:
     branches: [master]
@@ -15,7 +16,74 @@ permissions:
   packages: write
 
 jobs:
+  # go vet + go test, termasuk uji opt-in terhadap Postgres dan Redis sungguhan
+  # (SQL anti-replay/CAS token_version, lapis panjang TOTP di Postgres, skrip
+  # Lua pembatas, migrasi 000016/000017 lewat golang-migrate). Di CI (CI=true)
+  # uji opt-in GAGAL, bukan dilewati, bila layanannya tidak tersedia
+  # (internal/testenv). Image hanya dibangun bila job ini hijau.
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: gateway
+          POSTGRES_PASSWORD: gateway
+          POSTGRES_DB: gateway_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U gateway -d gateway_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      PGHOST: localhost
+      PGPORT: "5432"
+      PGUSER: gateway
+      PGPASSWORD: gateway
+      PGDATABASE: gateway_test
+      GATEWAY_TEST_DATABASE_URL: postgres://gateway:gateway@localhost:5432/gateway_test?sslmode=disable
+      GATEWAY_TEST_DATABASE_DISPOSABLE: "1"
+      GATEWAY_TEST_REDIS_ADDR: localhost:6379
+    defaults:
+      run:
+        working-directory: backend/gateway
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/gateway/go.mod
+          cache-dependency-path: backend/gateway/go.sum
+
+      - name: Terapkan migrasi ke DB uji
+        run: |
+          for f in $(ls migrations/*.up.sql | sort); do
+            echo "== $f"
+            psql -v ON_ERROR_STOP=1 -q -f "$f"
+          done
+          # Satu baris admin: uji semantik TOTP berjalan di dalam transaksi
+          # yang selalu di-ROLLBACK atas baris yang sudah ada.
+          psql -v ON_ERROR_STOP=1 -q -c "INSERT INTO public.admin_users (email, password_hash, full_name, role) VALUES ('ci@contoh.invalid', 'x', 'Admin CI', 'super_admin')"
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: go test
+        run: go test -count=1 ./...
+
   build:
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
