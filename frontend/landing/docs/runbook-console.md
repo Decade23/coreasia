@@ -380,8 +380,22 @@ rilis bersama landing" dan "Rollback rilis".
 - Landing terakhir. Landing ini menulis `admin_gw_id` dan GAGAL mencetak sesi
   CashFlow (`mint-gagal`) bila 0092 belum diterapkan. Itu disengaja: tanpa
   id, batas laju kasus bisa di-reset dengan mengganti email.
-- Rollback landing paket A ke `33b4502` aman selama 0092 tetap ada. Jangan
-  me-rollback 0092 selagi landing paket A tayang.
+- Landing lama (`33b4502`) hanya tetap jalan di atas 0092 sampai 15 menit
+  sesudah landing paket A mencetak sesi ber-id pertama. Sesudah itu pemicu
+  `admin_konsol_sesi_wajib_id` (0092 bagian 1b) menolak sesi tanpa id
+  (`42501`, hint `sesi-tanpa-id`) dan landing lama gagal `mint-gagal`.
+  Karena itu:
+  - Jangan login console dari landing paket A, termasuk preview Vercel yang
+    memakai kunci service produksi, sebelum landing itu siap dipromosikan.
+    Sesi ber-id pertama memulai hitungan 15 menit.
+  - Jangan mengganti email admin console selama 24 jam sesudah landing
+    paket A tayang (lihat CATATAN RILIS di kepala 0092).
+  - **Rollback landing paket A ke `33b4502` wajib didahului
+    `./toko/sql.sh toko/rollback-0092.sql` (tahap 1).** Tahap 1 membuang
+    pemicu ujung transisi dan mengembalikan badan fungsi ke 0091; kolom
+    `admin_gw_id` dan fungsi per id dibiarkan. Tanpa langkah ini landing lama
+    tidak bisa membuka modul CashFlow.
+  - Jangan me-rollback 0092 selagi landing paket A tayang.
 - **Rilis berikutnya sesudah paket A: buang jalur email.** Begitu landing
   paket A tayang lebih dari 12 jam, tidak ada lagi sesi tanpa `admin_gw_id`
   yang hidup. Pemanggilan `admin_konsol_sesi_cabut_pelaku` dan
