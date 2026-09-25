@@ -307,12 +307,16 @@ export function pesanLogin(g: GalatKonsol | null, cadangan: 'login.failed' | 'lo
  *     butuh password saat ini (begitu ada satu saja admin ber-TOTP);
  *   - MFA_REQUIRED / MFA_ENROLLMENT_TOO_RECENT (403): sesi belum lolos TOTP,
  *     atau TOTP/akun pelaku belum 24 jam;
- *   - 409: create = email sudah terdaftar; selain itu baris admin berubah sejak
- *     dimuat dan tidak ada yang ditulis (muat ulang, lalu ulangi);
+ *   - 409 EMAIL_TAKEN: email sudah dipakai admin lain (create maupun ubah);
+ *     mengulang tidak akan berhasil, jadi form tetap terbuka;
+ *   - 409 lain: create = email sudah terdaftar (gateway lama); selain itu baris
+ *     admin berubah sejak dimuat dan tidak ada yang ditulis (muat ulang, lalu
+ *     ulangi);
  *   - 423 TOTP_LOCKED; 429 (+ menit bila diketahui).
  */
 export function pesanKelolaAdmin(g: GalatKonsol, aksi: 'create' | 'update' | 'delete'): PesanLogin | null {
   switch (g.kode) {
+    case 'EMAIL_TAKEN': return { kunci: aksi === 'create' ? 'users.errors.emailTerdaftar' : 'users.errors.emailDipakai' }
     case 'CURRENT_PASSWORD_REQUIRED': return { kunci: 'users.errors.currentPasswordRequired' }
     case 'PASSWORD_INVALID': return { kunci: 'users.errors.currentPasswordWrong' }
     case 'MFA_REQUIRED': return { kunci: 'users.errors.mfaRequired' }
@@ -327,6 +331,14 @@ export function pesanKelolaAdmin(g: GalatKonsol, aksi: 'create' | 'update' | 'de
   if (g.status === 409) return { kunci: aksi === 'create' ? 'users.errors.emailTerdaftar' : 'users.errors.berubah' }
   return g.pesan ? { teks: g.pesan } : null
 }
+
+/**
+ * Galat simpan admin yang berarti "baris berubah sejak dimuat": daftar dimuat
+ * ulang supaya admin mengulang atas data terbaru. 409 EMAIL_TAKEN bukan itu:
+ * memuat ulang tidak menolong, isian form dibiarkan untuk diperbaiki.
+ */
+export const perluMuatUlangAdmin = (g: Pick<GalatKonsol, 'status' | 'kode'> | null | undefined): boolean =>
+  !!g && g.status === 409 && g.kode !== 'EMAIL_TAKEN'
 
 /* ───────────── unggah gambar lewat proxy ───────────── */
 

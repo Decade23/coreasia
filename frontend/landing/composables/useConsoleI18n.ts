@@ -1,6 +1,6 @@
 type ConsoleLocale = 'id' | 'en'
 
-const consoleMessages = {
+export const consoleMessages = {
   id: {
     common: {
       backToWebsite: 'Kembali ke website',
@@ -602,6 +602,7 @@ const consoleMessages = {
         mfaTooRecent: 'TOTP atau akun Anda belum 24 jam. Tindakan ini bisa dilakukan 24 jam setelah TOTP aktif.',
         berubah: 'Data admin ini baru saja berubah. Daftar dimuat ulang; ulangi perubahan Anda.',
         emailTerdaftar: 'Email sudah terdaftar.',
+        emailDipakai: 'Email ini sudah dipakai admin lain. Gunakan email lain.',
         totpLocked: 'Terlalu banyak password atau kode salah; percobaan dikunci. Minta super admin lain membukanya.',
         tooMany: 'Terlalu banyak percobaan. Coba lagi dalam {{menit}} menit.',
         tooManyLater: 'Terlalu banyak percobaan. Coba lagi beberapa menit lagi.',
@@ -1232,6 +1233,7 @@ const consoleMessages = {
         mfaTooRecent: 'Your TOTP or account is less than 24 hours old. This action opens 24 hours after TOTP is on.',
         berubah: 'This admin just changed. The list was reloaded; repeat your change.',
         emailTerdaftar: 'Email is already registered.',
+        emailDipakai: 'This email is already used by another admin. Use a different email.',
         totpLocked: 'Too many wrong passwords or codes; attempts are locked. Ask another super admin to unlock it.',
         tooMany: 'Too many attempts. Try again in {{menit}} minutes.',
         tooManyLater: 'Too many attempts. Try again in a few minutes.',

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { perluMuatUlangAdmin } from '~/utils/konsol'
+
 definePageMeta({ layout: 'console', middleware: 'console' })
 
 const { items, loading, saving, error, galat, totalItems, fetchUsers, createUser, updateUser, deleteUser } = useAdminUsers()
@@ -26,9 +28,10 @@ const gantiSandiSendiri = computed(() => !!passwordTarget.value && passwordTarge
 /** Kekuatan password sama dengan validasi gateway (password_strength). */
 const passwordLemah = (pwd: string) => pwd.length < 8 || !/[A-Z]/.test(pwd) || !/[a-z]/.test(pwd) || !/[0-9]/.test(pwd)
 
-/** 409 saat update: baris berubah sejak dimuat, tidak ada yang ditulis. */
+/** 409 saat update: baris berubah sejak dimuat, tidak ada yang ditulis.
+    409 EMAIL_TAKEN tidak: form tetap terbuka dengan isiannya. */
 const muatUlangBilaBerubah = () => {
-  if (galat.value?.status === 409) fetchUsers()
+  if (perluMuatUlangAdmin(galat.value)) fetchUsers()
 }
 
 const roleOptions = computed(() => [
