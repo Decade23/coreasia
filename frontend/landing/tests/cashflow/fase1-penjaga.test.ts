@@ -90,7 +90,10 @@ describe('Fase 1: URL tab Transaksi hanya kunci struktur', () => {
     // halaman pertama saat nilainya berubah (temuan F9; perilakunya diuji di
     // tests/cashflow/nominal.test.ts). Tidak ada debounce buatan sendiri lagi.
     expect(isi).toMatch(/useState<NominalSaring>\(`cf_tx_nominal_/)
-    expect(isi).toMatch(/useCashflowNominal\(\{[\s\S]*?keAwal: \(\) => setel\(\{ kursor: '', tx: '' \}\)/)
+    // Kapan kembali ke awal diputuskan composable dari q (diuji di nominal.test.ts);
+    // halaman hanya menyerahkan nilai URL dan setel-nya sendiri.
+    expect(isi).toMatch(/useCashflowNominal\(\{ nominal, q, setel \}\)/)
+    expect(isi).toMatch(/const \{ nilai: q, setel \} = useCashflowQuery\(SKEMA\)/)
     // Selama URL-nya diganti, kursor lama tidak dipakai bersama nominal baru.
     expect(isi).toMatch(/const kursor = computed\(\(\) => \(nominalKeAwal\.value \? null : kursorTransaksiDariUrl\(q\.value\.kursor\)\)\)/)
     expect(isi).not.toMatch(/setTimeout/)

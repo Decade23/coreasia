@@ -14,12 +14,14 @@ beforeEach(() => { vi.useFakeTimers() })
 afterEach(() => { vi.useRealTimers() })
 
 function siapkan(awal: { kursor: string; tx: string }) {
-  const url = { ...awal }
+  // Tiruan useCashflowQuery: `q` = nilai URL, `setel` menggantinya (async, replace).
+  const q = ref({ ...awal })
   let selesaikan: () => void = () => {}
-  const keAwal = vi.fn(() => new Promise<void>((r) => { selesaikan = () => { url.kursor = ''; url.tx = ''; r() } }))
+  const keAwal = vi.fn((ubah: { kursor: string; tx: string }) =>
+    new Promise<void>((r) => { selesaikan = () => { q.value = { ...q.value, ...ubah }; r() } }))
   const nominal = ref<NominalSaring>({ min: '', maks: '' })
-  const n = useCashflowNominal({ nominal, perluKeAwal: () => !!(url.kursor || url.tx), keAwal })
-  return { url, nominal, keAwal, selesai: () => selesaikan(), ...n }
+  const n = useCashflowNominal({ nominal, q, setel: keAwal })
+  return { get url() { return q.value }, nominal, keAwal, selesai: () => selesaikan(), ...n }
 }
 
 /** Ketik lalu tunggu debounce 300 ms. */
@@ -35,6 +37,7 @@ describe('useCashflowNominal', () => {
     await ketik(s.nominal, { min: '5000000' })
     expect(s.stabil.value).toEqual({ min: '5000000', maks: '' })
     expect(s.keAwal).toHaveBeenCalledTimes(1)
+    expect(s.keAwal).toHaveBeenCalledWith({ kursor: '', tx: '' })
     // Sampai URL selesai diganti, halaman mengabaikan ?kursor= lama.
     expect(s.menunggu.value).toBe(true)
     s.selesai()
@@ -47,6 +50,17 @@ describe('useCashflowNominal', () => {
     const s = siapkan({ kursor: '', tx: 'tx-1' })
     await ketik(s.nominal, { maks: '100' })
     expect(s.keAwal).toHaveBeenCalledTimes(1)
+    expect(s.menunggu.value).toBe(true)
+    s.selesai()
+    await vi.runAllTimersAsync()
+    expect(s.url).toEqual({ kursor: '', tx: '' })
+  })
+
+  it('halaman 2 dengan laci terbuka → kursor DAN laci dikosongkan dalam satu langkah', async () => {
+    const s = siapkan({ kursor: 'K2', tx: 'tx-1' })
+    await ketik(s.nominal, { min: '1' })
+    expect(s.keAwal).toHaveBeenCalledTimes(1)
+    expect(s.keAwal).toHaveBeenCalledWith({ kursor: '', tx: '' })
   })
 
   it('sudah di halaman pertama tanpa laci → hanya nilai stabil yang berubah', async () => {

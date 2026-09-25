@@ -11,22 +11,27 @@
  *
  * Di sini, begitu nilai stabil berubah:
  *   - `stabil` diperbarui (dipakai kunci muat halaman);
- *   - bila ada kursor/laci (`perluKeAwal`), `keAwal` dipanggil — jalur yang
- *     sama dengan saringan lain (setel({ kursor: '', tx: '' })) — dan
- *     `menunggu` bernilai true sampai URL-nya selesai diganti. Halaman
- *     mengabaikan ?kursor= selama `menunggu`, jadi tidak ada satu pun
- *     panggilan (dan baris audit) untuk pasangan saringan baru + kursor lama.
+ *   - bila URL membawa ?kursor= atau ?tx=, keduanya dikosongkan lewat
+ *     `setel` — jalur yang sama dengan saringan lain — dan `menunggu`
+ *     bernilai true sampai URL-nya selesai diganti. Halaman mengabaikan
+ *     ?kursor= selama `menunggu`, jadi tidak ada satu pun panggilan (dan
+ *     baris audit) untuk pasangan saringan baru + kursor lama.
+ * Kapan harus kembali ke awal diputuskan DI SINI, bukan di halaman, supaya
+ * perilakunya diuji (tests/cashflow/nominal.test.ts), bukan hanya dijaga regex.
  */
 import { getCurrentScope, onScopeDispose, ref, watch, type Ref } from 'vue'
 
 export interface NominalSaring { min: string; maks: string }
 
+/** Bagian URL tab Transaksi yang dikosongkan saat nominal berubah. */
+export interface PosisiHalaman { kursor: string; tx: string }
+
 export function useCashflowNominal(o: {
   nominal: Ref<NominalSaring>
-  /** true bila URL masih membawa ?kursor= atau ?tx=. */
-  perluKeAwal: () => boolean
-  /** Kosongkan ?kursor= dan ?tx= (replace). */
-  keAwal: () => Promise<unknown> | void
+  /** Nilai query URL tab ini (useCashflowQuery().nilai). */
+  q: Readonly<Ref<PosisiHalaman>>
+  /** useCashflowQuery().setel (replace). */
+  setel: (ubah: PosisiHalaman) => Promise<unknown> | void
   tundaMs?: number
 }) {
   const stabil = ref<NominalSaring>({ ...o.nominal.value })
@@ -38,10 +43,11 @@ export function useCashflowNominal(o: {
     tunda = setTimeout(() => {
       if (n.min === stabil.value.min && n.maks === stabil.value.maks) return
       stabil.value = { ...n }
-      if (!o.perluKeAwal()) return
+      // Halaman pertama tanpa laci: tidak ada yang perlu dikosongkan.
+      if (!o.q.value.kursor && !o.q.value.tx) return
       menunggu.value = true
       Promise.resolve()
-        .then(() => o.keAwal())
+        .then(() => o.setel({ kursor: '', tx: '' }))
         .catch(() => { /* navigasi dibatalkan (jarang): halaman kembali membaca ?kursor= dari URL */ })
         .finally(() => { menunggu.value = false })
     }, o.tundaMs ?? 300)

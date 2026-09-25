@@ -67,11 +67,7 @@ const { nilai: q, setel } = useCashflowQuery(SKEMA)
    Mengubahnya kembali ke halaman pertama dan menutup laci, sama dengan
    saringan lain (temuan F9, useCashflowNominal). */
 const nominal = useState<NominalSaring>(`cf_tx_nominal_${id.value}`, () => ({ min: '', maks: '' }))
-const { stabil: nominalStabil, menunggu: nominalKeAwal } = useCashflowNominal({
-  nominal,
-  perluKeAwal: () => !!(q.value.kursor || q.value.tx),
-  keAwal: () => setel({ kursor: '', tx: '' }),
-})
+const { stabil: nominalStabil, menunggu: nominalKeAwal } = useCashflowNominal({ nominal, q, setel })
 const keAngka = (s: string): number | null => {
   const t = s.replace(/[^\d]/g, '')
   return t ? Number(t) : null
