@@ -46,9 +46,9 @@ urutannya dari sisi console dan modul CashFlow.
   - Logout-all, mengaktifkan/mematikan TOTP, dan mengubah akun sendiri yang
     membuat gateway mencabut sesi (sandi, email, peran, atau menonaktifkan diri)
     yang berhasil lewat proxy menghapus cookie dan mencabut sesi CashFlow admin
-    itu: per id admin gateway (`admin_konsol_sesi_cabut_admin`, 0092) dan per
-    email (`admin_konsol_sesi_cabut_pelaku`, untuk sesi yang dicetak sebelum
-    0092). Lihat "Identitas admin di CashFlow" di bawah.
+    itu per id admin gateway (`admin_konsol_sesi_cabut_admin` +
+    `admin_kasus_tutup_admin`, 0092). Lihat "Identitas admin di CashFlow" di
+    bawah.
   - Tindakan atas admin LAIN yang membuat gateway mencabut semua sesinya
     (`users/<id>/revoke-sessions`, `users/<id>/totp/reset`, `DELETE users/<id>`,
     dan `PUT users/<id>` yang membawa sandi, `is_active: false`, email, atau
@@ -95,14 +95,14 @@ urutannya dari sisi console dan modul CashFlow.
   label tampilan, karena admin bisa menggantinya sendiri.
   - `/me` tanpa `id` yang sah: sesi CashFlow tidak dicetak (502
     `gateway-gagal`), bukan dicetak dengan kunci email saja.
-  - Sesi yang dicetak landing sebelum 0092 tidak punya `admin_gw_id` dan
-    tetap dilayani dengan kunci email sampai kedaluwarsa (≤ 12 jam). Karena
-    itu setiap jalur pencabutan SESI memanggil kedua RPC: per id dan per email.
-  - Kasus ditutup per id saja (`admin_kasus_tutup_admin`) bila id diketahui.
-    `admin_kasus_tutup_pelaku` hanya dipanggil untuk pemilik tanpa id (sesi
-    lama): menutup per label bisa mematikan kasus aktif admin lain yang pernah
-    memakai email itu. Kasus lama tanpa id tetap mati aksesnya lewat
-    pencabutan sesi, dan umurnya ≤ 2 jam.
+  - Landing hanya mencabut **per id** (`admin_konsol_sesi_cabut_admin` +
+    `admin_kasus_tutup_admin`). Jalur per email untuk sesi sebelum 0092
+    dibuang sesudah transisi paket A (lihat "Paket A" di bawah): sesi tanpa
+    `admin_gw_id` terakhir habis ≤ 12 jam sesudah landing paket A tayang, dan
+    cabut per label email bisa mengenai admin lain yang pernah memakai email
+    itu. `DELETE /api/cashflow/sesi` atas baris tanpa id mencabut sesi tab itu
+    saja (`admin_konsol_sesi_cabut` per `session_id`). RPC per email tetap ada
+    di SQL untuk Langkah 1 runbook di bawah.
 - **Tiga jenis dokumen.** Kebijakan melekat pada dokumen, jadi berpindah jenis
   selalu memuat ulang dokumen penuh (`plugins/konsol-isolasi.client.ts`).
 
@@ -229,10 +229,10 @@ select public.admin_kasus_tutup_pelaku('<email>');
 ```
 
 `POST /api/admin/logout`, `DELETE /api/cashflow/sesi`, dan proxy (setelah
-logout-all, TOTP diaktifkan/dimatikan, atau akun sendiri diubah) sudah
-menjalankan keempat RPC itu untuk admin itu. Tindakan console atas admin LAIN
-(cabut sesi, reset TOTP, hapus, ubah sandi/email/peran/status) menjalankan
-versi per id-nya saja. Langkah ini tetap wajib karena pelaku tidak akan
+logout-all, TOTP diaktifkan/dimatikan, akun sendiri diubah, atau tindakan
+console atas admin LAIN: cabut sesi, reset TOTP, hapus, ubah
+sandi/email/peran/status) sudah menjalankan langkah (2) untuk admin itu, per
+id saja. Langkah ini tetap wajib karena pelaku tidak akan
 menekan tombol keluar, karena tindakan lewat `curl` langsung ke gateway tidak
 lewat BFF, dan karena sesi lama tanpa `admin_gw_id` hanya kena jalur per email.
 
@@ -414,13 +414,15 @@ rilis bersama landing" dan "Rollback rilis".
     `admin_gw_id` dan fungsi per id dibiarkan. Tanpa langkah ini landing lama
     tidak bisa membuka modul CashFlow.
   - Jangan me-rollback 0092 selagi landing paket A tayang.
-- **Rilis berikutnya sesudah paket A: buang jalur email.** Begitu landing
-  paket A tayang lebih dari 12 jam, tidak ada lagi sesi tanpa `admin_gw_id`
-  yang hidup. Pemanggilan `admin_konsol_sesi_cabut_pelaku` dan
-  `admin_kasus_tutup_pelaku` di `server/lib/konsol/cashflow-cabut.ts` lalu
-  tidak berguna, dan cabut sesi per email masih bisa mengenai sesi admin lain
-  yang memakai email itu. Hapus keduanya dari landing (RPC-nya tetap ada di
-  SQL untuk runbook "Token console bocor").
+- **Rilis berikutnya sesudah paket A: jalur email dibuang (sudah).** Begitu
+  landing paket A tayang lebih dari 12 jam, tidak ada lagi sesi tanpa
+  `admin_gw_id` yang hidup, dan cabut sesi per email bisa mengenai sesi admin
+  lain yang memakai email itu. Landing kini tidak memanggil
+  `admin_konsol_sesi_cabut_pelaku` maupun `admin_kasus_tutup_pelaku` (RPC-nya
+  tetap ada di SQL untuk runbook "Token console bocor"). **Rilis landing ini
+  hanya boleh tayang sesudah** cek 12 jam di bawah menghasilkan 0:
+  `select count(*) from public.admin_konsol_sesi where admin_gw_id is null and dicabut is null and dibuat > now() - interval '12 hours';`
+  Bila belum 0, rilis tanpa commit pembuangan jalur email dulu.
 - Sesudah landing tayang: login console dengan TOTP, buka satu Pengguna 360,
   lalu pastikan sesinya ber-id:
   `select admin_gw_id, pelaku, dibuat from public.admin_konsol_sesi order by dibuat desc limit 3;`

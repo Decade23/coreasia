@@ -47,11 +47,13 @@ function panggilanRpc(): Array<{ berkas: string; nama: string; kunci: string[] }
 const ADA_0092 = adaMigrasiNomor('0092')
 
 describe('kontrak server/ ↔ migrasi CashFlow (0092)', () => {
-  it('pemindai menemukan jalur pencabutan per id DAN per email', () => {
+  it('pemindai menemukan jalur pencabutan per id; jalur per email sudah dibuang dari server/', () => {
     const nama = new Set(panggilanRpc().map(p => p.nama))
-    for (const n of ['admin_konsol_sesi_cabut_admin', 'admin_kasus_tutup_admin', 'admin_konsol_sesi_cabut_pelaku', 'admin_kasus_tutup_pelaku']) {
-      expect(nama, n).toContain(n)
-    }
+    for (const n of ['admin_konsol_sesi_cabut_admin', 'admin_kasus_tutup_admin']) expect(nama, n).toContain(n)
+    // Sesudah transisi paket A tidak ada sesi tanpa id yang hidup; cabut per
+    // label email bisa mengenai admin lain. RPC-nya tetap ada di SQL (runbook).
+    const perEmail = panggilanRpc().filter(p => ['admin_konsol_sesi_cabut_pelaku', 'admin_kasus_tutup_pelaku'].includes(p.nama))
+    expect(perEmail.map(p => `${p.berkas}: ${p.nama}`)).toEqual([])
   })
 
   it.skipIf(!ADA_0092)('setiap RPC di server/ ada, dengan nama argumen yang persis sama (tanpa kunci asing, tanpa parameter wajib tertinggal)', () => {
@@ -91,7 +93,7 @@ describe('kontrak server/ ↔ migrasi CashFlow (0092)', () => {
       }
     }
     const hapus = dibaca.find(x => x.f.endsWith('api/cashflow/sesi.delete.ts'))
-    expect(hapus?.kolom).toEqual(expect.arrayContaining(['admin_gw_id', 'pelaku']))
+    expect(hapus?.kolom).toEqual(expect.arrayContaining(['admin_gw_id']))
     for (const x of dibaca) for (const k of x.kolom) expect(ada.has(k), `${x.f}: ${k}`).toBe(true)
   })
 })

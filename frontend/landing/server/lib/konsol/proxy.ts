@@ -14,8 +14,9 @@
  *      dibiarkan, 401 asli diteruskan.
  *   4. Rute pengakhir sesi (logout-all, totp enable/disable, dan perubahan
  *      akun sendiri yang mencabut sesi di gateway — lihat ubahAkunSendiri)
- *      yang berhasil → cookie dihapus dan pemilik token (id admin gateway +
- *      email) dilaporkan untuk pencabutan sesi CashFlow (cashflow-cabut.ts).
+ *      yang berhasil → cookie dihapus dan pemilik token (id admin gateway;
+ *      email hanya label log) dilaporkan untuk pencabutan sesi CashFlow
+ *      per id (cashflow-cabut.ts).
  *      Keduanya diambil dari token yang BARU SAJA diterima gateway.
  *   4b. Tindakan yang mengakhiri semua sesi admin LAIN (cabut sesi, reset
  *      TOTP, hapus, ubah sandi/email/peran/status — lihat adminDiakhiri) yang

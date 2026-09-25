@@ -6,11 +6,11 @@
  *   1. semua catatan sesi milik orang yang sama dicabut → tab lain orang itu
  *      ikut mati, dan is_platform_admin() menolak seketika walau access
  *      token-nya belum kedaluwarsa. "Orang yang sama" = id admin gateway
- *      (admin_gw_id, 0092) DAN email pelakunya (sesi yang dicetak sebelum
- *      0092) — lib/konsol/cashflow-cabut.ts;
+ *      (admin_gw_id, 0092) — lib/konsol/cashflow-cabut.ts. Baris tanpa id
+ *      (sesi sebelum 0092, sudah habis sejak transisi paket A): sesi ini
+ *      saja yang dicabut, per session_id;
  *   2. semua kasus (Fase 1, migrasi 0089) milik orang itu ditutup
- *      (admin_kasus_tutup_admin; admin_kasus_tutup_pelaku hanya untuk sesi
- *      lama tanpa admin_gw_id — kasus dimiliki per id). Server sudah
+ *      (admin_kasus_tutup_admin — kasus dimiliki per id). Server sudah
  *      menolak kasus yang dibuka sebelum pencabutan sesi pelakunya;
  *      penutupan ini membuat /kasus jujur ("ditutup", bukan "aktif" yang tak
  *      bisa dipakai). Gagal = dicatat saja; pencabutan di langkah 1 yang
@@ -23,7 +23,7 @@
  * sesi orang lain dengan menebak session_id.
  */
 import { createClient } from '@supabase/supabase-js'
-import { cabutSesiCashflowAdmin } from '../../lib/konsol/cashflow-cabut'
+import { cabutSesiCashflowAdmin, idAdminGateway } from '../../lib/konsol/cashflow-cabut'
 
 function klaimJwt(token: string): Record<string, unknown> | null {
   try {
@@ -54,10 +54,10 @@ export default defineEventHandler(async (event) => {
     // Siapa pemilik sesi ini? Semua sesi orang yang sama ikut dicabut —
     // sessionStorage per tab berarti tab lain tidak tahu tab ini sudah keluar.
     const { data: baris } = await admin
-      .from('admin_konsol_sesi').select('pelaku, admin_gw_id').eq('session_id', sessionId).maybeSingle()
-    const orang = { id: baris?.admin_gw_id ?? null, email: baris?.pelaku ?? null }
-    const hasil = orang.id || orang.email
-      ? await cabutSesiCashflowAdmin({ url, service }, orang)
+      .from('admin_konsol_sesi').select('admin_gw_id').eq('session_id', sessionId).maybeSingle()
+    const id = idAdminGateway(baris?.admin_gw_id)
+    const hasil = id
+      ? await cabutSesiCashflowAdmin({ url, service }, { id })
       : ((await admin.rpc('admin_konsol_sesi_cabut', { p_session: sessionId })).error ? 'gagal' : 'dicabut')
     if (hasil !== 'dicabut') {
       // Tanpa pencabutan di tabel, access token ini masih diterima

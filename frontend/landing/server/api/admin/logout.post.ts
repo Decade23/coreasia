@@ -5,9 +5,8 @@
  *    akses; bila akses sudah habis, lewat refresh). Klaim token tidak dipercaya
  *    mentah-mentah untuk memilih sesi siapa yang dicabut.
  * 2. Semua sesi modul CashFlow milik admin itu dicabut di server, termasuk
- *    tab/perangkat lain: per id admin gateway (admin_konsol_sesi_cabut_admin,
- *    0092) DAN per email untuk sesi yang dicetak sebelum 0092
- *    (admin_konsol_sesi_cabut_pelaku) — lib/konsol/cashflow-cabut.ts.
+ *    tab/perangkat lain, per id admin gateway (admin_konsol_sesi_cabut_admin,
+ *    0092) — lib/konsol/cashflow-cabut.ts.
  * 3. Cookie akses, refresh, dan tantangan MFA dihapus.
  *
  * Gateway /admin/auth/logout tidak dipanggil: ia hanya menghapus cookie milik
@@ -21,11 +20,12 @@ import { cabutSesiCashflowAdmin, idAdminGateway, type PemilikSesi } from '../../
 import { HEADER_KLIEN_IP, segarkanToken } from '../../lib/konsol/proxy'
 import { bacaCookie, catat, hapusCookie, ipKlien, tanpaCache, wajibSatuAsal } from '../../lib/konsol/h3'
 
-/** Id + email dari data admin gateway (/me atau user hasil refresh); null bila keduanya tidak ada. */
+/** Id (+ email sebagai label log) dari data admin gateway (/me atau user hasil
+ *  refresh); null bila id tidak sah — pencabutan hanya per id. */
 function kePemilik(data: { id?: unknown; email?: unknown } | null | undefined): PemilikSesi | null {
   const id = idAdminGateway(data?.id)
   const email = typeof data?.email === 'string' && data.email.trim() ? data.email.trim() : null
-  return id || email ? { id, email } : null
+  return id ? { id, email } : null
 }
 
 async function pemilikSesi(gatewayUrl: string, akses: string | null, segar: string | null, klienIp: string | null): Promise<PemilikSesi | null> {
