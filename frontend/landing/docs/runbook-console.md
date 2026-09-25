@@ -43,9 +43,12 @@ urutannya dari sisi console dan modul CashFlow.
     membawa `X-Console: 1`.
   - Rute gateway milik BFF (`admin/auth/{login,refresh,totp/verify,logout}`)
     ditolak proxy tanpa peduli huruf.
-  - Logout-all, mengaktifkan/mematikan TOTP, dan mengganti sandi akun sendiri
+  - Logout-all, mengaktifkan/mematikan TOTP, dan mengubah akun sendiri yang
+    membuat gateway mencabut sesi (sandi, email, peran, atau menonaktifkan diri)
     yang berhasil lewat proxy menghapus cookie dan mencabut sesi CashFlow admin
-    itu (`admin_konsol_sesi_cabut_pelaku`).
+    itu: per id admin gateway (`admin_konsol_sesi_cabut_admin`, 0092) dan per
+    email (`admin_konsol_sesi_cabut_pelaku`, untuk sesi yang dicetak sebelum
+    0092). Lihat "Identitas admin di CashFlow" di bawah.
   - Proxy meneruskan IP peramban di `X-Konsol-Klien-IP`. Gateway mencatatnya di
     `gateway_audit_logs.reported_client_ip`, bukan di `ip_address`.
 - **Ikatan dokumen.** Setiap panggilan BFF (kecuali logout) wajib membawa
@@ -74,6 +77,17 @@ urutannya dari sisi console dan modul CashFlow.
 - `POST /api/cashflow/sesi` memvalidasi cookie yang sama ke gateway `/me`
   (lewat inti proxy), dan menolak permintaan tanpa `Sec-Fetch-Site: same-origin`
   atau tanpa token ikatan.
+- **Identitas admin di CashFlow (sejak 0092).** Semua admin console memakai
+  satu identitas Supabase (identitas layanan), jadi pembeda antar admin ada di
+  `admin_konsol_sesi`. `sesi.post.ts` menulis `admin_gw_id` = `id` dari gateway
+  `/me`, dan `pelaku` = email. Batas laju kasus, kepemilikan kasus, atribusi
+  audit (`admin_audit.admin_gw_id`), dan pencabutan memakai **id**. Email hanya
+  label tampilan, karena admin bisa menggantinya sendiri.
+  - `/me` tanpa `id` yang sah: sesi CashFlow tidak dicetak (502
+    `gateway-gagal`), bukan dicetak dengan kunci email saja.
+  - Sesi yang dicetak landing sebelum 0092 tidak punya `admin_gw_id` dan
+    tetap dilayani dengan kunci email sampai kedaluwarsa (≤ 12 jam). Karena
+    itu setiap jalur pencabutan memanggil kedua RPC: per id dan per email.
 - **Tiga jenis dokumen.** Kebijakan melekat pada dokumen, jadi berpindah jenis
   selalu memuat ulang dokumen penuh (`plugins/konsol-isolasi.client.ts`).
 
@@ -125,7 +139,19 @@ TOKEN=$(jq -r .data.access_token <<<"$J"); unset J
 Login ini ikut pembatas gateway (5 per 15 menit per IP). Token berlaku
 60 menit; `unset TOKEN` sesudah selesai.
 
-Pilih yang pertama yang tersedia:
+**Token super admin yang bocor: langsung rotasi `JWT_SECRET`** (README gateway,
+opsi 4), jangan mulai dari opsi 1 di bawah. Access token super admin yang
+sudah dicabut lewat opsi 1–4 masih lolos endpoint admin di luar `/me`,
+`/refresh`, TOTP, `/users`, dan `/api-keys` sampai kedaluwarsa (≤ 60 menit),
+termasuk `POST /api/admin/cad/licenses/generate` dan
+`GET /api/admin/cad/licenses/:id/copy`. Rotasi memutusnya seketika. Akibatnya
+semua admin keluar dan semua pendaftaran TOTP ikut gugur. Sesudah rotasi:
+ikuti langkah pasca-rotasi di README gateway (rahasia TOTP semua admin tidak
+terbaca lagi dan harus di-reset; kunci Redis penghitung percobaan), jalankan
+Langkah 1 untuk admin itu, lalu audit jendela insiden (kueri `admin_users`,
+`api_keys`, dan `gateway_audit_logs` di README gateway).
+
+**Admin biasa (bukan super admin):** pilih yang pertama yang tersedia.
 
 1. **Pemilik akun masih bisa masuk:** buka `/console/keamanan`, lalu pilih
    **Keluar dari semua perangkat** (`logout-all`). Setelah itu ganti sandi di
@@ -147,11 +173,8 @@ Pilih yang pertama yang tersedia:
    `curl -s -X PUT "$GW/admin/users/<id>" -H "Authorization: Bearer $TOKEN" -H 'content-type: application/json' -d '{"is_active": false}'`.
 4. **Console tidak bisa dipakai:** naikkan `token_version` lewat SQL di VPS
    (`ssh coreasia-cad`, lihat README gateway, bagian runbook opsi 3).
-5. **Token super admin yang bocor, atau butuh putus seketika di semua
-   endpoint:** rotasi `JWT_SECRET` (README gateway, opsi 4). Semua admin keluar
-   dan semua pendaftaran TOTP ikut gugur. Setelah itu jalankan audit jendela
-   insiden (kueri `admin_users`, `api_keys`, dan `gateway_audit_logs` di
-   README gateway).
+5. **Butuh putus seketika di semua endpoint:** rotasi `JWT_SECRET` (sama
+   dengan cabang super admin di atas).
 
 Batas yang tersisa: opsi 1–4 tidak memutus access token lama di endpoint admin
 selain `/me`, `/refresh`, TOTP, `/users`, dan `/api-keys`. Di endpoint lain
@@ -161,17 +184,32 @@ bertanya ke `/me`.
 
 ### Langkah 1: cabut sesi CashFlow milik pelaku
 
-Di Supabase CashFlow (SQL editor, peran `service_role`):
+Cabut **per id admin gateway**, bukan hanya per email: email bisa diganti
+pelaku sendiri, sedangkan id tidak. Id admin ada di halaman Users console,
+atau di jawaban `curl -s "$GW/admin/users" -H "Authorization: Bearer $TOKEN"`.
+
+Di Supabase CashFlow (SQL editor, peran `postgres`):
 
 ```sql
-select public.admin_konsol_sesi_cabut_pelaku('<email admin>');
--- Fase 1 ke atas, bila fungsinya sudah ada:
-select public.admin_kasus_tutup_pelaku('<email admin>');
+-- 1) Semua email yang pernah dipakai id ini untuk sesi CashFlow (label).
+select distinct lower(btrim(pelaku)) as email
+  from public.admin_konsol_sesi
+ where admin_gw_id = '<id admin gateway>';
+
+-- 2) Cabut per id (sesi yang dicetak sesudah 0092) dan tutup kasusnya.
+select public.admin_konsol_sesi_cabut_admin('<id admin gateway>');
+select public.admin_kasus_tutup_admin('<id admin gateway>');
+
+-- 3) Cabut per email untuk SETIAP email dari (1) dan email saat ini: sesi yang
+--    dicetak sebelum 0092 tidak punya id. Email lama yang tidak tampil di (1)
+--    ada di gateway_audit_logs (perubahan admin_users) — cabut juga.
+select public.admin_konsol_sesi_cabut_pelaku('<email>');
+select public.admin_kasus_tutup_pelaku('<email>');
 ```
 
-`POST /api/admin/logout` dan proxy (setelah logout-all, TOTP diaktifkan/
-dimatikan, atau ganti sandi akun sendiri) sudah menjalankan
-`admin_konsol_sesi_cabut_pelaku` untuk admin itu. Langkah ini tetap wajib karena
+`POST /api/admin/logout`, `DELETE /api/cashflow/sesi`, dan proxy (setelah
+logout-all, TOTP diaktifkan/dimatikan, atau akun sendiri diubah) sudah
+menjalankan keempat RPC itu untuk admin itu. Langkah ini tetap wajib karena
 pelaku tidak akan menekan tombol keluar, dan karena mencabut atau
 menonaktifkan admin LAIN tidak mencabut sesi CashFlow-nya.
 
@@ -195,9 +233,27 @@ Mulai Fase 1, `admin_kasus_aktif` untuk pelaku itu juga harus kosong.
 
 ### Langkah 3: tarik jejak akses
 
-- CashFlow: `admin_daftar_audit_v2` (Fase 1 ke atas: `admin_daftar_audit_v3`),
-  difilter pelaku dan rentang waktu, dari saat token diduga bocor sampai
-  langkah 0 selesai.
+- CashFlow: kueri langsung ke `public.admin_audit` di SQL editor (peran
+  `postgres`), rentang waktu dari saat token diduga bocor sampai langkah 0
+  selesai. Kueri siap jalan ada di Langkah 4; untuk kronologi per aksi:
+
+  ```sql
+  select a.created_at, a.action, a.target_type, a.target_id, a.pelaku,
+         to_jsonb(a) ->> 'admin_gw_id' as admin_gw_id,
+         cardinality(a.terdampak) as terdampak, a.detail, a.reason
+    from public.admin_audit a
+   where a.created_at >= timestamptz '<mulai, mis. 2026-09-24 08:00+07>'
+     and a.created_at <  timestamptz '<selesai>'
+     and (lower(btrim(a.pelaku)) in (select lower(btrim(e)) from unnest(array['<email 1>', '<email 2>']) e)
+          or to_jsonb(a) ->> 'admin_gw_id' = '<id admin gateway>')
+   order by a.created_at;
+  ```
+
+  Jangan memakai `admin_daftar_audit_v3` untuk ini: tidak punya saringan
+  waktu, hanya 500 baris per panggilan, menolak pemanggil tanpa sesi console
+  (42501 dari SQL editor), dan menahan `terdampak`/`detail.ids` bagi sesi
+  tanpa `cashflow:pii`. Halaman `/console/cashflow/audit` juga hanya memuat
+  500 baris terakhir tanpa UUID terdampak.
 - Gateway: `gateway_audit_logs` pada rentang yang sama (kueri di README
   gateway). Mencakup artikel, API key, lisensi CAD, admin, `logout_all`,
   `revoke_sessions`, dan `totp_*`. Cara membaca IP-nya:
@@ -214,7 +270,50 @@ Mulai Fase 1, `admin_kasus_aktif` untuk pelaku itu juga harus kosong.
 ### Langkah 4: susun daftar subjek dan pemberitahuan
 
 - Subjek = `target_id` ∪ `terdampak` ∪ `detail.ids` dari baris audit
-  CashFlow di langkah 3.
+  CashFlow di langkah 3. Kueri siap jalan (SQL editor, peran `postgres`; isi
+  empat nilai di `p`, lalu jalankan seluruhnya):
+
+  ```sql
+  with p as (
+    select array['<email 1>', '<email 2>']::text[] as email,  -- SEMUA email admin itu (Langkah 1)
+           array['<id admin gateway>']::uuid[]      as gw,     -- '{}'::uuid[] bila id tidak diketahui
+           timestamptz '<mulai>'                    as mulai,
+           timestamptz '<selesai>'                  as selesai
+  ), baris as (
+    select a.*
+      from public.admin_audit a, p
+     where a.created_at >= p.mulai and a.created_at < p.selesai
+       and (lower(btrim(a.pelaku)) in (select lower(btrim(e)) from unnest(p.email) e)
+            or (to_jsonb(a) ->> 'admin_gw_id')::uuid = any (p.gw))
+  ), subjek as (
+    select b.target_id as id, 'target_id' as sumber
+      from baris b
+     where b.target_id is not null and coalesce(b.target_type, 'user') = 'user'
+    union
+    select unnest(b.terdampak), 'terdampak' from baris b
+    union
+    select x.v::uuid, 'detail.ids'
+      from baris b,
+           jsonb_array_elements_text(case when jsonb_typeof(b.detail -> 'ids') = 'array'
+                                          then b.detail -> 'ids' else '[]'::jsonb end) x(v)
+     where b.action = 'daftar_pengguna_terbuka'
+    union
+    -- Baris yang menyasar ruang tanpa `terdampak` (ditulis sebelum 0089):
+    -- anggota ruang itu SAAT INI. Keanggotaan bisa sudah berubah sejak
+    -- barisnya ditulis; periksa manual bila ada.
+    select m.user_id, 'anggota ruang (kini)'
+      from baris b join public.workspace_members m on m.workspace_id = b.target_id
+     where b.target_type = 'workspace' and b.terdampak is null
+  )
+  select s.id, u.email, string_agg(distinct s.sumber, ', ' order by s.sumber) as dari
+    from subjek s left join auth.users u on u.id = s.id
+   group by s.id, u.email
+   order by u.email nulls last, s.id;
+  ```
+
+  Admin manusia yang masuk langsung (admin-next, aal2) tidak punya `pelaku`;
+  barisnya dikenali dari `admin_id` = id akun Supabase-nya. Tambahkan
+  `or a.admin_id = '<uuid>'` di `baris` bila pelakunya admin semacam itu.
 - Siapkan pemberitahuan kepada subjek dan otoritas dalam 3×24 jam sejak
   kegagalan pelindungan data diketahui (UU 27/2022).
 - Catat kronologinya: kapan bocor, kapan diketahui, langkah 0–3 dijalankan
@@ -236,9 +335,58 @@ kebalikannya: landing ke deployment sebelum 0c (`c7f9d97`) dulu atau bersamaan,
 baru image gateway lama. Perintah lengkapnya ada di README gateway, bagian "Urutan
 rilis bersama landing" dan "Rollback rilis".
 
+> **Rollback landing ke `c7f9d97` sesudah migrasi CashFlow 0091 diterapkan
+> merusak modul CashFlow console.** Landing `c7f9d97` (Fase 0b) memanggil lima
+> RPC yang dicabut 0091: detail pengguna dan `/console/cashflow/audit` menjawab
+> `permission denied for function …`. Pilih salah satu:
+> - rollback landing hanya ke deployment Fase 1 atau sesudahnya (`33b4502`
+>   ke atas), yang memakai RPC 0089/0090; atau
+> - bila memang harus ke `c7f9d97`, jalankan dulu GRANT di bawah (SQL editor
+>   Supabase CashFlow, peran `postgres`), dan REVOKE kembali begitu landing
+>   maju lagi ke Fase 1 atau sesudahnya. Selama GRANT berlaku, kelima RPC
+>   membuka data subjek tanpa kasus untuk sesi Fase 0b (itulah alasan 0091),
+>   jadi jendelanya sesingkat mungkin.
+>
+> ```sql
+> -- Pemulihan sementara untuk landing c7f9d97 (membalik 0091):
+> grant execute on function public.admin_detail_pengguna_v2(uuid, text) to authenticated;
+> grant execute on function public.admin_aktivitas_pengguna(uuid, text, integer) to authenticated;
+> grant execute on function public.admin_baca_transaksi_v2(uuid, text, integer) to authenticated;
+> grant execute on function public.admin_baca_catatan_transaksi(uuid, text, uuid[]) to authenticated;
+> grant execute on function public.admin_daftar_audit_v2(integer, integer, text, uuid) to authenticated;
+>
+> -- Begitu landing kembali ke Fase 1 atau sesudahnya (= isi 0091):
+> revoke execute on function public.admin_detail_pengguna_v2(uuid, text) from public, anon, authenticated, service_role;
+> revoke execute on function public.admin_aktivitas_pengguna(uuid, text, integer) from public, anon, authenticated, service_role;
+> revoke execute on function public.admin_baca_transaksi_v2(uuid, text, integer) from public, anon, authenticated, service_role;
+> revoke execute on function public.admin_baca_catatan_transaksi(uuid, text, uuid[]) from public, anon, authenticated, service_role;
+> revoke execute on function public.admin_daftar_audit_v2(integer, integer, text, uuid) from public, anon, authenticated, service_role;
+> ```
+>
+> Sesi yang dicetak `c7f9d97` tidak punya kolom `izin`, jadi di 0089 ia sesi
+> `'{}'` yang memang masih dilayani kelima RPC itu. `toko/uji-acl-admin.sql`
+> akan gagal selama GRANT berlaku; itu tanda yang benar.
+
+**Paket A (review 24 Sep): SQL 0092 → gateway → landing.**
+- 0092 dulu. Landing yang sedang tayang (Fase 1, `33b4502`) tetap jalan di
+  atasnya: kolom `admin_gw_id` nullable, sesinya memakai kunci email sampai
+  kedaluwarsa, dan RPC lama per email tetap ada.
+- Gateway kedua: `/admin/auth/me` memulangkan `id`.
+- Landing terakhir. Landing ini menulis `admin_gw_id` dan GAGAL mencetak sesi
+  CashFlow (`mint-gagal`) bila 0092 belum diterapkan. Itu disengaja: tanpa
+  id, batas laju kasus bisa di-reset dengan mengganti email.
+- Rollback landing paket A ke `33b4502` aman selama 0092 tetap ada. Jangan
+  me-rollback 0092 selagi landing paket A tayang.
+- Sesudah landing tayang: login console dengan TOTP, buka satu Pengguna 360,
+  lalu pastikan sesinya ber-id:
+  `select admin_gw_id, pelaku, dibuat from public.admin_konsol_sesi order by dibuat desc limit 3;`
+
 ```bash
 # CSP console: ber-hash, tanpa 'unsafe-inline' di script-src, tanpa googletagmanager, ditambah header /**
 curl -sI https://coreasia.id/console/cashflow | grep -iE 'content-security-policy|strict-transport|x-frame|x-content-type|referrer-policy|permissions-policy|cross-origin-opener'
+# URL console tidak menjadi referrer halaman publik (GTM/GA): no-referrer, hanya SATU header
+curl -sI https://coreasia.id/console/login | grep -i '^referrer-policy'    # referrer-policy: no-referrer
+curl -sI https://coreasia.id/ | grep -i '^referrer-policy'                 # strict-origin-when-cross-origin
 # dokumen login: connect-src memuat https://api.coreasia.id; dokumen console lain TIDAK
 curl -sI https://coreasia.id/console/login | grep -io "connect-src[^;]*"
 curl -sI https://coreasia.id/console/users | grep -io "connect-src[^;]*"
@@ -272,7 +420,11 @@ Laporkan: console tetap berjalan, tetapi tanpa CSP ketat.
   - console tidak bisa dibingkai (`DENY`, `frame-ancestors 'none'`) dan
     terputus dari opener publik (COOP);
   - HTML console `no-store` dan ber-CSP ketat; sesi CashFlow di sessionStorage
-    dihapus setiap kali dokumen publik dimuat.
+    dihapus setiap kali dokumen publik dimuat, termasuk saat dipulihkan dari
+    back/forward cache (pageshow, lalu dimuat ulang);
+  - console ber-`Referrer-Policy: no-referrer`, dan plugin GTM mengosongkan
+    `page_referrer` yang berjalur console: UUID subjek dan saringan di URL
+    console tidak sampai ke GA.
 
   Yang **tidak** tertutup tanpa origin terpisah:
   - skrip di halaman publik bisa menampilkan form login palsu di coreasia.id,
