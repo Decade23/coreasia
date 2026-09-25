@@ -44,14 +44,16 @@ type adminUserStore interface {
 // totpAttemptLimiter membatasi percobaan faktor kedua per admin (implementasi
 // produksi: auth.RedisTOTPLimiter, dua lapis). Take memesan satu jatah secara
 // atomik SEBELUM kode/sandi dievaluasi; Reset dipanggil setelah berhasil
-// (jendela pendek kosong, jatah panjang milik percobaan itu kembali); Clear
-// membuka kunci (pemulihan oleh super admin). Tidak ada operasi "catat gagal"
-// terpisah: jatah sudah terpakai sejak dipesan, jadi permintaan paralel tidak
-// bisa menyelinap di antara cek dan catat, dan galat tulis Redis tidak bisa
-// membuat hitungan diam di tempat.
+// (jendela pendek kosong, jatah panjang milik percobaan itu kembali); Refund
+// mengembalikan jatah percobaan yang gagal karena galat server, bukan karena
+// kodenya salah; Clear membuka kunci (pemulihan oleh super admin). Tidak ada
+// operasi "catat gagal" terpisah: jatah sudah terpakai sejak dipesan, jadi
+// permintaan paralel tidak bisa menyelinap di antara cek dan catat, dan galat
+// tulis tidak bisa membuat hitungan diam di tempat.
 type totpAttemptLimiter interface {
 	Take(ctx context.Context, userID uuid.UUID) (auth.AttemptResult, error)
 	Reset(ctx context.Context, userID uuid.UUID) error
+	Refund(ctx context.Context, userID uuid.UUID) error
 	Clear(ctx context.Context, userID uuid.UUID) error
 }
 
@@ -239,6 +241,8 @@ func (h *AuthHandler) Login(c fiber.Ctx) error {
 	if err := c.Bind().JSON(&req); err != nil {
 		return errResponse(c, apperr.NewBadRequest("Format request tidak valid"))
 	}
+	// Email tanpa peka huruf dan spasi tepi, sama dengan penyimpanannya.
+	req.Email = model.NormalizeEmail(req.Email)
 	if appErr := validate.Struct(&req); appErr != nil {
 		return errResponse(c, appErr)
 	}
@@ -536,6 +540,10 @@ func (h *AuthHandler) resetFailures(c fiber.Ctx, userID uuid.UUID) {
 	releaseAttempt(c, h.attempts, userID)
 }
 
+func (h *AuthHandler) refund(c fiber.Ctx, user *model.AdminUser, stage, cause string, err error) {
+	refundAttempt(c, h.attempts, h.auditLog, user, stage, cause, err)
+}
+
 // TOTPVerify menukar tantangan MFA + kode TOTP dengan pasangan token ber-MFA.
 func (h *AuthHandler) TOTPVerify(c fiber.Ctx) error {
 	if h.totp == nil {
@@ -572,14 +580,17 @@ func (h *AuthHandler) TOTPVerify(c fiber.Ctx) error {
 		return errResponse(c, appErr)
 	}
 
+	// Galat server sesudah pemesanan mengembalikan jatahnya (refundAttempt):
+	// setelah rotasi JWT_SECRET setiap verifikasi menjawab 500, dan tanpa ini
+	// setiap percobaan memakan jatah 30 hari tanpa jejak di audit.
 	secret, err := h.totp.Open(user.ID, *user.TOTPSecretEnc)
 	if err != nil {
-		slog.Error("totp verify: rahasia tidak bisa dibuka (JWT_SECRET dirotasi?)", "admin_id", user.ID, "error", err)
+		h.refund(c, user, "login", causeSecretUnreadable, err)
 		return errResponse(c, apperr.NewInternal(err))
 	}
 	step, matched, err := auth.VerifyTOTP(secret, code, h.now(), user.TOTPLastStep)
 	if err != nil {
-		slog.Error("totp verify: rahasia tersimpan rusak", "admin_id", user.ID, "error", err)
+		h.refund(c, user, "login", causeSecretCorrupt, err)
 		return errResponse(c, apperr.NewInternal(err))
 	}
 	if !matched {
@@ -588,7 +599,7 @@ func (h *AuthHandler) TOTPVerify(c fiber.Ctx) error {
 	}
 	consumed, err := h.userRepo.ConsumeTOTPStep(c.Context(), user.ID, step)
 	if err != nil {
-		slog.Error("totp verify: gagal mencatat langkah", "error", err)
+		h.refund(c, user, "login", causeDBWrite, err)
 		return errResponse(c, apperr.NewInternal(err))
 	}
 	if !consumed {
@@ -631,6 +642,11 @@ func (h *AuthHandler) TOTPSetup(c fiber.Ctx) error {
 		return errResponse(c, appErr)
 	}
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {
+		if !errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
+			// Hash tersimpan rusak: galat server, bukan sandi salah.
+			h.refund(c, user, "setup_sandi", causePasswordHashCorrupt, err)
+			return errResponse(c, apperr.NewInternal(err))
+		}
 		h.logRejected(c, user, "setup_sandi", res)
 		return errResponse(c, errPasswordInvalid())
 	}
@@ -694,11 +710,12 @@ func (h *AuthHandler) TOTPEnable(c fiber.Ctx) error {
 
 	secret, err := h.totp.Open(user.ID, *user.TOTPPendingEnc)
 	if err != nil {
-		slog.Warn("totp enable: rahasia tertunda tidak bisa dibuka", "admin_id", user.ID, "error", err)
+		h.refund(c, user, "enable", causeSecretUnreadable, err)
 		return errResponse(c, apperr.NewBadRequest("Pendaftaran TOTP tidak berlaku lagi. Jalankan setup ulang."))
 	}
 	step, matched, err := auth.VerifyTOTP(secret, code, h.now(), nil)
 	if err != nil {
+		h.refund(c, user, "enable", causeSecretCorrupt, err)
 		return errResponse(c, apperr.NewInternal(err))
 	}
 	if !matched {
@@ -707,7 +724,7 @@ func (h *AuthHandler) TOTPEnable(c fiber.Ctx) error {
 	}
 	enabled, err := h.userRepo.EnableTOTP(c.Context(), user.ID, *user.TOTPPendingEnc, step)
 	if err != nil {
-		slog.Error("totp enable: gagal mengaktifkan", "error", err)
+		h.refund(c, user, "enable", causeDBWrite, err)
 		return errResponse(c, apperr.NewInternal(err))
 	}
 	if !enabled {
@@ -751,11 +768,12 @@ func (h *AuthHandler) TOTPDisable(c fiber.Ctx) error {
 
 	secret, err := h.totp.Open(user.ID, *user.TOTPSecretEnc)
 	if err != nil {
-		slog.Error("totp disable: rahasia tidak bisa dibuka (JWT_SECRET dirotasi?)", "admin_id", user.ID, "error", err)
+		h.refund(c, user, "disable", causeSecretUnreadable, err)
 		return errResponse(c, apperr.NewInternal(err))
 	}
 	step, matched, err := auth.VerifyTOTP(secret, code, h.now(), user.TOTPLastStep)
 	if err != nil {
+		h.refund(c, user, "disable", causeSecretCorrupt, err)
 		return errResponse(c, apperr.NewInternal(err))
 	}
 	if !matched {
@@ -764,7 +782,7 @@ func (h *AuthHandler) TOTPDisable(c fiber.Ctx) error {
 	}
 	disabled, err := h.userRepo.DisableTOTP(c.Context(), user.ID, step)
 	if err != nil {
-		slog.Error("totp disable: gagal menonaktifkan", "error", err)
+		h.refund(c, user, "disable", causeDBWrite, err)
 		return errResponse(c, apperr.NewInternal(err))
 	}
 	if !disabled {

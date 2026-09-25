@@ -142,10 +142,12 @@ func (s *Server) setupRoutes() {
 			totpCipher = nil
 		}
 	}
+	// Lapis pendek jatah faktor kedua di Redis, lapis panjang (20 per 30 hari)
+	// di admin_users (Postgres): tidak bisa dibuang eviction Redis.
 	var totpAttempts totpAttemptLimiter
 	var loginAttempts loginAttemptLimiter
 	if s.rdb != nil {
-		totpAttempts = auth.NewRedisTOTPLimiter(s.rdb, totpMaxFailures, totpFailureWindow, totpMaxFailuresLong, totpFailureWindowLong)
+		totpAttempts = auth.NewRedisTOTPLimiter(s.rdb, adminUserRepo, totpMaxFailures, totpFailureWindow, totpMaxFailuresLong, totpFailureWindowLong)
 		loginAttempts = auth.NewRedisLoginLimiter(s.rdb, loginMaxFailures, loginFailureWindow, loginOriginTTL)
 	}
 	authHandler := NewAuthHandler(adminUserRepo, auditLogRepo, jwtProvider, totpCipher, totpAttempts, loginAttempts)
@@ -243,14 +245,8 @@ func (s *Server) setupRoutes() {
 	// Admin user management
 	registerAdminUserRoutes(admin, adminUserHandler, liveSession)
 
-	// API key management (menyalin kunci provider = rahasia; membuat kunci =
-	// akses yang bertahan): wajib sesi hidup.
-	admin.Get("/api-keys", liveSession, mw.RequirePermission(rbac.APIKeysList), apiKeyHandler.List)
-	admin.Get("/api-keys/:id", liveSession, mw.RequirePermission(rbac.APIKeysView), apiKeyHandler.GetByID)
-	admin.Get("/api-keys/:id/copy", liveSession, mw.RequirePermission(rbac.APIKeysCopy), apiKeyHandler.CopyKey)
-	admin.Post("/api-keys", liveSession, mw.RequirePermission(rbac.APIKeysCreate), apiKeyHandler.Create)
-	admin.Put("/api-keys/:id", liveSession, mw.RequirePermission(rbac.APIKeysUpdate), apiKeyHandler.Update)
-	admin.Delete("/api-keys/:id", liveSession, mw.RequirePermission(rbac.APIKeysDelete), apiKeyHandler.Delete)
+	// API key management
+	registerAPIKeyRoutes(admin, apiKeyHandler, liveSession)
 
 	// Keywords
 	admin.Get("/keywords", mw.RequirePermission(rbac.KeywordsList), keywordHandler.List)
@@ -346,6 +342,30 @@ func registerAdminUserRoutes(admin fiber.Router, users *AdminUserHandler, live f
 	admin.Delete("/users/:id", live, mw.RequirePermission(rbac.UsersDelete), users.Delete)
 	admin.Post("/users/:id/revoke-sessions", live, mw.RequirePermission(rbac.UsersUpdate), users.RevokeSessions)
 	admin.Post("/users/:id/totp/reset", live, mw.RequirePermission(rbac.UsersUpdate), users.ResetTOTP)
+}
+
+// apiKeyRoutes: handler /api/admin/api-keys/** (*APIKeyHandler). Interface
+// supaya uji bisa merakit rutenya lewat registerAPIKeyRoutes tanpa DB.
+type apiKeyRoutes interface {
+	List(c fiber.Ctx) error
+	GetByID(c fiber.Ctx) error
+	CopyKey(c fiber.Ctx) error
+	Create(c fiber.Ctx) error
+	Update(c fiber.Ctx) error
+	Delete(c fiber.Ctx) error
+}
+
+// registerAPIKeyRoutes: menyalin kunci provider = rahasia; membuat kunci =
+// akses yang bertahan. Semuanya wajib sesi hidup (live = mw.RequireLiveSession),
+// supaya token super admin yang sudah dicabut tidak bisa menyalin atau membuat
+// kunci selama sisa umurnya.
+func registerAPIKeyRoutes(admin fiber.Router, keys apiKeyRoutes, live fiber.Handler) {
+	admin.Get("/api-keys", live, mw.RequirePermission(rbac.APIKeysList), keys.List)
+	admin.Get("/api-keys/:id", live, mw.RequirePermission(rbac.APIKeysView), keys.GetByID)
+	admin.Get("/api-keys/:id/copy", live, mw.RequirePermission(rbac.APIKeysCopy), keys.CopyKey)
+	admin.Post("/api-keys", live, mw.RequirePermission(rbac.APIKeysCreate), keys.Create)
+	admin.Put("/api-keys/:id", live, mw.RequirePermission(rbac.APIKeysUpdate), keys.Update)
+	admin.Delete("/api-keys/:id", live, mw.RequirePermission(rbac.APIKeysDelete), keys.Delete)
 }
 
 // guardJWTSecret menolak JWT_SECRET yang kosong, pendek, atau sama dengan

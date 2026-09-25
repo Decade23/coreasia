@@ -96,6 +96,38 @@ func releaseAttempt(c fiber.Ctx, lim totpAttemptLimiter, userID uuid.UUID) {
 	}
 }
 
+// refundAttempt: percobaan yang sudah memesan jatah tidak bisa dievaluasi
+// sampai tuntas karena galat server (rahasia TOTP tidak terbuka setelah rotasi
+// JWT_SECRET, rahasia tersimpan rusak, DB gagal). Jatahnya dikembalikan, supaya
+// galat server tidak memakan jatah 30 hari dan diam-diam mengunci akun, dan satu
+// baris audit totp_error dicatat supaya 500 beruntun terlihat. Detail galat
+// hanya ke log; klien tetap menerima 500 umum dari pemanggil.
+func refundAttempt(c fiber.Ctx, lim totpAttemptLimiter, audit auditLogger, user *model.AdminUser, stage, cause string, err error) {
+	ip := middleware.ClientIP(c)
+	slog.Error("totp: galat server; jatah percobaan dikembalikan",
+		"tahap", stage, "sebab", cause, "admin_id", user.ID, "ip", ip, "error", err)
+	if lim != nil {
+		if rerr := lim.Refund(c.Context(), user.ID); rerr != nil {
+			slog.Warn("totp: gagal mengembalikan jatah percobaan", "admin_id", user.ID, "error", rerr)
+		}
+	}
+	if audit == nil {
+		return
+	}
+	resID := user.ID.String()
+	desc := fmt.Sprintf("Faktor kedua tidak bisa diperiksa karena galat server (tahap %s: %s); jatah percobaan dikembalikan", stage, cause)
+	audit.LogAction(c.Context(), &user.ID, &user.FullName, "totp_error", "admin_users", &resID, &desc, ip)
+}
+
+// Sebab galat server untuk refundAttempt (dicatat di audit, tanpa isi galat).
+const (
+	causeSecretUnreadable = "rahasia TOTP tidak bisa dibuka (JWT_SECRET dirotasi?)"
+	causeSecretCorrupt    = "rahasia TOTP tersimpan rusak"
+	causeDBWrite          = "gagal menulis ke database"
+	// hash sandi tersimpan bukan hash bcrypt yang sah (mis. diubah lewat SQL)
+	causePasswordHashCorrupt = "hash sandi tersimpan rusak"
+)
+
 // clearAttempts membuka kunci faktor kedua (kedua lapis). Dipanggil setelah
 // super admin mereset TOTP atau mengganti sandi akun itu: penguncian terjadi
 // karena seseorang memegang sandinya, dan kedua tindakan itu memutus pegangan

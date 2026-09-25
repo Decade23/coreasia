@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -164,125 +165,209 @@ type AttemptResult struct {
 	Retry time.Duration
 }
 
+// LongAttemptStore menyimpan lapis panjang jatah faktor kedua di Postgres
+// (kolom admin_users.totp_gagal_panjang*, migrasi 000017; implementasi
+// produksi: repository.AdminUserRepo). Bukan di Redis: Redis produksi memakai
+// allkeys-lru, dan pihak tanpa akses bisa memenuhi memorinya lewat /login
+// dengan email acak sampai kunci lapis panjang milik admin yang sedang diserang
+// dibuang, lalu hitungan 30 harinya mulai dari nol.
+//
+// Jendelanya tetap, dimulai dari kegagalan pertama; jendela yang lewat dibaca
+// nol. Semua operasi atomik (satu UPDATE bersyarat per operasi).
+type LongAttemptStore interface {
+	// LongFailures: hitungan jendela panjang saat ini dan sisa jendelanya.
+	// Admin tidak ada = galat.
+	LongFailures(ctx context.Context, userID uuid.UUID, window time.Duration) (n int64, retry time.Duration, err error)
+	// ReserveLongFailure memesan satu jatah bila hitungan < max. false = habis
+	// (atau admin tidak ada), tidak ada yang ditulis.
+	ReserveLongFailure(ctx context.Context, userID uuid.UUID, max int64, window time.Duration) (reserved bool, n int64, retry time.Duration, err error)
+	// ReleaseLongFailure mengembalikan tepat satu jatah (tidak pernah negatif).
+	ReleaseLongFailure(ctx context.Context, userID uuid.UUID) error
+	// ClearLongFailures mengosongkan hitungan (pemulihan oleh super admin).
+	ClearLongFailures(ctx context.Context, userID uuid.UUID) error
+	// ImportLongFailures memindahkan hitungan lama dari Redis (sementara).
+	ImportLongFailures(ctx context.Context, userID uuid.UUID, n int64, remaining, window time.Duration) error
+}
+
 // RedisTOTPLimiter membatasi percobaan faktor kedua per admin (kode TOTP di
 // verify/enable/disable, sandi konfirmasi di /totp/setup dan saat mengganti
 // sandi sendiri) dengan dua lapis:
 //
-//   - pendek: max percobaan per window (5 per 15 menit), dikembalikan
-//     seluruhnya setelah berhasil. Menahan tebakan beruntun.
-//   - panjang: maxLong kegagalan per windowLong (20 per 30 hari), jendela tetap
-//     dari kegagalan pertama. Keberhasilan hanya mengembalikan jatahnya
-//     sendiri, BUKAN kegagalan sebelumnya. Tanpa lapis ini, pemegang sandi
-//     yang sabar mendapat 480 tebakan per hari untuk selamanya (±41% tembus
-//     dalam setahun); dengan lapis ini paling banyak maxLong tebakan per
-//     windowLong, lalu verifikasi terkunci.
+//   - pendek (Redis): max percobaan per window (5 per 15 menit), dikembalikan
+//     seluruhnya setelah berhasil. Menahan tebakan beruntun. Kehilangan kunci
+//     ini (eviction) paling banyak membuka satu jendela 15 menit.
+//   - panjang (Postgres, LongAttemptStore): maxLong kegagalan per windowLong
+//     (20 per 30 hari), jendela tetap dari kegagalan pertama. Keberhasilan
+//     hanya mengembalikan jatahnya sendiri, BUKAN kegagalan sebelumnya. Tanpa
+//     lapis ini, pemegang sandi yang sabar mendapat 480 tebakan per hari untuk
+//     selamanya (±41% tembus dalam setahun); dengan lapis ini paling banyak
+//     maxLong tebakan per windowLong, lalu verifikasi terkunci.
 //
-// Pola "pesan dulu, baru evaluasi" berlaku untuk kedua lapis dalam satu skrip
-// Lua: permintaan paralel tidak bisa menyelinap di antara cek dan catat.
-// Percobaan yang ditahan lapis pendek tidak memakai jatah panjang (tidak
-// dievaluasi), jadi banjir permintaan tidak mempercepat penguncian.
+// Pola "pesan dulu, baru evaluasi": (1) terkunci? baca lapis panjang; (2) pesan
+// lapis pendek (skrip Lua atomik); (3) pesan lapis panjang (UPDATE bersyarat
+// atomik). Permintaan paralel tidak bisa menyelinap di antara cek dan catat
+// pada lapis mana pun: yang kalah di langkah 3 mendapat Locked. Percobaan yang
+// ditahan lapis pendek tidak memakai jatah panjang (tidak dievaluasi), jadi
+// banjir permintaan tidak mempercepat penguncian, dan percobaan saat terkunci
+// tidak menyentuh lapis pendek. Galat Redis atau Postgres dikembalikan apa
+// adanya; pemanggil wajib gagal tertutup.
 type RedisTOTPLimiter struct {
 	rdb         redis.Cmdable
+	long        LongAttemptStore
 	shortPrefix string
-	longPrefix  string
-	max         int64
-	window      time.Duration
-	maxLong     int64
-	windowLong  time.Duration
+	// legacyLongPrefix: kunci lapis panjang di Redis sebelum migrasi 000017.
+	// Hanya dibaca untuk dipindahkan ke Postgres sekali, lalu dihapus.
+	legacyLongPrefix string
+	max              int64
+	window           time.Duration
+	maxLong          int64
+	windowLong       time.Duration
 }
 
-func NewRedisTOTPLimiter(rdb redis.Cmdable, max int, window time.Duration, maxLong int, windowLong time.Duration) *RedisTOTPLimiter {
+func NewRedisTOTPLimiter(rdb redis.Cmdable, long LongAttemptStore, max int, window time.Duration, maxLong int, windowLong time.Duration) *RedisTOTPLimiter {
 	return &RedisTOTPLimiter{
-		rdb:         rdb,
-		shortPrefix: "gateway:admin_totp_gagal:",
-		longPrefix:  "gateway:admin_totp_gagal_panjang:",
-		max:         int64(max),
-		window:      window,
-		maxLong:     int64(maxLong),
-		windowLong:  windowLong,
+		rdb:              rdb,
+		long:             long,
+		shortPrefix:      "gateway:admin_totp_gagal:",
+		legacyLongPrefix: "gateway:admin_totp_gagal_panjang:",
+		max:              int64(max),
+		window:           window,
+		maxLong:          int64(maxLong),
+		windowLong:       windowLong,
 	}
 }
 
-func (l *RedisTOTPLimiter) keys(userID uuid.UUID) []string {
-	id := userID.String()
-	return []string{l.shortPrefix + id, l.longPrefix + id}
+func (l *RedisTOTPLimiter) shortKey(userID uuid.UUID) string {
+	return l.shortPrefix + userID.String()
 }
 
-// takeTOTPScript memesan satu jatah di kedua lapis secara atomik.
-// KEYS = {pendek, panjang}; ARGV = {ms pendek, maks pendek, ms panjang, maks panjang}.
-// Memulangkan {status, n pendek, sisa ms, n panjang}; status 0 = boleh,
-// 1 = jendela pendek habis, 2 = terkunci (jatah panjang habis).
-// TTL hanya dipasang bila kunci belum punya, jadi percobaan saat tertahan tidak
-// memperpanjang jendela, dan kunci tanpa TTL tidak pernah abadi.
-var takeTOTPScript = redis.NewScript(`
-local long = tonumber(redis.call('GET', KEYS[2]) or '0')
-if long >= tonumber(ARGV[4]) then
-  local lttl = redis.call('PTTL', KEYS[2])
-  if lttl < 0 then
-    redis.call('PEXPIRE', KEYS[2], ARGV[3])
-    lttl = tonumber(ARGV[3])
-  end
-  return {2, 0, lttl, long}
-end
-local n = redis.call('INCR', KEYS[1])
-local ttl = redis.call('PTTL', KEYS[1])
-if ttl < 0 then
-  redis.call('PEXPIRE', KEYS[1], ARGV[1])
-  ttl = tonumber(ARGV[1])
-end
-if n > tonumber(ARGV[2]) then
-  return {1, n, ttl, long}
-end
-long = redis.call('INCR', KEYS[2])
-if redis.call('PTTL', KEYS[2]) < 0 then
-  redis.call('PEXPIRE', KEYS[2], ARGV[3])
-end
-return {0, n, ttl, long}
-`)
+func (l *RedisTOTPLimiter) legacyLongKey(userID uuid.UUID) string {
+	return l.legacyLongPrefix + userID.String()
+}
 
-// releaseTOTPScript: berhasil → jendela pendek dihapus, dan tepat satu jatah
-// panjang (milik percobaan yang berhasil) dikembalikan. Tidak pernah negatif.
-var releaseTOTPScript = redis.NewScript(`
-redis.call('DEL', KEYS[1])
-local v = tonumber(redis.call('GET', KEYS[2]) or '0')
+// refundShortScript mengembalikan satu jatah jendela pendek (percobaan yang
+// tidak dievaluasi sampai tuntas karena galat server). Tidak pernah negatif,
+// TTL tidak diubah.
+var refundShortScript = redis.NewScript(`
+local v = tonumber(redis.call('GET', KEYS[1]) or '0')
 if v > 1 then
-  redis.call('DECR', KEYS[2])
+  redis.call('DECR', KEYS[1])
 elseif v == 1 then
-  redis.call('DEL', KEYS[2])
+  redis.call('DEL', KEYS[1])
 end
 return v
 `)
 
+// legacyLongScript: {hitungan, sisa ms} kunci lapis panjang Redis lama
+// ({0, 0} bila tidak ada).
+var legacyLongScript = redis.NewScript(`
+local v = tonumber(redis.call('GET', KEYS[1]) or '0')
+if v <= 0 then
+  return {0, 0}
+end
+return {v, redis.call('PTTL', KEYS[1])}
+`)
+
+// importLegacy memindahkan hitungan lapis panjang Redis lama (sebelum 000017)
+// ke Postgres, lalu menghapus kuncinya. Sementara: kunci lama habis TTL-nya
+// paling lambat 30 hari sesudah rilis, dan setelah itu langkah ini tidak
+// menemukan apa pun. Galat = gagal tertutup (hitungan lama tidak boleh hilang
+// diam-diam karena Postgres sedang tidak bisa ditulis).
+func (l *RedisTOTPLimiter) importLegacy(ctx context.Context, userID uuid.UUID) error {
+	key := l.legacyLongKey(userID)
+	res, err := legacyLongScript.Run(ctx, l.rdb, []string{key}).Int64Slice()
+	if err != nil {
+		return err
+	}
+	if len(res) != 2 {
+		return fmt.Errorf("totp limiter: jawaban skrip tidak terduga: %v", res)
+	}
+	if res[0] <= 0 {
+		return nil
+	}
+	remaining := time.Duration(res[1]) * time.Millisecond
+	if remaining <= 0 || remaining > l.windowLong {
+		remaining = l.windowLong
+	}
+	if err := l.long.ImportLongFailures(ctx, userID, res[0], remaining, l.windowLong); err != nil {
+		return err
+	}
+	return l.rdb.Del(ctx, key).Err()
+}
+
 // Take memesan satu percobaan untuk userID. Error Redis (putus, READONLY, OOM)
-// dikembalikan apa adanya; pemanggil WAJIB gagal tertutup (tanpa pemesanan,
-// kode tidak dievaluasi).
+// atau Postgres dikembalikan apa adanya; pemanggil WAJIB gagal tertutup (tanpa
+// pemesanan, kode tidak dievaluasi).
 func (l *RedisTOTPLimiter) Take(ctx context.Context, userID uuid.UUID) (AttemptResult, error) {
-	res, err := takeTOTPScript.Run(ctx, l.rdb, l.keys(userID),
-		l.window.Milliseconds(), l.max, l.windowLong.Milliseconds(), l.maxLong).Int64Slice()
+	if l.long == nil {
+		return AttemptResult{}, fmt.Errorf("totp limiter: penyimpan lapis panjang tidak ada")
+	}
+	if err := l.importLegacy(ctx, userID); err != nil {
+		return AttemptResult{}, err
+	}
+	// 1. Terkunci: kode tidak dievaluasi, lapis pendek tidak disentuh.
+	long, lretry, err := l.long.LongFailures(ctx, userID, l.windowLong)
 	if err != nil {
 		return AttemptResult{}, err
 	}
-	if len(res) != 4 {
+	if long >= l.maxLong {
+		return AttemptResult{Locked: true, Long: long, Retry: lretry}, nil
+	}
+	// 2. Lapis pendek.
+	res, err := takeScript.Run(ctx, l.rdb, []string{l.shortKey(userID)}, l.window.Milliseconds()).Int64Slice()
+	if err != nil {
+		return AttemptResult{}, err
+	}
+	if len(res) != 2 {
 		return AttemptResult{}, fmt.Errorf("totp limiter: jawaban skrip tidak terduga: %v", res)
 	}
-	return AttemptResult{
-		Allowed: res[0] == 0,
-		Locked:  res[0] == 2,
-		N:       res[1],
-		Retry:   time.Duration(res[2]) * time.Millisecond,
-		Long:    res[3],
-	}, nil
+	n, retry := res[0], time.Duration(res[1])*time.Millisecond
+	if n > l.max {
+		return AttemptResult{N: n, Long: long, Retry: retry}, nil
+	}
+	// 3. Lapis panjang. Kalah balapan dengan permintaan paralel yang mengambil
+	// jatah terakhir = terkunci (jatah pendek yang sudah terpesan tidak
+	// dikembalikan: paling banyak menahan satu percobaan di jendela ini).
+	reserved, long, _, err := l.long.ReserveLongFailure(ctx, userID, l.maxLong, l.windowLong)
+	if err != nil {
+		return AttemptResult{}, err
+	}
+	if !reserved {
+		long, lretry, err = l.long.LongFailures(ctx, userID, l.windowLong)
+		if err != nil {
+			return AttemptResult{}, err
+		}
+		return AttemptResult{Locked: true, Long: long, Retry: lretry}, nil
+	}
+	return AttemptResult{Allowed: true, N: n, Long: long, Retry: retry}, nil
 }
 
 // Reset dipanggil setelah kode atau sandi yang benar diterima: jendela pendek
 // dikosongkan, dan jatah panjang milik percobaan itu dikembalikan. Kegagalan
 // sebelumnya tetap terhitung di jendela panjang.
 func (l *RedisTOTPLimiter) Reset(ctx context.Context, userID uuid.UUID) error {
-	return releaseTOTPScript.Run(ctx, l.rdb, l.keys(userID)).Err()
+	return errors.Join(
+		l.rdb.Del(ctx, l.shortKey(userID)).Err(),
+		l.long.ReleaseLongFailure(ctx, userID),
+	)
 }
 
-// Clear menghapus kedua lapis (membuka kunci). Hanya untuk pemulihan oleh
-// super admin: reset TOTP, atau sandi akun itu diganti.
+// Refund mengembalikan jatah satu percobaan yang tidak bisa dievaluasi sampai
+// tuntas karena galat server (rahasia tidak terbuka setelah rotasi JWT_SECRET,
+// DB gagal): satu jatah pendek dan satu jatah panjang. Beda dengan Reset,
+// kegagalan lain di jendela pendek tetap terhitung.
+func (l *RedisTOTPLimiter) Refund(ctx context.Context, userID uuid.UUID) error {
+	return errors.Join(
+		refundShortScript.Run(ctx, l.rdb, []string{l.shortKey(userID)}).Err(),
+		l.long.ReleaseLongFailure(ctx, userID),
+	)
+}
+
+// Clear menghapus kedua lapis (membuka kunci), termasuk kunci Redis lama.
+// Hanya untuk pemulihan oleh super admin: reset TOTP, atau sandi akun itu diganti.
 func (l *RedisTOTPLimiter) Clear(ctx context.Context, userID uuid.UUID) error {
-	return l.rdb.Del(ctx, l.keys(userID)...).Err()
+	return errors.Join(
+		l.rdb.Del(ctx, l.shortKey(userID), l.legacyLongKey(userID)).Err(),
+		l.long.ClearLongFailures(ctx, userID),
+	)
 }

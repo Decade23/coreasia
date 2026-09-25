@@ -4,11 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"testing"
 	"time"
 
 	"github.com/coreasia/gateway/internal/model"
+	"github.com/coreasia/gateway/internal/testenv"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -19,10 +19,7 @@ import (
 // pun: semua perintah pengubah diarahkan ke id acak yang tidak ada, sehingga
 // yang teruji adalah sintaks, tipe parameter, dan kolom — bukan data.
 func TestAdminUserRepo_SQLFase0c(t *testing.T) {
-	dsn := os.Getenv("GATEWAY_TEST_DATABASE_URL")
-	if dsn == "" {
-		t.Skip("GATEWAY_TEST_DATABASE_URL tidak di-set")
-	}
+	dsn := testenv.DatabaseURL(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 	pool, err := pgxpool.New(ctx, dsn)
@@ -96,10 +93,7 @@ func TestAdminUserRepo_SQLFase0c(t *testing.T) {
 // tidak ada akun yang dibuat dan tidak ada perubahan yang tersimpan. Opt-in
 // lewat GATEWAY_TEST_DATABASE_URL.
 func TestAdminUserRepo_SemantikTOTPDalamRollback(t *testing.T) {
-	dsn := os.Getenv("GATEWAY_TEST_DATABASE_URL")
-	if dsn == "" {
-		t.Skip("GATEWAY_TEST_DATABASE_URL tidak di-set")
-	}
+	dsn := testenv.DatabaseURL(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 	pool, err := pgxpool.New(ctx, dsn)
@@ -111,7 +105,7 @@ func TestAdminUserRepo_SemantikTOTPDalamRollback(t *testing.T) {
 	var id uuid.UUID
 	if err := pool.QueryRow(ctx, `SELECT id FROM public.admin_users ORDER BY created_at LIMIT 1`).Scan(&id); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			t.Skip("tidak ada baris admin_users untuk diuji (uji ini tidak membuat akun)")
+			testenv.Unavailable(t, "tidak ada baris admin_users untuk diuji (uji ini tidak membuat akun)")
 		}
 		t.Fatal(err)
 	}

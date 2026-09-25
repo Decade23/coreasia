@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -159,6 +160,12 @@ func errAdminChanged() *apperr.AppError {
 	return apperr.NewConflict("Data admin ini baru saja berubah (mis. sesinya dicabut atau sandinya diganti). Muat ulang halaman lalu ulangi.")
 }
 
+// errEmailTaken: 409, sama untuk Create dan Update. Email dibandingkan tanpa
+// peka huruf dan spasi tepi.
+func errEmailTaken() *apperr.AppError {
+	return apperr.NewConflict("Email sudah terdaftar")
+}
+
 // errCurrentPasswordRequired: mengganti sandi sendiri tanpa current_password.
 // Pesannya dibaca manusia di console, jadi tanpa nama field.
 func errCurrentPasswordRequired() *apperr.AppError {
@@ -182,6 +189,11 @@ func (h *AdminUserHandler) verifyCurrentPassword(c fiber.Ctx, user *model.AdminU
 		return appErr
 	}
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(*current)); err != nil {
+		if !errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
+			// Hash tersimpan rusak: galat server, bukan sandi salah.
+			refundAttempt(c, h.attempts, h.auditLog, user, "ganti_sandi_sendiri", causePasswordHashCorrupt, err)
+			return apperr.NewInternal(err)
+		}
 		auditRejectedAttempt(c, h.auditLog, user, "ganti_sandi_sendiri", res)
 		return errPasswordInvalid()
 	}
@@ -213,6 +225,7 @@ func (h *AdminUserHandler) Create(c fiber.Ctx) error {
 	if err := c.Bind().JSON(&req); err != nil {
 		return errResponse(c, apperr.NewBadRequest("Format request tidak valid"))
 	}
+	req.Email = model.NormalizeEmail(req.Email)
 	if appErr := validate.Struct(&req); appErr != nil {
 		return errResponse(c, appErr)
 	}
@@ -223,9 +236,13 @@ func (h *AdminUserHandler) Create(c fiber.Ctx) error {
 		}
 	}
 
-	existing, _ := h.userRepo.FindByEmail(c.Context(), req.Email)
+	existing, err := h.userRepo.FindByEmail(c.Context(), req.Email)
+	if err != nil {
+		slog.Error("admin: gagal memeriksa email", "error", err)
+		return errResponse(c, apperr.NewInternal(err))
+	}
 	if existing != nil {
-		return errResponse(c, apperr.NewConflict("Email sudah terdaftar"))
+		return errResponse(c, errEmailTaken())
 	}
 
 	hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
@@ -242,6 +259,9 @@ func (h *AdminUserHandler) Create(c fiber.Ctx) error {
 	}
 
 	if err := h.userRepo.Create(c.Context(), user); err != nil {
+		if errors.Is(err, repository.ErrEmailTaken) {
+			return errResponse(c, errEmailTaken())
+		}
 		slog.Error("gagal buat admin user", "error", err)
 		return errResponse(c, apperr.NewInternal(err))
 	}
@@ -280,6 +300,29 @@ func (h *AdminUserHandler) Update(c fiber.Ctx) error {
 	var req model.UpdateAdminRequest
 	if err := c.Bind().JSON(&req); err != nil {
 		return errResponse(c, apperr.NewBadRequest("Format request tidak valid"))
+	}
+	// Aturan isian sama dengan Create (email, peran, nama, kekuatan sandi).
+	if req.Email != nil {
+		e := model.NormalizeEmail(*req.Email)
+		req.Email = &e
+	}
+	if appErr := validate.Struct(&req); appErr != nil {
+		return errResponse(c, appErr)
+	}
+	// Email adalah identitas admin di luar gateway (pelaku sesi console
+	// CashFlow, pencabutan sesi per email): harus unik tanpa peka huruf.
+	// Diperiksa sebelum sandi saat ini, supaya permintaan yang ditolak tidak
+	// memakai jatah percobaan.
+	emailChanged := req.Email != nil && *req.Email != model.NormalizeEmail(user.Email)
+	if emailChanged {
+		other, err := h.userRepo.FindByEmail(c.Context(), *req.Email)
+		if err != nil {
+			slog.Error("admin: gagal memeriksa email", "error", err)
+			return errResponse(c, apperr.NewInternal(err))
+		}
+		if other != nil && other.ID != user.ID {
+			return errResponse(c, errEmailTaken())
+		}
 	}
 
 	// Kredensial super admin: memberi peran super admin, atau menyetel sandi
@@ -322,15 +365,20 @@ func (h *AdminUserHandler) Update(c fiber.Ctx) error {
 		}
 	}
 
-	// Menonaktifkan admin, mengganti sandinya, atau mengganti perannya ikut
+	// Menonaktifkan admin, mengganti sandinya, perannya, atau emailnya ikut
 	// mencabut semua sesinya (token_version+1): token lama langsung ditolak
 	// /auth/me, /auth/refresh, dan rute ber-RequireLiveSession, mengaktifkan
 	// kembali akun tidak menghidupkan token lama, dan token tidak membawa peran
-	// lama (klaim role) setelah diturunkan.
+	// lama (klaim role) setelah diturunkan. Email: sesi yang dicetak atas email
+	// lama (mis. sesi console CashFlow) tidak boleh terus hidup di bawah
+	// identitas yang sudah diganti, dan ganti email tidak boleh menjadi cara
+	// memperoleh identitas baru tanpa login ulang.
 	revoke := (user.IsActive && req.IsActive != nil && !*req.IsActive) ||
 		req.Password != nil ||
-		(req.Role != nil && *req.Role != user.Role)
+		(req.Role != nil && *req.Role != user.Role) ||
+		emailChanged
 
+	oldEmail := user.Email
 	if req.Email != nil {
 		user.Email = *req.Email
 	}
@@ -356,6 +404,9 @@ func (h *AdminUserHandler) Update(c fiber.Ctx) error {
 	// sebelum penonaktifan / ganti sandi / ganti peran lalu menulis sesudahnya
 	// ditolak (409), tidak mengembalikan kolom lama.
 	updated, err := h.userRepo.Update(c.Context(), user, revoke)
+	if errors.Is(err, repository.ErrEmailTaken) {
+		return errResponse(c, errEmailTaken())
+	}
 	if err != nil {
 		slog.Error("gagal update admin user", "error", err)
 		return errResponse(c, apperr.NewInternal(err))
@@ -372,6 +423,9 @@ func (h *AdminUserHandler) Update(c fiber.Ctx) error {
 
 	resID := user.ID.String()
 	desc := "Mengupdate admin user: " + user.Email
+	if emailChanged {
+		desc += " (email lama: " + oldEmail + ")"
+	}
 	if revoke {
 		desc += " (semua sesi dicabut)"
 	}

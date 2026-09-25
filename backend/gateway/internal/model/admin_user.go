@@ -1,6 +1,7 @@
 package model
 
 import (
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -23,6 +24,15 @@ type AdminUser struct {
 	TOTPPendingEnc *string    `json:"-"` // rahasia dari /totp/setup yang belum dikonfirmasi
 	TOTPEnabledAt  *time.Time `json:"-"`
 	TOTPLastStep   *int64     `json:"-"` // langkah RFC 6238 terakhir yang diterima (anti-replay)
+}
+
+// NormalizeEmail: bentuk baku email admin (huruf kecil, tanpa spasi tepi).
+// Email admin disimpan, dicari, dan dibandingkan dalam bentuk ini (migrasi
+// 000016: indeks unik lower(btrim(email))), supaya "Y@X.ID" dan "y@x.id " tidak
+// bisa menjadi dua akun. CashFlow membandingkan pelaku sesi console dengan
+// lower(btrim(...)) yang sama.
+func NormalizeEmail(email string) string {
+	return strings.ToLower(strings.TrimSpace(email))
 }
 
 // TOTPEnabled: admin ini wajib memasukkan kode TOTP saat login.

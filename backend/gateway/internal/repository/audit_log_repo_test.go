@@ -2,11 +2,11 @@ package repository
 
 import (
 	"context"
-	"os"
 	"testing"
 	"time"
 
 	"github.com/coreasia/gateway/internal/auditip"
+	"github.com/coreasia/gateway/internal/testenv"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -14,10 +14,7 @@ import (
 // (000015: reported_client_ip). Opt-in lewat GATEWAY_TEST_DATABASE_URL. Semua
 // tulisan terjadi di dalam satu transaksi yang selalu di-ROLLBACK.
 func TestAuditLogRepo_IPDilaporkan(t *testing.T) {
-	dsn := os.Getenv("GATEWAY_TEST_DATABASE_URL")
-	if dsn == "" {
-		t.Skip("GATEWAY_TEST_DATABASE_URL tidak di-set")
-	}
+	dsn := testenv.DatabaseURL(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
 	defer cancel()
 	pool, err := pgxpool.New(ctx, dsn)

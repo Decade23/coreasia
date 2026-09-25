@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/coreasia/gateway/internal/model"
 	"github.com/google/uuid"
@@ -40,11 +41,29 @@ func adminUserScanTargets(u *model.AdminUser) []any {
 	}
 }
 
+// ErrEmailTaken: email (tanpa peka huruf) sudah dipakai admin lain. Dipulangkan
+// Create/Update bila indeks unik lower(btrim(email)) (migrasi 000016) atau
+// UNIQUE(email) lama menolak tulisan.
+var ErrEmailTaken = errors.New("email admin sudah dipakai")
+
+// isEmailTaken: pelanggaran unik pada kolom email admin_users.
+func isEmailTaken(err error) bool {
+	var pgErr *pgconn.PgError
+	return errors.As(err, &pgErr) && pgErr.Code == "23505" &&
+		(pgErr.ConstraintName == "admin_users_email_key" || pgErr.ConstraintName == "admin_users_email_lower_key")
+}
+
+// FindByEmail mencari admin tanpa peka huruf dan spasi tepi. Selama indeks unik
+// 000016 belum terpasang (data lama berisi email kembar setelah dinormalkan),
+// bisa ada lebih dari satu baris: yang persis sama dengan masukan didahulukan,
+// lalu yang tertua, supaya perilaku login lama tidak berubah untuk akun itu.
 func (r *AdminUserRepo) FindByEmail(ctx context.Context, email string) (*model.AdminUser, error) {
 	query := `
 		SELECT ` + adminUserColumns + `
 		FROM public.admin_users
-		WHERE email = $1
+		WHERE lower(btrim(email)) = lower(btrim($1::text))
+		ORDER BY (email = $1::text) DESC, created_at
+		LIMIT 1
 	`
 	var u model.AdminUser
 	err := r.pool.QueryRow(ctx, query, email).Scan(adminUserScanTargets(&u)...)
@@ -112,8 +131,12 @@ func (r *AdminUserRepo) Create(ctx context.Context, u *model.AdminUser) error {
 		VALUES ($1, $2, $3, $4)
 		RETURNING id, created_at, updated_at
 	`
-	return r.pool.QueryRow(ctx, query, u.Email, u.PasswordHash, u.FullName, u.Role).
+	err := r.pool.QueryRow(ctx, query, u.Email, u.PasswordHash, u.FullName, u.Role).
 		Scan(&u.ID, &u.CreatedAt, &u.UpdatedAt)
+	if isEmailTaken(err) {
+		return ErrEmailTaken
+	}
+	return err
 }
 
 // Update menulis kolom yang bisa diubah lewat PUT /api/admin/users/:id, HANYA
@@ -124,6 +147,7 @@ func (r *AdminUserRepo) Create(ctx context.Context, u *model.AdminUser) error {
 // status, atau peran diganti) atau sudah tidak ada: tidak ada yang ditulis.
 // Tanpa syarat ini, permintaan yang memuat baris sebelum penonaktifan dan
 // menulis sesudahnya mengembalikan is_active, peran, dan hash sandi lama.
+// Email yang sudah dipakai admin lain → ErrEmailTaken.
 func (r *AdminUserRepo) Update(ctx context.Context, u *model.AdminUser, revoke bool) (bool, error) {
 	query := `
 		UPDATE public.admin_users
@@ -138,10 +162,25 @@ func (r *AdminUserRepo) Update(ctx context.Context, u *model.AdminUser, revoke b
 	if errors.Is(err, pgx.ErrNoRows) {
 		return false, nil
 	}
+	if isEmailTaken(err) {
+		return false, ErrEmailTaken
+	}
 	if err != nil {
 		return false, err
 	}
 	return true, nil
+}
+
+// DuplicateEmailGroups: berapa email yang, setelah dinormalkan, dipakai lebih
+// dari satu admin. Bukan nol = migrasi 000016 tidak bisa memasang indeks unik
+// lower(btrim(email)); gateway mencatatnya di log saat start (lihat README).
+func (r *AdminUserRepo) DuplicateEmailGroups(ctx context.Context) (int, error) {
+	var n int
+	err := r.pool.QueryRow(ctx,
+		`SELECT count(*) FROM (
+		    SELECT 1 FROM public.admin_users
+		     GROUP BY lower(btrim(email)) HAVING count(*) > 1) d`).Scan(&n)
+	return n, err
 }
 
 func (r *AdminUserRepo) Delete(ctx context.Context, id uuid.UUID) error {
@@ -266,4 +305,101 @@ func (r *AdminUserRepo) AnyTOTPEnabled(ctx context.Context) (bool, error) {
 		    SELECT 1 FROM public.admin_users
 		     WHERE totp_enabled_at IS NOT NULL AND totp_secret_enc IS NOT NULL)`).Scan(&exists)
 	return exists, err
+}
+
+// ───────────────────────── lapis panjang jatah faktor kedua ─────────────────────────
+//
+// Penghitung kegagalan faktor kedua jangka panjang (lapis "20 per 30 hari" di
+// auth.RedisTOTPLimiter) disimpan di admin_users (migrasi 000017), bukan di
+// Redis: Redis produksi memakai allkeys-lru, dan kunci di sana bisa dibuang
+// eviction yang dipicu banjir /login tanpa autentikasi. Jendelanya tetap,
+// dimulai dari kegagalan pertama (totp_gagal_panjang_mulai); jendela yang sudah
+// lewat dibaca nol. Setiap perubahan adalah satu UPDATE bersyarat, jadi atomik
+// terhadap permintaan paralel (kunci baris). AdminUserRepo memenuhi
+// auth.LongAttemptStore. Kolom ini tidak ikut adminUserColumns: tidak pernah
+// dipakai di luar pembatas.
+
+// totpLongExpired: jendela panjang baris ini sudah lewat (atau belum dimulai).
+// Parameter jendela selalu $2 (milidetik) di kueri yang memakainya.
+const totpLongExpired = `(totp_gagal_panjang_mulai IS NULL
+		   OR totp_gagal_panjang_mulai + $2::bigint * interval '1 millisecond' <= now())`
+
+// totpLongRemainingMs: sisa jendela panjang (milidetik, bisa negatif bila lewat).
+const totpLongRemainingMs = `COALESCE(floor(extract(epoch FROM
+		   (totp_gagal_panjang_mulai + $2::bigint * interval '1 millisecond' - now())) * 1000)::bigint, 0)`
+
+// LongFailures: kegagalan yang terhitung di jendela panjang saat ini (0 bila
+// jendelanya lewat) dan sisa jendelanya. Admin tidak ada = galat (pemanggil
+// gagal tertutup).
+func (r *AdminUserRepo) LongFailures(ctx context.Context, id uuid.UUID, window time.Duration) (int64, time.Duration, error) {
+	var n, ms int64
+	err := r.pool.QueryRow(ctx,
+		`SELECT CASE WHEN `+totpLongExpired+` THEN 0 ELSE totp_gagal_panjang END,
+		        CASE WHEN `+totpLongExpired+` THEN 0 ELSE `+totpLongRemainingMs+` END
+		   FROM public.admin_users WHERE id = $1`, id, window.Milliseconds()).Scan(&n, &ms)
+	if err != nil {
+		return 0, 0, fmt.Errorf("membaca kegagalan faktor kedua jangka panjang: %w", err)
+	}
+	return n, time.Duration(ms) * time.Millisecond, nil
+}
+
+// ReserveLongFailure memesan satu jatah jangka panjang bila hitungannya masih
+// di bawah max (jendela yang lewat dimulai ulang dari 1). reserved=false = jatah
+// habis (terkunci) atau admin tidak ada; tidak ada yang ditulis. n dan retry
+// hanya berarti bila reserved.
+func (r *AdminUserRepo) ReserveLongFailure(ctx context.Context, id uuid.UUID, max int64, window time.Duration) (bool, int64, time.Duration, error) {
+	var n, ms int64
+	err := r.pool.QueryRow(ctx,
+		`UPDATE public.admin_users
+		    SET totp_gagal_panjang       = CASE WHEN `+totpLongExpired+` THEN 1 ELSE totp_gagal_panjang + 1 END,
+		        totp_gagal_panjang_mulai = CASE WHEN `+totpLongExpired+` THEN now() ELSE totp_gagal_panjang_mulai END
+		  WHERE id = $1 AND (`+totpLongExpired+` OR totp_gagal_panjang < $3::int)
+		RETURNING totp_gagal_panjang, `+totpLongRemainingMs,
+		id, window.Milliseconds(), max).Scan(&n, &ms)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return false, 0, 0, nil
+	}
+	if err != nil {
+		return false, 0, 0, fmt.Errorf("memesan jatah faktor kedua jangka panjang: %w", err)
+	}
+	return true, n, time.Duration(ms) * time.Millisecond, nil
+}
+
+// ReleaseLongFailure mengembalikan tepat satu jatah jangka panjang (percobaan
+// yang berhasil, atau yang gagal karena galat server). Tidak pernah negatif;
+// hitungan nol mengosongkan awal jendela, jadi kegagalan berikutnya memulai
+// jendela baru (sama dengan DEL kunci Redis lama).
+func (r *AdminUserRepo) ReleaseLongFailure(ctx context.Context, id uuid.UUID) error {
+	_, err := r.pool.Exec(ctx,
+		`UPDATE public.admin_users
+		    SET totp_gagal_panjang       = totp_gagal_panjang - 1,
+		        totp_gagal_panjang_mulai = CASE WHEN totp_gagal_panjang <= 1 THEN NULL ELSE totp_gagal_panjang_mulai END
+		  WHERE id = $1 AND totp_gagal_panjang > 0`, id)
+	return err
+}
+
+// ClearLongFailures membuka kunci jangka panjang (reset TOTP atau ganti sandi
+// oleh super admin).
+func (r *AdminUserRepo) ClearLongFailures(ctx context.Context, id uuid.UUID) error {
+	_, err := r.pool.Exec(ctx,
+		`UPDATE public.admin_users
+		    SET totp_gagal_panjang = 0, totp_gagal_panjang_mulai = NULL
+		  WHERE id = $1`, id)
+	return err
+}
+
+// ImportLongFailures memindahkan hitungan jangka panjang lama dari Redis
+// (sebelum 000017) ke sini: hitungan terbesar yang menang, dan jendela yang
+// lewat dimulai ulang dengan sisa waktu kunci Redis itu. Sementara, sampai
+// kunci Redis lama habis TTL-nya (30 hari sejak rilis).
+func (r *AdminUserRepo) ImportLongFailures(ctx context.Context, id uuid.UUID, n int64, remaining, window time.Duration) error {
+	_, err := r.pool.Exec(ctx,
+		`UPDATE public.admin_users
+		    SET totp_gagal_panjang       = CASE WHEN `+totpLongExpired+` THEN $3::int
+		                                        ELSE GREATEST(totp_gagal_panjang, $3::int) END,
+		        totp_gagal_panjang_mulai = CASE WHEN `+totpLongExpired+`
+		                                        THEN now() - ($2::bigint - $4::bigint) * interval '1 millisecond'
+		                                        ELSE totp_gagal_panjang_mulai END
+		  WHERE id = $1`, id, window.Milliseconds(), n, remaining.Milliseconds())
+	return err
 }

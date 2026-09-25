@@ -4,13 +4,13 @@ import (
 	"context"
 	"errors"
 	"net/url"
-	"os"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
 
+	"github.com/coreasia/gateway/internal/testenv"
 	"github.com/google/uuid"
 	"github.com/pquerna/otp/totp"
 	"github.com/redis/go-redis/v9"
@@ -174,15 +174,12 @@ func TestVerifyTOTP_JendelaDanReplay(t *testing.T) {
 // menulis ke Redis yang kebetulan terpasang di port itu; memakai DB 15 dan
 // kunci acak yang dihapus sesudahnya.
 func TestRedisAttemptLimiter(t *testing.T) {
-	addr := os.Getenv("GATEWAY_TEST_REDIS_ADDR")
-	if addr == "" {
-		t.Skip("GATEWAY_TEST_REDIS_ADDR tidak di-set")
-	}
+	addr := testenv.RedisAddr(t)
 	rdb := redis.NewClient(&redis.Options{Addr: addr, DB: 15})
 	defer rdb.Close()
 	ctx := context.Background()
 	if err := rdb.Ping(ctx).Err(); err != nil {
-		t.Skipf("redis %s tidak terjangkau: %v", addr, err)
+		testenv.Unavailable(t, "redis %s tidak terjangkau: %v", addr, err)
 	}
 
 	l := NewRedisAttemptLimiter(rdb, 3, 2*time.Second)
@@ -238,15 +235,12 @@ func TestRedisAttemptLimiter(t *testing.T) {
 // Take paralel: tepat max pemesanan yang diizinkan, berapa pun jumlah
 // permintaan yang datang bersamaan (INCR + PEXPIRE dalam satu skrip Lua).
 func TestRedisAttemptLimiter_ParalelTepatMax(t *testing.T) {
-	addr := os.Getenv("GATEWAY_TEST_REDIS_ADDR")
-	if addr == "" {
-		t.Skip("GATEWAY_TEST_REDIS_ADDR tidak di-set")
-	}
+	addr := testenv.RedisAddr(t)
 	rdb := redis.NewClient(&redis.Options{Addr: addr, DB: 15, PoolSize: 64})
 	defer rdb.Close()
 	ctx := context.Background()
 	if err := rdb.Ping(ctx).Err(); err != nil {
-		t.Skipf("redis %s tidak terjangkau: %v", addr, err)
+		testenv.Unavailable(t, "redis %s tidak terjangkau: %v", addr, err)
 	}
 	l := NewRedisAttemptLimiter(rdb, 5, time.Minute)
 	l.prefix = "gateway:uji:" + uuid.NewString() + ":"
@@ -282,136 +276,12 @@ func TestRedisAttemptLimiter_ParalelTepatMax(t *testing.T) {
 
 func testRedis(t *testing.T, pool int) *redis.Client {
 	t.Helper()
-	addr := os.Getenv("GATEWAY_TEST_REDIS_ADDR")
-	if addr == "" {
-		t.Skip("GATEWAY_TEST_REDIS_ADDR tidak di-set")
-	}
+	addr := testenv.RedisAddr(t)
 	rdb := redis.NewClient(&redis.Options{Addr: addr, DB: 15, PoolSize: pool})
 	if err := rdb.Ping(context.Background()).Err(); err != nil {
 		rdb.Close()
-		t.Skipf("redis %s tidak terjangkau: %v", addr, err)
+		testenv.Unavailable(t, "redis %s tidak terjangkau: %v", addr, err)
 	}
 	t.Cleanup(func() { rdb.Close() })
 	return rdb
-}
-
-func newTestTOTPLimiter(rdb redis.Cmdable, max int, window time.Duration, maxLong int, windowLong time.Duration) *RedisTOTPLimiter {
-	l := NewRedisTOTPLimiter(rdb, max, window, maxLong, windowLong)
-	p := "gateway:uji:" + uuid.NewString() + ":"
-	l.shortPrefix, l.longPrefix = p+"pendek:", p+"panjang:"
-	return l
-}
-
-// Putaran 3: lapis panjang terhadap Redis sungguhan (opt-in; DB 15, kunci acak
-// dihapus sesudahnya).
-func TestRedisTOTPLimiter_DuaLapis(t *testing.T) {
-	rdb := testRedis(t, 10)
-	ctx := context.Background()
-	l := newTestTOTPLimiter(rdb, 3, 400*time.Millisecond, 5, time.Minute)
-	uid := uuid.New()
-	defer l.Clear(ctx, uid)
-
-	for i := int64(1); i <= 3; i++ {
-		r, err := l.Take(ctx, uid)
-		if err != nil || !r.Allowed || r.N != i || r.Long != i {
-			t.Fatalf("Take ke-%d: %+v %v", i, r, err)
-		}
-	}
-	// Lapis pendek menahan; jatah panjang TIDAK dipakai percobaan yang ditahan.
-	r, _ := l.Take(ctx, uid)
-	if r.Allowed || r.Locked || r.N != 4 || r.Long != 3 || r.Retry <= 0 || r.Retry > 400*time.Millisecond {
-		t.Fatalf("Take saat jendela pendek habis: %+v", r)
-	}
-	if ttl := rdb.PTTL(ctx, l.keys(uid)[1]).Val(); ttl <= 0 || ttl > time.Minute {
-		t.Fatalf("kunci panjang harus ber-TTL: %v", ttl)
-	}
-	// Berhasil: jendela pendek kosong, hanya satu jatah panjang kembali.
-	if err := l.Reset(ctx, uid); err != nil {
-		t.Fatal(err)
-	}
-	if v, _ := rdb.Get(ctx, l.keys(uid)[1]).Int64(); v != 2 {
-		t.Fatalf("setelah berhasil, jendela panjang = %d, want 2", v)
-	}
-	// Dua pesanan lagi (panjang 3, 4), jendela pendek habis, lalu satu lagi (5 = batas).
-	for i := 0; i < 2; i++ {
-		if r, _ := l.Take(ctx, uid); !r.Allowed {
-			t.Fatalf("pesanan: %+v", r)
-		}
-	}
-	time.Sleep(450 * time.Millisecond)
-	if r, _ := l.Take(ctx, uid); !r.Allowed || r.Long != 5 {
-		t.Fatalf("pesanan ke-5 jendela panjang: %+v", r)
-	}
-	// Terkunci: jendela pendek baru pun tidak membuka.
-	time.Sleep(450 * time.Millisecond)
-	r, _ = l.Take(ctx, uid)
-	if r.Allowed || !r.Locked || r.Long != 5 || r.Retry <= 400*time.Millisecond || r.Retry > time.Minute {
-		t.Fatalf("setelah 5 kegagalan: %+v", r)
-	}
-	if n, _ := rdb.Exists(ctx, l.keys(uid)[0]).Result(); n != 0 {
-		t.Fatal("percobaan saat terkunci tidak menyentuh jendela pendek")
-	}
-	// Clear (pemulihan super admin) membuka keduanya.
-	if err := l.Clear(ctx, uid); err != nil {
-		t.Fatal(err)
-	}
-	if r, _ := l.Take(ctx, uid); !r.Allowed || r.N != 1 || r.Long != 1 {
-		t.Fatalf("setelah Clear: %+v", r)
-	}
-	// Reset tidak pernah membuat hitungan negatif atau kunci tanpa TTL.
-	_ = l.Clear(ctx, uid)
-	_ = l.Reset(ctx, uid)
-	if n, _ := rdb.Exists(ctx, l.keys(uid)...).Result(); n != 0 {
-		t.Fatalf("Reset tanpa pesanan meninggalkan %d kunci", n)
-	}
-}
-
-// Paralel: tepat max pesanan per jendela pendek, dan total tepat maxLong
-// melintasi banyak jendela, berapa pun paralelismenya.
-func TestRedisTOTPLimiter_ParalelTepatBatas(t *testing.T) {
-	rdb := testRedis(t, 64)
-	ctx := context.Background()
-	l := newTestTOTPLimiter(rdb, 5, 250*time.Millisecond, 12, time.Minute)
-	uid := uuid.New()
-	defer l.Clear(ctx, uid)
-
-	var allowed atomic.Int64
-	deadline := time.Now().Add(3 * time.Second)
-	for time.Now().Before(deadline) {
-		var wg sync.WaitGroup
-		start := make(chan struct{})
-		var round atomic.Int64
-		for i := 0; i < 50; i++ {
-			wg.Add(1)
-			go func() {
-				defer wg.Done()
-				<-start
-				r, err := l.Take(ctx, uid)
-				if err != nil {
-					t.Error(err)
-					return
-				}
-				if r.Allowed {
-					round.Add(1)
-				}
-			}()
-		}
-		close(start)
-		wg.Wait()
-		if round.Load() > 5 {
-			t.Fatalf("satu jendela pendek mengizinkan %d pesanan, batas 5", round.Load())
-		}
-		allowed.Add(round.Load())
-		if allowed.Load() >= 12 {
-			break
-		}
-		time.Sleep(300 * time.Millisecond)
-	}
-	time.Sleep(300 * time.Millisecond)
-	if r, _ := l.Take(ctx, uid); !r.Locked {
-		t.Fatalf("setelah jatah panjang habis harus terkunci: %+v", r)
-	}
-	if allowed.Load() != 12 {
-		t.Fatalf("total pesanan yang diizinkan = %d, want 12", allowed.Load())
-	}
 }

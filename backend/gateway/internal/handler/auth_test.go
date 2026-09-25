@@ -34,6 +34,7 @@ type fakeAdminStore struct {
 	mu         sync.Mutex
 	users      map[uuid.UUID]*model.AdminUser
 	lastLogins map[uuid.UUID]int
+	long       map[uuid.UUID]*fakeLong // lapis panjang faktor kedua (LongAttemptStore)
 	// findDelay meniru latensi DB di FindByID (memperlebar celah balapan di
 	// uji paralel).
 	findDelay time.Duration
@@ -67,16 +68,25 @@ func (f *fakeAdminStore) totpOn(id uuid.UUID) bool {
 	return u.TOTPEnabled()
 }
 
+// FindByEmail: tanpa peka huruf dan spasi tepi; yang persis sama didahulukan
+// (seperti ORDER BY di AdminUserRepo.FindByEmail).
 func (f *fakeAdminStore) FindByEmail(_ context.Context, email string) (*model.AdminUser, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
+	var found *model.AdminUser
 	for _, u := range f.users {
-		if u.Email == email {
-			cp := *u
-			return &cp, nil
+		if model.NormalizeEmail(u.Email) != model.NormalizeEmail(email) {
+			continue
+		}
+		if found == nil || u.Email == email {
+			found = u
 		}
 	}
-	return nil, nil
+	if found == nil {
+		return nil, nil
+	}
+	cp := *found
+	return &cp, nil
 }
 
 func (f *fakeAdminStore) FindByID(_ context.Context, id uuid.UUID) (*model.AdminUser, error) {
@@ -212,6 +222,93 @@ func (f *fakeAdminStore) ConsumeTOTPStep(_ context.Context, id uuid.UUID, step i
 	return true, nil
 }
 
+// Lapis panjang jatah faktor kedua (auth.LongAttemptStore), meniru SQL
+// AdminUserRepo di memori: jendela tetap dari kegagalan pertama, yang lewat
+// dibaca nol. Dipakai bersama auth.RedisTOTPLimiter di uji Redis sungguhan.
+type fakeLong struct {
+	n     int64
+	start time.Time
+}
+
+func (f *fakeAdminStore) longOf(id uuid.UUID, window time.Duration) (*fakeLong, error) {
+	if f.long == nil {
+		f.long = map[uuid.UUID]*fakeLong{}
+	}
+	if _, ok := f.users[id]; !ok {
+		return nil, errors.New("admin tidak ada")
+	}
+	l := f.long[id]
+	if l == nil {
+		l = &fakeLong{}
+		f.long[id] = l
+	}
+	if !l.start.IsZero() && !time.Now().Before(l.start.Add(window)) {
+		l.n, l.start = 0, time.Time{}
+	}
+	return l, nil
+}
+
+func (f *fakeAdminStore) LongFailures(_ context.Context, id uuid.UUID, window time.Duration) (int64, time.Duration, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	l, err := f.longOf(id, window)
+	if err != nil {
+		return 0, 0, err
+	}
+	if l.start.IsZero() {
+		return l.n, 0, nil
+	}
+	return l.n, time.Until(l.start.Add(window)), nil
+}
+
+func (f *fakeAdminStore) ReserveLongFailure(_ context.Context, id uuid.UUID, max int64, window time.Duration) (bool, int64, time.Duration, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	l, err := f.longOf(id, window)
+	if err != nil || l.n >= max {
+		return false, 0, 0, nil
+	}
+	if l.start.IsZero() {
+		l.start = time.Now()
+	}
+	l.n++
+	return true, l.n, time.Until(l.start.Add(window)), nil
+}
+
+func (f *fakeAdminStore) ReleaseLongFailure(_ context.Context, id uuid.UUID) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if l := f.long[id]; l != nil && l.n > 0 {
+		l.n--
+		if l.n == 0 {
+			l.start = time.Time{}
+		}
+	}
+	return nil
+}
+
+func (f *fakeAdminStore) ClearLongFailures(_ context.Context, id uuid.UUID) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	delete(f.long, id)
+	return nil
+}
+
+func (f *fakeAdminStore) ImportLongFailures(_ context.Context, id uuid.UUID, n int64, remaining, window time.Duration) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	l, err := f.longOf(id, window)
+	if err != nil {
+		return err
+	}
+	if l.start.IsZero() {
+		l.n, l.start = n, time.Now().Add(remaining-window)
+	} else if n > l.n {
+		l.n = n
+	}
+	return nil
+}
+
 // ───────────────────────── pembatas & audit tiruan ─────────────────────────
 
 // fakeLimiter meniru auth.RedisTOTPLimiter (Take/Reset/Clear, dua lapis) dan
@@ -295,6 +392,21 @@ func (l *fakeLimiter) Reset(_ context.Context, id uuid.UUID) error {
 	defer l.mu.Unlock()
 	key := id.String()
 	delete(l.counts, key)
+	if l.long[key] > 0 {
+		l.long[key]--
+	}
+	return nil
+}
+
+// Refund: galat server → satu jatah pendek dan satu jatah panjang kembali;
+// kegagalan lain di jendela pendek tetap terhitung.
+func (l *fakeLimiter) Refund(_ context.Context, id uuid.UUID) error {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	key := id.String()
+	if l.counts[key] > 0 {
+		l.counts[key]--
+	}
 	if l.long[key] > 0 {
 		l.long[key]--
 	}
@@ -432,14 +544,34 @@ type authEnv struct {
 	// evals menghitung kode TOTP yang benar-benar dievaluasi: h.now hanya
 	// dipanggil tepat sebelum auth.VerifyTOTP.
 	evals atomic.Int64
+	// keys: handler /api-keys tiruan (menghitung panggilan yang lolos middleware).
+	keys *fakeAPIKeys
 }
+
+// fakeAPIKeys menggantikan *APIKeyHandler di rute /api/admin/api-keys/**:
+// setiap handler hanya mencatat bahwa ia terpanggil lalu menjawab 200.
+type fakeAPIKeys struct{ calls atomic.Int64 }
+
+func (f *fakeAPIKeys) hit(c fiber.Ctx) error {
+	f.calls.Add(1)
+	return c.JSON(fiber.Map{"data": fiber.Map{"ok": true}})
+}
+func (f *fakeAPIKeys) List(c fiber.Ctx) error    { return f.hit(c) }
+func (f *fakeAPIKeys) GetByID(c fiber.Ctx) error { return f.hit(c) }
+func (f *fakeAPIKeys) CopyKey(c fiber.Ctx) error { return f.hit(c) }
+func (f *fakeAPIKeys) Create(c fiber.Ctx) error  { return f.hit(c) }
+func (f *fakeAPIKeys) Update(c fiber.Ctx) error  { return f.hit(c) }
+func (f *fakeAPIKeys) Delete(c fiber.Ctx) error  { return f.hit(c) }
 
 func passThrough(c fiber.Ctx) error { return c.Next() }
 
 type envOpts struct {
-	attempts    totpAttemptLimiter // nil = fakeLimiter
-	verifyLimit fiber.Handler      // nil = tanpa pembatas IP
-	loginLimit  fiber.Handler      // nil = tanpa pembatas IP
+	attempts totpAttemptLimiter // nil = fakeLimiter
+	// attemptsFor: pembatas yang butuh repositori in-memory env ini (mis.
+	// auth.RedisTOTPLimiter dengan lapis panjang di fakeAdminStore).
+	attemptsFor func(*fakeAdminStore) totpAttemptLimiter
+	verifyLimit fiber.Handler // nil = tanpa pembatas IP
+	loginLimit  fiber.Handler // nil = tanpa pembatas IP
 	// wrap membungkus repositori in-memory (mis. menahan satu panggilan untuk
 	// uji balapan). nil = env.store apa adanya.
 	wrap func(*fakeAdminStore) adminUserStore
@@ -472,6 +604,9 @@ func newAuthEnvWith(t *testing.T, o envOpts) *authEnv {
 	var attempts totpAttemptLimiter = env.limiter
 	if o.attempts != nil {
 		attempts = o.attempts
+	}
+	if o.attemptsFor != nil {
+		attempts = o.attemptsFor(env.store)
 	}
 	verifyLimit := o.verifyLimit
 	if verifyLimit == nil {
@@ -508,6 +643,8 @@ func newAuthEnvWith(t *testing.T, o envOpts) *authEnv {
 		verifyLimit: verifyLimit,
 	})
 	registerAdminUserRoutes(admin, uh, mw.RequireLiveSession(store))
+	env.keys = &fakeAPIKeys{}
+	registerAPIKeyRoutes(admin, env.keys, mw.RequireLiveSession(store))
 	env.app = app
 	return env
 }

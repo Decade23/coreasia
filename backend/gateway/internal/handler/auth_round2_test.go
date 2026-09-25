@@ -3,11 +3,11 @@ package handler
 import (
 	"context"
 	"net/http"
-	"os"
 	"strconv"
 	"testing"
 
 	"github.com/coreasia/gateway/internal/auth"
+	"github.com/coreasia/gateway/internal/testenv"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 )
@@ -272,14 +272,11 @@ func TestLogin_BatasPerAkun_RedisMatiGagalTerbuka(t *testing.T) {
 
 // Batas per akun dengan Redis sungguhan (opt-in; DB 15, kunci dihapus sesudahnya).
 func TestLogin_BatasPerAkun_RedisSungguhan(t *testing.T) {
-	addr := os.Getenv("GATEWAY_TEST_REDIS_ADDR")
-	if addr == "" {
-		t.Skip("GATEWAY_TEST_REDIS_ADDR tidak di-set")
-	}
+	addr := testenv.RedisAddr(t)
 	rdb := redis.NewClient(&redis.Options{Addr: addr, DB: 15})
 	defer rdb.Close()
 	if err := rdb.Ping(context.Background()).Err(); err != nil {
-		t.Skipf("redis %s tidak terjangkau: %v", addr, err)
+		testenv.Unavailable(t, "redis %s tidak terjangkau: %v", addr, err)
 	}
 	lim := auth.NewRedisLoginLimiter(rdb, loginMaxFailures, loginFailureWindow, loginOriginTTL)
 	email := "uji-" + uuid.NewString() + "@contoh.invalid"

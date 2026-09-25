@@ -7,7 +7,6 @@ import (
 	"errors"
 	"net"
 	"net/http"
-	"os"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -17,6 +16,7 @@ import (
 	"github.com/coreasia/gateway/internal/auth"
 	mw "github.com/coreasia/gateway/internal/middleware"
 	"github.com/coreasia/gateway/internal/model"
+	"github.com/coreasia/gateway/internal/testenv"
 	"github.com/gofiber/fiber/v3"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
@@ -391,15 +391,12 @@ func TestPutaran4_LoginPerAkun_AsalDikenalTidakTerkunci(t *testing.T) {
 // dan uji ujung ke ujung seperti PoC (penyerang dari 2 IP, Master dari asal
 // yang dikenal). Kunci dihapus sesudahnya.
 func TestPutaran4_LoginPerAkun_AsalDikenalRedisSungguhan(t *testing.T) {
-	addr := os.Getenv("GATEWAY_TEST_REDIS_ADDR")
-	if addr == "" {
-		t.Skip("GATEWAY_TEST_REDIS_ADDR tidak di-set")
-	}
+	addr := testenv.RedisAddr(t)
 	rdb := redis.NewClient(&redis.Options{Addr: addr, DB: 15})
 	defer rdb.Close()
 	ctx := context.Background()
 	if err := rdb.Ping(ctx).Err(); err != nil {
-		t.Skipf("redis %s tidak terjangkau: %v", addr, err)
+		testenv.Unavailable(t, "redis %s tidak terjangkau: %v", addr, err)
 	}
 	lim := auth.NewRedisLoginLimiter(rdb, loginMaxFailures, loginFailureWindow, loginOriginTTL)
 	email := "uji-" + uuid.NewString() + "@contoh.invalid"

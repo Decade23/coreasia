@@ -59,6 +59,7 @@ func main() {
 
 	// Auto-seed: ensure at least one admin user exists
 	ensureAdminExists(ctx, pool, cfg)
+	warnDuplicateAdminEmails(ctx, pool)
 
 	// Connect to Redis
 	rdb := connectRedis(ctx, cfg.Redis)
@@ -252,7 +253,7 @@ func runMigrations(dsn string) {
 }
 
 func seedAdminUser(ctx context.Context, pool *pgxpool.Pool, cfg *config.Config) {
-	email := os.Getenv("ADMIN_EMAIL")
+	email := model.NormalizeEmail(os.Getenv("ADMIN_EMAIL"))
 	password := os.Getenv("ADMIN_PASSWORD")
 	fullName := os.Getenv("ADMIN_NAME")
 
@@ -266,7 +267,7 @@ func seedAdminUser(ctx context.Context, pool *pgxpool.Pool, cfg *config.Config) 
 
 	// Check if admin already exists
 	var exists bool
-	err := pool.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM public.admin_users WHERE email = $1)", email).Scan(&exists)
+	err := pool.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM public.admin_users WHERE lower(btrim(email)) = $1)", email).Scan(&exists)
 	if err != nil {
 		slog.Error("gagal cek admin user", "error", err)
 		os.Exit(1)
@@ -315,4 +316,21 @@ func ensureAdminExists(ctx context.Context, pool *pgxpool.Pool, cfg *config.Conf
 	}
 
 	seedAdminUser(ctx, pool, cfg)
+}
+
+// warnDuplicateAdminEmails: migrasi 000016 tidak memasang indeks unik
+// lower(btrim(email)) bila ada email admin yang kembar setelah dinormalkan (supaya
+// migrasi tidak pernah gagal dan gateway tetap hidup). Selama itu, email bukan
+// identitas yang unik: catat di setiap start sampai operator merapikannya
+// (README, "Migrasi 000016").
+func warnDuplicateAdminEmails(ctx context.Context, pool *pgxpool.Pool) {
+	n, err := repository.NewAdminUserRepo(pool).DuplicateEmailGroups(ctx)
+	if err != nil {
+		slog.Warn("gagal memeriksa email admin kembar", "error", err)
+		return
+	}
+	if n > 0 {
+		slog.Error("email admin kembar tanpa peka huruf: indeks unik 000016 belum terpasang; rapikan lalu pasang indeksnya (lihat README)",
+			"jumlah_email_kembar", n)
+	}
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/coreasia/gateway/internal/auth"
 	"github.com/coreasia/gateway/internal/config"
 	mw "github.com/coreasia/gateway/internal/middleware"
+	"github.com/coreasia/gateway/internal/testenv"
 	"github.com/google/uuid"
 	"github.com/redis/go-redis/v9"
 )
@@ -72,18 +73,18 @@ func TestTOTPVerify_ParalelTidakMelampauiBatas(t *testing.T) {
 // Sama, dengan RedisAttemptLimiter sungguhan (opt-in; DB 15, kunci milik admin
 // acak dihapus sesudahnya).
 func TestTOTPVerify_ParalelRedisSungguhan(t *testing.T) {
-	addr := os.Getenv("GATEWAY_TEST_REDIS_ADDR")
-	if addr == "" {
-		t.Skip("GATEWAY_TEST_REDIS_ADDR tidak di-set")
-	}
+	addr := testenv.RedisAddr(t)
 	rdb := redis.NewClient(&redis.Options{Addr: addr, DB: 15})
 	defer rdb.Close()
 	ctx := context.Background()
 	if err := rdb.Ping(ctx).Err(); err != nil {
-		t.Skipf("redis %s tidak terjangkau: %v", addr, err)
+		testenv.Unavailable(t, "redis %s tidak terjangkau: %v", addr, err)
 	}
-	lim := auth.NewRedisTOTPLimiter(rdb, totpMaxFailures, totpFailureWindow, totpMaxFailuresLong, totpFailureWindowLong)
-	e := newAuthEnvWith(t, envOpts{attempts: lim})
+	var lim *auth.RedisTOTPLimiter
+	e := newAuthEnvWith(t, envOpts{attemptsFor: func(f *fakeAdminStore) totpAttemptLimiter {
+		lim = auth.NewRedisTOTPLimiter(rdb, f, totpMaxFailures, totpFailureWindow, totpMaxFailuresLong, totpFailureWindowLong)
+		return lim
+	}})
 	e.store.findDelay = 3 * time.Millisecond
 	u, secret := e.addTOTPAdmin(t, "mfa@coreasia.id")
 	defer lim.Clear(ctx, u.ID)
@@ -135,7 +136,7 @@ func TestTOTP_PemesananGagal_503TanpaEvaluasi(t *testing.T) {
 
 // Pembatas IP di depan /totp/verify: 10 per 15 menit per IP, lintas admin.
 func TestTOTPVerify_BatasPerIP(t *testing.T) {
-	e := newAuthEnvWith(t, envOpts{verifyLimit: mw.NewIPRateLimiter(10, 15*time.Minute, false).Middleware()})
+	e := newAuthEnvWith(t, envOpts{verifyLimit: mw.NewIPRateLimiter(10, 15*time.Minute, false).MiddlewareBy(mw.ClientIPKey)})
 	type akun struct{ email, secret, ch string }
 	var list []akun
 	for _, email := range []string{"a@coreasia.id", "b@coreasia.id", "c@coreasia.id"} {
