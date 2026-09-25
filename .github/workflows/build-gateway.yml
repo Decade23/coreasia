@@ -11,9 +11,10 @@ on:
       - '.github/workflows/build-gateway.yml'
   workflow_dispatch: {}
 
+# Izin diberikan per job: job test menjalankan kode pihak ketiga (init() dan
+# uji dependensi saat go test/vet), jadi tidak boleh memegang packages: write.
 permissions:
   contents: read
-  packages: write
 
 jobs:
   # go vet + go test, termasuk uji opt-in terhadap Postgres dan Redis sungguhan
@@ -23,6 +24,8 @@ jobs:
   # (internal/testenv). Image hanya dibangun bila job ini hijau.
   test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     services:
       postgres:
         image: postgres:17
@@ -60,6 +63,10 @@ jobs:
         working-directory: backend/gateway
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Job ini tidak pernah git push; jangan tinggalkan GITHUB_TOKEN di
+          # .git/config agar tidak terbaca kode yang dieksekusi go test.
+          persist-credentials: false
 
       - uses: actions/setup-go@v5
         with:
@@ -85,6 +92,9 @@ jobs:
   build:
     needs: test
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     steps:
       - uses: actions/checkout@v4
 
