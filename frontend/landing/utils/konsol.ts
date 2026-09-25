@@ -342,6 +342,7 @@ export const KUNCI_SESI_CASHFLOW = 'cf-console-sesi'
 interface SimpananSesi {
   length: number
   key: (i: number) => string | null
+  getItem: (k: string) => string | null
   removeItem: (k: string) => void
 }
 
@@ -349,15 +350,22 @@ interface SimpananSesi {
  * Buang sisa console dari sessionStorage tab ini: sesi Supabase CashFlow
  * (akses + refresh) dan, untuk dokumen publik, draf form console. `ambil`
  * dipanggil di dalam try: membaca window.sessionStorage pun bisa melempar.
+ * Memulangkan jumlah kunci yang benar-benar dibuang (0 = tidak ada sisa).
  */
-export function hapusSisaKonsol(ambil: () => SimpananSesi | null | undefined, draf: boolean): void {
+export function hapusSisaKonsol(ambil: () => SimpananSesi | null | undefined, draf: boolean): number {
   try {
     const simpan = ambil()
-    if (!simpan) return
-    simpan.removeItem(KUNCI_SESI_CASHFLOW)
-    if (draf) hapusSemuaDraf(simpan)
+    if (!simpan) return 0
+    let n = 0
+    if (simpan.getItem(KUNCI_SESI_CASHFLOW) !== null) {
+      simpan.removeItem(KUNCI_SESI_CASHFLOW)
+      n++
+    }
+    if (draf) n += hapusSemuaDraf(simpan)
+    return n
   } catch {
-    // penyimpanan diblokir: tidak ada yang tertinggal
+    // penyimpanan diblokir: tidak ada yang tertinggal (GTM pun tak bisa membacanya)
+    return 0
   }
 }
 
@@ -373,14 +381,15 @@ interface JendelaBfcache {
  * sudah berisi token CashFlow yang ditulis console sesudahnya — dan GTM di
  * dokumen itu masih hidup (temuan F8). Saat pageshow persisted: sisa console
  * dibuang lalu dokumen dimuat ulang (plugin berjalan dari awal, GTM baru).
- * Pendengar ini didaftarkan saat plugin berjalan, sebelum skrip GTM
+ * Muat ulang HANYA bila ada sisa yang dibuang: Back biasa di situs publik
+ * tetap dipulihkan dari bfcache (instan, isian form utuh, tanpa page_view
+ * ganda). Pendengar ini didaftarkan saat plugin berjalan, sebelum skrip GTM
  * disisipkan, jadi ia berjalan lebih dulu dari pendengar pageshow milik GTM.
  */
 export function pasangPembersihBfcache(w: JendelaBfcache): void {
   w.addEventListener('pageshow', (e) => {
     if (!e.persisted) return
-    hapusSisaKonsol(() => w.sessionStorage, true)
-    w.location.reload()
+    if (hapusSisaKonsol(() => w.sessionStorage, true) > 0) w.location.reload()
   })
 }
 

@@ -5,7 +5,8 @@
  * console) tidak menjalankan plugin lagi, padahal console di tab yang sama
  * sudah menulis token CashFlow (akses + refresh) ke sessionStorage, dan GTM di
  * dokumen itu masih hidup. Kini dokumen publik memasang pendengar pageshow:
- * persisted → token + draf dibuang, lalu dokumen dimuat ulang.
+ * persisted → token + draf dibuang, lalu dokumen dimuat ulang — hanya bila
+ * memang ada sisa console (Back biasa di situs publik tetap memakai bfcache).
  *
  * Nuxt ditiru secukupnya (defineNuxtPlugin, useRouter, window, document).
  */
@@ -89,11 +90,27 @@ describe('konsol-isolasi: dokumen publik', () => {
     expect(reload).not.toHaveBeenCalled()
   })
 
-  it('sessionStorage diblokir → tetap memuat ulang tanpa melempar', async () => {
+  it('Back biasa di situs publik (storage tanpa sisa console) → bfcache dipakai, TANPA muat ulang', async () => {
+    await muat('/layanan/jasa-pembuatan-website')
+    simpan.setItem('lain', 'tetap')
+    pageshow(true)
+    expect(reload).not.toHaveBeenCalled()
+    expect([...simpan.peta.keys()]).toEqual(['lain'])
+  })
+
+  it('hanya draf console yang tertinggal → dibuang lalu dimuat ulang', async () => {
+    await muat('/about')
+    simpan.setItem(`${AWALAN_DRAF}artikel`, '{"isi":"draf"}')
+    pageshow(true)
+    expect(simpan.getItem(`${AWALAN_DRAF}artikel`)).toBeNull()
+    expect(reload).toHaveBeenCalledTimes(1)
+  })
+
+  it('sessionStorage diblokir → tidak melempar dan tidak memuat ulang (GTM pun tak bisa membacanya)', async () => {
     await muat('/about')
     Object.defineProperty(window, 'sessionStorage', { get() { throw new Error('SecurityError') } })
     expect(() => pageshow(true)).not.toThrow()
-    expect(reload).toHaveBeenCalledTimes(1)
+    expect(reload).not.toHaveBeenCalled()
   })
 })
 
