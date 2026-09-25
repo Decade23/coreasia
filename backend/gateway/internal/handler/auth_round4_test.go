@@ -265,7 +265,7 @@ func TestPutaran4_TulisanMasterBasi409LaluUlangi(t *testing.T) {
 	}
 	close(g.release)
 	wg.Wait()
-	if mr.status != http.StatusConflict || !strings.Contains(errMessage(mr.body), "Muat ulang") {
+	if mr.status != http.StatusConflict || mr.errCode() != "CONFLICT" || !strings.Contains(errMessage(mr.body), "Muat ulang") {
 		t.Fatalf("tulisan Master yang basi: %d %v, want 409", mr.status, mr.body)
 	}
 	if r := e.do(t, http.MethodPut, path, mTok, map[string]any{"full_name": "Staf Baru"}); r.status != http.StatusOK {

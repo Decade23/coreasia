@@ -161,9 +161,16 @@ func errAdminChanged() *apperr.AppError {
 }
 
 // errEmailTaken: 409, sama untuk Create dan Update. Email dibandingkan tanpa
-// peka huruf dan spasi tepi.
+// peka huruf dan spasi tepi. Kodenya EMAIL_TAKEN, bukan CONFLICT: di Update,
+// 409 CONFLICT berarti baris berubah sejak dimuat (errAdminChanged, console
+// memuat ulang lalu meminta mengulang), sedangkan email kembar tidak akan
+// selesai dengan mengulang. Status tetap 409 agar console lama tetap jalan.
 func errEmailTaken() *apperr.AppError {
-	return apperr.NewConflict("Email sudah terdaftar")
+	return &apperr.AppError{
+		Code:       "EMAIL_TAKEN",
+		Message:    "Email sudah terdaftar",
+		HTTPStatus: http.StatusConflict,
+	}
 }
 
 // errCurrentPasswordRequired: mengganti sandi sendiri tanpa current_password.
@@ -379,7 +386,12 @@ func (h *AdminUserHandler) Update(c fiber.Ctx) error {
 		emailChanged
 
 	oldEmail := user.Email
-	if req.Email != nil {
+	// Kolom email hanya ditulis bila benar-benar diganti. Console selalu
+	// mengirim ulang email apa adanya; baris lama yang oleh 000016 dibiarkan tak
+	// baku (kembar beda huruf) akan melanggar UNIQUE(email) peka huruf bila
+	// ditulis ulang dalam bentuk baku, sehingga peran atau namanya tidak bisa
+	// diubah sama sekali.
+	if emailChanged {
 		user.Email = *req.Email
 	}
 	if req.FullName != nil {

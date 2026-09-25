@@ -422,13 +422,18 @@ pencabutan sesi per email. Karena itu:
   spasi tepi (`model.NormalizeEmail`) di `POST /users`, `PUT /users/:id`, `/login`,
   dan seed `ADMIN_EMAIL`. Login dengan `Admin@CoreAsia.ID ` diterima.
 - `POST /users` dan `PUT /users/:id` menolak email yang sudah dipakai admin lain,
-  tanpa peka huruf: **409 `CONFLICT`** ("Email sudah terdaftar"). Balapan dua
+  tanpa peka huruf: **409 `EMAIL_TAKEN`** ("Email sudah terdaftar"). Balapan dua
   permintaan ditahan indeks unik `admin_users_email_lower_key` pada
-  `lower(btrim(email))` (pelanggarannya juga dijawab 409).
+  `lower(btrim(email))` (pelanggarannya juga dijawab 409 `EMAIL_TAKEN`). Kodenya
+  sengaja beda dengan 409 `CONFLICT` di `PUT` (baris berubah sejak dimuat: muat
+  ulang lalu ulangi); email kembar tidak selesai dengan mengulang. Console yang
+  hanya membaca status tetap jalan.
 - **Mengganti email mencabut semua sesi admin itu** (`token_version` naik), termasuk
   akun sendiri: token lama ditolak `/auth/me`, jadi landing tidak bisa mencetak sesi
   CashFlow baru atas email baru tanpa login ulang. Email yang sama dengan huruf
-  berbeda bukan penggantian (tidak mencabut). Audit `update` menyebut email lama.
+  berbeda bukan penggantian: kolom email tidak ditulis dan sesi tidak dicabut
+  (baris kembar yang dibiarkan tak baku oleh 000016 tetap bisa diedit peran dan
+  namanya). Audit `update` menyebut email lama.
 - `PUT /users/:id` kini menjalankan validasi yang sama dengan `POST /users`: sandi
   lemah (`password_strength`), peran di luar `admin`/`super_admin`, email tidak sah,
   dan nama < 2 aksara ditolak **400 `VALIDATION_FAILED`** tanpa menulis apa pun.

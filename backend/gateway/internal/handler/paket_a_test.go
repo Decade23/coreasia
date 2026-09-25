@@ -73,8 +73,8 @@ func TestUpdateAdmin_EmailTanpaPekaHurufDanMencabutSesi(t *testing.T) {
 
 	for _, email := range []string{"boss@coreasia.id", "BOSS@COREASIA.ID", " Boss@CoreAsia.id "} {
 		r := e.do(t, http.MethodPut, path, bossTok, map[string]any{"email": email})
-		if r.status != http.StatusConflict || r.errCode() != "CONFLICT" {
-			t.Fatalf("email %q milik admin lain: %d %s, want 409 CONFLICT", email, r.status, r.errCode())
+		if r.status != http.StatusConflict || r.errCode() != "EMAIL_TAKEN" {
+			t.Fatalf("email %q milik admin lain: %d %s, want 409 EMAIL_TAKEN", email, r.status, r.errCode())
 		}
 	}
 	if got := e.store.get(target.ID); got.Email != "staf@coreasia.id" || got.TokenVersion != 0 {
@@ -125,8 +125,8 @@ func TestCreateDanLogin_EmailTanpaPekaHuruf(t *testing.T) {
 		return map[string]any{"email": email, "password": "SandiKuat-123", "full_name": "Admin Baru", "role": "admin"}
 	}
 	for _, email := range []string{"BOSS@coreasia.id", " boss@coreasia.id "} {
-		if r := e.do(t, http.MethodPost, "/api/admin/users", tok, body(email)); r.status != http.StatusConflict || r.errCode() != "CONFLICT" {
-			t.Fatalf("Create %q: %d %s, want 409 CONFLICT", email, r.status, r.errCode())
+		if r := e.do(t, http.MethodPost, "/api/admin/users", tok, body(email)); r.status != http.StatusConflict || r.errCode() != "EMAIL_TAKEN" {
+			t.Fatalf("Create %q: %d %s, want 409 EMAIL_TAKEN", email, r.status, r.errCode())
 		}
 	}
 	r := e.do(t, http.MethodPost, "/api/admin/users", tok, body(" Baru@CoreAsia.ID "))
@@ -157,11 +157,128 @@ func TestAdmin_PelanggaranUnikDariDB409(t *testing.T) {
 	boss := e.addAdmin(t, "boss@coreasia.id", "super_admin")
 	target := e.addAdmin(t, "staf@coreasia.id", "admin")
 	tok := e.tokens(t, boss, true).AccessToken
-	if r := e.do(t, http.MethodPut, "/api/admin/users/"+target.ID.String(), tok, map[string]any{"email": "lain@coreasia.id"}); r.status != http.StatusConflict {
-		t.Fatalf("Update, DB menolak email: %d %v, want 409", r.status, r.body)
+	if r := e.do(t, http.MethodPut, "/api/admin/users/"+target.ID.String(), tok, map[string]any{"email": "lain@coreasia.id"}); r.status != http.StatusConflict || r.errCode() != "EMAIL_TAKEN" {
+		t.Fatalf("Update, DB menolak email: %d %v, want 409 EMAIL_TAKEN", r.status, r.body)
 	}
-	if r := e.do(t, http.MethodPost, "/api/admin/users", tok, map[string]any{"email": "lain@coreasia.id", "password": "SandiKuat-123", "full_name": "Lain", "role": "admin"}); r.status != http.StatusConflict {
-		t.Fatalf("Create, DB menolak email: %d %v, want 409", r.status, r.body)
+	if r := e.do(t, http.MethodPost, "/api/admin/users", tok, map[string]any{"email": "lain@coreasia.id", "password": "SandiKuat-123", "full_name": "Lain", "role": "admin"}); r.status != http.StatusConflict || r.errCode() != "EMAIL_TAKEN" {
+		t.Fatalf("Create, DB menolak email: %d %v, want 409 EMAIL_TAKEN", r.status, r.body)
+	}
+}
+
+// Email kembar dan baris berubah sama-sama 409, tetapi kodenya berbeda: console
+// memuat ulang lalu meminta mengulang HANYA untuk CONFLICT (errAdminChanged).
+// Dengan kode yang sama, email kembar di Update tampil sebagai "data berubah,
+// ulangi" tanpa akhir.
+func TestAdmin_EmailKembarBedaKodeDenganBarisBerubah(t *testing.T) {
+	if a, b := errEmailTaken(), errAdminChanged(); a.HTTPStatus != http.StatusConflict || b.HTTPStatus != http.StatusConflict ||
+		a.Code != "EMAIL_TAKEN" || b.Code != "CONFLICT" {
+		t.Fatalf("errEmailTaken = %d %s, errAdminChanged = %d %s; want 409 EMAIL_TAKEN dan 409 CONFLICT",
+			a.HTTPStatus, a.Code, b.HTTPStatus, b.Code)
+	}
+}
+
+// pekaHurufUnikStore meniru produksi yang punya kembaran beda huruf sehingga
+// indeks 000016 tidak terpasang: hanya UNIQUE(email) peka huruf dari 000001
+// yang berlaku, jadi tulisan dengan email yang persis sama dengan baris lain
+// ditolak ErrEmailTaken.
+type pekaHurufUnikStore struct{ *fakeAdminStore }
+
+func (s pekaHurufUnikStore) Update(ctx context.Context, u *model.AdminUser, revoke bool) (bool, error) {
+	s.mu.Lock()
+	for id, o := range s.users {
+		if id != u.ID && o.Email == u.Email {
+			s.mu.Unlock()
+			return false, repository.ErrEmailTaken
+		}
+	}
+	s.mu.Unlock()
+	return s.fakeAdminStore.Update(ctx, u, revoke)
+}
+
+// Form edit console selalu mengirim ulang email apa adanya. Email yang sama
+// setelah dinormalkan bukan penggantian: kolom email tidak ditulis dan sesi
+// tidak dicabut karenanya. Tanpa itu, baris tak baku yang kembar tidak bisa
+// diedit sama sekali (UNIQUE peka huruf menolak bentuk baku, 409), dan baris
+// tak baku tanpa kembaran kehilangan sesinya setiap kali disimpan.
+func TestUpdateAdmin_EmailTakBakuTanpaGantiEmail(t *testing.T) {
+	e := newAuthEnvWith(t, envOpts{wrap: func(f *fakeAdminStore) adminUserStore { return pekaHurufUnikStore{f} }})
+	boss := e.addAdmin(t, "boss@coreasia.id", "super_admin")
+	e.addAdmin(t, "y@x.id", "admin")
+	kembar := e.addAdmin(t, "Y@X.ID", "super_admin")
+	lama := e.addAdmin(t, "Staf@CoreAsia.id", "admin")
+	tok := e.tokens(t, boss, true).AccessToken
+
+	// Menurunkan peran baris kembar tanpa menyentuh email.
+	r := e.do(t, http.MethodPut, "/api/admin/users/"+kembar.ID.String(), tok, map[string]any{"email": "Y@X.ID", "full_name": "Kembar", "role": "admin"})
+	if r.status != http.StatusOK {
+		t.Fatalf("edit baris kembar tanpa ganti email: %d %v, want 200", r.status, r.body)
+	}
+	if got := e.store.get(kembar.ID); got.Email != "Y@X.ID" || got.Role != "admin" || got.FullName != "Kembar" || got.TokenVersion != 1 {
+		t.Fatalf("baris kembar: %+v, want email tetap Y@X.ID, peran admin, tv 1 (karena peran)", got)
+	}
+
+	// Baris tak baku tanpa kembaran: email sama beda huruf, hanya nama.
+	r = e.do(t, http.MethodPut, "/api/admin/users/"+lama.ID.String(), tok, map[string]any{"email": "staf@coreasia.id", "full_name": "Staf Lama"})
+	if r.status != http.StatusOK {
+		t.Fatalf("edit baris tak baku: %d %v", r.status, r.body)
+	}
+	if got := e.store.get(lama.ID); got.Email != "Staf@CoreAsia.id" || got.FullName != "Staf Lama" || got.TokenVersion != 0 {
+		t.Fatalf("baris tak baku: %+v, want email tidak ditulis dan sesi tidak dicabut", got)
+	}
+	if d := e.audit.descsOf("update"); strings.Contains(d[len(d)-1], "email lama") || strings.Contains(d[len(d)-1], "dicabut") {
+		t.Fatalf("audit bukan ganti email: %q", d[len(d)-1])
+	}
+}
+
+// findEmailErrStore: pemeriksaan email kembar gagal (DB putus sesaat).
+type findEmailErrStore struct{ *fakeAdminStore }
+
+func (findEmailErrStore) FindByEmail(context.Context, string) (*model.AdminUser, error) {
+	return nil, errors.New("koneksi DB putus")
+}
+
+// Galat saat memeriksa email kembar = 500 tanpa menulis apa pun (dulu galatnya
+// ditelan dan penulisan berjalan tanpa pemeriksaan).
+func TestAdmin_GalatCekEmailTidakMenulis(t *testing.T) {
+	e := newAuthEnvWith(t, envOpts{wrap: func(f *fakeAdminStore) adminUserStore { return findEmailErrStore{f} }})
+	boss := e.addAdmin(t, "boss@coreasia.id", "super_admin")
+	target := e.addAdmin(t, "staf@coreasia.id", "admin")
+	tok := e.tokens(t, boss, true).AccessToken
+
+	if r := e.do(t, http.MethodPost, "/api/admin/users", tok, map[string]any{"email": "baru@coreasia.id", "password": "SandiKuat-123", "full_name": "Baru", "role": "admin"}); r.status != http.StatusInternalServerError {
+		t.Fatalf("Create, cek email galat: %d %v, want 500", r.status, r.body)
+	}
+	if n := len(e.store.users); n != 2 {
+		t.Fatalf("Create menulis walau cek email galat: %d admin, want 2", n)
+	}
+	if r := e.do(t, http.MethodPut, "/api/admin/users/"+target.ID.String(), tok, map[string]any{"email": "baru@coreasia.id"}); r.status != http.StatusInternalServerError {
+		t.Fatalf("Update, cek email galat: %d %v, want 500", r.status, r.body)
+	}
+	if got := e.store.get(target.ID); got.Email != "staf@coreasia.id" || got.TokenVersion != 0 {
+		t.Fatalf("Update menulis walau cek email galat: %+v", got)
+	}
+}
+
+// Ganti sandi sendiri: isian yang ditolak (validasi, email kembar) dijawab
+// sebelum sandi saat ini diperiksa, jadi tidak memakai jatah faktor kedua.
+func TestUpdateAdmin_DitolakSebelumSandiSaatIni(t *testing.T) {
+	e := newAuthEnv(t)
+	e.addTOTPAdmin(t, "master@coreasia.id") // aturan sandi saat ini berlaku
+	u := e.addAdmin(t, "a@coreasia.id", "super_admin")
+	tok := e.tokens(t, u, false).AccessToken
+	path := "/api/admin/users/" + u.ID.String()
+
+	if r := e.do(t, http.MethodPut, path, tok, map[string]any{"password": "a", "current_password": "salah-total"}); r.status != http.StatusBadRequest || r.errCode() != "VALIDATION_FAILED" {
+		t.Fatalf("sandi baru lemah: %d %s, want 400 VALIDATION_FAILED", r.status, r.errCode())
+	}
+	if r := e.do(t, http.MethodPut, path, tok, map[string]any{"email": "MASTER@coreasia.id", "password": "SandiKuat-123", "current_password": "salah-total"}); r.status != http.StatusConflict || r.errCode() != "EMAIL_TAKEN" {
+		t.Fatalf("email kembar: %d %s, want 409 EMAIL_TAKEN", r.status, r.errCode())
+	}
+	if n, l := e.limiter.count(u.ID), e.limiter.longCount(u.ID); n != 0 || l != 0 {
+		t.Fatalf("jatah terpakai oleh permintaan yang ditolak: pendek %d, panjang %d", n, l)
+	}
+	if e.audit.has("totp_failed") {
+		t.Fatalf("audit: %v", e.audit.actions)
 	}
 }
 
