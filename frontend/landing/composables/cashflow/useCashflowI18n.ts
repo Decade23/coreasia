@@ -465,7 +465,7 @@ const KAMUS = {
     kabar: {
       ket: 'Kotak masuk kabar orang ini dan setelannya, dari ruang dalam lingkup kasus. Nama tampilan pengirim tidak dikirim.',
       ringkas: { total: 'Kabar', belum: 'Belum dibaca' },
-      saring: { ruang: 'Semua ruang', jenis: 'Semua jenis', baca: { semua: 'Semua', belum: 'Belum dibaca', sudah: 'Sudah dibaca' } },
+      saring: { ruang: 'Semua ruang', jenis: 'Semua jenis', atur: 'Atur ulang saringan', baca: { semua: 'Semua', belum: 'Belum dibaca', sudah: 'Sudah dibaca' } },
       kosong: 'Belum ada kabar untuk orang ini.', kosongSaring: 'Tidak ada kabar untuk saringan ini.',
       dibaca: 'Dibaca', belum: 'Belum dibaca', aktor: 'Oleh', akunHilang: 'akun sudah tidak ada', adaNama: 'Nama tampilan ada (tidak dikirim)',
       kategori: 'Kategori', peranBaru: 'Peran baru', tanggal: 'Tanggal',
@@ -943,7 +943,7 @@ const KAMUS = {
     kabar: {
       ket: 'This person’s notification inbox and settings, from workspaces in the case scope. Sender display names are not sent.',
       ringkas: { total: 'Notifications', belum: 'Unread' },
-      saring: { ruang: 'All workspaces', jenis: 'All types', baca: { semua: 'All', belum: 'Unread', sudah: 'Read' } },
+      saring: { ruang: 'All workspaces', jenis: 'All types', atur: 'Reset filters', baca: { semua: 'All', belum: 'Unread', sudah: 'Read' } },
       kosong: 'No notifications for this person yet.', kosongSaring: 'No notifications match these filters.',
       dibaca: 'Read', belum: 'Unread', aktor: 'By', akunHilang: 'account no longer exists', adaNama: 'Display name exists (not sent)',
       kategori: 'Category', peranBaru: 'New role', tanggal: 'Date',

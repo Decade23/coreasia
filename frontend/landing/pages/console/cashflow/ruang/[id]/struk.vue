@@ -17,7 +17,7 @@
 import { POLA_UUID } from '~/adapters/cashflow'
 import { POLA_KURSOR_URL, tanggalJam } from '~/adapters/cashflowBuku'
 import { tulisQuery, type SkemaQuery } from '~/adapters/cashflowQuery'
-import { SARING_STRUK_KOSONG, kursorStrukDariUrl, type RingkasStruk, type SaringStruk } from '~/adapters/cashflowRanahBuku'
+import { SARING_STRUK_KOSONG, kursorStrukDariUrl, saringStrukSah, type RingkasStruk, type SaringStruk } from '~/adapters/cashflowRanahBuku'
 
 definePageMeta({
   layout: 'console',
@@ -38,7 +38,8 @@ const { nilai: q, setel } = useCashflowQuery(SKEMA)
 
 // ── Saringan (memori, per ruang) ───────────────────────────────────────
 const simpan = useState<{ ws: string; s: SaringStruk } | null>('cf_struk_saring', () => null)
-const saring = computed<SaringStruk>(() => (simpan.value?.ws === id.value ? simpan.value.s : { ...SARING_STRUK_KOSONG }))
+const saring = computed<SaringStruk>(() => (simpan.value?.ws === id.value ? saringStrukSah(simpan.value.s) : { ...SARING_STRUK_KOSONG }))
+const adaSaring = computed(() => (Object.keys(SARING_STRUK_KOSONG) as Array<keyof SaringStruk>).some(k => saring.value[k] !== null))
 const gantiSaring = (s: SaringStruk) => {
   simpan.value = { ws: id.value, s }
   setel({ kursor: '', struk: '' })
@@ -99,6 +100,14 @@ const keTx = (tx: string) => `${dasar.value}/transaksi?tx=${tx}`
         />
       </div>
     </CashflowPanelTab>
+    <!-- Galat menggantikan isi tab (termasuk kontrol saringan); saringan hidup
+         di useState lintas navigasi, jadi jalan pulangnya harus di luar panel. -->
+    <button
+      v-if="d.galat.value && adaSaring" type="button" class="ca-btn-secondary !px-3 !py-1.5 text-xs"
+      @click="gantiSaring({ ...SARING_STRUK_KOSONG })"
+    >
+      {{ tcf('struk.saring.atur') }}
+    </button>
 
     <CashflowLaci :show="!!q.struk" :judul="judulLaci" @close="tutup">
       <div v-if="q.struk" class="space-y-3">

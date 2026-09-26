@@ -31,16 +31,17 @@ const SKEMA = {
 const { nilai: q, setel } = useCashflowQuery(SKEMA)
 
 // ── Saringan (memori, per subjek) ──────────────────────────────────────
+const ruang = computed(() => kasus.kasus.value?.ruang ?? [])
 const simpan = useState<{ user: string; s: SaringKabar } | null>('cf_kabar_saring', () => null)
 const saring = computed<SaringKabar>(() => {
   const s = simpan.value?.user === id.value ? simpan.value.s : SARING_KABAR_KOSONG
-  return { ...s, ruang: ruangKabarSah(s.ruang) }
+  return { ...s, ruang: ruangKabarSah(s.ruang, ruang.value) }
 })
+const adaSaring = computed(() => saring.value.ruang !== null || saring.value.jenis !== null || saring.value.belum !== null)
 const gantiSaring = (s: SaringKabar) => {
   simpan.value = { user: id.value, s }
   setel({ kursor: '' })
 }
-const ruang = computed(() => kasus.kasus.value?.ruang ?? [])
 
 // ── Kotak masuk ────────────────────────────────────────────────────────
 const k = buku.kabar(() => id.value, () => saring.value, () => kursorKabarDariUrl(q.value.kursor))
@@ -77,5 +78,12 @@ const { wadah, berikutnya, sebelumnya, pertama: kePertama } = useCashflowKursor(
         />
       </div>
     </CashflowPanelTab>
+    <!-- Galat menggantikan isi tab (termasuk kontrol saringan): jalan pulang di luar panel. -->
+    <button
+      v-if="k.galat.value && adaSaring" type="button" class="ca-btn-secondary !px-3 !py-1.5 text-xs"
+      @click="gantiSaring({ ...SARING_KABAR_KOSONG })"
+    >
+      {{ tcf('kabar.saring.atur') }}
+    </button>
   </div>
 </template>

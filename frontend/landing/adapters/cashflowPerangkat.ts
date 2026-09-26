@@ -219,5 +219,9 @@ export function kursorKabarDariUrl(teks: string | null | undefined): KursorKabar
   const o = bacaObjekKursor(teks)
   return o && isoSah(o.p) && typeof o.i === 'number' && Number.isSafeInteger(o.i) && o.i > 0 ? { p: o.p, i: o.i } : null
 }
-/** p_ws kabar: hanya uuid yang dikirim (id rusak dari URL = semua ruang lingkup). */
-export const ruangKabarSah = (v: string | null | undefined): string | null => (v && POLA_UUID.test(v) ? v : null)
+/** p_ws kabar: hanya uuid yang ada di lingkup kasus kini yang dikirim. Saringan
+ *  disimpan per subjek dan hidup lebih lama dari kasusnya: ruang dari kasus
+ *  lama yang tidak ada di lingkup kasus baru dijawab server 42501 lingkup, dan
+ *  galat itu menutupi kontrol saringan — jadi dibuang di sini (= semua ruang). */
+export const ruangKabarSah = (v: string | null | undefined, lingkup: readonly string[]): string | null =>
+  (v && POLA_UUID.test(v) && lingkup.includes(v) ? v : null)

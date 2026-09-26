@@ -426,6 +426,24 @@ export interface SaringStruk {
   dari: string | null; sampai: string | null
 }
 export const SARING_STRUK_KOSONG: Readonly<SaringStruk> = { pencatat: null, jenis: null, kasbon: null, ocr: null, dari: null, sampai: null }
+/** Tanggal saringan yang sah: YYYY-MM-DD yang benar-benar ada di kalender. */
+const tanggalSaringSah = (v: string | null): string | null => {
+  if (!v || !/^\d{4}-\d{2}-\d{2}$/.test(v)) return null
+  const t = new Date(`${v}T00:00:00Z`)
+  return !Number.isNaN(t.getTime()) && t.toISOString().slice(0, 10) === v ? v : null
+}
+/**
+ * Saringan struk yang boleh dikirim: tanggal rusak dibuang, rentang terbalik
+ * ditukar. Atribut min/max input date tidak mencegah nilai yang DIKETIK, dan
+ * server menolak dari > sampai (22023 saringan) — galat itu menggantikan isi
+ * tab beserta kontrol saringannya, sementara saringan hidup di useState lintas
+ * navigasi: tanpa ini tab terkunci sampai peramban dimuat ulang.
+ */
+export function saringStrukSah(s: SaringStruk): SaringStruk {
+  const dari = tanggalSaringSah(s.dari)
+  const sampai = tanggalSaringSah(s.sampai)
+  return dari && sampai && dari > sampai ? { ...s, dari: sampai, sampai: dari } : { ...s, dari, sampai }
+}
 /** Arah UI → p_kind server. */
 export const kindDariArah = (a: ArahUang | null): 'income' | 'expense' | null => (a === 'masuk' ? 'income' : a === 'keluar' ? 'expense' : null)
 

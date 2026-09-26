@@ -14,7 +14,7 @@
  * boleh ke URL); komponen ini hanya memancarkan saringan baru.
  */
 import { angka, rupiah } from '~/adapters/cashflow'
-import { OCR_STRUK, SARING_STRUK_KOSONG, type RingkasStruk, type SaringStruk, type Struk } from '~/adapters/cashflowRanahBuku'
+import { OCR_STRUK, SARING_STRUK_KOSONG, saringStrukSah, type RingkasStruk, type SaringStruk, type Struk } from '~/adapters/cashflowRanahBuku'
 
 const props = defineProps<{
   baris: Struk[]
@@ -43,9 +43,11 @@ const pilihOcr = (e: Event) => {
   const v = (e.target as HTMLSelectElement).value
   ubah({ ocr: (OCR_STRUK as readonly string[]).includes(v) ? (v as SaringStruk['ocr']) : null })
 }
+/* Rentang terbalik yang diketik (min/max tidak mencegahnya) ditukar, bukan
+   dikirim: server menolaknya dan galat itu menutupi kontrol saringan. */
 const pilihTanggal = (k: 'dari' | 'sampai', e: Event) => {
   const v = (e.target as HTMLInputElement).value
-  ubah({ [k]: /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null })
+  emit('saring', saringStrukSah({ ...props.saring, [k]: v || null }))
 }
 const pilihPencatat = (e: Event) => {
   const v = (e.target as HTMLSelectElement).value
