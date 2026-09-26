@@ -480,6 +480,10 @@ terang dan gelap.
    Tab Ringkas, Anggota, Transaksi, Dompet, Jejak, dan Sampah terisi.
    `/kasus` hanya menampilkan SATU kasus aktif milik A atas U, dengan ranah
    ruang dan dompet sudah bertambah, bukan kasus baru.
+   Ruang U yang DI LUAR lingkup kasus (bagian "di luar lingkup") sengaja
+   tidak bertaut: klik "Masukkan ke lingkup" dulu, lalu nama ruangnya
+   bertaut dan kasus yang sama dipakai. Kalau ruang itu dibuka langsung
+   (palet, URL), Ruang 360 membuka kasus ruang kedua.
 2. **Refresh.** Tekan F5 di `/ruang/W1/dompet`. Data tampil lagi dan tetap
    tidak ada kasus baru di `/kasus`.
 3. **Tautan yang dibagikan.** B membuka URL `/ruang/W1` yang disalin A. B

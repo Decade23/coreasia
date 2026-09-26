@@ -42,9 +42,15 @@ describe('Fase 2: rute Ruang 360', () => {
     expect(TAB_PENGGUNA).toContain('dompet')
     expect(existsSync(join(AKAR, 'pages/console/cashflow/pengguna/[id]/dompet.vue'))).toBe(true)
   })
-  it('tab Ruang Pengguna 360 menautkan nama ruang ke Ruang 360', () => {
+  it('tab Ruang Pengguna 360 menautkan nama ruang DALAM lingkup saja ke Ruang 360', () => {
     const f = baca('pages/console/cashflow/pengguna/[id]/ruang.vue')
-    expect((f.match(/:to="`\/console\/cashflow\/ruang\/\$\{r\.id\}`"/g) ?? []).length).toBe(2)
+    const tautan = /:to="`\/console\/cashflow\/ruang\/\$\{r\.id\}`"/g
+    const dalam = f.slice(f.indexOf('v-for="r in dalam"'), f.indexOf('v-for="r in luar"'))
+    const luar = f.slice(f.indexOf('v-for="r in luar"'))
+    expect((dalam.match(tautan) ?? []).length).toBe(1)
+    // Ruang di luar lingkup → Ruang 360 akan membuka kasus ruang kedua; lewat "Masukkan ke lingkup" dulu.
+    expect(luar).not.toMatch(/\/console\/cashflow\/ruang\/|<NuxtLink/)
+    expect(luar).toMatch(/@click="masukkan\(r\)"/)
   })
 })
 

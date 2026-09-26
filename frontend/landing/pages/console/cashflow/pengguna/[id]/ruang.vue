@@ -13,9 +13,14 @@
  *   baru) = "Masukkan ke lingkup" satu klik, tanpa dialog (admin_kasus_tambah
  *   p_ruang; alasan diwarisi; tercatat).
  *
- * Nama ruang bertaut ke Ruang 360 (/ruang/<id>, Fase 2). Di sana kasus yang
- * sama dipakai lagi (admin_kasus_aktif_ruang: lingkupnya memuat ruang itu),
- * jadi pindah pengguna → ruang tidak membuka kasus baru, juga sesudah refresh.
+ * Nama ruang DALAM lingkup bertaut ke Ruang 360 (/ruang/<id>, Fase 2). Di
+ * sana kasus yang sama dipakai lagi (admin_kasus_aktif_ruang: lingkupnya
+ * memuat ruang itu), jadi pindah pengguna → ruang tidak membuka kasus baru,
+ * juga sesudah refresh. Nama ruang DI LUAR lingkup sengaja BUKAN tautan:
+ * admin_kasus_aktif_ruang tidak menemukan kasus yang memuatnya, sehingga
+ * Ruang 360 akan membuka kasus ruang KEDUA (subjek lain untuk batas 20/jam,
+ * audit buka_kasus ke semua anggota). Jalannya "Masukkan ke lingkup" dulu;
+ * sesudah itu ruang pindah ke bagian dalam dan namanya bertaut.
  */
 definePageMeta({
   layout: 'console',
@@ -91,7 +96,7 @@ const peran = (r: RuangSubjek) => (r.pemilik ? tcf('pengguna.pemilik') : r.peran
           <h3 class="text-xs font-semibold uppercase tracking-wide text-[var(--ca-muted)]">{{ tcf('ruangTab.luar')(luar.length) }}</h3>
           <ul class="mt-2 space-y-2">
             <li v-for="r in luar" :key="r.id" class="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-[color:var(--ca-border)] px-4 py-3 text-sm">
-              <NuxtLink :to="`/console/cashflow/ruang/${r.id}`" class="font-mono text-[var(--ca-text)] underline-offset-2 hover:underline">{{ r.nama }}</NuxtLink>
+              <span class="font-mono text-[var(--ca-text)]">{{ r.nama }}</span>
               <CashflowSalinId :id="r.id" />
               <span v-if="r.jenis" class="ca-pill-muted text-[0.7rem]">{{ tcf(`ruang.jenisOpsi.${r.jenis}`) }}</span>
               <span v-if="r.bekas" class="ca-pill-gold text-[0.7rem]">{{ tcf('ruangTab.bekas') }}</span>
