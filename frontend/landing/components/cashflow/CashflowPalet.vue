@@ -72,7 +72,7 @@ const item = computed<Item[]>(() => {
     for (const h of server.value.hasil) {
       hasil.push({
         kunci: `hasil-${h.kunci}`, grup: 'hasil', ke: h.ke,
-        ikon: h.jenis === 'pengguna' ? 'lucide:user' : h.jenis === 'sampah' ? 'lucide:trash-2' : 'lucide:receipt',
+        ikon: h.jenis === 'pengguna' ? 'lucide:user' : h.jenis === 'ruang' ? 'lucide:layers' : h.jenis === 'sampah' ? 'lucide:trash-2' : 'lucide:receipt',
         label: h.label, keterangan: h.ke ? labelJenis(h.jenis) : `${labelJenis(h.jenis)} · ${tcf('cari.tanpaPencatat')}`,
       })
     }
