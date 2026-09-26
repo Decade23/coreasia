@@ -23,25 +23,16 @@ const rows = ref<AktivitasV2DTO[]>([])
 onMounted(() => muat(async () => { rows.value = await api.aktivitasTerbaru(150) }))
 
 /** Satu Selidiki berjalan pada satu waktu: klik ganda tidak membuka dua kasus. */
-const sibuk = ref<number | null>(null)
-const selidiki = async (id: number) => {
-  if (sibuk.value !== null) return
-  sibuk.value = id
-  try {
-    await aksi(async () => {
-      const d = await api.kasusBukaDariPeristiwa(id, alasanSelidiki(new Date()))
-      if (adalahBatasAkses(d)) {
-        toast.error(tcf('kasus.batas')(d.batas.jam, d.batas.hari))
-        return
-      }
-      const ke = tujuanSelidiki(d)
-      if (ke) await navigateTo(ke)
-      else toast.error(tcf('selidiki.gagal'))
-    })
-  } finally {
-    sibuk.value = null
+const { sibuk, jalankan: selidiki } = useCashflowSekaliJalan((id: number) => aksi(async () => {
+  const d = await api.kasusBukaDariPeristiwa(id, alasanSelidiki(new Date()))
+  if (adalahBatasAkses(d)) {
+    toast.error(tcf('kasus.batas')(d.batas.jam, d.batas.hari))
+    return
   }
-}
+  const ke = tujuanSelidiki(d)
+  if (ke) await navigateTo(ke)
+  else toast.error(tcf('selidiki.gagal'))
+}))
 </script>
 
 <template>

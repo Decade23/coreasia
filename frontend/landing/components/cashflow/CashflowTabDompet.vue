@@ -21,7 +21,7 @@
 import { POLA_UUID, rupiah, angka } from '~/adapters/cashflow'
 import { POLA_KURSOR_URL, kursorTransaksiDariUrl, tanggalJam } from '~/adapters/cashflowBuku'
 import {
-  keDompet, keRingkasDompet, keMutasiBaris, kePemeriksaan, kelompokkanDompet,
+  keDompet, keRingkasDompet, keMutasiBaris, kePemeriksaan, kelompokkanDompet, wsTabDompet,
   type DompetRuangDTO, type MutasiDompetDTO, type PeriksaRuangDTO, type Dompet,
 } from '~/adapters/cashflowRuang'
 import { tulisQuery, type SkemaQuery } from '~/adapters/cashflowQuery'
@@ -52,19 +52,17 @@ const SKEMA = {
 const { nilai: q, setel } = useCashflowQuery(SKEMA)
 
 // ── Ranah dompet otomatis (satu klik) ──────────────────────────────────
-const ditambahUntuk = ref<string | null>(null)
-watch(() => [kasus.kasus.value?.id ?? null, kasus.kasus.value ? kasus.punyaRanah('dompet') : true] as const, ([id, punya]) => {
-  if (!id || punya || ditambahUntuk.value === id || kasus.kasus.value?.anak) return
-  ditambahUntuk.value = id
-  void aksi(() => kasus.tambah(['dompet']))
-}, { immediate: true })
+useCashflowRanahOtomatis(kasus, 'dompet', kerja => aksi(kerja))
 
 // ── Dompet + ringkas ───────────────────────────────────────────────────
-const kunci = computed(() => (kasus.kunciKasus.value && kasus.punyaRanah('dompet') ? `${kasus.kunciKasus.value}|dompet:${props.ws ?? '*'}` : null))
+/** p_ws: null = semua ruang lingkup (pengguna), ruang itu (ruang); undefined = jangan muat. */
+const wsMuat = computed(() => wsTabDompet(props.mode, props.ws))
+const kunci = computed(() => (kasus.kunciKasus.value && kasus.punyaRanah('dompet') && wsMuat.value !== undefined
+  ? `${kasus.kunciKasus.value}|dompet:${wsMuat.value ?? '*'}` : null))
 const mentah = computed(() => kasus.data<DompetRuangDTO>(kunci.value))
 watch(kunci, (k) => {
-  if (!k || mentah.value) return
-  const ws = props.ws
+  const ws = wsMuat.value
+  if (!k || mentah.value || ws === undefined) return
   muat(async () => { await kasus.muatData(k, kk => api.dompetRuang(kk.id, ws)) })
 }, { immediate: true })
 

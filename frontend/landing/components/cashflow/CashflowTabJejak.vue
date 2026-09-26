@@ -18,6 +18,7 @@ import { POLA_UUID } from '~/adapters/cashflow'
 import { POLA_KURSOR_URL } from '~/adapters/cashflowBuku'
 import { keJejakBaris, kursorJejakDariUrl, jedaTiba, JENIS_PERISTIWA, type JejakDTO, type SaringJejak } from '~/adapters/cashflowJejak'
 import type { SkemaQuery } from '~/adapters/cashflowQuery'
+import { subjekJejak } from '~/adapters/cashflowRuang'
 
 const { tcf, formatWaktu, formatTanggal } = useCashflowI18n()
 const api = useCashflowAdmin()
@@ -47,9 +48,10 @@ const SKEMA = {
 } as const satisfies SkemaQuery
 const { nilai: q, setel } = useCashflowQuery(SKEMA)
 
+/** Mode ruang: p_ws = ruang subjek, tanpa aktor (subjekJejak). */
+const argumen = computed(() => subjekJejak(props.mode, id.value, q.value.ruang || null))
 const saring = computed<SaringJejak>(() => ({
-  // Mode ruang: p_ws = ruang subjek, tanpa aktor.
-  ruang: modeRuang.value ? id.value : q.value.ruang || null, jenis: q.value.jenis || null, dari: q.value.dari || null, sampai: q.value.sampai || null,
+  ruang: argumen.value.ruang, jenis: q.value.jenis || null, dari: q.value.dari || null, sampai: q.value.sampai || null,
 }))
 const kursor = computed(() => kursorJejakDariUrl(q.value.kursor))
 const awalanKunci = computed(() => (kasus.kunciKasus.value && kasus.punyaRanah('jejak') ? `${kasus.kunciKasus.value}|jejak:${props.mode}:${id.value}|${JSON.stringify(saring.value)}|` : null))
@@ -59,8 +61,9 @@ const mentah = computed(() => kasus.data<JejakDTO>(kunci.value))
 watch(kunci, (k) => {
   if (!k || mentah.value) return
   const s = saring.value
+  const aktor = argumen.value.aktor
   const ks = kursor.value
-  muat(async () => { await kasus.muatData(k, kk => api.jejak(kk.id, modeRuang.value ? null : id.value, s, ks, PER)) })
+  muat(async () => { await kasus.muatData(k, kk => api.jejak(kk.id, aktor, s, ks, PER)) })
 }, { immediate: true })
 
 const baris = computed(() => mentah.value?.baris.map(keJejakBaris) ?? [])

@@ -94,6 +94,15 @@ describe('Fase 2: /aktivitas', () => {
     expect(f).toMatch(/tujuanSelidiki\(d\)/)
     expect(f).toMatch(/adalahBatasAkses\(d\)/)
   })
+  it('Selidiki lewat useCashflowSekaliJalan (klik ganda = satu kasus)', () => {
+    expect(f).toMatch(/const \{ sibuk, jalankan: selidiki \} = useCashflowSekaliJalan\(/)
+    expect(f).toMatch(/@click="selidiki\(r\.id\)"/)
+  })
+  it('tab Jejak: aktor & p_ws dari subjekJejak', () => {
+    const j = baca('components/cashflow/CashflowTabJejak.vue')
+    expect(j).toMatch(/subjekJejak\(props\.mode, id\.value, q\.value\.ruang \|\| null\)/)
+    expect(j).toMatch(/api\.jejak\(kk\.id, aktor, s, ks, PER\)/)
+  })
   it('useCashflowAdmin tidak lagi memanggil v1 aktivitas maupun cari', () => {
     const admin = baca('composables/cashflow/useCashflowAdmin.ts')
     expect(admin).not.toMatch(/'admin_aktivitas_terbaru'|'admin_cari'/)
@@ -102,8 +111,15 @@ describe('Fase 2: /aktivitas', () => {
 
 describe('Fase 2: tab Dompet', () => {
   const f = baca('components/cashflow/CashflowTabDompet.vue')
-  it('ranah dompet ditambah otomatis sekali per kasus (bukan tombol), tidak untuk kasus anak', () => {
-    expect(f).toMatch(/ditambahUntuk\.value === id \|\| kasus\.kasus\.value\?\.anak\) return\s+ditambahUntuk\.value = id\s+void aksi\(\(\) => kasus\.tambah\(\['dompet'\]\)\)/)
+  // Perilakunya diuji di tab-bersama.test.ts; di sini hanya sambungannya.
+  it('ranah dompet otomatis lewat useCashflowRanahOtomatis; p_ws lewat wsTabDompet', () => {
+    expect(f).toMatch(/useCashflowRanahOtomatis\(kasus, 'dompet', kerja => aksi\(kerja\)\)/)
+    expect(f).toMatch(/const wsMuat = computed\(\(\) => wsTabDompet\(props\.mode, props\.ws\)\)/)
+    expect(f).toMatch(/api\.dompetRuang\(kk\.id, ws\)/)
+  })
+  it('halaman Dompet: Ruang 360 mengirim id ruangnya, Pengguna 360 null', () => {
+    expect(baca('pages/console/cashflow/ruang/[id]/dompet.vue')).toMatch(/<CashflowTabDompet mode="ruang" :ws="id"/)
+    expect(baca('pages/console/cashflow/pengguna/[id]/dompet.vue')).toMatch(/<CashflowTabDompet mode="pengguna" :ws="null"/)
   })
   it('ringkas Terarsip = UANG (Σ saldo dompet terarsip, 0094 §6): rupiah, tampil bila kelompok punya dompet terarsip', () => {
     expect(f).toMatch(/<template v-if="g\.adaArsip"> · \{\{ tcf\('dompet\.arsip'\) \}\} \{\{ rupiah\(g\.r\.arsip\) \}\}<\/template>/)

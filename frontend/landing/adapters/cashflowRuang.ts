@@ -69,6 +69,27 @@ export function lencanaTabRuang(t: TabRuang, h: HitungRuangDTO | null, akses30: 
   }
 }
 
+// ── Parameter tab bersama Pengguna 360 / Ruang 360 ──────────────────────
+/**
+ * p_ws admin_dompet_ruang untuk CashflowTabDompet: mode 'pengguna' = null
+ * (semua ruang lingkup kasus); mode 'ruang' = ruang itu SAJA. Ruang yang
+ * tidak diketahui di mode ruang = undefined (jangan muat): p_ws null di sana
+ * akan menampilkan dompet ruang lain yang kebetulan ada di lingkup kasus
+ * (datang dari Pengguna 360 dengan kasus berlingkup W1 dan W2).
+ */
+export function wsTabDompet(mode: 'pengguna' | 'ruang', ws: string | null): string | null | undefined {
+  if (mode === 'pengguna') return null
+  return ws || undefined
+}
+/**
+ * Argumen admin_jejak untuk CashflowTabJejak: mode 'pengguna' = peristiwa
+ * yang dilakukan subjek (aktor = subjek), di ruang saringan; mode 'ruang' =
+ * semua peristiwa di ruang subjek (aktor null, p_ws = subjek).
+ */
+export function subjekJejak(mode: 'pengguna' | 'ruang', subjek: string, ruangSaring: string | null): { aktor: string | null; ruang: string | null } {
+  return mode === 'ruang' ? { aktor: null, ruang: subjek } : { aktor: subjek, ruang: ruangSaring }
+}
+
 // ── Kepala ruang (T0) ────────────────────────────────────────────────────
 /** admin_ruang_kepala (0094 §5). jumlah_* null untuk sesi tanpa pii. */
 export interface KepalaRuangDTO {
