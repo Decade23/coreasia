@@ -38,9 +38,19 @@ export const aktivasiSah = (e: Event | null | undefined): boolean => !!e && e.is
 /** Jalur tanpa query/hash dan tanpa garis miring penutup. */
 export const jalurTab = (to: string): string => (to.split(/[?#]/)[0] ?? '').replace(/\/+$/, '') || '/'
 
-/** Tandai aktivasi tab `to` oleh peristiwa `e`. false = peristiwa tidak sah (tidak ditandai). */
-export function catatAktivasi(tanda: Ref<TandaAktivasi | null>, to: string, e: Event | null | undefined, sekarang: number = Date.now()): boolean {
+/**
+ * Tandai aktivasi tab `to` oleh peristiwa `e`. false = tidak ditandai:
+ * peristiwa tidak sah, atau `to` adalah tab yang SEDANG terbuka (`kini`).
+ * Klik tab aktif tidak memasang ulang halaman, jadi tandanya tidak pernah
+ * diambil dan akan terpakai oleh Back→Forward ke tab itu dalam batas waktu —
+ * padahal spek §6 melarang aktivasi dari Back. Tanda lama ikut dibuang.
+ */
+export function catatAktivasi(tanda: Ref<TandaAktivasi | null>, to: string, e: Event | null | undefined, sekarang: number = Date.now(), kini?: string): boolean {
   if (!aktivasiSah(e)) return false
+  if (kini !== undefined && jalurTab(kini) === jalurTab(to)) {
+    tanda.value = null
+    return false
+  }
   tanda.value = { jalur: jalurTab(to), pada: sekarang }
   return true
 }
@@ -103,9 +113,10 @@ export function useCashflowRanahAktivasi(
 /** Tanda aktivasi bersama (useState: satu per aplikasi, kosong saat SSR). */
 export const useCashflowAktivasiTab = () => {
   const tanda = useState<TandaAktivasi | null>('cf_aktivasi_tab', () => null)
+  const route = useRoute()
   return {
-    /** Dipanggil di @click tautan tab dan di pintasan angka. */
-    catat: (to: string, e: Event | null | undefined) => catatAktivasi(tanda, to, e),
+    /** Dipanggil di @click tautan tab dan di pintasan angka (tab yang sedang terbuka tidak ditandai). */
+    catat: (to: string, e: Event | null | undefined) => catatAktivasi(tanda, to, e, Date.now(), route.path),
     /** Dipanggil SEKALI saat tab dipasang (client). */
     ambil: (jalur: string) => (import.meta.client ? ambilAktivasi(tanda, jalur) : false),
   }

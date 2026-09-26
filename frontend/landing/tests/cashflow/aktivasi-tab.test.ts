@@ -46,6 +46,15 @@ describe('tanda aktivasi tab', () => {
     expect(ambilAktivasi(t, `${DASAR}/usaha`, 1000 + BATAS_AKTIVASI_MS + 1)).toBe(false)
     expect(t.value).toBeNull()
   })
+  it('klik tab yang SEDANG terbuka tidak menandai dan membuang tanda lama (Back→Forward bukan aktivasi)', () => {
+    const t = ref<TandaAktivasi | null>(null)
+    catatAktivasi(t, `${DASAR}/usaha`, klik(), 900)
+    expect(catatAktivasi(t, `${DASAR}/katalog`, klik(), 1000, `${DASAR}/katalog/`)).toBe(false)
+    expect(t.value).toBeNull()
+    // Back ke Transaksi lalu Forward ke Katalog dalam 30 detik: tidak ada tanda.
+    expect(ambilAktivasi(t, `${DASAR}/katalog`, 5000)).toBe(false)
+    expect(catatAktivasi(t, `${DASAR}/katalog`, klik(), 1000, `${DASAR}/transaksi`)).toBe(true)
+  })
 })
 
 describe('penambahan ranah saat tab diaktifkan (useCashflowRanahAktivasi)', () => {
