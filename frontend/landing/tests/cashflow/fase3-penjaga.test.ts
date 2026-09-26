@@ -13,7 +13,7 @@ import { readFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
-import { RANAH_BUKU_RUANG } from '../../adapters/cashflowRuang'
+import { PINTASAN_TAB_RUANG, RANAH_BUKU_RUANG, TAB_RUANG } from '../../adapters/cashflowRuang'
 import { RANAH_ORANG_FASE3 } from '../../adapters/cashflowKasus'
 
 const AKAR = resolve(fileURLToPath(new URL('.', import.meta.url)), '../..')
@@ -44,9 +44,18 @@ describe('Fase 3: tab ranah buku', () => {
     expect(tab).not.toMatch(/@(mouseenter|mouseover|focus|pointerenter)=/)
   })
   it('pintasan angka menandai aktivasi dengan peristiwa keyboard (isTrusted), paling banyak 9 tab', () => {
-    for (const [induk, daftar] of [['pages/console/cashflow/ruang/[id].vue', 'TAB_RUANG'], ['pages/console/cashflow/pengguna/[id].vue', 'TAB_PENGGUNA']] as const) {
+    for (const [induk, daftar] of [['pages/console/cashflow/ruang/[id].vue', 'PINTASAN_TAB_RUANG'], ['pages/console/cashflow/pengguna/[id].vue', 'TAB_PENGGUNA']] as const) {
       expect(baca(induk)).toContain(`...${daftar}.slice(0, 9).map((t, i) => ({ kunci: String(i + 1), aksi: (e: KeyboardEvent) => { aktivasiTab.catat(keTab(t), e); navigateTo(keTab(t)) } })),`)
     }
+  })
+  it('pintasan angka Ruang 360: angka Fase 2 tetap (Jejak=5, Sampah=6, Akses=7), tab Fase 3 di akhir', () => {
+    expect(PINTASAN_TAB_RUANG.indexOf('jejak') + 1).toBe(5)
+    expect(PINTASAN_TAB_RUANG.indexOf('sampah') + 1).toBe(6)
+    expect(PINTASAN_TAB_RUANG.indexOf('akses') + 1).toBe(7)
+    expect(PINTASAN_TAB_RUANG.slice(0, 7).every(t => !(RANAH_BUKU_RUANG as readonly string[]).includes(t))).toBe(true)
+    expect(new Set(PINTASAN_TAB_RUANG).size).toBe(PINTASAN_TAB_RUANG.length)
+    expect(PINTASAN_TAB_RUANG.length).toBe(9)
+    for (const t of PINTASAN_TAB_RUANG) expect(TAB_RUANG).toContain(t)
   })
   it('"Muat data": tombol biasa, tanpa nama ranah, tanpa dialog', () => {
     const panel = baca('components/cashflow/CashflowPanelTab.vue')

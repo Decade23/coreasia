@@ -17,7 +17,7 @@
  * Id kasus tidak pernah di URL/storage: kasus dipulihkan dari server.
  */
 definePageMeta({ layout: 'console', middleware: ['console', 'cashflow-admin'] })
-import { TAB_RUANG, AKAR_RUANG, lencanaTabRuang, type TabRuang } from '~/adapters/cashflowRuang'
+import { TAB_RUANG, PINTASAN_TAB_RUANG, AKAR_RUANG, lencanaTabRuang, type TabRuang } from '~/adapters/cashflowRuang'
 import type { GalatAdmin } from '~/composables/cashflow/useCashflowAdmin'
 
 const { tcf } = useCashflowI18n()
@@ -86,7 +86,8 @@ const salin = async () => {
 }
 useCashflowPintasan([
   // Angka = aktivasi tab oleh keyboard (isTrusted): ditandai seperti klik tab.
-  ...TAB_RUANG.slice(0, 9).map((t, i) => ({ kunci: String(i + 1), aksi: (e: KeyboardEvent) => { aktivasiTab.catat(keTab(t), e); navigateTo(keTab(t)) } })),
+  // Urutan angka Fase 2 tetap (PINTASAN_TAB_RUANG), bukan urutan tampilan tab.
+  ...PINTASAN_TAB_RUANG.slice(0, 9).map((t, i) => ({ kunci: String(i + 1), aksi: (e: KeyboardEvent) => { aktivasiTab.catat(keTab(t), e); navigateTo(keTab(t)) } })),
   { kunci: 'c', aksi: () => { void salin() } },
 ])
 </script>

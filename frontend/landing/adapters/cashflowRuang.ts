@@ -51,6 +51,15 @@ export const RANAH_BUKU_RUANG = ['katalog', 'jadwal', 'usaha', 'struk'] as const
 export type RanahBukuRuang = typeof RANAH_BUKU_RUANG[number]
 export const TAB_RUANG = ['', 'anggota', 'transaksi', 'dompet', 'katalog', 'jadwal', 'usaha', 'struk', 'jejak', 'sampah', 'akses'] as const
 export type TabRuang = typeof TAB_RUANG[number]
+/**
+ * Urutan pintasan angka 1–9 Ruang 360 — BUKAN urutan tampilan tab. Angka
+ * Fase 2 dipertahankan (Jejak=5, Sampah=6, Akses=7) supaya kebiasaan staf
+ * tidak membuka tab Fase 3: angka yang bergeser membuka Jadwal di tempat
+ * Sampah, dan pintasan adalah aktivasi (isTrusted) → ranah jadwal ditambah
+ * dan satu audit tambah_ranah tertulis tanpa diniatkan. Tab Fase 3 di akhir;
+ * Usaha dan Struk tidak kebagian angka (hanya ada 9).
+ */
+export const PINTASAN_TAB_RUANG = ['', 'anggota', 'transaksi', 'dompet', 'jejak', 'sampah', 'akses', 'katalog', 'jadwal'] as const satisfies readonly TabRuang[]
 /** Ranah yang dibaca tiap tab (null = T0, tanpa kasus). Sampah = ranah jejak (0094 §7).
  *  Dompet memuat juga Patungan (ranah dompet, 0095 R7/R8). */
 export const RANAH_TAB_RUANG: Readonly<Record<TabRuang, RanahRuang | RanahBukuRuang | null>> = {
