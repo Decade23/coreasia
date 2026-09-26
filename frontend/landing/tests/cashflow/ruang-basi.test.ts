@@ -60,7 +60,7 @@ const api = {
   }),
   kasusAktif: vi.fn(async () => ({ kasus: null, investigasi: [] })),
   kasusAktifRuang: vi.fn(async () => ({ kasus: null, investigasi: [] })),
-  kasusBuka: vi.fn(async (subjek: string, _s: unknown, _p: unknown, _r: unknown, ruang: string[]) => kasusDto(subjek, ruang)),
+  kasusBuka: vi.fn(async (subjek: string, _s: unknown, _p: unknown, _r: unknown, ruang: string[], _a?: string, _t?: string) => kasusDto(subjek, ruang)),
   kasusTambah: vi.fn(),
   kasusPerpanjang: vi.fn(),
   kasusInvestigasi: vi.fn(),
