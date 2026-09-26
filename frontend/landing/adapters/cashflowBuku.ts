@@ -104,7 +104,11 @@ export interface RuangLuarDTO {
   workspace_id: string; dalam_lingkup: false; nama: string | null; jenis: string | null; peran: string | null
   pemilik: boolean; bekas_anggota: boolean; jumlah_anggota: number; tx_oleh_dia: number
 }
-export interface Hitung360DTO { ruang: number; ruang_dalam_lingkup: number; transaksi: number; jejak: number; sampah: number }
+export interface Hitung360DTO {
+  ruang: number; ruang_dalam_lingkup: number; transaksi: number; jejak: number; sampah: number
+  /* 0095 (lencana Perangkat/Kabar). null/tidak ada = server sebelum 0095. */
+  perangkat?: number | null; kabar?: number | null; kabar_belum?: number | null
+}
 export interface Pengguna360DTO {
   kasus: string
   akun: AkunDTO
@@ -182,6 +186,8 @@ export function ke360(d: Pengguna360DTO, sekarang: number = Date.now()): Penggun
     hitung: {
       ruang: angka(d.hitung?.ruang), ruang_dalam_lingkup: angka(d.hitung?.ruang_dalam_lingkup),
       transaksi: angka(d.hitung?.transaksi), jejak: angka(d.hitung?.jejak), sampah: angka(d.hitung?.sampah),
+      perangkat: angkaAtauNull(d.hitung?.perangkat), kabar: angkaAtauNull(d.hitung?.kabar),
+      kabar_belum: angkaAtauNull(d.hitung?.kabar_belum),
     },
     pertamaCatatIso: d.pertama_catat ?? null,
     total: { transaksi: angka(d.total?.transaksi), masukBersih: angka(d.total?.masuk_bersih), keluarBersih: angka(d.total?.keluar_bersih) },

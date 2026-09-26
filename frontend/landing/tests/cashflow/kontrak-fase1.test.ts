@@ -277,7 +277,9 @@ describe('kontrak Pengguna360DTO ↔ admin_pengguna_360', () => {
     const d = JSON.parse(P360) as Pengguna360DTO
     const atas = pohonDengan(badan, 'hitung', 'pertama_catat')
     expect(urut(Object.keys(d))).toEqual(urut(Object.keys(atas)))
-    expect(urutPohon(pohonContoh(d.hitung))).toEqual(urutPohon(atas.hitung!))
+    // 0095 menambah kunci lencana Perangkat/Kabar (kunci hanya bertambah, K-F3-7).
+    const hitung = adaMigrasiNomor('0095') ? { ...d.hitung, perangkat: 2, kabar: 64, kabar_belum: 5 } : d.hitung
+    expect(urutPohon(pohonContoh(hitung))).toEqual(urutPohon(atas.hitung!))
     expect(urutPohon(pohonContoh(d.total))).toEqual(urutPohon(atas.total!))
     expect(urutPohon(pohonContoh(d.akun))).toEqual(urutPohon(pohonDengan(badan, 'email_confirmed_at')))
     const [dalam, luar] = d.ruang

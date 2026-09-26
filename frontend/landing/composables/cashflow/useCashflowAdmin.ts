@@ -81,6 +81,12 @@ import type {
   AktivitasV2DTO, KasusPeristiwaDTO,
 } from '~/adapters/cashflowRuang'
 import { RANAH_RUANG, SKENARIO_SELIDIKI } from '~/adapters/cashflowRuang'
+import type {
+  KatalogDTO, JadwalRuangDTO, JadwalRinciDTO, UsahaRuangDTO, StokRuangDTO, KursorStok, StrukRuangDTO, KursorStruk,
+  SaringStruk, PatunganRuangDTO, PatunganRiwayatDTO, KursorBagi, KursorLunas, JenisRiwayatPatungan,
+} from '~/adapters/cashflowRanahBuku'
+import { kindDariArah } from '~/adapters/cashflowRanahBuku'
+import type { PerangkatPenggunaDTO, KabarPenggunaDTO, KursorKabar, SaringKabar } from '~/adapters/cashflowPerangkat'
 
 /* DTO sakelar pindah ke adapter (bertipe, tanpa any); diekspor ulang
    supaya impor lama dari berkas ini tetap jalan. */
@@ -110,6 +116,20 @@ export const HINT_42501: Readonly<Record<string, JenisGalat>> = {
   'batas-investigasi': 'batas',
   'batas-akses': 'batas',
 }
+
+/**
+ * Hint 22023 yang dikenal (jenisnya tetap 'argumen'; hint dipertahankan
+ * supaya useCashflowMuat melokalkannya — kalimat server hanya berbahasa
+ * Indonesia). Fase 1: batas-2jam, kueri-tidak-didukung, kursor; 0094:
+ * ranah-ruang; 0095: bulan (p_bulan bukan YYYY-MM), hari (p_hari di luar
+ * 1..90), saringan (nilai saringan di luar daftar, rentang terbalik).
+ * Id jadwal/struk/produk/dompet/kategori yang tidak ada dijawab 0095 dengan
+ * 42501 kasus-lingkup (bukan P0002) → 'lingkup'.
+ */
+export const HINT_22023 = [
+  'batas-2jam', 'kueri-tidak-didukung', 'kursor', 'ranah-ruang', 'nilai-tersamar', 'nilai-pribadi-publik',
+  'bulan', 'hari', 'saringan',
+] as const
 
 /** Galat PostgREST/jaringan → GalatAdmin. GalatAdmin yang sudah jadi dipulangkan apa adanya. */
 export function petakanGalat(e: unknown): GalatAdmin {
@@ -298,6 +318,46 @@ export const useCashflowAdmin = () => {
     /** Ranah jejak: sampah ruang (dihapus & dipulihkan), keyset {d,i}. Audit baca_sampah. */
     sampahRuang: (kasus: string, ws: string, kursor: KursorSampah | null, limit = 100) =>
       rpc<SampahRuangDTO>('admin_sampah_ruang', { p_kasus: kasus, p_ws: ws, p_kursor: kursor, p_limit: limit }),
+
+    // ── Ranah buku (0095): ruang — Katalog, Jadwal, Usaha, Struk, Patungan ─
+    /** Ranah katalog: kategori + anggaran bulan `bulan` ('YYYY-MM'; null = bulan WIB kini). Audit baca_katalog. */
+    katalogRuang: (kasus: string, ws: string, bulan: string | null = null) =>
+      rpc<KatalogDTO>('admin_katalog_ruang', { p_kasus: kasus, p_ws: ws, p_bulan: bulan }),
+    /** Ranah jadwal: daftar jadwal (≤ 500) + ringkas; `arsip` null = semua. Audit baca_jadwal. */
+    jadwalRuang: (kasus: string, ws: string, arsip: boolean | null = null) =>
+      rpc<JadwalRuangDTO>('admin_jadwal_ruang', { p_kasus: kasus, p_ws: ws, p_arsip: arsip }),
+    /** Ranah jadwal: satu jadwal (ruang diturunkan server dari barisnya). Id
+     *  tak ada / di luar lingkup = 42501 kasus-lingkup. Audit baca_jadwal. */
+    jadwalRinci: (kasus: string, jadwal: string) =>
+      rpc<JadwalRinciDTO>('admin_jadwal_rinci', { p_kasus: kasus, p_jadwal: jadwal }),
+    /** Ranah usaha: produk + stok kini (≤ 1000) + ringkas. Audit baca_usaha. */
+    usahaRuang: (kasus: string, ws: string, arsip: boolean | null = null) =>
+      rpc<UsahaRuangDTO>('admin_usaha_ruang', { p_kasus: kasus, p_ws: ws, p_arsip: arsip }),
+    /** Ranah usaha: riwayat stok (stock_moves), keyset {o,c,i}. Audit baca_usaha. */
+    stokRuang: (kasus: string, ws: string, produk: string | null, kursor: KursorStok | null, limit = 100) =>
+      rpc<StokRuangDTO>('admin_stok_ruang', { p_kasus: kasus, p_ws: ws, p_produk: produk, p_kursor: kursor, p_limit: limit }),
+    /** Ranah struk: metadata struk (tanpa merchant/note/foto/kontak), keyset {c,i}. Audit baca_struk. */
+    strukRuang: (kasus: string, ws: string, s: SaringStruk, kursor: KursorStruk | null, limit = 100) =>
+      rpc<StrukRuangDTO>('admin_struk_ruang', {
+        p_kasus: kasus, p_ws: ws, p_pencatat: s.pencatat, p_kind: kindDariArah(s.jenis), p_kasbon: s.kasbon,
+        p_ocr: s.ocr, p_dari: s.dari, p_sampai: s.sampai, p_kursor: kursor, p_limit: limit,
+      }),
+    /** Ranah dompet: saldo patungan anggota + bekas anggota + ringkas. Audit baca_dompet. */
+    patunganRuang: (kasus: string, ws: string) =>
+      rpc<PatunganRuangDTO>('admin_patungan_ruang', { p_kasus: kasus, p_ws: ws }),
+    /** Ranah dompet: riwayat bagi {o,c,i} atau pelunasan {p,i}. Audit baca_dompet. */
+    patunganRiwayat: (kasus: string, ws: string, jenis: JenisRiwayatPatungan, kursor: KursorBagi | KursorLunas | null, limit = 100) =>
+      rpc<PatunganRiwayatDTO>('admin_patungan_riwayat', { p_kasus: kasus, p_ws: ws, p_jenis: jenis, p_kursor: kursor, p_limit: limit }),
+
+    // ── Ranah milik orang (0095): Perangkat, Kabar — Pengguna 360 saja ──
+    /** Ranah perangkat: pemasangan (sidik), sesi (sidik), jeda antrean `hari` (1..90). Audit baca_perangkat. */
+    perangkatPengguna: (kasus: string, user: string, hari = 30) =>
+      rpc<PerangkatPenggunaDTO>('admin_perangkat_pengguna', { p_kasus: kasus, p_user: user, p_hari: hari }),
+    /** Ranah kabar: kotak masuk kabar orang ini di ruang lingkup kasus, keyset {p,i}. Audit baca_kabar. */
+    kabarPengguna: (kasus: string, user: string, s: SaringKabar, kursor: KursorKabar | null, limit = 100) =>
+      rpc<KabarPenggunaDTO>('admin_kabar_pengguna', {
+        p_kasus: kasus, p_user: user, p_ws: s.ruang, p_jenis: s.jenis, p_belum: s.belum, p_kursor: kursor, p_limit: limit,
+      }),
 
     // ── audit ──────────────────────────────────────────────────────────
     /** v3: target tersamar, alasan terpotong kecuali pii / milik sendiri; + ranah, kasus, terdampak. */

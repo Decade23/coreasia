@@ -18,6 +18,10 @@ import { SKENARIO_RUANG, SKENARIO_SELIDIKI, STATUS_UNDANGAN, TAB_RUANG } from '.
 import { PRESET_KASUS, RANAH_T1, RANAH_T2, RANAH_T3, SKENARIO_OTOMATIS, STATUS_KASUS, TAB_PENGGUNA } from '../../adapters/cashflowKasus'
 import { CEK_TRANSAKSI, JENIS_TEKS } from '../../adapters/cashflowBuku'
 import { JENIS_PERISTIWA } from '../../adapters/cashflowJejak'
+import {
+  ALASAN_LEWATI, ALASAN_STOK, SEBAB_RINCI_STOK, ARAH_PENYESUAIAN, SEBAB_PENYESUAIAN, IRAMA_JADWAL, KEADAAN_JADWAL, OCR_STRUK, kunciKode,
+} from '../../adapters/cashflowRanahBuku'
+import { JENIS_KABAR, PERAN_KABAR, PLATFORM_PERANGKAT, VARIAN_APLIKASI } from '../../adapters/cashflowPerangkat'
 
 const AKAR = resolve(fileURLToPath(new URL('.', import.meta.url)), '../..')
 function jelajah(dir: string, hasil: string[] = []): string[] {
@@ -62,6 +66,20 @@ describe('kamus CashFlow lengkap untuk setiap kunci yang dipakai', () => {
       ...TAB_RUANG.map(t => `tabRuang.${t || 'ringkas'}`),
       ...STATUS_UNDANGAN.map(s => `r360.statusUndangan.${s}`),
       'galat.ranahRuang',
+      // Fase 3 (0095): hint galat baru, kosakata kode (kunciKode: '.'/'-' → '_'), "Muat data".
+      'galat.bulan', 'galat.hari', 'galat.saringan', 'aktivasi.muatData', 'aktivasi.ket', 'kode.takDikenal',
+      ...ALASAN_LEWATI.map(k => `kode.alasanLewati.${kunciKode(k)}`),
+      ...[...ALASAN_STOK, 'lain'].map(k => `kode.alasanStok.${kunciKode(k)}`),
+      ...SEBAB_RINCI_STOK.map(k => `kode.sebabRinci.${kunciKode(k)}`),
+      ...[...ARAH_PENYESUAIAN, 'lain'].map(k => `kode.arah.${kunciKode(k)}`),
+      ...SEBAB_PENYESUAIAN.map(k => `kode.sebabPenyesuaian.${kunciKode(k)}`),
+      ...[...IRAMA_JADWAL, 'lain'].map(k => `kode.irama.${kunciKode(k)}`),
+      ...KEADAAN_JADWAL.map(k => `kode.keadaan.${kunciKode(k)}`),
+      ...[...OCR_STRUK, 'lain'].map(k => `kode.ocr.${kunciKode(k)}`),
+      ...[...JENIS_KABAR, 'lain'].map(k => `kode.jenisKabar.${kunciKode(k)}`),
+      ...[...PERAN_KABAR, 'lain'].map(k => `kode.peran.${kunciKode(k)}`),
+      ...[...PLATFORM_PERANGKAT, 'lain'].map(k => `kode.platform.${kunciKode(k)}`),
+      ...VARIAN_APLIKASI.map(k => `kode.varian.${kunciKode(k)}`),
     ]
     const hilang = jalur.flatMap(k => (['id', 'en'] as const).filter(b => typeof ambil(b, k) !== 'string').map(b => `${b}:${k}`))
     expect(hilang).toEqual([])
