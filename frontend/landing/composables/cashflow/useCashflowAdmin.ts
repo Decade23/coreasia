@@ -63,7 +63,7 @@
  * tests/cashflow/rpc-console.test.ts — jadi argumen WAJIB objek literal.
  */
 import type {
-  StatsDTO, PenggunaDTO, CorongDTO, KeberhasilanDTO, RetensiDTO, AktivitasDTO,
+  StatsDTO, PenggunaDTO, CorongDTO, KeberhasilanDTO, RetensiDTO,
   RuangDTO, PengumumanDTO, KesehatanDTO, ConfigDTO, NilaiJson, JenisRuang,
 } from '~/adapters/cashflow'
 import type {
@@ -76,6 +76,11 @@ import type {
   KursorTransaksi, SaringTransaksi, JenisTeks,
 } from '~/adapters/cashflowBuku'
 import type { JejakDTO, KursorJejak, SaringJejak } from '~/adapters/cashflowJejak'
+import type {
+  KepalaRuangDTO, Ruang360DTO, DompetRuangDTO, MutasiDompetDTO, PeriksaRuangDTO, SampahRuangDTO, KursorSampah,
+  AktivitasV2DTO, KasusPeristiwaDTO,
+} from '~/adapters/cashflowRuang'
+import { RANAH_RUANG, SKENARIO_SELIDIKI } from '~/adapters/cashflowRuang'
 
 /* DTO sakelar pindah ke adapter (bertipe, tanpa any); diekspor ulang
    supaya impor lama dari berkas ini tetap jalan. */
@@ -191,7 +196,9 @@ export const useCashflowAdmin = () => {
     ukuranKeberhasilan: (jendela = 14, minTx = 10) =>
       rpc<KeberhasilanDTO[]>('admin_ukuran_keberhasilan_v2', { p_jendela_hari: jendela, p_min_tx: minTx }).then(r => r[0] ?? null),
     retensi: (bulan = 6) => rpc<RetensiDTO[]>('admin_retensi', { p_bulan: bulan }),
-    aktivitasTerbaru: (limit = 100) => rpc<AktivitasDTO[]>('admin_aktivitas_terbaru', { p_limit: limit }),
+    /** v2 (0094): peristiwa.id, jenis, rentang nominal, tanggal — tanpa ruang,
+     *  aktor, jam. v1 dicabut sesudah landing Fase 2 tayang. */
+    aktivitasTerbaru: (limit = 100) => rpc<AktivitasV2DTO[]>('admin_aktivitas_terbaru_v2', { p_limit: limit }),
     ocr: () => rpc<OcrDTO[]>('admin_ocr_ringkas'),
     fotoYatim: (limit = 200) => rpc<FotoYatimDTO[]>('admin_foto_yatim', { p_limit: limit }),
     telemetri: (hari = 30) => rpc<TelemetriDTO[]>('admin_telemetri_ringkas', { p_hari: hari }),
@@ -211,11 +218,24 @@ export const useCashflowAdmin = () => {
     /** Kasus aktif milik pelaku atas subjek ini (+ anak investigasi aktif).
      *  T0, tanpa audit — cara memulihkan kasus sesudah refresh/tab baru. */
     kasusAktif: (subjek: string) => rpc<KasusAktifDTO>('admin_kasus_aktif', { p_subjek: subjek }),
-    /** Butuh pii. Batas laju → {ditolak:true, hint:'batas-akses'} (jsonb 200). */
-    kasusBuka: (subjek: string, skenario: string | null, preset: PresetKasus, ranah: readonly string[], ruang: readonly string[], alasan: string) =>
+    /** Butuh pii. Batas laju → {ditolak:true, hint:'batas-akses'} (jsonb 200).
+     *  `tipe` 'workspace' (0094): subjek = ruang, `ruang` = [] atau [subjek],
+     *  ranah hanya ranah buku ruang (akun/perangkat/kabar → 22023 ranah-ruang). */
+    kasusBuka: (subjek: string, skenario: string | null, preset: PresetKasus, ranah: readonly string[], ruang: readonly string[], alasan: string,
+      tipe: 'user' | 'workspace' = 'user') =>
       rpc<KasusBukaDTO>('admin_kasus_buka', {
-        p_subjek_tipe: 'user', p_subjek: subjek, p_skenario: skenario, p_preset: preset,
+        p_subjek_tipe: tipe, p_subjek: subjek, p_skenario: skenario, p_preset: preset,
         p_ranah: [...ranah], p_ruang: [...ruang], p_alasan: alasan,
+      }, { tanpaPelaku: true }),
+    /** 0094: kasus induk aktif MILIK pelaku yang lingkupnya memuat ruang ini
+     *  (subjek ruang itu dulu, lalu yang memegang ranah tab ruang terbanyak).
+     *  Butuh pii (tanpa pii → 42501 izin-kurang), tanpa audit. */
+    kasusAktifRuang: (ws: string) => rpc<KasusAktifDTO>('admin_kasus_aktif_ruang', { p_ws: ws }),
+    /** "Selidiki" di /aktivitas: server menentukan ruang dari peristiwa; kasus
+     *  ruang baru (kasus lama atas ruang itu ditutup, lanjutan_dari). */
+    kasusBukaDariPeristiwa: (peristiwa: number, alasan: string) =>
+      rpc<KasusPeristiwaDTO>('admin_kasus_buka_dari_peristiwa', {
+        p_peristiwa: peristiwa, p_preset: 'keluhan', p_ranah: [...RANAH_RUANG], p_alasan: alasan, p_skenario: SKENARIO_SELIDIKI,
       }, { tanpaPelaku: true }),
     /** Kasus anak T3 (10 menit, ranah teks), alasan BARU, butuh investigasi. */
     kasusInvestigasi: (induk: string, preset: PresetInvestigasi, alasan: string) =>
@@ -234,18 +254,21 @@ export const useCashflowAdmin = () => {
     kepalaPengguna: (user: string) => rpc<KepalaPenggunaDTO>('admin_pengguna_kepala', { p_user: user }),
     /** Ranah akun: akun, hitung{}, total bersih, ruang[]. Audit baca_akun. */
     pengguna360: (kasus: string, user: string) => rpc<Pengguna360DTO>('admin_pengguna_360', { p_kasus: kasus, p_user: user }),
-    /** Ranah transaksi, keyset, TANPA note. Audit baca_transaksi per halaman. */
-    transaksiCari: (kasus: string, user: string, s: SaringTransaksi, kursor: KursorTransaksi | null, limit = 100) =>
+    /** Ranah transaksi, keyset, TANPA note. Audit baca_transaksi per halaman.
+     *  mode 'pengguna': yang DICATAT subjek (s.ruang = saringan ruang);
+     *  mode 'ruang': semua transaksi di ruang `subjek` (Ruang 360). */
+    transaksiCari: (kasus: string, mode: 'pengguna' | 'ruang', subjek: string, s: SaringTransaksi, kursor: KursorTransaksi | null, limit = 100) =>
       rpc<TransaksiCariDTO>('admin_transaksi_cari', {
-        p_kasus: kasus, p_user: user, p_ws: s.ruang, p_mode: 'pengguna',
+        p_kasus: kasus, p_user: mode === 'pengguna' ? subjek : null, p_ws: mode === 'ruang' ? subjek : s.ruang, p_mode: mode,
         p_dompet: s.dompet, p_kategori: s.kategori, p_jenis: s.jenis,
         p_dari: s.dari, p_sampai: s.sampai, p_min: s.min, p_maks: s.maks,
         p_cek: s.cek, p_termasuk_sampah: s.sampah, p_kursor: kursor, p_limit: limit,
       }),
     /** Laci ?tx= — jatuh ke sampah bila id tidak hidup. Audit baca_transaksi_rinci. */
     transaksiRinci: (kasus: string, tx: string) => rpc<TransaksiRinciDTO>('admin_transaksi_rinci', { p_kasus: kasus, p_tx: tx }),
-    /** Ranah jejak: peristiwa yang dilakukan subjek. Audit baca_jejak. */
-    jejak: (kasus: string, aktor: string, s: SaringJejak, kursor: KursorJejak | null, limit = 100) =>
+    /** Ranah jejak: peristiwa yang dilakukan `aktor` (Pengguna 360), atau
+     *  aktor null = semua peristiwa di ruang s.ruang (Ruang 360). Audit baca_jejak. */
+    jejak: (kasus: string, aktor: string | null, s: SaringJejak, kursor: KursorJejak | null, limit = 100) =>
       rpc<JejakDTO>('admin_jejak', {
         p_kasus: kasus, p_ws: s.ruang, p_aktor: aktor, p_jenis: s.jenis,
         p_dari: s.dari, p_sampai: s.sampai, p_kursor: kursor, p_limit: limit,
@@ -253,11 +276,28 @@ export const useCashflowAdmin = () => {
     /** T3 (kasus ANAK): teks bebas untuk ≤ 100 id. Audit baca_teks {jenis, ids}. */
     teks: (kasusAnak: string, jenis: JenisTeks, ids: readonly string[]) =>
       rpc<TeksDTO>('admin_teks', { p_kasus_anak: kasusAnak, p_jenis: jenis, p_ids: [...ids] }),
-    /** Palet (Enter): butuh pii; email lengkap / uuid / awalan ≥ 8 hex; ≤ 20. Audit cari. */
-    cari: (q: string) => rpc<CariDTO>('admin_cari', { p_q: q }),
+    /** Palet (Enter): butuh pii; email lengkap / uuid / awalan ≥ 8 hex; ≤ 20.
+     *  v2 (0094): + jenis ruang. Audit cari. v1 dicabut sesudah Fase 2 tayang. */
+    cari: (q: string) => rpc<CariDTO>('admin_cari_v2', { p_q: q }),
     /** Siapa melihat data orang ini — T0, tanpa audit. */
     riwayatAkses: (target: string, kursor: KursorAkses | null, limit = 50) =>
       rpc<RiwayatAksesDTO>('admin_riwayat_akses', { p_target: target, p_kursor: kursor, p_limit: limit }),
+
+    // ── Ruang 360 (0094): kepala T0, lalu data lewat kasus ──────────────
+    /** T0: nama & pemilik tersamar; jumlah_* hanya pii. Audit lihat_kepala. */
+    kepalaRuang: (ws: string) => rpc<KepalaRuangDTO>('admin_ruang_kepala', { p_ws: ws }),
+    /** Ranah ruang: pengaturan, anggota, bekas, undangan, hitung{}. Audit baca_ruang. */
+    ruang360: (kasus: string, ws: string) => rpc<Ruang360DTO>('admin_ruang_360', { p_kasus: kasus, p_ws: ws }),
+    /** Ranah dompet: dompet + saldo; `ws` null = semua ruang lingkup kasus. Audit baca_dompet. */
+    dompetRuang: (kasus: string, ws: string | null) => rpc<DompetRuangDTO>('admin_dompet_ruang', { p_kasus: kasus, p_ws: ws }),
+    /** Ranah dompet: mutasi satu dompet + saldo berjalan, keyset. Audit baca_dompet. */
+    mutasiDompet: (kasus: string, wallet: string, kursor: KursorTransaksi | null, limit = 100) =>
+      rpc<MutasiDompetDTO>('admin_mutasi_dompet', { p_kasus: kasus, p_wallet: wallet, p_kursor: kursor, p_limit: limit }),
+    /** Ranah dompet: hitungan pemeriksaan integritas. Audit baca_dompet. */
+    periksaRuang: (kasus: string, ws: string) => rpc<PeriksaRuangDTO>('admin_periksa_ruang', { p_kasus: kasus, p_ws: ws }),
+    /** Ranah jejak: sampah ruang (dihapus & dipulihkan), keyset {d,i}. Audit baca_sampah. */
+    sampahRuang: (kasus: string, ws: string, kursor: KursorSampah | null, limit = 100) =>
+      rpc<SampahRuangDTO>('admin_sampah_ruang', { p_kasus: kasus, p_ws: ws, p_kursor: kursor, p_limit: limit }),
 
     // ── audit ──────────────────────────────────────────────────────────
     /** v3: target tersamar, alasan terpotong kecuali pii / milik sendiri; + ranah, kasus, terdampak. */

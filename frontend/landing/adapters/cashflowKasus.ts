@@ -93,7 +93,8 @@ export type KasusBukaDTO = KasusDTO | BatasAksesDTO
  *  `ruang` dan `jumlah_terdampak` hanya untuk pemegang pii (selain itu null —
  *  jumlah_ruang saja). */
 export interface DaftarKasusDTO {
-  id: string; induk: string | null; pelaku: string; subjek_tipe: string; subjek_id: string
+  /** subjek_id null = kasus bersubjek RUANG untuk sesi tanpa pii (0094). */
+  id: string; induk: string | null; pelaku: string; subjek_tipe: string; subjek_id: string | null
   subjek_label: string | null; ruang: string[] | null; jumlah_ruang: number; skenario: string | null; preset: string
   alasan: string | null; alasan_utuh: boolean; ranah: string[]; tingkat: string
   jumlah_terdampak: number | null; lanjutan_dari: string | null; dibuka: string; berlaku_sampai: string
@@ -136,6 +137,8 @@ export interface Kasus {
   id: string
   induk: string | null
   anak: boolean
+  /** 'workspace' = kasus bersubjek ruang (0094); selain itu 'user'. */
+  subjekTipe: 'user' | 'workspace'
   subjekId: string
   /** Lingkup ruang; [] bila server tidak mengirimnya (sesi tanpa pii). */
   ruang: string[]
@@ -173,6 +176,7 @@ export function keKasus(d: KasusDTO): Kasus {
     id: d.id,
     induk: d.induk ?? null,
     anak: !!d.induk,
+    subjekTipe: d.subjek_tipe === 'workspace' ? 'workspace' : 'user',
     subjekId: d.subjek_id,
     ruang: larikTeks(d.ruang),
     lingkupTerlihat: Array.isArray(d.ruang),
@@ -225,7 +229,7 @@ export function hitungMundur(detik: number): string {
 
 // ── Tab Pengguna 360 ─────────────────────────────────────────────────────
 /** Tab Pengguna 360 Fase 1 (segmen path; '' = Ringkas). */
-export const TAB_PENGGUNA = ['', 'ruang', 'transaksi', 'jejak', 'akses'] as const
+export const TAB_PENGGUNA = ['', 'ruang', 'transaksi', 'jejak', 'akses', 'dompet'] as const
 export type TabPengguna = typeof TAB_PENGGUNA[number]
 
 // ── Pembukaan OTOMATIS (keputusan Master 21 Sep 2026) ────────────────────
@@ -294,10 +298,14 @@ export const samaSubjek = (dariServer: string | null | undefined, subjek: string
   !!dariServer && dariServer.toLowerCase() === subjek.toLowerCase()
 
 /** Yang belum ada di kasus yang dipulihkan (dibuka sebelum ruang/ranah baru
- *  ada): ditambahkan otomatis lewat admin_kasus_tambah, alasan diwarisi. */
-export function kurangDariKasus(k: Pick<Kasus, 'ranah' | 'ruang' | 'lingkupTerlihat'>, lingkup: readonly string[]): { ranah: string[]; ruang: string[] } {
+ *  ada): ditambahkan otomatis lewat admin_kasus_tambah, alasan diwarisi.
+ *  `wajib` = ranah halaman ini (Pengguna 360: RANAH_FASE1; Ruang 360:
+ *  RANAH_RUANG — juga untuk kasus PENGGUNA yang lingkupnya memuat ruang itu). */
+export function kurangDariKasus(
+  k: Pick<Kasus, 'ranah' | 'ruang' | 'lingkupTerlihat'>, lingkup: readonly string[], wajib: readonly string[] = RANAH_FASE1,
+): { ranah: string[]; ruang: string[] } {
   return {
-    ranah: RANAH_FASE1.filter(r => !k.ranah.includes(r)),
+    ranah: wajib.filter(r => !k.ranah.includes(r)),
     ruang: k.lingkupTerlihat ? lingkup.filter(w => !k.ruang.includes(w)) : [],
   }
 }
@@ -311,8 +319,12 @@ export interface BarisKasus {
   id: string
   induk: string | null
   pelaku: string
-  subjekId: string
+  subjekTipe: 'user' | 'workspace'
+  /** null = disembunyikan server (kasus ruang, sesi tanpa pii). */
+  subjekId: string | null
   subjekLabel: string
+  /** Kepala subjek (Pengguna 360 / Ruang 360); null bila id disembunyikan. */
+  subjekKe: string | null
   ruang: number
   skenario: string | null
   preset: string
@@ -335,8 +347,10 @@ export function keBarisKasus(d: DaftarKasusDTO): BarisKasus {
     id: d.id,
     induk: d.induk ?? null,
     pelaku: d.pelaku,
-    subjekId: d.subjek_id,
+    subjekTipe: d.subjek_tipe === 'workspace' ? 'workspace' : 'user',
+    subjekId: d.subjek_id ?? null,
     subjekLabel: d.subjek_label || '—',
+    subjekKe: d.subjek_id ? `/console/cashflow/${d.subjek_tipe === 'workspace' ? 'ruang' : 'pengguna'}/${d.subjek_id}` : null,
     ruang: Number(d.jumlah_ruang ?? larikTeks(d.ruang).length) || 0,
     skenario: d.skenario ?? null,
     preset: d.preset,

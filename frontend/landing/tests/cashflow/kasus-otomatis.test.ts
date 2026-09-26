@@ -40,6 +40,7 @@ function kasusDto(x: Partial<KasusDTO> & { menit?: number; akarMenitLalu?: numbe
 
 const api = {
   kasusAktif: vi.fn(),
+  kasusAktifRuang: vi.fn(),
   kasusBuka: vi.fn(),
   kasusTambah: vi.fn(),
   kasusPerpanjang: vi.fn(),
@@ -75,6 +76,7 @@ beforeEach(async () => {
   vi.setSystemTime(new Date('2026-09-21T15:00:00Z'))
   for (const f of Object.values(api)) f.mockReset()
   api.kasusAktif.mockResolvedValue({ kasus: null, investigasi: [] })
+  api.kasusAktifRuang.mockResolvedValue({ kasus: null, investigasi: [] })
   api.kasusBuka.mockImplementation(async () => kasusDto())
   ;(await modul()).lupakanKasus()
 })
@@ -638,5 +640,81 @@ describe('kunjungan baru ke subjek yang sama mencoba lagi (temuan fe p3 #3)', ()
     await vi.advanceTimersByTimeAsync(10 * MENIT)
     expect(api.kasusBuka).toHaveBeenCalledTimes(1)
     expect(k.keadaan.value.tahap).toBe('galat')
+  })
+})
+
+describe('Ruang 360 (0094): subjek bertipe workspace, satu klik', () => {
+  async function siapkanRuang(lingkup: string[] | null = [W1]) {
+    const m = await modul()
+    const k = m.useCashflowKasus()
+    lepas = k.pasangHalaman()
+    await k.pulihkan(W1, 'workspace')
+    await k.aturLingkup(W1, lingkup)
+    return k
+  }
+  const kasusRuang = (x: Partial<KasusDTO> = {}) => kasusDto({
+    subjek_tipe: 'workspace', subjek_id: W1, ruang: [W1], jumlah_ruang: 1, skenario: 'ruang_360', ranah: ['dompet', 'jejak', 'ruang', 'transaksi'], ...x,
+  })
+
+  it('tanpa kasus → admin_kasus_aktif_ruang lalu admin_kasus_buka workspace berlingkup [W], ranah tab ruang, tanpa masukan orang', async () => {
+    api.kasusBuka.mockImplementation(async () => kasusRuang())
+    const k = await siapkanRuang()
+    expect(api.kasusAktifRuang).toHaveBeenCalledWith(W1)
+    expect(api.kasusAktif).not.toHaveBeenCalled()
+    expect(api.kasusBuka).toHaveBeenCalledTimes(1)
+    const [subjek, skenario, preset, ranah, ruang, alasan, tipe] = api.kasusBuka.mock.calls[0]!
+    expect([subjek, skenario, preset, [...ranah], ruang, tipe]).toEqual([W1, 'ruang_360', 'keluhan', ['ruang', 'dompet', 'transaksi', 'jejak'], [W1], 'workspace'])
+    expect(alasan).toBe('Dibuka dari console CashFlow — Ruang 360 · 2026-09-21 22.00.00 WIB')
+    expect(k.keadaan.value.tahap).toBe('siap')
+  })
+
+  it('kasus PENGGUNA yang lingkupnya memuat W dipakai (datang dari Pengguna 360): ranah kurang ditambah, tanpa kasus baru', async () => {
+    const pengguna = kasusDto({ ranah: ['akun', 'jejak', 'transaksi'] })
+    api.kasusAktifRuang.mockResolvedValue({ kasus: pengguna, investigasi: [] })
+    api.kasusTambah.mockImplementation(async () => ({ ...pengguna, ranah: ['akun', 'dompet', 'jejak', 'ruang', 'transaksi'] }))
+    const k = await siapkanRuang()
+    expect(api.kasusBuka).not.toHaveBeenCalled()
+    expect(api.kasusTambah).toHaveBeenCalledWith(pengguna.id, ['ruang', 'dompet'], [])
+    expect(k.kasus.value?.id).toBe(pengguna.id)
+    expect(k.keadaan.value.tahap).toBe('siap')
+  })
+
+  it('kasus aktif yang tidak memuat W ditolak (bukan milik halaman ini) → kasus ruang baru', async () => {
+    api.kasusAktifRuang.mockResolvedValue({ kasus: kasusDto({ ruang: [W2] }), investigasi: [] })
+    api.kasusBuka.mockImplementation(async () => kasusRuang())
+    const k = await siapkanRuang()
+    expect(api.kasusBuka).toHaveBeenCalledTimes(1)
+    expect(k.kasus.value?.subjekTipe).toBe('workspace')
+  })
+
+  it('sesi tanpa pii: pemulihan ditolak izin-kurang → tahap izin, tanpa kasusBuka, tanpa galat pemuatan', async () => {
+    api.kasusAktifRuang.mockRejectedValue({ code: '42501', hint: 'izin-kurang', message: 'x' })
+    const k = await siapkanRuang(null)
+    expect(k.keadaan.value.tahap).toBe('izin')
+    expect(k.keadaan.value.pulih).toBe('siap')
+    expect(api.kasusBuka).not.toHaveBeenCalled()
+  })
+
+  it('galat lain saat pemulihan ruang tetap dilempar', async () => {
+    api.kasusAktifRuang.mockRejectedValue({ code: 'P0002', message: 'Ruang tidak ditemukan.' })
+    const m = await modul()
+    const k = m.useCashflowKasus()
+    await expect(k.pulihkan(W1, 'workspace')).rejects.toMatchObject({ jenis: 'tidak-ada' })
+    expect(k.keadaan.value.pulih).toBe('galat')
+  })
+
+  it('pengguna → ruang → pengguna: ganti jenis subjek membuang data, kasus pengguna ditanya lewat admin_kasus_aktif', async () => {
+    const pengguna = kasusDto({ ranah: ['akun', 'dompet', 'jejak', 'ruang', 'transaksi'] })
+    api.kasusAktif.mockResolvedValue({ kasus: pengguna, investigasi: [] })
+    api.kasusAktifRuang.mockResolvedValue({ kasus: pengguna, investigasi: [] })
+    const { k } = await siapkan()
+    await k.muatData('tx-pengguna', async () => 'isi')
+    await k.pulihkan(W1, 'workspace')
+    expect(k.data('tx-pengguna')).toBeUndefined()
+    await k.aturLingkup(W1, [W1])
+    expect(k.kasus.value?.id).toBe(pengguna.id)
+    await k.pulihkan(SUBJEK)
+    expect(api.kasusAktif).toHaveBeenCalledTimes(2)
+    expect(api.kasusBuka).not.toHaveBeenCalled()
   })
 })

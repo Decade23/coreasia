@@ -626,13 +626,15 @@ export function keTeks(d: TeksDTO): Map<string, PotongTeks[]> {
   return hasil
 }
 
-// ── Cari global: admin_cari (0090 §10) ───────────────────────────────────
+// ── Cari global: admin_cari_v2 (0094 §9 = admin_cari 0090 §10 + ruang) ────
 export type HasilCariDTO =
   | { jenis: 'pengguna'; id: string; email: string | null }
+  /** 0094: uuid / awalan uuid ruang. Nama & pemilik tersamar server; isi di balik kasus. */
+  | { jenis: 'ruang'; id: string; nama: string | null; jenis_ruang: string | null; pemilik: string | null }
   | { jenis: 'transaksi'; id: string; pencatat: string | null }
   | { jenis: 'sampah'; id: string; sampah_id: string; pencatat: string | null }
 export interface CariDTO { jenis_kueri: 'email' | 'uuid' | 'awalan'; jumlah: number; hasil: HasilCariDTO[] }
-/** Batas hasil admin_cari. */
+/** Batas hasil admin_cari_v2. */
 export const BATAS_CARI = 20
 
 /** Masukan yang dilayani server (selain itu 22023 kueri-tidak-didukung). */
@@ -654,11 +656,18 @@ export interface HasilCari {
 }
 
 const AKAR = '/console/cashflow/pengguna'
-/** Hasil → rute Fase 1: pengguna → kepala; transaksi/sampah → laci di tab
- *  Transaksi pencatatnya (laci jatuh ke sampah bila id tidak hidup). */
+const AKAR_RUANG = '/console/cashflow/ruang'
+/** Hasil → rute: pengguna → kepala; ruang → kepala Ruang 360 (Fase 2);
+ *  transaksi/sampah → laci di tab Transaksi pencatatnya (server tidak
+ *  mengirim ruang transaksi di hasil cari; laci jatuh ke sampah bila id
+ *  tidak hidup). */
 export function keHasilCari(h: HasilCariDTO): HasilCari {
   if (h.jenis === 'pengguna') {
     return { kunci: `p-${h.id}`, jenis: 'pengguna', id: h.id, label: samarkanEmail(h.email), ke: `${AKAR}/${h.id}` }
+  }
+  if (h.jenis === 'ruang') {
+    const pemilik = h.pemilik ? ` · ${samarkanEmail(h.pemilik)}` : ''
+    return { kunci: `r-${h.id}`, jenis: 'ruang', id: h.id, label: `${h.nama || h.id.slice(0, 8)}${pemilik}`, ke: `${AKAR_RUANG}/${h.id}` }
   }
   const pencatat = h.pencatat
   return {

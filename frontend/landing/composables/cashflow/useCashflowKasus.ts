@@ -53,6 +53,16 @@
  * lalu admin_teks untuk id baris yang diklik saja (CashflowTeksTerkunci).
  * Teks disimpan per kasus anak dan dibuang saat anaknya habis.
  *
+ * RUANG 360 (Fase 2, 0094) memakai store yang SAMA dengan subjek bertipe
+ * 'workspace' (pulihkan(W, 'workspace')): admin_kasus_aktif_ruang memulihkan
+ * kasus aktif milik pelaku yang lingkupnya memuat W — termasuk kasus PENGGUNA
+ * dari Pengguna 360, jadi pindah pengguna → ruang tidak membuka kasus baru
+ * (juga sesudah refresh). Ranah tab ruang yang kurang ditambah
+ * (admin_kasus_tambah, alasan diwarisi); hanya bila tidak ada kasus, kasus
+ * ruang dibuka dengan isian otomatis (RANAH_RUANG, lingkup [W]).
+ * Kasus ruang butuh pii sejak pemulihan: tanpa pii → tahap 'izin' tanpa
+ * panggilan lain.
+ *
  * Semua keadaan di modul ini hidup di memori tab (console ssr:false) dan
  * dibuang saat logout (lupakanKasus, dipanggil useCashflowSesi).
  */
@@ -65,6 +75,10 @@ import {
   type Kasus, type BatasAksesDTO, type PresetKasus,
 } from '~/adapters/cashflowKasus'
 import { keTeks, BATAS_TEKS, type JenisTeks, type PotongTeks } from '~/adapters/cashflowBuku'
+import { RANAH_RUANG, SKENARIO_RUANG, alasanOtomatisRuang } from '~/adapters/cashflowRuang'
+
+/** Jenis subjek halaman: Pengguna 360 ('user') atau Ruang 360 ('workspace'). */
+export type TipeSubjek = 'user' | 'workspace'
 
 /**
  * diam     belum ada yang dikerjakan (atau kasus baru saja habis)
@@ -86,6 +100,7 @@ const galatSesi = (g: GalatAdmin): boolean => g.jenis === 'sesi' || g.jenis === 
 
 interface Keadaan {
   subjek: string | null
+  tipe: TipeSubjek
   kasus: Kasus | null
   anak: Kasus[]
   pulih: 'belum' | 'memuat' | 'siap' | 'galat'
@@ -99,7 +114,7 @@ interface Keadaan {
 }
 
 const awal = (): Keadaan => ({
-  subjek: null, kasus: null, anak: [], pulih: 'belum', lingkup: null, tahap: 'diam', galat: null, batas: null, versi: 0,
+  subjek: null, tipe: 'user', kasus: null, anak: [], pulih: 'belum', lingkup: null, tahap: 'diam', galat: null, batas: null, versi: 0,
 })
 
 const keadaan = ref<Keadaan>(awal())
@@ -223,9 +238,23 @@ export function lupakanKasus() {
   keadaan.value = { ...awal(), versi: keadaan.value.versi + 1 }
 }
 
-/** Kasus ini milik subjek yang sedang dibuka tab ini? (uuid, tanpa peka huruf) */
-const milikSubjek = (k: Kasus): boolean =>
-  !!keadaan.value.subjek && k.subjekId?.toLowerCase() === keadaan.value.subjek.toLowerCase()
+/** Kasus ini milik subjek yang sedang dibuka tab ini? (uuid, tanpa peka huruf)
+ *  Ruang: kasus bersubjek ruang itu, ATAU kasus (pengguna) yang lingkupnya
+ *  memuat ruang itu — jalur pindah pengguna → ruang tanpa kasus baru. */
+const milikSubjek = (k: Kasus): boolean => {
+  const s = keadaan.value.subjek?.toLowerCase()
+  if (!s) return false
+  if (keadaan.value.tipe === 'workspace') {
+    return (k.subjekTipe === 'workspace' && k.subjekId?.toLowerCase() === s)
+      || (k.lingkupTerlihat && k.ruang.some(w => w.toLowerCase() === s))
+  }
+  return k.subjekTipe === 'user' && k.subjekId?.toLowerCase() === s
+}
+/** Kasus aktif pelaku atas subjek halaman (T0 untuk pengguna; pii untuk ruang). */
+const tanyaAktif = (api: Api, subjek: string, tipe: TipeSubjek) =>
+  (tipe === 'workspace' ? api.kasusAktifRuang(subjek) : api.kasusAktif(subjek))
+/** Ranah wajib halaman ini. */
+const ranahWajib = (tipe: TipeSubjek): readonly string[] => (tipe === 'workspace' ? RANAH_RUANG : RANAH_FASE1)
 
 /**
  * Pasang kasus aktif. Kasus milik subjek lain DITOLAK (false): jawaban yang
@@ -301,6 +330,7 @@ function bukaOtomatis(paksa = false): Promise<void> {
   if (!api || !s.subjek || s.lingkup === null || s.pulih !== 'siap') return Promise.resolve()
   if (!paksa && TAHAP_TERTAHAN.includes(s.tahap)) return Promise.resolve()
   const subjek = s.subjek
+  const tipe = s.tipe
   const lingkup = [...s.lingkup]
   const kerja = async () => {
     if (!keadaan.value.kasus) {
@@ -322,7 +352,7 @@ function bukaOtomatis(paksa = false): Promise<void> {
       const segar = sekarang - pulihKosongPada < PULIH_SEGAR_MS
       pulihKosongPada = 0
       if (!segar) {
-        const p = await api.kasusAktif(subjek)
+        const p = await tanyaAktif(api, subjek, tipe)
         if (keadaan.value.subjek !== subjek) return
         const kp = p.kasus ? keKasus(p.kasus) : null
         // Masih hidup di server tapi sudah lewat menurut jam tab ini (jam
@@ -330,7 +360,9 @@ function bukaOtomatis(paksa = false): Promise<void> {
         if (kp && kasusBerlaku(kp)) pasang(kp, (p.investigasi ?? []).map(keKasus))
       }
       if (!keadaan.value.kasus) {
-        const d = await api.kasusBuka(subjek, SKENARIO_OTOMATIS, PRESET_OTOMATIS, RANAH_FASE1, lingkup, alasanOtomatis(new Date()))
+        const d = tipe === 'workspace'
+          ? await api.kasusBuka(subjek, SKENARIO_RUANG, PRESET_OTOMATIS, RANAH_RUANG, [subjek], alasanOtomatisRuang(new Date()), 'workspace')
+          : await api.kasusBuka(subjek, SKENARIO_OTOMATIS, PRESET_OTOMATIS, RANAH_FASE1, lingkup, alasanOtomatis(new Date()))
         if (keadaan.value.subjek !== subjek) return
         if (adalahBatasAkses(d)) { setelTahap('batas', null, d); return }
         pasang(keKasus(d), [])
@@ -340,7 +372,7 @@ function bukaOtomatis(paksa = false): Promise<void> {
     }
     const k = keadaan.value.kasus
     if (!k) return
-    const kurang = kurangDariKasus(k, lingkup)
+    const kurang = kurangDariKasus(k, lingkup, ranahWajib(tipe))
     if (kurang.ranah.length || kurang.ruang.length) {
       setelTahap('membuka')
       const d = await jalankanDengan(kk => api.kasusTambah(kk.id, kurang.ranah, kurang.ruang))
@@ -409,16 +441,17 @@ export const useCashflowKasus = () => {
   const kunciKasus = computed(() => (kasus.value ? `${kasus.value.id}:${kasus.value.ruang.join(',')}` : null))
   const punyaRanah = (r: string): boolean => !!kasus.value?.ranah.includes(r)
 
-  /** Kasus aktif pelaku atas subjek ini, dari server. Ganti subjek = data subjek lama dibuang. */
-  async function pulihkan(subjek: string): Promise<void> {
-    if (keadaan.value.subjek !== subjek) {
+  /** Kasus aktif pelaku atas subjek ini, dari server. Ganti subjek (atau
+   *  jenisnya: pengguna ↔ ruang) = data subjek lama dibuang. */
+  async function pulihkan(subjek: string, tipe: TipeSubjek = 'user'): Promise<void> {
+    if (keadaan.value.subjek !== subjek || keadaan.value.tipe !== tipe) {
       hentikanDetak()
       kosongkanData()
       if (tundaBuka) clearTimeout(tundaBuka)
       tundaBuka = null
       riwayatBuka = []
       pulihKosongPada = 0
-      keadaan.value = { ...awal(), subjek, pulih: 'memuat', versi: keadaan.value.versi + 1 }
+      keadaan.value = { ...awal(), subjek, tipe, pulih: 'memuat', versi: keadaan.value.versi + 1 }
     } else {
       // Kunjungan BARU ke subjek yang sama (induk dipasang lagi: kembali dari
       // daftar, sesudah masuk ulang) = perbuatan orang, sama dengan "Coba
@@ -433,7 +466,7 @@ export const useCashflowKasus = () => {
         : { ...s, pulih: 'memuat' }
     }
     try {
-      const d = await api.kasusAktif(subjek)
+      const d = await tanyaAktif(api, subjek, tipe)
       if (keadaan.value.subjek !== subjek) return
       const k = d.kasus ? keKasus(d.kasus) : null
       const hidup = !!k && kasusBerlaku(k)
@@ -443,8 +476,16 @@ export const useCashflowKasus = () => {
       pulihKosongPada = hidup ? 0 : Date.now()
       keadaan.value = { ...keadaan.value, pulih: 'siap' }
     } catch (e) {
+      const g = petakanGalat(e)
+      // Ruang tanpa pii: pemulihan sendiri sudah ditolak (izin-kurang) — itu
+      // keadaan halaman ("masuk ulang ber-TOTP"), bukan galat pemuatan.
+      if (tipe === 'workspace' && g.jenis === 'izin' && keadaan.value.subjek === subjek) {
+        pasang(null, [])
+        keadaan.value = { ...keadaan.value, pulih: 'siap', lingkup: null, tahap: 'izin', galat: null, batas: null }
+        return
+      }
       if (keadaan.value.subjek === subjek) keadaan.value = { ...keadaan.value, pulih: 'galat' }
-      throw petakanGalat(e)
+      throw g
     }
   }
 

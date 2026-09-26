@@ -100,6 +100,7 @@ describe('pesanUntuk: hint server dilokalkan', () => {
     const { pesanUntuk } = (await muatModul())()
     expect(pesanUntuk(new GalatAdmin('argumen', 'Kasus sudah di batas 2 jam…', 'batas-2jam'))).toBe('galat.batas2jam')
     expect(pesanUntuk(new GalatAdmin('argumen', 'Cari server hanya menerima…', 'kueri-tidak-didukung'))).toBe('galat.kueriTidakDidukung')
+    expect(pesanUntuk(new GalatAdmin('argumen', 'Ranah akun/perangkat/kabar hanya untuk subjek pengguna.', 'ranah-ruang'))).toBe('galat.ranahRuang')
   })
   it('jenis kasus/ranah/lingkup/izin/batas → kalimat kamus masing-masing', async () => {
     const { pesanUntuk } = (await muatModul())()

@@ -14,6 +14,7 @@ import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import { KAMUS_CASHFLOW } from '../../composables/cashflow/useCashflowI18n'
+import { SKENARIO_RUANG, SKENARIO_SELIDIKI, STATUS_UNDANGAN, TAB_RUANG } from '../../adapters/cashflowRuang'
 import { PRESET_KASUS, RANAH_T1, RANAH_T2, RANAH_T3, SKENARIO_OTOMATIS, STATUS_KASUS, TAB_PENGGUNA } from '../../adapters/cashflowKasus'
 import { CEK_TRANSAKSI, JENIS_TEKS } from '../../adapters/cashflowBuku'
 import { JENIS_PERISTIWA } from '../../adapters/cashflowJejak'
@@ -54,8 +55,13 @@ describe('kamus CashFlow lengkap untuk setiap kunci yang dipakai', () => {
       ...JENIS_PERISTIWA.map(j => `jejak.jenisOpsi.${j}`),
       ...CEK_TRANSAKSI.map(c => `saring.cekOpsi.${c}`),
       ...JENIS_TEKS.map(j => `teks.label.${j}`),
-      ...['pengguna', 'transaksi', 'sampah'].map(j => `cari.jenis.${j}`),
+      ...['pengguna', 'ruang', 'transaksi', 'sampah'].map(j => `cari.jenis.${j}`),
       'nav.kasus',
+      // Fase 2 (0094)
+      `skenario.${SKENARIO_RUANG}`, `skenario.${SKENARIO_SELIDIKI}`,
+      ...TAB_RUANG.map(t => `tabRuang.${t || 'ringkas'}`),
+      ...STATUS_UNDANGAN.map(s => `r360.statusUndangan.${s}`),
+      'galat.ranahRuang',
     ]
     const hilang = jalur.flatMap(k => (['id', 'en'] as const).filter(b => typeof ambil(b, k) !== 'string').map(b => `${b}:${k}`))
     expect(hilang).toEqual([])

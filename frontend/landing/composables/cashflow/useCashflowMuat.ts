@@ -41,6 +41,8 @@ export const useCashflowMuat = (opsi: { awal?: boolean } = {}) => {
     if (g.hint === 'batas-2jam') return tcf('galat.batas2jam')
     if (g.hint === 'kueri-tidak-didukung') return tcf('galat.kueriTidakDidukung')
     if (g.hint === 'kursor') return tcf('galat.kursor')
+    // 0094: ranah akun/perangkat/kabar tidak berlaku untuk kasus bersubjek ruang.
+    if (g.hint === 'ranah-ruang') return tcf('galat.ranahRuang')
     switch (g.jenis) {
       case 'kasus': return tcf('galat.kasusHabis')
       case 'ranah': return tcf('galat.diLuarRanah')

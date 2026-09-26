@@ -118,7 +118,8 @@ useConsoleRemah().pasang(() => [
               <span class="ml-auto font-mono text-xs text-[var(--ca-subtle)]">{{ k.id.slice(0, 8) }}</span>
             </div>
             <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
-              <NuxtLink :to="`/console/cashflow/pengguna/${k.subjekId}`" class="font-mono text-[var(--ca-text)] underline-offset-2 hover:underline">{{ k.subjekLabel }}</NuxtLink>
+              <NuxtLink v-if="k.subjekKe" :to="k.subjekKe" class="font-mono text-[var(--ca-text)] underline-offset-2 hover:underline">{{ k.subjekLabel }}</NuxtLink>
+              <span v-else class="font-mono text-[var(--ca-muted)]">{{ k.subjekTipe === 'workspace' ? tcf('kasus.subjekRuangTersamar') : k.subjekLabel }}</span>
               <span class="text-xs text-[var(--ca-muted)]">{{ tcf('kasus.oleh') }} <span class="font-mono">{{ k.pelaku }}</span></span>
               <span v-if="k.milikSaya" class="ca-pill-info text-[0.7rem]">{{ tcf('akses.saya') }}</span>
             </div>
