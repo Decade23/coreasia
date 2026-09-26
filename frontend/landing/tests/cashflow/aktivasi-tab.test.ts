@@ -118,6 +118,8 @@ describe('tab & lencana Fase 3', () => {
     const p = { ruang: 2, transaksi: 40, jejak: 12, sampah: 1, perangkat: 2, kabar: 0 }
     expect(TAB_PENGGUNA.map(t => lencanaTabPengguna(t, p, 5))).toEqual([null, 2, 41, 12, 5, null, 2, 0])
     expect(lencanaTabPengguna('perangkat', { ...p, perangkat: null }, 5)).toBeNull()
+    // 0 token push ≠ tab kosong (sesi auth & antrean ikut tampil): jangan ke "Lainnya (0)".
+    expect(lencanaTabPengguna('perangkat', { ...p, perangkat: 0 }, 5)).toBeNull()
     expect(lencanaTabPengguna('kabar', null, 5)).toBeNull()
   })
 })

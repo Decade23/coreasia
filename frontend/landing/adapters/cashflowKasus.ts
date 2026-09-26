@@ -248,6 +248,10 @@ export interface HitungLencanaPengguna {
  * Lencana tab Pengguna 360 (null = belum diketahui; tab tidak dipindah ke
  * "Lainnya"). Transaksi = transaksi + sampah (tab memuat keduanya). Perangkat
  * dan Kabar dari hitung{} 0095 (K-F3-7), tanpa memanggil RPC tab.
+ * hitung.perangkat hanya count(device_tokens), padahal tab Perangkat juga
+ * memuat sesi auth dan jeda antrean: 0 token bukan berarti tab kosong
+ * (pengguna web saja), jadi 0 → null supaya tab tidak disembunyikan ke
+ * "Lainnya (0)" — sama seperti jadwal/sampah Ruang 360.
  */
 export function lencanaTabPengguna(t: TabPengguna, h: HitungLencanaPengguna | null, akses30: number | null): number | null {
   if (t === 'akses') return akses30
@@ -256,7 +260,7 @@ export function lencanaTabPengguna(t: TabPengguna, h: HitungLencanaPengguna | nu
     case 'ruang': return h.ruang
     case 'transaksi': return h.transaksi + h.sampah
     case 'jejak': return h.jejak
-    case 'perangkat': return h.perangkat
+    case 'perangkat': return h.perangkat || null
     case 'kabar': return h.kabar
     default: return null
   }
