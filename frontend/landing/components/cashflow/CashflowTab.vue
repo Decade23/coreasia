@@ -8,12 +8,18 @@
  * kecuali tab yang sedang dibuka. Hitungan yang belum diketahui (null) tidak
  * pernah memindahkan tab. Di layar < 640 px baris ini menjadi pil yang
  * digulir ke samping dan menempel di atas.
+ *
+ * Setiap klik/ketuk/Enter pada tautan tab MENANDAI aktivasi pengguna
+ * (useCashflowAktivasiTab) — satu-satunya pemicu penambahan ranah tab Fase 3.
+ * Prefetch/hover NuxtLink tidak memicu click, jadi tidak menandai apa pun.
  */
 /** `judul` = arti lencana bila bukan "banyaknya isi tab" (mis. Sampah Ruang 360: masih terhapus). */
 interface ItemTab { kunci: string; label: string; to: string; jumlah: number | null; aktif: boolean; judul?: string }
 
 const props = defineProps<{ items: ItemTab[] }>()
 const { tcf } = useCashflowI18n()
+const aktivasi = useCashflowAktivasiTab()
+const tandai = (to: string, e: MouseEvent) => { aktivasi.catat(to, e) }
 
 const utama = computed(() => props.items.filter(i => i.aktif || i.jumlah !== 0 || i.kunci === ''))
 const kosong = computed(() => props.items.filter(i => !utama.value.includes(i)))
@@ -46,7 +52,7 @@ const kelas = (i: ItemTab) => ['inline-flex shrink-0 items-center gap-1.5 rounde
     class="cf-gulir sticky top-[4.5rem] z-20 -mx-4 flex items-center gap-1 overflow-x-auto border-y border-[color:var(--ca-border)] bg-[var(--ca-bg)] px-4 py-1.5 sm:static sm:mx-0 sm:flex-wrap sm:overflow-visible sm:rounded-full sm:border sm:bg-[var(--ca-panel-bg)] sm:p-1"
     :aria-label="tcf('tab.label')"
   >
-    <NuxtLink v-for="i in utama" :key="i.kunci || 'ringkas'" :to="i.to" :class="kelas(i)" :aria-current="i.aktif ? 'page' : undefined">
+    <NuxtLink v-for="i in utama" :key="i.kunci || 'ringkas'" :to="i.to" :class="kelas(i)" :aria-current="i.aktif ? 'page' : undefined" @click="tandai(i.to, $event)">
       {{ i.label }}
       <span v-if="i.jumlah !== null" class="rounded-full bg-[var(--ca-chip-bg)] px-1.5 text-[0.7rem] tabular-nums text-[var(--ca-muted)]" :title="i.judul" :aria-label="i.judul ? `${i.jumlah} ${i.judul}` : undefined">{{ i.jumlah }}</span>
     </NuxtLink>
@@ -54,7 +60,7 @@ const kelas = (i: ItemTab) => ['inline-flex shrink-0 items-center gap-1.5 rounde
          akan terpotong — tab kosong tampil sebaris, redup, di belakang pemisah. -->
     <template v-if="kosong.length">
       <span class="mx-1 h-4 w-px shrink-0 bg-[var(--ca-border)] sm:hidden" aria-hidden="true" />
-      <NuxtLink v-for="i in kosong" :key="`m-${i.kunci}`" :to="i.to" class="inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-sm text-[var(--ca-subtle)] sm:hidden">
+      <NuxtLink v-for="i in kosong" :key="`m-${i.kunci}`" :to="i.to" @click="tandai(i.to, $event)" class="inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-sm text-[var(--ca-subtle)] sm:hidden">
         {{ i.label }} <span class="tabular-nums">0</span>
       </NuxtLink>
     </template>
@@ -66,7 +72,7 @@ const kelas = (i: ItemTab) => ['inline-flex shrink-0 items-center gap-1.5 rounde
         {{ tcf('tab.lainnya') }}<Icon name="lucide:chevron-down" class="h-3.5 w-3.5" aria-hidden="true" />
       </button>
       <div v-if="lainnyaBuka" class="absolute left-0 top-full z-30 mt-1 min-w-40 rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-dropdown-bg)] p-1 shadow-lg">
-        <NuxtLink v-for="i in kosong" :key="i.kunci" :to="i.to" class="block rounded-lg px-3 py-1.5 text-sm text-[var(--ca-muted)] hover:bg-[var(--ca-panel-bg-strong)] hover:text-[var(--ca-text)]">
+        <NuxtLink v-for="i in kosong" :key="i.kunci" :to="i.to" @click="tandai(i.to, $event)" class="block rounded-lg px-3 py-1.5 text-sm text-[var(--ca-muted)] hover:bg-[var(--ca-panel-bg-strong)] hover:text-[var(--ca-text)]">
           {{ i.label }} <span class="tabular-nums text-[var(--ca-subtle)]">0</span>
         </NuxtLink>
       </div>

@@ -41,12 +41,25 @@ export const alasanSelidiki = (sekarang: Date = new Date()): string =>
   `Selidiki dari console CashFlow — Aktivitas · ${capWaktuWib(sekarang)}`
 
 // ── Tab Ruang 360 ────────────────────────────────────────────────────────
-export const TAB_RUANG = ['', 'anggota', 'transaksi', 'dompet', 'jejak', 'sampah', 'akses'] as const
+/**
+ * Ranah buku ruang Fase 3 (0095): TIDAK ikut kasus ruang otomatis
+ * (RANAH_RUANG tetap). Ditambah admin_kasus_tambah hanya saat tabnya
+ * DIAKTIFKAN pengguna (klik/ketuk/keyboard) atau lewat tombol "Muat data"
+ * (spek §6, K-F3-1) — lihat useCashflowAktivasiTab.
+ */
+export const RANAH_BUKU_RUANG = ['katalog', 'jadwal', 'usaha', 'struk'] as const
+export type RanahBukuRuang = typeof RANAH_BUKU_RUANG[number]
+export const TAB_RUANG = ['', 'anggota', 'transaksi', 'dompet', 'katalog', 'jadwal', 'usaha', 'struk', 'jejak', 'sampah', 'akses'] as const
 export type TabRuang = typeof TAB_RUANG[number]
-/** Ranah yang dibaca tiap tab (null = T0, tanpa kasus). Sampah = ranah jejak (0094 §7). */
-export const RANAH_TAB_RUANG: Readonly<Record<TabRuang, RanahRuang | null>> = {
-  '': 'ruang', anggota: 'ruang', transaksi: 'transaksi', dompet: 'dompet', jejak: 'jejak', sampah: 'jejak', akses: null,
+/** Ranah yang dibaca tiap tab (null = T0, tanpa kasus). Sampah = ranah jejak (0094 §7).
+ *  Dompet memuat juga Patungan (ranah dompet, 0095 R7/R8). */
+export const RANAH_TAB_RUANG: Readonly<Record<TabRuang, RanahRuang | RanahBukuRuang | null>> = {
+  '': 'ruang', anggota: 'ruang', transaksi: 'transaksi', dompet: 'dompet',
+  katalog: 'katalog', jadwal: 'jadwal', usaha: 'usaha', struk: 'struk',
+  jejak: 'jejak', sampah: 'jejak', akses: null,
 }
+/** Tab yang ranahnya ditambah saat diaktifkan (bukan saat kasus dibuka). */
+export const tabAktivasiRuang = (t: TabRuang): boolean => (RANAH_BUKU_RUANG as readonly string[]).includes(t)
 
 /**
  * Lencana tab Ruang 360 (null = belum diketahui; tab tidak dipindah ke
@@ -55,7 +68,13 @@ export const RANAH_TAB_RUANG: Readonly<Record<TabRuang, RanahRuang | null>> = {
  * menampilkan SEMUA baris termasuk yang sudah dipulihkan. Lencananya diberi
  * keterangan "masih terhapus" (CashflowTab `judul`), dan 0 dijadikan null:
  * nol yang masih terhapus tidak berarti tab kosong, jadi tab tidak boleh
- * disembunyikan ke "Lainnya (0)".
+ * disembunyikan ke "Lainnya (0)". Jadwal sama: lencananya jadwal AKTIF
+ * (hitung.jadwal_aktif, 0095), sedangkan tab memuat juga yang selesai dan
+ * diarsip — 0 aktif = null.
+ *
+ * Lencana Fase 3 (0095, K-F3-7) murni dari hitung{}: tidak ada RPC tab yang
+ * dipanggil (dan tidak ada audit tab) hanya untuk lencana. Server sebelum
+ * 0095 tidak mengirim kuncinya → null (belum diketahui), bukan 0.
  */
 export function lencanaTabRuang(t: TabRuang, h: HitungRuangDTO | null, akses30: number | null): number | null {
   if (t === 'akses') return akses30
@@ -64,6 +83,10 @@ export function lencanaTabRuang(t: TabRuang, h: HitungRuangDTO | null, akses30: 
     case 'anggota': return h.anggota + h.bekas_anggota
     case 'transaksi': return h.transaksi
     case 'dompet': return h.dompet
+    case 'katalog': return h.kategori ?? null
+    case 'jadwal': return h.jadwal_aktif || null
+    case 'usaha': return h.produk ?? null
+    case 'struk': return h.struk ?? null
     case 'jejak': return h.jejak
     case 'sampah': return h.sampah || null
     default: return null
@@ -163,6 +186,9 @@ export interface RuangInfoDTO {
 }
 export interface HitungRuangDTO {
   anggota: number; bekas_anggota: number; undangan_aktif: number; transaksi: number; dompet: number; jejak: number; sampah: number
+  /* 0095 (lencana tab Fase 3). null/tidak ada = server sebelum 0095 (belum diketahui). */
+  kategori?: number | null; anggaran?: number | null; jadwal_aktif?: number | null; produk?: number | null
+  struk?: number | null; patungan_bagi?: number | null; pelunasan?: number | null
 }
 export interface AgregatRuang360DTO { transaksi: number; masuk_bersih: number | string; keluar_bersih: number | string; terakhir_catat: string | null }
 export interface AnggotaRuangDTO {
@@ -232,6 +258,9 @@ export function keRuang360(d: Ruang360DTO): Ruang360 {
     hitung: {
       anggota: angka0(h?.anggota), bekas_anggota: angka0(h?.bekas_anggota), undangan_aktif: angka0(h?.undangan_aktif),
       transaksi: angka0(h?.transaksi), dompet: angka0(h?.dompet), jejak: angka0(h?.jejak), sampah: angka0(h?.sampah),
+      kategori: angkaAtauNull(h?.kategori), anggaran: angkaAtauNull(h?.anggaran), jadwal_aktif: angkaAtauNull(h?.jadwal_aktif),
+      produk: angkaAtauNull(h?.produk), struk: angkaAtauNull(h?.struk), patungan_bagi: angkaAtauNull(h?.patungan_bagi),
+      pelunasan: angkaAtauNull(h?.pelunasan),
     },
     agregat: d.agregat
       ? {

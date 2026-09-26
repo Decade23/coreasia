@@ -228,9 +228,39 @@ export function hitungMundur(detik: number): string {
 }
 
 // ── Tab Pengguna 360 ─────────────────────────────────────────────────────
-/** Tab Pengguna 360 Fase 1 (segmen path; '' = Ringkas). */
-export const TAB_PENGGUNA = ['', 'ruang', 'transaksi', 'jejak', 'akses', 'dompet'] as const
+/** Tab Pengguna 360 (segmen path; '' = Ringkas). Fase 2: dompet; Fase 3
+ *  (0095): perangkat dan kabar — ranah milik orang, hanya di halaman ini. */
+export const TAB_PENGGUNA = ['', 'ruang', 'transaksi', 'jejak', 'akses', 'dompet', 'perangkat', 'kabar'] as const
 export type TabPengguna = typeof TAB_PENGGUNA[number]
+/** Ranah Fase 3 milik orang: ditambah hanya saat tabnya DIAKTIFKAN pengguna
+ *  (spek §6), tidak ikut kasus otomatis (RANAH_FASE1 tetap). */
+export const RANAH_ORANG_FASE3 = ['perangkat', 'kabar'] as const
+export const tabAktivasiPengguna = (t: TabPengguna): t is typeof RANAH_ORANG_FASE3[number] =>
+  (RANAH_ORANG_FASE3 as readonly string[]).includes(t)
+
+/** Hitungan lencana Pengguna 360 yang dibaca (subset hitung{} admin_pengguna_360). */
+export interface HitungLencanaPengguna {
+  ruang: number; transaksi: number; jejak: number; sampah: number
+  /** 0095; null = server sebelum 0095 (belum diketahui). */
+  perangkat: number | null; kabar: number | null
+}
+/**
+ * Lencana tab Pengguna 360 (null = belum diketahui; tab tidak dipindah ke
+ * "Lainnya"). Transaksi = transaksi + sampah (tab memuat keduanya). Perangkat
+ * dan Kabar dari hitung{} 0095 (K-F3-7), tanpa memanggil RPC tab.
+ */
+export function lencanaTabPengguna(t: TabPengguna, h: HitungLencanaPengguna | null, akses30: number | null): number | null {
+  if (t === 'akses') return akses30
+  if (!h) return null
+  switch (t) {
+    case 'ruang': return h.ruang
+    case 'transaksi': return h.transaksi + h.sampah
+    case 'jejak': return h.jejak
+    case 'perangkat': return h.perangkat
+    case 'kabar': return h.kabar
+    default: return null
+  }
+}
 
 // ── Pembukaan OTOMATIS (keputusan Master 21 Sep 2026) ────────────────────
 /*

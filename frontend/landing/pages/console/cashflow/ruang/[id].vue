@@ -58,7 +58,7 @@ watch(tabAktif, async () => {
 const tab = computed(() => TAB_RUANG.map(t => ({
   kunci: t, label: tcf(`tabRuang.${t || 'ringkas'}`), to: keTab(t),
   jumlah: lencanaTabRuang(t, r360.value?.hitung ?? null, kepala.value?.akses30 ?? null),
-  judul: t === 'sampah' ? tcf('tabRuang.sampahLencana') : undefined,
+  judul: t === 'sampah' ? tcf('tabRuang.sampahLencana') : t === 'jadwal' ? tcf('tabRuang.jadwalLencana') : undefined,
   aktif: tabAktif.value === t,
 })))
 
@@ -75,6 +75,7 @@ useConsoleRemah().pasang(() => [
 
 // ── Pintasan: 1–9 tab, c salin id ──────────────────────────────────────
 const idSorot = useState<string | null>('cf_salin_sorot', () => null)
+const aktivasiTab = useCashflowAktivasiTab()
 const salin = async () => {
   try {
     await navigator.clipboard.writeText(idSorot.value || id.value)
@@ -84,7 +85,8 @@ const salin = async () => {
   }
 }
 useCashflowPintasan([
-  ...TAB_RUANG.map((t, i) => ({ kunci: String(i + 1), aksi: () => { navigateTo(keTab(t)) } })),
+  // Angka = aktivasi tab oleh keyboard (isTrusted): ditandai seperti klik tab.
+  ...TAB_RUANG.slice(0, 9).map((t, i) => ({ kunci: String(i + 1), aksi: (e: KeyboardEvent) => { aktivasiTab.catat(keTab(t), e); navigateTo(keTab(t)) } })),
   { kunci: 'c', aksi: () => { void salin() } },
 ])
 </script>

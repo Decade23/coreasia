@@ -71,7 +71,8 @@ describe('Fase 2: satu klik, tanpa dialog (keputusan Master 21 Sep 2026)', () =>
   it('lencana tab Sampah = yang masih terhapus, diberi keterangan; tab Sampah menyebut selisihnya', () => {
     const induk = baca('pages/console/cashflow/ruang/[id].vue')
     expect(induk).toMatch(/jumlah: lencanaTabRuang\(t, r360\.value\?\.hitung \?\? null, kepala\.value\?\.akses30 \?\? null\)/)
-    expect(induk).toMatch(/judul: t === 'sampah' \? tcf\('tabRuang\.sampahLencana'\) : undefined/)
+    // Fase 3: lencana Jadwal = jadwal AKTIF, juga diberi keterangan.
+    expect(induk).toMatch(/judul: t === 'sampah' \? tcf\('tabRuang\.sampahLencana'\) : t === 'jadwal' \? tcf\('tabRuang\.jadwalLencana'\) : undefined/)
     expect(baca('components/cashflow/CashflowTab.vue')).toMatch(/:title="i\.judul"/)
     // Syarat tampil diuji perilakunya (tab-bersama: ringkasSampah); di sini sambungannya.
     const sampah = baca('pages/console/cashflow/ruang/[id]/sampah.vue')

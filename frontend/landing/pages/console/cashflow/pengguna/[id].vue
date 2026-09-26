@@ -27,7 +27,7 @@
  * (vue-router); /masuk tidak dihitung asal.
  */
 definePageMeta({ layout: 'console', middleware: ['console', 'cashflow-admin'] })
-import { TAB_PENGGUNA, type TabPengguna } from '~/adapters/cashflowKasus'
+import { TAB_PENGGUNA, lencanaTabPengguna, type TabPengguna } from '~/adapters/cashflowKasus'
 import type { GalatAdmin } from '~/composables/cashflow/useCashflowAdmin'
 
 const { tcf } = useCashflowI18n()
@@ -73,12 +73,7 @@ const tabAktif = computed<TabPengguna>(() => {
 const keTab = (t: TabPengguna) => (t ? `${dasar.value}/${t}` : dasar.value)
 const jumlahTab = (t: TabPengguna): number | null => {
   const h = p360.value?.hitung
-  if (t === 'akses') return kepala.value?.akses30 ?? null
-  if (!h) return null
-  if (t === 'ruang') return h.ruang
-  if (t === 'transaksi') return h.transaksi + h.sampah
-  if (t === 'jejak') return h.jejak
-  return null
+  return lencanaTabPengguna(t, h ? { ...h, perangkat: h.perangkat ?? null, kabar: h.kabar ?? null } : null, kepala.value?.akses30 ?? null)
 }
 /* Pindah tab: isi tab baru mulai tepat di bawah baris tab (bukan di posisi
    gulir tab lama, bukan di kepala halaman). */
@@ -118,6 +113,7 @@ useConsoleRemah().pasang(() => [
 // ── Pintasan: 1–9 tab, c salin id ──────────────────────────────────────
 /** Id yang disalin `c`: baris yang sedang disorot tab anak, atau subjek. */
 const idSorot = useState<string | null>('cf_salin_sorot', () => null)
+const aktivasiTab = useCashflowAktivasiTab()
 const salin = async () => {
   try {
     await navigator.clipboard.writeText(idSorot.value || id.value)
@@ -127,7 +123,8 @@ const salin = async () => {
   }
 }
 useCashflowPintasan([
-  ...TAB_PENGGUNA.map((t, i) => ({ kunci: String(i + 1), aksi: () => { navigateTo(keTab(t)) } })),
+  // Angka = aktivasi tab oleh keyboard (isTrusted): ditandai seperti klik tab.
+  ...TAB_PENGGUNA.slice(0, 9).map((t, i) => ({ kunci: String(i + 1), aksi: (e: KeyboardEvent) => { aktivasiTab.catat(keTab(t), e); navigateTo(keTab(t)) } })),
   { kunci: 'c', aksi: () => { void salin() } },
 ])
 </script>

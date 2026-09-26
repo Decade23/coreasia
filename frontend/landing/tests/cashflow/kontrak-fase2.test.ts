@@ -14,7 +14,7 @@ import {
 import {
   keKepalaRuang, keRuang360, keDompet, keRingkasDompet, kelompokkanDompet, lencanaTabRuang, keMutasiBaris, kePemeriksaan, keSampahRuang, kursorSampahDariUrl,
   tujuanSelidiki, alasanOtomatisRuang, alasanSelidiki,
-  RANAH_RUANG, RANAH_BUKAN_RUANG, RANAH_TAB_RUANG, TAB_RUANG, SKENARIO_RUANG, SKENARIO_SELIDIKI, STATUS_UNDANGAN,
+  RANAH_RUANG, RANAH_BUKU_RUANG, RANAH_BUKAN_RUANG, RANAH_TAB_RUANG, TAB_RUANG, SKENARIO_RUANG, SKENARIO_SELIDIKI, STATUS_UNDANGAN,
   type KepalaRuangDTO, type Ruang360DTO, type DompetRuangDTO, type MutasiDompetDTO, type PeriksaRuangDTO, type SampahRuangDTO,
 } from '../../adapters/cashflowRuang'
 import { keHasilCari, CEK_TRANSAKSI, type CariDTO } from '../../adapters/cashflowBuku'
@@ -70,7 +70,11 @@ describe('kontrak Ruang360DTO ↔ admin_ruang_360', () => {
     const atas = pohonDengan(badan, 'undangan', 'hitung')
     expect(kunciAtas(d)).toEqual(urut(Object.keys(atas)))
     sama(d.ruang, atas.ruang!)
-    sama(d.hitung, pohonDengan(badan, 'bekas_anggota', 'undangan_aktif'))
+    // 0095 menambah kunci lencana tab Fase 3 (kunci hanya bertambah, K-F3-7).
+    const hitung = adaMigrasiNomor('0095')
+      ? { ...d.hitung, kategori: 12, anggaran: 3, jadwal_aktif: 2, produk: 221, struk: 1840, patungan_bagi: 6, pelunasan: 1 }
+      : d.hitung
+    sama(hitung, pohonDengan(badan, 'bekas_anggota', 'undangan_aktif'))
     sama(d.agregat, pohonDengan(badan, 'masuk_bersih', 'terakhir_catat'))
     sama(d.anggota[0], pohonDengan(badan, 'terakhir_catat_dia'))
     const bekas = semuaPohonJsonb(badan).find(p => 'user_id' in p && 'tx_oleh_dia' in p && !('peran' in p))
@@ -273,7 +277,7 @@ describe('kasus bersubjek ruang (0094)', () => {
     for (const t of TAB_RUANG) {
       const r = RANAH_TAB_RUANG[t]
       if (t === 'akses') expect(r).toBeNull()
-      else expect(RANAH_RUANG as readonly string[]).toContain(r)
+      else expect([...RANAH_RUANG, ...RANAH_BUKU_RUANG] as readonly string[]).toContain(r)
     }
   })
   it('keKasus membaca subjek_tipe; kurangDariKasus memakai ranah wajib halaman', () => {
