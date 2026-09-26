@@ -73,7 +73,10 @@ describe('Fase 2: satu klik, tanpa dialog (keputusan Master 21 Sep 2026)', () =>
     expect(induk).toMatch(/jumlah: lencanaTabRuang\(t, r360\.value\?\.hitung \?\? null, kepala\.value\?\.akses30 \?\? null\)/)
     expect(induk).toMatch(/judul: t === 'sampah' \? tcf\('tabRuang\.sampahLencana'\) : undefined/)
     expect(baca('components/cashflow/CashflowTab.vue')).toMatch(/:title="i\.judul"/)
-    expect(baca('pages/console/cashflow/ruang/[id]/sampah.vue')).toMatch(/tcf\('sampah\.ringkas'\)\(masihTerhapus, total\)/)
+    // Syarat tampil diuji perilakunya (tab-bersama: ringkasSampah); di sini sambungannya.
+    const sampah = baca('pages/console/cashflow/ruang/[id]/sampah.vue')
+    expect(sampah).toMatch(/const ringkas = computed\(\(\) => ringkasSampah\(r360\.value\?\.hitung\.sampah \?\? null, total\.value\)\)/)
+    expect(sampah).toMatch(/<p v-if="ringkas"[^>]*>\{\{ tcf\('sampah\.ringkas'\)\(ringkas\.masih, ringkas\.total\) \}\}<\/p>/)
   })
   it('induk Ruang 360 memulihkan kasus bertipe workspace dan melepas halaman saat pergi', () => {
     expect(baca('composables/cashflow/useCashflowRuang.ts')).toMatch(/kasus\.pulihkan\(ws, 'workspace'\)/)

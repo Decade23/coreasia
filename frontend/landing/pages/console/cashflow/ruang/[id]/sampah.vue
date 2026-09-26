@@ -13,7 +13,7 @@ definePageMeta({
   scrollToTop: (to, from) => to.params.id !== from.params.id,
 })
 import { POLA_KURSOR_URL } from '~/adapters/cashflowBuku'
-import { keSampahRuang, kursorSampahDariUrl, type SampahRuangDTO } from '~/adapters/cashflowRuang'
+import { keSampahRuang, kursorSampahDariUrl, ringkasSampah, type SampahRuangDTO } from '~/adapters/cashflowRuang'
 import type { SkemaQuery } from '~/adapters/cashflowQuery'
 
 const { tcf, formatTanggal, formatWaktu } = useCashflowI18n()
@@ -47,14 +47,14 @@ const { wadah, berikutnya, sebelumnya, pertama } = useCashflowKursor({
 })
 const keTx = (tx: string) => `${dasar.value}/transaksi?tx=${tx}`
 /* Lencana tab = yang MASIH terhapus (hitung.sampah); daftar ini memuat semua
-   baris termasuk yang dipulihkan — keduanya disebut bila berbeda. */
-const masihTerhapus = computed(() => r360.value?.hitung.sampah ?? null)
+   baris termasuk yang dipulihkan — keduanya disebut bila ada yang dipulihkan. */
+const ringkas = computed(() => ringkasSampah(r360.value?.hitung.sampah ?? null, total.value))
 </script>
 
 <template>
   <div ref="wadah" class="scroll-mt-40 space-y-4">
     <p class="text-sm text-[var(--ca-muted)]">{{ tcf('sampah.ket') }}</p>
-    <p v-if="masihTerhapus !== null && total !== null && total !== masihTerhapus" class="text-xs text-[var(--ca-subtle)]">{{ tcf('sampah.ringkas')(masihTerhapus, total) }}</p>
+    <p v-if="ringkas" class="text-xs text-[var(--ca-subtle)]">{{ tcf('sampah.ringkas')(ringkas.masih, ringkas.total) }}</p>
     <CashflowPanelTab
       ranah="jejak" :memuat="memuat" :galat="galat" :pesan-galat="pesanGalat" :ada-data="!!mentah"
       :kosong="!!mentah && !baris.length" :pesan-kosong="tcf('sampah.kosong')"

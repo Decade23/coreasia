@@ -6,7 +6,7 @@
  */
 import { nextTick, ref } from 'vue'
 import { describe, expect, it, vi } from 'vitest'
-import { argumenJejak, subjekJejak, wsTabDompet } from '~/adapters/cashflowRuang'
+import { argumenJejak, ringkasSampah, subjekJejak, wsTabDompet } from '~/adapters/cashflowRuang'
 import { useCashflowRanahOtomatis } from '~/composables/cashflow/useCashflowRanahOtomatis'
 import { useCashflowSekaliJalan } from '~/composables/cashflow/useCashflowSekaliJalan'
 import type { Kasus } from '~/adapters/cashflowKasus'
@@ -70,6 +70,21 @@ describe('argumen admin_jejak', () => {
     expect(argumenJejak('ruang', W1, q)).toEqual({ aktor: null, saring: { ruang: W1, jenis: 'tx.ubah', dari: '2026-09-01', sampai: '2026-09-30' } })
     expect(argumenJejak('pengguna', U, { ...q, ruang: W1 })).toEqual({ aktor: U, saring: { ruang: W1, jenis: 'tx.ubah', dari: '2026-09-01', sampai: '2026-09-30' } })
     expect(argumenJejak('pengguna', U, { ruang: '', jenis: '', dari: '', sampai: '' })).toEqual({ aktor: U, saring: { ruang: null, jenis: null, dari: null, sampai: null } })
+  })
+})
+
+describe('keterangan "masih terhapus dari N baris" di tab Sampah', () => {
+  it('tampil hanya bila ada yang dipulihkan (masih < total)', () => {
+    expect(ringkasSampah(3, 5)).toEqual({ masih: 3, total: 5 })
+    expect(ringkasSampah(0, 2)).toEqual({ masih: 0, total: 2 })
+    // Semua masih terhapus: lencana sudah menyebut angkanya, keterangan berlebihan.
+    expect(ringkasSampah(5, 5)).toBeNull()
+    expect(ringkasSampah(0, 0)).toBeNull()
+  })
+  it('angka belum dimuat atau basi (masih > total) → tidak tampil', () => {
+    expect(ringkasSampah(null, 5)).toBeNull()
+    expect(ringkasSampah(3, null)).toBeNull()
+    expect(ringkasSampah(6, 5)).toBeNull()
   })
 })
 

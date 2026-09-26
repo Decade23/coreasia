@@ -83,6 +83,16 @@ export function wsTabDompet(mode: 'pengguna' | 'ruang', ws: string | null): stri
   return ws || undefined
 }
 /**
+ * Keterangan tab Sampah "N masih terhapus dari T baris": N = hitung.sampah
+ * (lencana tab, 0094 §5: baris sampah yang transaksinya belum hidup lagi), T =
+ * total admin_sampah_ruang (semua baris, termasuk yang sudah dipulihkan).
+ * Tampil hanya bila keduanya diketahui dan ada yang dipulihkan (N < T); N > T
+ * = angka basi dari muatan berbeda waktu, tidak ditampilkan.
+ */
+export function ringkasSampah(masih: number | null, total: number | null): { masih: number; total: number } | null {
+  return masih !== null && total !== null && masih < total ? { masih, total } : null
+}
+/**
  * Argumen admin_jejak untuk CashflowTabJejak: mode 'pengguna' = peristiwa
  * yang dilakukan subjek (aktor = subjek), di ruang saringan; mode 'ruang' =
  * semua peristiwa di ruang subjek (aktor null, p_ws = subjek).
