@@ -521,6 +521,86 @@ terang dan gelap.
 Sesudah lolos, cabut v1 lewat jalur SQL (`admin_aktivitas_terbaru`,
 `admin_cari`).
 
+## Fase 3 (0095): ranah buku
+
+**Urutan rilis: SQL 0095 dulu, landing sesudahnya.** Landing Fase 3 memanggil
+`admin_katalog_ruang`, `admin_jadwal_ruang`, `admin_jadwal_rinci`,
+`admin_usaha_ruang`, `admin_stok_ruang`, `admin_struk_ruang`,
+`admin_patungan_ruang`, `admin_patungan_riwayat`, `admin_perangkat_pengguna`,
+dan `admin_kabar_pengguna`, dan membaca kunci `hitung` baru di
+`admin_ruang_360` dan `admin_pengguna_360` untuk lencana. Tanpa 0095 tab baru
+gagal (PGRST202) dan lencananya "—". Laci baris struk memakai
+`admin_transaksi_cari p_grup` (sudah ada sejak 0090).
+
+### Uji peramban (sesi console ber-TOTP)
+
+Siapkan data di ruang milik Master (K-F3-8), bukan ruang pelanggan: satu
+ruang usaha WU (produk berstok dan tanpa lacak stok, beberapa struk
+penjualan termasuk kasbon dan pelanggan yang sama di dua struk, satu struk
+berfoto, satu baris struk di sampah), satu ruang bersama WB dengan patungan
+(dua transaksi dibagi, satu pelunasan, satu anggota yang sudah keluar
+dengan saldo), dan pengguna U (Master) yang punya dua pemasangan aplikasi,
+kabar belum dibaca, dan setidaknya satu transaksi yang dicatat luring.
+Jalankan di 1280 px dan 375 px, tema terang dan gelap, bahasa ID dan EN.
+
+1. **Aktivasi satu klik.** Buka `/ruang/WU` (kasus baru). Klik tab Struk:
+   data tampil tanpa dialog dan tanpa teks ranah. `/kasus` menunjukkan
+   ranah `struk` bertambah pada kasus yang sama; audit memuat
+   `tambah_ranah` lalu `baca_struk`. Ulangi untuk Katalog, Jadwal, Usaha.
+2. **Refresh tidak menambah ranah.** Tutup kasus di `/kasus`, lalu tekan F5
+   di `/ruang/WU/struk`. Tab menampilkan tombol "Muat data" (tanpa nama
+   ranah). Audit TIDAK memuat `tambah_ranah` sebelum tombol diklik. Klik
+   sekali: data tampil. Back ke tab ini juga tidak menambah ranah sendiri.
+3. **Lencana tanpa RPC tab.** Buka `/ruang/WU` di tab Ringkas. Lencana
+   Katalog/Jadwal/Usaha/Struk terisi, tab bernilai 0 pindah ke
+   "Lainnya (0)". Audit hanya memuat `baca_ruang` (360), tidak ada
+   `baca_struk`, `baca_usaha`, dan seterusnya.
+4. **Struk: saringan dan kursor.** Saring Penjualan, Kasbon saja, OCR, dan
+   rentang tanggal: ringkas berubah dan halaman kembali ke pertama. Pilih
+   pencatat: URL tetap hanya `?kursor=`/`?struk=` (tidak ada id orang).
+   "Berikutnya" dan Back berjalan per halaman; ringkas tetap tampil di
+   halaman 2. Nama pedagang dan catatan hanya berupa penanda "tidak
+   dikirim"; baris di sampah berpil.
+5. **Struk: pelanggan.** Klik chip "Pelanggan ·xxxxxx" pada satu struk:
+   struk lain dengan pelanggan yang sama di halaman itu tersorot dan
+   jumlah struknya tampil, tanpa total rupiah atau kasbon per pelanggan.
+   Nama dan telepon pelanggan tidak ada di mana pun. Buka kasus baru
+   (tutup, lalu buka lagi): tanda pelanggan yang sama BERBEDA.
+6. **Struk: baris item.** Klik "Baris struk": laci `?struk=` berisi item
+   dengan qty dan nominal, Back menutup laci. Klik satu item: laci
+   transaksi `?tx=` terbuka di tab Transaksi.
+7. **Patungan.** `/ruang/WB/dompet` → segmen Patungan (`?lihat=patungan`).
+   Saldo anggota sama dengan layar Patungan aplikasi; anggota yang keluar
+   tampil di "Bekas anggota" dengan saldonya; teks "Jumlah semua saldo 0"
+   berwarna hijau. Riwayat Pembagian menampilkan bagian per orang dan
+   selisih; Pelunasan menampilkan dari/ke, bukti, dan penanda transfer
+   hilang. Ganti jenis: `?jenis=lunas`, kursor kembali ke halaman pertama.
+   Kembali ke segmen Dompet: mutasi dan Pemeriksaan jalan seperti Fase 2.
+8. **Perangkat.** `/pengguna/U` → tab Perangkat. Pemasangan menampilkan
+   platform, varian, versi (teks biasa), terakhir aktif, dan tanda sidik
+   pendek (tanpa token). Sesi tanpa IP maupun peramban. Ganti rentang 7/90
+   hari: angka jeda berubah, URL tidak berubah, dan setiap rentang tercatat
+   satu `baca_perangkat`. Jeda terlama bertaut ke Jejak (ruang dan tanggal
+   yang sama) dan ke laci transaksi. Buka staf platform sebagai subjek:
+   sesi berbunyi "staf platform; sesinya tidak ditampilkan".
+9. **Kabar.** Tab Kabar: ringkas (total, belum dibaca, per jenis) dan
+   setelan per ruang (bawaan berpil). Saring "Belum dibaca", jenis, dan
+   ruang: URL tetap hanya `?kursor=`. Kabar transaksi dihapus/besar
+   menampilkan kategori dan nominal, bertaut ke laci transaksi; nama
+   pengirim hanya penanda "tidak dikirim". Ruang U di luar lingkup kasus
+   tidak muncul di saringan dan kabarnya tidak dihitung.
+10. **Audit tanpa angka (F3-11).** Di `/audit`, baris `baca_perangkat` dan
+    `baca_kabar` hanya membawa `{rpc, ranah, halaman_pertama?, saring}`;
+    tidak ada `jumlah` atau hitungan per jenis.
+11. **Tanpa TOTP.** Sesi console tanpa TOTP membuka `/ruang/WU/struk` dan
+    `/pengguna/U/perangkat`: "butuh login console ber-TOTP", tidak ada RPC
+    tab dan tidak ada tombol "Muat data".
+12. **Tampilan.** Di 375 px tidak ada gulir samping selain tabel per hari
+    Perangkat dan tabel setelan Kabar (bergulir di dalam kotaknya). Pil,
+    tanda belum dibaca, dan warna saldo (hijau/merah) terbaca di tema
+    gelap. Semua kode (OCR, jenis kabar, peran, platform) tampil sebagai
+    kata, bukan kode mentah.
+
 ## Batas yang diketahui
 
 - **Console dan halaman publik satu origin (risiko sisa yang disadari, K6).**
