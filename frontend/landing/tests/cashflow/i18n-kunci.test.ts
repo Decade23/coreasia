@@ -21,6 +21,7 @@ import { JENIS_PERISTIWA } from '../../adapters/cashflowJejak'
 import {
   ALASAN_LEWATI, ALASAN_STOK, SEBAB_RINCI_STOK, ARAH_PENYESUAIAN, SEBAB_PENYESUAIAN, IRAMA_JADWAL, KEADAAN_JADWAL, OCR_STRUK, kunciKode,
 } from '../../adapters/cashflowRanahBuku'
+import { PILIHAN_ARSIP } from '../../adapters/cashflowTampilBuku'
 import { JENIS_KABAR, PERAN_KABAR, PLATFORM_PERANGKAT, VARIAN_APLIKASI } from '../../adapters/cashflowPerangkat'
 
 const AKAR = resolve(fileURLToPath(new URL('.', import.meta.url)), '../..')
@@ -80,6 +81,12 @@ describe('kamus CashFlow lengkap untuk setiap kunci yang dipakai', () => {
       ...[...PERAN_KABAR, 'lain'].map(k => `kode.peran.${kunciKode(k)}`),
       ...[...PLATFORM_PERANGKAT, 'lain'].map(k => `kode.platform.${kunciKode(k)}`),
       ...VARIAN_APLIKASI.map(k => `kode.varian.${kunciKode(k)}`),
+      // Isi tab Katalog/Jadwal/Usaha (kunci templat dinamis).
+      ...['keluar', 'masuk', 'lain'].map(k => `katalog.kelompok.${k}`),
+      ...PILIHAN_ARSIP.map(k => `jadwal.arsipOpsi.${k}`),
+      ...['aktif', 'terlambat', 'selesai', 'arsip', 'cicilan', 'berulang'].map(k => `jadwal.ringkas.${k}`),
+      ...['aktif', 'berstok', 'menipis', 'minus', 'arsip'].map(k => `usaha.ringkas.${k}`),
+      ...['produk', 'stok'].map(k => `usaha.lihat.${k}`),
     ]
     const hilang = jalur.flatMap(k => (['id', 'en'] as const).filter(b => typeof ambil(b, k) !== 'string').map(b => `${b}:${k}`))
     expect(hilang).toEqual([])
