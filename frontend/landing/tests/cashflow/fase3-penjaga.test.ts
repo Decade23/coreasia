@@ -148,5 +148,8 @@ describe('Fase 3: isi tab Struk, Patungan, Perangkat, Kabar', () => {
     expect(isi).toMatch(/<CashflowPanelTab ranah="dompet" :memuat/)
     expect(isi).not.toMatch(/ranah="dompet" aktivasi/)
     expect(baca('components/cashflow/CashflowTabPatungan.vue')).toMatch(/\(\['saldo', 'bekas'\] as const\)/)
+    // ?kursor= dipakai bersama mutasi Dompet: pager patungan diam di tampilan Dompet (pintasan [ tidak mundur dua kali)
+    expect(isi).toContain("kini: () => (patungan.value ? q.value.kursor : ''),")
+    expect(isi).toContain('berikut: () => (patungan.value ? riwayat.value?.kursorBerikut : null),')
   })
 })

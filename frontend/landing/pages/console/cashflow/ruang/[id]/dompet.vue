@@ -51,8 +51,10 @@ const lunas = computed(() => (riwayat.value?.jenis === 'lunas' ? riwayat.value.b
 const totalPertama = ref<Partial<Record<'bagi' | 'lunas', number | null>>>({})
 watch(riwayat, (d) => { if (d?.halamanPertama) totalPertama.value = { ...totalPertama.value, [d.jenis]: d.total } }, { immediate: true })
 const total = computed(() => (riwayat.value?.halamanPertama ? riwayat.value.total : totalPertama.value[q.value.jenis] ?? null))
+/* ?kursor= juga dipakai mutasi CashflowTabDompet (pintasan [ ] miliknya):
+   di tampilan Dompet pager ini diam supaya satu tombol tidak mundur dua kali. */
 const { wadah, berikutnya, sebelumnya, pertama } = useCashflowKursor({
-  kini: () => q.value.kursor,
+  kini: () => (patungan.value ? q.value.kursor : ''),
   berikut: () => (patungan.value ? riwayat.value?.kursorBerikut : null),
   ke: k => setel({ kursor: k }, { dorong: true }),
 })
