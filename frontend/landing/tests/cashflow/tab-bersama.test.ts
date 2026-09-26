@@ -6,7 +6,7 @@
  */
 import { nextTick, ref } from 'vue'
 import { describe, expect, it, vi } from 'vitest'
-import { subjekJejak, wsTabDompet } from '~/adapters/cashflowRuang'
+import { argumenJejak, subjekJejak, wsTabDompet } from '~/adapters/cashflowRuang'
 import { useCashflowRanahOtomatis } from '~/composables/cashflow/useCashflowRanahOtomatis'
 import { useCashflowSekaliJalan } from '~/composables/cashflow/useCashflowSekaliJalan'
 import type { Kasus } from '~/adapters/cashflowKasus'
@@ -64,6 +64,12 @@ describe('argumen admin_jejak', () => {
     expect(subjekJejak('ruang', W1, U)).toEqual({ aktor: null, ruang: W1 })
     expect(subjekJejak('pengguna', U, W1)).toEqual({ aktor: U, ruang: W1 })
     expect(subjekJejak('pengguna', U, null)).toEqual({ aktor: U, ruang: null })
+  })
+  it('argumenJejak: query tab → aktor + saringan terkirim; mode ruang mengabaikan ?ruang=; \'\' = null', () => {
+    const q = { ruang: U, jenis: 'tx.ubah' as const, dari: '2026-09-01', sampai: '2026-09-30' }
+    expect(argumenJejak('ruang', W1, q)).toEqual({ aktor: null, saring: { ruang: W1, jenis: 'tx.ubah', dari: '2026-09-01', sampai: '2026-09-30' } })
+    expect(argumenJejak('pengguna', U, { ...q, ruang: W1 })).toEqual({ aktor: U, saring: { ruang: W1, jenis: 'tx.ubah', dari: '2026-09-01', sampai: '2026-09-30' } })
+    expect(argumenJejak('pengguna', U, { ruang: '', jenis: '', dari: '', sampai: '' })).toEqual({ aktor: U, saring: { ruang: null, jenis: null, dari: null, sampai: null } })
   })
 })
 

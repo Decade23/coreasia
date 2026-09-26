@@ -8,7 +8,7 @@
  */
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ref } from 'vue'
-import { RANAH_RUANG, SKENARIO_SELIDIKI } from '~/adapters/cashflowRuang'
+import { argumenJejak, RANAH_RUANG, SKENARIO_SELIDIKI } from '~/adapters/cashflowRuang'
 
 const panggilan: Array<{ nama: string; a: Record<string, unknown> }> = []
 const sb = {
@@ -56,6 +56,19 @@ describe('argumen RPC Ruang 360', () => {
     expect(terakhir().a).toMatchObject({ p_kasus: 'k1', p_aktor: null, p_ws: W })
     await useCashflowAdmin().jejak('k1', U, { ruang: null, jenis: null, dari: null, sampai: null } as never, null, 20)
     expect(terakhir().a).toMatchObject({ p_aktor: U, p_ws: null })
+  })
+
+  it('jejak dari query tab (argumenJejak → api.jejak, jalur CashflowTabJejak): mode ruang abaikan ?ruang=, p_ws = subjek', async () => {
+    const q = { ruang: W2, jenis: 'tx.hapus' as const, dari: '2026-09-01', sampai: '' }
+    const r = argumenJejak('ruang', W, q)
+    await useCashflowAdmin().jejak('k1', r.aktor, r.saring, null, 100)
+    expect(terakhir().a).toMatchObject({ p_kasus: 'k1', p_ws: W, p_aktor: null, p_jenis: 'tx.hapus', p_dari: '2026-09-01', p_sampai: null })
+    const p = argumenJejak('pengguna', U, q)
+    await useCashflowAdmin().jejak('k1', p.aktor, p.saring, null, 100)
+    expect(terakhir().a).toMatchObject({ p_ws: W2, p_aktor: U, p_jenis: 'tx.hapus' })
+    const kosong = argumenJejak('pengguna', U, { ruang: '', jenis: '', dari: '', sampai: '' })
+    await useCashflowAdmin().jejak('k1', kosong.aktor, kosong.saring, null, 100)
+    expect(terakhir().a).toMatchObject({ p_ws: null, p_aktor: U, p_jenis: null, p_dari: null, p_sampai: null })
   })
 
   it('kasusBukaDariPeristiwa (Selidiki) → p_ranah = ranah tab ruang, skenario Selidiki', async () => {

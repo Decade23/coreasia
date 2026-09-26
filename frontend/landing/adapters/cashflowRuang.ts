@@ -18,6 +18,7 @@
  * adapters/ tidak di-auto-import Nuxt — selalu impor eksplisit.
  */
 import { samarkanEmail } from './cashflow'
+import type { JenisPeristiwa, SaringJejak } from './cashflowJejak'
 import { bacaObjekKursor, isoSah, keTransaksiBaris, jenisUang, type KursorTransaksi, type TransaksiBarisDTO, type TransaksiBaris, type JenisUang, type CekTransaksi, CEK_TRANSAKSI } from './cashflowBuku'
 import { capWaktuWib, type BatasAksesDTO, type KasusDTO } from './cashflowKasus'
 
@@ -88,6 +89,18 @@ export function wsTabDompet(mode: 'pengguna' | 'ruang', ws: string | null): stri
  */
 export function subjekJejak(mode: 'pengguna' | 'ruang', subjek: string, ruangSaring: string | null): { aktor: string | null; ruang: string | null } {
   return mode === 'ruang' ? { aktor: null, ruang: subjek } : { aktor: subjek, ruang: ruangSaring }
+}
+/**
+ * Seluruh argumen admin_jejak dari query tab (?ruang&jenis&dari&sampai; ''
+ * = tanpa saringan): aktor + saringan yang DIKIRIM (p_ws = saring.ruang).
+ * Mode 'ruang' mengabaikan ?ruang= — p_ws selalu ruang subjek.
+ */
+export function argumenJejak(
+  mode: 'pengguna' | 'ruang', subjek: string,
+  q: { ruang: string; jenis: JenisPeristiwa | ''; dari: string; sampai: string },
+): { aktor: string | null; saring: SaringJejak } {
+  const { aktor, ruang } = subjekJejak(mode, subjek, q.ruang || null)
+  return { aktor, saring: { ruang, jenis: q.jenis || null, dari: q.dari || null, sampai: q.sampai || null } }
 }
 
 // ── Kepala ruang (T0) ────────────────────────────────────────────────────

@@ -98,10 +98,15 @@ describe('Fase 2: /aktivitas', () => {
     expect(f).toMatch(/const \{ sibuk, jalankan: selidiki \} = useCashflowSekaliJalan\(/)
     expect(f).toMatch(/@click="selidiki\(r\.id\)"/)
   })
-  it('tab Jejak: aktor & p_ws dari subjekJejak', () => {
+  // Isi argumen diuji perilakunya (rpc-argumen: argumenJejak → sb.rpc);
+  // di sini hanya sambungannya: satu objek argumen, aktor & saring darinya.
+  it('tab Jejak: aktor & p_ws dari argumenJejak, dikirim utuh ke api.jejak', () => {
     const j = baca('components/cashflow/CashflowTabJejak.vue')
-    expect(j).toMatch(/subjekJejak\(props\.mode, id\.value, q\.value\.ruang \|\| null\)/)
-    expect(j).toMatch(/api\.jejak\(kk\.id, aktor, s, ks, PER\)/)
+    expect(j).toMatch(/const argumen = computed\(\(\) => argumenJejak\(props\.mode, id\.value, q\.value\)\)/)
+    expect(j).toMatch(/const a = argumen\.value\n/)
+    expect(j).toMatch(/api\.jejak\(kk\.id, a\.aktor, a\.saring, ks, PER\)/)
+    expect(j).toMatch(/const saring = computed\(\(\) => argumen\.value\.saring\)/)
+    expect(j).not.toMatch(/subjekJejak|q\.value\.ruang \|\| null/)
   })
   it('useCashflowAdmin tidak lagi memanggil v1 aktivitas maupun cari', () => {
     const admin = baca('composables/cashflow/useCashflowAdmin.ts')
