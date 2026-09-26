@@ -86,3 +86,18 @@ describe('Fase 2: /aktivitas', () => {
     expect(admin).not.toMatch(/'admin_aktivitas_terbaru'|'admin_cari'/)
   })
 })
+
+describe('Fase 2: tab Dompet', () => {
+  const f = baca('components/cashflow/CashflowTabDompet.vue')
+  it('ranah dompet ditambah otomatis sekali per kasus (bukan tombol), tidak untuk kasus anak', () => {
+    expect(f).toMatch(/ditambahUntuk\.value === id \|\| kasus\.kasus\.value\?\.anak\) return\s+ditambahUntuk\.value = id\s+void aksi\(\(\) => kasus\.tambah\(\['dompet'\]\)\)/)
+  })
+  it('Pemeriksaan bertaut ke tab Transaksi ?cek=<jenis>, bukan daftar id', () => {
+    expect(f).toMatch(/const keCek = \(cek: string\) => `\$\{props\.dasar\}\/transaksi\?cek=\$\{cek\}`/)
+    expect(f).not.toMatch(/\?ids=/)
+  })
+  it('mutasi di laci ?dompet= (push), kursor mutasi dikunci per dompet', () => {
+    expect(f).toMatch(/const bukaMutasi = \(id: string\) => setel\(\{ dompet: id, kursor: '' \}, \{ dorong: true \}\)/)
+    expect(f).toMatch(/\|mutasi:\$\{q\.value\.dompet\}\|/)
+  })
+})

@@ -457,6 +457,66 @@ tidak memuat CSP statis. Kalau `curl -I` di atas menunjukkan CSP
 `'unsafe-inline'` milik `/**`, berarti CSP ber-hash dari fungsi tertimpa.
 Laporkan: console tetap berjalan, tetapi tanpa CSP ketat.
 
+## Fase 2 (0094): Ruang 360
+
+**Urutan rilis: SQL 0094 dulu, landing sesudahnya.** Landing Fase 2 memanggil
+`admin_aktivitas_terbaru_v2`, `admin_cari_v2`, `admin_kasus_aktif_ruang`,
+`admin_kasus_buka_dari_peristiwa`, `admin_ruang_kepala`, `admin_ruang_360`,
+`admin_dompet_ruang`, `admin_mutasi_dompet`, `admin_periksa_ruang`, dan
+`admin_sampah_ruang`. Tanpa 0094 halaman Aktivitas dan palet langsung gagal
+(PGRST202). Landing yang sedang tayang tetap jalan di atas 0094 karena v1
+aktivitas dan cari belum dicabut. Keduanya baru dicabut sesudah landing Fase 2
+tayang.
+
+### Uji peramban (sesi console ber-TOTP)
+
+Uji dengan dua akun admin: A (pemilik sesi) dan B (admin lain). Keduanya
+login ber-TOTP. Siapkan satu pengguna U yang punya dua ruang, W1 bersama satu
+anggota lain dan W2 pribadi. Jalankan di 1280 px dan 375 px, dengan tema
+terang dan gelap.
+
+1. **Pengguna → ruang tanpa gerbang.** A membuka `/pengguna/U` dan data tampil
+   tanpa dialog. Di tab Ruang, klik nama W1. `/ruang/W1` tampil tanpa dialog.
+   Tab Ringkas, Anggota, Transaksi, Dompet, Jejak, dan Sampah terisi.
+   `/kasus` hanya menampilkan SATU kasus aktif milik A atas U, dengan ranah
+   ruang dan dompet sudah bertambah, bukan kasus baru.
+2. **Refresh.** Tekan F5 di `/ruang/W1/dompet`. Data tampil lagi dan tetap
+   tidak ada kasus baru di `/kasus`.
+3. **Tautan yang dibagikan.** B membuka URL `/ruang/W1` yang disalin A. B
+   mendapat kasus baru miliknya (subjek ruang W1). Tidak ada dialog. Kasus A
+   tidak dipakai.
+4. **Saldo salah, ≤ 3 klik.** `/ruang/W1` → tab Dompet → Mutasi di dompet
+   yang dicurigai. Saldo di kartu sama dengan saldo di aplikasi pemilik
+   (Beranda/Dompet). Saldo sesudahnya di baris teratas mutasi sama dengan
+   saldo dompet. Baris bertanggal masa depan berpil.
+5. **Pemeriksaan.** Di tab Dompet, cek yang jumlahnya > 0 bertaut ke tab
+   Transaksi `?cek=<jenis>` dan jumlah barisnya sama. Di URL tidak ada daftar
+   id.
+6. **Sengketa anggota, ≤ 3 klik.** `/ruang/W1` → tab Anggota → kolom pencatat
+   di tab Transaksi atau Jejak. Bekas anggota yang hanya tersisa di sampah
+   tampil dengan "hanya tersisa di sampah". Undangan tidak menampilkan kode.
+7. **Sampah.** Tab Sampah menampilkan status dihapus/dipulihkan. "Berikutnya"
+   dan Back berjalan per halaman. Catatan terkunci hanya terbuka untuk baris
+   yang diklik.
+8. **Selidiki.** `/aktivitas` tidak menampilkan ruang maupun jam. Klik Selidiki
+   pada satu baris: halaman pindah ke `/ruang/<W>/jejak` dengan data tampil.
+   Klik Selidiki lagi pada baris yang sama: `/kasus` menunjukkan kasus lama
+   ditutup dan kasus baru bertanda "lanjutan".
+9. **Palet.** Tekan Cmd+K, tempel uuid W2 (atau 8 hex awalnya), lalu Enter.
+   Hasil "Ruang" tersamar muncul dan membuka `/ruang/W2`.
+10. **Riwayat akses dua orang.** Sesudah langkah 1, tab Akses di
+    `/pengguna/U` dan di `/pengguna/<anggota lain W1>` sama-sama memuat baris
+    `baca_ruang` milik A. Tab Akses di `/ruang/W1` memuat `lihat_kepala`.
+11. **Tanpa TOTP.** Sesi console tanpa TOTP membuka `/ruang/W1`. Kepala tampil
+    tersamar dengan hitungan "—", tab data menampilkan "butuh login console
+    ber-TOTP", dan Selidiki menampilkan toast izin. Tidak ada yang terbuka.
+12. **Batas laju.** Buka ruang ke-21 berbeda dalam satu jam (boleh di
+    preview): tab menampilkan kalimat batas "20 subjek berbeda (pengguna atau
+    ruang)". Selidiki pada saat itu menampilkan toast yang sama.
+
+Sesudah lolos, cabut v1 lewat jalur SQL (`admin_aktivitas_terbaru`,
+`admin_cari`).
+
 ## Batas yang diketahui
 
 - **Console dan halaman publik satu origin (risiko sisa yang disadari, K6).**
