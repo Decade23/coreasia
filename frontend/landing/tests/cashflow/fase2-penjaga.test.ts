@@ -92,6 +92,11 @@ describe('Fase 2: tab Dompet', () => {
   it('ranah dompet ditambah otomatis sekali per kasus (bukan tombol), tidak untuk kasus anak', () => {
     expect(f).toMatch(/ditambahUntuk\.value === id \|\| kasus\.kasus\.value\?\.anak\) return\s+ditambahUntuk\.value = id\s+void aksi\(\(\) => kasus\.tambah\(\['dompet'\]\)\)/)
   })
+  it('ringkas Terarsip = UANG (Σ saldo dompet terarsip, 0094 §6): rupiah, tampil bila kelompok punya dompet terarsip', () => {
+    expect(f).toMatch(/<template v-if="g\.adaArsip"> · \{\{ tcf\('dompet\.arsip'\) \}\} \{\{ rupiah\(g\.r\.arsip\) \}\}<\/template>/)
+    expect(f).toMatch(/kelompokkanDompet\(ringkas\.value, dompet\.value\)/)
+    expect(f).not.toMatch(/angka\(g\.r\.arsip\)|v-if="g\.r\.arsip"/)
+  })
   it('Pemeriksaan bertaut ke tab Transaksi ?cek=<jenis>, bukan daftar id', () => {
     expect(f).toMatch(/const keCek = \(cek: string\) => `\$\{props\.dasar\}\/transaksi\?cek=\$\{cek\}`/)
     expect(f).not.toMatch(/\?ids=/)

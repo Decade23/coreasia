@@ -250,6 +250,20 @@ export const keRingkasDompet = (r: RingkasDompetDTO): RingkasDompet => ({
   ruangId: r.workspace_id, jumlah: angka0(r.jumlah_dompet), aset: angka0(r.aset), piutang: angka0(r.piutang), arsip: angka0(r.arsip),
 })
 
+/**
+ * Kelompok per ruang untuk tab Dompet (urut ringkas server; ruang tanpa
+ * dompet tetap tampil ringkasnya). `adaArsip` = kelompok punya dompet
+ * terarsip — BUKAN `arsip !== 0`: ringkas.arsip adalah Σ SALDO dompet
+ * terarsip (uang, 0094 §6), yang bisa 0 walau dompet terarsipnya ada.
+ */
+export interface KelompokDompet { r: RingkasDompet; dompet: Dompet[]; adaArsip: boolean }
+export function kelompokkanDompet(ringkas: readonly RingkasDompet[], dompet: readonly Dompet[]): KelompokDompet[] {
+  return ringkas.map((r) => {
+    const milik = dompet.filter(d => d.ruangId === r.ruangId)
+    return { r, dompet: milik, adaArsip: milik.some(d => d.arsip) }
+  })
+}
+
 /** admin_mutasi_dompet (0094 §6): baris = bentuk admin_transaksi_bangun + saldo_setelah. */
 export type MutasiBarisDTO = TransaksiBarisDTO & { saldo_setelah: number | string }
 export interface MutasiDompetDTO {

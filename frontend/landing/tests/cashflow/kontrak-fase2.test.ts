@@ -12,7 +12,7 @@ import {
   adaMigrasiNomor, fungsiTerakhir, kolomKembalian, parameterFungsi, pohonContoh, pohonDengan, pohonJsonb, semuaPohonJsonb, urutPohon,
 } from './migrasi'
 import {
-  keKepalaRuang, keRuang360, keDompet, keRingkasDompet, keMutasiBaris, kePemeriksaan, keSampahRuang, kursorSampahDariUrl,
+  keKepalaRuang, keRuang360, keDompet, keRingkasDompet, kelompokkanDompet, keMutasiBaris, kePemeriksaan, keSampahRuang, kursorSampahDariUrl,
   tujuanSelidiki, alasanOtomatisRuang, alasanSelidiki,
   RANAH_RUANG, RANAH_BUKAN_RUANG, RANAH_TAB_RUANG, TAB_RUANG, SKENARIO_RUANG, SKENARIO_SELIDIKI, STATUS_UNDANGAN,
   type KepalaRuangDTO, type Ruang360DTO, type DompetRuangDTO, type MutasiDompetDTO, type PeriksaRuangDTO, type SampahRuangDTO,
@@ -122,6 +122,23 @@ describe('kontrak DompetRuangDTO ↔ admin_dompet_ruang / admin_dompet_bangun', 
     expect(keDompet(d.baris[0]!)).toMatchObject({ saldoAwal: 100000, mutasi: -25000, saldo: 75000, transaksi: 12, masaDepan: 1, piutang: false, arsip: false, batasKredit: null })
     expect(keDompet({ ...d.baris[0]!, tipe: 'piutang' }).piutang).toBe(true)
     expect(keRingkasDompet(d.ringkas[0]!)).toEqual({ ruangId: W, jumlah: 3, aset: 75000, piutang: 0, arsip: 1 })
+  })
+})
+
+describe('kelompokkanDompet: keterangan Terarsip', () => {
+  const d = JSON.parse(DOMPET) as DompetRuangDTO
+  const W9 = 'cc000000-0000-4000-8000-000000000009'
+  const kas = keDompet(d.baris[0]!)
+  it('dompet terarsip yang saldonya saling meniadakan (Σ 0) tetap ditandai adaArsip', () => {
+    const arsip = [{ ...kas, id: 'a1', arsip: true, saldo: 5000 }, { ...kas, id: 'a2', arsip: true, saldo: -5000 }]
+    const g = kelompokkanDompet([{ ruangId: W, jumlah: 3, aset: 75000, piutang: 0, arsip: 0 }], [kas, ...arsip])
+    expect(g[0]).toMatchObject({ adaArsip: true, r: { arsip: 0 } })
+    expect(g[0]!.dompet.map(x => x.id)).toEqual([kas.id, 'a1', 'a2'])
+  })
+  it('tanpa dompet terarsip → tidak ada keterangan, walau ringkas.arsip bukan 0; dompet dikelompokkan per ruang', () => {
+    const lain = { ...kas, id: 'x9', ruangId: W9, arsip: true }
+    const g = kelompokkanDompet([{ ruangId: W, jumlah: 1, aset: 75000, piutang: 0, arsip: 1250000 }, { ruangId: W9, jumlah: 1, aset: 0, piutang: 0, arsip: 0 }], [kas, lain])
+    expect(g.map(x => [x.r.ruangId, x.adaArsip, x.dompet.length])).toEqual([[W, false, 1], [W9, true, 1]])
   })
 })
 

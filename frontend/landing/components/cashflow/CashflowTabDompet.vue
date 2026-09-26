@@ -21,7 +21,7 @@
 import { POLA_UUID, rupiah, angka } from '~/adapters/cashflow'
 import { POLA_KURSOR_URL, kursorTransaksiDariUrl, tanggalJam } from '~/adapters/cashflowBuku'
 import {
-  keDompet, keRingkasDompet, keMutasiBaris, kePemeriksaan,
+  keDompet, keRingkasDompet, keMutasiBaris, kePemeriksaan, kelompokkanDompet,
   type DompetRuangDTO, type MutasiDompetDTO, type PeriksaRuangDTO, type Dompet,
 } from '~/adapters/cashflowRuang'
 import { tulisQuery, type SkemaQuery } from '~/adapters/cashflowQuery'
@@ -71,9 +71,7 @@ watch(kunci, (k) => {
 const dompet = computed(() => mentah.value?.baris.map(keDompet) ?? [])
 const ringkas = computed(() => mentah.value?.ringkas.map(keRingkasDompet) ?? [])
 /** Per ruang (urut ringkas server); ruang tanpa dompet tetap tampil ringkasnya. */
-const kelompok = computed(() => ringkas.value.map(r => ({
-  r, nama: props.namaRuang(r.ruangId), dompet: dompet.value.filter(d => d.ruangId === r.ruangId),
-})))
+const kelompok = computed(() => kelompokkanDompet(ringkas.value, dompet.value).map(g => ({ ...g, nama: props.namaRuang(g.r.ruangId) })))
 
 // ── Pemeriksaan (mode ruang) ───────────────────────────────────────────
 const kunciPeriksa = computed(() => (props.mode === 'ruang' && props.ws && kunci.value ? `${kasus.kunciKasus.value}|periksa:${props.ws}` : null))
@@ -134,7 +132,7 @@ const labelPembuat = (uid: string | null) => (props.labelOrang ? props.labelOran
               <template v-else>{{ g.nama }}</template>
             </h3>
             <span class="text-xs text-[var(--ca-muted)]">
-              {{ tcf('dompet.jumlahDompet')(g.r.jumlah) }} · {{ tcf('dompet.aset') }} {{ rupiah(g.r.aset) }} · {{ tcf('dompet.piutang') }} {{ rupiah(g.r.piutang) }}<template v-if="g.r.arsip"> · {{ tcf('dompet.arsip') }} {{ angka(g.r.arsip) }}</template>
+              {{ tcf('dompet.jumlahDompet')(g.r.jumlah) }} · {{ tcf('dompet.aset') }} {{ rupiah(g.r.aset) }} · {{ tcf('dompet.piutang') }} {{ rupiah(g.r.piutang) }}<template v-if="g.adaArsip"> · {{ tcf('dompet.arsip') }} {{ rupiah(g.r.arsip) }}</template>
             </span>
           </div>
           <ul v-if="g.dompet.length" class="ca-console-dialog divide-y divide-[color:var(--ca-border)] text-sm">
