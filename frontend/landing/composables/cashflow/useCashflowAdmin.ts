@@ -342,6 +342,10 @@ export const useCashflowAdmin = () => {
         p_kasus: kasus, p_ws: ws, p_pencatat: s.pencatat, p_kind: kindDariArah(s.jenis), p_kasbon: s.kasbon,
         p_ocr: s.ocr, p_dari: s.dari, p_sampai: s.sampai, p_kursor: kursor, p_limit: limit,
       }),
+    /** Laci struk: baris item satu struk lewat admin_transaksi_cari p_grup —
+     *  ranah TRANSAKSI (bukan struk), tanpa note. Audit baca_transaksi. */
+    strukBaris: (kasus: string, ws: string, grup: string, limit = 200) =>
+      rpc<TransaksiCariDTO>('admin_transaksi_cari', { p_kasus: kasus, p_ws: ws, p_mode: 'ruang', p_grup: grup, p_limit: limit }),
     /** Ranah dompet: saldo patungan anggota + bekas anggota + ringkas. Audit baca_dompet. */
     patunganRuang: (kasus: string, ws: string) =>
       rpc<PatunganRuangDTO>('admin_patungan_ruang', { p_kasus: kasus, p_ws: ws }),

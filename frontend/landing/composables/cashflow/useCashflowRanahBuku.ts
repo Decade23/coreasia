@@ -20,6 +20,7 @@ import type {
 } from '~/adapters/cashflowRanahBuku'
 import { kePerangkatPengguna, keKabar, keSetelanKabar, keRingkasKabar } from '~/adapters/cashflowPerangkat'
 import type { PerangkatPenggunaDTO, KabarPenggunaDTO, KursorKabar, SaringKabar } from '~/adapters/cashflowPerangkat'
+import { keTransaksiBaris, type TransaksiCariDTO } from '~/adapters/cashflowBuku'
 
 type Getter<T> = () => T
 
@@ -108,6 +109,14 @@ export const useCashflowRanahBuku = () => {
       kunci: () => (ws() ? `${ws()}|${JSON.stringify(saring())}|${kursorTeks(kursor())}` : null),
       panggil: (k) => api.strukRuang(k, ws()!, saring(), kursor()) as Promise<StrukRuangDTO>,
       ubah: (d: StrukRuangDTO) => ({ ...halaman(d, keStruk), ringkas: keRingkasStruk(d.ringkas) }),
+    }),
+    /** Laci struk ?struk=: baris item lewat admin_transaksi_cari p_grup —
+     *  ranah TRANSAKSI (kasus ruang selalu memegangnya), satu halaman ≤ 200. */
+    strukBaris: (ws: Getter<string | null>, grup: Getter<string | null>) => useCashflowDataRanah({
+      ranah: 'transaksi',
+      kunci: () => (ws() && grup() ? `struk-baris:${ws()}|${grup()}` : null),
+      panggil: (k) => api.strukBaris(k, ws()!, grup()!),
+      ubah: (d: TransaksiCariDTO) => halaman(d, keTransaksiBaris),
     }),
     /** R7 ranah dompet: saldo patungan. */
     patungan: (ws: Getter<string | null>) => useCashflowDataRanah({
