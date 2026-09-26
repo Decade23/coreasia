@@ -12,7 +12,7 @@ import {
   adaMigrasiNomor, fungsiTerakhir, kolomKembalian, parameterFungsi, pohonContoh, pohonDengan, pohonJsonb, semuaPohonJsonb, urutPohon,
 } from './migrasi'
 import {
-  keKepalaRuang, keRuang360, keDompet, keRingkasDompet, kelompokkanDompet, keMutasiBaris, kePemeriksaan, keSampahRuang, kursorSampahDariUrl,
+  keKepalaRuang, keRuang360, keDompet, keRingkasDompet, kelompokkanDompet, lencanaTabRuang, keMutasiBaris, kePemeriksaan, keSampahRuang, kursorSampahDariUrl,
   tujuanSelidiki, alasanOtomatisRuang, alasanSelidiki,
   RANAH_RUANG, RANAH_BUKAN_RUANG, RANAH_TAB_RUANG, TAB_RUANG, SKENARIO_RUANG, SKENARIO_SELIDIKI, STATUS_UNDANGAN,
   type KepalaRuangDTO, type Ruang360DTO, type DompetRuangDTO, type MutasiDompetDTO, type PeriksaRuangDTO, type SampahRuangDTO,
@@ -122,6 +122,19 @@ describe('kontrak DompetRuangDTO ↔ admin_dompet_ruang / admin_dompet_bangun', 
     expect(keDompet(d.baris[0]!)).toMatchObject({ saldoAwal: 100000, mutasi: -25000, saldo: 75000, transaksi: 12, masaDepan: 1, piutang: false, arsip: false, batasKredit: null })
     expect(keDompet({ ...d.baris[0]!, tipe: 'piutang' }).piutang).toBe(true)
     expect(keRingkasDompet(d.ringkas[0]!)).toEqual({ ruangId: W, jumlah: 3, aset: 75000, piutang: 0, arsip: 1 })
+  })
+})
+
+describe('lencanaTabRuang', () => {
+  const h = { anggota: 2, bekas_anggota: 1, undangan_aktif: 0, transaksi: 40, dompet: 3, jejak: 9, sampah: 3 }
+  it('lencana dari hitung{} Ruang 360; Akses dari kepala; tanpa hitung = belum diketahui', () => {
+    expect(['', 'anggota', 'transaksi', 'dompet', 'jejak', 'sampah', 'akses'].map(t => lencanaTabRuang(t as never, h, 7))).toEqual([null, 3, 40, 3, 9, 3, 7])
+    expect(lencanaTabRuang('transaksi', null, 7)).toBeNull()
+    expect(lencanaTabRuang('akses', null, 7)).toBe(7)
+  })
+  it('Sampah: 0 yang MASIH terhapus = null (tab berisi baris dipulihkan tidak dipindah ke "Lainnya (0)")', () => {
+    expect(lencanaTabRuang('sampah', { ...h, sampah: 0 }, null)).toBeNull()
+    expect(lencanaTabRuang('transaksi', { ...h, transaksi: 0 }, null)).toBe(0)
   })
 })
 

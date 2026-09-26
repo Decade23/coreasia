@@ -47,6 +47,28 @@ export const RANAH_TAB_RUANG: Readonly<Record<TabRuang, RanahRuang | null>> = {
   '': 'ruang', anggota: 'ruang', transaksi: 'transaksi', dompet: 'dompet', jejak: 'jejak', sampah: 'jejak', akses: null,
 }
 
+/**
+ * Lencana tab Ruang 360 (null = belum diketahui; tab tidak dipindah ke
+ * "Lainnya"). Sampah: hitung.sampah admin_ruang_360 = baris sampah yang
+ * transaksinya MASIH terhapus, sedangkan tab Sampah (admin_sampah_ruang)
+ * menampilkan SEMUA baris termasuk yang sudah dipulihkan. Lencananya diberi
+ * keterangan "masih terhapus" (CashflowTab `judul`), dan 0 dijadikan null:
+ * nol yang masih terhapus tidak berarti tab kosong, jadi tab tidak boleh
+ * disembunyikan ke "Lainnya (0)".
+ */
+export function lencanaTabRuang(t: TabRuang, h: HitungRuangDTO | null, akses30: number | null): number | null {
+  if (t === 'akses') return akses30
+  if (!h) return null
+  switch (t) {
+    case 'anggota': return h.anggota + h.bekas_anggota
+    case 'transaksi': return h.transaksi
+    case 'dompet': return h.dompet
+    case 'jejak': return h.jejak
+    case 'sampah': return h.sampah || null
+    default: return null
+  }
+}
+
 // ── Kepala ruang (T0) ────────────────────────────────────────────────────
 /** admin_ruang_kepala (0094 §5). jumlah_* null untuk sesi tanpa pii. */
 export interface KepalaRuangDTO {

@@ -292,7 +292,7 @@ const KAMUS = {
       statusUndangan: { aktif: 'Aktif', diterima: 'Diterima', dicabut: 'Dicabut', ditolak: 'Ditolak', kedaluwarsa: 'Kedaluwarsa' },
       pencatat: 'Pencatat', aksesKet: 'Siapa membuka data ruang ini — termasuk kunjungan kepala dan pencarian.', aksesKosong: 'Belum ada yang membuka data ruang ini.',
     },
-    tabRuang: { label: 'Tab ruang', ringkas: 'Ringkas', anggota: 'Anggota', transaksi: 'Transaksi', dompet: 'Dompet', jejak: 'Jejak', sampah: 'Sampah', akses: 'Akses' },
+    tabRuang: { label: 'Tab ruang', ringkas: 'Ringkas', anggota: 'Anggota', transaksi: 'Transaksi', dompet: 'Dompet', jejak: 'Jejak', sampah: 'Sampah', akses: 'Akses', sampahLencana: 'masih terhapus' },
     dompet: {
       judul: 'Dompet', saldo: 'Saldo', saldoAwal: 'Saldo awal', mutasi: 'Mutasi', transaksi: 'Transaksi', terakhir: 'Tanggal terakhir',
       masaDepan: (n: number) => `${n} bertanggal masa depan`, arsip: 'Terarsip', piutang: 'Piutang', batasKredit: 'Batas kredit',
@@ -308,6 +308,7 @@ const KAMUS = {
       ket: 'Transaksi yang dihapus di ruang ini, terbaru dulu. Isi catatan dan judul tidak dikirim.', kosong: 'Sampah ruang ini kosong.',
       dihapus: 'Dihapus', dipulihkan: 'Dipulihkan', dihapusOleh: 'dihapus oleh', dipulihkanOleh: 'dipulihkan oleh', dicatatOleh: 'dicatat oleh',
       berjudul: 'berjudul', berfoto: 'berfoto',
+      ringkas: (masih: number, total: number) => `${masih} masih terhapus dari ${total} baris; sisanya sudah dipulihkan.`,
     },
     selidiki: {
       tombol: 'Selidiki', membuka: 'Membuka…', ket: 'Selidiki membuka kasus ruang tempat peristiwa ini terjadi (tercatat di audit), lalu menuju tab Jejak.',
@@ -603,7 +604,7 @@ const KAMUS = {
       statusUndangan: { aktif: 'Active', diterima: 'Accepted', dicabut: 'Revoked', ditolak: 'Rejected', kedaluwarsa: 'Expired' },
       pencatat: 'Recorded by', aksesKet: 'Who opened this workspace\'s data — including header visits and searches.', aksesKosong: 'Nobody has opened this workspace\'s data yet.',
     },
-    tabRuang: { label: 'Workspace tabs', ringkas: 'Summary', anggota: 'Members', transaksi: 'Transactions', dompet: 'Wallets', jejak: 'Trail', sampah: 'Trash', akses: 'Access' },
+    tabRuang: { label: 'Workspace tabs', ringkas: 'Summary', anggota: 'Members', transaksi: 'Transactions', dompet: 'Wallets', jejak: 'Trail', sampah: 'Trash', akses: 'Access', sampahLencana: 'still deleted' },
     dompet: {
       judul: 'Wallets', saldo: 'Balance', saldoAwal: 'Opening balance', mutasi: 'Movement', transaksi: 'Transactions', terakhir: 'Last date',
       masaDepan: (n: number) => `${n} future-dated`, arsip: 'Archived', piutang: 'Receivable', batasKredit: 'Credit limit',
@@ -619,6 +620,7 @@ const KAMUS = {
       ket: 'Deleted transactions in this workspace, newest first. Note and title contents are not sent.', kosong: 'This workspace\'s trash is empty.',
       dihapus: 'Deleted', dipulihkan: 'Restored', dihapusOleh: 'deleted by', dipulihkanOleh: 'restored by', dicatatOleh: 'recorded by',
       berjudul: 'titled', berfoto: 'with photo',
+      ringkas: (masih: number, total: number) => `${masih} still deleted out of ${total} rows; the rest were restored.`,
     },
     selidiki: {
       tombol: 'Investigate', membuka: 'Opening…', ket: 'Investigate opens a case on the workspace where this event happened (audited), then goes to the Trail tab.',

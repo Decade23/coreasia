@@ -62,6 +62,13 @@ describe('Fase 2: satu klik, tanpa dialog (keputusan Master 21 Sep 2026)', () =>
     const f = baca('composables/cashflow/useCashflowKasus.ts')
     expect(f).toMatch(/api\.kasusBuka\(subjek, SKENARIO_RUANG, PRESET_OTOMATIS, RANAH_RUANG, \[subjek\], alasanOtomatisRuang\(new Date\(\)\), 'workspace'\)/)
   })
+  it('lencana tab Sampah = yang masih terhapus, diberi keterangan; tab Sampah menyebut selisihnya', () => {
+    const induk = baca('pages/console/cashflow/ruang/[id].vue')
+    expect(induk).toMatch(/jumlah: lencanaTabRuang\(t, r360\.value\?\.hitung \?\? null, kepala\.value\?\.akses30 \?\? null\)/)
+    expect(induk).toMatch(/judul: t === 'sampah' \? tcf\('tabRuang\.sampahLencana'\) : undefined/)
+    expect(baca('components/cashflow/CashflowTab.vue')).toMatch(/:title="i\.judul"/)
+    expect(baca('pages/console/cashflow/ruang/[id]/sampah.vue')).toMatch(/tcf\('sampah\.ringkas'\)\(masihTerhapus, total\)/)
+  })
   it('induk Ruang 360 memulihkan kasus bertipe workspace dan melepas halaman saat pergi', () => {
     expect(baca('composables/cashflow/useCashflowRuang.ts')).toMatch(/kasus\.pulihkan\(ws, 'workspace'\)/)
     const induk = baca('pages/console/cashflow/ruang/[id].vue')

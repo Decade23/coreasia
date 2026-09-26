@@ -19,7 +19,7 @@ import type { SkemaQuery } from '~/adapters/cashflowQuery'
 const { tcf, formatTanggal, formatWaktu } = useCashflowI18n()
 const api = useCashflowAdmin()
 const kasus = useCashflowKasus()
-const { id, dasar, labelOrang } = useCashflowRuang()
+const { id, dasar, labelOrang, r360 } = useCashflowRuang()
 const { memuat, galat, pesanGalat, muat } = useCashflowMuat()
 
 const PER = 100
@@ -46,11 +46,15 @@ const { wadah, berikutnya, sebelumnya, pertama } = useCashflowKursor({
   ke: k => setel({ kursor: k }, { dorong: true }),
 })
 const keTx = (tx: string) => `${dasar.value}/transaksi?tx=${tx}`
+/* Lencana tab = yang MASIH terhapus (hitung.sampah); daftar ini memuat semua
+   baris termasuk yang dipulihkan — keduanya disebut bila berbeda. */
+const masihTerhapus = computed(() => r360.value?.hitung.sampah ?? null)
 </script>
 
 <template>
   <div ref="wadah" class="scroll-mt-40 space-y-4">
     <p class="text-sm text-[var(--ca-muted)]">{{ tcf('sampah.ket') }}</p>
+    <p v-if="masihTerhapus !== null && total !== null && total !== masihTerhapus" class="text-xs text-[var(--ca-subtle)]">{{ tcf('sampah.ringkas')(masihTerhapus, total) }}</p>
     <CashflowPanelTab
       ranah="jejak" :memuat="memuat" :galat="galat" :pesan-galat="pesanGalat" :ada-data="!!mentah"
       :kosong="!!mentah && !baris.length" :pesan-kosong="tcf('sampah.kosong')"

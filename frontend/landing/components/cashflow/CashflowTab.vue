@@ -9,7 +9,8 @@
  * pernah memindahkan tab. Di layar < 640 px baris ini menjadi pil yang
  * digulir ke samping dan menempel di atas.
  */
-interface ItemTab { kunci: string; label: string; to: string; jumlah: number | null; aktif: boolean }
+/** `judul` = arti lencana bila bukan "banyaknya isi tab" (mis. Sampah Ruang 360: masih terhapus). */
+interface ItemTab { kunci: string; label: string; to: string; jumlah: number | null; aktif: boolean; judul?: string }
 
 const props = defineProps<{ items: ItemTab[] }>()
 const { tcf } = useCashflowI18n()
@@ -47,7 +48,7 @@ const kelas = (i: ItemTab) => ['inline-flex shrink-0 items-center gap-1.5 rounde
   >
     <NuxtLink v-for="i in utama" :key="i.kunci || 'ringkas'" :to="i.to" :class="kelas(i)" :aria-current="i.aktif ? 'page' : undefined">
       {{ i.label }}
-      <span v-if="i.jumlah !== null" class="rounded-full bg-[var(--ca-chip-bg)] px-1.5 text-[0.7rem] tabular-nums text-[var(--ca-muted)]">{{ i.jumlah }}</span>
+      <span v-if="i.jumlah !== null" class="rounded-full bg-[var(--ca-chip-bg)] px-1.5 text-[0.7rem] tabular-nums text-[var(--ca-muted)]" :title="i.judul" :aria-label="i.judul ? `${i.jumlah} ${i.judul}` : undefined">{{ i.jumlah }}</span>
     </NuxtLink>
     <!-- < 640 px: baris ini digulir ke samping (overflow), jadi menu tarik-turun
          akan terpotong — tab kosong tampil sebaris, redup, di belakang pemisah. -->

@@ -17,7 +17,7 @@
  * Id kasus tidak pernah di URL/storage: kasus dipulihkan dari server.
  */
 definePageMeta({ layout: 'console', middleware: ['console', 'cashflow-admin'] })
-import { TAB_RUANG, AKAR_RUANG, type TabRuang } from '~/adapters/cashflowRuang'
+import { TAB_RUANG, AKAR_RUANG, lencanaTabRuang, type TabRuang } from '~/adapters/cashflowRuang'
 import type { GalatAdmin } from '~/composables/cashflow/useCashflowAdmin'
 
 const { tcf } = useCashflowI18n()
@@ -47,17 +47,6 @@ const tabAktif = computed<TabRuang>(() => {
   return (TAB_RUANG as readonly string[]).includes(sisa) ? (sisa as TabRuang) : ''
 })
 const keTab = (t: TabRuang) => (t ? `${dasar.value}/${t}` : dasar.value)
-const jumlahTab = (t: TabRuang): number | null => {
-  if (t === 'akses') return kepala.value?.akses30 ?? null
-  const h = r360.value?.hitung
-  if (!h) return null
-  if (t === 'anggota') return h.anggota + h.bekas_anggota
-  if (t === 'transaksi') return h.transaksi
-  if (t === 'dompet') return h.dompet
-  if (t === 'jejak') return h.jejak
-  if (t === 'sampah') return h.sampah
-  return null
-}
 const barisTab = ref<HTMLElement | null>(null)
 watch(tabAktif, async () => {
   await nextTick()
@@ -67,7 +56,10 @@ watch(tabAktif, async () => {
   if (atas < 0) window.scrollBy({ top: atas - 80 })
 })
 const tab = computed(() => TAB_RUANG.map(t => ({
-  kunci: t, label: tcf(`tabRuang.${t || 'ringkas'}`), to: keTab(t), jumlah: jumlahTab(t), aktif: tabAktif.value === t,
+  kunci: t, label: tcf(`tabRuang.${t || 'ringkas'}`), to: keTab(t),
+  jumlah: lencanaTabRuang(t, r360.value?.hitung ?? null, kepala.value?.akses30 ?? null),
+  judul: t === 'sampah' ? tcf('tabRuang.sampahLencana') : undefined,
+  aktif: tabAktif.value === t,
 })))
 
 // ── Remah ──────────────────────────────────────────────────────────────
