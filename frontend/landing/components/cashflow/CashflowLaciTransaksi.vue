@@ -21,14 +21,15 @@ const emit = defineEmits<{ pindah: [tx: string] }>()
 const { tcf, bahasa, formatWaktu } = useCashflowI18n()
 const api = useCashflowAdmin()
 const kasus = useCashflowKasus()
-const { memuat, galat, pesanGalat, muat } = useCashflowMuat()
+const { memuat, galat, pesanGalat, muat, pakaiSimpanan } = useCashflowMuat()
 
 const kunci = computed(() => (kasus.kunciKasus.value && kasus.punyaRanah('transaksi') ? `${kasus.kunciKasus.value}|rinci|${props.tx}` : null))
 const mentah = computed(() => kasus.data<TransaksiRinciDTO>(kunci.value))
 const r = computed(() => (mentah.value ? keRinci(mentah.value) : null))
 
 watch(kunci, (k) => {
-  if (!k || mentah.value) return
+  if (!k) return
+  if (mentah.value) { pakaiSimpanan(); return }
   const tx = props.tx
   muat(async () => { await kasus.muatData(k, kk => api.transaksiRinci(kk.id, tx)) })
 }, { immediate: true })

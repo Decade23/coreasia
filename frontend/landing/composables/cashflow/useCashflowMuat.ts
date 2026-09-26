@@ -16,6 +16,11 @@
  * - `batal()`      halaman dilepas: `muat` yang masih berjalan menjadi basi
  *                  (`terbaru()` = false) — jawabannya tidak menulis apa pun,
  *                  termasuk keadaan global yang dibagi halaman berikutnya;
+ * - `pakaiSimpanan()` kunci halaman pindah ke jawaban yang SUDAH tersimpan
+ *                  (Back ke halaman N-1, kembali ke saringan lama): tidak ada
+ *                  `muat` baru, jadi yang masih berjalan dibuat basi dan
+ *                  galat/memuat kunci sebelumnya dibuang — kalau tidak, galat
+ *                  halaman N menutupi data halaman N-1 yang sebenarnya ada;
  * - `aksi(kerja)`  untuk tombol (simpan, hentikan, buka catatan): galat jadi
  *                  toast, isi halaman tetap; `gagal` (opsional) menerima
  *                  galatnya bila halaman perlu membereskan keadaannya sendiri;
@@ -108,6 +113,14 @@ export const useCashflowMuat = (opsi: { awal?: boolean } = {}) => {
     memuat.value = false
   }
 
+  /** Kunci pindah ke jawaban yang sudah tersimpan (lihat kepala): permintaan
+   *  yang masih berjalan menjadi basi; memuat mati; galat kunci lama dibuang. */
+  const pakaiSimpanan = () => {
+    giliran++
+    memuat.value = false
+    galat.value = null
+  }
+
   /** Aksi tombol. Galat → toast; `sukses` (opsional) → toast berhasil. */
   const aksi = async (
     kerja: () => Promise<void>,
@@ -125,5 +138,5 @@ export const useCashflowMuat = (opsi: { awal?: boolean } = {}) => {
     }
   }
 
-  return { memuat, galat, pesanGalat, pesanUntuk, keMasukBilaSesi, muat, batal, aksi }
+  return { memuat, galat, pesanGalat, pesanUntuk, keMasukBilaSesi, muat, batal, pakaiSimpanan, aksi }
 }

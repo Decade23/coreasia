@@ -52,7 +52,7 @@ const props = defineProps<{
 }>()
 const id = computed(() => props.subjek)
 const modeRuang = computed(() => props.mode === 'ruang')
-const { memuat, galat, pesanGalat, muat } = useCashflowMuat()
+const { memuat, galat, pesanGalat, muat, pakaiSimpanan } = useCashflowMuat()
 
 const PER = 100
 const POLA_TGL = /^\d{4}-\d{2}-\d{2}$/
@@ -101,7 +101,8 @@ const kunci = computed(() => (awalanKunci.value ? `${awalanKunci.value}${kursor.
 const mentah = computed(() => kasus.data<TransaksiCariDTO>(kunci.value))
 
 watch(kunci, (k) => {
-  if (!k || mentah.value) return
+  if (!k) return
+  if (mentah.value) { pakaiSimpanan(); return }
   const s = saring.value
   const ks = kursor.value
   muat(async () => { await kasus.muatData(k, kk => api.transaksiCari(kk.id, props.mode, id.value, s, ks, PER)) })

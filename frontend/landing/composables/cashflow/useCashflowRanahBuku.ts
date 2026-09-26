@@ -51,7 +51,13 @@ export function useCashflowDataRanah<D, T>(opsi: {
   const mentah = computed(() => kasus.data<D>(kunci.value))
   const data = computed<T | null>(() => (mentah.value ? opsi.ubah(mentah.value) : null))
   const muatKunci = (k: string) => m.muat(async () => { await kasus.muatData(k, kk => opsi.panggil(kk.id)) })
-  watch(kunci, (k) => { if (k && !mentah.value) void muatKunci(k) }, { immediate: true })
+  /* Kunci yang sudah tersimpan tidak dimuat lagi, tapi galat/memuat milik
+     kunci sebelumnya tetap harus dibuang (Back dari halaman yang gagal). */
+  watch(kunci, (k) => {
+    if (!k) return
+    if (mentah.value) m.pakaiSimpanan()
+    else void muatKunci(k)
+  }, { immediate: true })
   onBeforeUnmount(m.batal)
   const muatUlang = async (): Promise<boolean> => {
     const k = kunci.value

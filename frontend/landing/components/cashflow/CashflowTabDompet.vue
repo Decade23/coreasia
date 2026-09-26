@@ -41,7 +41,7 @@ const api = useCashflowAdmin()
 const route = useRoute()
 const router = useRouter()
 const kasus = useCashflowKasus()
-const { memuat, galat, pesanGalat, muat, aksi } = useCashflowMuat()
+const { memuat, galat, pesanGalat, muat, pakaiSimpanan, aksi } = useCashflowMuat()
 const periksaMuat = useCashflowMuat()
 const mutasiMuat = useCashflowMuat()
 
@@ -62,7 +62,8 @@ const kunci = computed(() => (kasus.kunciKasus.value && kasus.punyaRanah('dompet
 const mentah = computed(() => kasus.data<DompetRuangDTO>(kunci.value))
 watch(kunci, (k) => {
   const ws = wsMuat.value
-  if (!k || mentah.value || ws === undefined) return
+  if (!k || ws === undefined) return
+  if (mentah.value) { pakaiSimpanan(); return }
   muat(async () => { await kasus.muatData(k, kk => api.dompetRuang(kk.id, ws)) })
 }, { immediate: true })
 
@@ -75,7 +76,8 @@ const kelompok = computed(() => kelompokkanDompet(ringkas.value, dompet.value).m
 const kunciPeriksa = computed(() => (props.mode === 'ruang' && props.ws && kunci.value ? `${kasus.kunciKasus.value}|periksa:${props.ws}` : null))
 const mentahPeriksa = computed(() => kasus.data<PeriksaRuangDTO>(kunciPeriksa.value))
 watch(kunciPeriksa, (k) => {
-  if (!k || mentahPeriksa.value || !props.ws) return
+  if (!k || !props.ws) return
+  if (mentahPeriksa.value) { periksaMuat.pakaiSimpanan(); return }
   const ws = props.ws
   periksaMuat.muat(async () => { await kasus.muatData(k, kk => api.periksaRuang(kk.id, ws)) })
 }, { immediate: true })
@@ -88,7 +90,8 @@ const awalanMutasi = computed(() => (kunci.value && q.value.dompet ? `${kasus.ku
 const kunciMutasi = computed(() => (awalanMutasi.value ? `${awalanMutasi.value}${kursor.value ? q.value.kursor : ''}` : null))
 const mentahMutasi = computed(() => kasus.data<MutasiDompetDTO>(kunciMutasi.value))
 watch(kunciMutasi, (k) => {
-  if (!k || mentahMutasi.value) return
+  if (!k) return
+  if (mentahMutasi.value) { mutasiMuat.pakaiSimpanan(); return }
   const w = q.value.dompet
   const ks = kursor.value
   mutasiMuat.muat(async () => { await kasus.muatData(k, kk => api.mutasiDompet(kk.id, w, ks, 100)) })

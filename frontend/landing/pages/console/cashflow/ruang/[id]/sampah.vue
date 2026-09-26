@@ -20,7 +20,7 @@ const { tcf, formatTanggal, formatWaktu } = useCashflowI18n()
 const api = useCashflowAdmin()
 const kasus = useCashflowKasus()
 const { id, dasar, labelOrang, r360 } = useCashflowRuang()
-const { memuat, galat, pesanGalat, muat } = useCashflowMuat()
+const { memuat, galat, pesanGalat, muat, pakaiSimpanan } = useCashflowMuat()
 
 const PER = 100
 const SKEMA = { kursor: { jenis: 'teks', pola: POLA_KURSOR_URL, maks: 600, bawaan: '' } } as const satisfies SkemaQuery
@@ -31,7 +31,8 @@ const awalanKunci = computed(() => (kasus.kunciKasus.value && kasus.punyaRanah('
 const kunci = computed(() => (awalanKunci.value ? `${awalanKunci.value}${kursor.value ? q.value.kursor : ''}` : null))
 const mentah = computed(() => kasus.data<SampahRuangDTO>(kunci.value))
 watch(kunci, (k) => {
-  if (!k || mentah.value) return
+  if (!k) return
+  if (mentah.value) { pakaiSimpanan(); return }
   const ws = id.value
   const ks = kursor.value
   muat(async () => { await kasus.muatData(k, kk => api.sampahRuang(kk.id, ws, ks, PER)) })
