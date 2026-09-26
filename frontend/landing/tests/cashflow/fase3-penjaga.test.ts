@@ -26,7 +26,7 @@ const TAB = [
 describe('Fase 3: tab ranah buku', () => {
   it('setiap tab Fase 3 memakai CashflowPanelTab ber-aktivasi dengan ranahnya sendiri', () => {
     for (const { ranah, berkas } of TAB) {
-      expect(baca(berkas), berkas).toMatch(new RegExp(`<CashflowPanelTab ranah="${ranah}" aktivasi[\\s>]`))
+      expect(baca(berkas), berkas).toMatch(new RegExp(`<CashflowPanelTab\\s+ranah="${ranah}"\\s+aktivasi[\\s>]`))
     }
   })
   it('kasus.tambah hanya lewat CashflowPanelTab (aktivasi) — tab & pemanggil RPC tidak menambah ranah sendiri', () => {
@@ -55,5 +55,42 @@ describe('Fase 3: tab ranah buku', () => {
     expect(blok).toContain('@click="muatData"')
     expect(blok).not.toMatch(/labelRanah|ranah\./)
     for (const { berkas } of TAB) expect(baca(berkas)).not.toMatch(/Modal|dialog|alasan/i)
+  })
+})
+
+describe('Fase 3: isi tab Katalog, Jadwal, Usaha', () => {
+  const HALAMAN = ['katalog', 'jadwal', 'usaha'].map(r => `pages/console/cashflow/ruang/[id]/${r}.vue`)
+  const KOMPONEN = ['CashflowTabKatalog', 'CashflowTabJadwal', 'CashflowLaciJadwal', 'CashflowTabUsaha', 'CashflowRiwayatStok', 'CashflowSegmen']
+    .map(k => `components/cashflow/${k}.vue`)
+  const kunciSkema = (isi: string) => {
+    const m = isi.match(/const SKEMA = \{([\s\S]*?)\} as const satisfies SkemaQuery/)
+    return m ? [...m[1]!.matchAll(/^\s*(\w+): \{ jenis:/gm), ...m[1]!.matchAll(/\{ (\w+): \{ jenis:/g)].map(x => x[1]).sort() : []
+  }
+  it('isi sudah terpasang: tidak ada lagi keterangan "menyusul" di ketiga tab', () => {
+    for (const h of HALAMAN) expect(baca(h), h).not.toContain('aktivasi.menyusul')
+  })
+  it('URL hanya membawa kunci struktur (spek §6): ?jadwal=, ?lihat=, ?produk=, ?kursor=; bulan, arsip, dan cari tetap di memori', () => {
+    expect(kunciSkema(baca(HALAMAN[0]!))).toEqual([])
+    expect(kunciSkema(baca(HALAMAN[1]!))).toEqual(['jadwal'])
+    expect(kunciSkema(baca(HALAMAN[2]!))).toEqual(['kursor', 'lihat', 'produk'])
+    for (const k of KOMPONEN) expect(baca(k), k).not.toMatch(/useCashflowQuery|setel\(|router\.(push|replace)/)
+  })
+  it('komponen isi tidak menambah ranah, tidak memanggil RPC langsung, dan tanpa v-html', () => {
+    for (const k of KOMPONEN) {
+      const isi = baca(k)
+      expect(isi, k).not.toMatch(/\.tambah\(|kasusTambah|useCashflowRanahOtomatis|useCashflowAdmin\(/)
+      expect(isi.slice(isi.indexOf('<template')), k).not.toMatch(/v-html|innerHTML/)
+    }
+  })
+  it('warna kategori sebagai gaya hanya dari nilai tersaring adapter (warna), tidak pernah color mentah', () => {
+    const isi = baca('components/cashflow/CashflowTabKatalog.vue')
+    expect(isi).toContain(':style="c.warna ? { backgroundColor: c.warna } : undefined"')
+    expect(isi).not.toMatch(/\.color\b/)
+  })
+  it('laci jadwal: pembayaran tanpa id (tanpa ranah transaksi) tidak bertaut; sampah rinci hanya bila server mengirimnya', () => {
+    const isi = baca('components/cashflow/CashflowLaciJadwal.vue')
+    expect(isi).toContain('<NuxtLink v-if="b.id" :to="keTx(b.id)"')
+    expect(isi).toContain('v-if="!d.rinci.pembayaran"')
+    expect(isi).toContain('<template v-if="d.rinci.diSampah">')
   })
 })
