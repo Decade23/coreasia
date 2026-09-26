@@ -94,3 +94,59 @@ describe('Fase 3: isi tab Katalog, Jadwal, Usaha', () => {
     expect(isi).toContain('<template v-if="d.rinci.diSampah">')
   })
 })
+
+describe('Fase 3: isi tab Struk, Patungan, Perangkat, Kabar', () => {
+  const HALAMAN = {
+    struk: 'pages/console/cashflow/ruang/[id]/struk.vue',
+    dompet: 'pages/console/cashflow/ruang/[id]/dompet.vue',
+    perangkat: 'pages/console/cashflow/pengguna/[id]/perangkat.vue',
+    kabar: 'pages/console/cashflow/pengguna/[id]/kabar.vue',
+  } as const
+  const KOMPONEN = ['CashflowTabStruk', 'CashflowTabPatungan', 'CashflowRiwayatPatungan', 'CashflowTabPerangkat', 'CashflowTabKabar']
+    .map(k => `components/cashflow/${k}.vue`)
+  const kunciSkema = (isi: string) => {
+    const m = isi.match(/const SKEMA = \{([\s\S]*?)\} as const satisfies SkemaQuery/)
+    return m ? [...m[1]!.matchAll(/^\s*(\w+): \{ jenis:/gm)].map(x => x[1]).sort() : []
+  }
+  it('isi sudah terpasang: tidak ada lagi keterangan "menyusul" di tab Fase 3 mana pun', () => {
+    for (const r of [...RANAH_BUKU_RUANG, ...RANAH_ORANG_FASE3]) {
+      const berkas = TAB.find(t => t.ranah === r)!.berkas
+      expect(baca(berkas), berkas).not.toContain('aktivasi.menyusul')
+    }
+  })
+  it('URL hanya kunci struktur (spek §6): pencatat, hari, dan saringan kabar tidak pernah ke URL', () => {
+    expect(kunciSkema(baca(HALAMAN.struk))).toEqual(['kursor', 'struk'])
+    expect(kunciSkema(baca(HALAMAN.dompet))).toEqual(['jenis', 'kursor', 'lihat'])
+    expect(kunciSkema(baca(HALAMAN.kabar))).toEqual(['kursor'])
+    expect(baca(HALAMAN.perangkat)).not.toMatch(/useCashflowQuery|SKEMA/)
+    for (const h of Object.values(HALAMAN)) expect(baca(h), h).not.toMatch(/pencatat: \{ jenis:|hari: \{ jenis:|belum: \{ jenis:/)
+    for (const k of KOMPONEN) expect(baca(k), k).not.toMatch(/useCashflowQuery|setel\(|router\.(push|replace)/)
+  })
+  it('komponen isi tidak menambah ranah, tidak memanggil RPC langsung, dan tanpa v-html (teks klien dirender sebagai teks)', () => {
+    for (const k of KOMPONEN) {
+      const isi = baca(k)
+      expect(isi, k).not.toMatch(/\.tambah\(|kasusTambah|useCashflowRanahOtomatis|useCashflowAdmin\(/)
+      expect(isi.slice(isi.indexOf('<template')), k).not.toMatch(/v-html|innerHTML/)
+    }
+  })
+  it('struk: sidik pelanggan hanya untuk sorot di halaman ini — tidak disimpan, tidak ke URL, kasbon/nominal tidak dijumlah per sidik', () => {
+    /* Kode saja (lewati komentar kepala berkas). */
+    const isi = baca('components/cashflow/CashflowTabStruk.vue').split('*/').slice(1).join('*/')
+    expect(isi).not.toMatch(/localStorage|sessionStorage|useState|kursorKeUrl/)
+    const sidik = [...isi.matchAll(/^.*kontakSidik.*$/gm)].map(m => m[0])
+    expect(sidik.length).toBeGreaterThan(0)
+    for (const baris of sidik) expect(baris).not.toMatch(/nominal|kasbon|reduce|\+=/)
+    expect(baca(HALAMAN.struk)).not.toMatch(/kontakSidik/)
+  })
+  it('perangkat: tautan jeda terbesar hanya bila server mengirim rinci (kasus memegang jejak)', () => {
+    const isi = baca('components/cashflow/CashflowTabPerangkat.vue')
+    expect(isi).toContain('<template v-if="data.jeda.rinci && t.ruangId">')
+    expect(isi.match(/<NuxtLink/g)?.length).toBe(2)
+  })
+  it('patungan: memakai ranah dompet yang sudah dipegang kasus ruang (tanpa aktivasi); bekas anggota ikut tampil', () => {
+    const isi = baca(HALAMAN.dompet)
+    expect(isi).toMatch(/<CashflowPanelTab ranah="dompet" :memuat/)
+    expect(isi).not.toMatch(/ranah="dompet" aktivasi/)
+    expect(baca('components/cashflow/CashflowTabPatungan.vue')).toMatch(/\(\['saldo', 'bekas'\] as const\)/)
+  })
+})
