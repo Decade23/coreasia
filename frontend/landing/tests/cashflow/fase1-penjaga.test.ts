@@ -36,9 +36,13 @@ const sumber = ['components', 'pages', 'composables', 'adapters', 'utils', 'layo
   .map(f => ({ f, isi: readFileSync(f, 'utf8') }))
 
 describe('Fase 1: tautan hanya ke rute yang sudah ada', () => {
-  it('tidak ada tautan ke /console/cashflow/ruang/<id> (Fase 2)', () => {
-    const temuan = sumber.filter(x => /\/console\/cashflow\/ruang\/(?:\$\{|[0-9a-f:[])/.test(x.isi)).map(x => x.f)
-    expect(temuan).toEqual([])
+  it('Fase 2: tautan ke /console/cashflow/ruang/<id>/<tab> hanya ke tab yang berkasnya ada', () => {
+    for (const x of sumber) {
+      for (const m of x.isi.matchAll(/\/console\/cashflow\/ruang\/\$\{[^}]+\}\/([a-z]+)/g)) {
+        expect(existsSync(join(AKAR, `pages/console/cashflow/ruang/[id]/${m[1]}.vue`)), `${x.f}: ${m[0]}`).toBe(true)
+      }
+    }
+    expect(baca('pages/console/cashflow/ruang/[id].vue')).toMatch(/<NuxtPage\s*\/>/)
   })
   it('setiap tab Pengguna 360 punya berkas; induk memasang <NuxtPage/>', () => {
     for (const t of TAB_PENGGUNA) {
@@ -82,7 +86,7 @@ describe('Fase 1: id kasus tidak di URL maupun storage', () => {
 
 describe('Fase 1: URL tab Transaksi hanya kunci struktur', () => {
   it('skema = saringan struktur + kursor + tx; nominal dan pencatat tidak ada', () => {
-    const isi = baca('pages/console/cashflow/pengguna/[id]/transaksi.vue')
+    const isi = baca('components/cashflow/CashflowTabTransaksi.vue')
     const skema = /const SKEMA = \{([\s\S]*?)\} as const satisfies SkemaQuery/.exec(isi)?.[1] ?? ''
     const kunci = [...skema.matchAll(/^\s*(\w+):\s*\{/gm)].map(m => m[1]!).sort()
     expect(kunci).toEqual(['cek', 'dari', 'dompet', 'jenis', 'kategori', 'kursor', 'ruang', 'sampah', 'sampai', 'tx'])
@@ -100,7 +104,7 @@ describe('Fase 1: URL tab Transaksi hanya kunci struktur', () => {
   })
 
   it('sampah terpotong (0092): judul "50+" dan kalimat penanda muncul hanya bila sampah_lebih', () => {
-    const isi = baca('pages/console/cashflow/pengguna/[id]/transaksi.vue')
+    const isi = baca('components/cashflow/CashflowTabTransaksi.vue')
     // Bentuk label dan pembacaan sampah_lebih diuji di kontrak-fase1.test.ts;
     // di sini: halaman benar-benar memakainya.
     expect(isi).toMatch(/const sampahLebih = computed\(\(\) => adaSampahLebih\(mentah\.value\)\)/)
@@ -175,7 +179,7 @@ describe('jawaban basi subjek sebelumnya (temuan fe p3 #1)', () => {
 describe('Enter milik tombol/tautan yang difokus (temuan fe p3 #2)', () => {
   it("pintasan 'enter' di Transaksi & Jejak mengembalikan false bila tidak ada yang dibuka", () => {
     for (const f of ['transaksi', 'jejak']) {
-      const isi = baca(`pages/console/cashflow/pengguna/[id]/${f}.vue`)
+      const isi = baca(`components/cashflow/CashflowTab${f === 'transaksi' ? 'Transaksi' : 'Jejak'}.vue`)
       const baris = isi.split('\n').find(b => b.includes("kunci: 'enter'"))
       expect(baris, f).toBeTruthy()
       expect(baris, f).toMatch(/return false/)
