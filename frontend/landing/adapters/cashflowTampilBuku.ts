@@ -136,3 +136,30 @@ export function kuantitas(n: number | null | undefined, bahasa: 'id' | 'en' = 'i
   if (n == null || !Number.isFinite(n)) return '—'
   return n.toLocaleString(bahasa === 'en' ? 'en-US' : 'id-ID', { maximumFractionDigits: 3 })
 }
+
+// ── Perangkat & Kabar (Pengguna 360) ─────────────────────────────────────
+/** Jeda antrean dalam satuan terbaca: 12 dtk, 3 mnt, 5 jam, 2 hari ('—' untuk null).
+ *  Jam dipakai sampai < 2 hari (sama dengan jedaTiba jejak). */
+export function durasiSingkat(detik: number | null | undefined, bahasa: 'id' | 'en' = 'id'): string {
+  if (detik == null || !Number.isFinite(detik)) return '—'
+  const tanda = detik < 0 ? '−' : ''
+  const d = Math.abs(detik)
+  const [s, m, j, h] = bahasa === 'en' ? ['s', 'min', 'h', 'd'] : ['dtk', 'mnt', 'jam', 'hari']
+  if (d < 60) return `${tanda}${Math.round(d)} ${s}`
+  if (d < 3600) return `${tanda}${Math.round(d / 60)} ${m}`
+  if (d < 86400 * 2) return `${tanda}${Math.round(d / 3600)} ${j}`
+  return `${tanda}${Math.round(d / 86400)} ${h}`
+}
+/** Tanggal WIB 'YYYY-MM-DD' dari ISO (saringan Jejak ?dari=&sampai= satu hari); null bila rusak. */
+export function tanggalWibDariIso(iso: string | null | undefined): string | null {
+  if (!iso) return null
+  const t = new Date(iso)
+  return Number.isFinite(t.getTime()) ? hariIniWib(t) : null
+}
+/** Pilihan rentang tab Perangkat (p_hari 1..90; server menolak di luar itu). */
+export const PILIHAN_HARI_PERANGKAT = [7, 30, 90] as const
+/** Saringan baca kabar: belum = true, sudah = false, semua = null. */
+export const PILIHAN_BACA_KABAR = ['semua', 'belum', 'sudah'] as const
+export type PilihanBacaKabar = typeof PILIHAN_BACA_KABAR[number]
+export const belumDariPilihan = (p: PilihanBacaKabar): boolean | null => (p === 'belum' ? true : p === 'sudah' ? false : null)
+export const pilihanDariBelum = (b: boolean | null): PilihanBacaKabar => (b === true ? 'belum' : b === false ? 'sudah' : 'semua')

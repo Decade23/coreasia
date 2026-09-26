@@ -1,14 +1,18 @@
 /**
  * Perilaku bantu tampilan tab ranah buku (adapters/cashflowTampilBuku.ts):
  * bulan, anggaran (rasio null = tanpa target), kelompok kategori, progres
- * cicilan, saringan produk di memori, dan kuantitas stok pecahan.
+ * cicilan, saringan produk di memori, dan kuantitas stok pecahan; Fase 3
+ * Pengguna 360: durasi jeda antrean, tanggal WIB untuk tautan Jejak, pilihan
+ * rentang Perangkat, dan saringan baca Kabar.
  */
 import { describe, expect, it } from 'vitest'
 import { keKatalog, keUsahaRuang, keJadwalBaris, type KatalogDTO, type ProdukDTO, type JadwalBarisDTO } from '../../adapters/cashflowRanahBuku'
 import {
   arsipDariPilihan, bulanWibKini, deltaTeks, geserBulan, kategoriProduk, kelompokkanKategori, kuantitas, labelBulan,
   lebarBilah, nadaAnggaran, nadaKeadaan, progresJadwal, saringProduk, susunAnggaran, SARING_PRODUK_KOSONG,
+  durasiSingkat, tanggalWibDariIso, belumDariPilihan, pilihanDariBelum, PILIHAN_BACA_KABAR, PILIHAN_HARI_PERANGKAT,
 } from '../../adapters/cashflowTampilBuku'
+import { hariSah } from '../../adapters/cashflowPerangkat'
 
 const NOL = '00000000-0000-0000-0000-000000000000'
 const kat = (id: string, name: string, kind: string, archived = false) => ({
@@ -126,5 +130,34 @@ describe('usaha', () => {
     expect(deltaTeks(3)).toBe('+3')
     expect(deltaTeks(0)).toBe('0')
     expect(deltaTeks(-1.5, n => kuantitas(n, 'id'))).toBe('−1,5')
+  })
+})
+
+describe('Perangkat & Kabar', () => {
+  it('durasiSingkat: detik → dtk/mnt/jam/hari (jam sampai < 2 hari), tanda negatif, null = —', () => {
+    expect(durasiSingkat(0)).toBe('0 dtk')
+    expect(durasiSingkat(48)).toBe('48 dtk')
+    expect(durasiSingkat(60)).toBe('1 mnt')
+    expect(durasiSingkat(3599)).toBe('60 mnt')
+    expect(durasiSingkat(21540)).toBe('6 jam')
+    expect(durasiSingkat(86400 * 2 - 1)).toBe('48 jam')
+    expect(durasiSingkat(86400 * 3)).toBe('3 hari')
+    expect(durasiSingkat(-120)).toBe('−2 mnt')
+    expect(durasiSingkat(90, 'en')).toBe('2 min')
+    expect(durasiSingkat(null)).toBe('—')
+    expect(durasiSingkat(Number.NaN)).toBe('—')
+  })
+  it('tanggalWibDariIso: hari WIB (UTC+7), bukan UTC; rusak → null', () => {
+    expect(tanggalWibDariIso('2026-09-24T17:30:00Z')).toBe('2026-09-25')
+    expect(tanggalWibDariIso('2026-09-24T16:59:59Z')).toBe('2026-09-24')
+    expect(tanggalWibDariIso('bukan-tanggal')).toBeNull()
+    expect(tanggalWibDariIso(null)).toBeNull()
+  })
+  it('rentang Perangkat selalu sah untuk p_hari (1..90)', () => {
+    for (const n of PILIHAN_HARI_PERANGKAT) expect(hariSah(n)).toBe(true)
+  })
+  it('saringan baca Kabar: belum = true, sudah = false, semua = null — bolak-balik', () => {
+    expect(PILIHAN_BACA_KABAR.map(belumDariPilihan)).toEqual([null, true, false])
+    for (const p of PILIHAN_BACA_KABAR) expect(pilihanDariBelum(belumDariPilihan(p))).toBe(p)
   })
 })
