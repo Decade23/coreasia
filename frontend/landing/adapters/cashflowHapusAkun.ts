@@ -153,14 +153,19 @@ export function urutPermintaan(daftar: readonly PermintaanHapus[], status: Statu
   return [...daftar].sort((a, b) => (waktu(a) - waktu(b)) * arah || a.id.localeCompare(b.id))
 }
 
-/** Ringkasan isi akun untuk kartu dan konfirmasi; hitungan yang ditahan
- *  server (null) dilewati, bukan ditulis 0. Kosong = tidak ada yang dikirim. */
+/** Ringkasan isi akun untuk kartu dan konfirmasi. Yang dilewati: hitungan
+ *  yang ditahan server (null, bukan 0) dan hitungan 0 ("anggota di 0 ruang"
+ *  hanya mengganggu). Bedakan kosong karena ditahan dan kosong karena
+ *  akunnya memang tanpa isi lewat isiDitahan. */
 export const BAGIAN_ISI = ['ruangMilik', 'ruangAnggota', 'transaksi', 'foto'] as const
 export type BagianIsi = typeof BAGIAN_ISI[number]
 export function bagianIsi(p: Pick<PermintaanHapus, 'bukuMilik' | 'bukuAnggota' | 'transaksi' | 'foto'>): Array<{ kunci: BagianIsi; n: number }> {
   const nilai: Record<BagianIsi, number | null> = { ruangMilik: p.bukuMilik, ruangAnggota: p.bukuAnggota, transaksi: p.transaksi, foto: p.foto }
-  return BAGIAN_ISI.flatMap(kunci => (nilai[kunci] === null ? [] : [{ kunci, n: nilai[kunci]! }]))
+  return BAGIAN_ISI.flatMap(kunci => (nilai[kunci] === null || nilai[kunci] === 0 ? [] : [{ kunci, n: nilai[kunci]! }]))
 }
+/** Semua hitungan ditahan server (sesi tanpa izin yang membukanya). */
+export const isiDitahan = (p: Pick<PermintaanHapus, 'bukuMilik' | 'bukuAnggota' | 'transaksi' | 'foto'>): boolean =>
+  p.bukuMilik === null && p.bukuAnggota === null && p.transaksi === null && p.foto === null
 
 /** Id akun yang permintaannya masih menunggu — untuk badge di daftar pengguna. */
 export function idMenungguHapus(daftar: readonly HapusAkunDTO[]): Set<string> {

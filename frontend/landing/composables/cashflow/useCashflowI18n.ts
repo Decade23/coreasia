@@ -577,7 +577,7 @@ const KAMUS = {
       tanpaNama: 'Tanpa nama',
       diminta: (w: string) => `Diminta ${w} WIB`,
       dihapusPada: (w: string) => `Dihapus ${w} WIB`,
-      umur: (n: number) => (n === 0 ? 'Diminta hari ini' : `Menunggu ${n} hari`),
+      umur: (n: number) => (n === 0 ? 'Hari ini' : `Menunggu ${n} hari`),
       lewatBatas: 'Lewat 7 hari',
       isi: {
         ruangMilik: (n: number) => `${n} ruang miliknya`,
@@ -586,6 +586,7 @@ const KAMUS = {
         foto: (n: number) => `${n} foto`,
       },
       isiTertahan: 'Isi akun tampil untuk login console ber-TOTP.',
+      isiKosong: 'Belum ada ruang, transaksi, atau foto.',
       foto: {
         tersimpan: 'Foto struk dan lampirannya masih tersimpan.',
         menunggu: (n: number) => `${n} foto masih antre dihapus dari penyimpanan.`,
@@ -1189,7 +1190,7 @@ const KAMUS = {
       tanpaNama: 'No name',
       diminta: (w: string) => `Requested ${w} WIB`,
       dihapusPada: (w: string) => `Deleted ${w} WIB`,
-      umur: (n: number) => (n === 0 ? 'Requested today' : `Waiting ${n} ${n === 1 ? 'day' : 'days'}`),
+      umur: (n: number) => (n === 0 ? 'Today' : `Waiting ${n} ${n === 1 ? 'day' : 'days'}`),
       lewatBatas: 'Over 7 days',
       isi: {
         ruangMilik: (n: number) => `owns ${n} ${n === 1 ? 'workspace' : 'workspaces'}`,
@@ -1198,6 +1199,7 @@ const KAMUS = {
         foto: (n: number) => `${n} ${n === 1 ? 'photo' : 'photos'}`,
       },
       isiTertahan: 'Account contents show for a console sign-in with TOTP.',
+      isiKosong: 'No workspaces, transactions, or photos yet.',
       foto: {
         tersimpan: 'Receipt photos and attachments are still stored.',
         menunggu: (n: number) => `${n} ${n === 1 ? 'photo is' : 'photos are'} still queued for removal from storage.`,

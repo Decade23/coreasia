@@ -16,7 +16,7 @@ import { computed, ref } from 'vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   aksiPermintaan, alasanBatalOtomatis, alasanHapusOtomatis, bagianIsi, BAGIAN_ISI, BATAS_DAFTAR_HAPUS, HASIL_HAPUS,
-  idMenungguHapus, jenisGagalHapus, keadaanFoto, keHasilHapus, kePermintaanHapus, LEWAT_HAPUS, STATUS_HAPUS, urutPermintaan,
+  idMenungguHapus, isiDitahan, jenisGagalHapus, keadaanFoto, keHasilHapus, kePermintaanHapus, LEWAT_HAPUS, STATUS_HAPUS, urutPermintaan,
   type HapusAkunDTO, type HasilHapusDTO,
 } from '../../adapters/cashflowHapusAkun'
 import { kePengguna, type PenggunaDTO } from '../../adapters/cashflow'
@@ -94,7 +94,15 @@ describe('kePermintaanHapus', () => {
     const p = kePermintaanHapus(baris({ jumlah_buku_milik: null, jumlah_transaksi: '', jumlah_foto: null, lewat: 'faks', status: 'aneh', nama: '  ' }), KINI)
     expect(p).toMatchObject({ bukuMilik: null, transaksi: null, foto: null, lewat: null, status: null, nama: null })
     expect(bagianIsi(p)).toEqual([{ kunci: 'ruangAnggota', n: 1 }])
-    expect(bagianIsi({ bukuMilik: null, bukuAnggota: null, transaksi: null, foto: null })).toEqual([])
+    expect(isiDitahan(p)).toBe(false)
+    const ditahan = { bukuMilik: null, bukuAnggota: null, transaksi: null, foto: null }
+    expect(bagianIsi(ditahan)).toEqual([])
+    expect(isiDitahan(ditahan)).toBe(true)
+    // Nol bukan "ditahan": dilewati dari ringkasan, tapi akunnya terbaca kosong, bukan butuh TOTP.
+    const kosong = { bukuMilik: 0, bukuAnggota: 0, transaksi: 0, foto: 0 }
+    expect(bagianIsi(kosong)).toEqual([])
+    expect(isiDitahan(kosong)).toBe(false)
+    expect(bagianIsi({ ...kosong, transaksi: 5 })).toEqual([{ kunci: 'transaksi', n: 5 }])
   })
 
   it('sesudah hapus permanen tidak ada tautan Pengguna 360; foto mengikuti antrean penyapu', () => {
@@ -223,6 +231,23 @@ describe('daftar pengguna: "Menunggu dihapus" menggantikan "Ditangguhkan"', () =
   })
 })
 
+describe('saringan status tidak membuang ?lang (useCashflowQuery)', () => {
+  it('setel mempertahankan ?lang=en dan tetap membuang kunci di luar skema', async () => {
+    const route = { path: '/console/cashflow/hapus-akun', query: { status: 'menunggu', lang: 'en', asing: 'x' } as Record<string, unknown> }
+    const replace = vi.fn(async () => {})
+    vi.stubGlobal('useRoute', () => route)
+    vi.stubGlobal('useRouter', () => ({ replace, push: vi.fn() }))
+    const { useCashflowQuery } = await import('~/composables/cashflow/useCashflowQuery')
+    const { setel } = useCashflowQuery({ status: { jenis: 'pilihan', opsi: STATUS_HAPUS, bawaan: 'menunggu' } } as const)
+    await setel({ status: 'dibatalkan' })
+    expect(replace).toHaveBeenLastCalledWith({ path: route.path, query: { status: 'dibatalkan', lang: 'en' } })
+    route.query = { status: 'dibatalkan' }
+    await setel({ status: 'selesai' })
+    expect(replace).toHaveBeenLastCalledWith({ path: route.path, query: { status: 'selesai' } })
+    vi.stubGlobal('useRoute', () => ({ fullPath: '/console/cashflow/hapus-akun' }))
+  })
+})
+
 describe('kamus ID dan EN', () => {
   const ambil = (bahasa: 'id' | 'en', jalur: string): unknown =>
     jalur.split('.').reduce<unknown>((a, k) => (a && typeof a === 'object' ? (a as Record<string, unknown>)[k] : undefined), KAMUS_CASHFLOW[bahasa])
@@ -234,6 +259,7 @@ describe('kamus ID dan EN', () => {
       ...[...HASIL_HAPUS, 'lain'].map(h => `hapusAkun.hasil.${h}`),
       'hapusAkun.foto.tersimpan', 'hapusAkun.foto.bersih',
       'nav.hapusAkun', 'pengguna.menungguHapus', 'galat.belumAktif', 'galat.alihkanKepemilikan',
+      'hapusAkun.isiTertahan', 'hapusAkun.isiKosong',
     ]
     const fungsi = [...BAGIAN_ISI.map(k => `hapusAkun.isi.${k}`), 'hapusAkun.foto.menunggu', 'hapusAkun.foto.gagal', 'hapusAkun.umur', 'hapusAkun.diminta']
     const salah = [
@@ -251,7 +277,7 @@ describe('kamus ID dan EN', () => {
       }
     }
     const umur = ambil('id', 'hapusAkun.umur') as (n: number) => string
-    expect(umur(0)).toBe('Diminta hari ini')
+    expect(umur(0)).toBe('Hari ini')
     expect(umur(9)).toBe('Menunggu 9 hari')
     expect((ambil('en', 'hapusAkun.umur') as (n: number) => string)(1)).toBe('Waiting 1 day')
   })

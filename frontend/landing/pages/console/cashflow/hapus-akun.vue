@@ -74,7 +74,8 @@ const belumAktif = computed(() => galat.value?.jenis === 'belum-aktif')
 const sibuk = ref<{ id: string; jenis: 'hapus' | 'batal' } | null>(null)
 const dikonfirmasi = ref<PermintaanHapus | null>(null)
 
-const jalankan = async (p: PermintaanHapus, jenis: 'hapus' | 'batal'): Promise<void> => {
+/** `sesudahJawab`: dipanggil begitu server menjawab (berhasil atau gagal), sebelum daftar dimuat ulang. */
+const jalankan = async (p: PermintaanHapus, jenis: 'hapus' | 'batal', sesudahJawab?: () => void): Promise<void> => {
   if (sibuk.value) return
   sibuk.value = { id: p.id, jenis }
   try {
@@ -88,6 +89,7 @@ const jalankan = async (p: PermintaanHapus, jenis: 'hapus' | 'batal'): Promise<v
         if (j === 'tertahan') tertahan.value = new Set([...tertahan.value, p.id])
       },
     })
+    sesudahJawab?.()
     if (!ok) return
     const kalimat = tcf(`hapusAkun.hasil.${jawab.hasil}`) as string
     if (jawab.hasil === 'dihapus' || jawab.hasil === 'dibatalkan') toast.success(kalimat)
@@ -102,8 +104,7 @@ const mintaHapus = (p: PermintaanHapus) => { if (!sibuk.value) dikonfirmasi.valu
 const setujuHapus = async () => {
   const p = dikonfirmasi.value
   if (!p) return
-  await jalankan(p, 'hapus')
-  dikonfirmasi.value = null
+  await jalankan(p, 'hapus', () => { dikonfirmasi.value = null })
 }
 const batalkan = (p: PermintaanHapus) => jalankan(p, 'batal')
 

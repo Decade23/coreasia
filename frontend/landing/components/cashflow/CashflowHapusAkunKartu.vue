@@ -11,7 +11,7 @@
  * halaman; Batalkan dikonfirmasi sebaris di kartu ini. Tanpa izin tindak
  * tombolnya mati dan halaman menjelaskan lewat CashflowIzinKurang.
  */
-import { aksiPermintaan, bagianIsi, type PermintaanHapus } from '~/adapters/cashflowHapusAkun'
+import { aksiPermintaan, bagianIsi, isiDitahan, type PermintaanHapus } from '~/adapters/cashflowHapusAkun'
 
 const props = defineProps<{
   permintaan: PermintaanHapus
@@ -29,11 +29,19 @@ const { tcf, formatWaktu } = useCashflowI18n()
 const p = computed(() => props.permintaan)
 const aksi = computed(() => aksiPermintaan(p.value, props.bolehTindak))
 const tanyaBatal = ref(false)
-watch(() => p.value.status, () => { tanyaBatal.value = false })
+/* Pertanyaan sebaris ditutup bila permintaannya berubah status atau izinnya
+   ternyata ditolak server: tombol "Ya, batalkan" yang mati tidak dibiarkan menggantung. */
+watch(() => [p.value.status, props.bolehTindak], () => { tanyaBatal.value = false })
 
 const nadaStatus = computed(() =>
   p.value.status === 'menunggu' ? 'ca-pill-gold' : p.value.status === 'selesai' ? 'ca-pill-muted' : 'ca-pill-info')
-const isi = computed(() => bagianIsi(p.value).map(b => tcf(`hapusAkun.isi.${b.kunci}`)(b.n) as string).join(' · '))
+/* Sesudah hapus permanen isinya sudah tidak ada: baris ini hanya untuk akun yang masih hidup. */
+const isi = computed(() => {
+  if (p.value.status === 'selesai') return ''
+  const bagian = bagianIsi(p.value).map(b => tcf(`hapusAkun.isi.${b.kunci}`)(b.n) as string)
+  if (bagian.length) return bagian.join(' · ')
+  return isiDitahan(p.value) ? tcf('hapusAkun.isiTertahan') : tcf('hapusAkun.isiKosong')
+})
 const teksFoto = computed(() => {
   const k = p.value.keadaanFoto
   if (k === 'menunggu') return tcf('hapusAkun.foto.menunggu')(p.value.fotoMenunggu) as string
@@ -67,7 +75,7 @@ const setujuBatal = () => {
       <template v-if="p.status === 'menunggu'">{{ tcf('hapusAkun.umur')(p.umurHari) }} · </template>{{ tcf('hapusAkun.diminta')(formatWaktu(p.dimintaIso)) }}<template v-if="p.lewat"> · {{ tcf(`hapusAkun.lewat.${p.lewat}`) }}</template><template v-if="p.selesaiIso"> · {{ tcf('hapusAkun.dihapusPada')(formatWaktu(p.selesaiIso)) }}</template>
     </p>
 
-    <p class="mt-2 text-xs text-[var(--ca-muted)]">{{ isi || tcf('hapusAkun.isiTertahan') }}</p>
+    <p v-if="isi" class="mt-2 text-xs text-[var(--ca-muted)]">{{ isi }}</p>
     <p class="mt-1 text-xs" :class="nadaFoto">{{ teksFoto }}</p>
 
     <p
