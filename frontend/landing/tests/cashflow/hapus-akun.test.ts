@@ -1,11 +1,10 @@
 /**
  * Halaman Hapus akun (0112): adapter, tombol per izin, galat 42883 dan P0001,
- * argumen RPC, kamus, dan kontrak terhadap migrasi.
+ * argumen RPC, kamus, dan penjaga halaman.
  *
- * Kontrak DTO dibandingkan dengan definisi TERAKHIR fungsinya di migrasi
- * (tests/cashflow/migrasi.ts). Sebelum 0112 ada di folder migrasi, bagian itu
- * DILEWATI dan terlihat "skipped"; halaman sendiri tetap aman karena 42883 /
- * PGRST202 dibaca sebagai "fitur belum aktif".
+ * Kontrak DTO terhadap migrasi ada di kontrak-0112.test.ts. Halaman sendiri
+ * tetap aman sebelum 0112 terpasang karena 42883 / PGRST202 dibaca sebagai
+ * "fitur belum aktif".
  *
  * Semua id dan email di sini karangan.
  */
@@ -16,14 +15,13 @@ import { computed, ref } from 'vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   aksiPermintaan, alasanBatalOtomatis, alasanHapusOtomatis, bagianIsi, barisHapus, BAGIAN_ISI, BATAS_BADGE_HAPUS, BATAS_DAFTAR_HAPUS,
-  HASIL_HAPUS, idMenungguHapus, jenisGagalHapus, jumlahPerStatus, keadaanFoto, keHasilHapus, keIsiHapus, kePermintaanHapus,
+  HASIL_BERHASIL, HASIL_HAPUS, idMenungguHapus, jenisGagalHapus, jumlahPerStatus, keadaanFoto, keHasilHapus, keIsiHapus, kePermintaanHapus,
   LEWAT_HAPUS, STATUS_HAPUS, STATUS_JAWAB, urutPermintaan,
-  type HapusAkunDaftarDTO, type HapusAkunDTO, type HasilHapusDTO, type IsiHapusDTO,
+  type HapusAkunDaftarDTO, type HapusAkunDTO, type IsiHapusDTO,
 } from '../../adapters/cashflowHapusAkun'
 import { kePengguna, type PenggunaDTO } from '../../adapters/cashflow'
 import { izinSesiCashflow } from '../../utils/rbac'
 import { KAMUS_CASHFLOW } from '../../composables/cashflow/useCashflowI18n'
-import { adaMigrasiNomor, fungsiTerakhir, parameterFungsi, pohonDengan, pohonJsonb, semuaPohonJsonb } from './migrasi'
 
 // ── Global tiruan (tanpa Nuxt, lihat vitest.config.ts) ───────────────────
 type Jawab = { data: unknown; error: unknown }
@@ -225,6 +223,11 @@ describe('argumen RPC (klien Supabase tiruan)', () => {
       expect(keHasilHapus({ status: st, permintaan: ID1 })).toBe(st)
     }
     for (const st of STATUS_JAWAB) expect([...HASIL_HAPUS, 'lain']).toContain(keHasilHapus({ status: st, permintaan: ID1 }))
+    // Pembatalan lewat jalur cadangan: blokirnya dibuka fungsi edge, belum pasti.
+    expect(keHasilHapus({ status: 'dibatalkan', permintaan: ID1, buka_blokir: 'edge' })).toBe('dibatalkan_tertunda')
+    expect(keHasilHapus({ status: 'dibatalkan', permintaan: ID1, buka_blokir: 'sql' })).toBe('dibatalkan')
+    expect(keHasilHapus({ status: 'sudah_dibatalkan', permintaan: ID1, buka_blokir: 'edge' })).toBe('sudah_dibatalkan')
+    expect([...HASIL_BERHASIL].sort()).toEqual(['dibatalkan', 'dibatalkan_tertunda', 'dihapus'])
     expect(keHasilHapus({ status: 'aneh' })).toBe('lain')
     expect(keHasilHapus({ hasil: 'dihapus' })).toBe('lain')
     expect(keHasilHapus(null)).toBe('lain')
@@ -333,6 +336,9 @@ describe('penjaga halaman (keputusan P3: satu konfirmasi, tanpa kolom alasan)', 
     expect(baca(HAL)).not.toMatch(/<ConsoleModal\b/)
     expect(baca(KARTU)).not.toMatch(/<ConsoleModal\b/)
   })
+  it('toast sukses hanya untuk aksi yang benar-benar dikerjakan sekarang (HASIL_BERHASIL)', () => {
+    expect(baca(HAL)).toMatch(/if \(jawab\.hasil !== 'lain' && HASIL_BERHASIL\.includes\(jawab\.hasil\)\) toast\.success\(kalimat\)\s+else toast\.info\(kalimat\)/)
+  })
   it('Batalkan dikonfirmasi sebaris di kartu; Hapus permanen lewat konfirmasi halaman', () => {
     const kartu = baca(KARTU)
     expect(kartu).toMatch(/@click="tanyaBatal = true"/)
@@ -359,72 +365,9 @@ describe('penjaga halaman (keputusan P3: satu konfirmasi, tanpa kolom alasan)', 
     expect(baca('components/cashflow/CashflowPalet.vue')).toMatch(/\{ kunci: 'hapusAkun', ke: '\/console\/cashflow\/hapus-akun'/)
   })
   it('repo publik: berkas baru tanpa jalur lokal, email nyata, atau angka produksi', () => {
-    for (const f of [HAL, KARTU, KONF, 'adapters/cashflowHapusAkun.ts', 'tests/cashflow/hapus-akun.test.ts']) {
+    for (const f of [HAL, KARTU, KONF, 'adapters/cashflowHapusAkun.ts', 'tests/cashflow/hapus-akun.test.ts', 'tests/cashflow/kontrak-0112.test.ts']) {
       const isi = baca(f)
       expect(isi, f).not.toMatch(/\/Users\/|@gmail\.|@coreasia\.id/)
     }
-  })
-})
-
-/* Kontrak terhadap migrasi 0112 (folder migrasi CashFlow, CASHFLOW_MIGRASI). */
-const CONTOH_DAFTAR = daftarDTO([baris()])
-const CONTOH_HASIL: Required<HasilHapusDTO> = {
-  status: 'selesai', permintaan: ID1, user_id: U1, sudah_tiada: false, foto_antre: 0, ringkasan: { isi: ISI, inti: null },
-  selesai_pada: null, dibatalkan_pada: null, buka_blokir: null,
-}
-const kunci = (o: object) => Object.keys(o).sort()
-describe.skipIf(!adaMigrasiNomor('0112'))('kontrak 0112', () => {
-  it('admin_hapus_akun_daftar: kunci jawaban dan baris = HapusAkunDaftarDTO', () => {
-    const { kepala, badan } = fungsiTerakhir('admin_hapus_akun_daftar')
-    expect(kepala).toMatch(/returns\s+jsonb/i)
-    const pohon = pohonDengan(badan, 'baris', 'jumlah')
-    expect(kunci(pohon)).toEqual(kunci(CONTOH_DAFTAR))
-    expect(kunci(pohon.jumlah ?? {})).toEqual(kunci(CONTOH_DAFTAR.jumlah!))
-    expect(kunci(pohon.baris ?? {})).toEqual(kunci(baris()))
-  })
-  it('isi (hapus_akun_hitung_inti) = IsiHapusDTO', () => {
-    expect(kunci(pohonJsonb(fungsiTerakhir('hapus_akun_hitung_inti').badan))).toEqual(kunci(ISI))
-  })
-  it('status yang diterima daftar = saringan halaman (+ semua)', () => {
-    const { badan } = fungsiTerakhir('admin_hapus_akun_daftar')
-    const m = /v_status not in \(([^)]*)\)/.exec(badan)
-    expect([...(m?.[1] ?? '').matchAll(/'([a-z]+)'/g)].map(x => x[1]).sort()).toEqual([...STATUS_HAPUS, 'semua'].sort())
-    expect(badan).toMatch(/least\(coalesce\(p_batas, 100\), 500\)/)
-    expect(BATAS_DAFTAR_HAPUS).toBe(100)
-  })
-  it('parameter ketiga RPC = argumen yang dikirim useCashflowAdmin', () => {
-    expect(parameterFungsi('admin_hapus_akun_daftar')).toEqual([{ nama: 'p_status', bawaan: true }, { nama: 'p_batas', bawaan: true }])
-    for (const n of ['admin_hapus_akun_permanen', 'admin_hapus_akun_batalkan']) {
-      expect(parameterFungsi(n), n).toEqual([{ nama: 'p_permintaan', bawaan: false }, { nama: 'p_alasan', bawaan: false }])
-    }
-  })
-  it('penjaga: daftar izin view; hapus permanen dan batalkan izin tindak; alasan otomatis lolos syarat server', () => {
-    expect(fungsiTerakhir('admin_hapus_akun_daftar').badan).toMatch(/konsol_boleh\(\s*'cashflow:view'\s*\)/)
-    for (const n of ['admin_hapus_akun_permanen', 'admin_hapus_akun_batalkan']) {
-      const { kepala, badan } = fungsiTerakhir(n)
-      expect(kepala, n).toMatch(/returns\s+jsonb/i)
-      expect(badan, n).toMatch(/konsol_boleh\(\s*'cashflow:tindak'\s*\)[\s\S]*hint = 'izin-kurang'/)
-      expect(badan, n).toMatch(/is_platform_admin\(\)/)
-      const min = Number(/length\(btrim\(p_alasan\)\) < (\d+)/.exec(badan)?.[1])
-      expect(min, n).toBeGreaterThan(0)
-      expect(alasanHapusOtomatis(ID1).length).toBeGreaterThanOrEqual(min)
-      expect(alasanBatalOtomatis(ID1).length).toBeGreaterThanOrEqual(min)
-    }
-    expect(fungsiTerakhir('admin_hapus_akun_permanen').badan).toMatch(/errcode = 'P0001',\s*hint = 'alihkan-kepemilikan'/)
-  })
-  it('jawaban aksi: objek ber-status dan permintaan; nilai status dikenal console', () => {
-    for (const n of ['admin_hapus_akun_permanen', 'admin_hapus_akun_batalkan']) {
-      const { badan } = fungsiTerakhir(n)
-      const pohon = semuaPohonJsonb(badan).filter(t => 'status' in t)
-      expect(pohon.length, n).toBeGreaterThan(0)
-      for (const t of pohon) {
-        expect(Object.keys(t), n).toContain('permintaan')
-        for (const k of Object.keys(t)) expect(Object.keys(CONTOH_HASIL), `${n}: ${k}`).toContain(k)
-      }
-      const nilai = [...badan.matchAll(/'status'\s*,\s*'([a-z_]+)'/g)].map(m => m[1]!)
-      expect(nilai.length, n).toBeGreaterThan(0)
-      for (const st of nilai) expect(STATUS_JAWAB as readonly string[], `${n}: ${st}`).toContain(st)
-    }
-    expect(fungsiTerakhir('admin_hapus_akun_permanen').badan).toMatch(/'sudah_tiada',/)
   })
 })

@@ -27,7 +27,7 @@
  */
 definePageMeta({ layout: 'console', middleware: ['console', 'cashflow-admin'] })
 import {
-  STATUS_HAPUS, BATAS_DAFTAR_HAPUS, kePermintaanHapus, urutPermintaan, keHasilHapus, jenisGagalHapus, barisHapus, jumlahPerStatus,
+  STATUS_HAPUS, BATAS_DAFTAR_HAPUS, HASIL_BERHASIL, kePermintaanHapus, urutPermintaan, keHasilHapus, jenisGagalHapus, barisHapus, jumlahPerStatus,
   type HapusAkunDaftarDTO, type HasilHapus, type PermintaanHapus,
 } from '~/adapters/cashflowHapusAkun'
 import type { SkemaQuery } from '~/adapters/cashflowQuery'
@@ -97,7 +97,7 @@ const jalankan = async (p: PermintaanHapus, jenis: 'hapus' | 'batal', sesudahJaw
     sesudahJawab?.()
     if (!ok) return
     const kalimat = tcf(`hapusAkun.hasil.${jawab.hasil}`) as string
-    if (jawab.hasil === 'dihapus' || jawab.hasil === 'dibatalkan') toast.success(kalimat)
+    if (jawab.hasil !== 'lain' && HASIL_BERHASIL.includes(jawab.hasil)) toast.success(kalimat)
     else toast.info(kalimat)
     await muatDaftar()
   } finally {

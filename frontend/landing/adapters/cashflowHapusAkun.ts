@@ -18,7 +18,10 @@
  *   sudah_dibatalkan | tidak_ada. Pemilik buku bersama beranggota → P0001
  *   hint alihkan-kepemilikan (penjaga yang sama dengan aplikasi).
  * - admin_hapus_akun_batalkan(p_permintaan, p_alasan) returns jsonb, izin
- *   tindak; `status`: dibatalkan | sudah_selesai | sudah_dibatalkan | tidak_ada.
+ *   tindak; `status`: dibatalkan (+ buka_blokir) | sudah_selesai |
+ *   sudah_dibatalkan | tidak_ada.
+ * - Jawaban "sudah_*" dan "tidak_ada" dipulangkan sebelum audit: server tidak
+ *   mengubah apa pun, console cukup memuat ulang daftar.
  *
  * TANPA KOLOM ALASAN. Kedua aksi satu konfirmasi; p_alasan diisi otomatis di
  * sini (menamai tindakannya + id permintaan), rpc() menambahkan email pelaku.
@@ -97,15 +100,20 @@ export interface HasilHapusDTO {
   /** Hapus permanen: akunnya sudah terhapus lewat jalur lain sebelum admin menekan. */
   sudah_tiada?: boolean
   foto_antre?: number | string | null
+  /** isi = hitungan saat dihapus (sama dengan `isi` daftar yang selesai);
+   *  inti = hasil hapus_akun_inti ({buku_runtuh, pindah} atau {sudah_tiada}), tidak ditampilkan. */
   ringkasan?: { isi?: IsiHapusDTO | null; inti?: unknown } | null
   selesai_pada?: string | null
   dibatalkan_pada?: string | null
-  /** Pembatalan: 'sql' | 'edge' | 'gagal' | null. */
+  /** Pembatalan: 'sql' = blokir masuk sudah dibuka; 'edge' = dibuka fungsi
+   *  edge, belum dipastikan; null = akunnya sudah tiada. */
   buka_blokir?: string | null
 }
 /** Kunci kalimat jawaban aksi (hapusAkun.hasil.*). */
-export const HASIL_HAPUS = ['dihapus', 'sudah_tiada', 'dibatalkan', 'sudah_selesai', 'sudah_dibatalkan', 'tidak_ada'] as const
+export const HASIL_HAPUS = ['dihapus', 'sudah_tiada', 'dibatalkan', 'dibatalkan_tertunda', 'sudah_selesai', 'sudah_dibatalkan', 'tidak_ada'] as const
 export type HasilHapus = typeof HASIL_HAPUS[number]
+/** Jawaban yang berarti aksinya benar-benar dikerjakan sekarang (toast sukses). */
+export const HASIL_BERHASIL: readonly HasilHapus[] = ['dihapus', 'dibatalkan', 'dibatalkan_tertunda']
 
 // ── Domain ───────────────────────────────────────────────────────────────
 export type KeadaanFoto = 'tersimpan' | 'menunggu' | 'gagal' | 'bersih'
@@ -264,6 +272,8 @@ export function keHasilHapus(d: unknown): HasilHapus | 'lain' {
   const j = d as Partial<HasilHapusDTO>
   const status = pilihan(STATUS_JAWAB, j.status)
   if (status === 'selesai') return j.sudah_tiada === true ? 'sudah_tiada' : 'dihapus'
+  // Jalur cadangan: blokirnya dibuka fungsi edge, jadi "bisa masuk lagi" belum pasti.
+  if (status === 'dibatalkan' && j.buka_blokir === 'edge') return 'dibatalkan_tertunda'
   return status ?? 'lain'
 }
 

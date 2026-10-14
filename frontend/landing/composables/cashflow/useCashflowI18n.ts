@@ -608,6 +608,7 @@ const KAMUS = {
       hasil: {
         dihapus: 'Akun sudah dihapus permanen.',
         dibatalkan: 'Permintaan dibatalkan. Akunnya bisa masuk lagi.',
+        dibatalkan_tertunda: 'Permintaan dibatalkan. Blokir masuknya sedang dibuka otomatis.',
         sudah_selesai: 'Akun ini sudah dihapus admin lain.',
         sudah_dibatalkan: 'Permintaan ini sudah dibatalkan admin lain.',
         sudah_tiada: 'Akunnya sudah tidak ada, jadi permintaan ditandai selesai.',
@@ -1225,6 +1226,7 @@ const KAMUS = {
       hasil: {
         dihapus: 'The account was deleted permanently.',
         dibatalkan: 'Request cancelled. The account can sign in again.',
+        dibatalkan_tertunda: 'Request cancelled. Sign-in for this account is being unblocked automatically.',
         sudah_selesai: 'Another admin already deleted this account.',
         sudah_dibatalkan: 'Another admin already cancelled this request.',
         sudah_tiada: 'The account no longer exists, so the request was marked done.',
