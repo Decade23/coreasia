@@ -8,8 +8,9 @@
  * membatalkan permintaannya (akun bisa masuk lagi).
  *
  * - Daftar: admin_hapus_akun_daftar per status (?status=menunggu|selesai|
- *   dibatalkan, replace). Izin view, email tersamar dari server, tanpa audit.
- *   Menunggu lebih dari 7 hari ditandai merah, pengingat internal saja.
+ *   dibatalkan, replace), beserta jumlah tiap status untuk label saringan.
+ *   Izin view, email tersamar dari server, tanpa audit. Menunggu lebih dari
+ *   7 hari ditandai merah, pengingat internal saja.
  * - Hapus permanen: satu konfirmasi (CashflowHapusAkunKonfirmasi), tanpa kolom
  *   alasan. Batalkan: konfirmasi sebaris di kartunya. Keduanya izin
  *   cashflow:tindak (super admin ber-TOTP); tanpa itu tombolnya mati dan
@@ -26,8 +27,8 @@
  */
 definePageMeta({ layout: 'console', middleware: ['console', 'cashflow-admin'] })
 import {
-  STATUS_HAPUS, BATAS_DAFTAR_HAPUS, kePermintaanHapus, urutPermintaan, keHasilHapus, jenisGagalHapus,
-  type HapusAkunDTO, type HasilHapus, type PermintaanHapus,
+  STATUS_HAPUS, BATAS_DAFTAR_HAPUS, kePermintaanHapus, urutPermintaan, keHasilHapus, jenisGagalHapus, barisHapus, jumlahPerStatus,
+  type HapusAkunDaftarDTO, type HasilHapus, type PermintaanHapus,
 } from '~/adapters/cashflowHapusAkun'
 import type { SkemaQuery } from '~/adapters/cashflowQuery'
 
@@ -43,8 +44,11 @@ const SKEMA = {
 } as const satisfies SkemaQuery
 const { nilai: q, setel } = useCashflowQuery(SKEMA)
 
-const mentah = shallowRef<HapusAkunDTO[]>([])
-const daftar = computed<PermintaanHapus[]>(() => urutPermintaan(mentah.value.map(d => kePermintaanHapus(d)), q.value.status))
+const mentah = shallowRef<HapusAkunDaftarDTO | null>(null)
+const daftar = computed<PermintaanHapus[]>(() => urutPermintaan(barisHapus(mentah.value).map(d => kePermintaanHapus(d)), q.value.status))
+/* Jumlah tiap status tetap dari jawaban terakhir selama saringan berganti. */
+const jumlah = shallowRef<ReturnType<typeof jumlahPerStatus>>(null)
+const totalStatus = computed(() => jumlah.value?.[q.value.status] ?? 0)
 
 /** Id permintaan yang baru ditolak hapus permanen (P0001 alihkan-kepemilikan). */
 const tertahan = ref<ReadonlySet<string>>(new Set())
@@ -53,10 +57,11 @@ const muatDaftar = () => muat(async (terbaru) => {
   const rows = await api.hapusAkunDaftar(q.value.status, BATAS_DAFTAR_HAPUS)
   if (!terbaru()) return
   mentah.value = rows
+  jumlah.value = jumlahPerStatus(rows)
 })
 /* Ganti saringan: baris status lama dibuang dulu, jangan tampil di bawah judul status baru. */
 watch(() => q.value.status, () => {
-  mentah.value = []
+  mentah.value = null
   tertahan.value = new Set()
   muatDaftar()
 })
@@ -125,7 +130,9 @@ useConsoleRemah().pasang(() => [
           v-for="s in STATUS_HAPUS" :key="s" type="button" class="rounded-full px-3 py-1 transition"
           :class="q.status === s ? 'bg-[var(--ca-panel-bg-strong)] font-semibold text-[var(--ca-text)]' : 'text-[var(--ca-muted)]'"
           :aria-pressed="q.status === s" @click="setel({ status: s })"
-        >{{ tcf(`hapusAkun.status.${s}`) }}</button>
+        >
+          {{ tcf(`hapusAkun.status.${s}`) }} <span v-if="jumlah" class="ml-0.5 tabular-nums text-xs text-[var(--ca-subtle)]">{{ jumlah[s] }}</span>
+        </button>
       </div>
     </div>
 
@@ -149,7 +156,7 @@ useConsoleRemah().pasang(() => [
           />
         </li>
       </ul>
-      <p v-if="mentah.length >= BATAS_DAFTAR_HAPUS" class="text-xs ca-tone-gold">{{ tcf('hapusAkun.terpotong')(mentah.length) }}</p>
+      <p v-if="totalStatus > daftar.length" class="text-xs ca-tone-gold">{{ tcf('hapusAkun.terpotong')(daftar.length, totalStatus) }}</p>
     </template>
 
     <CashflowHapusAkunKonfirmasi :permintaan="dikonfirmasi" :sibuk="sibuk?.jenis === 'hapus'" @tutup="dikonfirmasi = null" @setuju="setujuHapus" />

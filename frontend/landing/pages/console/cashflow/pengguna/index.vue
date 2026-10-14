@@ -43,7 +43,7 @@
  */
 definePageMeta({ layout: 'console', middleware: ['console', 'cashflow-admin'] })
 import { kePengguna, samarkanEmail, type Pengguna, type PenggunaDTO, type StatusPengguna } from '~/adapters/cashflow'
-import { idMenungguHapus } from '~/adapters/cashflowHapusAkun'
+import { idMenungguHapus, BATAS_BADGE_HAPUS } from '~/adapters/cashflowHapusAkun'
 import { urutkan, saringKolom, potongHalaman, halamanAman, jumlahHalaman, type AturanUrut } from '~/adapters/cashflowDaftar'
 import type { SkemaQuery } from '~/adapters/cashflowQuery'
 import type { AlasanDaftar } from '~/composables/cashflow/useCashflowAlasanDaftar'
@@ -102,7 +102,7 @@ const muatDaftar = (alasan: AlasanDaftar | null) => muat(async (terbaru) => {
 })
 onMounted(() => {
   muatDaftar(alasanDaftar.ambil())
-  api.hapusAkunDaftar('menunggu').then((r) => { menungguHapus.value = idMenungguHapus(r) }).catch(() => {})
+  api.hapusAkunDaftar('menunggu', BATAS_BADGE_HAPUS).then((r) => { menungguHapus.value = idMenungguHapus(r) }).catch(() => {})
 })
 
 const buka = async () => {

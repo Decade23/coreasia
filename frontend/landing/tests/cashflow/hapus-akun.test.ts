@@ -15,14 +15,15 @@ import { fileURLToPath } from 'node:url'
 import { computed, ref } from 'vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
-  aksiPermintaan, alasanBatalOtomatis, alasanHapusOtomatis, bagianIsi, BAGIAN_ISI, BATAS_DAFTAR_HAPUS, HASIL_HAPUS,
-  idMenungguHapus, isiDitahan, jenisGagalHapus, keadaanFoto, keHasilHapus, kePermintaanHapus, LEWAT_HAPUS, STATUS_HAPUS, urutPermintaan,
-  type HapusAkunDTO, type HasilHapusDTO,
+  aksiPermintaan, alasanBatalOtomatis, alasanHapusOtomatis, bagianIsi, barisHapus, BAGIAN_ISI, BATAS_BADGE_HAPUS, BATAS_DAFTAR_HAPUS,
+  HASIL_HAPUS, idMenungguHapus, jenisGagalHapus, jumlahPerStatus, keadaanFoto, keHasilHapus, keIsiHapus, kePermintaanHapus,
+  LEWAT_HAPUS, STATUS_HAPUS, STATUS_JAWAB, urutPermintaan,
+  type HapusAkunDaftarDTO, type HapusAkunDTO, type HasilHapusDTO, type IsiHapusDTO,
 } from '../../adapters/cashflowHapusAkun'
 import { kePengguna, type PenggunaDTO } from '../../adapters/cashflow'
 import { izinSesiCashflow } from '../../utils/rbac'
 import { KAMUS_CASHFLOW } from '../../composables/cashflow/useCashflowI18n'
-import { adaMigrasiNomor, fungsiTerakhir, kolomKembalian, parameterFungsi, semuaPohonJsonb } from './migrasi'
+import { adaMigrasiNomor, fungsiTerakhir, parameterFungsi, pohonDengan, pohonJsonb, semuaPohonJsonb } from './migrasi'
 
 // ── Global tiruan (tanpa Nuxt, lihat vitest.config.ts) ───────────────────
 type Jawab = { data: unknown; error: unknown }
@@ -54,17 +55,22 @@ const U2 = '00000000-0000-4000-8000-0000000000b2'
 const KINI = Date.parse('2026-10-14T05:00:00Z')
 const HARI = 864e5
 
-/** Contoh jawaban satu baris admin_hapus_akun_daftar (bigint bisa pulang sebagai string). */
+/** Contoh `isi` (hapus_akun_hitung_inti); bigint bisa pulang sebagai string. */
+const ISI: IsiHapusDTO = { buku_milik: 2, buku_anggota: 1, transaksi_milik: '340', transaksi_pindah: 5, foto: 12, tertahan: false }
+/** Contoh satu baris `baris` admin_hapus_akun_daftar. */
 const baris = (lain: Partial<HapusAkunDTO> = {}): HapusAkunDTO => ({
-  id: ID1, user_id: U1, email_samar: 'bud***@contoh.id', nama: 'Budi', diminta_pada: new Date(KINI - 2 * HARI).toISOString(),
-  lewat: 'aplikasi', status: 'menunggu', selesai_pada: null,
-  jumlah_buku_milik: 2, jumlah_buku_anggota: 1, jumlah_transaksi: '340', jumlah_foto: 12,
-  tertahan: false, foto_menunggu: 0, foto_gagal: 0, ...lain,
+  id: ID1, user_id: U1, email_samar: 'bud***@contoh.id', nama: 'Budi', lewat: 'aplikasi', status: 'menunggu',
+  diminta_pada: new Date(KINI - 2 * HARI).toISOString(), umur_hari: null, lewat_7_hari: null,
+  selesai_pada: null, dibatalkan_pada: null, oleh: null, blokir: 'sql', blokir_pada: new Date(KINI - 2 * HARI).toISOString(),
+  isi: ISI, tertahan: false, foto_menunggu: 0, foto_gagal: 0, ...lain,
+})
+const daftarDTO = (rows: HapusAkunDTO[]): HapusAkunDaftarDTO => ({
+  status: 'menunggu', batas: 100, jumlah: { menunggu: rows.length, selesai: '3', dibatalkan: 0 }, baris: rows,
 })
 
 beforeEach(() => {
   panggilan.length = 0
-  jawaban = { data: [], error: null }
+  jawaban = { data: daftarDTO([]), error: null }
 })
 
 describe('kePermintaanHapus', () => {
@@ -72,57 +78,74 @@ describe('kePermintaanHapus', () => {
     const p = kePermintaanHapus(baris(), KINI)
     expect(p).toMatchObject({
       id: ID1, userId: U1, emailTersamar: 'bud***@contoh.id', nama: 'Budi', status: 'menunggu', lewat: 'aplikasi',
-      umurHari: 2, lewatBatas: false, bukuMilik: 2, bukuAnggota: 1, transaksi: 340, foto: 12, tertahan: false,
-      keadaanFoto: 'tersimpan', ke360: `/console/cashflow/pengguna/${U1}`,
+      umurHari: 2, lewatBatas: false, blokirTertunda: false, tertahan: false, keadaanFoto: 'tersimpan', ke360: `/console/cashflow/pengguna/${U1}`,
+      isi: { ruangMilik: 2, ruangAnggota: 1, transaksi: 340, transaksiPindah: 5, foto: 12 },
     })
     // Sabuk kedua: email utuh yang lolos dari server tetap disamarkan di sini.
     expect(kePermintaanHapus(baris({ email_samar: 'budiman@contoh.id' }), KINI).emailTersamar).toBe('bud***@contoh.id')
     expect(kePermintaanHapus(baris({ email_samar: null }), KINI).emailTersamar).toBe('—')
   })
 
-  it('merah hanya untuk yang MENUNGGU lebih dari 7 hari', () => {
-    const umur = (ms: number, status = 'menunggu') =>
-      kePermintaanHapus(baris({ diminta_pada: new Date(KINI - ms).toISOString(), status }), KINI)
+  it('merah hanya untuk yang MENUNGGU lebih dari 7 hari; jam server lebih dulu', () => {
+    const umur = (ms: number, status = 'menunggu', lain: Partial<HapusAkunDTO> = {}) =>
+      kePermintaanHapus(baris({ diminta_pada: new Date(KINI - ms).toISOString(), status, ...lain }), KINI)
     expect(umur(7 * HARI)).toMatchObject({ umurHari: 7, lewatBatas: false })
     expect(umur(7 * HARI + 1000)).toMatchObject({ umurHari: 7, lewatBatas: true })
     expect(umur(30 * HARI, 'selesai').lewatBatas).toBe(false)
     expect(umur(30 * HARI, 'dibatalkan').lewatBatas).toBe(false)
     expect(umur(0).umurHari).toBe(0)
+    // Jam laptop admin meleset: yang dipakai umur_hari dan lewat_7_hari dari server.
+    expect(umur(HARI, 'menunggu', { umur_hari: 9, lewat_7_hari: true })).toMatchObject({ umurHari: 9, lewatBatas: true })
+    expect(umur(9 * HARI, 'menunggu', { umur_hari: 1, lewat_7_hari: false })).toMatchObject({ umurHari: 1, lewatBatas: false })
+    expect(umur(9 * HARI, 'selesai', { lewat_7_hari: true }).lewatBatas).toBe(false)
   })
 
-  it('hitungan yang ditahan server tetap null, bukan 0; nilai asing jadi null', () => {
-    const p = kePermintaanHapus(baris({ jumlah_buku_milik: null, jumlah_transaksi: '', jumlah_foto: null, lewat: 'faks', status: 'aneh', nama: '  ' }), KINI)
-    expect(p).toMatchObject({ bukuMilik: null, transaksi: null, foto: null, lewat: null, status: null, nama: null })
-    expect(bagianIsi(p)).toEqual([{ kunci: 'ruangAnggota', n: 1 }])
-    expect(isiDitahan(p)).toBe(false)
-    const ditahan = { bukuMilik: null, bukuAnggota: null, transaksi: null, foto: null }
-    expect(bagianIsi(ditahan)).toEqual([])
-    expect(isiDitahan(ditahan)).toBe(true)
-    // Nol bukan "ditahan": dilewati dari ringkasan, tapi akunnya terbaca kosong, bukan butuh TOTP.
-    const kosong = { bukuMilik: 0, bukuAnggota: 0, transaksi: 0, foto: 0 }
-    expect(bagianIsi(kosong)).toEqual([])
-    expect(isiDitahan(kosong)).toBe(false)
-    expect(bagianIsi({ ...kosong, transaksi: 5 })).toEqual([{ kunci: 'transaksi', n: 5 }])
+  it('isi: angka 0 dan null dilewati; isi tak dikirim → null; nilai asing jadi null', () => {
+    const p = kePermintaanHapus(baris({ isi: { ...ISI, buku_milik: 0, transaksi_milik: '', foto: null, transaksi_pindah: 0 }, lewat: 'faks', status: 'aneh', nama: '  ' }), KINI)
+    expect(p).toMatchObject({ lewat: null, status: null, nama: null })
+    expect(bagianIsi(p.isi)).toEqual([{ kunci: 'ruangAnggota', n: 1 }])
+    expect(kePermintaanHapus(baris({ isi: null }), KINI).isi).toBeNull()
+    expect(bagianIsi(null)).toEqual([])
+    expect(bagianIsi(keIsiHapus({ buku_milik: 0, buku_anggota: 0, transaksi_milik: 0, transaksi_pindah: 0, foto: 0, tertahan: false }))).toEqual([])
+    expect(bagianIsi(keIsiHapus(ISI)).map(b => b.kunci)).toEqual([...BAGIAN_ISI])
+  })
+
+  it('blokir masuk yang belum pasti (jalur edge) ditandai selama menunggu', () => {
+    expect(kePermintaanHapus(baris({ blokir: 'edge', blokir_pada: null }), KINI).blokirTertunda).toBe(true)
+    expect(kePermintaanHapus(baris({ blokir: 'gagal', blokir_pada: null }), KINI).blokirTertunda).toBe(true)
+    expect(kePermintaanHapus(baris({ blokir: 'edge', blokir_pada: new Date(KINI).toISOString() }), KINI).blokirTertunda).toBe(false)
+    expect(kePermintaanHapus(baris({ status: 'selesai', selesai_pada: new Date(KINI).toISOString(), blokir_pada: null }), KINI).blokirTertunda).toBe(false)
   })
 
   it('sesudah hapus permanen tidak ada tautan Pengguna 360; foto mengikuti antrean penyapu', () => {
     const selesai = (menunggu: number, gagal: number) =>
-      kePermintaanHapus(baris({ status: 'selesai', selesai_pada: new Date(KINI).toISOString(), foto_menunggu: menunggu, foto_gagal: String(gagal) }), KINI)
-    expect(selesai(0, 0)).toMatchObject({ ke360: null, keadaanFoto: 'bersih' })
+      kePermintaanHapus(baris({ status: 'selesai', selesai_pada: new Date(KINI).toISOString(), oleh: 'adm@contoh.id', foto_menunggu: menunggu, foto_gagal: String(gagal) }), KINI)
+    expect(selesai(0, 0)).toMatchObject({ ke360: null, keadaanFoto: 'bersih', oleh: 'adm@contoh.id' })
     expect(selesai(3, 0)).toMatchObject({ keadaanFoto: 'menunggu', fotoMenunggu: 3 })
     expect(selesai(3, 1)).toMatchObject({ keadaanFoto: 'gagal', fotoGagal: 1 })
-    expect(kePermintaanHapus(baris({ status: 'dibatalkan' }), KINI)).toMatchObject({ ke360: `/console/cashflow/pengguna/${U1}`, keadaanFoto: 'tersimpan' })
+    expect(kePermintaanHapus(baris({ status: 'dibatalkan', dibatalkan_pada: new Date(KINI).toISOString() }), KINI))
+      .toMatchObject({ ke360: `/console/cashflow/pengguna/${U1}`, keadaanFoto: 'tersimpan', dibatalkanIso: new Date(KINI).toISOString() })
     expect(keadaanFoto('menunggu', 5, 5)).toBe('tersimpan')
+  })
+
+  it('jawaban daftar: baris, jumlah per status, id yang menunggu', () => {
+    const d = daftarDTO([baris(), baris({ id: ID2, user_id: U2, status: 'selesai' })])
+    expect(barisHapus(d)).toHaveLength(2)
+    expect(barisHapus(null)).toEqual([])
+    expect(barisHapus({ ...d, baris: null })).toEqual([])
+    expect(jumlahPerStatus(d)).toEqual({ menunggu: 2, selesai: 3, dibatalkan: 0 })
+    expect(jumlahPerStatus({ ...d, jumlah: null })).toBeNull()
+    expect([...idMenungguHapus(d)]).toEqual([U1])
   })
 })
 
 describe('urutPermintaan', () => {
-  const a = kePermintaanHapus(baris({ id: ID1, diminta_pada: '2026-10-01T00:00:00Z', selesai_pada: '2026-10-10T00:00:00Z' }), KINI)
-  const b = kePermintaanHapus(baris({ id: ID2, diminta_pada: '2026-10-05T00:00:00Z', selesai_pada: '2026-10-06T00:00:00Z' }), KINI)
-  it('menunggu: paling lama dulu; selesai: terbaru dihapus dulu; dibatalkan: terbaru diminta dulu', () => {
+  const a = kePermintaanHapus(baris({ id: ID1, diminta_pada: '2026-10-01T00:00:00Z', selesai_pada: '2026-10-10T00:00:00Z', dibatalkan_pada: '2026-10-03T00:00:00Z' }), KINI)
+  const b = kePermintaanHapus(baris({ id: ID2, diminta_pada: '2026-10-05T00:00:00Z', selesai_pada: '2026-10-06T00:00:00Z', dibatalkan_pada: '2026-10-02T00:00:00Z' }), KINI)
+  it('menunggu: paling lama dulu; selesai: terbaru dihapus dulu; dibatalkan: terbaru dibatalkan dulu', () => {
     expect(urutPermintaan([b, a], 'menunggu').map(p => p.id)).toEqual([ID1, ID2])
     expect(urutPermintaan([b, a], 'selesai').map(p => p.id)).toEqual([ID1, ID2])
-    expect(urutPermintaan([a, b], 'dibatalkan').map(p => p.id)).toEqual([ID2, ID1])
+    expect(urutPermintaan([b, a], 'dibatalkan').map(p => p.id)).toEqual([ID1, ID2])
   })
 })
 
@@ -172,13 +195,13 @@ describe('argumen RPC (klien Supabase tiruan)', () => {
     expect(panggilan.at(-1)!.a).toEqual({ p_status: 'dibatalkan', p_batas: 100 })
   })
   it('hapus permanen dan batalkan: alasan OTOMATIS menamai tindakannya, berawalan pelaku', async () => {
-    jawaban = { data: { hasil: 'dihapus', permintaan: ID1 }, error: null }
+    jawaban = { data: { status: 'selesai', permintaan: ID1, user_id: U1, sudah_tiada: false, foto_antre: 12 }, error: null }
     expect(keHasilHapus(await useCashflowAdmin().hapusAkunPermanen(ID1))).toBe('dihapus')
     expect(panggilan.at(-1)).toEqual({
       nama: 'admin_hapus_akun_permanen',
       a: { p_permintaan: ID1, p_alasan: `[staf@contoh.id] ${alasanHapusOtomatis(ID1)}` },
     })
-    jawaban = { data: { hasil: 'sudah_selesai', permintaan: ID2 }, error: null }
+    jawaban = { data: { status: 'sudah_selesai', permintaan: ID2, user_id: U2 }, error: null }
     expect(keHasilHapus(await useCashflowAdmin().hapusAkunBatalkan(ID2))).toBe('sudah_selesai')
     expect(panggilan.at(-1)).toEqual({
       nama: 'admin_hapus_akun_batalkan',
@@ -195,11 +218,17 @@ describe('argumen RPC (klien Supabase tiruan)', () => {
     expect(g).toBeInstanceOf(GalatAdmin)
     expect(jenisGagalHapus(g as InstanceType<typeof GalatAdmin>)).toBe('tertahan')
   })
-  it('jawaban aksi: nilai dikenal, sisanya "lain"', () => {
-    for (const h of HASIL_HAPUS) expect(keHasilHapus({ hasil: h, permintaan: ID1 })).toBe(h)
-    expect(keHasilHapus({ hasil: 'aneh' })).toBe('lain')
+  it('jawaban aksi: status server → kalimat; sudah_tiada dibedakan; sisanya "lain"', () => {
+    expect(keHasilHapus({ status: 'selesai', permintaan: ID1, sudah_tiada: false })).toBe('dihapus')
+    expect(keHasilHapus({ status: 'selesai', permintaan: ID1, sudah_tiada: true })).toBe('sudah_tiada')
+    for (const st of ['dibatalkan', 'sudah_selesai', 'sudah_dibatalkan', 'tidak_ada'] as const) {
+      expect(keHasilHapus({ status: st, permintaan: ID1 })).toBe(st)
+    }
+    for (const st of STATUS_JAWAB) expect([...HASIL_HAPUS, 'lain']).toContain(keHasilHapus({ status: st, permintaan: ID1 }))
+    expect(keHasilHapus({ status: 'aneh' })).toBe('lain')
+    expect(keHasilHapus({ hasil: 'dihapus' })).toBe('lain')
     expect(keHasilHapus(null)).toBe('lain')
-    expect(keHasilHapus('dihapus')).toBe('lain')
+    expect(keHasilHapus('selesai')).toBe('lain')
   })
 })
 
@@ -209,7 +238,7 @@ describe('daftar pengguna: "Menunggu dihapus" menggantikan "Ditangguhkan"', () =
     banned_until: banned, jumlah_ruang: null, jumlah_tx: null, total_semua: 2,
   })
   it('akun berpermintaan menunggu → menunggu_hapus walau ber-ban; akun ber-ban lain tetap ditangguhkan', () => {
-    const tunggu = idMenungguHapus([baris({ user_id: U1 }), baris({ id: ID2, user_id: U2, status: 'selesai' })])
+    const tunggu = idMenungguHapus(daftarDTO([baris({ user_id: U1 }), baris({ id: ID2, user_id: U2, status: 'selesai' })]))
     expect([...tunggu]).toEqual([U1])
     const nanti = '2126-01-01T00:00:00Z'
     expect(kePengguna(pengguna(U1, nanti), 'id', tunggu).status).toBe('menunggu_hapus')
@@ -224,7 +253,8 @@ describe('daftar pengguna: "Menunggu dihapus" menggantikan "Ditangguhkan"', () =
   })
   it('halaman daftar memuat permintaan menunggu terpisah, gagalnya tidak menutup daftar', () => {
     const f = baca('pages/console/cashflow/pengguna/index.vue')
-    expect(f).toMatch(/api\.hapusAkunDaftar\('menunggu'\)\.then\(\(r\) => \{ menungguHapus\.value = idMenungguHapus\(r\) \}\)\.catch\(\(\) => \{\}\)/)
+    expect(f).toMatch(/api\.hapusAkunDaftar\('menunggu', BATAS_BADGE_HAPUS\)\.then\(\(r\) => \{ menungguHapus\.value = idMenungguHapus\(r\) \}\)\.catch\(\(\) => \{\}\)/)
+    expect(BATAS_BADGE_HAPUS).toBeLessThanOrEqual(500)
     expect(f).toMatch(/kePengguna\(d, bahasa\.value, menungguHapus\.value\)/)
     expect(f).toMatch(/if \(q\.value\.seg === 'ditangguhkan'\) return p\.status === 'ditangguhkan'/)
     expect(f).toMatch(/tcf\('pengguna\.menungguHapus'\)/)
@@ -259,9 +289,12 @@ describe('kamus ID dan EN', () => {
       ...[...HASIL_HAPUS, 'lain'].map(h => `hapusAkun.hasil.${h}`),
       'hapusAkun.foto.tersimpan', 'hapusAkun.foto.bersih',
       'nav.hapusAkun', 'pengguna.menungguHapus', 'galat.belumAktif', 'galat.alihkanKepemilikan',
-      'hapusAkun.isiTertahan', 'hapusAkun.isiKosong',
+      'hapusAkun.isiKosong', 'hapusAkun.blokirTertunda',
     ]
-    const fungsi = [...BAGIAN_ISI.map(k => `hapusAkun.isi.${k}`), 'hapusAkun.foto.menunggu', 'hapusAkun.foto.gagal', 'hapusAkun.umur', 'hapusAkun.diminta']
+    const fungsi = [
+      ...BAGIAN_ISI.map(k => `hapusAkun.isi.${k}`), 'hapusAkun.foto.menunggu', 'hapusAkun.foto.gagal', 'hapusAkun.umur', 'hapusAkun.diminta',
+      'hapusAkun.dihapusPada', 'hapusAkun.dibatalkanPada', 'hapusAkun.oleh', 'hapusAkun.isiSaatDihapus', 'hapusAkun.terpotong',
+    ]
     const salah = [
       ...teks.flatMap(k => (['id', 'en'] as const).filter(b => typeof ambil(b, k) !== 'string').map(b => `${b}:${k}`)),
       ...fungsi.flatMap(k => (['id', 'en'] as const).filter(b => typeof ambil(b, k) !== 'function').map(b => `${b}:${k}`)),
@@ -270,7 +303,7 @@ describe('kamus ID dan EN', () => {
   })
   it('kalimat satu baris tanpa kata "admin_" atau kode galat mentah', () => {
     for (const b of ['id', 'en'] as const) {
-      for (const k of ['izinTindak', 'belumAktif', 'tertahan', 'konfirmasiKet', 'konfirmasiPindah']) {
+      for (const k of ['izinTindak', 'belumAktif', 'tertahan', 'konfirmasiKet', 'konfirmasiPindah', 'blokirTertunda']) {
         const t = ambil(b, `hapusAkun.${k}`) as string
         expect(t, `${b}:${k}`).not.toMatch(/admin_|P0001|42883|\n/)
         expect(t.length, `${b}:${k}`).toBeLessThan(160)
@@ -334,39 +367,64 @@ describe('penjaga halaman (keputusan P3: satu konfirmasi, tanpa kolom alasan)', 
 })
 
 /* Kontrak terhadap migrasi 0112 (folder migrasi CashFlow, CASHFLOW_MIGRASI). */
-const CONTOH_DAFTAR = baris()
-const CONTOH_HASIL: Required<HasilHapusDTO> = { hasil: 'dihapus', permintaan: ID1, foto_antre: 0 }
+const CONTOH_DAFTAR = daftarDTO([baris()])
+const CONTOH_HASIL: Required<HasilHapusDTO> = {
+  status: 'selesai', permintaan: ID1, user_id: U1, sudah_tiada: false, foto_antre: 0, ringkasan: { isi: ISI, inti: null },
+  selesai_pada: null, dibatalkan_pada: null, buka_blokir: null,
+}
+const kunci = (o: object) => Object.keys(o).sort()
 describe.skipIf(!adaMigrasiNomor('0112'))('kontrak 0112', () => {
-  it('admin_hapus_akun_daftar: kolom kembalian = kunci HapusAkunDTO', () => {
-    expect([...kolomKembalian('admin_hapus_akun_daftar')].sort()).toEqual(Object.keys(CONTOH_DAFTAR).sort())
+  it('admin_hapus_akun_daftar: kunci jawaban dan baris = HapusAkunDaftarDTO', () => {
+    const { kepala, badan } = fungsiTerakhir('admin_hapus_akun_daftar')
+    expect(kepala).toMatch(/returns\s+jsonb/i)
+    const pohon = pohonDengan(badan, 'baris', 'jumlah')
+    expect(kunci(pohon)).toEqual(kunci(CONTOH_DAFTAR))
+    expect(kunci(pohon.jumlah ?? {})).toEqual(kunci(CONTOH_DAFTAR.jumlah!))
+    expect(kunci(pohon.baris ?? {})).toEqual(kunci(baris()))
+  })
+  it('isi (hapus_akun_hitung_inti) = IsiHapusDTO', () => {
+    expect(kunci(pohonJsonb(fungsiTerakhir('hapus_akun_hitung_inti').badan))).toEqual(kunci(ISI))
+  })
+  it('status yang diterima daftar = saringan halaman (+ semua)', () => {
+    const { badan } = fungsiTerakhir('admin_hapus_akun_daftar')
+    const m = /v_status not in \(([^)]*)\)/.exec(badan)
+    expect([...(m?.[1] ?? '').matchAll(/'([a-z]+)'/g)].map(x => x[1]).sort()).toEqual([...STATUS_HAPUS, 'semua'].sort())
+    expect(badan).toMatch(/least\(coalesce\(p_batas, 100\), 500\)/)
+    expect(BATAS_DAFTAR_HAPUS).toBe(100)
   })
   it('parameter ketiga RPC = argumen yang dikirim useCashflowAdmin', () => {
     expect(parameterFungsi('admin_hapus_akun_daftar')).toEqual([{ nama: 'p_status', bawaan: true }, { nama: 'p_batas', bawaan: true }])
     for (const n of ['admin_hapus_akun_permanen', 'admin_hapus_akun_batalkan']) {
-      expect(parameterFungsi(n).map(p => p.nama), n).toEqual(['p_permintaan', 'p_alasan'])
+      expect(parameterFungsi(n), n).toEqual([{ nama: 'p_permintaan', bawaan: false }, { nama: 'p_alasan', bawaan: false }])
     }
   })
-  it('penjaga: daftar izin view; hapus permanen dan batalkan izin tindak', () => {
+  it('penjaga: daftar izin view; hapus permanen dan batalkan izin tindak; alasan otomatis lolos syarat server', () => {
     expect(fungsiTerakhir('admin_hapus_akun_daftar').badan).toMatch(/konsol_boleh\(\s*'cashflow:view'\s*\)/)
     for (const n of ['admin_hapus_akun_permanen', 'admin_hapus_akun_batalkan']) {
       const { kepala, badan } = fungsiTerakhir(n)
       expect(kepala, n).toMatch(/returns\s+jsonb/i)
-      expect(badan, n).toMatch(/konsol_boleh\(\s*'cashflow:tindak'\s*\)/)
+      expect(badan, n).toMatch(/konsol_boleh\(\s*'cashflow:tindak'\s*\)[\s\S]*hint = 'izin-kurang'/)
       expect(badan, n).toMatch(/is_platform_admin\(\)/)
+      const min = Number(/length\(btrim\(p_alasan\)\) < (\d+)/.exec(badan)?.[1])
+      expect(min, n).toBeGreaterThan(0)
+      expect(alasanHapusOtomatis(ID1).length).toBeGreaterThanOrEqual(min)
+      expect(alasanBatalOtomatis(ID1).length).toBeGreaterThanOrEqual(min)
     }
-    expect(fungsiTerakhir('admin_hapus_akun_permanen').badan).toMatch(/errcode\s*=\s*'P0001'\s*,\s*hint\s*=\s*'alihkan-kepemilikan'/)
+    expect(fungsiTerakhir('admin_hapus_akun_permanen').badan).toMatch(/errcode = 'P0001',\s*hint = 'alihkan-kepemilikan'/)
   })
-  it('jawaban aksi: objek ber-hasil dan permintaan; nilai hasil dikenal console', () => {
+  it('jawaban aksi: objek ber-status dan permintaan; nilai status dikenal console', () => {
     for (const n of ['admin_hapus_akun_permanen', 'admin_hapus_akun_batalkan']) {
       const { badan } = fungsiTerakhir(n)
-      const pohon = semuaPohonJsonb(badan).filter(t => 'hasil' in t)
+      const pohon = semuaPohonJsonb(badan).filter(t => 'status' in t)
       expect(pohon.length, n).toBeGreaterThan(0)
       for (const t of pohon) {
         expect(Object.keys(t), n).toContain('permintaan')
         for (const k of Object.keys(t)) expect(Object.keys(CONTOH_HASIL), `${n}: ${k}`).toContain(k)
       }
-      const nilai = [...badan.matchAll(/'hasil'\s*,\s*'([a-z_]+)'/g)].map(m => m[1]!)
-      for (const h of nilai) expect(HASIL_HAPUS as readonly string[], `${n}: ${h}`).toContain(h)
+      const nilai = [...badan.matchAll(/'status'\s*,\s*'([a-z_]+)'/g)].map(m => m[1]!)
+      expect(nilai.length, n).toBeGreaterThan(0)
+      for (const st of nilai) expect(STATUS_JAWAB as readonly string[], `${n}: ${st}`).toContain(st)
     }
+    expect(fungsiTerakhir('admin_hapus_akun_permanen').badan).toMatch(/'sudah_tiada',/)
   })
 })

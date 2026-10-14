@@ -2,16 +2,18 @@
 /**
  * Satu permintaan hapus akun (halaman Hapus akun).
  *
- * Isi kartu: email tersamar, nama, umur permintaan (merah bila menunggu lebih
- * dari 7 hari, pengingat internal saja), ringkasan isi akun, keadaan foto,
- * dan tautan Pengguna 360 selama akunnya masih ada.
+ * Isi kartu: email tersamar, nama (hanya untuk sesi ber-pii), umur permintaan
+ * (merah bila menunggu lebih dari 7 hari, pengingat internal saja), ringkasan
+ * isi akun (sesudah dihapus: ringkasan yang dibekukan saat itu), keadaan
+ * foto, peringatan bila blokir masuk belum pasti terpasang, dan tautan
+ * Pengguna 360 selama akunnya masih ada.
  *
  * Tombol hanya untuk permintaan yang menunggu (aksiPermintaan). Hapus
  * permanen meminta satu konfirmasi lewat CashflowHapusAkunKonfirmasi di
  * halaman; Batalkan dikonfirmasi sebaris di kartu ini. Tanpa izin tindak
  * tombolnya mati dan halaman menjelaskan lewat CashflowIzinKurang.
  */
-import { aksiPermintaan, bagianIsi, isiDitahan, type PermintaanHapus } from '~/adapters/cashflowHapusAkun'
+import { aksiPermintaan, bagianIsi, type PermintaanHapus } from '~/adapters/cashflowHapusAkun'
 
 const props = defineProps<{
   permintaan: PermintaanHapus
@@ -35,12 +37,18 @@ watch(() => [p.value.status, props.bolehTindak], () => { tanyaBatal.value = fals
 
 const nadaStatus = computed(() =>
   p.value.status === 'menunggu' ? 'ca-pill-gold' : p.value.status === 'selesai' ? 'ca-pill-muted' : 'ca-pill-info')
-/* Sesudah hapus permanen isinya sudah tidak ada: baris ini hanya untuk akun yang masih hidup. */
+/* Selama menunggu: hitungan sekarang. Sesudah dihapus: ringkasan yang dibekukan saat itu. */
 const isi = computed(() => {
-  if (p.value.status === 'selesai') return ''
-  const bagian = bagianIsi(p.value).map(b => tcf(`hapusAkun.isi.${b.kunci}`)(b.n) as string)
-  if (bagian.length) return bagian.join(' · ')
-  return isiDitahan(p.value) ? tcf('hapusAkun.isiTertahan') : tcf('hapusAkun.isiKosong')
+  if (!p.value.isi) return ''
+  const bagian = bagianIsi(p.value.isi).map(b => tcf(`hapusAkun.isi.${b.kunci}`)(b.n) as string)
+  const teks = bagian.length ? bagian.join(' · ') : (tcf('hapusAkun.isiKosong') as string)
+  return p.value.status === 'selesai' ? (tcf('hapusAkun.isiSaatDihapus')(teks) as string) : teks
+})
+/** Kapan dan oleh siapa permintaan ini dikerjakan (selesai/dibatalkan). */
+const dikerjakan = computed(() => {
+  const w = p.value.selesaiIso ? tcf('hapusAkun.dihapusPada')(formatWaktu(p.value.selesaiIso))
+    : p.value.dibatalkanIso ? tcf('hapusAkun.dibatalkanPada')(formatWaktu(p.value.dibatalkanIso)) : ''
+  return w && p.value.oleh ? `${w} ${tcf('hapusAkun.oleh')(p.value.oleh)}` : w
 })
 const teksFoto = computed(() => {
   const k = p.value.keadaanFoto
@@ -65,19 +73,20 @@ const setujuBatal = () => {
   >
     <div class="flex flex-wrap items-center gap-2">
       <span class="font-mono text-[var(--ca-text)]">{{ p.emailTersamar }}</span>
-      <span class="text-[var(--ca-muted)]">{{ p.nama ?? tcf('hapusAkun.tanpaNama') }}</span>
+      <span v-if="p.nama" class="text-[var(--ca-muted)]">{{ p.nama }}</span>
       <span v-if="p.status" :class="nadaStatus" class="text-[0.7rem]">{{ tcf(`hapusAkun.status.${p.status}`) }}</span>
       <span v-if="p.lewatBatas" class="ca-pill-danger text-[0.7rem]">{{ tcf('hapusAkun.lewatBatas') }}</span>
       <span class="ml-auto font-mono text-xs text-[var(--ca-subtle)]">{{ p.id.slice(0, 8) }}</span>
     </div>
 
     <p class="mt-1 text-xs tabular-nums" :class="p.lewatBatas ? 'font-semibold ca-tone-danger' : 'text-[var(--ca-subtle)]'">
-      <template v-if="p.status === 'menunggu'">{{ tcf('hapusAkun.umur')(p.umurHari) }} · </template>{{ tcf('hapusAkun.diminta')(formatWaktu(p.dimintaIso)) }}<template v-if="p.lewat"> · {{ tcf(`hapusAkun.lewat.${p.lewat}`) }}</template><template v-if="p.selesaiIso"> · {{ tcf('hapusAkun.dihapusPada')(formatWaktu(p.selesaiIso)) }}</template>
+      <template v-if="p.status === 'menunggu'">{{ tcf('hapusAkun.umur')(p.umurHari) }} · </template>{{ tcf('hapusAkun.diminta')(formatWaktu(p.dimintaIso)) }}<template v-if="p.lewat"> · {{ tcf(`hapusAkun.lewat.${p.lewat}`) }}</template><template v-if="dikerjakan"> · {{ dikerjakan }}</template>
     </p>
 
     <p v-if="isi" class="mt-2 text-xs text-[var(--ca-muted)]">{{ isi }}</p>
     <p class="mt-1 text-xs" :class="nadaFoto">{{ teksFoto }}</p>
 
+    <p v-if="p.blokirTertunda" class="mt-3 rounded-xl border border-[color:var(--ca-danger-border)] bg-[var(--ca-danger-bg)] px-3 py-2 text-xs text-[var(--ca-text)]" role="status">{{ tcf('hapusAkun.blokirTertunda') }}</p>
     <p
       v-if="p.status === 'menunggu' && (p.tertahan || ditolakTertahan)"
       class="mt-3 rounded-xl border border-[color:var(--ca-gold-border)] bg-[var(--ca-gold-bg)] px-3 py-2 text-xs text-[var(--ca-text)]"

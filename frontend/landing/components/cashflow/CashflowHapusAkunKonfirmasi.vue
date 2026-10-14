@@ -14,7 +14,7 @@ const emit = defineEmits<{ tutup: []; setuju: [] }>()
 const { tcf } = useCashflowI18n()
 
 const isi = computed(() => (props.permintaan
-  ? bagianIsi(props.permintaan).map(b => tcf(`hapusAkun.isi.${b.kunci}`)(b.n) as string).join(' · ')
+  ? bagianIsi(props.permintaan.isi).map(b => tcf(`hapusAkun.isi.${b.kunci}`)(b.n) as string).join(' · ')
   : ''))
 const tutup = () => { if (!props.sibuk) emit('tutup') }
 const setuju = () => { if (!props.sibuk) emit('setuju') }
