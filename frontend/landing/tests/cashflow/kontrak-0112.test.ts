@@ -171,10 +171,15 @@ describe.skipIf(!adaMigrasiNomor('0112'))('kontrak 0112', () => {
   it('buka_blokir: nilai server = yang dibaca console (edge = blokir masuk belum pasti dibuka)', () => {
     const { badan } = fungsiTerakhir('admin_hapus_akun_batalkan')
     expect(urut(kutipan([...badan.matchAll(/v_buka := ('[a-z]+')/g)].map(m => m[1]).join(' ')))).toEqual(['edge', 'sql'])
-    expect(badan).toMatch(/if exists \(select 1 from auth\.users u where u\.id = p\.user_id\) then/)
+    // null = v_buka tidak pernah diisi: hanya terjadi bila akunnya sudah tidak ada di auth.users.
+    expect(badan).toMatch(/\bv_buka text;/)
+    expect(badan).toMatch(/if exists \(select 1 from auth\.users u where u\.id = p\.user_id\) then\s+begin\s+update auth\.users set banned_until = p\.banned_until_lama where id = p\.user_id;\s+v_buka := 'sql';\s+exception when insufficient_privilege then\s+v_buka := 'edge';\s+end;\s+end if;/)
+    expect(keHasilHapus({ ...JAWAB.admin_hapus_akun_batalkan.dibatalkan, buka_blokir: 'sql' })).toBe('dibatalkan')
     expect(keHasilHapus({ ...JAWAB.admin_hapus_akun_batalkan.dibatalkan, buka_blokir: 'edge' })).toBe('dibatalkan_tertunda')
-    expect(keHasilHapus({ ...JAWAB.admin_hapus_akun_batalkan.dibatalkan, buka_blokir: null })).toBe('dibatalkan')
+    expect(keHasilHapus({ ...JAWAB.admin_hapus_akun_batalkan.dibatalkan, buka_blokir: null })).toBe('dibatalkan_tiada')
     expect(HASIL_BERHASIL).toContain('dibatalkan_tertunda')
+    // Akun yang sudah tiada: permintaannya tetap dibatalkan, tapi kalimatnya info, bukan sukses.
+    expect(HASIL_BERHASIL).not.toContain('dibatalkan_tiada')
   })
 
   it('setiap galat yang bisa dilempar punya jawaban console (tanpa galat baru yang luput)', () => {

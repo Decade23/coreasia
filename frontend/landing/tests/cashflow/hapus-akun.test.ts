@@ -262,6 +262,8 @@ describe('argumen RPC (klien Supabase tiruan)', () => {
     expect(keHasilHapus({ status: 'dibatalkan', permintaan: ID1, buka_blokir: 'edge' })).toBe('dibatalkan_tertunda')
     expect(keHasilHapus({ status: 'dibatalkan', permintaan: ID1, buka_blokir: 'sql' })).toBe('dibatalkan')
     expect(keHasilHapus({ status: 'sudah_dibatalkan', permintaan: ID1, buka_blokir: 'edge' })).toBe('sudah_dibatalkan')
+    // Akunnya sudah terhapus lewat jalur lain: tidak ada blokir yang dibuka (buka_blokir null).
+    expect(keHasilHapus({ status: 'dibatalkan', permintaan: ID1, user_id: U1, buka_blokir: null })).toBe('dibatalkan_tiada')
     expect([...HASIL_BERHASIL].sort()).toEqual(['dibatalkan', 'dibatalkan_tertunda', 'dihapus'])
     expect(keHasilHapus({ status: 'aneh' })).toBe('lain')
     expect(keHasilHapus({ hasil: 'dihapus' })).toBe('lain')
@@ -347,6 +349,12 @@ describe('kamus ID dan EN', () => {
         expect(t.length, `${b}:${k}`).toBeLessThan(160)
       }
     }
+    // Kalimat "bisa masuk lagi" hanya untuk pembatalan yang benar-benar membuka blokirnya.
+    for (const k of ['dibatalkan_tertunda', 'dibatalkan_tiada']) {
+      expect(ambil('id', `hapusAkun.hasil.${k}`), k).not.toMatch(/bisa masuk lagi/)
+      expect(ambil('en', `hapusAkun.hasil.${k}`), k).not.toMatch(/can sign in again/)
+    }
+    expect(ambil('id', 'hapusAkun.hasil.dibatalkan_tiada')).toMatch(/sudah tidak ada/)
     const umur = ambil('id', 'hapusAkun.umur') as (n: number) => string
     expect(umur(0)).toBe('Hari ini')
     expect(umur(9)).toBe('Menunggu 9 hari')

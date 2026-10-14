@@ -110,9 +110,11 @@ export interface HasilHapusDTO {
   buka_blokir?: string | null
 }
 /** Kunci kalimat jawaban aksi (hapusAkun.hasil.*). */
-export const HASIL_HAPUS = ['dihapus', 'sudah_tiada', 'dibatalkan', 'dibatalkan_tertunda', 'sudah_selesai', 'sudah_dibatalkan', 'tidak_ada'] as const
+export const HASIL_HAPUS = ['dihapus', 'sudah_tiada', 'dibatalkan', 'dibatalkan_tertunda', 'dibatalkan_tiada', 'sudah_selesai', 'sudah_dibatalkan', 'tidak_ada'] as const
 export type HasilHapus = typeof HASIL_HAPUS[number]
-/** Jawaban yang berarti aksinya benar-benar dikerjakan sekarang (toast sukses). */
+/** Jawaban yang berarti aksinya benar-benar dikerjakan sekarang (toast sukses).
+ *  dibatalkan_tiada tidak termasuk: permintaannya dibatalkan, tapi akunnya
+ *  sudah tidak ada, jadi tidak ada yang bisa masuk lagi (toast info). */
 export const HASIL_BERHASIL: readonly HasilHapus[] = ['dihapus', 'dibatalkan', 'dibatalkan_tertunda']
 
 // ── Domain ───────────────────────────────────────────────────────────────
@@ -272,8 +274,12 @@ export function keHasilHapus(d: unknown): HasilHapus | 'lain' {
   const j = d as Partial<HasilHapusDTO>
   const status = pilihan(STATUS_JAWAB, j.status)
   if (status === 'selesai') return j.sudah_tiada === true ? 'sudah_tiada' : 'dihapus'
-  // Jalur cadangan: blokirnya dibuka fungsi edge, jadi "bisa masuk lagi" belum pasti.
-  if (status === 'dibatalkan' && j.buka_blokir === 'edge') return 'dibatalkan_tertunda'
+  if (status === 'dibatalkan') {
+    // Jalur cadangan: blokirnya dibuka fungsi edge, jadi "bisa masuk lagi" belum pasti.
+    if (j.buka_blokir === 'edge') return 'dibatalkan_tertunda'
+    // null: akunnya sudah terhapus lewat jalur lain, tidak ada blokir yang dibuka.
+    if (j.buka_blokir === null) return 'dibatalkan_tiada'
+  }
   return status ?? 'lain'
 }
 
