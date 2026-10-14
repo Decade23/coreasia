@@ -9,6 +9,8 @@
  *
  * - Daftar: admin_hapus_akun_daftar per status (?status=menunggu|selesai|
  *   dibatalkan, replace), beserta jumlah tiap status untuk label saringan.
+ *   Yang menunggu diminta sampai jepit atas server (batasDaftarHapus): server
+ *   memotong yang terbaru dulu, dan yang tertua justru yang paling mendesak.
  *   Izin view, email tersamar dari server, tanpa audit. Menunggu lebih dari
  *   7 hari ditandai merah, pengingat internal saja.
  * - Hapus permanen: satu konfirmasi (CashflowHapusAkunKonfirmasi), tanpa kolom
@@ -31,7 +33,7 @@
  */
 definePageMeta({ layout: 'console', middleware: ['console', 'cashflow-admin'] })
 import {
-  STATUS_HAPUS, BATAS_DAFTAR_HAPUS, HASIL_BERHASIL, kePermintaanHapus, urutPermintaan, keHasilHapus, jenisGagalHapus, muatUlangSesudahGagal,
+  STATUS_HAPUS, batasDaftarHapus, HASIL_BERHASIL, kePermintaanHapus, urutPermintaan, keHasilHapus, jenisGagalHapus, muatUlangSesudahGagal,
   barisHapus, jumlahPerStatus,
   type HapusAkunDaftarDTO, type HasilHapus, type PermintaanHapus,
 } from '~/adapters/cashflowHapusAkun'
@@ -59,7 +61,7 @@ const totalStatus = computed(() => jumlah.value?.[q.value.status] ?? 0)
 const tertahan = ref<ReadonlySet<string>>(new Set())
 
 const muatDaftar = () => muat(async (terbaru) => {
-  const rows = await api.hapusAkunDaftar(q.value.status, BATAS_DAFTAR_HAPUS)
+  const rows = await api.hapusAkunDaftar(q.value.status, batasDaftarHapus(q.value.status))
   if (!terbaru()) return
   mentah.value = rows
   jumlah.value = jumlahPerStatus(rows)

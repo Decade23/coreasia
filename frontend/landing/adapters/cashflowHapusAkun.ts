@@ -42,10 +42,16 @@ export type LewatHapus = typeof LEWAT_HAPUS[number]
 /** Pengingat internal (keputusan P4): menunggu lebih dari 7 hari ditandai merah.
  *  Tidak ada hapus otomatis. Server juga mengirim lewat_7_hari; ini cadangannya. */
 export const BATAS_HARI_MENUNGGU = 7
-/** p_batas halaman (server menjepit 1..500). */
+/** p_batas halaman untuk selesai dan dibatalkan (bawaan server; server menjepit 1..500). */
 export const BATAS_DAFTAR_HAPUS = 100
+/** p_batas untuk yang menunggu: jepit atas server. Server mengurutkan yang
+ *  terbaru dulu sebelum memotong, jadi batas kecil membuang permintaan yang
+ *  PALING LAMA, justru yang bertanda merah. */
+export const BATAS_MENUNGGU_HAPUS = 500
 /** p_batas untuk badge di daftar pengguna: semua yang menunggu. */
-export const BATAS_BADGE_HAPUS = 500
+export const BATAS_BADGE_HAPUS = BATAS_MENUNGGU_HAPUS
+export const batasDaftarHapus = (status: StatusHapus): number =>
+  status === 'menunggu' ? BATAS_MENUNGGU_HAPUS : BATAS_DAFTAR_HAPUS
 
 // ── DTO: persis seperti yang dipulangkan RPC ─────────────────────────────
 /** hapus_akun_hitung_inti: angka bigint bisa pulang sebagai string. */

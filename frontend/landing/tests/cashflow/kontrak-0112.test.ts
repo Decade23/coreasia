@@ -25,7 +25,7 @@ import {
   urutPohon, type PohonKunci,
 } from './migrasi'
 import {
-  alasanBatalOtomatis, alasanHapusOtomatis, BATAS_BADGE_HAPUS, BATAS_DAFTAR_HAPUS, BATAS_HARI_MENUNGGU, HASIL_BERHASIL,
+  alasanBatalOtomatis, alasanHapusOtomatis, BATAS_BADGE_HAPUS, BATAS_DAFTAR_HAPUS, BATAS_HARI_MENUNGGU, BATAS_MENUNGGU_HAPUS, batasDaftarHapus, HASIL_BERHASIL,
   HASIL_HAPUS, jenisGagalHapus, keHasilHapus, LEWAT_HAPUS, STATUS_HAPUS, STATUS_JAWAB,
   type HapusAkunDaftarDTO, type HapusAkunDTO, type HasilHapusDTO, type IsiHapusDTO,
 } from '../../adapters/cashflowHapusAkun'
@@ -298,6 +298,15 @@ describe.skipIf(!adaMigrasiNomor('0112'))('kontrak 0112', () => {
     expect(jepit).not.toBeNull()
     expect(BATAS_DAFTAR_HAPUS).toBe(Number(jepit![2]))
     expect(BATAS_BADGE_HAPUS).toBe(Number(jepit![3]))
+    /* Server memotong SESUDAH mengurutkan terbaru dulu: untuk yang menunggu,
+       batas kecil membuang yang paling lama (yang bertanda merah). Console
+       meminta jepit atasnya. Bila server kelak mengurutkan yang menunggu dari
+       yang paling lama, uji ini merah dan batasnya boleh ditinjau ulang. */
+    expect(badan).toMatch(/order by p\.diminta_pada desc, p\.id\s+limit v_batas/)
+    expect(BATAS_MENUNGGU_HAPUS).toBe(Number(jepit![3]))
+    expect(batasDaftarHapus('menunggu')).toBe(Number(jepit![3]))
+    expect(batasDaftarHapus('selesai')).toBe(Number(jepit![2]))
+    expect(batasDaftarHapus('dibatalkan')).toBe(Number(jepit![2]))
     // Foto gagal = bagian dari yang belum selesai (keadaanFoto mendahulukan gagal).
     expect(badan).toMatch(/'foto_gagal',\s+\(select count\(\*\) from public\.hapus_foto_antrean f\s+where f\.permintaan_id = p\.id and f\.selesai_pada is null and f\.coba > 0\)/)
   })

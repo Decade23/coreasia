@@ -97,7 +97,7 @@ import { kindDariArah } from '~/adapters/cashflowRanahBuku'
 import type { PerangkatPenggunaDTO, KabarPenggunaDTO, KursorKabar, SaringKabar } from '~/adapters/cashflowPerangkat'
 import type { VersiAplikasiDTO, AjakanPembaruanDTO, LangkahUsahaDTO } from '~/adapters/cashflowVersi'
 import type { HapusAkunDaftarDTO, HasilHapusDTO, StatusHapus } from '~/adapters/cashflowHapusAkun'
-import { alasanHapusOtomatis, alasanBatalOtomatis, BATAS_DAFTAR_HAPUS } from '~/adapters/cashflowHapusAkun'
+import { alasanHapusOtomatis, alasanBatalOtomatis, batasDaftarHapus } from '~/adapters/cashflowHapusAkun'
 
 /* DTO sakelar pindah ke adapter (bertipe, tanpa any); diekspor ulang
    supaya impor lama dari berkas ini tetap jalan. */
@@ -418,8 +418,9 @@ export const useCashflowAdmin = () => {
       rpc<void>('admin_set_entitlement', { p_user: user, p_tier: tier, p_sampai: sampai, p_alasan: alasan }),
 
     // ── hapus akun bertahap (0112) ─────────────────────────────────────
-    /** Permintaan hapus akun per status + jumlah tiap status, email tersamar. Izin view, tanpa audit. */
-    hapusAkunDaftar: (status: StatusHapus = 'menunggu', batas = BATAS_DAFTAR_HAPUS) =>
+    /** Permintaan hapus akun per status + jumlah tiap status, email tersamar. Izin view, tanpa audit.
+     *  Bawaan batas: semua yang menunggu (lihat batasDaftarHapus). */
+    hapusAkunDaftar: (status: StatusHapus = 'menunggu', batas = batasDaftarHapus(status)) =>
       rpc<HapusAkunDaftarDTO>('admin_hapus_akun_daftar', { p_status: status, p_batas: batas }),
     /** Izin tindak. Satu konfirmasi, alasan otomatis; audit ditulis server lebih dulu. */
     hapusAkunPermanen: (permintaan: string) =>

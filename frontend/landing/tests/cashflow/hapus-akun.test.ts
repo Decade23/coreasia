@@ -16,6 +16,7 @@ import { computed, ref } from 'vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   aksiPermintaan, alasanBatalOtomatis, alasanHapusOtomatis, bagianIsi, barisHapus, BAGIAN_ISI, BATAS_BADGE_HAPUS, BATAS_DAFTAR_HAPUS,
+  BATAS_MENUNGGU_HAPUS, batasDaftarHapus,
   HASIL_BERHASIL, HASIL_HAPUS, idMenungguHapus, jenisGagalHapus, jumlahPerStatus, keadaanFoto, keHasilHapus, keIsiHapus, kePermintaanHapus,
   LEWAT_HAPUS, muatUlangSesudahGagal, STATUS_HAPUS, STATUS_JAWAB, urutPermintaan,
   type HapusAkunDaftarDTO, type HapusAkunDTO, type IsiHapusDTO,
@@ -225,11 +226,30 @@ describe('galat: RPC yang belum ada = fitur belum aktif, P0001 dijelaskan', () =
 })
 
 describe('argumen RPC (klien Supabase tiruan)', () => {
-  it('daftar: status + batas bawaan server', async () => {
+  it('daftar: menunggu meminta semua (500), selesai/dibatalkan batas bawaan server (100)', async () => {
     await useCashflowAdmin().hapusAkunDaftar()
-    expect(panggilan.at(-1)).toEqual({ nama: 'admin_hapus_akun_daftar', a: { p_status: 'menunggu', p_batas: BATAS_DAFTAR_HAPUS } })
+    expect(panggilan.at(-1)).toEqual({ nama: 'admin_hapus_akun_daftar', a: { p_status: 'menunggu', p_batas: 500 } })
     await useCashflowAdmin().hapusAkunDaftar('dibatalkan')
     expect(panggilan.at(-1)!.a).toEqual({ p_status: 'dibatalkan', p_batas: 100 })
+    await useCashflowAdmin().hapusAkunDaftar('selesai')
+    expect(panggilan.at(-1)!.a).toEqual({ p_status: 'selesai', p_batas: BATAS_DAFTAR_HAPUS })
+    expect(batasDaftarHapus('menunggu')).toBe(BATAS_MENUNGGU_HAPUS)
+    expect(BATAS_BADGE_HAPUS).toBe(BATAS_MENUNGGU_HAPUS)
+  })
+  it('101 menunggu: yang PALING LAMA (bertanda merah) tetap terkirim dan tampil paling atas', () => {
+    // Tiruan admin_hapus_akun_daftar: urut diminta_pada terbaru dulu, lalu dipotong p_batas.
+    const server = (rows: HapusAkunDTO[], batas: number) =>
+      [...rows].sort((a, b) => Date.parse(b.diminta_pada) - Date.parse(a.diminta_pada) || a.id.localeCompare(b.id)).slice(0, batas)
+    const rows = Array.from({ length: 101 }, (_, i) => baris({
+      id: `00000000-0000-4000-8000-${String(i).padStart(12, '0')}`,
+      diminta_pada: new Date(KINI - i * HARI).toISOString(),
+    }))
+    const tertua = rows.at(-1)!.id
+    const tampil = urutPermintaan(server(rows, batasDaftarHapus('menunggu')).map(d => kePermintaanHapus(d, KINI)), 'menunggu')
+    expect(tampil).toHaveLength(101)
+    expect(tampil[0]).toMatchObject({ id: tertua, umurHari: 100, lewatBatas: true })
+    // Dengan batas bawaan server, yang tertua justru hilang.
+    expect(server(rows, BATAS_DAFTAR_HAPUS).map(d => d.id)).not.toContain(tertua)
   })
   it('hapus permanen dan batalkan: alasan OTOMATIS menamai tindakannya, berawalan pelaku', async () => {
     jawaban = { data: { status: 'selesai', permintaan: ID1, user_id: U1, sudah_tiada: false, foto_antre: 12 }, error: null }
@@ -401,6 +421,9 @@ describe('penjaga halaman (keputusan P3: satu konfirmasi, tanpa kolom alasan)', 
     const hal = baca(HAL)
     expect(hal).toMatch(/if \(muatUlangSesudahGagal\(g\)\) muatUlang = true/)
     expect(hal).toMatch(/if \(!ok\) \{\s+if \(muatUlang\) await muatDaftar\(\)\s+return\s+\}/)
+  })
+  it('batas daftar mengikuti status (menunggu = semua, lihat batasDaftarHapus)', () => {
+    expect(baca(HAL)).toMatch(/api\.hapusAkunDaftar\(q\.value\.status, batasDaftarHapus\(q\.value\.status\)\)/)
   })
   it('toast sukses hanya untuk aksi yang benar-benar dikerjakan sekarang (HASIL_BERHASIL)', () => {
     expect(baca(HAL)).toMatch(/if \(jawab\.hasil !== 'lain' && HASIL_BERHASIL\.includes\(jawab\.hasil\)\) toast\.success\(kalimat\)\s+else toast\.info\(kalimat\)/)
