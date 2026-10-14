@@ -51,7 +51,8 @@ export const useCashflowIndeks = () => {
     if (entri.value.length) return
     if (!pengisian) {
       pengisian = api.daftarPengguna(500, 0, '', null)
-        .then((rows) => { isi(rows.map(kePengguna), rows.length ? Number(rows[0]?.total_semua ?? rows.length) : 0) })
+        // kePengguna dibungkus: map meneruskan (indeks, larik) ke parameter bahasa dan menungguHapus.
+        .then((rows) => { isi(rows.map(d => kePengguna(d)), rows.length ? Number(rows[0]?.total_semua ?? rows.length) : 0) })
         .finally(() => { pengisian = null })
     }
     return pengisian

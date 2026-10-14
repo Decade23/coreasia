@@ -52,6 +52,8 @@ export const useCashflowMuat = (opsi: { awal?: boolean } = {}) => {
     if (g.jenis === 'argumen' && g.hint === 'bulan') return tcf('galat.bulan')
     if (g.jenis === 'argumen' && g.hint === 'hari') return tcf('galat.hari')
     if (g.jenis === 'argumen' && g.hint === 'saringan') return tcf('galat.saringan')
+    // 0112: hapus permanen ditolak penjaga yang sama dengan aplikasi (P0001).
+    if (g.hint === 'alihkan-kepemilikan') return tcf('galat.alihkanKepemilikan')
     switch (g.jenis) {
       case 'kasus': return tcf('galat.kasusHabis')
       case 'ranah': return tcf('galat.diLuarRanah')
@@ -65,6 +67,7 @@ export const useCashflowMuat = (opsi: { awal?: boolean } = {}) => {
       case 'argumen': return g.message || tcf('umum.gagal')
       case 'tidak-ada': return tcf('umum.tidakAda')
       case 'versi-lama': return tcf('galat.versiLama')
+      case 'belum-aktif': return tcf('galat.belumAktif')
       // Biasanya tidak sempat terbaca (keMasukBilaSesi sudah mengarahkan ke
       // /masuk), tapi jangan pernah menampilkan kode mentah ('cookie-ditolak').
       case 'sesi':

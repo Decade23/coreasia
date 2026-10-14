@@ -29,6 +29,9 @@
  *                 kalimatnya dari server, useCashflowMuat melokalkan hint yang
  *                 dikenal
  *   'tidak-ada'   P0002 — pengguna/transaksi/dompet tidak ada
+ *   'belum-aktif' 42883 / PGRST202 — fungsinya belum ada di server (console
+ *                 boleh tayang lebih dulu dari migrasinya, mis. hapus akun
+ *                 bertahap sebelum 0112): halaman menulis "fitur belum aktif"
  *   'lain'        sisanya
  *
  * Halaman tidak menulis blok catch sendiri: useCashflowMuat yang mengubah
@@ -88,6 +91,8 @@ import type {
 import { kindDariArah } from '~/adapters/cashflowRanahBuku'
 import type { PerangkatPenggunaDTO, KabarPenggunaDTO, KursorKabar, SaringKabar } from '~/adapters/cashflowPerangkat'
 import type { VersiAplikasiDTO, AjakanPembaruanDTO, LangkahUsahaDTO } from '~/adapters/cashflowVersi'
+import type { HapusAkunDTO, HasilHapusDTO, StatusHapus } from '~/adapters/cashflowHapusAkun'
+import { alasanHapusOtomatis, alasanBatalOtomatis, BATAS_DAFTAR_HAPUS } from '~/adapters/cashflowHapusAkun'
 
 /* DTO sakelar pindah ke adapter (bertipe, tanpa any); diekspor ulang
    supaya impor lama dari berkas ini tetap jalan. */
@@ -95,7 +100,7 @@ export type { ConfigDTO } from '~/adapters/cashflow'
 
 export type JenisGalat =
   | 'sesi' | 'totp' | 'bukan-admin' | 'alasan' | 'argumen' | 'konfigurasi' | 'tidak-ada' | 'versi-lama'
-  | 'kasus' | 'ranah' | 'lingkup' | 'izin' | 'batas' | 'lain'
+  | 'kasus' | 'ranah' | 'lingkup' | 'izin' | 'batas' | 'belum-aktif' | 'lain'
 export class GalatAdmin extends Error {
   constructor(public jenis: JenisGalat, pesan: string, public hint: string = '') { super(pesan) }
 }
@@ -142,6 +147,8 @@ export function petakanGalat(e: unknown): GalatAdmin {
   if (kode === '42501') return new GalatAdmin(HINT_42501[hint] ?? 'bukan-admin', pesan, hint)
   if (kode === '22023') return new GalatAdmin('argumen', pesan, hint)
   if (kode === 'P0002') return new GalatAdmin('tidak-ada', pesan, hint)
+  // Fungsi tidak dikenal: Postgres (42883) atau cache skema PostgREST (PGRST202).
+  if (kode === '42883' || kode === 'PGRST202') return new GalatAdmin('belum-aktif', pesan, hint)
   return new GalatAdmin('lain', pesan, hint)
 }
 
@@ -396,5 +403,16 @@ export const useCashflowAdmin = () => {
     hentikanPengumuman: (id: string, alasan: string) => rpc<void>('admin_hentikan_pengumuman', { p_id: id, p_alasan: alasan }),
     setEntitlement: (user: string, tier: string, sampai: string | null, alasan: string) =>
       rpc<void>('admin_set_entitlement', { p_user: user, p_tier: tier, p_sampai: sampai, p_alasan: alasan }),
+
+    // ── hapus akun bertahap (0112) ─────────────────────────────────────
+    /** Permintaan hapus akun per status, email tersamar. Izin view, tanpa audit. */
+    hapusAkunDaftar: (status: StatusHapus = 'menunggu', batas = BATAS_DAFTAR_HAPUS) =>
+      rpc<HapusAkunDTO[]>('admin_hapus_akun_daftar', { p_status: status, p_batas: batas }),
+    /** Izin tindak. Satu konfirmasi, alasan otomatis; audit ditulis server lebih dulu. */
+    hapusAkunPermanen: (permintaan: string) =>
+      rpc<HasilHapusDTO>('admin_hapus_akun_permanen', { p_permintaan: permintaan, p_alasan: alasanHapusOtomatis(permintaan) }),
+    /** Izin tindak. Akun bisa masuk lagi; alasan otomatis, beraudit. */
+    hapusAkunBatalkan: (permintaan: string) =>
+      rpc<HasilHapusDTO>('admin_hapus_akun_batalkan', { p_permintaan: permintaan, p_alasan: alasanBatalOtomatis(permintaan) }),
   }
 }

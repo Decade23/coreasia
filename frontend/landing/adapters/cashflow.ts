@@ -135,10 +135,13 @@ export interface Pengguna {
   /** null = server tidak mengirim hitungan (sesi tanpa pii) — bukan 0. */
   ruang: number | null
   tx: number | null
-  status: 'aktif' | 'ditangguhkan'
+  /** 'menunggu_hapus' (0112): akun yang meminta hapus akun juga di-ban server,
+   *  jadi tanpa penanda ini ia terbaca "Ditangguhkan". */
+  status: StatusPengguna
   hariAktif: number         // aktivitas terakhir − daftar, dalam hari
   hariSejakAktif: number    // hari ini − aktivitas terakhir; Infinity bila belum pernah
 }
+export type StatusPengguna = 'aktif' | 'ditangguhkan' | 'menunggu_hapus'
 export interface LangkahCorong { urut: number; kunci: string; jumlah: number; persenDariSebelumnya: number | null }
 export interface SelKohort { kohort: string; mendaftar: number; pernahCatat: number; catat30: number; berjalan: boolean; persen: number }
 
@@ -249,7 +252,9 @@ export function keArahUang(v: string | null | undefined): ArahUang | null {
 }
 
 // ── Konversi ─────────────────────────────────────────────────────────────
-export function kePengguna(d: PenggunaDTO, bahasa: BahasaWaktu = 'id'): Pengguna {
+/** `menungguHapus`: id akun yang permintaan hapus akunnya masih menunggu
+ *  (admin_hapus_akun_daftar, lihat cashflowHapusAkun.ts idMenungguHapus). */
+export function kePengguna(d: PenggunaDTO, bahasa: BahasaWaktu = 'id', menungguHapus: ReadonlySet<string> = new Set()): Pengguna {
   const daftar = new Date(d.created_at)
   const aktifIso = d.aktivitas_terakhir ?? d.last_sign_in
   const aktif = aktifIso ? new Date(aktifIso) : null
@@ -271,7 +276,7 @@ export function kePengguna(d: PenggunaDTO, bahasa: BahasaWaktu = 'id'): Pengguna
     aktivitasTerakhirIso: aktifIso ?? null,
     ruang: angkaAtauNull(d.jumlah_ruang),
     tx: angkaAtauNull(d.jumlah_tx),
-    status: ditangguhkan ? 'ditangguhkan' : 'aktif',
+    status: menungguHapus.has(d.user_id) ? 'menunggu_hapus' : ditangguhkan ? 'ditangguhkan' : 'aktif',
     hariAktif,
     hariSejakAktif,
   }
