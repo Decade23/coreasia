@@ -23,12 +23,16 @@
  *
  * SIBUK. Setiap aksi menulis audit yang tidak bisa dihapus; selama satu
  * berjalan, semua tombol menunggu dan panggilan ulang diabaikan. Jawaban
- * "sudah selesai" atau "sudah dibatalkan" (admin lain lebih dulu) tidak
- * mengubah apa pun di server dan hanya memuat ulang daftar.
+ * "sudah selesai" atau "sudah dibatalkan" (admin lain, tab lain, atau
+ * tekanan ulang sesudah jawaban pertama hilang) tidak mengubah apa pun di
+ * server dan hanya memuat ulang daftar. Aksi yang gagal tanpa kepastian
+ * (muatUlangSesudahGagal) juga memuat ulang daftar: server bisa saja sudah
+ * selesai sebelum jawabannya hilang.
  */
 definePageMeta({ layout: 'console', middleware: ['console', 'cashflow-admin'] })
 import {
-  STATUS_HAPUS, BATAS_DAFTAR_HAPUS, HASIL_BERHASIL, kePermintaanHapus, urutPermintaan, keHasilHapus, jenisGagalHapus, barisHapus, jumlahPerStatus,
+  STATUS_HAPUS, BATAS_DAFTAR_HAPUS, HASIL_BERHASIL, kePermintaanHapus, urutPermintaan, keHasilHapus, jenisGagalHapus, muatUlangSesudahGagal,
+  barisHapus, jumlahPerStatus,
   type HapusAkunDaftarDTO, type HasilHapus, type PermintaanHapus,
 } from '~/adapters/cashflowHapusAkun'
 import type { SkemaQuery } from '~/adapters/cashflowQuery'
@@ -86,6 +90,7 @@ const jalankan = async (p: PermintaanHapus, jenis: 'hapus' | 'batal', sesudahJaw
   sibuk.value = { id: p.id, jenis }
   try {
     const jawab: { hasil: HasilHapus | 'lain' } = { hasil: 'lain' }
+    let muatUlang = false
     const ok = await aksi(async () => {
       jawab.hasil = keHasilHapus(jenis === 'hapus' ? await api.hapusAkunPermanen(p.id) : await api.hapusAkunBatalkan(p.id))
     }, {
@@ -93,10 +98,14 @@ const jalankan = async (p: PermintaanHapus, jenis: 'hapus' | 'batal', sesudahJaw
         const j = jenisGagalHapus(g)
         if (j === 'izin') izinDitolak.value = true
         if (j === 'tertahan') tertahan.value = new Set([...tertahan.value, p.id])
+        if (muatUlangSesudahGagal(g)) muatUlang = true
       },
     })
     sesudahJawab?.()
-    if (!ok) return
+    if (!ok) {
+      if (muatUlang) await muatDaftar()
+      return
+    }
     const kalimat = tcf(`hapusAkun.hasil.${jawab.hasil}`) as string
     if (jawab.hasil !== 'lain' && HASIL_BERHASIL.includes(jawab.hasil)) toast.success(kalimat)
     else toast.info(kalimat)

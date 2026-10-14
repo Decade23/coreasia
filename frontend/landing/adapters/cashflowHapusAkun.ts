@@ -296,3 +296,11 @@ export function jenisGagalHapus(g: { jenis: string; hint?: string }): 'tertahan'
   if (g.jenis === 'belum-aktif') return 'belum-aktif'
   return 'lain'
 }
+
+/** Aksi gagal tanpa kepastian (jaringan putus, galat yang tidak dikenal):
+ *  server bisa saja sudah selesai sebelum jawabannya hilang, jadi daftar
+ *  dimuat ulang supaya kartunya tidak tetap tampil menunggu. Penolakan yang
+ *  jelas (tertahan, izin, sesi, bukan admin, argumen, belum aktif) terjadi
+ *  sebelum apa pun berubah dan tidak perlu dimuat ulang. */
+export const muatUlangSesudahGagal = (g: { jenis: string; hint?: string }): boolean =>
+  g.jenis === 'lain' && jenisGagalHapus(g) === 'lain'

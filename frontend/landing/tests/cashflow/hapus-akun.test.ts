@@ -17,7 +17,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   aksiPermintaan, alasanBatalOtomatis, alasanHapusOtomatis, bagianIsi, barisHapus, BAGIAN_ISI, BATAS_BADGE_HAPUS, BATAS_DAFTAR_HAPUS,
   HASIL_BERHASIL, HASIL_HAPUS, idMenungguHapus, jenisGagalHapus, jumlahPerStatus, keadaanFoto, keHasilHapus, keIsiHapus, kePermintaanHapus,
-  LEWAT_HAPUS, STATUS_HAPUS, STATUS_JAWAB, urutPermintaan,
+  LEWAT_HAPUS, muatUlangSesudahGagal, STATUS_HAPUS, STATUS_JAWAB, urutPermintaan,
   type HapusAkunDaftarDTO, type HapusAkunDTO, type IsiHapusDTO,
 } from '../../adapters/cashflowHapusAkun'
 import { kePengguna, type PenggunaDTO } from '../../adapters/cashflow'
@@ -202,6 +202,19 @@ describe('galat: RPC yang belum ada = fitur belum aktif, P0001 dijelaskan', () =
     expect(jenisGagalHapus(petakanGalat({ code: 'P0001', hint: 'lain' }))).toBe('lain')
     expect(jenisGagalHapus(petakanGalat(new TypeError('Failed to fetch')))).toBe('lain')
   })
+  it('aksi gagal tanpa kepastian (jaringan, galat lain) → daftar dimuat ulang; penolakan yang jelas tidak', () => {
+    // Server mungkin sudah commit sebelum jawabannya hilang: kartunya harus menunjukkan keadaan sebenarnya.
+    expect(muatUlangSesudahGagal(petakanGalat(new TypeError('Failed to fetch')))).toBe(true)
+    expect(muatUlangSesudahGagal(petakanGalat({ code: '23503', message: 'update or delete on table "users" violates foreign key constraint' }))).toBe(true)
+    expect(muatUlangSesudahGagal(petakanGalat(DALAM_HILANG, 'admin_hapus_akun_permanen'))).toBe(true)
+    // Ditolak sebelum apa pun berubah, atau halaman sudah punya jawabannya sendiri.
+    expect(muatUlangSesudahGagal(petakanGalat({ code: 'P0001', hint: 'alihkan-kepemilikan', message: 'Masih ada…' }))).toBe(false)
+    expect(muatUlangSesudahGagal(petakanGalat({ code: '42501', hint: 'izin-kurang' }))).toBe(false)
+    expect(muatUlangSesudahGagal(petakanGalat({ code: '42501', hint: 'sesi-konsol' }))).toBe(false)
+    expect(muatUlangSesudahGagal(petakanGalat({ code: '42501' }))).toBe(false)
+    expect(muatUlangSesudahGagal(petakanGalat({ code: '22023', hint: 'alasan' }))).toBe(false)
+    expect(muatUlangSesudahGagal(petakanGalat(BELUM_ADA))).toBe(false)
+  })
   it('kalimatnya bahasa awam dari kamus, bukan kalimat mentah server', () => {
     const { pesanUntuk } = useCashflowMuat()
     expect(pesanUntuk(petakanGalat(BELUM_ADA))).toBe('galat.belumAktif')
@@ -355,6 +368,11 @@ describe('kamus ID dan EN', () => {
       expect(ambil('en', `hapusAkun.hasil.${k}`), k).not.toMatch(/can sign in again/)
     }
     expect(ambil('id', 'hapusAkun.hasil.dibatalkan_tiada')).toMatch(/sudah tidak ada/)
+    // "sudah_*" juga terjadi pada admin yang sama (dua tab, menekan ulang sesudah jawaban hilang).
+    for (const k of ['sudah_selesai', 'sudah_dibatalkan']) {
+      expect(ambil('id', `hapusAkun.hasil.${k}`), k).not.toMatch(/admin lain/i)
+      expect(ambil('en', `hapusAkun.hasil.${k}`), k).not.toMatch(/another admin/i)
+    }
     const umur = ambil('id', 'hapusAkun.umur') as (n: number) => string
     expect(umur(0)).toBe('Hari ini')
     expect(umur(9)).toBe('Menunggu 9 hari')
@@ -378,6 +396,11 @@ describe('penjaga halaman (keputusan P3: satu konfirmasi, tanpa kolom alasan)', 
     }
     expect(baca(HAL)).not.toMatch(/<ConsoleModal\b/)
     expect(baca(KARTU)).not.toMatch(/<ConsoleModal\b/)
+  })
+  it('aksi gagal tanpa kepastian tetap memuat ulang daftar (muatUlangSesudahGagal)', () => {
+    const hal = baca(HAL)
+    expect(hal).toMatch(/if \(muatUlangSesudahGagal\(g\)\) muatUlang = true/)
+    expect(hal).toMatch(/if \(!ok\) \{\s+if \(muatUlang\) await muatDaftar\(\)\s+return\s+\}/)
   })
   it('toast sukses hanya untuk aksi yang benar-benar dikerjakan sekarang (HASIL_BERHASIL)', () => {
     expect(baca(HAL)).toMatch(/if \(jawab\.hasil !== 'lain' && HASIL_BERHASIL\.includes\(jawab\.hasil\)\) toast\.success\(kalimat\)\s+else toast\.info\(kalimat\)/)
