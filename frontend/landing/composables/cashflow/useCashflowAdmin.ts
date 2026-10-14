@@ -419,9 +419,11 @@ export const useCashflowAdmin = () => {
 
     // ── hapus akun bertahap (0112) ─────────────────────────────────────
     /** Permintaan hapus akun per status + jumlah tiap status, email tersamar. Izin view, tanpa audit.
-     *  Bawaan batas: semua yang menunggu (lihat batasDaftarHapus). */
-    hapusAkunDaftar: (status: StatusHapus = 'menunggu', batas = batasDaftarHapus(status)) =>
-      rpc<HapusAkunDaftarDTO>('admin_hapus_akun_daftar', { p_status: status, p_batas: batas }),
+     *  Bawaan batas: semua yang menunggu (lihat batasDaftarHapus). Bawaannya di
+     *  badan, bukan di daftar parameter: rpc-console.test.ts membaca daftar
+     *  parameter tanpa kurung di dalamnya. */
+    hapusAkunDaftar: (status: StatusHapus = 'menunggu', batas?: number) =>
+      rpc<HapusAkunDaftarDTO>('admin_hapus_akun_daftar', { p_status: status, p_batas: batas ?? batasDaftarHapus(status) }),
     /** Izin tindak. Satu konfirmasi, alasan otomatis; audit ditulis server lebih dulu. */
     hapusAkunPermanen: (permintaan: string) =>
       rpc<HasilHapusDTO>('admin_hapus_akun_permanen', { p_permintaan: permintaan, p_alasan: alasanHapusOtomatis(permintaan) }),
