@@ -29,6 +29,7 @@ const item = computed(() => [
   { kunci: 'sakelar', to: '/console/cashflow/sakelar' },
   { kunci: 'pengumuman', to: '/console/cashflow/pengumuman' },
   { kunci: 'kasus', to: '/console/cashflow/kasus' },
+  { kunci: 'hapusAkun', to: '/console/cashflow/hapus-akun' },
   { kunci: 'audit', to: '/console/cashflow/audit' },
 ])
 const aktif = (jalur: string) => jalur === '/console/cashflow' ? route.path === jalur : route.path.startsWith(jalur)

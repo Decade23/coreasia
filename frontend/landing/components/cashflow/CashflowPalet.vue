@@ -49,6 +49,7 @@ const HALAMAN = [
   { kunci: 'sakelar', ke: '/console/cashflow/sakelar', ikon: 'lucide:toggle-right' },
   { kunci: 'pengumuman', ke: '/console/cashflow/pengumuman', ikon: 'lucide:megaphone' },
   { kunci: 'kasus', ke: '/console/cashflow/kasus', ikon: 'lucide:folder-lock' },
+  { kunci: 'hapusAkun', ke: '/console/cashflow/hapus-akun', ikon: 'lucide:user-x' },
   { kunci: 'audit', ke: '/console/cashflow/audit', ikon: 'lucide:scroll-text' },
 ] as const
 

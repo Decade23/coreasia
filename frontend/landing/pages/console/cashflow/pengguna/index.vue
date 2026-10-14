@@ -33,9 +33,17 @@
  * segmen yang bergantung padanya (Tidak pernah mencatat, Mencatat 7 hari)
  * dimatikan. Cabang tersamar juga membulatkan masuk/aktif terakhir ke awal
  * hari WIB — halaman ini memang hanya menampilkan tanggal.
+ *
+ * MENUNGGU DIHAPUS (0112). Akun yang meminta hapus akun di-ban server sampai
+ * admin menghapusnya permanen, jadi banned_until-nya sama dengan akun yang
+ * ditangguhkan. Daftar permintaan yang menunggu (admin_hapus_akun_daftar, izin
+ * view) dimuat terpisah; akun di sana berstatus "Menunggu dihapus" dan tidak
+ * ikut segmen Ditangguhkan. Gagal memuatnya (mis. 0112 belum terpasang) tidak
+ * mengganggu daftar: badge-nya saja yang tidak ada.
  */
 definePageMeta({ layout: 'console', middleware: ['console', 'cashflow-admin'] })
-import { kePengguna, samarkanEmail, type Pengguna, type PenggunaDTO } from '~/adapters/cashflow'
+import { kePengguna, samarkanEmail, type Pengguna, type PenggunaDTO, type StatusPengguna } from '~/adapters/cashflow'
+import { idMenungguHapus } from '~/adapters/cashflowHapusAkun'
 import { urutkan, saringKolom, potongHalaman, halamanAman, jumlahHalaman, type AturanUrut } from '~/adapters/cashflowDaftar'
 import type { SkemaQuery } from '~/adapters/cashflowQuery'
 import type { AlasanDaftar } from '~/composables/cashflow/useCashflowAlasanDaftar'
@@ -63,7 +71,8 @@ const { nilai: q, setel } = useCashflowQuery(SKEMA)
 /* DTO disimpan mentah dan dipetakan ulang saat bahasa berganti: tanggal
    tampilan ('3 Agu 2026' / '3 Aug 2026') dibentuk adapter. */
 const mentah = shallowRef<PenggunaDTO[]>([])
-const semua = computed<Pengguna[]>(() => mentah.value.map(d => kePengguna(d, bahasa.value)))
+const menungguHapus = shallowRef<ReadonlySet<string>>(new Set())
+const semua = computed<Pengguna[]>(() => mentah.value.map(d => kePengguna(d, bahasa.value, menungguHapus.value)))
 const total = ref(0)
 const cari = useState('cf_cari_pengguna', () => '')
 const kolomCari = ref<HTMLInputElement | null>(null)
@@ -91,7 +100,10 @@ const muatDaftar = (alasan: AlasanDaftar | null) => muat(async (terbaru) => {
   indeks.isi(semua.value, total.value)
   terbuka.value = alasan
 })
-onMounted(() => muatDaftar(alasanDaftar.ambil()))
+onMounted(() => {
+  muatDaftar(alasanDaftar.ambil())
+  api.hapusAkunDaftar('menunggu').then((r) => { menungguHapus.value = idMenungguHapus(r) }).catch(() => {})
+})
 
 const buka = async () => {
   if (!(await muatDaftar(alasanDaftar.ingat(ALASAN_SAKELAR)))) alasanDaftar.lupakan()
@@ -120,6 +132,9 @@ const gantiHalaman = async (h: number) => {
 // Tombol kembali di halaman detail membawa query terakhir daftar ini.
 watch(() => route.fullPath, p => indeks.ingatDaftar(p), { immediate: true })
 
+const labelStatus = (s: StatusPengguna): string =>
+  s === 'menunggu_hapus' ? tcf('pengguna.menungguHapus') : s === 'ditangguhkan' ? tcf('pengguna.ditangguhkan') : tcf('pengguna.aktif')
+
 /* ruang/tx null = sesi tanpa pii: server tidak mengirim hitungan (M/0089 §15 (d)); tabel menulis '—'. */
 interface Baris { id: string; email: string; daftar: string; aktif: string; ruang: number | null; tx: number | null; status: string; p: Pengguna }
 const keBaris = (p: Pengguna): Baris => ({
@@ -129,7 +144,7 @@ const keBaris = (p: Pengguna): Baris => ({
   aktif: p.aktivitasTerakhir,
   ruang: p.ruang,
   tx: p.tx,
-  status: p.status === 'aktif' ? tcf('pengguna.aktif') : tcf('pengguna.ditangguhkan'),
+  status: labelStatus(p.status),
   p,
 })
 
@@ -140,8 +155,8 @@ const kolom = computed(() => [
   { key: 'ruang', label: tcf('pengguna.ruang'), type: 'text' as const, width: '70px', sortable: true, class: 'hidden tabular-nums text-right md:table-cell', headerClass: 'hidden md:table-cell' },
   { key: 'tx', label: tcf('pengguna.tx'), type: 'text' as const, width: '90px', sortable: true, class: 'tabular-nums text-right' },
   {
-    key: 'status', label: tcf('pengguna.status'), type: 'status' as const, width: '110px',
-    options: [tcf('pengguna.aktif'), tcf('pengguna.ditangguhkan')].map((v: string) => ({ label: v, value: v })),
+    key: 'status', label: tcf('pengguna.status'), type: 'status' as const, width: '140px',
+    options: (['aktif', 'ditangguhkan', 'menunggu_hapus'] as const).map(s => labelStatus(s)).map((v: string) => ({ label: v, value: v })),
     class: 'hidden text-[var(--ca-muted)] sm:table-cell', headerClass: 'hidden sm:table-cell',
   },
 ])
@@ -265,6 +280,10 @@ useCashflowPintasan([{ kunci: '/', aksi: () => kolomCari.value?.focus() }])
       >
         <template #cell-email="{ row }">
           <NuxtLink :to="`/console/cashflow/pengguna/${row.id}`" class="font-mono text-[var(--ca-text)] underline-offset-2 hover:underline" @click.stop>{{ row.email }}</NuxtLink>
+        </template>
+        <template #cell-status="{ row }">
+          <span v-if="row.p.status === 'menunggu_hapus'" class="ca-pill-danger whitespace-nowrap text-[0.7rem]">{{ row.status }}</span>
+          <template v-else>{{ row.status }}</template>
         </template>
         <template v-for="k in (['ruang', 'tx'] as const)" :key="k" #[`cell-${k}`]="{ value }">
           <span v-if="value === null" :title="tcf('umum.butuhTotp')">—<span class="sr-only"> ({{ tcf('umum.butuhTotp') }})</span></span>
