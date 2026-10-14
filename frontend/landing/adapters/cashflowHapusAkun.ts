@@ -16,7 +16,8 @@
  * - admin_hapus_akun_permanen(p_permintaan, p_alasan) returns jsonb, izin
  *   tindak; `status`: selesai (+ sudah_tiada, foto_antre) | sudah_selesai |
  *   sudah_dibatalkan | tidak_ada. Pemilik buku bersama beranggota → P0001
- *   hint alihkan-kepemilikan (penjaga yang sama dengan aplikasi).
+ *   hint alihkan-kepemilikan (penjaga yang sama dengan aplikasi). Akun yang
+ *   masih terdaftar di admin_users → P0001 hint akun-admin, sebelum audit.
  * - admin_hapus_akun_batalkan(p_permintaan, p_alasan) returns jsonb, izin
  *   tindak; `status`: dibatalkan (+ buka_blokir) | sudah_selesai |
  *   sudah_dibatalkan | tidak_ada.
@@ -291,13 +292,16 @@ export function keHasilHapus(d: unknown): HasilHapus | 'lain' {
 
 /** Galat aksi → cara halaman menjawabnya.
  *  'tertahan'    P0001 alihkan-kepemilikan: ditulis di kartunya, bahasa awam;
+ *  'akun-admin'  P0001 akun-admin: akunnya masih admin console, akses adminnya
+ *                dicabut dulu. Cukup toast bahasa awam, server belum mengubah apa pun;
  *  'izin'        42501 izin-kurang: CashflowIzinKurang di atas daftar;
  *  'belum-aktif' RPC-nya belum ada (PGRST202, atau 42883 yang menyebut RPC
  *                itu sendiri): migrasi 0112 belum terpasang. 42883 fungsi lain
  *                di dalamnya = 0112 rusak, jatuh ke 'lain';
  *  'lain'        sisanya (toast dari useCashflowMuat). */
-export function jenisGagalHapus(g: { jenis: string; hint?: string }): 'tertahan' | 'izin' | 'belum-aktif' | 'lain' {
+export function jenisGagalHapus(g: { jenis: string; hint?: string }): 'tertahan' | 'akun-admin' | 'izin' | 'belum-aktif' | 'lain' {
   if (g.hint === 'alihkan-kepemilikan') return 'tertahan'
+  if (g.hint === 'akun-admin') return 'akun-admin'
   if (g.jenis === 'izin') return 'izin'
   if (g.jenis === 'belum-aktif') return 'belum-aktif'
   return 'lain'
@@ -306,7 +310,7 @@ export function jenisGagalHapus(g: { jenis: string; hint?: string }): 'tertahan'
 /** Aksi gagal tanpa kepastian (jaringan putus, galat yang tidak dikenal):
  *  server bisa saja sudah selesai sebelum jawabannya hilang, jadi daftar
  *  dimuat ulang supaya kartunya tidak tetap tampil menunggu. Penolakan yang
- *  jelas (tertahan, izin, sesi, bukan admin, argumen, belum aktif) terjadi
+ *  jelas (tertahan, akun admin, izin, sesi, bukan admin, argumen, belum aktif) terjadi
  *  sebelum apa pun berubah dan tidak perlu dimuat ulang. */
 export const muatUlangSesudahGagal = (g: { jenis: string; hint?: string }): boolean =>
   g.jenis === 'lain' && jenisGagalHapus(g) === 'lain'

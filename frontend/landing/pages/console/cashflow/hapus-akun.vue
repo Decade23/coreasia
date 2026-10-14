@@ -19,6 +19,8 @@
  *   CashflowIzinKurang menjelaskan jalan keluarnya.
  * - P0001 alihkan-kepemilikan (akun masih memiliki ruang bersama beranggota
  *   orang lain) ditulis di kartunya dengan bahasa awam.
+ * - P0001 akun-admin (akunnya masih terdaftar sebagai admin console) cukup
+ *   jadi toast bahasa awam; daftar tidak dimuat ulang.
  * - RPC-nya belum ada karena console tayang lebih dulu dari 0112 (PGRST202,
  *   atau 42883 yang menyebut RPC itu sendiri): halaman menulis "fitur belum
  *   aktif", bukan galat. 42883 fungsi lain di dalamnya tetap galat biasa.

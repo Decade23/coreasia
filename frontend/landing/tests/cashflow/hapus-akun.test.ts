@@ -197,8 +197,9 @@ describe('galat: RPC yang belum ada = fitur belum aktif, P0001 dijelaskan', () =
     }
     expect(useCashflowMuat().pesanUntuk(petakanGalat(DALAM_HILANG, 'admin_hapus_akun_permanen'))).toBe(DALAM_HILANG.message)
   })
-  it('P0001 alihkan-kepemilikan → tertahan; 42501 izin-kurang → izin; lainnya → lain', () => {
+  it('P0001 alihkan-kepemilikan → tertahan; P0001 akun-admin → akun-admin; 42501 izin-kurang → izin; lainnya → lain', () => {
     expect(jenisGagalHapus(petakanGalat({ code: 'P0001', hint: 'alihkan-kepemilikan', message: 'Masih ada 1 catatan bersama…' }))).toBe('tertahan')
+    expect(jenisGagalHapus(petakanGalat({ code: 'P0001', hint: 'akun-admin', message: 'Akun ini terdaftar sebagai admin console…' }))).toBe('akun-admin')
     expect(jenisGagalHapus(petakanGalat({ code: '42501', hint: 'izin-kurang' }))).toBe('izin')
     expect(jenisGagalHapus(petakanGalat({ code: 'P0001', hint: 'lain' }))).toBe('lain')
     expect(jenisGagalHapus(petakanGalat(new TypeError('Failed to fetch')))).toBe('lain')
@@ -210,6 +211,7 @@ describe('galat: RPC yang belum ada = fitur belum aktif, P0001 dijelaskan', () =
     expect(muatUlangSesudahGagal(petakanGalat(DALAM_HILANG, 'admin_hapus_akun_permanen'))).toBe(true)
     // Ditolak sebelum apa pun berubah, atau halaman sudah punya jawabannya sendiri.
     expect(muatUlangSesudahGagal(petakanGalat({ code: 'P0001', hint: 'alihkan-kepemilikan', message: 'Masih ada…' }))).toBe(false)
+    expect(muatUlangSesudahGagal(petakanGalat({ code: 'P0001', hint: 'akun-admin', message: 'Akun ini terdaftar…' }))).toBe(false)
     expect(muatUlangSesudahGagal(petakanGalat({ code: '42501', hint: 'izin-kurang' }))).toBe(false)
     expect(muatUlangSesudahGagal(petakanGalat({ code: '42501', hint: 'sesi-konsol' }))).toBe(false)
     expect(muatUlangSesudahGagal(petakanGalat({ code: '42501' }))).toBe(false)
@@ -221,6 +223,7 @@ describe('galat: RPC yang belum ada = fitur belum aktif, P0001 dijelaskan', () =
     expect(pesanUntuk(petakanGalat(BELUM_ADA))).toBe('galat.belumAktif')
     expect(pesanUntuk(petakanGalat(CACHE_BASI, 'admin_hapus_akun_daftar'))).toBe('galat.belumAktif')
     expect(pesanUntuk(petakanGalat({ code: 'P0001', hint: 'alihkan-kepemilikan', message: 'Masih ada 1 catatan bersama…' }))).toBe('galat.alihkanKepemilikan')
+    expect(pesanUntuk(petakanGalat({ code: 'P0001', hint: 'akun-admin', message: 'Akun ini terdaftar sebagai admin console…' }))).toBe('galat.akunAdmin')
     expect(pesanUntuk(petakanGalat({ code: '42501', hint: 'izin-kurang' }))).toBe('galat.izinKurang')
   })
 })
@@ -361,7 +364,7 @@ describe('kamus ID dan EN', () => {
       ...LEWAT_HAPUS.map(l => `hapusAkun.lewat.${l}`),
       ...[...HASIL_HAPUS, 'lain'].map(h => `hapusAkun.hasil.${h}`),
       'hapusAkun.foto.tersimpan', 'hapusAkun.foto.bersih',
-      'nav.hapusAkun', 'pengguna.menungguHapus', 'galat.belumAktif', 'galat.alihkanKepemilikan',
+      'nav.hapusAkun', 'pengguna.menungguHapus', 'galat.belumAktif', 'galat.alihkanKepemilikan', 'galat.akunAdmin',
       'hapusAkun.isiKosong', 'hapusAkun.blokirTertunda',
     ]
     const fungsi = [

@@ -54,6 +54,8 @@ export const useCashflowMuat = (opsi: { awal?: boolean } = {}) => {
     if (g.jenis === 'argumen' && g.hint === 'saringan') return tcf('galat.saringan')
     // 0112: hapus permanen ditolak penjaga yang sama dengan aplikasi (P0001).
     if (g.hint === 'alihkan-kepemilikan') return tcf('galat.alihkanKepemilikan')
+    // 0112: akun yang masih admin console tidak bisa dihapus permanen (P0001).
+    if (g.hint === 'akun-admin') return tcf('galat.akunAdmin')
     switch (g.jenis) {
       case 'kasus': return tcf('galat.kasusHabis')
       case 'ranah': return tcf('galat.diLuarRanah')

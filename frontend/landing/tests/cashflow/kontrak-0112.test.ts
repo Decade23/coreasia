@@ -185,7 +185,7 @@ describe.skipIf(!adaMigrasiNomor('0112'))('kontrak 0112', () => {
   it('setiap galat yang bisa dilempar punya jawaban console (tanpa galat baru yang luput)', () => {
     const DIHARAP: Record<string, string[]> = {
       admin_hapus_akun_daftar: ['22023:status', '42501:', '42501:izin-kurang'],
-      admin_hapus_akun_permanen: ['22023:alasan', '42501:', '42501:izin-kurang', 'P0001:alihkan-kepemilikan'],
+      admin_hapus_akun_permanen: ['22023:alasan', '42501:', '42501:izin-kurang', 'P0001:akun-admin', 'P0001:alihkan-kepemilikan'],
       admin_hapus_akun_batalkan: ['22023:alasan', '42501:', '42501:izin-kurang'],
     }
     for (const n of RPC) expect(galatDi(fungsiTerakhir(n).badan), n).toEqual(DIHARAP[n])
@@ -200,6 +200,7 @@ describe.skipIf(!adaMigrasiNomor('0112'))('kontrak 0112', () => {
       '22023:status': { jenis: 'argumen', halaman: 'lain' },
       '22023:alasan': { jenis: 'argumen', halaman: 'lain' },
       'P0001:alihkan-kepemilikan': { jenis: 'lain', halaman: 'tertahan' },
+      'P0001:akun-admin': { jenis: 'lain', halaman: 'akun-admin' },
     }
     for (const kh of [...new Set([...Object.values(DIHARAP).flat(), ...dariPenjaga])]) {
       const [code, hint] = kh.split(':') as [string, string]
