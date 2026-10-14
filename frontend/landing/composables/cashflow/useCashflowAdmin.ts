@@ -87,6 +87,7 @@ import type {
 } from '~/adapters/cashflowRanahBuku'
 import { kindDariArah } from '~/adapters/cashflowRanahBuku'
 import type { PerangkatPenggunaDTO, KabarPenggunaDTO, KursorKabar, SaringKabar } from '~/adapters/cashflowPerangkat'
+import type { VersiAplikasiDTO, AjakanPembaruanDTO, LangkahUsahaDTO } from '~/adapters/cashflowVersi'
 
 /* DTO sakelar pindah ke adapter (bertipe, tanpa any); diekspor ulang
    supaya impor lama dari berkas ini tetap jalan. */
@@ -222,6 +223,12 @@ export const useCashflowAdmin = () => {
     ocr: () => rpc<OcrDTO[]>('admin_ocr_ringkas'),
     fotoYatim: (limit = 200) => rpc<FotoYatimDTO[]>('admin_foto_yatim', { p_limit: limit }),
     telemetri: (hari = 30) => rpc<TelemetriDTO[]>('admin_telemetri_ringkas', { p_hari: hari }),
+    /** 0110: sebaran versi pengguna aktif (device_tokens + telemetri aplikasi.versi), tertinggi, konfig. T0, tanpa audit. */
+    versiAplikasi: (hari = 30) => rpc<VersiAplikasiDTO>('admin_versi_aplikasi', { p_hari: hari }),
+    /** 0110: lima langkah pembaruan.* per versi tujuan (baris, ringkas, sampai). T0, tanpa audit. */
+    ajakanPembaruan: (hari = 30) => rpc<AjakanPembaruanDTO>('admin_ajakan_pembaruan', { p_hari: hari }),
+    /** 0110: langkah ruang.*, ajakan_usaha.*, usaha.* per isi dan ruang usaha baru per minggu WIB. T0, tanpa audit. */
+    langkahUsaha: (hari = 30) => rpc<LangkahUsahaDTO>('admin_langkah_usaha', { p_hari: hari }),
 
     // ── daftar tersamar (adapter yang menyamarkan) ─────────────────────
     /** Tersamar oleh server bila `alasan` null — tanpa baris audit, dan

@@ -26,12 +26,16 @@ export const adaMigrasi = existsSync(DIR_MIGRASI)
 export const adaMigrasiNomor = (nomor: string): boolean =>
   adaMigrasi && readdirSync(DIR_MIGRASI).some(n => n.startsWith(`${nomor}_`) && n.endsWith('.sql'))
 
-/** Semua migrasi, urut nama (= urut terap), tanpa komentar baris `--`. */
+/** Semua migrasi, urut nama (= urut terap), tanpa komentar baris `--`.
+ *  Dibaca sekali per proses uji: rpc-console.test.ts memanggil fungsiTerakhir
+ *  untuk setiap RPC console, dan membaca ulang 100+ berkas tiap kali pernah
+ *  melewati batas 5 detik saat seluruh suite berjalan bersamaan. */
+let simpananMigrasi: Array<{ nama: string; sql: string }> | null = null
 function semuaMigrasi(): Array<{ nama: string; sql: string }> {
-  return readdirSync(DIR_MIGRASI)
+  return (simpananMigrasi ??= readdirSync(DIR_MIGRASI)
     .filter(n => n.endsWith('.sql'))
     .sort()
-    .map(nama => ({ nama, sql: readFileSync(join(DIR_MIGRASI, nama), 'utf8').replace(/--[^\n]*/g, '') }))
+    .map(nama => ({ nama, sql: readFileSync(join(DIR_MIGRASI, nama), 'utf8').replace(/--[^\n]*/g, '') })))
 }
 
 /** Tutup kurung pasangan dari `buka` (indeks '('), melompati string '…'. */

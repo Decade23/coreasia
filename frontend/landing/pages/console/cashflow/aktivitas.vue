@@ -10,6 +10,8 @@
  * audit), lalu halaman pindah ke tab Jejak ruang itu. Id ruang tidak pernah
  * sampai ke peramban sebelum kasus terbuka. Tiap klik membuka kasus baru
  * (kasus lama atas ruang itu ditutup, tercatat di lanjutan_dari).
+ *
+ * Langkah usaha (0110) di atas tabel: agregat T0 dengan rentangnya sendiri.
  */
 definePageMeta({ layout: 'console', middleware: ['console', 'cashflow-admin'] })
 import { alasanSelidiki, tujuanSelidiki, type AktivitasV2DTO } from '~/adapters/cashflowRuang'
@@ -39,6 +41,8 @@ const { sibuk, jalankan: selidiki } = useCashflowSekaliJalan((id: number) => aks
   <div class="space-y-6">
     <ConsolePageHeader :title="tcf('aktivitas.judul')" kicker="CashFlow"><template #meta><CashflowNav /></template></ConsolePageHeader>
     <p class="text-sm text-[var(--ca-muted)]">{{ tcf('aktivitas.ket') }} {{ tcf('selidiki.ket') }}</p>
+    <!-- Langkah usaha (0110): memuat sendiri, galatnya tidak menutup tabel peristiwa. -->
+    <CashflowLangkahUsaha />
     <p v-if="pesanGalat" class="text-sm ca-tone-danger">{{ pesanGalat }}</p>
     <p v-else-if="memuat" class="text-sm text-[var(--ca-muted)]">{{ tcf('umum.memuat') }}</p>
     <div v-else class="ca-console-dialog overflow-x-auto">

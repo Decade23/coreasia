@@ -37,6 +37,10 @@
  * menamai tindakan yang sebenarnya (membuka vs mengubah), karena keduanya
  * masuk audit.
  *
+ * VERSI APLIKASI (0110). Kartu CashflowKartuVersi menyunting tiga kunci versi
+ * yang dibaca aplikasi 1.3.2 ke atas, dengan pemeriksaan bentuk, penjaga
+ * timpa, dan sibuknya sendiri. Ia memakai daftar config halaman ini.
+ *
  * SIBUK. Setiap aksi di halaman ini menulis audit yang tidak bisa dihapus;
  * selama satu berjalan, semua pemicunya nonaktif dan panggilan ulang diabaikan.
  */
@@ -68,6 +72,12 @@ onMounted(muatConfig)
 const segarkan = async () => {
   mentah.value = await api.daftarConfig()
   return barisPengecualian.value
+}
+
+/** Untuk kartu Versi aplikasi: baca ulang daftar tanpa keadaan memuat halaman. */
+const segarkanDaftar = async () => {
+  mentah.value = await api.daftarConfig()
+  return config.value
 }
 
 const nilai = (key: string) => config.value.find(c => c.kunci === key)?.nilai
@@ -224,6 +234,9 @@ onBeforeUnmount(tutupSunting)
           <input v-model="alasanOtp" type="text" class="ca-input mt-1 w-full" :placeholder="tcf('alasan.lengkapi')" />
         </label>
       </section>
+
+      <!-- Versi aplikasi (0110): versi_android, versi_android_uat, versi_android_ias -->
+      <CashflowKartuVersi :config="config" :segarkan="segarkanDaftar" />
 
       <!-- Pengecualian ukuran keberhasilan -->
       <section class="ca-console-dialog p-5">

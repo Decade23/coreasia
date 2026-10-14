@@ -601,6 +601,76 @@ Jalankan di 1280 px dan 375 px, tema terang dan gelap, bahasa ID dan EN.
     gelap. Semua kode (OCR, jenis kabar, peran, platform) tampil sebagai
     kata, bukan kode mentah.
 
+## 1.3.2 (0110): versi aplikasi, ajakan pembaruan, langkah usaha
+
+Tiga RPC agregat baru (T0, tanpa audit, tanpa TOTP): `admin_versi_aplikasi`,
+`admin_ajakan_pembaruan`, dan `admin_langkah_usaha`, ditambah pembantu privat
+`akun_dalam_inti`. Migrasi 0110 hanya membuat fungsi, tidak menyentuh tabel.
+Penyunting versi di Sakelar menulis lewat `admin_set_config` dan
+`admin_hapus_config` yang sudah ada.
+
+**Urutan rilis: SQL 0110 dulu, landing sesudahnya.** Landing lama tetap jalan
+di atas 0110. Landing baru tanpa 0110 hanya membuat ketiga bagian baru
+menampilkan galat di bagiannya sendiri (PGRST202). Kartu Versi aplikasi tetap
+bisa menyimpan, jumlah yang tertahan minimum jadi "belum bisa diketahui".
+
+Penerapan 0110 (di repo CashFlow):
+
+1. Cek nama di `pg_proc` (keempat fungsi harus belum ada).
+2. Gladi: `begin;` + isi 0110 tanpa `notify` + blok `do` yang memanggil
+   ketiga RPC sebagai admin + `raise exception 'GLADI-OK ...'`. Jawaban yang
+   benar adalah galat `GLADI-OK`.
+3. Terap: `./toko/sql.sh supabase/migrations/0110_admin_versi_aplikasi.sql`.
+4. Uji baca sekali sebagai admin, cetak angka saja.
+5. `toko/uji-acl-admin.sql` lulus (ketiga RPC tergolong admin).
+
+Mundur SQL: `toko/rollback-0110.sql` (membuang keempat fungsi, aman diulang).
+Mundur landing: promosikan deployment Vercel sebelumnya, tanpa langkah SQL.
+
+### Uji lokal
+
+```bash
+# repo CashFlow
+toko/lokal/jalankan-uji.sh toko/uji-0110.sql toko/uji-acl-admin.sql toko/uji-corong-usaha.sql
+toko/lokal/uji-tanpa-superuser.sh toko/uji-0110.sql
+toko/lokal/uji-mutan-0110.sh
+node uji/konsol-0110.mjs
+# landing
+CASHFLOW_MIGRASI=<repo cashflow>/supabase/migrations npx vitest run
+node scripts/cek-komponen-cashflow.mjs
+```
+
+Uji tampilan memakai data tiruan di Chromium headless (tanpa jendela), dan
+server dev dimatikan lagi di perintah yang sama.
+
+### Uji peramban (sesi console ber-TOTP, sesudah tayang)
+
+1. **Sakelar, kartu Versi aplikasi.** Segmen Play, UAT, Uji IAS. Kunci yang
+   belum ada berbunyi "Belum disetel". Di segmen Play, "Pakai angka ini"
+   mengisi rilis Play terakhir. Segmen UAT dan IAS tidak punya tombol itu dan
+   tidak memperingatkan "di atas rilis Play". Isi minimum: panel kuning
+   menyebut jumlah pengguna aktif yang tertahan dan baru bisa disimpan sesudah
+   dicentang.
+2. **Simpan pertama.** Audit `set_config` memuat nilai lama (null) dan baru
+   `{"terbaru": ...}` sebagai angka, `is_public` true. Daftar "Semua kunci"
+   memuat `versi_android` dengan catatan kunci.
+3. **Kesehatan.** Versi aplikasi (7, 30, 90 hari) dan Ajakan pembaruan
+   memakai rentang yang sama. Ubin "Di bawah versi terbaru" muncul sesudah
+   `versi_android` disetel.
+4. **Aktivitas.** Langkah usaha di atas tabel peristiwa, bisa dilipat.
+
+Acuan "tertinggi yang pernah tercatat di HP" diambil sepanjang waktu dan ikut
+menghitung akun uji. Build IAS tercatat sebagai Play di pendaftaran
+notifikasi, jadi angka Play bisa lebih tinggi dari rilis Play. Pakai sebagai
+petunjuk, bukan patokan.
+
+### Setiap rilis Play
+
+Naikkan `RILIS_PLAY_TERAKHIR` (dan tambahkan namanya di `RILIS_PLAY`) di
+`adapters/cashflowVersi.ts`, lalu sesudah rilis tayang setel `versi_android`
+dari kartu Versi aplikasi. `tests/cashflow/versi.test.ts` memeriksa
+versionCode-nya ada di `toko/catatan-rilis-<versi>.md` repo CashFlow.
+
 ## Batas yang diketahui
 
 - **Console dan halaman publik satu origin (risiko sisa yang disadari, K6).**

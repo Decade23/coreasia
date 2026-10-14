@@ -23,6 +23,9 @@ import {
 } from '../../adapters/cashflowRanahBuku'
 import { PILIHAN_ARSIP } from '../../adapters/cashflowTampilBuku'
 import { JENIS_KABAR, PERAN_KABAR, PLATFORM_PERANGKAT, VARIAN_APLIKASI } from '../../adapters/cashflowPerangkat'
+import {
+  PILIHAN_KUNCI_VERSI, KELOMPOK_USAHA, URUT_KELOMPOK, ISI_USAHA, LANGKAH_USAHA, type BuildVersi, type BagianDiabaikan,
+} from '../../adapters/cashflowVersi'
 
 const AKAR = resolve(fileURLToPath(new URL('.', import.meta.url)), '../..')
 function jelajah(dir: string, hasil: string[] = []): string[] {
@@ -87,9 +90,25 @@ describe('kamus CashFlow lengkap untuk setiap kunci yang dipakai', () => {
       ...['aktif', 'terlambat', 'selesai', 'arsip', 'cicilan', 'berulang'].map(k => `jadwal.ringkas.${k}`),
       ...['aktif', 'berstok', 'menipis', 'minus', 'arsip'].map(k => `usaha.ringkas.${k}`),
       ...['produk', 'stok'].map(k => `usaha.lihat.${k}`),
+      // 0110: kartu Versi aplikasi, sebaran versi, ajakan pembaruan, langkah usaha.
+      ...PILIHAN_KUNCI_VERSI.map(p => `versi.kunci.${p.label}`),
+      ...['angka', 'minimum', 'catatanPanjang', 'catatanEmail'].map(k => `versi.galat.${k}`),
+      ...(['minimum', 'catatan', 'catatan_en', 'bidang'] satisfies BagianDiabaikan[]).map(k => `versi.bagian.${k}`),
+      ...['diAtasRilis', 'belumTerlihat'].map(k => `versi.lembut.${k}`),
+      ...(['prod', 'uat', 'ias', 'ios', 'web', 'lain'] satisfies BuildVersi[]).map(k => `kesehatan.versi.build.${k}`),
+      ...['lihat', 'ketuk', 'tutup', 'wajibLihat', 'wajibKetuk'].map(k => `kesehatan.ajakan.kolom.${k}`),
+      ...URUT_KELOMPOK.map(k => `aktivitas.usaha.kelompok.${k}`),
+      ...LANGKAH_USAHA.map(l => `aktivitas.usaha.langkah.${l.replace(/\./g, '_')}`),
+      ...Object.entries(ISI_USAHA).flatMap(([j, isi]) => isi.map(v => `aktivitas.usaha.isi.${j}.${v}`)),
     ]
     const hilang = jalur.flatMap(k => (['id', 'en'] as const).filter(b => typeof ambil(b, k) !== 'string').map(b => `${b}:${k}`))
     expect(hilang).toEqual([])
+  })
+
+  it('0110: setiap langkah usaha yang dikenal ada di satu kelompok saja', () => {
+    const semua = URUT_KELOMPOK.flatMap(k => [...KELOMPOK_USAHA[k]])
+    expect(new Set(semua).size).toBe(semua.length)
+    expect(semua).toEqual([...LANGKAH_USAHA])
   })
 
   it('preset kasus TANPA berkala (K12)', () => {

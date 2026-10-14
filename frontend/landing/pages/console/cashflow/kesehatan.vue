@@ -1,8 +1,15 @@
 <script setup lang="ts">
-/** Kesehatan — yang dilihat saat ada keluhan. Semua agregat. */
-definePageMeta({ layout: 'console', middleware: ['console', 'cashflow-admin'] })
+/**
+ * Kesehatan — yang dilihat saat ada keluhan. Semua agregat.
+ *
+ * Versi aplikasi dan Ajakan pembaruan (0110) dimuat TERPISAH dari Promise.all
+ * lama, masing-masing dengan galatnya sendiri: satu RPC yang gagal tidak
+ * menutup ubin dan tabel lain. Keduanya memakai rentang yang sama (hariVersi).
+ */
 import { angka, keKesehatan, ukuranByte, type KesehatanDTO } from '~/adapters/cashflow'
+import { HARI_BAWAAN } from '~/adapters/cashflowVersi'
 import type { FotoYatimDTO, OcrDTO, TelemetriDTO } from '~/composables/cashflow/useCashflowAdmin'
+definePageMeta({ layout: 'console', middleware: ['console', 'cashflow-admin'] })
 const { tcf, bahasa } = useCashflowI18n()
 const api = useCashflowAdmin()
 const { memuat, pesanGalat, muat, aksi } = useCashflowMuat({ awal: true })
@@ -12,6 +19,7 @@ const kesehatan = computed(() => (kesehatanMentah.value ? keKesehatan(kesehatanM
 const byte = (v: number | string | null | undefined) => ukuranByte(v, bahasa.value)
 const yatim = ref<FotoYatimDTO[]>([]); const ocr = ref<OcrDTO[]>([]); const telemetri = ref<TelemetriDTO[]>([])
 const tersalin = ref(false)
+const hariVersi = ref<number>(HARI_BAWAAN)
 /* admin_foto_yatim tidak memulangkan total (M/0058), jadi diminta BATAS + 1:
    baris ke-201 hanya penanda "masih ada lagi". Dulu ubinnya menampilkan
    paling banyak 200 dan salinannya terpotong diam-diam. */
@@ -36,17 +44,20 @@ const salinJalur = () => aksi(async () => {
     <p class="text-sm text-[var(--ca-muted)]">{{ tcf('kesehatan.ket') }}</p>
     <p v-if="pesanGalat" class="text-sm ca-tone-danger">{{ pesanGalat }}</p>
     <p v-else-if="memuat" class="text-sm text-[var(--ca-muted)]">{{ tcf('umum.memuat') }}</p>
-    <template v-else-if="kesehatan">
-      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <CashflowStatTile icon="lucide:database" warna="sky" :label="tcf('kesehatan.db')" :nilai="byte(kesehatan.ukuranDb)" />
-        <CashflowStatTile
-          icon="lucide:image-off" warna="rose" :label="tcf('kesehatan.yatim')"
-          :nilai="yatimTerpotong ? `${BATAS_YATIM}+` : yatim.length"
-          :keterangan="`${yatimTerpotong ? '≥ ' : ''}${byte(ukuranYatim)}`"
-        />
-        <CashflowStatTile v-for="o in ocr" :key="o.status" icon="lucide:scan-text" warna="netral" :label="`OCR · ${o.status}`" :nilai="angka(o.jumlah)" />
-      </div>
+    <div v-if="kesehatan" class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <CashflowStatTile icon="lucide:database" warna="sky" :label="tcf('kesehatan.db')" :nilai="byte(kesehatan.ukuranDb)" />
+      <CashflowStatTile
+        icon="lucide:image-off" warna="rose" :label="tcf('kesehatan.yatim')"
+        :nilai="yatimTerpotong ? `${BATAS_YATIM}+` : yatim.length"
+        :keterangan="`${yatimTerpotong ? '≥ ' : ''}${byte(ukuranYatim)}`"
+      />
+      <CashflowStatTile v-for="o in ocr" :key="o.status" icon="lucide:scan-text" warna="netral" :label="`OCR · ${o.status}`" :nilai="angka(o.jumlah)" />
+    </div>
 
+    <CashflowSebaranVersi v-model:hari="hariVersi" />
+    <CashflowAjakanPembaruan :hari="hariVersi" />
+
+    <template v-if="kesehatan">
       <div class="grid gap-6 lg:grid-cols-2">
         <section class="ca-console-dialog overflow-x-auto p-5">
           <h2 class="font-display text-base font-bold text-[var(--ca-text)]">{{ tcf('kesehatan.tabel') }}</h2>
