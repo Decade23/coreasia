@@ -571,7 +571,7 @@ const KAMUS = {
     },
     hapusAkun: {
       judul: 'Hapus akun',
-      ket: 'Permintaan hapus akun dari aplikasi. Datanya baru hilang setelah dihapus permanen di sini.',
+      ket: 'Permintaan hapus akun dari aplikasi dan surel. Datanya baru hilang setelah dihapus permanen di sini.',
       saring: 'Saring status',
       status: { menunggu: 'Menunggu', selesai: 'Sudah dihapus', dibatalkan: 'Dibatalkan' },
       lewat: { aplikasi: 'Dari aplikasi', surel: 'Lewat email' },
@@ -1191,7 +1191,7 @@ const KAMUS = {
     },
     hapusAkun: {
       judul: 'Account deletion',
-      ket: 'Deletion requests from the app. Nothing is removed until you delete it permanently here.',
+      ket: 'Deletion requests from the app and by email. Nothing is removed until you delete it permanently here.',
       saring: 'Filter by status',
       status: { menunggu: 'Pending', selesai: 'Deleted', dibatalkan: 'Cancelled' },
       lewat: { aplikasi: 'From the app', surel: 'By email' },
