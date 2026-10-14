@@ -1,10 +1,11 @@
 /**
- * Halaman Hapus akun (0112): adapter, tombol per izin, galat 42883 dan P0001,
+ * Halaman Hapus akun (0112): adapter, tombol per izin, galat RPC belum ada dan P0001,
  * argumen RPC, kamus, dan penjaga halaman.
  *
  * Kontrak DTO terhadap migrasi ada di kontrak-0112.test.ts. Halaman sendiri
- * tetap aman sebelum 0112 terpasang karena 42883 / PGRST202 dibaca sebagai
- * "fitur belum aktif".
+ * tetap aman sebelum 0112 terpasang karena RPC yang belum ada (PGRST202, atau
+ * 42883 yang menyebut RPC itu sendiri) dibaca sebagai "fitur belum aktif".
+ * 42883 dari fungsi lain di dalamnya tetap galat biasa.
  *
  * Semua id dan email di sini karangan.
  */
@@ -165,11 +166,35 @@ describe('tombol per izin (keputusan P3: hanya cashflow:tindak)', () => {
   })
 })
 
-describe('galat: 42883 fitur belum aktif, P0001 dijelaskan', () => {
-  it('42883 dan PGRST202 → belum-aktif (console boleh tayang sebelum 0112)', () => {
-    expect(petakanGalat({ code: '42883', message: 'function public.admin_hapus_akun_daftar(text, integer) does not exist' }).jenis).toBe('belum-aktif')
-    expect(petakanGalat({ code: 'PGRST202', message: 'Could not find the function' }).jenis).toBe('belum-aktif')
-    expect(jenisGagalHapus(petakanGalat({ code: '42883' }))).toBe('belum-aktif')
+/* Jawaban PostgREST v12 yang sebenarnya, disalin dari wadah lokal
+   (postgres 16 + postgrest v12.2.12): RPC yang belum ada, RPC yang hilang
+   sesudah cache skema dimuat, dan fungsi di DALAM RPC yang hilang. */
+const PETUNJUK_42883 = 'No function matches the given name and argument types. You might need to add explicit type casts.'
+const BELUM_ADA = { code: 'PGRST202', hint: null, message: 'Could not find the function public.admin_hapus_akun_daftar(p_batas, p_status) in the schema cache' }
+const CACHE_BASI = { code: '42883', hint: PETUNJUK_42883, message: 'function public.admin_hapus_akun_daftar(p_status => text, p_batas => integer) does not exist' }
+const DALAM_HILANG = { code: '42883', hint: PETUNJUK_42883, message: 'function public.hapus_foto_milik(uuid) does not exist' }
+
+describe('galat: RPC yang belum ada = fitur belum aktif, P0001 dijelaskan', () => {
+  it('PGRST202 → belum-aktif (console boleh tayang sebelum 0112)', () => {
+    expect(petakanGalat(BELUM_ADA).jenis).toBe('belum-aktif')
+    expect(petakanGalat(BELUM_ADA, 'admin_hapus_akun_daftar').jenis).toBe('belum-aktif')
+    expect(jenisGagalHapus(petakanGalat(BELUM_ADA))).toBe('belum-aktif')
+  })
+  it('42883 belum-aktif HANYA bila yang hilang RPC yang dipanggil itu sendiri (cache skema basi)', () => {
+    expect(petakanGalat(CACHE_BASI, 'admin_hapus_akun_daftar').jenis).toBe('belum-aktif')
+    // Tanpa nama RPC, atau nama lain: tidak bisa dipastikan RPC-nya yang belum ada.
+    expect(petakanGalat(CACHE_BASI).jenis).toBe('lain')
+    expect(petakanGalat(CACHE_BASI, 'admin_hapus_akun_permanen').jenis).toBe('lain')
+    expect(petakanGalat({ ...CACHE_BASI, message: 'function public.admin_hapus_akun_daftar_v2(text) does not exist' }, 'admin_hapus_akun_daftar').jenis).toBe('lain')
+    expect(petakanGalat({ code: '42883' }, 'admin_hapus_akun_daftar').jenis).toBe('lain')
+  })
+  it('fungsi di dalam RPC yang hilang (0112 terpasang tapi rusak) → lain, kalimat Postgres-nya terbaca', () => {
+    for (const n of ['admin_hapus_akun_daftar', 'admin_hapus_akun_permanen', 'admin_hapus_akun_batalkan']) {
+      const g = petakanGalat(DALAM_HILANG, n)
+      expect(g, n).toMatchObject({ jenis: 'lain', message: DALAM_HILANG.message })
+      expect(jenisGagalHapus(g), n).toBe('lain')
+    }
+    expect(useCashflowMuat().pesanUntuk(petakanGalat(DALAM_HILANG, 'admin_hapus_akun_permanen'))).toBe(DALAM_HILANG.message)
   })
   it('P0001 alihkan-kepemilikan → tertahan; 42501 izin-kurang → izin; lainnya → lain', () => {
     expect(jenisGagalHapus(petakanGalat({ code: 'P0001', hint: 'alihkan-kepemilikan', message: 'Masih ada 1 catatan bersama…' }))).toBe('tertahan')
@@ -179,7 +204,8 @@ describe('galat: 42883 fitur belum aktif, P0001 dijelaskan', () => {
   })
   it('kalimatnya bahasa awam dari kamus, bukan kalimat mentah server', () => {
     const { pesanUntuk } = useCashflowMuat()
-    expect(pesanUntuk(petakanGalat({ code: '42883' }))).toBe('galat.belumAktif')
+    expect(pesanUntuk(petakanGalat(BELUM_ADA))).toBe('galat.belumAktif')
+    expect(pesanUntuk(petakanGalat(CACHE_BASI, 'admin_hapus_akun_daftar'))).toBe('galat.belumAktif')
     expect(pesanUntuk(petakanGalat({ code: 'P0001', hint: 'alihkan-kepemilikan', message: 'Masih ada 1 catatan bersama…' }))).toBe('galat.alihkanKepemilikan')
     expect(pesanUntuk(petakanGalat({ code: '42501', hint: 'izin-kurang' }))).toBe('galat.izinKurang')
   })
@@ -209,8 +235,17 @@ describe('argumen RPC (klien Supabase tiruan)', () => {
     expect(alasanHapusOtomatis(ID1)).toContain(ID1)
   })
   it('galat server sampai ke halaman sebagai GalatAdmin berjenis', async () => {
-    jawaban = { data: null, error: { code: '42883', message: 'function does not exist' } }
+    jawaban = { data: null, error: BELUM_ADA }
     await expect(useCashflowAdmin().hapusAkunDaftar()).rejects.toMatchObject({ jenis: 'belum-aktif' })
+    // rpc() memberi tahu petakanGalat nama RPC yang dipanggil.
+    jawaban = { data: null, error: CACHE_BASI }
+    await expect(useCashflowAdmin().hapusAkunDaftar()).rejects.toMatchObject({ jenis: 'belum-aktif' })
+    jawaban = { data: null, error: DALAM_HILANG }
+    await expect(useCashflowAdmin().hapusAkunDaftar()).rejects.toMatchObject({ jenis: 'lain', message: DALAM_HILANG.message })
+    await expect(useCashflowAdmin().hapusAkunPermanen(ID1)).rejects.toMatchObject({ jenis: 'lain', message: DALAM_HILANG.message })
+    // Nama RPC lain yang kebetulan hilang di dalam: bukan RPC ini → lain.
+    jawaban = { data: null, error: CACHE_BASI }
+    await expect(useCashflowAdmin().hapusAkunBatalkan(ID1)).rejects.toMatchObject({ jenis: 'lain' })
     jawaban = { data: null, error: { code: 'P0001', hint: 'alihkan-kepemilikan', message: 'Masih ada…' } }
     const g = await useCashflowAdmin().hapusAkunPermanen(ID1).catch((e: unknown) => e)
     expect(g).toBeInstanceOf(GalatAdmin)
@@ -348,7 +383,7 @@ describe('penjaga halaman (keputusan P3: satu konfirmasi, tanpa kolom alasan)', 
     expect(hal).toMatch(/@hapus="mintaHapus\(p\)"/)
     expect(hal).toMatch(/@setuju="setujuHapus"/)
   })
-  it('izin tindak dari sesi; izin-kurang lewat CashflowIzinKurang; 42883 = fitur belum aktif', () => {
+  it('izin tindak dari sesi; izin-kurang lewat CashflowIzinKurang; RPC belum ada = fitur belum aktif', () => {
     const hal = baca(HAL)
     expect(hal).toMatch(/sesi\.boleh\('cashflow:tindak'\)/)
     expect(hal).toMatch(/<CashflowIzinKurang v-if="tampilIzin" :pesan="tcf\('hapusAkun\.izinTindak'\)" \/>/)

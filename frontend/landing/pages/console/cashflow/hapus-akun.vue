@@ -17,8 +17,9 @@
  *   CashflowIzinKurang menjelaskan jalan keluarnya.
  * - P0001 alihkan-kepemilikan (akun masih memiliki ruang bersama beranggota
  *   orang lain) ditulis di kartunya dengan bahasa awam.
- * - 42883 / PGRST202: RPC-nya belum ada karena console tayang lebih dulu dari
- *   0112. Halaman menulis "fitur belum aktif", bukan galat.
+ * - RPC-nya belum ada karena console tayang lebih dulu dari 0112 (PGRST202,
+ *   atau 42883 yang menyebut RPC itu sendiri): halaman menulis "fitur belum
+ *   aktif", bukan galat. 42883 fungsi lain di dalamnya tetap galat biasa.
  *
  * SIBUK. Setiap aksi menulis audit yang tidak bisa dihapus; selama satu
  * berjalan, semua tombol menunggu dan panggilan ulang diabaikan. Jawaban

@@ -195,17 +195,40 @@ describe.skipIf(!adaMigrasiNomor('0112'))('kontrak 0112', () => {
       '22023:status': { jenis: 'argumen', halaman: 'lain' },
       '22023:alasan': { jenis: 'argumen', halaman: 'lain' },
       'P0001:alihkan-kepemilikan': { jenis: 'lain', halaman: 'tertahan' },
-      // Bukan dari badan: PostgREST/Postgres saat 0112 belum terpasang.
-      '42883:': { jenis: 'belum-aktif', halaman: 'belum-aktif' },
-      'PGRST202:': { jenis: 'belum-aktif', halaman: 'belum-aktif' },
     }
-    for (const kh of [...new Set([...Object.values(DIHARAP).flat(), ...dariPenjaga, '42883:', 'PGRST202:'])]) {
+    for (const kh of [...new Set([...Object.values(DIHARAP).flat(), ...dariPenjaga])]) {
       const [code, hint] = kh.split(':') as [string, string]
       const g = petakanGalat({ code, hint, message: 'kalimat server' })
       expect(JAWAB_GALAT[kh], kh).toBeDefined()
       expect({ jenis: g.jenis, halaman: jenisGagalHapus(g) }, kh).toEqual(JAWAB_GALAT[kh])
     }
     for (const h of ['izin-kurang', 'mfa-wajib', 'sesi-konsol']) expect(HINT_42501[h], h).toBeDefined()
+  })
+
+  it('"fitur belum aktif" hanya untuk RPC-nya sendiri; fungsi yang dipanggil di dalamnya hilang = galat biasa', () => {
+    /* Bukan dari badan: PostgREST v12 menjawab PGRST202 bila RPC belum ada,
+       dan Postgres 42883 bila RPC hilang sesudah cache skema dimuat. 42883
+       yang menyebut fungsi LAIN berarti 0112 terpasang tapi rusak: kalimat
+       Postgres-nya harus terbaca, bukan disamarkan sebagai belum dipasang. */
+    const petunjuk = 'No function matches the given name and argument types. You might need to add explicit type casts.'
+    for (const n of RPC) {
+      const tanda = parameterFungsi(n).map(p => p.nama)
+      const pgrst = { code: 'PGRST202', hint: null, message: `Could not find the function public.${n}(${[...tanda].sort().join(', ')}) in the schema cache` }
+      const basi = { code: '42883', hint: petunjuk, message: `function public.${n}(${tanda.map(t => `${t} => text`).join(', ')}) does not exist` }
+      for (const g of [petakanGalat(pgrst, n), petakanGalat(basi, n)]) {
+        expect({ jenis: g.jenis, halaman: jenisGagalHapus(g) }, n).toEqual({ jenis: 'belum-aktif', halaman: 'belum-aktif' })
+      }
+      // Setiap fungsi public yang dipanggil badan RPC ini (hitung_inti, ruang_dari_jalur, hapus_akun_inti, …).
+      const dalam = [...new Set([...fungsiTerakhir(n).badan.matchAll(/\bpublic\.([a-z_0-9]+)\(/g)].map(m => m[1]!))]
+        .filter(f => f !== n)
+      expect(dalam.length, n).toBeGreaterThan(0)
+      for (const f of dalam) {
+        const g = petakanGalat({ code: '42883', hint: petunjuk, message: `function public.${f}(uuid) does not exist` }, n)
+        expect({ jenis: g.jenis, halaman: jenisGagalHapus(g), pesan: g.message }, `${n} → ${f}`)
+          .toEqual({ jenis: 'lain', halaman: 'lain', pesan: `function public.${f}(uuid) does not exist` })
+      }
+    }
+    expect(fungsiTerakhir('admin_hapus_akun_permanen').badan).toMatch(/public\.hapus_akun_inti\(p\.user_id\)/)
   })
 
   it('22023 tidak terpicu console: status yang dikirim diterima server, alasan otomatis cukup panjang', () => {

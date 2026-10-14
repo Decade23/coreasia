@@ -280,7 +280,9 @@ export function keHasilHapus(d: unknown): HasilHapus | 'lain' {
 /** Galat aksi → cara halaman menjawabnya.
  *  'tertahan'    P0001 alihkan-kepemilikan: ditulis di kartunya, bahasa awam;
  *  'izin'        42501 izin-kurang: CashflowIzinKurang di atas daftar;
- *  'belum-aktif' 42883/PGRST202: migrasi 0112 belum terpasang;
+ *  'belum-aktif' RPC-nya belum ada (PGRST202, atau 42883 yang menyebut RPC
+ *                itu sendiri): migrasi 0112 belum terpasang. 42883 fungsi lain
+ *                di dalamnya = 0112 rusak, jatuh ke 'lain';
  *  'lain'        sisanya (toast dari useCashflowMuat). */
 export function jenisGagalHapus(g: { jenis: string; hint?: string }): 'tertahan' | 'izin' | 'belum-aktif' | 'lain' {
   if (g.hint === 'alihkan-kepemilikan') return 'tertahan'

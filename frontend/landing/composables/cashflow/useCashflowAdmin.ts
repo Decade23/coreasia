@@ -29,9 +29,14 @@
  *                 kalimatnya dari server, useCashflowMuat melokalkan hint yang
  *                 dikenal
  *   'tidak-ada'   P0002 — pengguna/transaksi/dompet tidak ada
- *   'belum-aktif' 42883 / PGRST202 — fungsinya belum ada di server (console
- *                 boleh tayang lebih dulu dari migrasinya, mis. hapus akun
- *                 bertahap sebelum 0112): halaman menulis "fitur belum aktif"
+ *   'belum-aktif' RPC-nya belum ada di server (console boleh tayang lebih
+ *                 dulu dari migrasinya, mis. hapus akun bertahap sebelum
+ *                 0112): halaman menulis "fitur belum aktif". PostgREST
+ *                 menjawab PGRST202; 42883 hanya bila kalimatnya menyebut RPC
+ *                 yang dipanggil itu sendiri (hilang sesudah cache skema
+ *                 dimuat). 42883 untuk fungsi LAIN berarti RPC-nya ada tapi
+ *                 rusak di dalam → 'lain', kalimat Postgres-nya dibiarkan
+ *                 terbaca
  *   'lain'        sisanya
  *
  * Halaman tidak menulis blok catch sendiri: useCashflowMuat yang mengubah
@@ -137,8 +142,13 @@ export const HINT_22023 = [
   'bulan', 'hari', 'saringan',
 ] as const
 
-/** Galat PostgREST/jaringan → GalatAdmin. GalatAdmin yang sudah jadi dipulangkan apa adanya. */
-export function petakanGalat(e: unknown): GalatAdmin {
+/** 42883 menyebut RPC `nama` sendiri ("function public.<nama>(p_a => text) does not exist")? */
+const rpcItuYangHilang = (pesan: string, nama: string): boolean =>
+  /^[a-z_][a-z0-9_]*$/.test(nama) && new RegExp(`^function (?:public\\.)?${nama}\\(`).test(pesan)
+
+/** Galat PostgREST/jaringan → GalatAdmin. GalatAdmin yang sudah jadi dipulangkan apa adanya.
+ *  `rpc`: nama RPC yang dipanggil, untuk membedakan 42883 RPC itu dari 42883 fungsi di dalamnya. */
+export function petakanGalat(e: unknown, rpc?: string): GalatAdmin {
   if (e instanceof GalatAdmin) return e
   const g: GalatMentah = e && typeof e === 'object' ? (e as GalatMentah) : {}
   const kode = teks(g.code)
@@ -147,8 +157,11 @@ export function petakanGalat(e: unknown): GalatAdmin {
   if (kode === '42501') return new GalatAdmin(HINT_42501[hint] ?? 'bukan-admin', pesan, hint)
   if (kode === '22023') return new GalatAdmin('argumen', pesan, hint)
   if (kode === 'P0002') return new GalatAdmin('tidak-ada', pesan, hint)
-  // Fungsi tidak dikenal: Postgres (42883) atau cache skema PostgREST (PGRST202).
-  if (kode === '42883' || kode === 'PGRST202') return new GalatAdmin('belum-aktif', pesan, hint)
+  // RPC belum ada: cache skema PostgREST (PGRST202), atau Postgres (42883) bila
+  // RPC itu sendiri yang hilang. 42883 fungsi lain di dalamnya jatuh ke 'lain'.
+  if (kode === 'PGRST202' || (kode === '42883' && !!rpc && rpcItuYangHilang(pesan, rpc))) {
+    return new GalatAdmin('belum-aktif', pesan, hint)
+  }
   return new GalatAdmin('lain', pesan, hint)
 }
 
@@ -198,7 +211,7 @@ export const useCashflowAdmin = () => {
     const sb = await pastikanSesi()
     const { data, error } = await sb.rpc(nama, a)
     if (error) {
-      const g = petakanGalat(error)
+      const g = petakanGalat(error, nama)
       // Sesi ditolak server (dicabut, atau tab memegang sesi basi): cetak
       // ulang sekali dan coba lagi — kalau masih ditolak, biar halaman yang bicara.
       if (g.jenis === 'sesi') {
@@ -207,7 +220,7 @@ export const useCashflowAdmin = () => {
         if (h.ok) {
           const ulang = await sb.rpc(nama, a)
           if (!ulang.error) return ulang.data as T
-          throw petakanGalat(ulang.error)
+          throw petakanGalat(ulang.error, nama)
         }
       }
       throw g

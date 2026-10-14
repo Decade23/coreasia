@@ -36,6 +36,15 @@ describe('petakanGalat', () => {
     expect(g.jenis).toBe('argumen')
     expect(g.hint).toBe('nilai-tersamar')
   })
+  it('RPC belum ada: PGRST202 → belum-aktif; 42883 hanya bila menyebut RPC yang dipanggil', () => {
+    expect(petakanGalat({ code: 'PGRST202', message: 'Could not find the function public.admin_x(p_a) in the schema cache' }).jenis).toBe('belum-aktif')
+    expect(petakanGalat({ code: '42883', message: 'function public.admin_x(p_a => text) does not exist' }, 'admin_x').jenis).toBe('belum-aktif')
+    // Fungsi lain di dalam RPC yang hilang: galat biasa, kalimat Postgres-nya dibawa.
+    const g = petakanGalat({ code: '42883', message: 'function public.bantu_y(uuid) does not exist' }, 'admin_x')
+    expect(g.jenis).toBe('lain')
+    expect(g.message).toBe('function public.bantu_y(uuid) does not exist')
+    expect(petakanGalat({ code: '42883', message: 'function public.admin_x(p_a => text) does not exist' }).jenis).toBe('lain')
+  })
   it('galat jaringan tanpa bentuk PostgREST tetap terpetakan', () => {
     expect(petakanGalat(new TypeError('Failed to fetch')).jenis).toBe('lain')
     expect(petakanGalat(null).message).toBe('Gagal memanggil server.')
