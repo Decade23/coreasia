@@ -47,14 +47,14 @@ const ID_CONTENT = {
       // v1: 'Bangun operasi digital lebih cepat dengan ekosistem produk CoreAsia.'
       // v1: 'Dari sertifikasi digital, web monitoring, sampai CRM multi-workspace, CoreAsia membantu bisnis Anda memilih produk yang tepat dan model kerja sama yang realistis untuk launch, scale, dan monetisasi.'
       title:
-        'Eksekusi digital yang lebih cepat, rapi, dan <span class="ca-gradient-text">siap di-scale</span>.',
+        'Jasa pembuatan website dan <span class="ca-gradient-text">aplikasi web untuk bisnis</span>.',
       subtitle:
-        'CoreAsia menyediakan produk dan model kerja sama yang membantu bisnis Anda launch lebih cepat tanpa build dari nol.',
+        'Dari website perusahaan hingga aplikasi operasional, kami bantu merancang, membangun, dan merawatnya sesuai kebutuhan tim kamu.',
       ctaPrimary: 'Diskusikan Kebutuhan',
       ctaSecondary: 'WhatsApp',
       powerStatement:
         'Satu ekosistem, banyak solusi — dari sertifikasi, monitoring, hingga CRM, CoreAsia bantu bisnis Anda launch lebih cepat dan scale lebih rapi.',
-      chips: ['Product Ecosystem', 'Growth Partnership', 'Enterprise Delivery'],
+      chips: ['Website Perusahaan', 'Aplikasi Web Custom', 'Integrasi Sistem'],
     },
     products: {
       kicker: 'Produk Kami',
@@ -2684,7 +2684,7 @@ const ID_CONTENT = {
     privacy: {
       title: 'Kebijakan Privasi',
       description: 'Kebijakan privasi CoreAsia menjelaskan bagaimana kami mengumpulkan, menggunakan, dan melindungi informasi pribadi Anda.',
-      lastUpdated: 'Terakhir diperbarui: Februari 2026',
+      lastUpdated: 'Terakhir diperbarui: 27 Oktober 2026',
       sections: {
         informationCollected: {
           title: '1. Informasi yang Kami Kumpulkan',
@@ -2710,7 +2710,7 @@ const ID_CONTENT = {
         },
         cookies: {
           title: '5. Cookie dan Teknologi Pelacakan',
-          content: 'Website ini menggunakan cookie teknis yang diperlukan untuk fungsi dasar situs. Kami tidak menggunakan cookie pelacakan pihak ketiga tanpa persetujuan Anda.',
+          content: 'Cookie dasar menyimpan pilihan bahasa dan tampilan. Analitik kunjungan serta pengukuran iklan Google hanya dimuat setelah kamu mengizinkannya. Kamu dapat memilihnya secara terpisah atau menarik izin melalui Pengaturan privasi di bawah halaman. Penarikan izin memuat ulang halaman agar skrip yang sudah berjalan berhenti.',
         },
         userRights: {
           title: '6. Hak Anda',

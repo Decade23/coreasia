@@ -16,10 +16,11 @@ useCoreSeo({
     title: t('legal.downloaderRecover.title') as string,
     description: sub(t('legal.downloaderRecover.description') as string) as string,
     path: '/downloader/recover',
+    noindex: true,
 })
 
 const sections = computed(() => {
-    const raw = t('legal.downloaderRecover.sections') as Record<string, any>
+    const raw = t('legal.downloaderRecover.sections') as Record<string, { title?: string; content?: string; items?: string[] }>
     return Object.values(raw).map(section => ({
         ...section,
         content: sub(section.content),

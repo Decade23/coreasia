@@ -9,7 +9,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vites
 import { jalurKonsol, referrerAnalitik } from '~/utils/konsol'
 
 const trackPageView = vi.fn()
-const useHead = vi.fn()
+const useHead = vi.fn(() => ({ patch: vi.fn() }))
 let referrer = ''
 let path = '/'
 
@@ -31,10 +31,12 @@ beforeEach(() => {
 async function muat(dari: string, ke = '/') {
   referrer = dari
   path = ke
-  vi.stubGlobal('document', { referrer, documentElement: { lang: 'id' } })
+  vi.stubGlobal('document', { referrer, cookie: 'coreasia-consent=v1.a1.m0', documentElement: { lang: 'id' } })
   vi.stubGlobal('window', {
     location: { pathname: ke, href: `https://coreasia.id${ke}` },
     requestAnimationFrame: (f: () => void) => f(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
   })
   vi.resetModules()
   const plugin = (await import('~/plugins/gtag.client')).default as unknown as (app: { hook: () => void }) => void

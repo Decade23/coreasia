@@ -1,9 +1,18 @@
 <script setup lang="ts">
 import { themeColors } from '~/utils/theme'
+import type { NeuralNetworkScene } from '~/utils/NeuralNetworkScene'
 
 const containerRef = ref<HTMLElement | null>(null)
 const isLoaded = ref(false)
-let networkScene: any = null
+let networkScene: NeuralNetworkScene | null = null
+let disposed = false
+let inViewport = true
+let loadTimer: ReturnType<typeof setTimeout> | null = null
+let motionQuery: MediaQueryList | null = null
+const syncActivity = () => {
+    if (document.hidden || !inViewport || motionQuery?.matches) networkScene?.stop()
+    else networkScene?.start()
+}
 let observer: IntersectionObserver | null = null
 
 // Theme-aware colors
@@ -18,7 +27,7 @@ const getThemeColors = () => {
 }
 
 const getViewportWidth = () => {
-    if (!process.client) return 1024
+    if (!import.meta.client) return 1024
     return window.innerWidth
 }
 
@@ -26,7 +35,7 @@ const isMobileViewport = () => getViewportWidth() < 768
 
 // Adaptive particle count based on device
 const getParticleCount = () => {
-    if (process.client) {
+    if (import.meta.client) {
         const width = getViewportWidth()
         if (width < 768) return 60  // Mobile
         if (width < 1024) return 100 // Tablet
@@ -84,7 +93,11 @@ const handleMouseLeave = () => networkScene?.resetMouse()
 
 
 onMounted(async () => {
+    motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)')
+    motionQuery.addEventListener('change', syncActivity)
+    document.addEventListener('visibilitychange', syncActivity)
     const { NeuralNetworkScene } = await import('~/utils/NeuralNetworkScene')
+    if (disposed) return
 
     if (containerRef.value) {
         const tc = getThemeColors()
@@ -98,21 +111,18 @@ onMounted(async () => {
                 line: tc.line,
             }
         })
-        networkScene.start()
+        syncActivity()
 
         // Slight delay to ensure first frame rendered
-        setTimeout(() => {
+        loadTimer = setTimeout(() => {
             isLoaded.value = true
         }, 200)
 
         // Optimization: Pause when not visible
         observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    networkScene?.start()
-                } else {
-                    networkScene?.stop()
-                }
+                inViewport = entry.isIntersecting
+                syncActivity()
             })
         }, { threshold: 0 })
         observer.observe(containerRef.value)
@@ -126,6 +136,11 @@ onMounted(async () => {
 })
 
 onBeforeUnmount(() => {
+    disposed = true
+    if (resizeTimeout) clearTimeout(resizeTimeout)
+    if (loadTimer) clearTimeout(loadTimer)
+    motionQuery?.removeEventListener('change', syncActivity)
+    document.removeEventListener('visibilitychange', syncActivity)
     window.removeEventListener('resize', handleResize)
     if (containerRef.value) {
         containerRef.value.removeEventListener('mousemove', handleMouseMove)
@@ -152,8 +167,8 @@ onBeforeUnmount(() => {
             class="absolute inset-0 z-0 transition-opacity duration-1000"
             :class="{ 'opacity-0': isLoaded, 'opacity-100': !isLoaded }"
         >
-             <div class="ca-scene-grid absolute inset-0"></div>
-             <div class="ca-scene-glow ca-light-soft-blend absolute left-1/2 top-1/2 h-125 w-200 -translate-x-1/2 -translate-y-1/2 rounded-full blur-[100px]"></div>
+             <div class="ca-scene-grid absolute inset-0"/>
+             <div class="ca-scene-glow ca-light-soft-blend absolute left-1/2 top-1/2 h-125 w-200 -translate-x-1/2 -translate-y-1/2 rounded-full blur-[100px]"/>
 
              <!-- Optional: Dark radial background base -->
              <div class="ca-scene-base absolute inset-0 -z-10" />

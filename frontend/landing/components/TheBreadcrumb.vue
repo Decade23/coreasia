@@ -1,5 +1,7 @@
 <script setup lang="ts">
-const { t } = useCoreI18n()
+import { publicCanonical, stringifyJsonLd } from '~/utils/public-seo'
+
+const { t, locale } = useCoreI18n()
 const route = useRoute()
 const siteUrl = useSiteOrigin()
 
@@ -18,6 +20,7 @@ const breadcrumbs = computed<BreadcrumbItem[]>(() => {
 
   const labelMap: Record<string, () => string> = {
     products: () => t('nav.products') as string,
+    downloader: () => 'CoreAsia Download Manager',
     partnerships: () => t('nav.partnerships') as string,
     solutions: () => t('nav.solutions') as string,
     pricing: () => t('nav.pricing') as string,
@@ -47,10 +50,10 @@ const breadcrumbs = computed<BreadcrumbItem[]>(() => {
   segments.forEach((segment, index) => {
     path += `/${segment}`
     const isLast = index === segments.length - 1
-    const label = labelMap[segment]?.() || segment.charAt(0).toUpperCase() + segment.slice(1)
+    const label = labelMap[segment]?.() || segment.charAt(0).toUpperCase() + segment.slice(1).replace(/-/g, ' ')
     items.push({
       label,
-      to: isLast ? undefined : path,
+      to: isLast ? undefined : segment === 'downloader' ? '/products/downloader' : path,
     })
   })
 
@@ -73,7 +76,7 @@ const breadcrumbSchema = computed(() => {
         '@type': 'ListItem',
         position: index + 1,
         name: item.label,
-        item: `${siteUrl.value}${itemPath}`,
+        item: publicCanonical(siteUrl.value, itemPath, locale.value),
       }
     }),
   }
@@ -85,7 +88,7 @@ useHead(() => ({
         {
           key: 'breadcrumb-schema',
           type: 'application/ld+json',
-          innerHTML: JSON.stringify(breadcrumbSchema.value),
+          innerHTML: stringifyJsonLd(breadcrumbSchema.value),
         },
       ]
     : [],
@@ -108,7 +111,7 @@ useHead(() => ({
           />
           <NuxtLink
             v-if="crumb.to"
-            :to="crumb.to"
+            :to="locale === 'en' && !crumb.to.startsWith('/artikel') ? `${crumb.to}?lang=en` : crumb.to"
             class="text-[var(--ca-muted)] opacity-70 transition hover:opacity-100 hover:text-[var(--ca-text)]"
           >
             {{ crumb.label }}

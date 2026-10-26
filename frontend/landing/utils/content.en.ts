@@ -1,6 +1,6 @@
 import ID_CONTENT from './content.id'
 
-type ContentRecord = Record<string, any>
+type ContentRecord = Record<string, unknown>
 
 const mergeLocaleContent = <T extends ContentRecord>(base: T, overrides: Partial<T>): T => {
   if (Array.isArray(base)) {
@@ -25,7 +25,7 @@ const mergeLocaleContent = <T extends ContentRecord>(base: T, overrides: Partial
       !Array.isArray(baseValue) &&
       !Array.isArray(overrideValue)
     ) {
-      merged[key] = mergeLocaleContent(baseValue, overrideValue as Partial<typeof baseValue>)
+      merged[key] = mergeLocaleContent(baseValue as ContentRecord, overrideValue as ContentRecord)
       continue
     }
 
@@ -76,13 +76,13 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
     hero: {
       // v1: 'Move faster with the CoreAsia product ecosystem.'
       // v1: 'From certification operations to web monitoring and multi-workspace CRM, CoreAsia helps you choose the right product and engagement model for launch, scale, and monetization.'
-      title: 'Faster digital execution, cleaner ops, <span class="ca-gradient-text">ready to scale</span>.',
+      title: 'Website development and <span class="ca-gradient-text">custom web applications for business</span>.',
       subtitle:
-        'CoreAsia provides products and engagement models that help your business launch faster without building from scratch.',
+        'From company websites to operational applications, we help plan, build, and maintain software around the way your team works.',
       ctaPrimary: 'Discuss Your Needs',
       powerStatement:
         'One ecosystem, many solutions — from certification to monitoring to CRM, CoreAsia helps you launch faster and scale smarter.',
-      chips: ['Product Ecosystem', 'Growth Partnership', 'Enterprise Delivery'],
+      chips: ['Company Websites', 'Custom Web Applications', 'System Integration'],
     },
     products: {
       kicker: 'Our Products',
@@ -2588,7 +2588,7 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
       title: 'Privacy Policy',
       description:
         'CoreAsia privacy policy explains how we collect, use, and protect your personal information.',
-      lastUpdated: 'Last updated: February 2026',
+      lastUpdated: 'Last updated: October 27, 2026',
       sections: {
         informationCollected: {
           title: '1. Information We Collect',

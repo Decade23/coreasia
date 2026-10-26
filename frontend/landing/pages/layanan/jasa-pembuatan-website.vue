@@ -288,6 +288,8 @@ const processItems = computed(() => (t('services.jasaPembuatanWebsite.process.it
     </section>
 
     <!-- CTA -->
+    <RelatedServiceReading kind="website" />
+
     <section class="ca-section pt-0">
       <div class="ca-container">
         <div ref="ctaSection" class="ca-card p-6 text-center sm:p-10">

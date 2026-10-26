@@ -1,12 +1,9 @@
 <script setup lang="ts">
-import { ARTICLES } from '~/utils/articles'
+import type { PublicArticle } from '~/utils/public-articles'
 
 const { locale, t } = useCoreI18n()
 const { useReveal, revealRef } = useScrollReveal()
-const config = useRuntimeConfig()
-const baseURL = import.meta.client
-  ? (config.public?.gatewayPublicUrl || 'http://localhost:8084/api')
-  : (config.public?.gatewayUrl || 'http://localhost:8081/api')
+definePageMeta({ middleware: 'article-language' })
 
 const heroContent = useReveal('fadeUp')
 const browseHeader = useReveal('fadeUp')
@@ -30,94 +27,10 @@ const normalizeCategoryKey = (value: string | null | undefined) => {
   return normalized
 }
 
-interface PublicArticle {
-  id: string
-  slug: string
-  title: string
-  description: string
-  category: string
-  tags: string[]
-  author: string
-  read_time: number
-  featured_image: string | null
-  published_at: string
-  created_at: string
-}
-
-const fetchPublicArticles = async (categoryKey = 'all') => {
-  try {
-    const params: Record<string, string> = { per_page: '50' }
-    if (categoryKey !== 'all') {
-      params.category = categoryKey
-    }
-    const query = new URLSearchParams(params).toString()
-    const res = await $fetch<{ data: PublicArticle[] }>(`${baseURL}/articles?${query}`, {
-      timeout: 3500,
-    })
-    return res?.data || []
-  } catch {
-    return []
-  }
-}
-
-const initialArticles = import.meta.server ? await fetchPublicArticles('all') : []
-const apiArticles = ref<PublicArticle[]>(initialArticles)
-const allApiArticles = ref<PublicArticle[]>(initialArticles)
+const { data: catalogData } = await useFetch<{ data: PublicArticle[] }>('/api/public/articles', { key: 'public-article-catalog', default: () => ({ data: [] }) })
+const articles = computed(() => catalogData.value?.data || [])
+const articleCatalog = articles
 const loadingArticles = ref(false)
-let activeRequestId = 0
-let catalogRequestId = 0
-
-const articleFallback = computed<PublicArticle[]>(() => ARTICLES.map((article) => ({
-  id: article.slug,
-  slug: article.slug,
-  title: article.title,
-  description: article.description,
-  category: article.category,
-  tags: article.tags || [],
-  author: article.author || (t('blog.defaultAuthor') as string) || 'Tim CoreAsia',
-  read_time: article.readTime || 5,
-  featured_image: null,
-  published_at: article.publishedAt,
-  created_at: article.publishedAt,
-})))
-
-const articleCatalog = computed(() => {
-  if ((allApiArticles.value || []).length > 0) return allApiArticles.value
-  return articleFallback.value
-})
-
-const loadArticles = async (showLoader = true) => {
-  const requestId = ++activeRequestId
-  if (showLoader) {
-    loadingArticles.value = true
-  }
-
-  const nextArticles = activeCategory.value === 'all'
-    ? ((allApiArticles.value || []).length > 0 ? allApiArticles.value : await fetchPublicArticles('all'))
-    : await fetchPublicArticles(activeCategory.value)
-
-  if (requestId === activeRequestId) {
-    apiArticles.value = nextArticles
-    loadingArticles.value = false
-  }
-}
-
-const loadArticleCatalog = async () => {
-  const requestId = ++catalogRequestId
-  const nextArticles = await fetchPublicArticles('all')
-  if (requestId !== catalogRequestId) return
-
-  allApiArticles.value = nextArticles
-  if (activeCategory.value === 'all') {
-    apiArticles.value = nextArticles
-  }
-}
-
-// Merge API articles with static fallback
-const articles = computed(() => {
-  if ((apiArticles.value || []).length > 0) return apiArticles.value || []
-  return articleFallback.value
-})
 
 const prettifyCategoryKey = (value: string) => value
   .split(/[-_]+/)
@@ -189,24 +102,6 @@ const visibleCategories = computed(() => {
 const filteredArticles = computed(() => {
   if (activeCategory.value === 'all') return articles.value
   return articles.value.filter((article) => normalizeCategoryKey(article.category) === activeCategory.value)
-})
-
-onMounted(() => {
-  if (!allApiArticles.value.length) {
-    void loadArticleCatalog()
-  }
-
-  if (!apiArticles.value.length) {
-    void loadArticles(false)
-  }
-})
-
-watch(activeCategory, () => {
-  if (activeCategory.value !== 'all' && !visibleCategories.value.some((category) => category.key === activeCategory.value)) {
-    categoriesExpanded.value = true
-  }
-
-  void loadArticles(true)
 })
 
 watch(categories, (nextCategories) => {
@@ -289,13 +184,11 @@ const categoryLabel = (key: string) => {
         </div>
 
         <div v-else-if="filteredArticles.length" class="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          <NuxtLink v-for="(article, index) in filteredArticles" :key="article.slug" :ref="revealRef('fadeUp', index * 80)" :to="`/artikel/${article.slug}`"
+          <NuxtLink
+v-for="(article, index) in filteredArticles" :key="article.slug" :ref="revealRef('fadeUp', index * 80)" :to="`/artikel/${article.slug}`"
             class="ca-card-soft group flex flex-col overflow-hidden transition hover:-translate-y-1 hover:border-[color:var(--ca-gold-border)] hover:shadow-lg"
           >
-            <div v-if="article.featured_image" class="aspect-[16/9] w-full overflow-hidden">
-              <NuxtImg :src="article.featured_image" :alt="article.title" loading="lazy" format="webp" class="h-full w-full object-cover transition group-hover:scale-105" />
-            </div>
-            <ArticleCoverPlaceholder v-else :title="article.title" :category="categoryLabel(article.category)" />
+            <ArticleCover :slug="article.slug" :title="article.title" :image="article.featured_image" class="transition group-hover:scale-[1.02]" />
 
             <div class="flex flex-1 flex-col p-5">
               <div class="flex items-center gap-2">

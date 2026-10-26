@@ -1,4 +1,6 @@
-import { DEFAULT_LOCALE, LOCALES, LOCALE_QUERY_KEY, isSupportedLocale } from '~/utils/i18n'
+import { publicLocales } from '~/utils/public-seo'
+import type { LOCALES} from '~/utils/i18n';
+import { DEFAULT_LOCALE, LOCALE_QUERY_KEY, isSupportedLocale } from '~/utils/i18n'
 
 /**
  * Membuat pilihan bahasa tetap "lengket" tanpa merusak cache.
@@ -22,7 +24,7 @@ export default defineNuxtPlugin((nuxtApp) => {
     const preferred = cookie.value
     // Hanya bertindak untuk preferensi non-default yang valid: DEFAULT_LOCALE tak
     // butuh query, jadi URL bersih dibiarkan bersih.
-    if (!isSupportedLocale(preferred) || preferred === DEFAULT_LOCALE) return
+    if (!isSupportedLocale(preferred) || preferred === DEFAULT_LOCALE || !publicLocales(route.path).includes(preferred)) return
     // Jangan sentuh URL yang sudah menyatakan bahasanya secara eksplisit — termasuk
     // saat pengunjung sengaja membuka versi Indonesia lewat ?lang=id.
     if (route.query[LOCALE_QUERY_KEY] !== undefined) return

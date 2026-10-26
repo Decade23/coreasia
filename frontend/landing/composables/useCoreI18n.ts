@@ -1,4 +1,4 @@
-import { computed, watch } from 'vue'
+import { computed } from 'vue'
 import {
   DEFAULT_LOCALE,
   LOCALES,
@@ -11,6 +11,7 @@ import { getContent } from '~/utils/content'
 
 export { LOCALE_QUERY_KEY }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- Translation paths can return text, lists, or nested objects.
 const resolvePathValue = (source: any, path: string) => {
   return path.split('.').reduce((result, part) => result?.[part], source)
 }
@@ -28,24 +29,6 @@ export const useCoreI18n = () => {
   // sisi klien untuk mengarahkan ke URL ber-?lang.
   const resolveActiveLocale = () => resolveLocaleFromQuery(route.query)
 
-  const contentState = useState('coreasia-content', () => getContent(resolveActiveLocale()))
-
-  watch(
-    () => route.query[LOCALE_QUERY_KEY],
-    (value) => {
-      const queryLocale = Array.isArray(value) ? value[0] : value
-      // Hanya di klien: menulis cookie saat SSR akan menempelkan header Set-Cookie
-      // pada respons yang di-cache, sehingga preferensi satu pengunjung ikut
-      // dipaksakan ke semua orang yang menerima salinan cache itu.
-      if (import.meta.client && isSupportedLocale(queryLocale)) {
-        localeCookie.value = queryLocale
-      }
-
-      contentState.value = getContent(resolveActiveLocale())
-    },
-    { immediate: true },
-  )
-
   const locale = computed<keyof typeof LOCALES>({
     get() {
       return resolveActiveLocale()
@@ -53,7 +36,6 @@ export const useCoreI18n = () => {
     set(value) {
       const nextLocale = isSupportedLocale(value) ? value : DEFAULT_LOCALE
       localeCookie.value = nextLocale
-      contentState.value = getContent(nextLocale)
     },
   })
 
@@ -62,12 +44,8 @@ export const useCoreI18n = () => {
 
     locale.value = resolvedLocale
 
-    const nextQuery = { ...route.query }
-    if (resolvedLocale === DEFAULT_LOCALE) {
-      delete nextQuery[LOCALE_QUERY_KEY]
-    } else {
-      nextQuery[LOCALE_QUERY_KEY] = resolvedLocale
-    }
+    const { [LOCALE_QUERY_KEY]: _previousLocale, ...withoutLocale } = route.query
+    const nextQuery = resolvedLocale === DEFAULT_LOCALE ? withoutLocale : { ...withoutLocale, [LOCALE_QUERY_KEY]: resolvedLocale }
 
     await navigateTo(
       {
@@ -81,7 +59,9 @@ export const useCoreI18n = () => {
 
   const currentLocaleInfo = computed(() => getLocaleInfo(locale.value))
   const availableLocales = computed(() => Object.values(LOCALES))
-  const content = computed(() => contentState.value || getContent(locale.value))
+  // Dictionaries are already bundled on both server and client. Keeping them in
+  // useState serializes the whole dictionary into every HTML payload a second time.
+  const content = computed(() => getContent(locale.value))
 
   const t = (path: string) => {
     const localizedValue = resolvePathValue(content.value, path)

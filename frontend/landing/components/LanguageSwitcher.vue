@@ -2,7 +2,11 @@
 import type { Locale } from '~/utils/i18n'
 import { useCoreI18n } from '~/composables/useCoreI18n'
 
-const { locale, availableLocales, setLocale } = useCoreI18n()
+withDefaults(defineProps<{ teleportTo?: string | HTMLElement }>(), { teleportTo: 'body' })
+
+const { locale, availableLocales: allLocales, setLocale } = useCoreI18n()
+const route = useRoute()
+const availableLocales = computed(() => route.path === '/artikel' || route.path.startsWith('/artikel/') || route.path.startsWith('/portfolio/') ? allLocales.value.filter(item => item.code === 'id') : allLocales.value)
 
 const isOpen = ref(false)
 const triggerRef = ref<HTMLElement | null>(null)
@@ -85,6 +89,7 @@ const handleKeydown = (e: KeyboardEvent) => {
   switch (e.key) {
     case 'Escape':
       e.preventDefault()
+      e.stopPropagation()
       close()
       triggerRef.value?.focus()
       break
@@ -134,7 +139,7 @@ const flagIsText = computed(() => {
       >{{ currentLocale?.flag }}</span>
     </button>
 
-    <Teleport to="body">
+    <Teleport :to="teleportTo">
       <Transition
         enter-active-class="transition duration-100 ease-out"
         enter-from-class="opacity-0 scale-95"

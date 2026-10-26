@@ -1,5 +1,6 @@
 <script setup lang="ts">
-const { t } = useCoreI18n()
+import { CASE_STUDIES } from '~/utils/case-studies'
+const { t, locale } = useCoreI18n()
 
 useCoreSeo({
   title: t('portfolio.title') as string,
@@ -43,6 +44,7 @@ const items = computed(() => (t('portfolio.items') as PortfolioItem[]) || [])
 
     <section class="ca-section pt-0">
       <div class="ca-container">
+        <div class="mb-8 grid gap-5 md:grid-cols-2"><NuxtLink v-for="study in CASE_STUDIES" :key="study.slug" :to="`/portfolio/${study.slug}`" class="ca-card-soft flex flex-col p-7"><span class="text-xs text-[var(--ca-subtle)]">{{ locale === 'en' ? 'CoreAsia product case study (Indonesian)' : 'Studi kasus produk CoreAsia' }}</span><h2 class="mt-3 font-display text-xl font-bold">{{ locale === 'en' ? (study.product === 'LeadKu' ? 'LeadKu: managing a sales team workflow' : 'Pantau: connecting website monitoring data') : study.title }}</h2><p class="mt-3 flex-1 text-sm leading-relaxed text-[var(--ca-muted)]">{{ locale === 'en' ? (study.product === 'LeadKu' ? 'How CoreAsia connects the pipeline, follow-ups, quotations and invoices in its CRM product.' : 'How CoreAsia brings analytics, search data and scheduled reporting into a monitoring workflow.') : study.summary }}</p><span class="mt-5 text-sm font-semibold ca-tone-gold">{{ locale === 'en' ? 'Read the case study in Indonesian' : 'Baca studi kasus' }}</span></NuxtLink></div>
         <div class="space-y-8">
           <article
             v-for="item in items"

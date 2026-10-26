@@ -2,7 +2,7 @@
 import { useCoreI18n } from '~/composables/useCoreI18n'
 import { LINKS } from '~/utils/constants'
 
-const { t } = useCoreI18n()
+const { locale, t } = useCoreI18n()
 
 useCoreSeo({
     title: t('solutions.lms.title') as string,
@@ -23,7 +23,7 @@ useHead({
                 description: t('solutions.lms.description') as string,
                 url: 'https://coreasia.id/products/lms',
                 provider: { '@type': 'Organization', name: 'CoreAsia Teknologi', url: 'https://coreasia.id' },
-                offers: { '@type': 'Offer', price: '0', priceCurrency: 'IDR', availability: 'https://schema.org/PreOrder' },
+
             }),
         },
     ],
@@ -49,7 +49,7 @@ const features = computed(() => {
             </div>
 
             <div class="ca-container relative ca-section pt-6 sm:pt-8 text-center lg:py-28">
-                <span class="ca-kicker mb-6 animate-fade-in-up">{{ t('solutions.lms.kicker') }}</span>
+                <span class="ca-kicker mb-6 animate-fade-in-up">{{ locale === 'en' ? 'In preparation' : 'Sedang disiapkan' }}</span>
                 <h1 class="ca-title mx-auto max-w-4xl animate-fade-in-up delay-100">
                     <span v-html="t('solutions.lms.hero.title')" />
                 </h1>
@@ -59,7 +59,7 @@ const features = computed(() => {
 
                 <div class="mt-8 flex flex-col justify-center gap-3 sm:flex-row animate-fade-in-up delay-300">
                     <NuxtLink to="/contact?subject=lms" class="ca-btn-primary">
-                        {{ t('solutions.lms.hero.ctaPrimary') }}
+                        {{ locale === 'en' ? 'Discuss LMS needs' : 'Diskusikan kebutuhan LMS' }}
                         <Icon name="lucide:arrow-right" class="h-4 w-4" />
                     </NuxtLink>
                     <a :href="LINKS.whatsapp" target="_blank" rel="noopener noreferrer" class="ca-btn-secondary">

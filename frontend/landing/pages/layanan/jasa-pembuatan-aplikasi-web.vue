@@ -182,6 +182,8 @@ const faqItems = computed(() => (t('services.jasaPembuatanAplikasiWeb.faq.items'
     </section>
 
     <!-- CTA -->
+    <RelatedServiceReading kind="webapp" />
+
     <section class="ca-section pt-0">
       <div class="ca-container">
         <div ref="ctaSection" class="ca-card p-6 text-center sm:p-10">

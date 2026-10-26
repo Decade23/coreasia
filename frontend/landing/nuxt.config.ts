@@ -48,7 +48,7 @@ export default defineNuxtConfig({
         ],
     },
     sitemap: {
-        exclude: ['/console', '/console/**', '/blog', '/blog/**', '/404', '/500', '/maintenance', '/register', '/preview', '/preview/**'],
+        exclude: ['/console', '/console/**', '/blog', '/blog/**', '/404', '/500', '/maintenance', '/register', '/preview', '/preview/**', '/downloader/recover'],
         defaults: {
             changefreq: 'weekly' as const,
             priority: 0.7,
@@ -60,6 +60,9 @@ export default defineNuxtConfig({
         sources: ['/api/__sitemap__/urls'],
         urls: [
             { loc: '/', changefreq: 'weekly', priority: 1.0 },
+            { loc: '/layanan', changefreq: 'monthly', priority: 0.9 },
+            { loc: '/portfolio/leadku-crm-tim-penjualan' },
+            { loc: '/portfolio/pantau-monitoring-website' },
             { loc: '/products', changefreq: 'weekly', priority: 0.9 },
             { loc: '/products/pantau', changefreq: 'weekly', priority: 0.82 },
             { loc: '/products/leadku', changefreq: 'weekly', priority: 0.82 },
@@ -119,14 +122,6 @@ export default defineNuxtConfig({
         head: {
             title: 'CoreAsia Teknologi',
             link: [
-                {
-                    rel: 'preconnect',
-                    href: 'https://www.googletagmanager.com',
-                },
-                {
-                    rel: 'dns-prefetch',
-                    href: 'https://www.googletagmanager.com',
-                },
                 {
                     rel: 'icon',
                     type: 'image/x-icon',
@@ -442,8 +437,10 @@ export default defineNuxtConfig({
         '/portfolio': { ssr: true },
         '/privacy-policy': { ssr: true },
         '/terms': { ssr: true },
-        '/layanan': { redirect: { to: '/layanan/jasa-pembuatan-website', statusCode: 301 } },
+        '/layanan': { ssr: true },
         '/layanan/**': { ssr: true },
+        '/downloader': { redirect: { to: '/products/downloader', statusCode: 301 } },
+        '/downloader/': { redirect: { to: '/products/downloader', statusCode: 301 } },
         '/blog': { redirect: { to: '/artikel', statusCode: 301 } },
         '/artikel': { ssr: true },
         '/artikel/**': { ssr: true },

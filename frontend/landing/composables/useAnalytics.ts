@@ -1,3 +1,5 @@
+import { readPublicConsent } from '~/utils/public-consent'
+import { jalurKonsol } from '~/utils/konsol'
 /**
  * Analytics composable for GTM dataLayer event tracking.
  * Pushes events to dataLayer which GTM picks up and routes
@@ -17,7 +19,7 @@ declare global {
 
 const pushEvent = (event: string, params: EventParams = {}) => {
   if (import.meta.server) return
-  if (window.location.pathname === '/console' || window.location.pathname.startsWith('/console/')) return
+  if (jalurKonsol(window.location.pathname) || !readPublicConsent().analytics) return
 
   window.dataLayer = window.dataLayer || []
   window.dataLayer.push({ event, ...params })
@@ -30,7 +32,7 @@ const resolvePageContext = (): EventParams => {
 
   return {
     page_title: typeof document !== 'undefined' ? document.title : '',
-    page_location: window.location.href,
+    page_location: new URL(window.location.pathname, window.location.origin).href,
   }
 }
 

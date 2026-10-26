@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { useThrottleFn } from '@vueuse/core'
+import type { ComponentPublicInstance } from 'vue'
+import type { CoreContent } from '~/utils/content'
+import type { RevealPreset } from '~/composables/useScrollReveal'
 
 const { t } = useCoreI18n()
 const { useReveal, revealRef } = useScrollReveal()
@@ -8,9 +11,9 @@ const productsHeader = useReveal('fadeUp')
 const roadmapHeader = useReveal('fadeUp')
 const engagementHeader = useReveal('fadeUp')
 
-const products = computed(() => (t('home.products.items') as Array<Record<string, any>>) || [])
-const roadmapProducts = computed(() => (t('home.products.comingSoon') as Array<Record<string, any>>) || [])
-const engagementModels = computed(() => (t('home.engagementModels.items') as Array<Record<string, any>>) || [])
+const products = computed(() => (t('home.products.items') as CoreContent['home']['products']['items']) || [])
+const roadmapProducts = computed(() => (t('home.products.comingSoon') as CoreContent['home']['products']['comingSoon']) || [])
+const engagementModels = computed(() => (t('home.engagementModels.items') as CoreContent['home']['engagementModels']['items']) || [])
 const roadmapIcons = ['lucide:graduation-cap', 'lucide:briefcase-business']
 
 const productMousePositions = ref(
@@ -25,8 +28,8 @@ const engagementCardsRef = ref<HTMLElement[]>([])
 
 const registerCard = (
   list: HTMLElement[],
-  elementLike: Element | any | null,
-  effect: string,
+  elementLike: Element | ComponentPublicInstance | null,
+  effect: RevealPreset,
   delay: number,
   index: number,
 ) => {
@@ -34,16 +37,17 @@ const registerCard = (
     return
   }
 
-  const element = elementLike.$el || (elementLike as HTMLElement)
+  const element = '$el' in elementLike ? elementLike.$el : elementLike
+  if (!(element instanceof HTMLElement)) return
   list[index] = element
-  revealRef(effect as any, delay)(element)
+  revealRef(effect, delay)(element)
 }
 
-const setProductCardRef = (el: Element | any | null, index: number) => {
+const setProductCardRef = (el: Element | ComponentPublicInstance | null, index: number) => {
   registerCard(productCardsRef.value, el, 'fadeUp', index * 120, index)
 }
 
-const setEngagementCardRef = (el: Element | any | null, index: number) => {
+const setEngagementCardRef = (el: Element | ComponentPublicInstance | null, index: number) => {
   registerCard(engagementCardsRef.value, el, 'fadeUp', index * 120, index)
 }
 
@@ -79,13 +83,14 @@ const resetSpotlight = (positions: Array<{ x: number; y: number }>, index: numbe
         <p class="ca-copy mt-3 max-w-3xl">{{ t('home.products.subtitle') }}</p>
       </div>
 
-      <div class="mx-auto grid max-w-3xl gap-4 md:grid-cols-2" :class="products.length >= 3 ? 'md:grid-cols-3 max-w-none' : ''">
+      <div class="nc-catalog-grid mx-auto grid max-w-3xl gap-4 md:grid-cols-2" :class="products.length >= 3 ? 'md:grid-cols-3 max-w-none' : ''">
         <NuxtLink
           v-for="(product, index) in products"
           :key="product.name"
           :ref="(el) => setProductCardRef(el, index)"
           :to="product.to"
-          class="ca-card-soft group relative overflow-hidden p-5 transition hover:-translate-y-0.5 hover:border-[color:var(--ca-gold-border)] hover:shadow-lg"
+          :data-nc-color="index === 0 ? 'blue' : index === 1 ? 'amber' : 'green'"
+          class="ca-card-soft nc-card nc-product nc-interactive group relative overflow-hidden p-5 transition hover:-translate-y-0.5 hover:border-[color:var(--ca-gold-border)] hover:shadow-lg"
           @mousemove="updateSpotlight(productCardsRef, productMousePositions, index, $event)"
           @mouseleave="resetSpotlight(productMousePositions, index)"
         >
@@ -96,22 +101,22 @@ const resetSpotlight = (positions: Array<{ x: number; y: number }>, index: numbe
             }"
           />
 
-          <div class="relative z-10 flex items-start justify-between gap-3">
+          <div class="nc-top relative z-10 flex items-start justify-between gap-3">
             <div
-              class="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg-strong)]"
+              class="nc-icon inline-flex h-11 w-11 items-center justify-center rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg-strong)]"
             >
               <Icon :name="index === 0 ? 'lucide:bar-chart-3' : index === 1 ? 'lucide:code-2' : 'lucide:box'" class="h-5 w-5 ca-tone-gold" />
             </div>
-            <span class="ca-pill-gold px-2.5 py-1 text-[0.68rem] font-bold uppercase tracking-[0.12em]">
+            <span  :data-nc-status="index === 1 ? 'service' : 'live'" class="nc-status ca-pill-gold px-2.5 py-1 text-[0.68rem] font-bold uppercase tracking-[0.12em]">
               {{ product.badge }}
             </span>
           </div>
 
-          <div class="relative z-10 mt-5">
+          <div class="nc-copy relative z-10 mt-5">
             <h3 class="text-lg font-display font-semibold text-[var(--ca-text)]">
               {{ product.name }}
             </h3>
-            <p class="mt-3 text-sm leading-relaxed text-[var(--ca-muted)]">
+            <p class="nc-description mt-3 text-sm leading-relaxed text-[var(--ca-muted)]">
               {{ product.description }}
             </p>
 
@@ -126,7 +131,7 @@ const resetSpotlight = (positions: Array<{ x: number; y: number }>, index: numbe
               </li>
             </ul>
 
-            <span class="mt-5 inline-flex items-center gap-1 text-sm font-semibold ca-tone-gold">
+            <span class="nc-link mt-5 inline-flex items-center gap-1 text-sm font-semibold ca-tone-gold">
               {{ product.ctaLabel }}
               <Icon name="lucide:arrow-right" class="h-4 w-4" />
             </span>

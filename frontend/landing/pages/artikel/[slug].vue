@@ -1,21 +1,10 @@
 <script setup lang="ts">
 import { BRAND_ASSETS, COMPANY, LINKS } from '~/utils/constants'
-import { getArticleBySlug, ARTICLES } from '~/utils/articles'
-
-interface PublicArticle {
-    id: string
-    slug: string
-    title: string
-    description: string
-    content: string
-    category: string
-    tags: string[]
-    author: string
-    read_time: number
-    featured_image: string | null
-    published_at: string
-    created_at: string
-}
+import type { PublicArticle } from '~/utils/public-articles'
+import { articleCategory } from '~/utils/public-articles'
+import { resolveArticleCover } from '~/utils/article-assets'
+import { stringifyJsonLd } from '~/utils/public-seo'
+definePageMeta({ middleware: 'article-language' })
 
 interface ProductSpotlight {
     name: string
@@ -35,226 +24,42 @@ interface ProductRoadmapItem {
     badge: string
 }
 
-const { locale, t } = useCoreI18n()
+const { t } = useCoreI18n()
 const { useReveal, revealRef } = useScrollReveal()
 const route = useRoute()
 const router = useRouter()
 const slug = route.params.slug as string
-const config = useRuntimeConfig()
-const baseURL = import.meta.client
-    ? config.public?.gatewayPublicUrl || 'http://localhost:8084/api'
-    : config.public?.gatewayUrl || 'http://localhost:8081/api'
 const siteOrigin = useSiteOrigin()
-
 const articleHero = useReveal('fadeUp')
 const articleContent = useReveal('fadeUp', 80)
 const relatedHeader = useReveal('fadeUp')
 const productsHeader = useReveal('fadeUp')
 const ctaSection = useReveal('scaleUp')
-
-const normalizeCategoryKey = (value: string | null | undefined) => {
-    const normalized = (value || '').trim().toLowerCase()
-    if (normalized === 'business') return 'bisnis'
-    return normalized
-}
-
-const toPublicArticle = (item: any): PublicArticle => ({
-    id: item.id || item.slug,
-    slug: item.slug,
-    title: item.title,
-    description: item.description,
-    content: item.content || '',
-    category: item.category,
-    tags: item.tags || [],
-    author: item.author || (t('blog.defaultAuthor') as string) || 'Tim CoreAsia',
-    read_time: item.read_time || item.readTime || 5,
-    featured_image: item.featured_image || item.featuredImage || null,
-    published_at: item.published_at || item.publishedAt || item.created_at || new Date().toISOString(),
-    created_at: item.created_at || item.publishedAt || item.published_at || new Date().toISOString(),
-})
-
-const staticArticle = getArticleBySlug(slug)
-
-const fetchArticleFromApi = async () => {
-    try {
-        const res = await $fetch<{ data: any }>(`${baseURL}/articles/${slug}`, {
-            timeout: 1800,
-        })
-        return res?.data || null
-    } catch {
-        return null
-    }
-}
-
-const fetchStaticArticleRefreshFromApi = async () => {
-    try {
-        const res = await $fetch<{ data: any[] | null }>(`${baseURL}/articles?per_page=50`, {
-            timeout: 1800,
-        })
-        return (res?.data || []).find((item) => item?.slug === slug) || null
-    } catch {
-        return null
-    }
-}
-
-const { data: articleData } = await useAsyncData(`article-${slug}`, async () => {
-    if (import.meta.server && staticArticle) {
-        return staticArticle
-    }
-
-    const apiArticle = await fetchArticleFromApi()
-    return apiArticle || staticArticle || null
-})
-
-const article = computed(() => (articleData.value ? toPublicArticle(articleData.value) : null))
-
-if (!article.value) {
-    throw createError({ statusCode: 404, message: 'Article not found' })
-}
-
-if (import.meta.client && staticArticle) {
-    onMounted(async () => {
-        const apiArticle = await fetchStaticArticleRefreshFromApi()
-        if (apiArticle) {
-            articleData.value = apiArticle
-        }
-    })
-}
-
-const articleCategoryKey = computed(() => normalizeCategoryKey(article.value?.category))
-
-useCoreSeo({
-    title: article.value.title,
-    description: article.value.description,
-    path: `/artikel/${slug}`,
-    ogType: 'article',
-    // featured_image datang dari admin console dengan ukuran bebas, jadi hanya
-    // dipakai kalau ada dan dibiarkan tanpa deklarasi dimensi. Artikel tanpa gambar
-    // jatuh ke kartu bawaan yang dimensinya sudah pasti.
-    image: article.value.featured_image || undefined,
-})
-
-useSchemaOrg([defineWebPage({ name: article.value.title, description: article.value.description })])
-
-useHead(() => ({
-    script: [
-        {
-            type: 'application/ld+json',
-            innerHTML: JSON.stringify({
-                '@context': 'https://schema.org',
-                '@type': 'Article',
-                headline: article.value?.title,
-                description: article.value?.description,
-                datePublished: article.value?.published_at || article.value?.publishedAt,
-                author: {
-                    '@type': 'Organization',
-                    name: COMPANY.name,
-                    url: siteOrigin.value,
-                },
-                publisher: {
-                    '@type': 'Organization',
-                    name: COMPANY.name,
-                    url: siteOrigin.value,
-                    logo: {
-                        '@type': 'ImageObject',
-                        url: `${siteOrigin.value}${BRAND_ASSETS.logo}`,
-                    },
-                },
-                mainEntityOfPage: `${siteOrigin.value}/artikel/${slug}`,
-                inLanguage: locale.value === 'en' ? 'en' : 'id',
-            }),
-        },
-    ],
-}))
-
-const fetchRelatedArticlesFromApi = async () => {
-    try {
-        const params = new URLSearchParams({ per_page: '6' })
-        if (articleCategoryKey.value) {
-            params.set('category', articleCategoryKey.value)
-        }
-
-        const res = await $fetch<{ data: PublicArticle[] }>(`${baseURL}/articles?${params.toString()}`, {
-            timeout: 1200,
-        })
-
-        return res?.data || []
-    } catch {
-        return []
-    }
-}
-
-const { data: relatedApiArticles } = await useAsyncData(
-    `article-related-${slug}`,
-    async () => {
-        if (import.meta.server && staticArticle) {
-            return []
-        }
-
-        return fetchRelatedArticlesFromApi()
-    },
-    {
-        default: () => [],
-    },
-)
-
-if (import.meta.client) {
-    onMounted(async () => {
-        if (!relatedApiArticles.value?.length) {
-            relatedApiArticles.value = await fetchRelatedArticlesFromApi()
-        }
-    })
-}
-
-const dateLocale = computed(() => (locale.value === 'en' ? 'en-US' : 'id-ID'))
-
-const formatDate = (value: string) =>
-    new Date(value).toLocaleDateString(dateLocale.value, {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-    })
-
-const categoryLabel = (key: string) => {
-    const cats = t('blog.categories') as Record<string, string>
-    return cats[key] || cats.business || key
-}
-
-const getPublishDate = (item: any) => item.published_at || item.publishedAt || item.created_at
-const getReadTime = (item: any) => item.read_time || item.readTime || 5
-const getTags = (item: any) => item.tags || []
-
-const relatedArticles = computed(() => {
-    const seen = new Set<string>([slug])
-    const merged: PublicArticle[] = []
-
-    for (const source of [relatedApiArticles.value || [], ARTICLES.map(toPublicArticle)]) {
-        for (const item of source as PublicArticle[]) {
-            const articleItem = toPublicArticle(item)
-            if (!articleItem.slug || seen.has(articleItem.slug)) continue
-            seen.add(articleItem.slug)
-            merged.push(articleItem)
-        }
-    }
-
-    return merged
-        .sort((left, right) => {
-            const leftScore = normalizeCategoryKey(left.category) === articleCategoryKey.value ? 0 : 1
-            const rightScore = normalizeCategoryKey(right.category) === articleCategoryKey.value ? 0 : 1
-
-            if (leftScore !== rightScore) {
-                return leftScore - rightScore
-            }
-
-            const leftDate = new Date(left.published_at || left.created_at).getTime()
-            const rightDate = new Date(right.published_at || right.created_at).getTime()
-            return rightDate - leftDate
-        })
-        .slice(0, 3)
-})
+const { data: articleResponse, error: articleError } = await useFetch<{ data: PublicArticle }>(`/api/public/articles/${encodeURIComponent(slug)}`, { key: `public-article-${slug}` })
+if (articleError.value || !articleResponse.value?.data) throw createError({ statusCode: 404, message: 'Artikel tidak ditemukan' })
+const article = computed(() => articleResponse.value!.data)
+const cover = computed(() => resolveArticleCover(article.value))
+useCoreSeo(() => ({ title: article.value.title, description: article.value.description, path: `/artikel/${slug}`, ogType: 'article', image: cover.value.src, imageAlt: cover.value.alt, ogImageWidth: cover.value.width, ogImageHeight: cover.value.height }))
+useHead(() => ({ script: [{ type: 'application/ld+json', innerHTML: stringifyJsonLd({
+  '@context': 'https://schema.org', '@type': 'Article', '@id': `${siteOrigin.value}/artikel/${slug}#article`,
+  headline: article.value.title, description: article.value.description,
+  datePublished: article.value.published_at, dateModified: article.value.updated_at,
+  image: [new URL(cover.value.src, siteOrigin.value).href],
+  author: { '@type': 'Organization', name: article.value.author, url: siteOrigin.value },
+  publisher: { '@type': 'Organization', name: COMPANY.name, url: siteOrigin.value, logo: { '@type': 'ImageObject', url: `${siteOrigin.value}${BRAND_ASSETS.logo}` } },
+  mainEntityOfPage: `${siteOrigin.value}/artikel/${slug}`, inLanguage: 'id-ID',
+}) }] }))
+useSeoMeta({ articlePublishedTime: () => article.value.published_at, articleModifiedTime: () => article.value.updated_at })
+const { data: catalogResponse } = await useFetch<{ data: PublicArticle[] }>('/api/public/articles', { key: 'public-article-catalog', default: () => ({ data: [] }) })
+const relatedArticles = computed(() => [...(catalogResponse.value?.data || [])].filter(item => item.slug !== slug).sort((a, b) => Number(articleCategory(a.category) !== articleCategory(article.value.category)) - Number(articleCategory(b.category) !== articleCategory(article.value.category)) || Date.parse(b.published_at) - Date.parse(a.published_at)).slice(0, 3))
+const formatDate = (value: string) => new Date(value).toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Asia/Jakarta' })
+const categoryLabel = (key: string) => (t('blog.categories') as Record<string, string>)[articleCategory(key)] || key
+const getPublishDate = (item: PublicArticle) => item.published_at
+const getReadTime = (item: PublicArticle) => item.read_time
+const getTags = (item: PublicArticle) => item.tags
 
 const productSpotlights = computed<ProductSpotlight[]>(() => {
-    const products = ((t('home.products.items') as Array<Record<string, any>>) || []).slice(0, 3)
+    const products = ((t('home.products.items') as Array<{ name: string; tagline: string; description: string; heroDesc?: string; to: string; badge?: string; ctaLabel?: string; features?: string[] }>) || []).slice(0, 3)
 
     return products.map((product, index) => ({
         name: product.name,
@@ -269,7 +74,7 @@ const productSpotlights = computed<ProductSpotlight[]>(() => {
 })
 
 const productRoadmap = computed<ProductRoadmapItem[]>(() => {
-    const nextProducts = ((t('home.products.comingSoon') as Array<Record<string, any>>) || []).slice(0, 2)
+    const nextProducts = ((t('home.products.comingSoon') as Array<{ name: string; tagline: string; description: string; heroDesc?: string; to: string; badge?: string; ctaLabel?: string; features?: string[] }>) || []).slice(0, 2)
 
     return nextProducts.map((product) => ({
         name: product.name,
@@ -342,20 +147,8 @@ const goToArticles = async () => {
         <section class="ca-section pt-0">
             <div class="ca-container">
                 <article ref="articleContent" class="mx-auto max-w-4xl">
-                    <NuxtImg
-                        v-if="article.featured_image"
-                        :src="article.featured_image"
-                        :alt="article.title"
-                        loading="lazy"
-                        format="webp"
-                        class="mb-8 aspect-[16/9] w-full rounded-[1.75rem] object-cover shadow-[0_24px_60px_rgba(15,23,42,0.08)]"
-                    />
-                    <ArticleCoverPlaceholder
-                        v-else
-                        :title="article.title"
-                        :category="categoryLabel(article.category)"
-                        class="mb-8 rounded-[1.75rem]"
-                    />
+                    <figure class="mb-8"><ArticleCover :slug="article.slug" :title="article.title" :image="article.featured_image" priority class="rounded-[1.75rem]" /><figcaption v-if="cover.generated" class="mt-2 text-xs text-[var(--ca-subtle)]">Ilustrasi untuk artikel, bukan tangkapan layar produk.</figcaption></figure>
+                    <p class="mb-5 text-sm text-[var(--ca-muted)]">Oleh {{ article.author }}<span v-if="article.updated_at !== article.published_at"> · Diperbarui {{ formatDate(article.updated_at) }}</span></p>
                     <ArticleContentRenderer :content="article.content" />
                 </article>
             </div>
@@ -382,20 +175,7 @@ const goToArticles = async () => {
                             class="group flex flex-col overflow-hidden rounded-2xl border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] transition duration-200 hover:-translate-y-0.5 hover:border-[color:var(--ca-gold-border)] hover:shadow-[var(--ca-card-soft-shadow)]"
                         >
                             <div class="relative overflow-hidden">
-                                <NuxtImg
-                                    v-if="item.featured_image"
-                                    :src="item.featured_image"
-                                    :alt="item.title"
-                                    loading="lazy"
-                                    format="webp"
-                                    class="aspect-[16/10] w-full object-cover transition duration-300 group-hover:scale-[1.03]"
-                                />
-                                <ArticleCoverPlaceholder
-                                    v-else
-                                    :title="item.title"
-                                    :category="categoryLabel(item.category)"
-                                    class="aspect-[16/10] w-full"
-                                />
+                                <ArticleCover :slug="item.slug" :title="item.title" :image="item.featured_image" class="transition group-hover:scale-[1.02]" />
                                 <span
                                     class="absolute left-3 top-3 rounded-md bg-[rgba(8,12,22,0.82)] px-2 py-0.5 text-[0.65rem] font-bold uppercase tracking-[0.1em] text-[var(--ca-gold-text)] backdrop-blur-sm"
                                 >

@@ -1,3 +1,4 @@
+import { readPublicConsent } from '~/utils/public-consent'
 export interface LeadAttribution {
   utm_source: string
   utm_medium: string
@@ -101,6 +102,7 @@ const attributionFromCurrentPage = () => {
     'fbclid',
   ]) {
     const value = query.get(key)
+    if ((key === 'gclid' || key === 'fbclid') && !readPublicConsent().ads) continue
     if (value) landingUrl.searchParams.set(key, value)
   }
 
@@ -110,8 +112,8 @@ const attributionFromCurrentPage = () => {
     utm_campaign: truncate(query.get('utm_campaign'), ATTRIBUTION_VALUE_MAX_LENGTH),
     utm_term: truncate(query.get('utm_term'), ATTRIBUTION_VALUE_MAX_LENGTH),
     utm_content: truncate(query.get('utm_content'), ATTRIBUTION_VALUE_MAX_LENGTH),
-    gclid: truncate(query.get('gclid'), CLICK_ID_MAX_LENGTH),
-    fbclid: truncate(query.get('fbclid'), CLICK_ID_MAX_LENGTH),
+    gclid: readPublicConsent().ads ? truncate(query.get('gclid'), CLICK_ID_MAX_LENGTH) : '',
+    fbclid: readPublicConsent().ads ? truncate(query.get('fbclid'), CLICK_ID_MAX_LENGTH) : '',
     // Keep only known attribution parameters in the landing URL. This preserves
     // ad context without persisting unrelated or potentially sensitive queries.
     landing_page: truncate(landingUrl.toString(), URL_VALUE_MAX_LENGTH),
@@ -138,7 +140,7 @@ export const useLeadAttribution = () => {
    * never erases the click ID needed for Google/Meta conversion attribution.
    */
   const captureAttribution = (): LeadAttribution | null => {
-    if (import.meta.server) return null
+    if (import.meta.server || !(readPublicConsent().analytics || readPublicConsent().ads)) return null
 
     const existing = readStoredAttribution()
     const current = attributionFromCurrentPage()
@@ -155,7 +157,7 @@ export const useLeadAttribution = () => {
   }
 
   const getAttribution = (): LeadAttribution | null => {
-    if (import.meta.server) return null
+    if (import.meta.server || !(readPublicConsent().analytics || readPublicConsent().ads)) return null
     return captureAttribution()
   }
 

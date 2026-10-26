@@ -13,7 +13,7 @@
     </svg>
 
     <NuxtLayout>
-      <NuxtPage />
+      <NuxtPage :page-key="route => route.path.startsWith('/console') ? route.path : `${route.path}:${route.query.lang || 'id'}`" />
     </NuxtLayout>
   </div>
 </template>

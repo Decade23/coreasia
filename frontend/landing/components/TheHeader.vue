@@ -1,328 +1,426 @@
 <script setup lang="ts">
+import { trapDialogFocus } from '~/utils/dialog-focus'
 import { COMPANY } from '~/utils/constants'
-import { useWhatsAppLink } from '~/composables/useWhatsAppLink'
-import { getNavItems } from '~/utils/navigation'
-import { useCoreI18n } from '~/composables/useCoreI18n'
-import { useAnalytics } from '~/composables/useAnalytics'
-import { useMagnetic } from '~/composables/useMagnetic'
+import { getPublicNavigation, type PublicNavItem } from '~/utils/navigation'
 import { useWindowScroll } from '@vueuse/core'
+import { useMagnetic } from '~/composables/useMagnetic'
 
 const route = useRoute()
 const { locale, t } = useCoreI18n()
-const { trackWhatsAppClick, trackCTAClick } = useAnalytics()
-
+const { trackCTAClick, trackWhatsAppClick } = useAnalytics()
 const { buildContextualUrl } = useWhatsAppLink()
-
-const waUrl = computed(() => {
-    const greeting =
-        locale.value === 'en'
-            ? `Hi CoreAsia, I'd like to learn more about your products and services.`
-            : `Halo CoreAsia, saya ingin mengetahui lebih lanjut tentang produk dan layanan Anda.`
-    return buildContextualUrl(greeting)
-})
+const navigation = computed(() => getPublicNavigation(locale.value))
+const groups = computed(() => navigation.value.filter((item) => item.children))
+const text = (id: string, en: string) => (locale.value === 'en' ? en : id)
+const link = (path: string) => (locale.value === 'en' ? `${path}${path.includes('?') ? '&' : '?'}lang=en` : path)
+const waUrl = computed(() =>
+    buildContextualUrl(
+        text(
+            'Halo CoreAsia, saya ingin berdiskusi tentang website atau aplikasi.',
+            'Hi CoreAsia, I would like to discuss a website or application.',
+        ),
+    ),
+)
+const iconMap: Record<string, string> = {
+    web: 'lucide:panels-top-left',
+    code: 'lucide:code-2',
+    chart: 'lucide:chart-no-axes-combined',
+    shield: 'lucide:shield-check',
+    clinic: 'lucide:hospital',
+    box: 'lucide:package',
+    people: 'lucide:users',
+    download: 'lucide:download',
+    drive: 'lucide:hard-drive',
+    file: 'lucide:files',
+    hand: 'lucide:handshake',
+    chat: 'lucide:message-circle',
+}
+const header = ref<HTMLElement | null>(null)
+const mobileMenu = ref<HTMLDialogElement | null>(null)
+const mobileTrigger = ref<HTMLButtonElement | null>(null)
+const contactBtnRef = ref<HTMLElement | null>(null)
+const { style: magneticStyle } = useMagnetic(contactBtnRef)
+const openPanel = ref<string | null>(null)
+const mobileOpen = ref(false)
+const mobileGroup = ref<string | null>(null)
+const visible = ref(true)
 const { y } = useWindowScroll()
-
-const isMobileMenuOpen = ref(false)
-
-// Smart Scroll & Dynamic Style Logic
-const isHeaderVisible = ref(true)
-const lastScrollY = ref(0)
-const isAtTop = ref(true)
-
-watch(y, (newY) => {
-    isAtTop.value = newY <= 50
-
-    // Always show at very top to avoid flickering or hidden nav on load
-    if (newY <= 0) {
-        isHeaderVisible.value = true
-        lastScrollY.value = 0
-        return
-    }
-
-    // Determine direction
-    const direction = newY > lastScrollY.value ? 'down' : 'up'
-
-    // Threshold to hide: scroll down > 100px
-    if (direction === 'down' && newY > 100) {
-        isHeaderVisible.value = false
-    } else if (direction === 'up') {
-        isHeaderVisible.value = true
-    }
-
-    lastScrollY.value = newY
+let previousY = 0
+let previousOverflow = ''
+const active = (item: PublicNavItem) =>
+    item.to
+        ? route.path === item.to || route.path.startsWith(`${item.to}/`)
+        : item.paths?.some((path) => route.path === path || route.path.startsWith(`${path}/`))
+watch(y, (value) => {
+    visible.value = value <= 100 || value < previousY || !!openPanel.value || mobileOpen.value
+    previousY = value
 })
-
-const headerClass = computed(() => {
-    // Base classes - ensure header is always visible
-    // Compact height (h-14) on mobile, standard (h-16) on desktop
-    let classes = 'fixed top-0 left-0 right-0 z-50 w-full h-14 lg:h-16 transition-transform duration-300'
-
-    // Smart Scroll: Hide header on scroll down, unless menu is open
-    if (!isHeaderVisible.value && !isMobileMenuOpen.value) {
-        classes += ' -translate-y-full'
-    } else {
-        classes += ' translate-y-0'
-    }
-
-    // Dynamic styling based on scroll position
-    if (isAtTop.value && !isMobileMenuOpen.value) {
-        // Transparent at top (immersive)
-        classes += ' bg-transparent border-b border-transparent'
-    } else {
-        // Glassmorphism when scrolled or menu open
-        classes += ' ca-glass-header backdrop-blur-xl'
-    }
-
-    return classes
-})
-
-const navItems = computed(() => getNavItems(locale.value))
-
-const isActive = (path: string) => {
-    if (path.includes('#')) {
-        const [targetPath, targetHash] = path.split('#')
-        return route.path === (targetPath || '/') && route.hash === `#${targetHash}`
-    }
-
-    if (path === '/') {
-        return route.path === '/'
-    }
-
-    return route.path === path || route.path.startsWith(`${path}/`)
+const closePanel = (restoreFocus = false) => {
+    const key = openPanel.value
+    openPanel.value = null
+    if (restoreFocus && key) header.value?.querySelector<HTMLButtonElement>(`[data-panel="${key}"]`)?.focus()
 }
-
-const setBodyLock = (locked: boolean) => {
-    if (!process.client) {
-        return
-    }
-    document.body.style.overflow = locked ? 'hidden' : ''
-}
-
-const toggleMobileMenu = () => {
-    isMobileMenuOpen.value = !isMobileMenuOpen.value
-}
-
-const closeMobileMenu = () => {
-    isMobileMenuOpen.value = false
-}
-
-const handleMobileConsultClick = () => {
-    trackCTAClick('mobile_konsultasi', '/contact')
-    closeMobileMenu()
-}
-
-const handleMobileWhatsAppClick = () => {
-    trackWhatsAppClick('mobile_menu')
-    closeMobileMenu()
-}
-
-const handleEscape = (event: KeyboardEvent) => {
-    if (event.key === 'Escape' && isMobileMenuOpen.value) {
-        closeMobileMenu()
+const togglePanel = async (key: string, focus = false) => {
+    openPanel.value = openPanel.value === key && !focus ? null : key
+    visible.value = true
+    if (focus) {
+        await nextTick()
+        header.value?.querySelector<HTMLAnchorElement>(`#nh-panel-${key} a`)?.focus()
     }
 }
-
+const afterMobileClose = () => {
+    if (!mobileOpen.value) return
+    mobileOpen.value = false
+    document.body.style.overflow = previousOverflow
+    mobileTrigger.value?.focus()
+}
+const closeMobile = () => mobileMenu.value?.close()
+const mobileConsult = () => {
+  trackCTAClick('mobile_konsultasi', '/contact')
+  closeMobile()
+}
+const openMobile = async () => {
+    closePanel()
+    previousOverflow = document.body.style.overflow
+    mobileOpen.value = true
+    visible.value = true
+    await nextTick()
+    mobileMenu.value?.showModal()
+    document.body.style.overflow = 'hidden'
+    mobileMenu.value?.querySelector<HTMLButtonElement>('.nh-close')?.focus()
+}
+const outside = (event: PointerEvent) => {
+    if (!header.value?.contains(event.target as Node)) closePanel()
+}
+const focusOut = () => {
+    setTimeout(() => {
+        if (!header.value?.contains(document.activeElement)) closePanel()
+    }, 0)
+}
+const resize = () => {
+    if (innerWidth >= 1200) closeMobile()
+    else closePanel()
+}
 watch(
     () => route.fullPath,
     () => {
-        closeMobileMenu()
+        closePanel()
+        closeMobile()
     },
 )
-
-watch(isMobileMenuOpen, (value: boolean) => {
-    setBodyLock(value)
-})
-
 onMounted(() => {
-    window.addEventListener('keydown', handleEscape)
+    document.addEventListener('pointerdown', outside)
+    window.addEventListener('resize', resize)
 })
-
-onUnmounted(() => {
-    window.removeEventListener('keydown', handleEscape)
-    setBodyLock(false)
+onBeforeUnmount(() => {
+    document.removeEventListener('pointerdown', outside)
+    window.removeEventListener('resize', resize)
+    if (mobileOpen.value) document.body.style.overflow = previousOverflow
 })
-
-// Magnetic Button implementation
-const contactBtnRef = ref(null)
-const { style: magneticStyle } = useMagnetic(contactBtnRef, 0.3)
-
-const navIconMap: Record<string, string> = {
-    '/': 'lucide:home',
-    '/products': 'lucide:box',
-    '/layanan/jasa-pembuatan-website': 'lucide:code-2',
-    '/partnerships': 'lucide:handshake',
-    '/pricing': 'lucide:tag',
-    '/artikel': 'lucide:pen-tool',
-    '/about': 'lucide:users',
-}
 </script>
 
 <template>
-    <header :class="headerClass">
-        <div class="ca-container h-full">
-            <div class="flex h-full items-center justify-between gap-3">
-                <NuxtLink to="/" class="group inline-flex items-center gap-2 lg:gap-3" :aria-label="t('nav.home')">
-                    <span class="inline-flex h-9 w-9 items-center justify-center lg:h-10 lg:w-10">
-                        <NuxtImg
-                            src="/logo.svg"
-                            alt="CoreAsia logo"
-                            width="36"
-                            height="36"
-                            loading="eager"
-                            decoding="async"
-                            class="h-8 w-8 object-contain lg:h-9 lg:w-9"
-                        />
-                    </span>
-                    <span class="flex flex-col leading-none">
-                        <span class="font-display text-base font-bold tracking-tight text-[var(--ca-text)] lg:text-lg">
-                            {{ COMPANY.shortName }}
-                        </span>
-                        <span
-                            class="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--ca-muted)]"
-                        >
-                            {{ t('components.brand.tagline') }}
-                        </span>
+    <header
+        id="nh-root"
+        ref="header"
+        :class="{ 'nh-out': !visible, 'nh-open': !!openPanel || mobileOpen, 'nh-scrolled': y > 15 }"
+        @focusout="focusOut"
+        @keydown.esc="closePanel(true)"
+    >
+        <div class="nh-bar">
+            <div class="nh-inner">
+                <NuxtLink
+                    :to="link('/')"
+                    class="nh-brand"
+                    :aria-label="text('CoreAsia, kembali ke beranda', 'CoreAsia, home')"
+                >
+                    <img src="/logo.svg" alt="" width="36" height="36" >
+                    <span>
+                        <span class="nh-brand-name">{{ COMPANY.shortName }}</span>
+                        <small class="nh-brand-tag">{{ t('components.brand.tagline') }}</small>
                     </span>
                 </NuxtLink>
-
-                <nav :aria-label="t('components.header.ariaLabel')" class="hidden items-center gap-0.5 lg:flex xl:gap-1">
-                    <NuxtLink
-                        v-for="item in navItems"
-                        :key="item.to"
-                        :to="item.to"
-                        :class="[
-                            'whitespace-nowrap rounded-lg px-2 py-2 text-sm font-semibold transition-colors xl:px-3',
-                            isActive(item.to)
-                                ? 'bg-[var(--ca-kicker-bg)] text-brand-primary'
-                                : 'text-[var(--ca-muted)] hover:bg-[var(--ca-panel-bg-strong)] hover:text-[var(--ca-text)]',
-                        ]"
-                    >
-                        {{ item.label }}
-                    </NuxtLink>
+                <nav class="nh-desktop" :aria-label="text('Navigasi utama', 'Main navigation')">
+                    <ul class="contents list-none p-0 m-0">
+                        <li v-for="item in navigation" :key="item.key" class="nh-nav-item">
+                            <button
+                                v-if="item.children"
+                                type="button"
+                                class="nh-trigger"
+                                :data-panel="item.key"
+                                :data-active="!!active(item)"
+                                :aria-expanded="openPanel === item.key"
+                                :aria-controls="`nh-panel-${item.key}`"
+                                @click="togglePanel(item.key)"
+                                @keydown.down.prevent="togglePanel(item.key, true)"
+                            >
+                                {{ item.label }}
+                                <Icon name="lucide:chevron-down" class="nh-icon nh-chevron" />
+                            </button>
+                            <NuxtLink
+                                v-else
+                                :to="link(item.to!)"
+                                class="nh-direct"
+                                :aria-current="active(item) ? 'page' : undefined"
+                                @click="closePanel()"
+                            >
+                                {{ item.label }}
+                            </NuxtLink>
+                        </li>
+                    </ul>
                 </nav>
-
-                <div class="hidden items-center gap-1.5 lg:flex xl:gap-2">
-                    <LanguageSwitcher />
-                    <ThemeToggle />
-                    <a
-                        :href="waUrl"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="ca-btn-secondary !px-2.5 !py-2 xl:!px-3"
-                        :aria-label="t('common.whatsapp')"
-                        @click="trackWhatsAppClick('header')"
-                    >
-                        <Icon name="lucide:message-circle" class="h-4 w-4" />
-                        <span class="hidden xl:inline">{{ t('common.whatsapp') }}</span>
-                    </a>
+                <div class="nh-actions">
+                    <div class="nh-tools">
+                        <LanguageSwitcher />
+                        <ThemeToggle />
+                        <a
+                            :href="waUrl"
+                            class="nh-chat"
+                            data-analytics-ignore="true"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label="WhatsApp"
+                            @click="trackWhatsAppClick('header')"
+                        >
+                            <Icon name="lucide:message-circle" class="h-4 w-4" />
+                        </a>
+                    </div>
                     <NuxtLink
                         ref="contactBtnRef"
-                        to="/contact"
-                        class="ca-btn-primary !px-3 !py-2 xl:!px-4"
+                        :to="link('/contact')"
+                        class="ca-btn-primary nh-primary"
+                        data-analytics-ignore="true"
                         :style="magneticStyle"
                         @click="trackCTAClick('header_konsultasi', '/contact')"
                     >
                         {{ t('components.header.ctaText') }}
                     </NuxtLink>
+                    <button
+                        ref="mobileTrigger"
+                        type="button"
+                        class="nh-mobile-trigger"
+                        aria-haspopup="dialog"
+                        aria-controls="nh-mobile-dialog"
+                        :aria-expanded="mobileOpen"
+                        :aria-label="text('Buka navigasi', 'Open navigation')"
+                        @click="openMobile"
+                    >
+                        <Icon name="lucide:menu" class="nh-icon" />
+                    </button>
                 </div>
-
-                <button
-                    type="button"
-                    class="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-[color:var(--ca-border)] text-[var(--ca-muted)] transition hover:bg-[var(--ca-panel-bg-strong)] hover:text-[var(--ca-text)] lg:hidden"
-                    :aria-expanded="isMobileMenuOpen"
-                    aria-controls="mobile-nav"
-                    :aria-label="
-                        isMobileMenuOpen
-                            ? t('components.header.mobileMenuAriaClose')
-                            : t('components.header.mobileMenuAriaOpen')
-                    "
-                    @click="toggleMobileMenu"
-                >
-                    <Icon :name="isMobileMenuOpen ? 'lucide:x' : 'lucide:menu'" class="h-5 w-5" />
-                </button>
             </div>
         </div>
 
-        <Transition
-            enter-active-class="transition duration-250 ease-out"
-            enter-from-class="opacity-0 translate-y-[-8px]"
-            enter-to-class="opacity-100 translate-y-0"
-            leave-active-class="transition duration-150 ease-in"
-            leave-from-class="opacity-100 translate-y-0"
-            leave-to-class="opacity-0 translate-y-[-8px]"
+        <div
+            v-for="group in groups"
+            :id="`nh-panel-${group.key}`"
+            :key="group.key"
+            class="nh-dropdown"
+            :hidden="openPanel !== group.key"
         >
-            <div
-                v-if="isMobileMenuOpen"
-                id="mobile-nav"
-                class="ca-glass-drawer max-h-[calc(100vh-3.5rem)] overflow-y-auto lg:hidden"
-            >
-                <div class="ca-container py-4">
-                    <!-- Nav links -->
-                    <nav class="space-y-0.5" aria-label="Mobile Navigation">
-                        <NuxtLink
-                            v-for="item in navItems"
-                            :key="`mobile-${item.to}`"
-                            :to="item.to"
-                            class="group flex items-center gap-3 rounded-xl px-3 py-3 transition-colors"
-                            :class="
-                                isActive(item.to)
-                                    ? 'bg-brand-primary/8 text-brand-primary'
-                                    : 'text-[var(--ca-text)] hover:bg-[var(--ca-panel-bg-strong)]'
-                            "
-                            @click="closeMobileMenu"
-                        >
-                            <span
-                                class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg transition-colors"
-                                :class="
-                                    isActive(item.to)
-                                        ? 'bg-brand-primary/12 text-brand-primary'
-                                        : 'bg-[var(--ca-panel-bg-strong)] text-[var(--ca-muted)]'
-                                "
+            <div class="nh-dropdown-grid">
+                <div
+                    v-for="(items, i) in [
+                        group.children!.slice(0, group.key === 'tentang' ? 2 : 3),
+                        group.children!.slice(group.key === 'tentang' ? 2 : 3),
+                    ]"
+                    :key="i"
+                    class="nh-drop-column"
+                >
+                    <span class="nh-drop-label">
+                        {{
+                            group.key === 'produk'
+                                ? i
+                                    ? text('Alat harian', 'Everyday tools')
+                                    : text('Untuk bisnis', 'For business')
+                                : group.key === 'tentang'
+                                  ? i
+                                      ? text('Mulai percakapan', 'Start a conversation')
+                                      : text('Kenali CoreAsia', 'Meet CoreAsia')
+                                  : i
+                                    ? text('Kebutuhan operasional', 'Operational needs')
+                                    : text('Website & aplikasi', 'Websites & applications')
+                        }}
+                    </span>
+                    <NuxtLink
+                        v-for="item in items"
+                        :key="item.to"
+                        :to="link(item.to)"
+                        class="nh-drop-link"
+                        :aria-current="route.path === item.to ? 'page' : undefined"
+                        @click="closePanel()"
+                    >
+                        <span class="nh-link-icon"><Icon :name="iconMap[item.icon]!" class="nh-icon" /></span>
+                        <span>
+                            <strong>
+                                {{ item.label }}
+                                <span v-if="item.soon" class="nh-badge">{{ text('Disiapkan', 'Coming soon') }}</span>
+                            </strong>
+                            <small>{{ item.description }}</small>
+                        </span>
+                    </NuxtLink>
+                </div>
+                <aside class="nh-drop-aside">
+                    <span class="nh-eyebrow">{{ text('Mulai dari kebutuhanmu', 'Start with your needs') }}</span>
+                    <h3>
+                        {{
+                            group.key === 'produk'
+                                ? text('Ada yang siap kamu gunakan.', 'Find a tool you can use.')
+                                : text('Apa yang ingin dibuat lebih mudah?', 'What would you like to make easier?')
+                        }}
+                    </h3>
+                    <p>
+                        {{
+                            group.key === 'produk'
+                                ? text(
+                                      'Lihat produk yang sesuai sebelum memutuskan membuat sistem baru.',
+                                      'Explore the products before deciding to build a new system.',
+                                  )
+                                : text(
+                                      'Ceritakan alur kerjamu. Kita bahas kebutuhan yang paling penting lebih dulu.',
+                                      'Tell us about your workflow. We can start with what matters most.',
+                                  )
+                        }}
+                    </p>
+                    <NuxtLink :to="link(group.key === 'produk' ? '/products' : '/contact')" @click="closePanel()">
+                        {{
+                            group.key === 'produk'
+                                ? text('Lihat semua produk', 'Explore all products')
+                                : text('Diskusikan kebutuhan', 'Discuss your needs')
+                        }}
+                        <Icon name="lucide:arrow-right" class="nh-icon" />
+                    </NuxtLink>
+                </aside>
+            </div>
+            <div class="nh-drop-bottom">
+                <span>{{ t('components.brand.tagline') }}</span>
+                <NuxtLink
+                    :to="
+                        link(
+                            group.key === 'produk'
+                                ? '/products'
+                                : group.key === 'tentang'
+                                  ? '/about'
+                                  : '/products/build',
+                        )
+                    "
+                    @click="closePanel()"
+                >
+                    {{
+                        group.key === 'produk'
+                            ? text('Semua produk', 'All products')
+                            : group.key === 'tentang'
+                              ? text('Tentang kami', 'About us')
+                              : text('Cara kami bekerja', 'How we work')
+                    }}
+                    <Icon name="lucide:arrow-up-right" class="nh-icon" />
+                </NuxtLink>
+            </div>
+        </div>
+
+        <dialog
+            id="nh-mobile-dialog"
+            ref="mobileMenu"
+            class="nh-dialog"
+            :aria-label="text('Navigasi CoreAsia', 'CoreAsia navigation')"
+            @keydown.tab="trapDialogFocus"
+            @close="afterMobileClose"
+            @click="$event.target === mobileMenu && closeMobile()"
+        >
+            <div class="nh-sheet">
+                <div class="nh-sheet-head">
+                    <NuxtLink :to="link('/')" class="nh-sheet-brand" @click="closeMobile()">
+                        <img src="/logo.svg" alt="" width="31" height="31" >
+                        CoreAsia
+                    </NuxtLink>
+                    <button
+                        type="button"
+                        class="nh-close"
+                        :aria-label="text('Tutup navigasi', 'Close navigation')"
+                        @click="closeMobile"
+                    >
+                        <Icon name="lucide:x" class="nh-icon" />
+                    </button>
+                </div>
+                <div class="nh-sheet-content">
+                    <p class="nh-sheet-intro">{{ text('Temukan yang kamu butuhkan', 'Find what you need') }}</p>
+                    <nav :aria-label="text('Navigasi mobile', 'Mobile navigation')">
+                        <template v-for="item in navigation" :key="item.key">
+                            <div v-if="item.children" class="nh-sheet-details">
+                                <button
+                                    type="button"
+                                    class="nh-sheet-summary"
+                                    :aria-expanded="mobileGroup === item.key"
+                                    :aria-controls="`nh-mobile-${item.key}`"
+                                    @click="mobileGroup = mobileGroup === item.key ? null : item.key"
+                                >
+                                    {{ item.label }}
+                                    <Icon name="lucide:chevron-down" class="nh-icon" />
+                                </button>
+                                <div
+                                    :id="`nh-mobile-${item.key}`"
+                                    class="nh-sheet-links"
+                                    :hidden="mobileGroup !== item.key"
+                                >
+                                    <NuxtLink
+                                        v-for="child in item.children"
+                                        :key="child.to"
+                                        :to="link(child.to)"
+                                        :aria-current="route.path === child.to ? 'page' : undefined"
+                                        @click="closeMobile()"
+                                    >
+                                        <Icon :name="iconMap[child.icon]!" class="nh-icon" />
+                                        <span>
+                                            {{ child.label }}
+                                            <span v-if="child.soon" class="nh-badge">
+                                                {{ text('Disiapkan', 'Coming soon') }}
+                                            </span>
+                                            <small>{{ child.description }}</small>
+                                        </span>
+                                    </NuxtLink>
+                                </div>
+                            </div>
+                            <NuxtLink
+                                v-else
+                                :to="link(item.to!)"
+                                class="nh-sheet-direct"
+                                :aria-current="active(item) ? 'page' : undefined"
+                                @click="closeMobile()"
                             >
-                                <Icon :name="navIconMap[item.to] || 'lucide:circle'" class="h-4 w-4" />
-                            </span>
-                            <span class="flex-1 text-[0.9375rem] font-semibold">{{ item.label }}</span>
-                            <Icon
-                                name="lucide:chevron-right"
-                                class="h-3.5 w-3.5 opacity-25 transition-opacity group-hover:opacity-50"
-                            />
-                        </NuxtLink>
+                                {{ item.label }}
+                                <Icon name="lucide:arrow-up-right" class="nh-icon" />
+                            </NuxtLink>
+                        </template>
                     </nav>
-
-                    <!-- Divider -->
-                    <div class="my-3 h-px bg-[var(--ca-border)]" />
-
-                    <!-- CTA actions -->
-                    <div class="flex flex-col gap-2">
-                        <NuxtLink to="/contact" class="ca-btn-primary w-full" @click="handleMobileConsultClick">
-                            {{ t('components.header.ctaText') }}
-                        </NuxtLink>
+                </div>
+                <div class="nh-sheet-footer">
+                    <NuxtLink
+                        :to="link('/contact')"
+                        class="ca-btn-primary nh-mobile-cta"
+                        data-analytics-ignore="true"
+                        @click="mobileConsult"
+                    >
+                        {{ text('Diskusikan kebutuhan', 'Discuss your needs') }}
+                    </NuxtLink>
+                    <div class="nh-sheet-meta">
                         <a
                             :href="waUrl"
+                            class="nh-sheet-wa"
+                            data-analytics-ignore="true"
                             target="_blank"
                             rel="noopener noreferrer"
-                            class="ca-btn-secondary w-full"
-                            @click="handleMobileWhatsAppClick"
+                            @click="trackWhatsAppClick('mobile_menu')"
                         >
-                            <Icon name="lucide:message-circle" class="h-4 w-4" />
-                            {{ t('common.whatsapp') }}
+                            <Icon name="lucide:message-circle" class="nh-icon" />
+                            WhatsApp
                         </a>
-                    </div>
-
-                    <!-- Utility row -->
-                    <div class="mt-3 flex items-center justify-between">
-                        <div class="flex items-center gap-1.5">
-                            <LanguageSwitcher />
+                        <div class="nh-mobile-tools">
+                            <LanguageSwitcher :teleport-to="mobileMenu || 'body'" />
                             <ThemeToggle />
                         </div>
-                        <p class="text-right text-[0.7rem] leading-snug text-[var(--ca-subtle)]">
-                            {{ t('components.header.responseTime') }}
-                            <br />
-                            {{ t('components.header.businessHours') }}
-                        </p>
                     </div>
                 </div>
             </div>
-        </Transition>
+        </dialog>
     </header>
 </template>

@@ -113,6 +113,8 @@ export const BRAND_ASSETS = {
 export const STRUCTURED_SAME_AS = [LINKS.instagram] as const
 
 export const PRIMARY_SITE_LINKS = [
+    { name: 'Portofolio', path: '/portfolio' },
+    { name: 'Aplikasi Web Custom', path: '/layanan/jasa-pembuatan-aplikasi-web' },
     { name: 'Produk CoreAsia', path: '/products' },
     { name: 'Layanan Website', path: '/layanan/jasa-pembuatan-website' },
     { name: 'Pantau', path: '/products/pantau' },

@@ -1,7 +1,10 @@
+import { SERVICE_ARTICLES } from './service-articles'
+
 /**
  * Blog article data structure.
- * Articles are stored here as static data for now.
- * This will be replaced by API calls when the admin panel is ready.
+ * Authored public editorials shipped with the site. The public article adapter
+ * combines these with published CMS records. Remove a seed here to withdraw it
+ * from the fallback catalog; CMS drafts are never included.
  */
 
 export interface Article {
@@ -11,13 +14,15 @@ export interface Article {
   category: string
   readTime: number
   publishedAt: string
+  updatedAt?: string
   author: string
   content: string
   tags: string[]
 }
 
-// Seed articles — to be replaced by API later
+// Authored public articles, also available during gateway outages.
 export const ARTICLES: Article[] = [
+  ...SERVICE_ARTICLES,
   {
     slug: 'apa-itu-web-monitoring-dan-mengapa-bisnis-membutuhkannya',
     title: 'Apa Itu Web Monitoring dan Mengapa Bisnis Anda Membutuhkannya',
@@ -120,6 +125,7 @@ Di CoreAsia, kami tidak sekadar membangun software. Kami menjadi mitra teknologi
   },
   {
     slug: 'cara-meningkatkan-seo-website-bisnis',
+    updatedAt: '2026-10-27T00:00:00+07:00',
     title: 'Cara Meningkatkan SEO Website Bisnis: Panduan Praktis 2026',
     description: 'Panduan praktis untuk meningkatkan SEO website bisnis Anda di 2026. Dari technical SEO, on-page optimization, hingga content strategy.',
     category: 'seo',
@@ -139,7 +145,7 @@ Google menjadikan Core Web Vitals sebagai faktor ranking. Pastikan website Anda:
 - Tidak ada layout shift yang mengganggu (CLS)
 
 ### Mobile-First
-Lebih dari 70% pengguna internet Indonesia mengakses via mobile. Website Anda harus responsif dan nyaman digunakan di smartphone.
+Website perlu nyaman dibaca dan dioperasikan di smartphone. Periksa ukuran teks, tombol, formulir, dan susunan isi pada beberapa ukuran layar.
 
 ### SSL & Keamanan
 HTTPS bukan opsional — ini sudah menjadi standar. Website tanpa SSL akan ditandai "Not Secure" oleh browser.
@@ -167,10 +173,14 @@ Setiap gambar harus punya alt text yang deskriptif. Ini membantu SEO dan accessi
 Riset keyword yang sering dicari target audiens Anda, lalu buat konten yang menjawab pertanyaan mereka dengan lengkap.
 
 ### Update Konten Secara Berkala
-Konten yang up-to-date mendapat prioritas dari Google. Review dan update artikel Anda setidaknya setiap 6 bulan.
+Perbarui artikel ketika informasi, contoh, atau langkahnya berubah. Cantumkan tanggal perubahan yang sebenarnya. Mengganti tanggal saja tidak menambah manfaat bagi pembaca.
 
 ### Structured Data
-Implementasikan schema markup (FAQ, Article, Organization) untuk membantu Google memahami konten Anda dan menampilkan rich snippets.
+Gunakan data terstruktur yang sesuai isi halaman, seperti Article dan Organization. Tampilan khusus dan sitelinks tetap dipilih oleh Google, sehingga markup bukan jaminan peringkat atau bentuk hasil pencarian.
+
+## Rujukan dan langkah berikutnya
+
+Baca [panduan SEO Google](https://developers.google.com/search/docs/fundamentals/seo-starter-guide), [penjelasan sitelinks](https://developers.google.com/search/docs/appearance/sitelinks), dan [Core Web Vitals](https://developers.google.com/search/docs/appearance/core-web-vitals) untuk ketentuan dari sumbernya.
 
 ## Butuh Bantuan SEO?
 

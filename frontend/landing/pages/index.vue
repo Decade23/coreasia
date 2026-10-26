@@ -1,15 +1,16 @@
 <script setup lang="ts">
 import { BRAND_ASSETS, COMPANY, CONTACT, LINKS, PRIMARY_SITE_LINKS, STRUCTURED_SAME_AS } from '~/utils/constants'
+import type { CoreContent } from '~/utils/content'
 import { useCoreI18n } from '~/composables/useCoreI18n'
 import { useAnalytics } from '~/composables/useAnalytics'
 
-const { t } = useCoreI18n()
+const { t, locale } = useCoreI18n()
 const { trackWhatsAppClick, trackCTAClick } = useAnalytics()
 const { useReveal } = useScrollReveal()
 const siteOrigin = useSiteOrigin()
 
 const ctaSection = useReveal('scaleUp')
-const featuredProducts = computed(() => ((t('home.products.items') as Array<Record<string, any>>) || []).slice(0, 3))
+const featuredProducts = computed(() => ((t('home.products.items') as CoreContent['home']['products']['items']) || []).slice(0, 3))
 const showHeroScene = ref(false)
 
 const heroCardRefs = ref<HTMLElement[]>([])
@@ -166,18 +167,18 @@ useHead({
                 <ClientOnly>
                     <LazyThreeHeroScene v-if="showHeroScene" />
                     <div v-else class="absolute inset-0 z-0">
-                        <div class="ca-scene-grid absolute inset-0"></div>
+                        <div class="ca-scene-grid absolute inset-0"/>
                         <div
                             class="ca-scene-glow ca-light-soft-blend absolute left-1/2 top-1/2 h-[500px] w-[800px] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[100px]"
-                        ></div>
+                        />
                         <div class="ca-scene-base absolute inset-0 -z-10" />
                     </div>
                     <template #fallback>
                         <div class="absolute inset-0 z-0">
-                            <div class="ca-scene-grid absolute inset-0"></div>
+                            <div class="ca-scene-grid absolute inset-0"/>
                             <div
                                 class="ca-scene-glow ca-light-soft-blend absolute left-1/2 top-1/2 h-[500px] w-[800px] -translate-x-1/2 -translate-y-1/2 rounded-full blur-[100px]"
-                            ></div>
+                            />
                             <div class="ca-scene-base absolute inset-0 -z-10" />
                         </div>
                     </template>
@@ -305,8 +306,6 @@ useHead({
             </div>
         </section>
 
-        <HomeEcosystem />
-
         <!-- Services / Layanan -->
         <section id="layanan" class="ca-section pt-0">
             <div class="ca-container">
@@ -329,13 +328,15 @@ useHead({
                         </h3>
                         <p class="mt-2 text-sm leading-relaxed text-[var(--ca-muted)]">{{ item.description }}</p>
                         <span class="mt-3 inline-flex items-center gap-1 text-sm font-semibold ca-tone-gold">
-                            Pelajari
+                            {{ locale === 'en' ? 'Learn more' : 'Pelajari layanan' }}
                             <Icon name="lucide:arrow-right" class="h-4 w-4 transition group-hover:translate-x-0.5" />
                         </span>
                     </NuxtLink>
                 </div>
             </div>
         </section>
+
+        <HomeEcosystem />
 
         <section class="ca-section pt-0">
             <div class="ca-container">

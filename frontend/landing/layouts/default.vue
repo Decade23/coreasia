@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import '~/assets/css/public-header.css'
+import '~/assets/css/public-cards.css'
 import { computed } from 'vue'
 import {
   DEFAULT_THEME,
@@ -45,7 +47,7 @@ useHead(() => {
   const meta = [
     {
       name: 'theme-color',
-      content: theme.value === 'light' ? '#f6f1e8' : '#050814',
+      content: theme.value === 'light' ? '#ffffff' : '#050814',
     },
   ]
 
@@ -57,6 +59,7 @@ useHead(() => {
   }
 
   return {
+    bodyAttrs: { class: 'ca-public-page' },
     htmlAttrs: {
       lang: locale.value === 'en' ? 'en' : 'id',
       'data-theme': theme.value,
@@ -79,7 +82,7 @@ useHead(() => {
 
 <template>
   <div class="ca-page-shell relative min-h-screen overflow-hidden font-sans text-[var(--ca-text)]">
-    <GtmNoscript />
+
     <div class="pointer-events-none absolute inset-0 -z-10">
       <div class="absolute inset-0 ca-grid-bg opacity-[0.08]" />
       <div class="absolute -top-28 left-1/2 h-[30rem] w-[30rem] -translate-x-1/2 rounded-full bg-[var(--ca-orb-primary)] blur-[140px]" />
@@ -91,6 +94,7 @@ useHead(() => {
       <slot />
     </main>
     <TheFooter />
+    <PrivacyPreferences />
     <!--
       Hanya di layout publik. Layout console memakai layouts/console.vue, dan di sana
       tombol melayang justru menutupi tombol aksi sementara pengguna berbayar sudah
