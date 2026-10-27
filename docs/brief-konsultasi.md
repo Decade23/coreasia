@@ -21,6 +21,7 @@ tidak disentuh. Desain halaman lain, navigasi, dan animasi tetap dipakai.
 | C3 | Widget mobile tidak melebar; kegagalan chat tetap menyediakan WhatsApp | CDP 390 px dan abort SDK |
 | C4 | WhatsApp Business app dan API tetap bekerja bersama | Belum diuji pada nomor Business utama. PoC nomor tes: pesan masuk lulus; balasan ditolak Meta 131031 |
 | C5 | Balas pesan widget dari aplikasi WhatsApp | Belum dibuat/diuji: bridge tambahan, nomor API terpisah, template dan pemetaan konteks |
+| C6 | Alternatif WhatsApp Web terpisah: kirim, terima dan balas ke nomor pribadi penguji | Lulus CDP background; pesan awal dibaca, balasan masuk dari penguji, balasan penutup dari web disampaikan |
 
 ## Hasil PoC Meta, 27 Oktober 2026
 
@@ -45,6 +46,21 @@ tetap tersedia. Alternatif sementara memakai chat website dan WhatsApp Business
 app/Web sebagai kanal terpisah; penautan WhatsApp Web membutuhkan autentikasi
 pemilik dari aplikasi Business. Alternatif ini tidak meneruskan pesan widget ke
 WhatsApp secara otomatis dan tidak membuktikan Coexistence.
+
+## Hasil alternatif WhatsApp Web, 27 Oktober 2026
+
+Pemilik menyelesaikan penautan dari aplikasi WhatsApp. Pengujian pada percakapan
+pribadi pemilik berakhiran 0123 memakai kode `BIS-2710-94DB`: pesan dari WhatsApp
+Web pukul 20.23 WIB berstatus dibaca, balasan penguji pukul 20.30 WIB terbaca
+sebagai pesan masuk, lalu balasan penutup dari web pukul 20.39 WIB berstatus
+disampaikan. Pemilik juga mengonfirmasi pesan diterima dan sudah dibalas.
+Browser CDP tetap tersembunyi, tidak aktif dan diminimalkan.
+
+Hasil ini membuktikan percakapan manual dua arah pada sesi WhatsApp Web yang
+ditautkan. Nomor pengirim belum dibaca secara independen dari profil akun.
+Chat website masih kanal terpisah; C4 dan C5 belum lulus. Pembatasan Meta API
+pada PoC di atas tetap berlaku. Bukti hanya memuat percakapan uji pemilik,
+bukan riwayat pelanggan.
 
 ## Kontrak dan keandalan
 
