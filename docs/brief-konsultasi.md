@@ -19,8 +19,32 @@ tidak disentuh. Desain halaman lain, navigasi, dan animasi tetap dipakai.
 | C1 | SDK chat hanya dimuat setelah pengunjung membuka chat | CDP, Chatwoot CE lokal |
 | C2 | Pesan pengunjung masuk inbox; balasan dari browser operator muncul di widget | CDP dua halaman, Chatwoot CE sungguhan |
 | C3 | Widget mobile tidak melebar; kegagalan chat tetap menyediakan WhatsApp | CDP 390 px dan abort SDK |
-| C4 | WhatsApp Business app dan API tetap bekerja bersama | Belum diuji: membutuhkan sesi Meta, kelayakan Coexistence dan konfigurasi app |
+| C4 | WhatsApp Business app dan API tetap bekerja bersama | Belum diuji pada nomor Business utama. PoC nomor tes: pesan masuk lulus; balasan ditolak Meta 131031 |
 | C5 | Balas pesan widget dari aplikasi WhatsApp | Belum dibuat/diuji: bridge tambahan, nomor API terpisah, template dan pemetaan konteks |
+
+## Hasil PoC Meta, 27 Oktober 2026
+
+Aplikasi Meta khusus UAT dibuat dan tetap Unpublished. Akses hanya diberikan ke
+akun WhatsApp tes. Nomor pribadi pemilik dipakai sebagai penerima uji, bukan
+nomor Business utama. Pesan dari aplikasi WhatsApp masuk ke Chatwoot melalui
+webhook dengan tanda tangan valid. Balasan dikirim lewat browser operator
+sungguhan. Meta menerima permintaan, lalu menandainya gagal dengan kode 131031,
+`Business Account locked`. Pesan template awal juga gagal dengan kode yang sama.
+Uji pengiriman dua arah belum lulus.
+
+API akun melaporkan ACTIVE, APPROVED dan business verification verified, tetapi
+health check memblokir pengiriman dengan kode 141006 terkait metode pembayaran.
+Security Centre untuk WhatsApp meminta informasi tambahan, sedangkan WhatsApp
+Manager meminta verifikasi bisnis. Tidak ada metode pembayaran ditambahkan.
+Jangan menganggap perubahan kode dapat menghilangkan pembatasan penyedia ini.
+
+Setelah bukti disimpan, langganan webhook aplikasi UAT dilepas tanpa mengubah
+dua aplikasi lain yang sudah terhubung. Tunnel sementara dihentikan dan akses
+keluar container Chatwoot dikembalikan ke jaringan internal. Chat website lokal
+tetap tersedia. Alternatif sementara memakai chat website dan WhatsApp Business
+app/Web sebagai kanal terpisah; penautan WhatsApp Web membutuhkan autentikasi
+pemilik dari aplikasi Business. Alternatif ini tidak meneruskan pesan widget ke
+WhatsApp secara otomatis dan tidak membuktikan Coexistence.
 
 ## Kontrak dan keandalan
 
