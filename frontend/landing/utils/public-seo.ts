@@ -9,12 +9,12 @@ export const publicCanonical = (origin: string, path: string, locale: string, av
 }
 export const stringifyJsonLd = (value: unknown) => JSON.stringify(value).replace(/</g, '\\u003c')
 export const publicSocialImages: Record<string, string> = {
-    '/layanan/jasa-pembuatan-website': '/articles/jenis-website-1200.webp',
-    '/layanan/jasa-pembuatan-aplikasi-web': '/articles/brief-aplikasi-1200.webp',
-    '/layanan/web-monitoring-dashboard': '/articles/web-monitoring-1200.webp',
-    '/products/build': '/articles/software-house-1200.webp',
-    '/products/pantau': '/articles/web-monitoring-1200.webp',
-    '/products/downloader': '/articles/download-manager-1200.webp',
-    '/products/beres': '/articles/rapikan-unduhan-1200.webp',
-    '/pricing': '/articles/biaya-website-1200.webp',
+    '/layanan/jasa-pembuatan-website': '/social/articles/jenis-website.jpg',
+    '/layanan/jasa-pembuatan-aplikasi-web': '/social/articles/brief-aplikasi.jpg',
+    '/layanan/web-monitoring-dashboard': '/social/articles/web-monitoring.jpg',
+    '/products/build': '/social/articles/software-house.jpg',
+    '/products/pantau': '/social/articles/web-monitoring.jpg',
+    '/products/downloader': '/social/articles/download-manager.jpg',
+    '/products/beres': '/social/articles/rapikan-unduhan.jpg',
+    '/pricing': '/social/articles/biaya-website.jpg',
 }

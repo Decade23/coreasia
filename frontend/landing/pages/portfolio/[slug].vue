@@ -10,7 +10,7 @@ useCoreSeo({
     title: item.product === 'LeadKu' ? 'Studi Kasus LeadKu: CRM Tim Penjualan' : 'Studi Kasus Pantau: Dashboard Monitoring Website',
     description: item.summary,
     path: `/portfolio/${item.slug}`,
-    image: item.product === 'LeadKu' ? '/social/og-leadku.png' : '/articles/web-monitoring-1200.webp',
+    image: item.product === 'LeadKu' ? '/social/og-leadku.png' : '/social/articles/web-monitoring.jpg',
     ogImageWidth: 1200,
     ogImageHeight: 630,
 })

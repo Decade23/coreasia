@@ -71,6 +71,7 @@ export const resolveArticleCover = (article: ArticleCoverInput) => {
     if (editorImage)
         return {
             src: editorImage,
+            socialSrc: editorImage,
             alt: article.title || 'Gambar artikel',
             generated: false,
             srcset: undefined,
@@ -80,6 +81,7 @@ export const resolveArticleCover = (article: ArticleCoverInput) => {
     const [name, alt] = covers[article.slug || ''] || ['software-house', 'Ilustrasi perencanaan dan pengerjaan website']
     return {
         src: `/articles/${name}-1200.webp`,
+        socialSrc: `/social/articles/${name}.jpg`,
         alt,
         generated: true,
         srcset: [480, 800, 1200].map((w) => `/articles/${name}-${w}.webp ${w}w`).join(', '),

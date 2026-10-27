@@ -39,12 +39,12 @@ const { data: articleResponse, error: articleError } = await useFetch<{ data: Pu
 if (articleError.value || !articleResponse.value?.data) throw createError({ statusCode: 404, message: 'Artikel tidak ditemukan' })
 const article = computed(() => articleResponse.value!.data)
 const cover = computed(() => resolveArticleCover(article.value))
-useCoreSeo(() => ({ title: article.value.title, description: article.value.description, path: `/artikel/${slug}`, ogType: 'article', image: cover.value.src, imageAlt: cover.value.alt, ogImageWidth: cover.value.width, ogImageHeight: cover.value.height }))
+useCoreSeo(() => ({ title: article.value.title, description: article.value.description, path: `/artikel/${slug}`, ogType: 'article', image: cover.value.socialSrc, imageAlt: cover.value.alt, ogImageWidth: cover.value.width, ogImageHeight: cover.value.height }))
 useHead(() => ({ script: [{ type: 'application/ld+json', innerHTML: stringifyJsonLd({
   '@context': 'https://schema.org', '@type': 'Article', '@id': `${siteOrigin.value}/artikel/${slug}#article`,
   headline: article.value.title, description: article.value.description,
   datePublished: article.value.published_at, dateModified: article.value.updated_at,
-  image: [new URL(cover.value.src, siteOrigin.value).href],
+  image: [new URL(cover.value.socialSrc, siteOrigin.value).href],
   author: { '@type': 'Organization', name: article.value.author, url: siteOrigin.value },
   publisher: { '@type': 'Organization', name: COMPANY.name, url: siteOrigin.value, logo: { '@type': 'ImageObject', url: `${siteOrigin.value}${BRAND_ASSETS.logo}` } },
   mainEntityOfPage: `${siteOrigin.value}/artikel/${slug}`, inLanguage: 'id-ID',

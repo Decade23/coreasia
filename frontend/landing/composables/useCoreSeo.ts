@@ -29,7 +29,7 @@ export const useCoreSeo = (input: MaybeRefOrGetter<CoreSeoOptions>): void => {
         const canonical = publicCanonical(origin.value, path, language, available)
         const image = options.image || publicSocialImages[path] || '/social/og-image.png'
         const absolute = (asset: string) => new URL(asset, origin.value).href
-        const knownImage = !options.image || /^\/articles\/[-a-z]+-1200\.webp$/.test(image)
+        const knownImage = !options.image || /^\/(?:articles\/[-a-z]+-1200\.webp|social\/articles\/[-a-z]+\.jpg)$/.test(image)
         return {
             ...options,
             path,
@@ -42,7 +42,7 @@ export const useCoreSeo = (input: MaybeRefOrGetter<CoreSeoOptions>): void => {
             height: options.ogImageHeight || (knownImage ? 630 : undefined),
             type:
                 options.ogImageType ||
-                (image.endsWith('.webp') ? 'image/webp' : image.endsWith('.png') ? 'image/png' : undefined),
+                (image.endsWith('.webp') ? 'image/webp' : image.endsWith('.png') ? 'image/png' : /\.jpe?g$/.test(image) ? 'image/jpeg' : undefined),
             robots: options.noindex ? 'noindex, nofollow' : options.robots || 'index, follow, max-image-preview:large',
         }
     })

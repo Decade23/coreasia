@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ARTICLES } from '~/utils/articles'
 import { mergePublicArticles, normalizePublicArticle } from '~/utils/public-articles'
 import { ARTICLE_ASSET_SLUGS, resolveArticleCover, safeArticleImage } from '~/utils/article-assets'
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 
 beforeEach(() => { vi.useFakeTimers(); vi.setSystemTime(new Date('2026-10-28T00:00:00Z')) })
@@ -18,6 +18,8 @@ describe('published public article catalog', () => {
       expect(cover.alt.length).toBeGreaterThan(15)
       expect(existsSync(fileURLToPath(new URL(`../../public${cover.src}`, import.meta.url)))).toBe(true)
       expect(cover.srcset).toContain('480w')
+      const socialFile = fileURLToPath(new URL(`../../public${cover.socialSrc}`, import.meta.url))
+      expect([...readFileSync(socialFile).subarray(0, 2)]).toEqual([0xff, 0xd8])
     }
   })
   it('merges published CMS updates once while retaining content absent from a list response', () => {
