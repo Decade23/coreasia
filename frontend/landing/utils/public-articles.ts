@@ -62,3 +62,11 @@ export const mergePublicArticles = (seed: unknown[], published: unknown[]): Publ
     )
 }
 export const articleImage = (article: PublicArticle) => resolveArticleCover(article)
+
+export const formatPublicArticleDate = (value: string, locale = 'id-ID') => {
+    try {
+        return new Date(value).toLocaleDateString(locale, {
+            year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Asia/Jakarta',
+        })
+    } catch { return value }
+}

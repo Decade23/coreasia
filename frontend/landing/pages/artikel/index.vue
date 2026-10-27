@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { PublicArticle } from '~/utils/public-articles'
+import { formatPublicArticleDate, type PublicArticle } from '~/utils/public-articles'
 
 const { locale, t } = useCoreI18n()
 const { useReveal, revealRef } = useScrollReveal()
@@ -112,15 +112,7 @@ watch(categories, (nextCategories) => {
 
 const dateLocale = computed(() => (locale.value === 'en' ? 'en-US' : 'id-ID'))
 
-const formatDate = (dateStr: string) => {
-  try {
-    return new Date(dateStr).toLocaleDateString(dateLocale.value, {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    })
-  } catch { return dateStr }
-}
+const formatDate = (dateStr: string) => formatPublicArticleDate(dateStr, dateLocale.value)
 
 const categoryLabel = (key: string) => {
   return resolveCategoryLabel(key)

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ARTICLES } from '~/utils/articles'
-import { mergePublicArticles, normalizePublicArticle } from '~/utils/public-articles'
+import { mergePublicArticles, normalizePublicArticle, formatPublicArticleDate } from '~/utils/public-articles'
 import { ARTICLE_ASSET_SLUGS, resolveArticleCover, safeArticleImage } from '~/utils/article-assets'
 import { existsSync, readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
@@ -44,5 +44,17 @@ describe('published public article catalog', () => {
     for (const value of ['javascript:alert(1)', '//evil.example/a.png', '/\\evil.example/a.png', 'data:image/svg+xml,bad']) expect(safeArticleImage(value)).toBeUndefined()
     expect(resolveArticleCover({ slug: 'new-article', title: 'Baru' }).generated).toBe(true)
     expect(resolveArticleCover({ slug: ARTICLES[0]!.slug, featured_image: '/uploads/cover.jpg' }).src).toBe('/uploads/cover.jpg')
+  })
+})
+
+describe('article dates across server and browser timezones', () => {
+  it('keeps the Jakarta publication day when the server runs in UTC', () => {
+    const previous = process.env.TZ
+    try {
+      process.env.TZ = 'UTC'
+      expect(formatPublicArticleDate('2026-10-27T00:00:00+07:00')).toBe('27 Oktober 2026')
+      process.env.TZ = 'Pacific/Honolulu'
+      expect(formatPublicArticleDate('2026-10-27T00:00:00+07:00')).toBe('27 Oktober 2026')
+    } finally { if (previous === undefined) Reflect.deleteProperty(process.env, 'TZ'); else process.env.TZ = previous }
   })
 })
