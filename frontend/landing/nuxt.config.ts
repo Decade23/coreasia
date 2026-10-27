@@ -4,6 +4,11 @@
    tests/konsol/csp.test.ts. */
 import { HEADER_KEAMANAN_DASAR, HEADER_KONSOL } from './server/lib/konsol/header'
 
+import { websiteChatOrigin } from './utils/website-chat'
+const CHAT_ORIGIN = websiteChatOrigin(process.env.NUXT_PUBLIC_CHATWOOT_BASE_URL || '', process.env.NUXT_PUBLIC_CHATWOOT_ALLOW_LOCAL === 'true')
+const CHAT_SOURCE = CHAT_ORIGIN ? ' ' + CHAT_ORIGIN : ''
+const CHAT_SOCKET = CHAT_ORIGIN ? ' ' + CHAT_ORIGIN.replace(/^http/, 'ws') : ''
+
 const ASSET_VERSION = '20260522-1'
 const SITE_URL = process.env.NUXT_PUBLIC_SITE_URL || process.env.SITE_URL || 'https://coreasia.id'
 const asset = (path: string): string => `${path}?v=${ASSET_VERSION}`
@@ -255,6 +260,9 @@ export default defineNuxtConfig({
            CashFlow; keduanya kosong → kunci acak per proses (hanya layak dev). */
         konsolIkatKunci: process.env.NUXT_KONSOL_IKAT_KUNCI || '',
         public: {
+            chatwootBaseUrl: process.env.NUXT_PUBLIC_CHATWOOT_BASE_URL || '',
+            chatwootWebsiteToken: process.env.NUXT_PUBLIC_CHATWOOT_WEBSITE_TOKEN || '',
+            chatwootAllowLocal: process.env.NUXT_PUBLIC_CHATWOOT_ALLOW_LOCAL === 'true',
             /* Modul CashFlow di /console/cashflow berbicara LANGSUNG ke Supabase
                CashFlow dari peramban, bukan lewat gateway — datanya dijaga RPC
                ber-penjaga is_platform_admin() dan RLS. Sesinya dibuatkan server
@@ -337,7 +345,7 @@ export default defineNuxtConfig({
                 // mengizinkan skrip blob apa pun berjalan di seluruh halaman, jalur
                 // eskalasi XSS yang klasik; membatasinya di worker-src menutup risiko
                 // itu dan hanya menyentuh worker.
-                'Content-Security-Policy': `default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com https://www.googleadservices.com https://googleads.g.doubleclick.net; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self' http://localhost:8084 https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://ad.doubleclick.net https://stats.g.doubleclick.net https://www.google.com https://www.google.co.id https://www.google.com.sg https://www.google.com.my https://www.google.com.au https://*.coreasia.id https://api.coreasia.id https://fjoiivcyrznawbbnkkmn.supabase.co; frame-src 'self' https://www.googletagmanager.com https://td.doubleclick.net; frame-ancestors 'self'`,
+                'Content-Security-Policy': `default-src 'self'; script-src 'self' 'unsafe-inline'${CHAT_SOURCE} https://www.googletagmanager.com https://www.google-analytics.com https://www.googleadservices.com https://googleads.g.doubleclick.net; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com; connect-src 'self'${CHAT_SOURCE}${CHAT_SOCKET} http://localhost:8084 https://www.googletagmanager.com https://www.google-analytics.com https://*.google-analytics.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://ad.doubleclick.net https://stats.g.doubleclick.net https://www.google.com https://www.google.co.id https://www.google.com.sg https://www.google.com.my https://www.google.com.au https://*.coreasia.id https://api.coreasia.id https://fjoiivcyrznawbbnkkmn.supabase.co; frame-src 'self'${CHAT_SOURCE} https://www.googletagmanager.com https://td.doubleclick.net; frame-ancestors 'self'`,
             },
         },
         /* Halaman pratinjau untuk calon klien (lampiran proposal). Berdiri

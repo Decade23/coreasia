@@ -1594,14 +1594,14 @@ const ID_CONTENT = {
       'Hubungi tim CoreAsia untuk konsultasi gratis seputar jasa pembuatan website, aplikasi web custom, web monitoring, dan kebutuhan digital enterprise.',
     kicker: 'Hubungi Kami',
     hero: {
-      title: 'Konsultasi strategi produk <span class="ca-gradient-text">tanpa ribet</span>',
-      subtitle: 'Ceritakan kebutuhan bisnis Anda. Tim kami bantu memetakan opsi paling realistis untuk launch, scale, dan monetisasi.',
-      ctaPrimary: 'Jadwalkan Konsultasi',
+      title: 'Mau bikin website <span class="ca-gradient-text">atau aplikasi?</span>',
+      subtitle: 'Ceritakan pekerjaan yang ingin kamu permudah. Kami bantu menentukan langkah pertama dan lingkup pengerjaannya.',
+      ctaPrimary: 'Diskusikan proyek',
       ctaSecondary: 'Chat via WhatsApp',
     },
     channels: {
       quickResponse: 'Respon cepat',
-      title: 'Pilih channel favorit Anda',
+      title: 'Pilih cara menghubungi kami',
       subtitle: 'Untuk respon tercepat, gunakan WhatsApp pada jam kerja.',
       whatsapp: 'WhatsApp',
       email: 'Email',
@@ -1625,9 +1625,10 @@ const ID_CONTENT = {
         '10_25jt': 'Rp10 juta sampai Rp25 juta',
         '25_50jt': 'Rp25 juta sampai Rp50 juta',
         above_50jt: 'Di atas Rp50 juta',
-        not_set: 'Belum ada anggaran',
+        not_set: 'Ingin diskusi dulu',
       },
       subjects: {
+        improve: 'Perbaikan Website atau Aplikasi',
         website: 'Jasa Pembuatan Website',
         webapp: 'Jasa Pembuatan Aplikasi Web',
         k3: 'Sistem Pelaporan K3',
@@ -1681,11 +1682,11 @@ const ID_CONTENT = {
       download: 'Download',
     },
     whatToPrepare: {
-      title: 'What to prepare',
+      title: 'Bahan untuk diskusi',
       items: [
-        'Tujuan bisnis 6-12 bulan ke depan',
-        'Segment user dan volume target',
-        'Constraint budget dan timeline',
+        'Pekerjaan yang ingin dipermudah',
+        'Siapa yang akan memakai website atau aplikasi',
+        'Anggaran dan waktu mulai, jika sudah ada',
       ],
     },
     schema: {

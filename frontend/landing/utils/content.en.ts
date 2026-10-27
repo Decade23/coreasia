@@ -1768,10 +1768,10 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
       'Contact CoreAsia for free consultation on web development, custom web applications, website monitoring, and enterprise digital solutions.',
     kicker: 'Contact Us',
     hero: {
-      title: 'Discuss your product strategy <span class="ca-gradient-text">without the noise</span>',
+      title: 'Planning a website <span class="ca-gradient-text">or application?</span>',
       subtitle:
-        'Share your business context and we will help map the most realistic product, delivery, and monetization path.',
-      ctaPrimary: 'Book a Consultation',
+        'Tell us what work you want to simplify. We can help define the first step and scope.',
+      ctaPrimary: 'Discuss your project',
       ctaSecondary: 'Chat via WhatsApp',
     },
     channels: {
@@ -1798,9 +1798,10 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
         '10_25jt': 'Rp10 million to Rp25 million',
         '25_50jt': 'Rp25 million to Rp50 million',
         above_50jt: 'Above Rp50 million',
-        not_set: 'No budget set yet',
+        not_set: 'Discuss first',
       },
       subjects: {
+        improve: 'Improve a Website or Application',
         website: 'Website Development',
         webapp: 'Web Application Development',
         k3: 'Safety Reporting System',

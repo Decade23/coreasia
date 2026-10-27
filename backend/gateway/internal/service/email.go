@@ -95,12 +95,12 @@ func (s *EmailService) SendContactLeadNotification(ctx context.Context, lead *mo
 		To:      []string{recipient},
 		Subject: "[Lead Baru CoreAsia] " + subject,
 		HTML:    contactLeadHTML(lead),
-		Text:    contactLeadText(lead),
+		Text:    contactLeadText(lead) + "\nReferensi: " + lead.Reference + "\nCara dihubungi: " + lead.PreferredContact + "\nMulai: " + model.TimelineLabels[lead.Timeline] + "\nPerusahaan: " + lead.Organization + "\nPaket: " + lead.SelectedPlan,
 	}
-	return s.send(ctx, reqBody)
+	return s.send(ctx, reqBody, "contact-lead/"+lead.ID.String())
 }
 
-func (s *EmailService) send(ctx context.Context, reqBody resendEmailRequest) error {
+func (s *EmailService) send(ctx context.Context, reqBody resendEmailRequest, key ...string) error {
 
 	payload, err := json.Marshal(reqBody)
 	if err != nil {
@@ -114,6 +114,9 @@ func (s *EmailService) send(ctx context.Context, reqBody resendEmailRequest) err
 	req.Header.Set("Authorization", "Bearer "+strings.TrimSpace(s.cfg.APIKey))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json")
+	if len(key) > 0 {
+		req.Header.Set("Idempotency-Key", key[0])
+	}
 
 	resp, err := s.client.Do(req)
 	if err != nil {
@@ -151,7 +154,7 @@ func contactLeadHTML(lead *model.ContactLead) string {
   <div style="max-width:640px;margin:0 auto;background:#ffffff;border-radius:12px;padding:32px;">
     <h1 style="font-size:20px;margin:0 0 20px;">Lead baru dari coreasia.id</h1>
     <table style="width:100%%;border-collapse:collapse;font-size:14px;line-height:1.6;">
-      <tr><td style="padding:5px 12px 5px 0;color:#6b7280;">Lead ID</td><td>%s</td></tr>
+      <tr><td style="padding:5px 12px 5px 0;color:#6b7280;">Referensi</td><td>%s</td></tr>
       <tr><td style="padding:5px 12px 5px 0;color:#6b7280;">Nama</td><td>%s</td></tr>
       <tr><td style="padding:5px 12px 5px 0;color:#6b7280;">Email</td><td>%s</td></tr>
       <tr><td style="padding:5px 12px 5px 0;color:#6b7280;">WhatsApp</td><td>%s</td></tr>
@@ -175,14 +178,14 @@ func contactLeadHTML(lead *model.ContactLead) string {
   </div>
 </body>
 </html>`,
-		html.EscapeString(lead.ID.String()),
+		html.EscapeString(lead.Reference+" / "+lead.ID.String()),
 		html.EscapeString(lead.Name),
 		html.EscapeString(lead.Email),
 		value(lead.Phone),
 		html.EscapeString(model.SubjectLabel(lead.Subject)),
 		html.EscapeString(budgetLabel(lead.BudgetRange)),
 		html.EscapeString(createdAt),
-		html.EscapeString(lead.Message),
+		html.EscapeString(lead.Message+"\n\nCara dihubungi: "+lead.PreferredContact+"\nMulai: "+model.TimelineLabels[lead.Timeline]+"\nPerusahaan: "+lead.Organization+"\nPaket: "+lead.SelectedPlan),
 		value(lead.UTMSource),
 		value(lead.UTMMedium),
 		value(lead.UTMCampaign),

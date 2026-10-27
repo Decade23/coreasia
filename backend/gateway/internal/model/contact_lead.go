@@ -28,7 +28,7 @@ var BudgetRangeLabels = map[string]string{
 	BudgetRange10To25:    "Rp10 juta sampai Rp25 juta",
 	BudgetRange25To50:    "Rp25 juta sampai Rp50 juta",
 	BudgetRangeAbove50:   "Di atas Rp50 juta",
-	BudgetRangeUndecided: "Belum ada anggaran",
+	BudgetRangeUndecided: "Belum ditentukan",
 }
 
 // SubjectLabels menerjemahkan kunci subjek formulir menjadi nama layanan yang
@@ -37,6 +37,7 @@ var BudgetRangeLabels = map[string]string{
 // "lainnya": subjek baru biasanya lahir di frontend lebih dulu, dan menampilkan
 // kunci mentah jauh lebih menolong daripada menyembunyikannya.
 var SubjectLabels = map[string]string{
+	"improve":     "Perbaikan Website atau Aplikasi",
 	"website":     "Jasa Pembuatan Website",
 	"webapp":      "Jasa Pembuatan Aplikasi Web",
 	"k3":          "Sistem Pelaporan K3",
@@ -64,12 +65,17 @@ func SubjectLabel(key string) string {
 // values are captured at submission time so a later qualified lead or sale can
 // be connected back to its originating campaign.
 type CreateContactLeadRequest struct {
-	Name    string `json:"name" validate:"required,min=2,max=200"`
-	Email   string `json:"email" validate:"required,email,max=254"`
-	Phone   string `json:"phone" validate:"omitempty,min=8,max=32"`
-	Subject string `json:"subject" validate:"required,max=100"`
-	Message string `json:"message" validate:"required,max=5000"`
-	Consent bool   `json:"consent" validate:"required"`
+	RequestID        string `json:"request_id" validate:"omitempty,uuid4"`
+	PreferredContact string `json:"preferred_contact" validate:"omitempty,oneof=whatsapp email"`
+	Timeline         string `json:"timeline" validate:"omitempty,oneof=soon 1_3_months planning not_set"`
+	Organization     string `json:"organization" validate:"max=300"`
+	SelectedPlan     string `json:"selected_plan" validate:"max=200"`
+	Name             string `json:"name" validate:"required,min=2,max=200"`
+	Email            string `json:"email" validate:"required_without=Phone,omitempty,email,max=254"`
+	Phone            string `json:"phone" validate:"required_without=Email,omitempty,min=8,max=32"`
+	Subject          string `json:"subject" validate:"required,max=100"`
+	Message          string `json:"message" validate:"required,max=5000"`
+	Consent          bool   `json:"consent" validate:"required"`
 
 	// BudgetRange sengaja opsional. Pada kampanye berbayar bervolume kecil,
 	// setiap kolom wajib tambahan menukar lead nyata dengan kerapian data.
@@ -89,33 +95,45 @@ type CreateContactLeadRequest struct {
 }
 
 type ContactLead struct {
-	ID          uuid.UUID `json:"id"`
-	Name        string    `json:"name"`
-	Email       string    `json:"email"`
-	Phone       *string   `json:"phone,omitempty"`
-	Subject     string    `json:"subject"`
-	Message     string    `json:"message"`
-	Consent     bool      `json:"consent"`
-	ConsentedAt time.Time `json:"consented_at"`
-	Status      string    `json:"status"`
-	BudgetRange *string   `json:"budget_range,omitempty"`
-	UTMSource   *string   `json:"utm_source,omitempty"`
-	UTMMedium   *string   `json:"utm_medium,omitempty"`
-	UTMCampaign *string   `json:"utm_campaign,omitempty"`
-	UTMContent  *string   `json:"utm_content,omitempty"`
-	UTMTerm     *string   `json:"utm_term,omitempty"`
-	GCLID       *string   `json:"gclid,omitempty"`
-	FBCLID      *string   `json:"fbclid,omitempty"`
-	LandingPage *string   `json:"landing_page,omitempty"`
-	Referrer    *string   `json:"referrer,omitempty"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	Reference        string    `json:"reference"`
+	RequestID        string    `json:"request_id"`
+	PayloadHash      string    `json:"payload_hash"`
+	Replayed         bool      `json:"-"`
+	PreferredContact string    `json:"preferred_contact"`
+	Timeline         string    `json:"timeline"`
+	Organization     string    `json:"organization"`
+	SelectedPlan     string    `json:"selected_plan"`
+	ID               uuid.UUID `json:"id"`
+	Name             string    `json:"name"`
+	Email            string    `json:"email"`
+	Phone            *string   `json:"phone,omitempty"`
+	Subject          string    `json:"subject"`
+	Message          string    `json:"message"`
+	Consent          bool      `json:"consent"`
+	ConsentedAt      time.Time `json:"consented_at"`
+	Status           string    `json:"status"`
+	BudgetRange      *string   `json:"budget_range,omitempty"`
+	UTMSource        *string   `json:"utm_source,omitempty"`
+	UTMMedium        *string   `json:"utm_medium,omitempty"`
+	UTMCampaign      *string   `json:"utm_campaign,omitempty"`
+	UTMContent       *string   `json:"utm_content,omitempty"`
+	UTMTerm          *string   `json:"utm_term,omitempty"`
+	GCLID            *string   `json:"gclid,omitempty"`
+	FBCLID           *string   `json:"fbclid,omitempty"`
+	LandingPage      *string   `json:"landing_page,omitempty"`
+	Referrer         *string   `json:"referrer,omitempty"`
+	CreatedAt        time.Time `json:"created_at"`
+	UpdatedAt        time.Time `json:"updated_at"`
 }
 
 // ContactLeadCreatedResponse intentionally stays flat to keep the public form
 // contract small and stable.
 type ContactLeadCreatedResponse struct {
-	Success bool      `json:"success"`
-	LeadID  uuid.UUID `json:"lead_id"`
-	Status  string    `json:"status"`
+	Reference string    `json:"reference"`
+	Replayed  bool      `json:"replayed"`
+	Success   bool      `json:"success"`
+	LeadID    uuid.UUID `json:"lead_id"`
+	Status    string    `json:"status"`
 }
+
+var TimelineLabels = map[string]string{"soon": "Segera", "1_3_months": "1–3 bulan lagi", "planning": "Masih merencanakan", "not_set": "Belum tahu"}

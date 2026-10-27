@@ -152,8 +152,7 @@ func (s *Server) setupRoutes() {
 	}
 	authHandler := NewAuthHandler(adminUserRepo, auditLogRepo, jwtProvider, totpCipher, totpAttempts, loginAttempts)
 	articleHandler := NewArticleHandler(articleRepo, auditLogRepo)
-	crmService := service.NewCRMService(s.cfg.CRM)
-	contactLeadHandler := NewContactLeadHandler(contactLeadRepo, emailService, crmService)
+	contactLeadHandler := NewContactLeadHandler(contactLeadRepo)
 	adminUserHandler := NewAdminUserHandler(adminUserRepo, auditLogRepo, totpAttempts)
 	uploadHandler := NewUploadHandler(r2Service, auditLogRepo)
 	apiKeyRepo := repository.NewAPIKeyRepo(s.pool)

@@ -105,6 +105,7 @@ useHead(() => {
     <FloatingWhatsApp />
     <ClientOnly>
       <BackToTop />
+      <WebsiteChat />
     </ClientOnly>
   </div>
 </template>

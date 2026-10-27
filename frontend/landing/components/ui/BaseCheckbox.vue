@@ -15,12 +15,13 @@
                 :checked="modelValue"
                 :disabled="disabled"
                 :required="required"
+                :aria-labelledby="id + '-label'"
                 :aria-invalid="error ? 'true' : undefined"
                 :aria-describedby="error ? id + '-error' : undefined"
                 type="checkbox"
                 class="sr-only"
                 @change="$emit('update:modelValue', ($event.target as HTMLInputElement).checked)"
-            />
+            >
 
             <span
                 class="ca-checkbox-box mt-0.5 flex-shrink-0"
@@ -34,7 +35,7 @@
                 />
             </span>
 
-            <span class="flex-1 leading-relaxed">
+            <span :id="id + '-label'" class="flex-1 leading-relaxed">
                 <slot>
                     {{ label }}
                 </slot>
