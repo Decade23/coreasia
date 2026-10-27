@@ -147,7 +147,7 @@ const goToArticles = async () => {
         <section class="ca-section pt-0">
             <div class="ca-container">
                 <article ref="articleContent" class="mx-auto max-w-4xl">
-                    <figure class="mb-8"><ArticleCover :slug="article.slug" :title="article.title" :image="article.featured_image" priority class="rounded-[1.75rem]" /><figcaption v-if="cover.generated" class="mt-2 text-xs text-[var(--ca-subtle)]">Ilustrasi untuk artikel, bukan tangkapan layar produk.</figcaption></figure>
+                    <figure class="mb-8"><ArticleCover :slug="article.slug" :title="article.title" :image="article.featured_image" priority class="rounded-[1.75rem]" /></figure>
                     <p class="mb-5 text-sm text-[var(--ca-muted)]">Oleh {{ article.author }}<span v-if="article.updated_at !== article.published_at"> · Diperbarui {{ formatDate(article.updated_at) }}</span></p>
                     <ArticleContentRenderer :content="article.content" />
                 </article>
