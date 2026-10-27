@@ -1,7 +1,8 @@
 # Brief dua langkah dan penerusan LeadKu
 
-Perubahan ini disiapkan dari rilis publik `f3d92bb`. Checkout utama dan produksi
-tidak disentuh. Desain halaman lain, navigasi, dan animasi tetap dipakai.
+Perubahan ini disiapkan dari rilis publik `f3d92bb` pada checkout terpisah.
+Desain halaman lain, navigasi, dan animasi tetap dipakai. Status produksi
+dicatat terpisah dalam bukti rilis.
 
 ## Kriteria penerimaan
 
@@ -113,6 +114,9 @@ dan token uji disimpan di direktori artifact privat, bukan git.
 
 1. Terapkan migration receipt dan tenant-service LeadKu lebih dulu. Versi lama
    menolak kontak tanpa email dan belum melakukan deduplikasi.
+   Pastikan `SALES_INBOX_TENANT_SLUG` menunjuk workspace milik CoreAsia dengan
+   pemilik aktif, pipeline dan tahap tersedia. Nilai bawaan tidak membuat
+   workspace otomatis.
 2. Terapkan gateway beserta migration 18 dan worker; periksa penyimpanan serta
    status delivery dengan data uji yang disetujui.
 3. Terapkan frontend brief. Jangan mendahulukan frontend terhadap gateway baru.
