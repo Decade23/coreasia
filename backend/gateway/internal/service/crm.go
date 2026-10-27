@@ -47,12 +47,18 @@ func (s *CRMService) IsConfigured() bool {
 }
 
 type crmWebsiteLead struct {
-	Name        string `json:"name"`
-	Email       string `json:"email"`
-	Phone       string `json:"phone,omitempty"`
-	Subject     string `json:"subject,omitempty"`
-	Message     string `json:"message,omitempty"`
-	BudgetRange string `json:"budget_range,omitempty"`
+	SourceLeadID     string `json:"source_lead_id"`
+	Reference        string `json:"reference"`
+	PreferredContact string `json:"preferred_contact,omitempty"`
+	Timeline         string `json:"timeline,omitempty"`
+	Organization     string `json:"organization,omitempty"`
+	SelectedPlan     string `json:"selected_plan,omitempty"`
+	Name             string `json:"name"`
+	Email            string `json:"email"`
+	Phone            string `json:"phone,omitempty"`
+	Subject          string `json:"subject,omitempty"`
+	Message          string `json:"message,omitempty"`
+	BudgetRange      string `json:"budget_range,omitempty"`
 
 	UTMSource   string `json:"utm_source,omitempty"`
 	UTMMedium   string `json:"utm_medium,omitempty"`
@@ -78,9 +84,10 @@ func (s *CRMService) PushContactLead(ctx context.Context, lead *model.ContactLea
 	}
 
 	payload := crmWebsiteLead{
-		Name:        lead.Name,
-		Email:       lead.Email,
-		Phone:       deref(lead.Phone),
+		SourceLeadID: lead.ID.String(), Reference: lead.Reference, PreferredContact: lead.PreferredContact, Timeline: lead.Timeline, Organization: lead.Organization, SelectedPlan: lead.SelectedPlan,
+		Name:  lead.Name,
+		Email: lead.Email,
+		Phone: deref(lead.Phone),
 		// Label, bukan kunci mentah: nilai ini menjadi judul deal di CRM, dan
 		// "Website (website)" tidak memberi tahu apa pun kepada tim sales.
 		Subject:     model.SubjectLabel(lead.Subject),
@@ -105,6 +112,7 @@ func (s *CRMService) PushContactLead(ctx context.Context, lead *model.ContactLea
 		return fmt.Errorf("build crm request: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Idempotency-Key", "coreasia-"+lead.ID.String())
 	req.Header.Set("X-Lead-Ingest-Token", strings.TrimSpace(s.cfg.LeadKuIngestToken))
 
 	resp, err := s.client.Do(req)

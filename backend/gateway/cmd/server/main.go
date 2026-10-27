@@ -66,6 +66,9 @@ func main() {
 	// Create and start HTTP server
 	server := handler.NewServer(cfg, pool, rdb)
 
+	// Durable email/CRM delivery is independent of the HTTP response.
+	go service.NewLeadDispatcher(repository.NewContactLeadRepo(pool), service.NewEmailService(cfg.Email), service.NewCRMService(cfg.CRM)).Run(ctx)
+
 	// Start bot scheduler — reads schedules from DB dynamically
 	{
 		articleRepo := repository.NewArticleRepo(pool)

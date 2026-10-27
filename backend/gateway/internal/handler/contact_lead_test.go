@@ -24,18 +24,6 @@ type fakeContactLeadStore struct {
 	calls   int
 }
 
-type fakeContactLeadNotifier struct {
-	err      error
-	received chan model.ContactLead
-}
-
-func (f *fakeContactLeadNotifier) SendContactLeadNotification(_ context.Context, lead *model.ContactLead) error {
-	if f.received != nil {
-		f.received <- *lead
-	}
-	return f.err
-}
-
 func (f *fakeContactLeadStore) Create(_ context.Context, lead *model.ContactLead) error {
 	f.calls++
 	if f.err != nil {
@@ -235,51 +223,6 @@ func TestContactLeadCreateDoesNotReportSuccessWhenPersistenceFails(t *testing.T)
 	}
 }
 
-func TestContactLeadCreateNotifiesAfterPersistence(t *testing.T) {
-	leadID := uuid.New()
-	store := &fakeContactLeadStore{id: leadID}
-	notifier := &fakeContactLeadNotifier{received: make(chan model.ContactLead, 1)}
-	h := &ContactLeadHandler{repo: store, notifier: notifier}
-	app := fiber.New(fiber.Config{ErrorHandler: globalErrorHandler})
-	app.Post("/api/public/leads", h.Create)
-
-	resp, parsed := postContactLead(t, app, validContactLeadPayload(), nil)
-	if resp.StatusCode != http.StatusCreated {
-		t.Fatalf("status = %d, want 201; body=%v", resp.StatusCode, parsed)
-	}
-
-	select {
-	case notified := <-notifier.received:
-		if notified.ID != leadID {
-			t.Fatalf("notified lead ID = %s, want %s", notified.ID, leadID)
-		}
-	case <-time.After(time.Second):
-		t.Fatal("timed out waiting for lead notification")
-	}
-}
-
-func TestContactLeadNotificationFailureDoesNotChangeCreatedResponse(t *testing.T) {
-	store := &fakeContactLeadStore{id: uuid.New()}
-	notifier := &fakeContactLeadNotifier{
-		err:      errors.New("resend unavailable"),
-		received: make(chan model.ContactLead, 1),
-	}
-	h := &ContactLeadHandler{repo: store, notifier: notifier}
-	app := fiber.New(fiber.Config{ErrorHandler: globalErrorHandler})
-	app.Post("/api/public/leads", h.Create)
-
-	resp, parsed := postContactLead(t, app, validContactLeadPayload(), nil)
-	if resp.StatusCode != http.StatusCreated || parsed["success"] != true {
-		t.Fatalf("notification failure changed response: status=%d body=%v", resp.StatusCode, parsed)
-	}
-
-	select {
-	case <-notifier.received:
-	case <-time.After(time.Second):
-		t.Fatal("timed out waiting for failing notification attempt")
-	}
-}
-
 func TestContactLeadCreateIsRateLimitedPerIP(t *testing.T) {
 	store := &fakeContactLeadStore{id: uuid.New()}
 	app := newRateLimitedContactLeadTestApp(store, 2)
@@ -321,5 +264,30 @@ func TestContactLeadCreateRejectsMalformedJSON(t *testing.T) {
 	}
 	if store.created != nil {
 		t.Fatal("repository must not be called for malformed JSON")
+	}
+}
+
+func TestContactLeadWhatsAppOnlyAndPreferredContact(t *testing.T) {
+	for _, tc := range []struct {
+		name, email, phone, preferred string
+		want                          int
+	}{
+		{"whatsapp only", "", "081200000000", "whatsapp", 201},
+		{"email only", "pengunjung@example.test", "", "email", 201},
+		{"missing both", "", "", "whatsapp", 400},
+		{"email preference missing email", "", "081200000000", "email", 400},
+		{"invalid phone", "", "++6281200000000", "whatsapp", 400},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			store := &fakeContactLeadStore{id: uuid.New()}
+			payload := validContactLeadPayload()
+			payload["email"] = tc.email
+			payload["phone"] = tc.phone
+			payload["preferred_contact"] = tc.preferred
+			resp, body := postContactLead(t, newContactLeadTestApp(store), payload, nil)
+			if resp.StatusCode != tc.want {
+				t.Fatalf("status=%d want=%d body=%v", resp.StatusCode, tc.want, body)
+			}
+		})
 	}
 }
