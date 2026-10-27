@@ -117,14 +117,38 @@ jobs:
             type=raw,value=latest
             type=sha,format=short
 
-      - name: Build and push (linux/amd64)
+      - name: Build locally for scanning (linux/amd64)
         uses: docker/build-push-action@v6
         with:
           context: backend/gateway
           file: backend/gateway/Dockerfile
           platforms: linux/amd64
-          push: true
+          push: false
+          load: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      # Watchtower follows :latest. Do not publish that tag until the exact
+      # locally built image has passed the same vulnerability gate as LeadKu.
+      - name: Scan image before publication (HIGH / CRITICAL)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: ghcr.io/decade23/coreasia-gateway:latest
+          format: table
+          exit-code: '1'
+          ignore-unfixed: false
+          vuln-type: os,library
+          severity: HIGH,CRITICAL
+
+      - name: Publish scanned image tags
+        env:
+          IMAGE_TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          set -euo pipefail
+          while IFS= read -r tag; do
+            if [ -n "$tag" ]; then
+              docker push "$tag"
+            fi
+          done <<< "$IMAGE_TAGS"
