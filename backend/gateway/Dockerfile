@@ -11,10 +11,10 @@
 # ─────────────────────────────────────────────────────────────────────────────
 
 # ── Stage 1: build ───────────────────────────────────────────────────────────
-FROM golang:1.24-alpine AS builder
+FROM golang:1.26-alpine AS builder
 
-# go.mod declares go 1.25.x; GOTOOLCHAIN=auto lets the 1.24 image fetch the
-# matching toolchain automatically at build time.
+# Keep the compiler on the maintained 1.26 patch line. Fetching only the
+# go.mod minimum would leave the production binary on an older patch.
 ENV GOTOOLCHAIN=auto
 ENV CGO_ENABLED=0
 ENV GOOS=linux
@@ -34,11 +34,11 @@ COPY . .
 RUN go build -ldflags "-s -w" -o /server ./cmd/server
 
 # ── Stage 2: runtime ─────────────────────────────────────────────────────────
-FROM alpine:3.20
+FROM alpine:3.22
 
 # ca-certificates: outbound HTTPS (Resend, Midtrans, R2, etc.).
 # tzdata: bot scheduler uses time.LoadLocation (Asia/Jakarta).
-RUN apk add --no-cache ca-certificates tzdata
+RUN apk upgrade --no-cache && apk add --no-cache ca-certificates tzdata
 ENV TZ=Asia/Jakarta
 
 # WORKDIR is /app so that "file://migrations" and "configs/config.yaml" resolve.
