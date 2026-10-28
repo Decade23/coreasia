@@ -1,7 +1,13 @@
 <script setup lang="ts">
 import { CONTACT, COMPANY } from '~/utils/constants'
 
-const { t } = useCoreI18n()
+const { t, locale } = useCoreI18n()
+const route = useRoute()
+// Accept only the contact route; never redirect to a user supplied host.
+const returnToBrief = computed(() => {
+    const from = route.query.from
+    return typeof from === 'string' && /^\/contact(?:\?|#|$)/.test(from) ? from : ''
+})
 
 const { useReveal } = useScrollReveal()
 const heroSection = useReveal('fadeUp')
@@ -34,6 +40,10 @@ const sections = computed(() => {
             </div>
 
             <div ref="heroSection" class="ca-container relative ca-section pt-6 sm:pt-8 pb-8">
+                <NuxtLink v-if="returnToBrief" :to="returnToBrief" class="ca-btn-secondary mb-6">
+                    <Icon name="lucide:arrow-left" class="h-4 w-4" />
+                    {{ locale === 'en' ? 'Continue your brief' : 'Lanjutkan mengisi brief' }}
+                </NuxtLink>
                 <span class="ca-kicker">{{ t('legal.kicker') }}</span>
                 <h1
                     class="mt-5 font-display text-4xl font-bold text-[var(--ca-text)] sm:text-5xl"

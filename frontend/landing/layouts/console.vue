@@ -21,6 +21,7 @@ useHead(() => ({
 
 const menuItems = computed(() => [
   { label: tc('layout.dashboard'), icon: 'lucide:layout-dashboard', to: '/console' },
+  ...(can('briefs:list') ? [{ label: tc('layout.briefs'), icon: 'lucide:inbox', to: '/console/briefs' }] : []),
   { label: tc('layout.articles'), icon: 'lucide:file-text', to: '/console/articles' },
   { label: tc('layout.bots'), icon: 'lucide:bot', to: '/console/bots' },
   { label: tc('layout.keywords'), icon: 'lucide:tag', to: '/console/keywords' },

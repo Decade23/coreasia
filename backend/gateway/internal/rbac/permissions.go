@@ -32,6 +32,12 @@ const (
 
 // Articles
 const (
+	BriefsList Permission = "briefs:list"
+	BriefsView Permission = "briefs:view"
+)
+
+// Articles
+const (
 	ArticlesList    Permission = "articles:list"
 	ArticlesView    Permission = "articles:view"
 	ArticlesCreate  Permission = "articles:create"
@@ -117,6 +123,8 @@ const (
 // tests/cashflow/rbac-paritas.test.ts dan permissions_test.go).
 var RolePermissions = map[string]map[Permission]bool{
 	"super_admin": {
+		BriefsList:          true,
+		BriefsView:          true,
 		DashboardView:       true,
 		CashflowView:        true,
 		CashflowPII:         true,
@@ -170,6 +178,8 @@ var RolePermissions = map[string]map[Permission]bool{
 		CADAnalyticsView:    true,
 	},
 	"admin": {
+		BriefsList:        true,
+		BriefsView:        true,
 		DashboardView:     true,
 		ArticlesList:      true,
 		ArticlesView:      true,

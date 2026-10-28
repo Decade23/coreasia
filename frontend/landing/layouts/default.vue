@@ -9,6 +9,9 @@ import {
 } from '~/composables/useCoreTheme'
 
 const config = useRuntimeConfig()
+const route = useRoute()
+// Contact already has WhatsApp actions. Keep the form's submit/back buttons clear.
+const showFloatingShortcuts = computed(() => !/^\/contact\/?$/.test(route.path))
 const { theme } = useCoreTheme()
 const { locale } = useCoreI18n()
 
@@ -102,9 +105,9 @@ useHead(() => {
       tautannya ada sejak muatan pertama, tidak menunggu hidrasi seperti BackToTop
       yang memang bergantung pada posisi gulir.
     -->
-    <FloatingWhatsApp />
+    <FloatingWhatsApp v-if="showFloatingShortcuts" />
     <ClientOnly>
-      <BackToTop />
+      <BackToTop v-if="showFloatingShortcuts" />
       <WebsiteChat />
     </ClientOnly>
   </div>
