@@ -221,6 +221,9 @@ func (s *Server) setupRoutes() {
 	// permintaan, hanya di rute ini.
 	liveSession := mw.RequireLiveSession(adminUserRepo)
 
+	// Briefs contain contact details. Recheck current account/role before reads.
+	registerAdminBriefRoutes(admin, NewAdminBriefHandler(contactLeadRepo), liveSession)
+
 	// Article management
 	admin.Get("/articles", mw.RequirePermission(rbac.ArticlesList), articleHandler.ListAll)
 	admin.Get("/articles/stats", mw.RequirePermission(rbac.ArticlesStats), articleHandler.Stats)

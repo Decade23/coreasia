@@ -53,6 +53,7 @@ export const consoleMessages = {
     layout: {
       kicker: 'Console',
       dashboard: 'Dashboard',
+      briefs: 'Brief masuk',
       articles: 'Artikel',
       bots: 'Bots',
       keywords: 'Keywords',
@@ -769,6 +770,7 @@ export const consoleMessages = {
     layout: {
       kicker: 'Console',
       dashboard: 'Dashboard',
+      briefs: 'Incoming briefs',
       articles: 'Articles',
       bots: 'Bots',
       keywords: 'Keywords',

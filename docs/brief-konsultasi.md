@@ -9,7 +9,7 @@ dicatat terpisah dalam bukti rilis.
 | ID | Perilaku | Bukti uji |
 | --- | --- | --- |
 | B1 | Pilih website, aplikasi, atau perbaikan sistem; tulis kebutuhan sebelum kontak | CDP desktop dan 390 px |
-| B2 | Pilih WhatsApp atau email; hanya kontak pilihan yang wajib/dikirim | Unit frontend, handler, CDP |
+| B2 | Pilih WhatsApp atau email; kontak pilihan wajib, keduanya tetap terlihat dan dikirim bila diisi | Unit frontend, handler, CDP |
 | B3 | Anggaran, waktu mulai, perusahaan/website opsional; tautan produk/bantuan lama tetap berlaku | Unit, CDP deep link dan bahasa Inggris |
 | B4 | Persetujuan wajib; label dan pesan kesalahan terhubung dengan input | CDP keyboard dan validasi |
 | B5 | Referensi muncul sesudah penyimpanan dan ikut ke pesan WhatsApp bersama konteks | Database dan CDP |
@@ -64,6 +64,43 @@ pada PoC di atas tetap berlaku. Bukti hanya memuat percakapan uji pemilik,
 bukan riwayat pelanggan.
 
 ## Kontrak dan keandalan
+
+### Kontak, draf, dan Console (29 Oktober 2026)
+
+Nama mempunyai contoh isian. Nomor memakai format Indonesia +62 atau pilihan
+negara lain dengan kode internasional. Email selalu terlihat, dirapikan saat
+keluar dari kolom, dan wajib hanya ketika pengunjung memilih dihubungi lewat
+email. Kontak tambahan yang diisi ikut divalidasi serta disimpan.
+
+Isian dan langkah disimpan dalam `sessionStorage` tab itu sendiri, dengan batas
+baca 24 jam. Tautan kebijakan privasi membawa jalan kembali ke formulir tanpa
+memasukkan isian pribadi ke URL. Tombol Back dan reload memulihkan langkah,
+kontak, wilayah, persetujuan dan ID percobaan ulang. Sukses atau “Kirim brief
+lain” menghapus draf. Penyimpanan browser yang diblokir tidak menghalangi
+pengiriman, tetapi draf tidak bisa dipulihkan pada keadaan tersebut.
+
+Di halaman kontak, pintasan melayang WhatsApp dan kembali ke atas tidak
+ditampilkan agar tidak menutupi tombol formulir pada HP. Kontak WhatsApp tetap
+tersedia di kartu kontak, bantuan saat kirim gagal, dan konfirmasi sukses.
+
+Admin membuka **Console > Brief masuk**, `/console/briefs`. Daftar dan detail
+membaca `contact_leads` serta status outbox yang sudah ada. Menu ini tidak
+mengirim ulang brief lama. `GET /api/admin/briefs` menerima `page`, `per_page`
+(1–100, default 25), dan `search` (maksimal 200 karakter). Detail berada pada
+`GET /api/admin/briefs/:id`. Izin `briefs:list`/`briefs:view` diberikan kepada
+`super_admin` dan `admin`; gateway memeriksa akun aktif, versi sesi, dan peran
+terkini pada kedua rute. Respons tidak boleh dicache dan tidak memuat fingerprint
+permintaan maupun identitas pelacakan iklan.
+
+Email tim tetap memakai penerima konfigurasi `LEAD_NOTIFICATION_EMAIL` (default
+`hello@coreasia.id`), diteruskan oleh worker durable yang sama. Ini pemberitahuan
+ke tim, bukan email otomatis kepada pengunjung. Status email dan LeadKu dapat
+dilihat di Console. Centang konfirmasi memakai SVG lokal dengan animasi singkat;
+pengaturan reduced motion menonaktifkan animasinya.
+
+Perubahan ini belum otomatis berarti sudah tayang. Ikuti prosedur rilis dan
+izin push/deploy yang berlaku, gunakan konfigurasi gateway produksi saat build,
+serta bedakan bukti pengujian lokal dari verifikasi setelah rilis.
 
 `POST /api/public/leads` menerima payload lama serta field tambahan:
 `request_id` (UUID v4), `preferred_contact` (`whatsapp`/`email`), `timeline`,

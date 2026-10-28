@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { LINKS, CONTACT, COMPANY, buildWhatsAppUrl } from '~/utils/constants'
 import { briefCopy } from '~/utils/brief-copy'
-import { briefContact, briefWhatsAppMessage, validateBriefStep, type ProjectBrief } from '~/utils/contact-brief'
+import { briefContact, briefFingerprint, briefWhatsAppMessage, formatBriefPhone, normalizeBriefEmail, validateBriefStep, type PhoneRegion, type ProjectBrief } from '~/utils/contact-brief'
+import { BRIEF_DRAFT_KEY, decodeBriefDraft, encodeBriefDraft } from '~/utils/brief-draft'
 import { submitContactBrief } from '~/services/contact-brief'
 
 const { useReveal } = useScrollReveal()
@@ -46,6 +47,18 @@ const form = reactive<ProjectBrief>({
     consent: false,
 })
 const step = ref<1 | 2>(1)
+const phoneRegion = ref<PhoneRegion>('ID')
+const draftReady = ref(false)
+const restoringDraft = ref(false)
+const draftRestored = ref(false)
+const phoneModel = computed({
+    get: () => form.phone,
+    set: (raw: string | number) => {
+        const value = String(raw)
+        if (/^\s*(\+|00)/.test(value)) phoneRegion.value = /^\s*(\+|00)62/.test(value) ? 'ID' : 'international'
+        form.phone = formatBriefPhone(value, phoneRegion.value)
+    },
+})
 const showOtherTopics = ref(!projectSubjects.includes(form.subject))
 const fieldError = ref('')
 const requestId = ref('')
@@ -58,19 +71,46 @@ const formState = reactive({
     errorMessage: '',
 })
 const selectedPlan = computed(() => (typeof route.query.plan === 'string' ? route.query.plan.slice(0, 200) : ''))
-watch(selectedPlan, () => {
-    requestId.value = ''
-})
 const hasTrackedFormStart = ref(false)
 watch(
-    form,
+    () => briefFingerprint(form, selectedPlan.value),
     () => {
+        if (restoringDraft.value) return
         requestId.value = ''
         fieldError.value = ''
         formState.errorMessage = ''
     },
-    { deep: true, flush: 'sync' },
+    { flush: 'sync' },
 )
+const saveDraft = () => {
+    if (!draftReady.value || restoringDraft.value || formState.isSuccess) return
+    try {
+        sessionStorage.setItem(BRIEF_DRAFT_KEY, encodeBriefDraft({ form: { ...form }, step: step.value,
+            region: phoneRegion.value, requestId: requestId.value, plan: selectedPlan.value }))
+    } catch { /* Private mode or full storage must not prevent submission. */ }
+}
+const clearDraft = () => {
+    try { sessionStorage.removeItem(BRIEF_DRAFT_KEY) } catch { /* Storage may be disabled. */ }
+}
+watch([form, step, phoneRegion, requestId, selectedPlan], saveDraft, { deep: true, flush: 'sync' })
+onMounted(() => {
+    let draft = null
+    try { draft = decodeBriefDraft(sessionStorage.getItem(BRIEF_DRAFT_KEY)) } catch { /* Storage blocked. */ }
+    if (draft && draft.plan === selectedPlan.value) {
+        restoringDraft.value = true
+        Object.assign(form, draft.form)
+        step.value = draft.step
+        phoneRegion.value = draft.region
+        requestId.value = draft.requestId
+        showOtherTopics.value = !projectSubjects.includes(form.subject)
+        hasTrackedFormStart.value = true
+        draftRestored.value = true
+        restoringDraft.value = false
+    } else clearDraft()
+    draftReady.value = true
+})
+onBeforeRouteLeave(() => { saveDraft() })
+const privacyLink = computed(() => ({ path: '/privacy-policy', query: { from: route.fullPath, ...(locale.value === 'en' ? { lang: 'en' } : {}) } }))
 watch(
     () => [form.name, form.email, form.phone, form.message],
     (values) => {
@@ -143,12 +183,15 @@ const resetForm = () => {
     showOtherTopics.value = !projectSubjects.includes(form.subject)
     hasTrackedFormStart.value = false
     requestId.value = ''
+    phoneRegion.value = 'ID'
+    draftRestored.value = false
 }
 const startNewBrief = () => {
     formState.isSuccess = false
     formState.successWhatsAppUrl = ''
     formState.reference = ''
     resetForm()
+    clearDraft()
 }
 const handleSubmit = async () => {
     if (formState.isSubmitting) return
@@ -160,6 +203,7 @@ const handleSubmit = async () => {
         step.value = 1
         return
     }
+    form.email = normalizeBriefEmail(form.email)
     if (!validateStep(2)) return
     formState.isSubmitting = true
     formState.errorMessage = ''
@@ -197,6 +241,7 @@ const handleSubmit = async () => {
         formState.reference = response.reference
         formState.isSuccess = true
         resetForm()
+        clearDraft()
         try {
             trackLeadSaved(response.lead_id, 'contact_brief', { subject, plan: selectedPlan.value || undefined })
             trackLeadConversion(response.lead_id)
@@ -372,12 +417,7 @@ useSchemaOrg([
                             role="status"
                             aria-live="polite"
                         >
-                            <span
-                                class="flex h-14 w-14 items-center justify-center rounded-full"
-                                :style="{ background: 'var(--ca-emerald-bg)', color: 'var(--ca-emerald-text)' }"
-                            >
-                                <Icon name="lucide:check" class="h-7 w-7" />
-                            </span>
+                            <BriefSuccessMark />
 
                             <h2 class="mt-5 text-2xl font-display font-bold text-[var(--ca-text)]">
                                 {{ copy.success }}
@@ -523,6 +563,7 @@ useSchemaOrg([
                                         id="name"
                                         v-model="form.name"
                                         :label="t('contact.form.fields.name') as string"
+                                        :placeholder="t('contact.form.placeholders.name') as string"
                                         :error="errorFor('name')"
                                         maxlength="200"
                                         autocomplete="name"
@@ -541,28 +582,41 @@ useSchemaOrg([
                                             <option value="email">Email</option>
                                         </select>
                                     </div>
+                                    <p v-if="draftRestored" class="text-xs text-[var(--ca-muted)]" role="status">{{ copy.draftRestored }}</p>
+                                    <div>
+                                        <label for="phone-region" class="ca-field-label">{{ copy.phoneRegion }}</label>
+                                        <select id="phone-region" v-model="phoneRegion" class="ca-field-control">
+                                            <option value="ID">Indonesia (+62)</option>
+                                            <option value="international">{{ copy.international }}</option>
+                                        </select>
+                                    </div>
                                     <BaseInput
-                                        v-if="form.preferredContact === 'whatsapp'"
                                         id="phone"
-                                        v-model="form.phone"
+                                        v-model="phoneModel"
                                         type="tel"
-                                        :label="t('contact.form.fields.phone') as string"
+                                        :label="`${t('contact.form.fields.phone')}${form.preferredContact === 'email' ? copy.optional : ''}`"
                                         :error="errorFor('phone')"
-                                        placeholder="08… / +62…"
-                                        maxlength="32"
+                                        :placeholder="phoneRegion === 'ID' ? '+62 812 3456 7890' : '+65 8123 4567'"
+                                        maxlength="40"
+                                        inputmode="tel"
                                         autocomplete="tel"
-                                        required
+                                        :required="form.preferredContact === 'whatsapp'"
                                     />
+                                    <p v-if="phoneRegion === 'international'" class="text-xs text-[var(--ca-muted)]">{{ copy.internationalHint }}</p>
                                     <BaseInput
-                                        v-else
                                         id="email"
                                         v-model="form.email"
                                         type="email"
-                                        :label="t('contact.form.fields.email') as string"
+                                        :label="`${t('contact.form.fields.email')}${form.preferredContact === 'whatsapp' ? copy.optional : ''}`"
+                                        :placeholder="t('contact.form.placeholders.email') as string"
                                         :error="errorFor('email')"
                                         maxlength="254"
                                         autocomplete="email"
-                                        required
+                                        inputmode="email"
+                                        autocapitalize="none"
+                                        :spellcheck="false"
+                                        :required="form.preferredContact === 'email'"
+                                        @blur="form.email = normalizeBriefEmail(form.email)"
                                     />
                                     <BaseInput
                                         id="organization"
@@ -583,7 +637,7 @@ useSchemaOrg([
                                     </BaseCheckbox>
                                     <p class="text-xs text-[var(--ca-muted)]">
                                         {{ t('contact.channels.businessHours') }}.
-                                        <NuxtLink to="/privacy-policy" class="underline underline-offset-4">
+                                        <NuxtLink :to="privacyLink" class="underline underline-offset-4">
                                             {{ locale === 'en' ? 'Privacy policy' : 'Kebijakan privasi' }}
                                         </NuxtLink>
                                     </p>

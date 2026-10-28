@@ -3,6 +3,9 @@ import {
     briefContact,
     briefWhatsAppMessage,
     normalizeWhatsApp,
+    formatBriefPhone,
+    normalizeBriefEmail,
+    briefFingerprint,
     validateBriefStep,
     type ProjectBrief,
 } from '~/utils/contact-brief'
@@ -24,11 +27,30 @@ describe('brief dua langkah', () => {
         expect(validateBriefStep(form(), 2)).toBeUndefined()
         expect(briefContact(form())).toEqual({ email: '', phone: '+6281200000000' })
     })
-    it('memvalidasi kontak yang dipilih dan tidak mengirim kontak tersembunyi', () => {
+    it('mengirim kedua kontak yang terlihat dan tetap mewajibkan kanal pilihan', () => {
         const f = { ...form(), preferredContact: 'email' as const, email: '  CONTOH@example.test ' }
         expect(validateBriefStep(f, 2)).toBeUndefined()
-        expect(briefContact(f)).toEqual({ email: 'contoh@example.test', phone: '' })
+        expect(briefContact(f)).toEqual({ email: 'contoh@example.test', phone: '+6281200000000' })
         expect(validateBriefStep({ ...f, email: '' }, 2)).toBe('email')
+        expect(validateBriefStep({ ...f, phone: '' }, 2)).toBeUndefined()
+        expect(validateBriefStep({ ...form(), email: 'rusak' }, 2)).toBe('email')
+        expect(validateBriefStep({ ...f, phone: '123' }, 2)).toBe('phone')
+    })
+    it('memformat ketikan Indonesia bertahap dan paste kode internasional', () => {
+        let display = ''
+        for (const digit of '081234567890') display = formatBriefPhone(display + digit)
+        expect(display).toBe('+62 812 3456 7890')
+        expect(formatBriefPhone('6281234567890')).toBe(display)
+        expect(formatBriefPhone('+65 (8123)-4567', 'international')).toBe('+6581234567')
+        expect(formatBriefPhone('006581234567', 'international')).toBe('+6581234567')
+        expect(formatBriefPhone('')).toBe('')
+        expect(formatBriefPhone('+628123456789012345')).toContain('9012345') // do not silently truncate
+    })
+    it('merapikan email tanpa mengganti nama penyedia dan mempertahankan id retry untuk perubahan tampilan', () => {
+        expect(normalizeBriefEmail('  Nama .Tim@EXAMPLE.TEST \n')).toBe('nama.tim@example.test')
+        expect(normalizeBriefEmail('nama@gmial.com')).toBe('nama@gmial.com')
+        expect(briefFingerprint(form(), '')).toBe(briefFingerprint({ ...form(), phone: '+62 812 0000 0000', name: ' Pengunjung Contoh ' }, ''))
+        expect(briefFingerprint(form(), '')).not.toBe(briefFingerprint({ ...form(), message: 'Kebutuhan berbeda' }, ''))
     })
     it('menolak nomor rusak, kebutuhan kosong, nama kosong dan consent kosong', () => {
         expect(validateBriefStep({ ...form(), phone: '++6281200000000' }, 2)).toBe('phone')
