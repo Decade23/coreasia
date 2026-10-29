@@ -83,6 +83,8 @@ const EN_CONTENT = mergeLocaleContent(ID_CONTENT, {
       powerStatement:
         'One ecosystem, many solutions — from certification to monitoring to CRM, CoreAsia helps you launch faster and scale smarter.',
       chips: ['Company Websites', 'Custom Web Applications', 'System Integration'],
+      animationLabel:
+        'Illustration: a training provider is overwhelmed by registrations over chat. CoreAsia builds online registration, and participants now sign up on their own. Have a similar problem? Discuss your needs with us.',
     },
     products: {
       kicker: 'Our Products',

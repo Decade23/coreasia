@@ -13,6 +13,17 @@ const ctaSection = useReveal('scaleUp')
 const featuredProducts = computed(() => ((t('home.products.items') as CoreContent['home']['products']['items']) || []).slice(0, 3))
 const showHeroScene = ref(false)
 
+// Ilustrasi hero: dari masalah pelanggan sampai ajakan. Sumbernya scripts/animation/hero-story,
+// dikompilasi ke Lottie. Saat adegan "Ajakan" diputar, tombol CTA asli ikut berdenyut.
+const HERO_STORY = {
+    desktop: { json: '/animations/coreasia-hero-v2-desktop.json', poster: '/animations/coreasia-hero-v2-desktop-poster.webp', width: 960, height: 600, frames: 450, fps: 30 },
+    mobile: { json: '/animations/coreasia-hero-v2-mobile.json', poster: '/animations/coreasia-hero-v2-mobile-poster.webp', width: 400, height: 540, frames: 450, fps: 30 },
+} as const
+const heroCtaPulse = ref(false)
+const onHeroMarker = (name: string | null) => {
+    heroCtaPulse.value = name === 'Ajakan'
+}
+
 const heroCardRefs = ref<HTMLElement[]>([])
 const heroMousePositions = ref(Array.from({ length: 3 }, () => ({ x: 0, y: 0 })))
 const siteAsset = (path: string) => new URL(path, siteOrigin.value).toString()
@@ -185,123 +196,138 @@ useHead({
                 </ClientOnly>
             </div>
 
-            <div class="ca-container relative ca-section pt-6 sm:pt-8 lg:py-28">
-                <div class="mx-auto max-w-4xl text-center">
-                    <span class="ca-kicker animate-fade-in-up min-h-[32px]">
-                        <Icon name="lucide:sparkles" class="h-3.5 w-3.5 ca-tone-gold" />
-                        <TypewriterEffect :text="t('home.kicker')" />
-                    </span>
+            <div class="ca-container relative ca-section pt-6 sm:pt-8 lg:py-20">
+                <div class="grid items-center gap-10 lg:grid-cols-[minmax(0,0.88fr)_minmax(0,1.12fr)] lg:gap-10">
+                    <div class="mx-auto max-w-2xl text-center lg:mx-0 lg:max-w-none lg:text-left">
+                        <span class="ca-kicker animate-fade-in-up min-h-[32px]">
+                            <Icon name="lucide:sparkles" class="h-3.5 w-3.5 ca-tone-gold" />
+                            <TypewriterEffect :text="t('home.kicker')" />
+                        </span>
 
-                    <h1
-                        class="mt-5 text-balance font-display text-4xl font-bold leading-[1.08] text-[var(--ca-text)] sm:text-5xl lg:text-[3.6rem] animate-fade-in-up delay-100"
-                        v-html="t('home.hero.title')"
-                    />
+                        <h1
+                            class="mt-5 text-balance font-display text-4xl font-bold leading-[1.08] text-[var(--ca-text)] sm:text-5xl lg:text-[2.75rem] xl:text-[3.1rem] animate-fade-in-up delay-100"
+                            v-html="t('home.hero.title')"
+                        />
 
-                    <p
-                        class="ca-copy mx-auto mt-5 max-w-2xl animate-fade-in-up delay-200"
-                        v-html="t('home.hero.subtitle')"
-                    />
+                        <p
+                            class="ca-copy mx-auto mt-5 max-w-2xl animate-fade-in-up delay-200 lg:mx-0"
+                            v-html="t('home.hero.subtitle')"
+                        />
 
-                    <div
-                        class="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row animate-fade-in-up delay-300"
-                    >
-                        <NuxtLink
-                            to="/contact"
-                            class="ca-btn-primary"
-                            data-analytics-ignore="true"
-                            @click="trackCTAClick('hero_primary', '/contact')"
-                        >
-                            {{ t('home.hero.ctaPrimary') }}
-                            <Icon name="lucide:arrow-right" class="h-4 w-4" />
-                        </NuxtLink>
-                        <a
-                            :href="LINKS.whatsapp"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            class="ca-btn-secondary"
-                            data-analytics-ignore="true"
-                            @click="trackWhatsAppClick('hero')"
-                        >
-                            <Icon name="lucide:message-circle" class="h-4 w-4" />
-                            {{ t('home.hero.ctaSecondary') }}
-                        </a>
-                    </div>
-
-                    <div class="mt-6 animate-fade-in-up delay-350">
-                        <p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-[var(--ca-subtle)]">
-                            {{ t('home.products.kicker') }}
-                        </p>
                         <div
-                            class="mx-auto mt-3 grid max-w-md gap-3 text-left sm:max-w-none"
-                            :class="featuredProducts.length >= 3 ? 'sm:grid-cols-3' : 'sm:grid-cols-2 sm:max-w-lg'"
+                            class="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row lg:justify-start animate-fade-in-up delay-300"
                         >
                             <NuxtLink
-                                v-for="(product, index) in featuredProducts"
-                                :key="product.name"
-                                :ref="
-                                    (el: any) => {
-                                        if (el) heroCardRefs[index] = el.$el || el
-                                    }
-                                "
-                                :to="product.to"
-                                class="ca-card-soft group relative overflow-hidden rounded-2xl p-4 transition-all duration-300 hover:-translate-y-1 hover:border-[color:var(--ca-gold-border)] hover:shadow-[0_8px_30px_rgba(245,158,11,0.08)]"
-                                @mousemove="updateHeroSpotlight(index, $event)"
-                                @mouseleave="resetHeroSpotlight(index)"
+                                to="/contact"
+                                class="ca-btn-primary"
+                                :class="{ 'ca-cta-pulse': heroCtaPulse }"
+                                data-analytics-ignore="true"
+                                @click="trackCTAClick('hero_primary', '/contact')"
                             >
-                                <div
-                                    class="pointer-events-none absolute -inset-px opacity-0 transition duration-300 group-hover:opacity-100"
-                                    :style="{
-                                        background: `radial-gradient(320px circle at ${heroMousePositions[index].x}px ${heroMousePositions[index].y}px, var(--ca-spotlight), transparent 42%)`,
-                                    }"
-                                />
-
-                                <div class="relative z-10">
-                                    <div class="flex items-center gap-3">
-                                        <div
-                                            class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg-strong)]"
-                                        >
-                                            <Icon
-                                                :name="
-                                                    index === 0
-                                                        ? 'lucide:bar-chart-3'
-                                                        : index === 1
-                                                          ? 'lucide:code-2'
-                                                          : 'lucide:box'
-                                                "
-                                                class="h-4 w-4 ca-tone-gold"
-                                            />
-                                        </div>
-                                        <div class="flex-1 min-w-0">
-                                            <h3 class="text-sm font-display font-bold text-[var(--ca-text)] truncate">
-                                                {{ product.name }}
-                                            </h3>
-                                            <span class="text-[0.68rem] text-[var(--ca-muted)]">
-                                                {{ product.tagline }}
-                                            </span>
-                                        </div>
-                                        <Icon
-                                            name="lucide:arrow-right"
-                                            class="h-4 w-4 flex-shrink-0 text-[var(--ca-subtle)] transition-all group-hover:translate-x-0.5 group-hover:text-[var(--ca-gold-text)]"
-                                        />
-                                    </div>
-                                    <p class="mt-2 line-clamp-2 text-xs leading-relaxed text-[var(--ca-muted)]">
-                                        {{ product.heroDesc || product.description }}
-                                    </p>
-                                </div>
+                                {{ t('home.hero.ctaPrimary') }}
+                                <Icon name="lucide:arrow-right" class="h-4 w-4" />
                             </NuxtLink>
+                            <a
+                                :href="LINKS.whatsapp"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                class="ca-btn-secondary"
+                                data-analytics-ignore="true"
+                                @click="trackWhatsAppClick('hero')"
+                            >
+                                <Icon name="lucide:message-circle" class="h-4 w-4" />
+                                {{ t('home.hero.ctaSecondary') }}
+                            </a>
                         </div>
                     </div>
 
-                    <p class="mt-4 text-xs font-medium text-[var(--ca-subtle)] animate-fade-in delay-400">
-                        <Icon name="lucide:shield-check" class="mr-1 inline-block h-3 w-3 ca-tone-emerald" />
-                        {{ t('home.hero.powerStatement') }}
-                    </p>
-
-                    <div class="mt-8 flex flex-wrap items-center justify-center gap-2 animate-fade-in delay-500">
-                        <span v-for="chip in t('home.hero.chips')" :key="chip" class="ca-chip">
-                            {{ chip }}
-                        </span>
+                    <div class="animate-fade-in-up delay-200">
+                        <StoryLottie
+                            :desktop="HERO_STORY.desktop"
+                            :mobile="HERO_STORY.mobile"
+                            :label="t('home.hero.animationLabel') as string"
+                            priority
+                            @marker="onHeroMarker"
+                        />
                     </div>
+                </div>
+
+                <div class="mx-auto mt-14 max-w-4xl text-center lg:mt-16">
+                        <div class="animate-fade-in-up delay-350">
+                            <p class="text-[0.68rem] font-semibold uppercase tracking-[0.16em] text-[var(--ca-subtle)]">
+                                {{ t('home.products.kicker') }}
+                            </p>
+                            <div
+                                class="mx-auto mt-3 grid max-w-md gap-3 text-left sm:max-w-none"
+                                :class="featuredProducts.length >= 3 ? 'sm:grid-cols-3' : 'sm:grid-cols-2 sm:max-w-lg'"
+                            >
+                                <NuxtLink
+                                    v-for="(product, index) in featuredProducts"
+                                    :key="product.name"
+                                    :ref="
+                                        (el: any) => {
+                                            if (el) heroCardRefs[index] = el.$el || el
+                                        }
+                                    "
+                                    :to="product.to"
+                                    class="ca-card-soft group relative overflow-hidden rounded-2xl p-4 transition-all duration-300 hover:-translate-y-1 hover:border-[color:var(--ca-gold-border)] hover:shadow-[0_8px_30px_rgba(245,158,11,0.08)]"
+                                    @mousemove="updateHeroSpotlight(index, $event)"
+                                    @mouseleave="resetHeroSpotlight(index)"
+                                >
+                                    <div
+                                        class="pointer-events-none absolute -inset-px opacity-0 transition duration-300 group-hover:opacity-100"
+                                        :style="{
+                                            background: `radial-gradient(320px circle at ${heroMousePositions[index].x}px ${heroMousePositions[index].y}px, var(--ca-spotlight), transparent 42%)`,
+                                        }"
+                                    />
+
+                                    <div class="relative z-10">
+                                        <div class="flex items-center gap-3">
+                                            <div
+                                                class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg-strong)]"
+                                            >
+                                                <Icon
+                                                    :name="
+                                                        index === 0
+                                                            ? 'lucide:bar-chart-3'
+                                                            : index === 1
+                                                              ? 'lucide:code-2'
+                                                              : 'lucide:box'
+                                                    "
+                                                    class="h-4 w-4 ca-tone-gold"
+                                                />
+                                            </div>
+                                            <div class="flex-1 min-w-0">
+                                                <h3 class="text-sm font-display font-bold text-[var(--ca-text)] truncate">
+                                                    {{ product.name }}
+                                                </h3>
+                                                <span class="text-[0.68rem] text-[var(--ca-muted)]">
+                                                    {{ product.tagline }}
+                                                </span>
+                                            </div>
+                                            <Icon
+                                                name="lucide:arrow-right"
+                                                class="h-4 w-4 flex-shrink-0 text-[var(--ca-subtle)] transition-all group-hover:translate-x-0.5 group-hover:text-[var(--ca-gold-text)]"
+                                            />
+                                        </div>
+                                        <p class="mt-2 line-clamp-2 text-xs leading-relaxed text-[var(--ca-muted)]">
+                                            {{ product.heroDesc || product.description }}
+                                        </p>
+                                    </div>
+                                </NuxtLink>
+                            </div>
+                        </div>
+
+                        <p class="mt-4 text-xs font-medium text-[var(--ca-subtle)] animate-fade-in delay-400">
+                            <Icon name="lucide:shield-check" class="mr-1 inline-block h-3 w-3 ca-tone-emerald" />
+                            {{ t('home.hero.powerStatement') }}
+                        </p>
+
+                        <div class="mt-8 flex flex-wrap items-center justify-center gap-2 animate-fade-in delay-500">
+                            <span v-for="chip in t('home.hero.chips')" :key="chip" class="ca-chip">
+                                {{ chip }}
+                            </span>
+                        </div>
                 </div>
             </div>
         </section>
@@ -374,3 +400,23 @@ useHead({
         <!-- <LazyTrustedBy /> -->
     </div>
 </template>
+
+<style scoped>
+/* Tombol CTA hero berdenyut saat ilustrasi sampai di adegan ajakan. */
+.ca-cta-pulse {
+    animation: ca-cta-pulse 1.2s ease-out 2;
+}
+@keyframes ca-cta-pulse {
+    0% {
+        box-shadow: 0 0 0 0 var(--ca-gold-border);
+    }
+    100% {
+        box-shadow: 0 0 0 16px transparent;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .ca-cta-pulse {
+        animation: none;
+    }
+}
+</style>
