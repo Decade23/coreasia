@@ -61,12 +61,12 @@
  *
  * Kode gagal (statusMessage) dibaca halaman /console/cashflow/masuk:
  *   tanpa-cookie · cookie-ditolak · gateway-gagal · tanpa-izin ·
- *   belum-konfigurasi · mint-gagal · lintas-situs · ikatan
+ *   belum-konfigurasi · mint-gagal · lintas-situs · ikatan · dibatasi (429)
  */
 import { createClient } from '@supabase/supabase-js'
 import { batasIzinMfa, izinSesiCashflow } from '~/utils/rbac'
 import { idAdminGateway } from '../../lib/konsol/cashflow-cabut'
-import { bacaCookie, catat, hapusCookie, ipKlien, pasangToken, wajibIkatan } from '../../lib/konsol/h3'
+import { batasi, bacaCookie, catat, hapusCookie, ipKlien, pasangToken, tanpaCache, wajibIkatan } from '../../lib/konsol/h3'
 import { rakitTujuan } from '../../lib/konsol/jalur'
 import { teruskan } from '../../lib/konsol/proxy'
 
@@ -95,12 +95,16 @@ function klaimJwt(token: string): Record<string, unknown> | null {
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig(event)
+  // Jawaban berisi token sesi: jangan pernah masuk cache.
+  tanpaCache(event)
 
   // 0. Hanya dari halaman kita. Sec-Fetch-Site WAJIB ada dan same-origin.
   if (getHeader(event, 'x-cf-sesi') !== '1' || getHeader(event, 'sec-fetch-site') !== 'same-origin') {
     throw createError({ statusCode: 403, statusMessage: 'lintas-situs' })
   }
   wajibIkatan(event)
+  // Batas per IP sebelum /me ke gateway dan generateLink ke Supabase.
+  if (batasi(event, 'cashflowSesi')) throw createError({ statusCode: 429, statusMessage: 'dibatasi' })
 
   const akses = bacaCookie(event, 'akses')
   const segar = bacaCookie(event, 'segar')

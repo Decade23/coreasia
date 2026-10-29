@@ -280,6 +280,14 @@ describe('/api/cashflow/sesi (POST) — penjaga sebelum gateway', () => {
     expect(r).toMatchObject({ status: 403, statusMessage: 'lintas-situs' })
     expect(gateway).not.toHaveBeenCalled()
   })
+
+  it('jawaban selalu no-store + nosniff, termasuk saat ditolak', async () => {
+    const r = await panggil(h.cfSesi, { metode: 'POST', path: '/api/cashflow/sesi', header: headerKonsol(), cookie: cookieKonsol() })
+    expect(r.header.get('cache-control')).toBe('no-store')
+    expect(r.header.get('x-content-type-options')).toBe('nosniff')
+  })
+
+
 })
 
 describe('/api/admin/refresh — penjaga sebelum gateway', () => {

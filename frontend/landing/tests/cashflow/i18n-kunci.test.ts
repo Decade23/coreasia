@@ -22,7 +22,7 @@ import {
   ALASAN_LEWATI, ALASAN_STOK, SEBAB_RINCI_STOK, ARAH_PENYESUAIAN, SEBAB_PENYESUAIAN, IRAMA_JADWAL, KEADAAN_JADWAL, OCR_STRUK, kunciKode,
 } from '../../adapters/cashflowRanahBuku'
 import { PILIHAN_ARSIP } from '../../adapters/cashflowTampilBuku'
-import { JENIS_KABAR, PERAN_KABAR, PLATFORM_PERANGKAT, VARIAN_APLIKASI } from '../../adapters/cashflowPerangkat'
+import { JENIS_KABAR, PERAN_KABAR, PLATFORM_PERANGKAT, TINGKAT_KABAR, VARIAN_APLIKASI } from '../../adapters/cashflowPerangkat'
 import {
   PILIHAN_KUNCI_VERSI, KELOMPOK_USAHA, URUT_KELOMPOK, ISI_USAHA, LANGKAH_USAHA, type BuildVersi, type BagianDiabaikan,
 } from '../../adapters/cashflowVersi'
@@ -82,6 +82,7 @@ describe('kamus CashFlow lengkap untuk setiap kunci yang dipakai', () => {
       ...[...OCR_STRUK, 'lain'].map(k => `kode.ocr.${kunciKode(k)}`),
       ...[...JENIS_KABAR, 'lain'].map(k => `kode.jenisKabar.${kunciKode(k)}`),
       ...[...PERAN_KABAR, 'lain'].map(k => `kode.peran.${kunciKode(k)}`),
+      ...[...TINGKAT_KABAR, 'lain'].map(k => `kode.tingkatKabar.${kunciKode(k)}`),
       ...[...PLATFORM_PERANGKAT, 'lain'].map(k => `kode.platform.${kunciKode(k)}`),
       ...VARIAN_APLIKASI.map(k => `kode.varian.${kunciKode(k)}`),
       // Isi tab Katalog/Jadwal/Usaha (kunci templat dinamis).

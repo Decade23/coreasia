@@ -60,11 +60,21 @@ let sudahDiperingatkan = false
  *  console akan sering meminta muat ulang. Karena itu dicatat keras. */
 function kunci(event: H3Event): Buffer {
   const config = useRuntimeConfig(event)
+  const khusus = (config.konsolIkatKunci as string) ?? ''
   const k = kunciIkatan({
-    khusus: config.konsolIkatKunci as string,
+    khusus,
     cadangan: config.cashflowSupabaseServiceKey as string,
   })
-  if (k) return k
+  if (k) {
+    // Cadangan service-key aman (HKDF), tetapi rotasi kunci itu ikut
+    // membatalkan semua token ikatan. Sengaja tidak ditolak: env yang belum
+    // dipasang tidak boleh mematikan console produksi.
+    if (process.env.VERCEL && khusus.trim().length < 32 && !sudahDiperingatkan) {
+      sudahDiperingatkan = true
+      console.error('[konsol] NUXT_KONSOL_IKAT_KUNCI (>= 32 aksara) belum dipasang: ikatan memakai turunan service key')
+    }
+    return k
+  }
   if (!kunciProses) kunciProses = randomBytes(32)
   if (!sudahDiperingatkan) {
     sudahDiperingatkan = true
@@ -130,6 +140,9 @@ export const ipKlien = (event: H3Event): string | null => ipKlienMurni({
  */
 const PEMBATAS = {
   sesi: new PembatasJendela(20, 15 * 60_000),
+  /** POST /api/cashflow/sesi: satu cetak per tab tanpa sesi Supabase (lihat
+   *  middleware cashflow-admin). Jatah sendiri supaya tidak memakan /api/admin/sesi. */
+  cashflowSesi: new PembatasJendela(30, 15 * 60_000),
 } as const
 
 /**

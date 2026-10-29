@@ -48,6 +48,7 @@ const KAMUS = {
         'gateway-gagal': 'Gateway console tidak menjawab. Bukan salah sesi Master — coba lagi sebentar.',
         'lintas-situs': 'Permintaan tidak datang dari halaman console.',
         ikatan: 'Halaman console ini perlu dimuat ulang. Muat ulang halaman, lalu coba lagi.',
+        dibatasi: 'Terlalu banyak percobaan menyambung dari jaringan ini. Tunggu beberapa menit, lalu coba lagi.',
         sibuk: 'Masih menyambungkan…',
         'tanpa-izin': 'Peran akun console ini tidak punya izin membuka CashFlow.',
         'mint-gagal': 'Supabase menolak membuat sesi. Periksa identitas konsol dan kuncinya di server.',
@@ -277,13 +278,16 @@ const KAMUS = {
       },
       arah: { tambah: 'Tambah', kurang: 'Kurang', lain: 'Kode tidak dikenal' },
       sebabPenyesuaian: { denda: 'Denda', admin: 'Biaya admin', potongan: 'Potongan', pembulatan: 'Pembulatan', lain: 'Lainnya' },
-      irama: { week: 'Mingguan', month: 'Bulanan', year: 'Tahunan', lain: 'Kode tidak dikenal' },
+      irama: { day: 'Harian', week: 'Mingguan', month: 'Bulanan', year: 'Tahunan', lain: 'Kode tidak dikenal' },
       keadaan: { arsip: 'Diarsip', selesai: 'Selesai', terlambat: 'Terlambat', hari_ini: 'Hari ini', akan_datang: 'Akan datang' },
       ocr: { pending: 'OCR menunggu', done: 'OCR selesai', failed: 'OCR gagal', tanpa: 'Tanpa OCR', lain: 'Kode tidak dikenal' },
       jenisKabar: {
         tx_hapus: 'Transaksi dihapus', tx_besar: 'Transaksi besar', anggota_masuk: 'Anggota masuk', peran_ubah: 'Peran diubah',
-        rangkuman: 'Rangkuman harian', lain: 'Kode tidak dikenal',
+        rangkuman: 'Rangkuman harian', tx_ubah: 'Transaksi diubah', tx_buang: 'Transaksi dibuang permanen', anggota_keluar: 'Anggota keluar',
+        ruang_ubah: 'Ruang diubah', undangan_buat: 'Undangan dibuat', dompet_saldo: 'Saldo dompet diubah', aktivitas: 'Rangkuman aktivitas',
+        lain: 'Kode tidak dikenal',
       },
+      tingkatKabar: { semua: 'Semua', penting: 'Penting saja', rangkuman: 'Rangkuman saja', senyap: 'Senyap', lain: 'Kode tidak dikenal' },
       peran: { owner: 'Pemilik', admin: 'Admin', member: 'Anggota', viewer: 'Pembaca', lain: 'Kode tidak dikenal' },
       platform: { android: 'Android', ios: 'iOS', web: 'Web', lain: 'Tidak dikenal' },
       varian: { prod: 'Produksi', uat: 'UAT' },
@@ -557,11 +561,16 @@ const KAMUS = {
       saring: { ruang: 'Semua ruang', jenis: 'Semua jenis', atur: 'Atur ulang saringan', baca: { semua: 'Semua', belum: 'Belum dibaca', sudah: 'Sudah dibaca' } },
       kosong: 'Belum ada kabar untuk orang ini.', kosongSaring: 'Tidak ada kabar untuk saringan ini.',
       dibaca: 'Dibaca', belum: 'Belum dibaca', aktor: 'Oleh', akunHilang: 'akun sudah tidak ada', adaNama: 'Nama tampilan ada (tidak dikirim)',
-      kategori: 'Kategori', peranBaru: 'Peran baru', tanggal: 'Tanggal',
-      isi: { cacah: 'catatan', masuk: 'masuk', keluar: 'keluar', pencatat: 'pencatat' },
+      kategori: 'Kategori', peranBaru: 'Peran baru', peranUndangan: 'Peran undangan', kunci: 'Kolom berubah', tanggal: 'Tanggal',
+      isi: { cacah: 'catatan', masuk: 'masuk', keluar: 'keluar', pencatat: 'pencatat', pelaku: 'pelaku' },
       setelan: 'Setelan kabar per ruang', setelanKet: 'Bawaan = setelan belum pernah disimpan; aplikasi memakai nilai bawaan.',
       setelanKosong: 'Orang ini bukan anggota ruang mana pun dalam lingkup kasus.',
-      kolom: { ruang: 'Ruang', hapus: 'Transaksi dihapus', masuk: 'Anggota masuk', peran: 'Peran diubah', ambang: 'Ambang transaksi besar', rangkuman: 'Jam rangkuman' },
+      kolom: {
+        ruang: 'Ruang', hapus: 'Transaksi dihapus', masuk: 'Anggota masuk', peran: 'Peran diubah', ubah: 'Transaksi diubah',
+        keluar: 'Anggota keluar', ruangUbah: 'Ruang diubah', tingkat: 'Tingkat', jendela: 'Jendela gabung',
+        ambang: 'Ambang transaksi besar', rangkuman: 'Jam rangkuman',
+      },
+      tingkatBawaan: 'Bawaan peran', menit: (n: number) => `${n} mnt`,
       bawaan: 'Bawaan', nyala: 'Nyala', mati: 'Mati', tanpaAmbang: 'Mati', jam: (j: number, z: string) => `${String(j).padStart(2, '0')}.00 ${z}`,
       bukaTx: 'Buka transaksi',
     },
@@ -665,6 +674,7 @@ const KAMUS = {
         'gateway-gagal': 'The console gateway did not respond. Not a session problem — try again shortly.',
         'lintas-situs': 'The request did not come from a console page.',
         ikatan: 'This console page needs a reload. Reload the page, then try again.',
+        dibatasi: 'Too many connection attempts from this network. Wait a few minutes, then try again.',
         sibuk: 'Still connecting…',
         'tanpa-izin': 'This console role is not allowed to open CashFlow.',
         'mint-gagal': 'Supabase refused to create a session. Check the console identity and key on the server.',
@@ -895,13 +905,16 @@ const KAMUS = {
       },
       arah: { tambah: 'Add', kurang: 'Subtract', lain: 'Unknown code' },
       sebabPenyesuaian: { denda: 'Penalty', admin: 'Admin fee', potongan: 'Discount', pembulatan: 'Rounding', lain: 'Other' },
-      irama: { week: 'Weekly', month: 'Monthly', year: 'Yearly', lain: 'Unknown code' },
+      irama: { day: 'Daily', week: 'Weekly', month: 'Monthly', year: 'Yearly', lain: 'Unknown code' },
       keadaan: { arsip: 'Archived', selesai: 'Completed', terlambat: 'Overdue', hari_ini: 'Due today', akan_datang: 'Upcoming' },
       ocr: { pending: 'OCR pending', done: 'OCR done', failed: 'OCR failed', tanpa: 'No OCR', lain: 'Unknown code' },
       jenisKabar: {
         tx_hapus: 'Transaction deleted', tx_besar: 'Large transaction', anggota_masuk: 'Member joined', peran_ubah: 'Role changed',
-        rangkuman: 'Daily summary', lain: 'Unknown code',
+        rangkuman: 'Daily summary', tx_ubah: 'Transaction edited', tx_buang: 'Transaction purged', anggota_keluar: 'Member left',
+        ruang_ubah: 'Workspace changed', undangan_buat: 'Invite created', dompet_saldo: 'Wallet balance changed', aktivitas: 'Activity summary',
+        lain: 'Unknown code',
       },
+      tingkatKabar: { semua: 'All', penting: 'Important only', rangkuman: 'Summary only', senyap: 'Silent', lain: 'Unknown code' },
       peran: { owner: 'Owner', admin: 'Admin', member: 'Member', viewer: 'Viewer', lain: 'Unknown code' },
       platform: { android: 'Android', ios: 'iOS', web: 'Web', lain: 'Unknown' },
       varian: { prod: 'Production', uat: 'UAT' },
@@ -1177,11 +1190,16 @@ const KAMUS = {
       saring: { ruang: 'All workspaces', jenis: 'All types', atur: 'Reset filters', baca: { semua: 'All', belum: 'Unread', sudah: 'Read' } },
       kosong: 'No notifications for this person yet.', kosongSaring: 'No notifications match these filters.',
       dibaca: 'Read', belum: 'Unread', aktor: 'By', akunHilang: 'account no longer exists', adaNama: 'Display name exists (not sent)',
-      kategori: 'Category', peranBaru: 'New role', tanggal: 'Date',
-      isi: { cacah: 'entries', masuk: 'in', keluar: 'out', pencatat: 'recorders' },
+      kategori: 'Category', peranBaru: 'New role', peranUndangan: 'Invite role', kunci: 'Changed fields', tanggal: 'Date',
+      isi: { cacah: 'entries', masuk: 'in', keluar: 'out', pencatat: 'recorders', pelaku: 'actors' },
       setelan: 'Notification settings per workspace', setelanKet: 'Default = settings never saved; the app uses default values.',
       setelanKosong: 'This person is not a member of any workspace in the case scope.',
-      kolom: { ruang: 'Workspace', hapus: 'Transaction deleted', masuk: 'Member joined', peran: 'Role changed', ambang: 'Large transaction threshold', rangkuman: 'Summary hour' },
+      kolom: {
+        ruang: 'Workspace', hapus: 'Transaction deleted', masuk: 'Member joined', peran: 'Role changed', ubah: 'Transaction edited',
+        keluar: 'Member left', ruangUbah: 'Workspace changed', tingkat: 'Level', jendela: 'Batching window',
+        ambang: 'Large transaction threshold', rangkuman: 'Summary hour',
+      },
+      tingkatBawaan: 'Role default', menit: (n: number) => `${n} min`,
       bawaan: 'Default', nyala: 'On', mati: 'Off', tanpaAmbang: 'Off', jam: (j: number, z: string) => `${String(j).padStart(2, '0')}:00 ${z}`,
       bukaTx: 'Open transaction',
     },
@@ -1261,12 +1279,15 @@ const _enLengkap: Bentuk<typeof KAMUS.id> = null as unknown as Bentuk<typeof KAM
 const _idLengkap: Bentuk<typeof KAMUS.en> = null as unknown as Bentuk<typeof KAMUS.id>
 void _enLengkap; void _idLengkap
 
+/** Hasil tcf: teks, atau kalimat berfungsi yang dipanggil pemakainya. */
+type TeksKamus = string & ((...a: unknown[]) => string)
+
 export const useCashflowI18n = () => {
   const { locale } = useConsoleI18n()
   const kamus = computed<Kamus>(() => (locale.value === 'en' ? (KAMUS.en as unknown as Kamus) : KAMUS.id))
   /** tcf('pengguna.kolom.nama') — kunci bertitik; fungsi dipulangkan apa adanya. */
-  const tcf = (jalur: string): any =>
-    jalur.split('.').reduce<any>((acc, k) => acc?.[k], kamus.value) ?? jalur
+  const tcf = (jalur: string): TeksKamus =>
+    (jalur.split('.').reduce<unknown>((acc, k) => (acc as Record<string, unknown> | null | undefined)?.[k], kamus.value) ?? jalur) as TeksKamus
   /* Waktu tetap WIB; bahasa hanya mengganti nama bulan dan pemisah jam.
      Diikat di sini supaya halaman tidak meneruskan locale satu per satu. */
   const bahasa = computed<BahasaWaktu>(() => (locale.value === 'en' ? 'en' : 'id'))

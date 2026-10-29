@@ -23,7 +23,7 @@ import {
 } from '../../adapters/cashflowRanahBuku'
 import {
   kePerangkatPengguna, keKabar, keRingkasKabar, keSetelanKabar, kursorKabarDariUrl, hariSah,
-  JENIS_KABAR, PERAN_KABAR, PLATFORM_PERANGKAT, VARIAN_APLIKASI, AAL_SESI,
+  JENIS_KABAR, PERAN_KABAR, PERAN_UNDANGAN, TINGKAT_KABAR, PLATFORM_PERANGKAT, VARIAN_APLIKASI, AAL_SESI,
   type PerangkatPenggunaDTO, type KabarPenggunaDTO, type KabarDTO,
 } from '../../adapters/cashflowPerangkat'
 import { kursorKeUrl } from '../../adapters/cashflowBuku'
@@ -155,7 +155,8 @@ describe('kontrak JadwalRuangDTO / JadwalRinciDTO ↔ admin_jadwal_ruang / admin
     expect(r).toContain(`array[${SEBAB_PENYESUAIAN.map(x => `'${x}'`).join(', ')}]`)
     expect(r).toContain(`in (${ARAH_PENYESUAIAN.map(x => `'${x}'`).join(', ')})`)
     const inti = badan('admin_jadwal_baris_inti')
-    expect(inti).toContain(`in (${IRAMA_JADWAL.map(x => `'${x}'`).join(', ')})`)
+    expect(inti).toContain(`not in (${IRAMA_JADWAL.map(x => `'${x}'`).join(', ')})`)
+    expect(inti).toContain(`admin_kode_inti(s.cadence, array[${IRAMA_JADWAL.map(x => `'${x}'`).join(', ')}])`)
     const keadaan = new Set([...inti.matchAll(/then '([a-z-]+)'|else '([a-z-]+)' end,/g)].map(m => (m[1] ?? m[2])!))
     for (const k of KEADAAN_JADWAL) expect(keadaan.has(k), k).toBe(true)
     expect(r).toMatch(/hint = 'kasus-lingkup'/)
@@ -402,53 +403,103 @@ describe('kontrak PerangkatPenggunaDTO ↔ admin_perangkat_pengguna', () => {
 })
 
 // ── R10 Kabar ────────────────────────────────────────────────────────────
+// 0104: 12 jenis; kunci tambahan per jenis dirakit admin_kabar_isi_inti;
+// setelan + tingkat/jendela_menit/ubah/keluar/ruang (0102).
+const ADA_0104 = adaMigrasiNomor('0104')
 const KABAR = `{"kasus": "${K}", "user_id": "${U}",
-  "ringkas": {"total": 64, "belum_dibaca": 5, "per_jenis": {"tx.hapus": 3, "tx.besar": 0, "anggota.masuk": 1, "peran.ubah": 0, "rangkuman": 60, "lain": 0}},
-  "setelan": [{"workspace_id": "${W}", "tersimpan": true, "hapus": true, "masuk": true, "peran": true, "ambang": 500000, "rangkuman_jam": 20, "zona": "WIB"}],
+  "ringkas": {"total": 64, "belum_dibaca": 5, "per_jenis": {"tx.hapus": 3, "tx.besar": 0, "anggota.masuk": 1, "peran.ubah": 0, "rangkuman": 56,
+    "tx.ubah": 1, "tx.buang": 0, "anggota.keluar": 0, "ruang.ubah": 0, "undangan.buat": 1, "dompet.saldo": 0, "aktivitas": 2, "lain": 0}},
+  "setelan": [{"workspace_id": "${W}", "tersimpan": true, "hapus": true, "masuk": true, "peran": true, "ambang": 500000, "rangkuman_jam": 20, "zona": "WIB",
+    "tingkat": "penting", "jendela_menit": 15, "ubah": true, "keluar": false, "ruang": true}],
   "baris": [
     {"id": 9921, "workspace_id": "${W}", "jenis": "tx.hapus", "kode_tak_dikenal": false, "aktor": "${U2}", "akun_ada": true, "ada_nama_aktor": true,
      "sasaran_id": "${ID(81)}", "nominal": 45000, "tanggal": null, "pada": "2026-09-24T10:00:00+00:00", "dibaca_pada": null, "kategori": "Belanja dapur"},
+    {"id": 9915, "workspace_id": "${W}", "jenis": "tx.ubah", "kode_tak_dikenal": false, "aktor": "${U2}", "akun_ada": true, "ada_nama_aktor": false,
+     "sasaran_id": "${ID(82)}", "nominal": 52000, "tanggal": null, "pada": "2026-09-24T09:00:00+00:00", "dibaca_pada": null,
+     "kategori": "Belanja dapur", "kunci": ["amount", "lain"]},
+    {"id": 9912, "workspace_id": "${W}", "jenis": "undangan.buat", "kode_tak_dikenal": false, "aktor": "${U2}", "akun_ada": true, "ada_nama_aktor": false,
+     "sasaran_id": null, "nominal": null, "tanggal": null, "pada": "2026-09-23T15:00:00+00:00", "dibaca_pada": null, "peran_undangan": "member"},
     {"id": 9910, "workspace_id": "${W}", "jenis": "peran.ubah", "kode_tak_dikenal": false, "aktor": "${U2}", "akun_ada": false, "ada_nama_aktor": false,
      "sasaran_id": null, "nominal": null, "tanggal": null, "pada": "2026-09-23T14:00:00+00:00", "dibaca_pada": null, "peran_baru": "admin"},
+    {"id": 9905, "workspace_id": "${W}", "jenis": "anggota.masuk", "kode_tak_dikenal": false, "aktor": "${U2}", "akun_ada": true, "ada_nama_aktor": true,
+     "sasaran_id": null, "nominal": null, "tanggal": null, "pada": "2026-09-23T13:30:00+00:00", "dibaca_pada": null},
+    {"id": 9903, "workspace_id": "${W}", "jenis": "aktivitas", "kode_tak_dikenal": false, "aktor": null, "akun_ada": null, "ada_nama_aktor": false,
+     "sasaran_id": null, "nominal": null, "tanggal": "2026-09-23", "pada": "2026-09-23T13:10:00+00:00", "dibaca_pada": null,
+     "isi": {"cacah": 7, "masuk": 0, "keluar": 310000, "jumlah_pelaku": 2, "jenis": {"tx.catat": 6, "tx.ubah": 1}}},
     {"id": 9900, "workspace_id": "${W}", "jenis": "rangkuman", "kode_tak_dikenal": false, "aktor": null, "akun_ada": null, "ada_nama_aktor": false,
      "sasaran_id": null, "nominal": null, "tanggal": "2026-09-23", "pada": "2026-09-23T13:00:00+00:00", "dibaca_pada": "2026-09-24T01:00:00+00:00",
      "isi": {"cacah": 24, "masuk": 1850000, "keluar": 420000, "pencatat": 2}}],
   "kursor_berikut": {"p": "2026-09-23T13:00:00+00:00", "i": 9900}, "total": 64, "halaman_pertama": true}`
+/** Kunci tambahan baris per jenis = cabang admin_kabar_isi_inti (0104). */
+const TAMBAHAN_KABAR: Record<(typeof JENIS_KABAR)[number], string[]> = {
+  'tx.hapus': ['kategori'], 'tx.besar': ['kategori'], 'tx.buang': ['kategori'], 'tx.ubah': ['kategori', 'kunci'],
+  'dompet.saldo': ['kunci'], 'ruang.ubah': ['kunci'], 'peran.ubah': ['peran_baru'], 'undangan.buat': ['peran_undangan'],
+  rangkuman: ['isi'], aktivitas: ['isi'], 'anggota.masuk': [], 'anggota.keluar': [],
+}
+/** Cabang `when p_jenis …` admin_kabar_isi_inti → jenis ↦ kunci objek cabang. */
+const cabangIsiKabar = (): Record<string, string[]> => {
+  const hasil: Record<string, string[]> = {}
+  for (const seg of badan('admin_kabar_isi_inti').split(/\bwhen\s+p_jenis\b/).slice(1)) {
+    const kepala = /^\s*(?:in\s*\(([^)]*)\)|=\s*'([^']+)')/.exec(seg)
+    if (!kepala) continue
+    const jenis = kepala[1] ? [...kepala[1].matchAll(/'([^']+)'/g)].map(m => m[1]!) : [kepala[2]!]
+    const kunci = urut(Object.keys(semuaPohonJsonb(seg)[0] ?? {}))
+    for (const j of jenis) hasil[j] = kunci
+  }
+  return hasil
+}
 
 describe('kontrak KabarPenggunaDTO ↔ admin_kabar_pengguna', () => {
-  it.skipIf(!ADA)('baris (+ kategori | peran_baru | isi per jenis), ringkas, setelan, kursor {p,i} = kunci server; tanpa aktor_nama/judul', () => {
+  it.skipIf(!ADA_0104)('baris (dasar + kunci admin_kabar_isi_inti per jenis), ringkas, setelan, kursor {p,i} = kunci server; tanpa aktor_nama/judul', () => {
     const b = badan('admin_kabar_pengguna')
     const d = JSON.parse(KABAR) as KabarPenggunaDTO
     const dasar = pohonDengan(b, 'ada_nama_aktor', 'dibaca_pada')
-    const tambahan: Record<string, string> = { 'tx.hapus': 'kategori', 'peran.ubah': 'peran_baru', rangkuman: 'isi' }
+    expect(b).toMatch(/\|\|\s*public\.admin_kabar_isi_inti\(x\.jenis,\s*x\.judul,\s*x\.isi\)/)
+    const cabang = cabangIsiKabar()
+    for (const j of JENIS_KABAR) expect(cabang[j] ?? [], j).toEqual(urut(TAMBAHAN_KABAR[j]))
+    expect(Object.keys(cabang).filter(j => !(JENIS_KABAR as readonly string[]).includes(j))).toEqual([])
     for (const x of d.baris) {
-      const ekstra = tambahan[x.jenis]!
-      expect(urut(Object.keys(x))).toEqual(urut([...Object.keys(dasar), ekstra]))
-      expect(semuaPohonJsonb(b).some(p => urut(Object.keys(p)).join() === ekstra)).toBe(true)
+      expect(urut(Object.keys(x)), x.jenis).toEqual(urut([...Object.keys(dasar), ...TAMBAHAN_KABAR[x.jenis as (typeof JENIS_KABAR)[number]]]))
     }
-    sama(d.ringkas, pohonDengan(b, 'belum_dibaca', 'per_jenis'))
+    expect(urut(Object.keys(d.ringkas!.per_jenis))).toEqual(urut([...JENIS_KABAR, 'lain']))
+    sama(tanpa(pohonContoh(d.ringkas)!, 'per_jenis'), tanpa(pohonDengan(b, 'belum_dibaca', 'per_jenis'), 'per_jenis'))
     sama(d.setelan![0], pohonDengan(b, 'tersimpan', 'rangkuman_jam'))
     sama(d.kursor_berikut, semuaPohonJsonb(b).find(p => urut(Object.keys(p)).join() === 'i,p')!)
     sama(d, { ...atas('admin_kabar_pengguna'), ringkas: pohonContoh(d.ringkas), setelan: pohonContoh(d.setelan), baris: pohonContoh(d.baris), kursor_berikut: pohonContoh(d.kursor_berikut) })
     expect(Object.keys(dasar)).not.toContain('aktor_nama')
     expect(Object.keys(dasar)).not.toContain('judul')
   })
-  it.skipIf(!ADA)('kosakata jenis & peran = daftar putih server; p_jenis asing = 22023 saringan', () => {
+  it.skipIf(!ADA_0104)('kosakata jenis, peran, peran undangan, tingkat, kunci isi = daftar putih server; p_jenis asing = 22023 saringan', () => {
     const b = badan('admin_kabar_pengguna')
-    expect(b).toContain(`array[${PERAN_KABAR.map(x => `'${x}'`).join(', ')}]`)
-    for (const j of JENIS_KABAR) expect(b).toContain(`'${j}'`)
+    const isi = badan('admin_kabar_isi_inti')
+    const cJenis = /c_jenis\s+constant\s+text\[\]\s*:=\s*array\[([^\]]*)\]/.exec(b)
+    expect(cJenis).not.toBeNull()
+    expect([...cJenis![1]!.matchAll(/'([^']+)'/g)].map(m => m[1])).toEqual([...JENIS_KABAR])
+    expect(isi).toContain(`array[${PERAN_KABAR.map(x => `'${x}'`).join(', ')}]`)
+    expect(isi).toContain(`array[${PERAN_UNDANGAN.map(x => `'${x}'`).join(', ')}]`)
+    expect(b).toContain(`array[${TINGKAT_KABAR.map(x => `'${x}'`).join(', ')}]`)
+    expect(isi).toContain(`e.key in ('cacah', 'masuk', 'keluar', 'pencatat')`)
+    expect(isi).toContain(`e.key in ('cacah', 'masuk', 'keluar')`)
+    expect(isi).toMatch(/'jumlah_pelaku'/)
     expect(b).toMatch(/hint = 'saringan'/)
   })
-  it('keKabar: kategori hanya tx.*, peran_baru hanya peran.ubah, isi hanya rangkuman; jenis asing = lain', () => {
+  it('keKabar: kategori hanya tx.*, kunci hanya tx.ubah/dompet.saldo/ruang.ubah, peran hanya peran.ubah/undangan.buat, isi hanya rangkuman/aktivitas; jenis asing = lain', () => {
     const d = JSON.parse(KABAR) as KabarPenggunaDTO
-    const [hapus, peran, rangkuman] = d.baris.map(keKabar)
-    expect(hapus).toMatchObject({ id: 9921, jenis: 'tx.hapus', kategori: 'Belanja dapur', nominal: 45000, dibaca: false, peranBaru: null, isi: null })
-    expect(peran).toMatchObject({ jenis: 'peran.ubah', peranBaru: 'admin', kategori: null, akunAda: false })
-    expect(rangkuman).toMatchObject({ jenis: 'rangkuman', isi: { cacah: 24, masuk: 1850000, keluar: 420000, pencatat: 2 }, dibaca: true })
-    const asing = keKabar({ ...(d.baris[0] as KabarDTO), jenis: 'lain', kode_tak_dikenal: true, kategori: 'bocor?' })
-    expect(asing).toMatchObject({ jenis: 'lain', kodeTakDikenal: true, kategori: null })
-    expect(keRingkasKabar(d.ringkas)).toMatchObject({ total: 64, belumDibaca: 5, perJenis: { 'tx.hapus': 3, rangkuman: 60, lain: 0 } })
-    expect(keSetelanKabar(d.setelan![0]!)).toMatchObject({ ambang: 500000, rangkumanJam: 20, zona: 'WIB' })
+    const [hapus, ubah, undangan, peran, masuk, aktivitas, rangkuman] = d.baris.map(keKabar)
+    expect(hapus).toMatchObject({ id: 9921, jenis: 'tx.hapus', kategori: 'Belanja dapur', nominal: 45000, dibaca: false, peranBaru: null, kunci: null, isi: null })
+    expect(ubah).toMatchObject({ jenis: 'tx.ubah', kategori: 'Belanja dapur', kunci: ['amount', 'lain'], peranUndangan: null })
+    expect(undangan).toMatchObject({ jenis: 'undangan.buat', peranUndangan: 'member', peranBaru: null, kategori: null, kunci: null })
+    expect(peran).toMatchObject({ jenis: 'peran.ubah', peranBaru: 'admin', peranUndangan: null, kategori: null, akunAda: false })
+    expect(masuk).toMatchObject({ jenis: 'anggota.masuk', kategori: null, kunci: null, peranBaru: null, peranUndangan: null, isi: null })
+    expect(aktivitas).toMatchObject({ jenis: 'aktivitas', isi: { cacah: 7, masuk: 0, keluar: 310000, pencatat: null, pelaku: 2 } })
+    expect(rangkuman).toMatchObject({ jenis: 'rangkuman', isi: { cacah: 24, masuk: 1850000, keluar: 420000, pencatat: 2, pelaku: null }, dibaca: true })
+    expect(keKabar({ ...(d.baris[0] as KabarDTO), peran_undangan: 'owner', jenis: 'undangan.buat' }).peranUndangan).toBe('lain')
+    const asing = keKabar({ ...(d.baris[1] as KabarDTO), jenis: 'lain', kode_tak_dikenal: true })
+    expect(asing).toMatchObject({ jenis: 'lain', kodeTakDikenal: true, kategori: null, kunci: null })
+    expect(keRingkasKabar(d.ringkas)).toMatchObject({ total: 64, belumDibaca: 5, perJenis: { 'tx.hapus': 3, rangkuman: 56, aktivitas: 2, 'undangan.buat': 1, lain: 0 } })
+    expect(keSetelanKabar(d.setelan![0]!)).toMatchObject({ ambang: 500000, rangkumanJam: 20, zona: 'WIB', tingkat: 'penting', jendelaMenit: 15, ubah: true, keluar: false, ruang: true })
+    expect(keSetelanKabar({ ...d.setelan![0]!, tingkat: null }).tingkat).toBeNull()
+    expect(keSetelanKabar({ ...d.setelan![0]!, tingkat: 'lain' }).tingkat).toBe('lain')
   })
   it('kursor kabar {p, i bigint}: i teks/uuid → null', () => {
     const k = { p: '2026-09-23T13:00:00+00:00', i: 9900 }

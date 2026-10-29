@@ -6,7 +6,7 @@
  *
  * Yang tidak pernah datang dari server: token perangkat (hanya `sidik` HMAC
  * per subjek), id sesi mentah, IP, user_agent (K-F3-6), aktor_nama kabar
- * (K-F3-3; hanya `ada_nama_aktor`), judul kabar di luar kategori/peran.
+ * (K-F3-3; hanya `ada_nama_aktor`), judul kabar di luar kategori/peran/peran undangan.
  * `platform`, `versi_aplikasi`, `kode_build` adalah LAPORAN klien yang sudah
  * disaring server; dirender sebagai teks, tidak pernah v-html.
  *
@@ -131,25 +131,45 @@ export function kePerangkatPengguna(d: PerangkatPenggunaDTO): PerangkatPengguna 
 }
 
 // ── R10 admin_kabar_pengguna (ranah kabar) ───────────────────────────────
-export const JENIS_KABAR = ['tx.hapus', 'tx.besar', 'anggota.masuk', 'peran.ubah', 'rangkuman'] as const
+/** c_jenis admin_kabar_pengguna (0104) = CHECK kabar_jenis_check: 5 jenis 0064 + 7 jenis 0102. */
+export const JENIS_KABAR = [
+  'tx.hapus', 'tx.besar', 'anggota.masuk', 'peran.ubah', 'rangkuman',
+  'tx.ubah', 'tx.buang', 'anggota.keluar', 'ruang.ubah', 'undangan.buat', 'dompet.saldo', 'aktivitas',
+] as const
 export type JenisKabar = typeof JENIS_KABAR[number]
 export const PERAN_KABAR = ['owner', 'admin', 'member', 'viewer'] as const
 export type PeranKabar = typeof PERAN_KABAR[number]
+/** Daftar putih peran undangan.buat (admin_kabar_isi_inti 0104). */
+export const PERAN_UNDANGAN = ['admin', 'member', 'viewer'] as const
+export type PeranUndangan = typeof PERAN_UNDANGAN[number]
+/** kabar_setelan.tingkat (0102); null = bawaan menurut peran. */
+export const TINGKAT_KABAR = ['semua', 'penting', 'rangkuman', 'senyap'] as const
+export type TingkatKabar = typeof TINGKAT_KABAR[number]
+/** Jenis pembawa kunci tambahan (admin_kabar_isi_inti 0104). */
+const JENIS_KATEGORI: readonly string[] = ['tx.hapus', 'tx.besar', 'tx.buang', 'tx.ubah']
+const JENIS_KUNCI: readonly string[] = ['tx.ubah', 'dompet.saldo', 'ruang.ubah']
+const JENIS_ISI: readonly string[] = ['rangkuman', 'aktivitas']
 
 export interface KabarDTO {
   id: number; workspace_id: string; jenis: string; kode_tak_dikenal: boolean; aktor: string | null
   akun_ada: boolean | null; ada_nama_aktor: boolean; sasaran_id: string | null; nominal: Num | null
   tanggal: string | null; pada: string; dibaca_pada: string | null
-  /** Hanya tx.hapus / tx.besar: nama kategori (label beku). */
+  /** Hanya tx.hapus / tx.besar / tx.buang / tx.ubah: nama kategori (label beku). */
   kategori?: string | null
+  /** Hanya tx.ubah / dompet.saldo / ruang.ubah: kolom yang berubah (daftar putih; asing = 'lain'). */
+  kunci?: string[]
   /** Hanya peran.ubah (daftar putih peran). */
   peran_baru?: string | null
-  /** Hanya rangkuman: cacah/masuk/keluar/pencatat bertipe angka. */
-  isi?: { cacah?: number; masuk?: number; keluar?: number; pencatat?: number }
+  /** Hanya undangan.buat (daftar putih admin/member/viewer). */
+  peran_undangan?: string | null
+  /** rangkuman: cacah/masuk/keluar/pencatat; aktivitas: cacah/masuk/keluar + jumlah_pelaku + jenis {kode: n}. */
+  isi?: { cacah?: number; masuk?: number; keluar?: number; pencatat?: number; jumlah_pelaku?: number; jenis?: Record<string, number> }
 }
 export interface SetelanKabarDTO {
   workspace_id: string; tersimpan: boolean; hapus: boolean; masuk: boolean; peran: boolean
   ambang: Num | null; rangkuman_jam: number | null; zona: string | null
+  /** 0102. */
+  tingkat: string | null; jendela_menit: number | null; ubah: boolean; keluar: boolean; ruang: boolean
 }
 export interface RingkasKabarDTO {
   total: number; belum_dibaca: number
@@ -171,19 +191,26 @@ export interface Kabar {
   id: number; ruangId: string; jenis: JenisKabar | 'lain'; kodeTakDikenal: boolean
   aktor: string | null; akunAda: boolean | null; adaNamaAktor: boolean; sasaranId: string | null
   nominal: number | null; tanggal: string | null; padaIso: string; dibacaIso: string | null; dibaca: boolean
-  kategori: string | null; peranBaru: PeranKabar | 'lain' | null
-  isi: { cacah: number | null; masuk: number | null; keluar: number | null; pencatat: number | null } | null
+  kategori: string | null; kunci: string[] | null
+  peranBaru: PeranKabar | 'lain' | null; peranUndangan: PeranUndangan | 'lain' | null
+  /** rangkuman dan aktivitas; `pelaku` = isi.jumlah_pelaku aktivitas. */
+  isi: { cacah: number | null; masuk: number | null; keluar: number | null; pencatat: number | null; pelaku: number | null } | null
 }
 export interface SetelanKabar {
   ruangId: string; tersimpan: boolean; hapus: boolean; masuk: boolean; peran: boolean
   ambang: number | null; rangkumanJam: number | null; zona: string | null
+  /** null = bawaan menurut peran. */
+  tingkat: TingkatKabar | 'lain' | null; jendelaMenit: number; ubah: boolean; keluar: boolean; ruang: boolean
 }
 export interface RingkasKabar { total: number; belumDibaca: number; perJenis: Record<JenisKabar | 'lain', number> }
 
 export function keKabar(k: KabarDTO): Kabar {
   const jenis = kodeDari(k.jenis, JENIS_KABAR) ?? 'lain'
   const isi = k.isi && typeof k.isi === 'object'
-    ? { cacah: angkaAtauNull(k.isi.cacah), masuk: angkaAtauNull(k.isi.masuk), keluar: angkaAtauNull(k.isi.keluar), pencatat: angkaAtauNull(k.isi.pencatat) }
+    ? {
+        cacah: angkaAtauNull(k.isi.cacah), masuk: angkaAtauNull(k.isi.masuk), keluar: angkaAtauNull(k.isi.keluar),
+        pencatat: angkaAtauNull(k.isi.pencatat), pelaku: angkaAtauNull(k.isi.jumlah_pelaku),
+      }
     : null
   return {
     id: angka0(k.id),
@@ -199,14 +226,18 @@ export function keKabar(k: KabarDTO): Kabar {
     padaIso: k.pada,
     dibacaIso: k.dibaca_pada ?? null,
     dibaca: !!k.dibaca_pada,
-    kategori: jenis === 'tx.hapus' || jenis === 'tx.besar' ? (k.kategori?.trim() || null) : null,
+    kategori: JENIS_KATEGORI.includes(jenis) ? (k.kategori?.trim() || null) : null,
+    kunci: JENIS_KUNCI.includes(jenis) && Array.isArray(k.kunci) ? k.kunci.filter((x): x is string => typeof x === 'string') : null,
     peranBaru: jenis === 'peran.ubah' ? kodeDari(k.peran_baru, PERAN_KABAR) : null,
-    isi: jenis === 'rangkuman' ? isi : null,
+    peranUndangan: jenis === 'undangan.buat' ? kodeDari(k.peran_undangan, PERAN_UNDANGAN) : null,
+    isi: JENIS_ISI.includes(jenis) ? isi : null,
   }
 }
 export const keSetelanKabar = (s: SetelanKabarDTO): SetelanKabar => ({
   ruangId: s.workspace_id, tersimpan: s.tersimpan === true, hapus: s.hapus === true, masuk: s.masuk === true,
   peran: s.peran === true, ambang: angkaAtauNull(s.ambang), rangkumanJam: s.rangkuman_jam ?? null, zona: s.zona ?? null,
+  tingkat: kodeDari(s.tingkat, TINGKAT_KABAR), jendelaMenit: angka0(s.jendela_menit),
+  ubah: s.ubah === true, keluar: s.keluar === true, ruang: s.ruang === true,
 })
 export const keRingkasKabar = (r: RingkasKabarDTO | null | undefined): RingkasKabar | null => {
   if (!r) return null

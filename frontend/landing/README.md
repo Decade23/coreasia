@@ -120,3 +120,18 @@ PORT=3000
 - Dockerfile mendukung target `development` dan `production`.
 - Runtime production menjalankan Nitro output via Bun.
 - Dependency lock utama: `bun.lock`.
+
+## Pemeriksaan console CashFlow
+
+Jalankan `npx nuxt prepare` sesudah menambah komponen, lalu:
+
+```bash
+CASHFLOW_MIGRASI=<repo-cashflow>/supabase/migrations npx vitest run
+node scripts/cek-komponen-cashflow.mjs
+npm run build
+```
+
+Cetak sesi CashFlow dibatasi 30 kali per 15 menit per IP per instans; jatahnya
+terpisah dari serah terima login console. Jawaban sesi memakai no-store dan
+nosniff. Peran dan kesegaran MFA tetap menentukan izin, tanpa masa tunggu
+pendaftaran TOTP. Lihat `docs/runbook-console.md` untuk urutan rilis.

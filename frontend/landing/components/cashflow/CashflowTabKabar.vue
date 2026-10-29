@@ -6,7 +6,8 @@
  *
  * Yang tidak datang dari server: nama tampilan pengirim (hanya
  * `ada_nama_aktor`, K-F3-3), judul di luar kategori (tx.*) dan peran
- * (peran.ubah), kunci isi di luar cacah/masuk/keluar/pencatat. Jenis dan
+ * (peran.ubah / undangan.buat), kunci isi di luar cacah/masuk/keluar/pencatat
+ * (+ jumlah_pelaku aktivitas). Jenis dan
  * peran diterjemahkan lewat i18n; kode asing = "Kode tidak dikenal".
  * Saringan di memori (halaman), tidak ke URL.
  */
@@ -44,11 +45,17 @@ const pilihJenis = (e: Event) => {
 const labelJenis = (j: Kabar['jenis']) => tcf(`kode.jenisKabar.${kunciKode(j)}`)
 const ikonJenis = (j: Kabar['jenis']) => ({
   'tx.hapus': 'lucide:trash-2', 'tx.besar': 'lucide:trending-up', 'anggota.masuk': 'lucide:user-plus', 'peran.ubah': 'lucide:shield', rangkuman: 'lucide:calendar-days',
+  'tx.ubah': 'lucide:pencil', 'tx.buang': 'lucide:trash', 'anggota.keluar': 'lucide:user-minus', 'ruang.ubah': 'lucide:settings',
+  'undangan.buat': 'lucide:mail-plus', 'dompet.saldo': 'lucide:wallet', aktivitas: 'lucide:activity',
 } as Record<string, string>)[j] ?? 'lucide:bell'
+/** Jenis yang sasaran_id-nya id transaksi (tx.buang: transaksi sudah dibuang permanen). */
+const JENIS_TX: readonly string[] = ['tx.hapus', 'tx.besar', 'tx.ubah']
 const keTx = (tx: string) => `${props.dasar}/transaksi?tx=${tx}`
-const ISI = ['cacah', 'masuk', 'keluar', 'pencatat'] as const
+const ISI = ['cacah', 'masuk', 'keluar', 'pencatat', 'pelaku'] as const
 const nilaiIsi = (k: typeof ISI[number], n: number) => (k === 'masuk' || k === 'keluar' ? rupiah(n) : angka(n))
-const SETELAN = ['hapus', 'masuk', 'peran'] as const
+/** Sakelar setelan → label kolom (`ruang` sakelar = kabar ruang.ubah; kolom.ruang = nama ruang). */
+const SETELAN = { hapus: 'hapus', masuk: 'masuk', peran: 'peran', ubah: 'ubah', keluar: 'keluar', ruang: 'ruangUbah' } as const
+const SAKELAR = Object.keys(SETELAN) as Array<keyof typeof SETELAN>
 const JENIS_RINGKAS = [...JENIS_KABAR, 'lain'] as const
 const isiAda = (k: Kabar) => (k.isi ? ISI.filter(x => k.isi![x] != null).map(x => ({ kunci: x, nilai: nilaiIsi(x, k.isi![x]!) })) : [])
 </script>
@@ -79,7 +86,9 @@ const isiAda = (k: Kabar) => (k.isi ? ISI.filter(x => k.isi![x] != null).map(x =
           <thead class="text-[var(--ca-muted)]">
             <tr>
               <th class="py-1 pr-3 font-medium">{{ tcf('kabar.kolom.ruang') }}</th>
-              <th v-for="k in SETELAN" :key="k" class="py-1 pr-3 font-medium">{{ tcf(`kabar.kolom.${k}`) }}</th>
+              <th v-for="k in SAKELAR" :key="k" class="py-1 pr-3 font-medium">{{ tcf(`kabar.kolom.${SETELAN[k]}`) }}</th>
+              <th class="py-1 pr-3 font-medium">{{ tcf('kabar.kolom.tingkat') }}</th>
+              <th class="py-1 pr-3 font-medium">{{ tcf('kabar.kolom.jendela') }}</th>
               <th class="py-1 pr-3 font-medium">{{ tcf('kabar.kolom.ambang') }}</th>
               <th class="py-1 font-medium">{{ tcf('kabar.kolom.rangkuman') }}</th>
             </tr>
@@ -90,7 +99,9 @@ const isiAda = (k: Kabar) => (k.isi ? ISI.filter(x => k.isi![x] != null).map(x =
                 {{ namaRuang(s.ruangId) }}
                 <span v-if="!s.tersimpan" class="ca-pill-muted ml-1 text-[0.65rem]">{{ tcf('kabar.bawaan') }}</span>
               </td>
-              <td v-for="k in SETELAN" :key="k" class="py-1.5 pr-3" :class="s[k] ? '' : 'text-[var(--ca-muted)]'">{{ s[k] ? tcf('kabar.nyala') : tcf('kabar.mati') }}</td>
+              <td v-for="k in SAKELAR" :key="k" class="py-1.5 pr-3" :class="s[k] ? '' : 'text-[var(--ca-muted)]'">{{ s[k] ? tcf('kabar.nyala') : tcf('kabar.mati') }}</td>
+              <td class="py-1.5 pr-3" :class="s.tingkat ? '' : 'text-[var(--ca-muted)]'">{{ s.tingkat ? tcf(`kode.tingkatKabar.${s.tingkat}`) : tcf('kabar.tingkatBawaan') }}</td>
+              <td class="py-1.5 pr-3 tabular-nums">{{ s.jendelaMenit ? tcf('kabar.menit')(s.jendelaMenit) : tcf('kabar.mati') }}</td>
               <td class="py-1.5 pr-3 tabular-nums">{{ s.ambang == null ? tcf('kabar.tanpaAmbang') : rupiah(s.ambang) }}</td>
               <td class="py-1.5 tabular-nums">{{ s.rangkumanJam == null ? '—' : tcf('kabar.jam')(s.rangkumanJam, s.zona ?? 'WIB') }}</td>
             </tr>
@@ -121,6 +132,8 @@ const isiAda = (k: Kabar) => (k.isi ? ISI.filter(x => k.isi![x] != null).map(x =
             <span class="font-medium text-[var(--ca-text)]">{{ labelJenis(k.jenis) }}</span>
             <span v-if="k.kategori" class="text-[var(--ca-muted)]">{{ k.kategori }}</span>
             <span v-if="k.peranBaru" class="ca-pill-info text-[0.7rem]">{{ tcf('kabar.peranBaru') }}: {{ tcf(`kode.peran.${k.peranBaru}`) }}</span>
+            <span v-if="k.peranUndangan" class="ca-pill-info text-[0.7rem]">{{ tcf('kabar.peranUndangan') }}: {{ tcf(`kode.peran.${k.peranUndangan}`) }}</span>
+            <span v-if="k.kunci?.length" class="text-xs text-[var(--ca-muted)]">{{ tcf('kabar.kunci') }}: <span class="font-mono">{{ k.kunci.join(', ') }}</span></span>
             <span v-if="k.kodeTakDikenal" class="ca-pill-muted text-[0.7rem]">{{ tcf('kode.takDikenal') }}</span>
             <span class="text-xs text-[var(--ca-subtle)]">{{ namaRuang(k.ruangId) }}</span>
           </div>
@@ -139,7 +152,7 @@ const isiAda = (k: Kabar) => (k.isi ? ISI.filter(x => k.isi![x] != null).map(x =
           </p>
         </div>
         <span v-if="k.nominal != null" class="font-semibold tabular-nums text-[var(--ca-text)]">{{ rupiah(k.nominal) }}</span>
-        <NuxtLink v-if="k.sasaranId && (k.jenis === 'tx.hapus' || k.jenis === 'tx.besar')" :to="keTx(k.sasaranId)" class="ca-btn-secondary !px-3 !py-1 text-xs">{{ tcf('kabar.bukaTx') }}</NuxtLink>
+        <NuxtLink v-if="k.sasaranId && JENIS_TX.includes(k.jenis)" :to="keTx(k.sasaranId)" class="ca-btn-secondary !px-3 !py-1 text-xs">{{ tcf('kabar.bukaTx') }}</NuxtLink>
       </li>
     </ul>
   </div>

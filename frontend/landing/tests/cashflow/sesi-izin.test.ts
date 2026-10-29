@@ -22,8 +22,12 @@
  * (dulu wajibIkatan ditiru sebagai no-op — temuan F13). Hanya
  * lib/konsol/proxy (ke gateway) dan klien Supabase yang ditiru.
  */
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
-import { cookieKonsol, headerKonsol, panggil, pasangGlobalNitro } from '../konsol/bff'
+import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest'
+import { AKSES, SEGAR, cookieKonsol, headerKonsol, panggil, pasangGlobalNitro } from '../konsol/bff'
+
+import { KAMUS_CASHFLOW } from '../../composables/cashflow/useCashflowI18n'
+
+const panggilan = { gateway: 0, mint: 0 }
 
 interface Me {
   id: string; email: string; role: string; is_active: boolean
@@ -36,11 +40,13 @@ const dicabut: string[] = []
 const jwt = (klaim: Record<string, unknown>) => `h.${Buffer.from(JSON.stringify(klaim)).toString('base64url')}.t`
 
 vi.mock('../../server/lib/konsol/proxy', () => ({
-  teruskan: async () => ({
+  teruskan: async () => {
+    panggilan.gateway++
+    return ({
     respons: new Response(JSON.stringify({ data: keadaan.me }), { status: 200, headers: { 'content-type': 'application/json' } }),
     hapusCookie: false,
     tokenBaru: null,
-  }),
+  }) },
 }))
 vi.mock('@supabase/supabase-js', () => ({
   createClient: (_url: string, kunci: string) => (kunci === 'kunci-layanan-tiruan'
@@ -56,7 +62,7 @@ vi.mock('@supabase/supabase-js', () => ({
         }),
         auth: {
           admin: {
-            generateLink: async () => ({ data: { properties: { hashed_token: 'hash' } }, error: null }),
+            generateLink: async () => { panggilan.mint++; return { data: { properties: { hashed_token: 'hash' } }, error: null } },
             signOut: async (token: string) => { dicabut.push(token); return { error: null } },
           },
         },
@@ -73,23 +79,26 @@ vi.mock('@supabase/supabase-js', () => ({
 
 interface Hasil { izin: string[]; pelaku: string }
 let handler: unknown
-beforeAll(async () => {
-  pasangGlobalNitro()
-  handler = (await import('../../server/api/cashflow/sesi.post')).default
-})
 /** POST /api/cashflow/sesi lewat h3 asli; galat jadi { status, statusMessage }. */
 async function cetak(header: Record<string, string> = headerKonsol({ 'x-cf-sesi': '1' })) {
   const j = await panggil(handler, { metode: 'POST', path: '/api/cashflow/sesi', header, cookie: cookieKonsol() })
   return { ...j, isi: j.json as unknown as Hasil }
 }
-afterAll(() => { vi.useRealTimers(); vi.unstubAllGlobals() })
+afterAll(() => { vi.useRealTimers(); vi.unstubAllGlobals(); vi.unstubAllEnvs() })
 const ADMIN_GW = '0b6e7c1e-2a55-4d59-9c5f-0a8d2f9d1b11'
 const KINI = Date.parse('2026-09-21T15:00:00Z')
 const JAM = 3_600_000
 const iso = (ms: number) => new Date(ms).toISOString()
-beforeEach(() => {
+beforeEach(async () => {
   vi.useFakeTimers({ toFake: ['Date'] })
   vi.setSystemTime(KINI)
+  // Setiap kasus mendapat pembatas baru; urutan uji tidak menghabiskan jatah.
+  vi.resetModules()
+  vi.stubEnv('VERCEL', '1')
+  pasangGlobalNitro()
+  handler = (await import('../../server/api/cashflow/sesi.post')).default
+  panggilan.gateway = 0
+  panggilan.mint = 0
   tulis.length = 0
   dicabut.length = 0
   keadaan.galatInsert = null
@@ -218,5 +227,66 @@ describe('sesi.post: izin sesi CashFlow', () => {
       expect(await cetak(), String(id)).toMatchObject({ status: 502, statusMessage: 'gateway-gagal' })
       expect(tulis).toEqual([])
     }
+  })
+})
+
+
+describe('sesi.post: pembatasan tidak mengubah izin sesi', () => {
+  it('jawaban token yang berhasil selalu no-store dan nosniff', async () => {
+    keadaan.me = me('super_admin', true)
+    const r = await cetak()
+    expect(r.status).toBe(200)
+    expect(r.header.get('cache-control')).toBe('no-store')
+    expect(r.header.get('x-content-type-options')).toBe('nosniff')
+    expect(r.isi.izin).toHaveLength(5)
+  })
+
+  it('30 cetak sah lolos; ke-31 ditolak sebelum gateway dan Supabase, lalu pulih tepat 15 menit', async () => {
+    keadaan.me = me('super_admin', true)
+    for (let i = 0; i < 30; i++) expect((await cetak()).status, `permintaan ${i + 1}`).toBe(200)
+    const r = await cetak()
+    expect(r).toMatchObject({ status: 429, statusMessage: 'dibatasi' })
+    expect(r.header.get('retry-after')).toBe('900')
+    expect(r.header.get('cache-control')).toBe('no-store')
+    expect(r.header.get('x-content-type-options')).toBe('nosniff')
+    expect(panggilan).toEqual({ gateway: 30, mint: 30 })
+    expect(tulis).toHaveLength(30)
+    vi.setSystemTime(KINI + 15 * 60_000)
+    expect((await cetak()).status).toBe(200)
+    expect(panggilan).toEqual({ gateway: 31, mint: 31 })
+  })
+
+  it('permintaan lintas situs dan tanpa ikatan tidak menghabiskan jatah console yang sah', async () => {
+    keadaan.me = me('super_admin', true)
+    for (let i = 0; i < 35; i++) {
+      expect((await cetak(headerKonsol({ 'x-cf-sesi': '1', 'sec-fetch-site': 'cross-site' }))).status).toBe(403)
+      expect((await cetak({ 'x-cf-sesi': '1', 'sec-fetch-site': 'same-origin' })).status).toBe(403)
+    }
+    expect(panggilan).toEqual({ gateway: 0, mint: 0 })
+    for (let i = 0; i < 30; i++) expect((await cetak()).status).toBe(200)
+  })
+
+  it('IP lain tetap bisa mencetak saat jatah IP pertama habis', async () => {
+    keadaan.me = me('super_admin', true)
+    const hdr = (ip: string) => headerKonsol({ 'x-cf-sesi': '1', 'x-real-ip': ip })
+    for (let i = 0; i < 30; i++) expect((await cetak(hdr('192.0.2.1'))).status).toBe(200)
+    expect((await cetak(hdr('192.0.2.1'))).status).toBe(429)
+    expect((await cetak(hdr('192.0.2.2'))).status).toBe(200)
+  })
+
+  it('jatah serah terima login habis tidak menghabiskan jatah cetak sesi CashFlow', async () => {
+    keadaan.me = me('super_admin', true)
+    const sesi = (await import('../../server/api/admin/sesi.post')).default
+    const serahkan = () => panggil(sesi, {
+      metode: 'POST', path: '/api/admin/sesi', header: headerKonsol({ 'content-type': 'application/json' }), cookie: cookieKonsol(),
+      badan: JSON.stringify({ access_token: AKSES, refresh_token: SEGAR }),
+    })
+    for (let i = 0; i < 20; i++) expect((await serahkan()).status).toBe(200)
+    expect((await serahkan()).status).toBe(429)
+    expect((await cetak()).status).toBe(200)
+  })
+
+  it('sebab dibatasi memiliki pesan Indonesia dan Inggris', () => {
+    for (const lang of ['id', 'en'] as const) expect(KAMUS_CASHFLOW[lang].masuk.sebab.dibatasi).toMatch(/\S/)
   })
 })
