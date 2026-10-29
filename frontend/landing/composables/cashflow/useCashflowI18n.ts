@@ -284,7 +284,7 @@ const KAMUS = {
       jenisKabar: {
         tx_hapus: 'Transaksi dihapus', tx_besar: 'Transaksi besar', anggota_masuk: 'Anggota masuk', peran_ubah: 'Peran diubah',
         rangkuman: 'Rangkuman harian', tx_ubah: 'Transaksi diubah', tx_buang: 'Transaksi dibuang permanen', anggota_keluar: 'Anggota keluar',
-        ruang_ubah: 'Ruang diubah', undangan_buat: 'Undangan dibuat', dompet_saldo: 'Saldo dompet diubah', aktivitas: 'Rangkuman aktivitas',
+        ruang_ubah: 'Ruang diubah', undangan_buat: 'Undangan dibuat', dompet_saldo: 'Saldo dompet diubah', rekonsiliasi_basi: 'Perlu dicek ulang', rekonsiliasi_ingat: 'Pengingat cek saldo', aktivitas: 'Rangkuman aktivitas',
         lain: 'Kode tidak dikenal',
       },
       tingkatKabar: { semua: 'Semua', penting: 'Penting saja', rangkuman: 'Rangkuman saja', senyap: 'Senyap', lain: 'Kode tidak dikenal' },
@@ -332,7 +332,7 @@ const KAMUS = {
     },
     transaksi: {
       tanggal: 'Tanggal', ruang: 'Ruang', dompet: 'Dompet', kategori: 'Kategori', penanda: 'Penanda', nominal: 'Nominal', jenis: 'Jenis',
-      masuk: 'Masuk', keluar: 'Keluar', transfer: 'Transfer', masaDepan: 'Tanggal depan', lampiran: 'Lampiran',
+      masuk: 'Masuk', keluar: 'Keluar', transfer: 'Transfer', penyesuaian: 'Penyesuaian saldo', masaDepan: 'Tanggal depan', lampiran: 'Lampiran',
       cicilan: (n: number) => `Cicilan ${n}`, saringIni: 'Saring dengan ini',
       kosong: 'Tidak ada transaksi yang dicatat orang ini di ruang lingkup kasus.',
       tanpaRuang: 'Orang ini tidak punya ruang, jadi tidak ada transaksi yang bisa dibuka.',
@@ -353,6 +353,7 @@ const KAMUS = {
       jedaKet: 'Selisih jam server dan jam perangkat: lama catatan menunggu di antrean HP.',
       bukaTransaksi: 'Buka transaksi', bukaPengguna: 'Buka pengguna',
       jenisOpsi: {
+        rekonsiliasi: { simpan: 'saldo dicocokkan', basi: 'saldo perlu dicek ulang' },
         tx: { catat: 'transaksi dicatat', ubah: 'transaksi diubah', hapus: 'transaksi dihapus', pulih: 'transaksi dipulihkan', buang: 'transaksi dibuang' },
         struk: { catat: 'struk dicatat', hapus: 'struk dihapus' },
         dompet: { arsip: 'dompet diarsipkan', pulih: 'dompet dipulihkan' },
@@ -556,6 +557,7 @@ const KAMUS = {
       terbesarRingkasKet: 'Hanya waktu. Ruang dan transaksinya terbuka bila kasus memegang ranah jejak.',
     },
     kabar: {
+      dompetRekon: 'Dompet', selisihRekon: 'Selisih cek saldo', hariRekon: 'Hari sejak cek terakhir',
       ket: 'Kotak masuk kabar orang ini dan setelannya, dari ruang dalam lingkup kasus. Nama tampilan pengirim tidak dikirim.',
       ringkas: { total: 'Kabar', belum: 'Belum dibaca' },
       saring: { ruang: 'Semua ruang', jenis: 'Semua jenis', atur: 'Atur ulang saringan', baca: { semua: 'Semua', belum: 'Belum dibaca', sudah: 'Sudah dibaca' } },
@@ -911,7 +913,7 @@ const KAMUS = {
       jenisKabar: {
         tx_hapus: 'Transaction deleted', tx_besar: 'Large transaction', anggota_masuk: 'Member joined', peran_ubah: 'Role changed',
         rangkuman: 'Daily summary', tx_ubah: 'Transaction edited', tx_buang: 'Transaction purged', anggota_keluar: 'Member left',
-        ruang_ubah: 'Workspace changed', undangan_buat: 'Invite created', dompet_saldo: 'Wallet balance changed', aktivitas: 'Activity summary',
+        ruang_ubah: 'Workspace changed', undangan_buat: 'Invite created', dompet_saldo: 'Wallet balance changed', rekonsiliasi_basi: 'Needs another check', rekonsiliasi_ingat: 'Balance check reminder', aktivitas: 'Activity summary',
         lain: 'Unknown code',
       },
       tingkatKabar: { semua: 'All', penting: 'Important only', rangkuman: 'Summary only', senyap: 'Silent', lain: 'Unknown code' },
@@ -959,7 +961,7 @@ const KAMUS = {
     },
     transaksi: {
       tanggal: 'Date', ruang: 'Workspace', dompet: 'Wallet', kategori: 'Category', penanda: 'Flags', nominal: 'Amount', jenis: 'Type',
-      masuk: 'In', keluar: 'Out', transfer: 'Transfer', masaDepan: 'Future date', lampiran: 'Attachment',
+      masuk: 'In', keluar: 'Out', transfer: 'Transfer', penyesuaian: 'Balance adjustment', masaDepan: 'Future date', lampiran: 'Attachment',
       cicilan: (n: number) => `Installment ${n}`, saringIni: 'Filter by this',
       kosong: 'No transactions recorded by this person in the case\'s workspaces.',
       tanpaRuang: 'This person has no workspaces, so there are no transactions to open.',
@@ -982,6 +984,8 @@ const KAMUS = {
       jedaKet: 'Server clock minus device clock: how long the record waited in the phone\'s queue.',
       bukaTransaksi: 'Open transaction', bukaPengguna: 'Open user',
       jenisOpsi: {
+        rekonsiliasi: { simpan: 'balance matched', basi: 'balance needs another check' },
+
         tx: { catat: 'transaction recorded', ubah: 'transaction edited', hapus: 'transaction deleted', pulih: 'transaction restored', buang: 'transaction purged' },
         struk: { catat: 'receipt recorded', hapus: 'receipt deleted' },
         dompet: { arsip: 'wallet archived', pulih: 'wallet restored' },
@@ -1185,6 +1189,7 @@ const KAMUS = {
       terbesarRingkasKet: 'Times only. The workspace and transaction open when the case holds the trail domain.',
     },
     kabar: {
+      dompetRekon: 'Wallet', selisihRekon: 'Balance check difference', hariRekon: 'Days since last check',
       ket: 'This person’s notification inbox and settings, from workspaces in the case scope. Sender display names are not sent.',
       ringkas: { total: 'Notifications', belum: 'Unread' },
       saring: { ruang: 'All workspaces', jenis: 'All types', atur: 'Reset filters', baca: { semua: 'All', belum: 'Unread', sudah: 'Read' } },

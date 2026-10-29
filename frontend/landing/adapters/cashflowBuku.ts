@@ -222,7 +222,7 @@ export interface TransaksiBarisDTO {
   dompet_id: string | null; dompet: string | null; kategori_id: string | null; kategori: string | null
   kind: string; amount: number | string; occurred_at: string; occurred_time: string | null
   created_at: string; updated_at: string | null; dicatat_pada: string | null
-  transfer_group: string | null; pasangan_id: string | null
+  rekonsiliasi_id?: string | null; transfer_group: string | null; pasangan_id: string | null
   group_id: string | null; schedule_id: string | null; installment_no: number | null
   schedule_periods: number | null; product_id: string | null; qty: number | string | null
   unit_price: number | string | null; cost_at_sale: number | string | null
@@ -232,7 +232,7 @@ export interface TransaksiBarisDTO {
 export interface SampahBarisDTO {
   id: string; tx_id: string; workspace_id: string; kind: string | null; amount: number | string | null
   occurred_at: string | null; dompet_id: string | null; dompet_nama: string | null; kategori_id: string | null
-  transfer_group: string | null; group_id: string | null; schedule_id: string | null
+  rekonsiliasi_id?: string | null; transfer_group: string | null; group_id: string | null; schedule_id: string | null
   ada_foto: boolean | null; ada_catatan: boolean; pencatat: string | null
   dihapus_oleh: string | null; dihapus_pada: string; dipulihkan_oleh: string | null; dipulihkan_pada: string | null
 }
@@ -252,8 +252,8 @@ export interface TransaksiCariDTO {
 }
 
 /** Masuk/keluar sungguhan, atau kaki transfer (transfer_group terisi). */
-export type JenisUang = 'masuk' | 'keluar' | 'transfer'
-export const JENIS_TRANSAKSI = ['masuk', 'keluar', 'transfer'] as const
+export type JenisUang = 'masuk' | 'keluar' | 'transfer' | 'penyesuaian'
+export const JENIS_TRANSAKSI = ['masuk', 'keluar', 'transfer', 'penyesuaian'] as const
 /** p_cek admin_transaksi_bangun (0090 §4). */
 export const CEK_TRANSAKSI = ['masa_depan', 'transfer_pincang', 'dompet_arsip', 'calon_ganda'] as const
 export type CekTransaksi = typeof CEK_TRANSAKSI[number]
@@ -302,7 +302,8 @@ export interface TransaksiBaris {
   masaDepan: boolean
 }
 
-export function jenisUang(kind: string | null | undefined, transferGroup: string | null | undefined): JenisUang | null {
+export function jenisUang(kind: string | null | undefined, transferGroup: string | null | undefined, rekonsiliasiId?: string | null): JenisUang | null {
+  if (rekonsiliasiId) return 'penyesuaian'
   if (transferGroup) return 'transfer'
   const a = keArahUang(kind)
   return a
@@ -318,7 +319,7 @@ export function keTransaksiBaris(d: TransaksiBarisDTO): TransaksiBaris {
     kategoriId: d.kategori_id ?? null,
     kategori: d.kategori?.trim() || '',
     arah: keArahUang(d.kind),
-    jenis: jenisUang(d.kind, d.transfer_group),
+    jenis: jenisUang(d.kind, d.transfer_group, d.rekonsiliasi_id),
     nominal: angka(d.amount),
     tanggal: d.occurred_at,
     jam: d.occurred_time ? d.occurred_time.slice(0, 5) : null,
@@ -367,7 +368,7 @@ export function keSampahBaris(d: SampahBarisDTO): SampahBaris {
     id: d.id,
     txId: d.tx_id,
     ruangId: d.workspace_id,
-    jenis: jenisUang(d.kind, d.transfer_group),
+    jenis: jenisUang(d.kind, d.transfer_group, d.rekonsiliasi_id),
     nominal: angka(d.amount),
     tanggal: d.occurred_at ?? null,
     dompet: d.dompet_nama?.trim() || '—',
@@ -445,7 +446,7 @@ export interface SampahRinciDTO {
   id: string; sampah_id: string; workspace_id: string; pencatat: string | null
   dompet_id: string | null; dompet_nama: string | null; kategori_id: string | null
   kind: string | null; amount: number | string | null; occurred_at: string | null
-  transfer_group: string | null; group_id: string | null; schedule_id: string | null
+  rekonsiliasi_id?: string | null; transfer_group: string | null; group_id: string | null; schedule_id: string | null
   schedule_periods: number | null; ada_foto: boolean | null; ada_catatan: boolean
   dihapus_oleh: string | null; dihapus_pada: string; dipulihkan_oleh: string | null; dipulihkan_pada: string | null
 }
@@ -562,7 +563,7 @@ export function keRinci(d: TransaksiRinciDTO): TransaksiRinci {
     return {
       ...umum,
       sumber: 'sampah', id: s.id, sampahId: s.sampah_id, ruangId: s.workspace_id, pencatat: s.pencatat ?? null,
-      jenis: jenisUang(s.kind, s.transfer_group), arah: keArahUang(s.kind), nominal: angka(s.amount),
+      jenis: jenisUang(s.kind, s.transfer_group, s.rekonsiliasi_id), arah: keArahUang(s.kind), nominal: angka(s.amount),
       tanggal: s.occurred_at ?? null, jam: null, dompet: s.dompet_nama?.trim() || '—', kategori: '',
       dibuatIso: null, diubahIso: null, dicatatPerangkatIso: null, adaCatatan: s.ada_catatan === true, masaDepan: false,
       cicilanKe: null, qty: null, hargaSatuan: null, hpp: null,

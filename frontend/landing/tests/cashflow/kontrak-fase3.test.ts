@@ -408,7 +408,7 @@ describe('kontrak PerangkatPenggunaDTO ↔ admin_perangkat_pengguna', () => {
 const ADA_0104 = adaMigrasiNomor('0104')
 const KABAR = `{"kasus": "${K}", "user_id": "${U}",
   "ringkas": {"total": 64, "belum_dibaca": 5, "per_jenis": {"tx.hapus": 3, "tx.besar": 0, "anggota.masuk": 1, "peran.ubah": 0, "rangkuman": 56,
-    "tx.ubah": 1, "tx.buang": 0, "anggota.keluar": 0, "ruang.ubah": 0, "undangan.buat": 1, "dompet.saldo": 0, "aktivitas": 2, "lain": 0}},
+    "tx.ubah": 1, "tx.buang": 0, "anggota.keluar": 0, "ruang.ubah": 0, "undangan.buat": 1, "dompet.saldo": 0, "aktivitas": 2, "rekonsiliasi.basi": 0, "rekonsiliasi.ingat": 0, "lain": 0}},
   "setelan": [{"workspace_id": "${W}", "tersimpan": true, "hapus": true, "masuk": true, "peran": true, "ambang": 500000, "rangkuman_jam": 20, "zona": "WIB",
     "tingkat": "penting", "jendela_menit": 15, "ubah": true, "keluar": false, "ruang": true}],
   "baris": [
@@ -432,6 +432,7 @@ const KABAR = `{"kasus": "${K}", "user_id": "${U}",
   "kursor_berikut": {"p": "2026-09-23T13:00:00+00:00", "i": 9900}, "total": 64, "halaman_pertama": true}`
 /** Kunci tambahan baris per jenis = cabang admin_kabar_isi_inti (0104). */
 const TAMBAHAN_KABAR: Record<(typeof JENIS_KABAR)[number], string[]> = {
+  'rekonsiliasi.basi': ['isi'], 'rekonsiliasi.ingat': ['isi'],
   'tx.hapus': ['kategori'], 'tx.besar': ['kategori'], 'tx.buang': ['kategori'], 'tx.ubah': ['kategori', 'kunci'],
   'dompet.saldo': ['kunci'], 'ruang.ubah': ['kunci'], 'peran.ubah': ['peran_baru'], 'undangan.buat': ['peran_undangan'],
   rangkuman: ['isi'], aktivitas: ['isi'], 'anggota.masuk': [], 'anggota.keluar': [],

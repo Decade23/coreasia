@@ -14,6 +14,7 @@ import { bacaObjekKursor, isoSah } from './cashflowBuku'
 
 /** CHECK peristiwa.jenis (M/0053:68-73). */
 export const JENIS_PERISTIWA = [
+  'rekonsiliasi.simpan', 'rekonsiliasi.basi',
   'tx.catat', 'tx.ubah', 'tx.hapus', 'tx.pulih', 'tx.buang',
   'struk.catat', 'struk.hapus',
   'dompet.arsip', 'dompet.pulih',

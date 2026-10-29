@@ -404,7 +404,7 @@ export function kePemeriksaan(d: PeriksaRuangDTO): { baris: Pemeriksaan[]; berma
 export interface SampahRuangBarisDTO {
   id: string; tx_id: string; workspace_id: string; kind: string | null; amount: number | string | null
   occurred_at: string | null; dompet_id: string | null; dompet_nama: string | null; kategori_id: string | null
-  kategori: string | null; transfer_group: string | null; group_id: string | null; schedule_id: string | null
+  kategori: string | null; rekonsiliasi_id?: string | null; transfer_group: string | null; group_id: string | null; schedule_id: string | null
   ada_foto: boolean | null; ada_catatan: boolean; ada_judul: boolean; pencatat: string | null
   dihapus_oleh: string | null; dihapus_pada: string; dipulihkan_oleh: string | null; dipulihkan_pada: string | null
   status: string
@@ -428,7 +428,7 @@ export function keSampahRuang(d: SampahRuangBarisDTO): SampahRuangBaris {
   return {
     id: d.id,
     txId: d.tx_id,
-    jenis: jenisUang(d.kind, d.transfer_group),
+    jenis: jenisUang(d.kind, d.transfer_group, d.rekonsiliasi_id),
     nominal: angka0(d.amount),
     tanggal: d.occurred_at ?? null,
     dompet: d.dompet_nama || '—',

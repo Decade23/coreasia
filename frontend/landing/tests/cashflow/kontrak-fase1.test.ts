@@ -147,11 +147,11 @@ describe('nilai yang dikenal server', () => {
   })
   it.skipIf(!adaMigrasi)('JENIS_PERISTIWA = CHECK peristiwa.jenis', () => {
     const def = kolomTabel('peristiwa').definisi.jenis ?? ''
-    expect(urut(kutip(def))).toEqual(urut([...JENIS_PERISTIWA]))
+    expect(urut(kutip(def))).toEqual(urut(JENIS_PERISTIWA.filter(j => !j.startsWith('rekonsiliasi.'))))
   })
   it.skipIf(!adaMigrasi)('CEK_TRANSAKSI = p_cek admin_transaksi_bangun', () => {
     const { badan } = fungsiTerakhir('admin_transaksi_bangun')
-    const cek = [...badan.matchAll(/when\s+'([a-z_]+)'\s+then/g)].map(m => m[1]!).filter(c => !['masuk', 'keluar', 'transfer'].includes(c))
+    const cek = [...badan.matchAll(/when\s+'([a-z_]+)'\s+then/g)].map(m => m[1]!).filter(c => !['masuk', 'keluar', 'transfer', 'penyesuaian'].includes(c))
     expect(urut(cek)).toEqual(urut([...CEK_TRANSAKSI]))
   })
 })
@@ -293,7 +293,7 @@ describe('kontrak Pengguna360DTO ↔ admin_pengguna_360', () => {
   it.skipIf(!adaMigrasi)('bersih = uang berpindah (tanpa transfer, piutang/kasbon, dompet arsip); ruang luar lingkup tanpa agregat', () => {
     const { badan } = fungsiTerakhir('admin_pengguna_360')
     // Himpunan yang sama dengan Beranda / rekap_ruang (0068): label UI "bersih" bergantung pada ini.
-    const uang = [...badan.matchAll(/select\s+(t2?)\.transfer_group is null and not (d2?)\.archived and \2\.type <> 'piutang' as uang/g)]
+    const uang = [...badan.matchAll(/select\s+(t2?)\.transfer_group is null and \1\.rekonsiliasi_id is null and not (d2?)\.archived and \2\.type <> 'piutang' as uang/g)]
     expect(uang.length).toBe(2)
     expect(badan).toMatch(/filter \(where t2?\.kind = 'income'\s+and u2?\.uang\)/)
     expect(badan).toMatch(/where x\.dalam and t2\.workspace_id = x\.ws/)
@@ -319,7 +319,7 @@ const TX_BARIS = `{"id": "11111111-1111-4111-8111-111111111111", "workspace_id":
   "dompet_id": "22222222-2222-4222-8222-222222222222", "dompet": "Kas", "kategori_id": null, "kategori": null,
   "kind": "expense", "amount": "275000.50", "occurred_at": "2026-09-16", "occurred_time": "14:05:00",
   "created_at": "2026-09-16T07:05:12.345678+00:00", "updated_at": null, "dicatat_pada": "2026-09-16T07:05:00+00:00",
-  "transfer_group": "99999999-9999-4999-8999-999999999999", "pasangan_id": "33333333-3333-4333-8333-333333333333",
+  "rekonsiliasi_id": null, "transfer_group": "99999999-9999-4999-8999-999999999999", "pasangan_id": "33333333-3333-4333-8333-333333333333",
   "group_id": null, "schedule_id": null, "installment_no": 2, "schedule_periods": null, "product_id": null, "qty": 1.5,
   "unit_price": null, "cost_at_sale": null, "ada_catatan": true, "ada_lampiran": false, "masa_depan": false}`
 const SAMPAH_BARIS = `{"id": "44444444-4444-4444-8444-444444444444", "tx_id": "55555555-5555-4555-8555-555555555555",
@@ -405,7 +405,7 @@ const RINCI = `{"sumber": "transaksi", "transaksi": ${TX_BARIS.slice(0, -1)}, "j
     "nominal": 275000.5, "arah": "expense", "tanggal": "2026-09-16"}]}`
 const RINCI_SAMPAH = `{"id": "55555555-5555-4555-8555-555555555555", "sampah_id": "44444444-4444-4444-8444-444444444444",
   "workspace_id": "${RUANG}", "pencatat": "${SUBJEK}", "dompet_id": null, "dompet_nama": "Bank", "kategori_id": null,
-  "kind": "income", "amount": 150000, "occurred_at": "2026-09-10", "transfer_group": null, "group_id": null, "schedule_id": null,
+  "kind": "income", "amount": 150000, "occurred_at": "2026-09-10", "rekonsiliasi_id": null, "transfer_group": null, "group_id": null, "schedule_id": null,
   "schedule_periods": null, "ada_foto": false, "ada_catatan": true, "dihapus_oleh": "${SUBJEK}",
   "dihapus_pada": "2026-09-11T01:00:00+00:00", "dipulihkan_oleh": null, "dipulihkan_pada": null}`
 

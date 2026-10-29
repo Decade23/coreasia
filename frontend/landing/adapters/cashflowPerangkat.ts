@@ -134,7 +134,7 @@ export function kePerangkatPengguna(d: PerangkatPenggunaDTO): PerangkatPengguna 
 /** c_jenis admin_kabar_pengguna (0104) = CHECK kabar_jenis_check: 5 jenis 0064 + 7 jenis 0102. */
 export const JENIS_KABAR = [
   'tx.hapus', 'tx.besar', 'anggota.masuk', 'peran.ubah', 'rangkuman',
-  'tx.ubah', 'tx.buang', 'anggota.keluar', 'ruang.ubah', 'undangan.buat', 'dompet.saldo', 'aktivitas',
+  'tx.ubah', 'tx.buang', 'anggota.keluar', 'ruang.ubah', 'undangan.buat', 'dompet.saldo', 'aktivitas', 'rekonsiliasi.basi', 'rekonsiliasi.ingat',
 ] as const
 export type JenisKabar = typeof JENIS_KABAR[number]
 export const PERAN_KABAR = ['owner', 'admin', 'member', 'viewer'] as const
@@ -163,7 +163,7 @@ export interface KabarDTO {
   /** Hanya undangan.buat (daftar putih admin/member/viewer). */
   peran_undangan?: string | null
   /** rangkuman: cacah/masuk/keluar/pencatat; aktivitas: cacah/masuk/keluar + jumlah_pelaku + jenis {kode: n}. */
-  isi?: { cacah?: number; masuk?: number; keluar?: number; pencatat?: number; jumlah_pelaku?: number; jenis?: Record<string, number> }
+  isi?: { dompet?: string; selisih?: Num; per_tanggal?: string; hari?: number | null; cacah?: number; masuk?: number; keluar?: number; pencatat?: number; jumlah_pelaku?: number; jenis?: Record<string, number> }
 }
 export interface SetelanKabarDTO {
   workspace_id: string; tersimpan: boolean; hapus: boolean; masuk: boolean; peran: boolean
@@ -188,6 +188,7 @@ export interface SaringKabar { ruang: string | null; jenis: JenisKabar | null; b
 export const SARING_KABAR_KOSONG: Readonly<SaringKabar> = { ruang: null, jenis: null, belum: null }
 
 export interface Kabar {
+  rekonsiliasi?: { dompet: string | null; selisih: number | null; perTanggal: string | null; hari: number | null };
   id: number; ruangId: string; jenis: JenisKabar | 'lain'; kodeTakDikenal: boolean
   aktor: string | null; akunAda: boolean | null; adaNamaAktor: boolean; sasaranId: string | null
   nominal: number | null; tanggal: string | null; padaIso: string; dibacaIso: string | null; dibaca: boolean
@@ -231,6 +232,12 @@ export function keKabar(k: KabarDTO): Kabar {
     peranBaru: jenis === 'peran.ubah' ? kodeDari(k.peran_baru, PERAN_KABAR) : null,
     peranUndangan: jenis === 'undangan.buat' ? kodeDari(k.peran_undangan, PERAN_UNDANGAN) : null,
     isi: JENIS_ISI.includes(jenis) ? isi : null,
+    ...(jenis.startsWith('rekonsiliasi.') ? { rekonsiliasi: {
+      dompet: typeof k.isi?.dompet === 'string' ? k.isi.dompet : null,
+      selisih: angkaAtauNull(k.isi?.selisih),
+      perTanggal: typeof k.isi?.per_tanggal === 'string' ? k.isi.per_tanggal : null,
+      hari: angkaAtauNull(k.isi?.hari),
+    } } : {}),
   }
 }
 export const keSetelanKabar = (s: SetelanKabarDTO): SetelanKabar => ({

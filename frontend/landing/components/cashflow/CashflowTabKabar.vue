@@ -137,6 +137,12 @@ const isiAda = (k: Kabar) => (k.isi ? ISI.filter(x => k.isi![x] != null).map(x =
             <span v-if="k.kodeTakDikenal" class="ca-pill-muted text-[0.7rem]">{{ tcf('kode.takDikenal') }}</span>
             <span class="text-xs text-[var(--ca-subtle)]">{{ namaRuang(k.ruangId) }}</span>
           </div>
+          <p v-if="k.rekonsiliasi" class="mt-0.5 text-xs tabular-nums text-[var(--ca-muted)]">
+            {{ tcf('kabar.dompetRekon') }}: {{ k.rekonsiliasi.dompet ?? '—' }}
+            <template v-if="k.rekonsiliasi.perTanggal"> · {{ formatTanggal(k.rekonsiliasi.perTanggal) }}</template>
+            <template v-if="k.rekonsiliasi.selisih != null"> · {{ tcf('kabar.selisihRekon') }} {{ rupiah(k.rekonsiliasi.selisih) }}</template>
+            <template v-if="k.rekonsiliasi.hari != null"> · {{ tcf('kabar.hariRekon') }} {{ angka(k.rekonsiliasi.hari) }}</template>
+          </p>
           <p v-if="k.isi" class="mt-0.5 text-xs tabular-nums text-[var(--ca-muted)]">
             <template v-if="k.tanggal">{{ formatTanggal(k.tanggal) }} · </template>
             <template v-for="(x, i) in isiAda(k)" :key="x.kunci"><template v-if="i"> · </template>{{ tcf(`kabar.isi.${x.kunci}`) }} {{ x.nilai }}</template>
