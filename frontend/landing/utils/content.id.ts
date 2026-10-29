@@ -55,6 +55,8 @@ const ID_CONTENT = {
       powerStatement:
         'Satu ekosistem, banyak solusi — dari sertifikasi, monitoring, hingga CRM, CoreAsia bantu bisnis Anda launch lebih cepat dan scale lebih rapi.',
       chips: ['Website Perusahaan', 'Aplikasi Web Custom', 'Integrasi Sistem'],
+      animationLabel:
+        'Ilustrasi: pemilik lembaga pelatihan kewalahan mengurus pendaftaran lewat chat. CoreAsia membuatkan pendaftaran online, peserta lalu mendaftar sendiri. Punya masalah serupa? Diskusikan kebutuhanmu.',
     },
     products: {
       kicker: 'Produk Kami',

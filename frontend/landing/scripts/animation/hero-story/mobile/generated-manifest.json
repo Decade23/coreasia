@@ -1,0 +1,22 @@
+{
+  "name": "coreasia-hero-v2-mobile",
+  "seconds": 15.0,
+  "fps": 30,
+  "frames": 450,
+  "width": 400,
+  "height": 540,
+  "jsonBytes": 578567,
+  "gzipBytes": 66564,
+  "posterWebpBytes": 26822,
+  "posterFrame": 327,
+  "markers": [
+    "Masalah",
+    "Bertemu",
+    "Dibangun",
+    "Beres",
+    "Ajakan"
+  ],
+  "sceneSha256": "91a8a2517b697b39e8913bd6b64dfaa917cd6ae74f5300889a428206904d52d2",
+  "motionSha256": "6990d5e0bcb758b8c465f8d79fcc7a311fd4c027cd83d46ee6113bc595fe8425",
+  "jsonSha256": "7e7aabf007b9bad17091ab3c47e11c062a2be90f1500fdfe7bf0b11de2c0a8d7"
+}
