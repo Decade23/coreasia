@@ -135,7 +135,7 @@ export interface Pengguna {
   /** null = server tidak mengirim hitungan (sesi tanpa pii) — bukan 0. */
   ruang: number | null
   tx: number | null
-  /** 'menunggu_hapus' (0112): akun yang meminta hapus akun juga di-ban server,
+  /** 'menunggu_hapus' (0114): akun yang meminta hapus akun juga di-ban server,
    *  jadi tanpa penanda ini ia terbaca "Ditangguhkan". */
   status: StatusPengguna
   hariAktif: number         // aktivitas terakhir − daftar, dalam hari

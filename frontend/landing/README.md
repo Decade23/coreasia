@@ -135,3 +135,7 @@ Cetak sesi CashFlow dibatasi 30 kali per 15 menit per IP per instans; jatahnya
 terpisah dari serah terima login console. Jawaban sesi memakai no-store dan
 nosniff. Peran dan kesegaran MFA tetap menentukan izin, tanpa masa tunggu
 pendaftaran TOTP. Lihat `docs/runbook-console.md` untuk urutan rilis.
+
+Hapus akun bertahap memakai migrasi 0114 di repo CashFlow (0112 dipakai
+telemetri). Arahkan `CASHFLOW_MIGRASI` ke folder migrasi yang sudah memuat
+0114 supaya uji kontraknya ikut berjalan, bukan dilewati.

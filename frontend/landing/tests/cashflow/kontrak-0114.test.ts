@@ -1,5 +1,5 @@
 /**
- * Kontrak DTO console ↔ RPC 0112 (admin_hapus_akun_daftar,
+ * Kontrak DTO console ↔ RPC 0114 (admin_hapus_akun_daftar,
  * admin_hapus_akun_permanen, admin_hapus_akun_batalkan).
  *
  * Contoh jawaban di bawah bertipe DTO adapter (cashflowHapusAkun.ts), dan
@@ -14,7 +14,7 @@
  * `oleh` di daftar dibaca dari audit itu), dan nilai hitungan server (tanda
  * 7 hari, batas, email tersamar) yang punya cadangan di console.
  *
- * Sebelum 0112 ada di folder migrasi, semuanya DILEWATI dan terlihat "skipped".
+ * Sebelum 0114 ada di folder migrasi, semuanya DILEWATI dan terlihat "skipped".
  * Semua id dan email di sini karangan.
  */
 import { readdirSync, readFileSync } from 'node:fs'
@@ -80,11 +80,11 @@ const galatDi = (badan: string): string[] =>
 const kutipan = (teks: string): string[] => [...teks.matchAll(/'([a-z_]+)'/g)].map(m => m[1]!)
 const urut = (a: readonly string[]) => [...a].sort()
 
-describe.skipIf(!adaMigrasiNomor('0112'))('kontrak 0112', () => {
+describe.skipIf(!adaMigrasiNomor('0114'))('kontrak 0114', () => {
   const isiServer = () => pohonJsonb(fungsiTerakhir('hapus_akun_hitung_inti').badan)
 
-  it('tiga RPC didefinisikan terakhir di 0112, dengan tanda tangan yang dipanggil console', () => {
-    for (const n of RPC) expect(fungsiTerakhir(n).berkas, n).toMatch(/^0112_/)
+  it('tiga RPC didefinisikan terakhir di 0114, dengan tanda tangan yang dipanggil console', () => {
+    for (const n of RPC) expect(fungsiTerakhir(n).berkas, n).toMatch(/^0114_/)
     expect(fungsiTerakhir('admin_hapus_akun_daftar').kepala)
       .toMatch(/\(p_status text default 'menunggu', p_batas integer default 100\)\s*returns jsonb\s+language plpgsql\s+stable\s+security definer\s+set search_path = public/i)
     for (const n of AKSI) {
@@ -98,7 +98,7 @@ describe.skipIf(!adaMigrasiNomor('0112'))('kontrak 0112', () => {
   })
 
   it('hak: authenticated saja; fungsi hitungan privat', () => {
-    const nama = readdirSync(DIR_MIGRASI).find(n => n.startsWith('0112_'))!
+    const nama = readdirSync(DIR_MIGRASI).find(n => n.startsWith('0114_'))!
     const sql = readFileSync(join(DIR_MIGRASI, nama), 'utf8').replace(/--[^\n]*/g, '')
     for (const [n, tanda] of [['admin_hapus_akun_daftar', 'text, integer'], ['admin_hapus_akun_permanen', 'uuid, text'], ['admin_hapus_akun_batalkan', 'uuid, text']]) {
       expect(sql, n).toContain(`revoke all on function public.${n}(${tanda}) from public, anon, service_role;`)
@@ -214,7 +214,7 @@ describe.skipIf(!adaMigrasiNomor('0112'))('kontrak 0112', () => {
   it('"fitur belum aktif" hanya untuk RPC-nya sendiri; fungsi yang dipanggil di dalamnya hilang = galat biasa', () => {
     /* Bukan dari badan: PostgREST v12 menjawab PGRST202 bila RPC belum ada,
        dan Postgres 42883 bila RPC hilang sesudah cache skema dimuat. 42883
-       yang menyebut fungsi LAIN berarti 0112 terpasang tapi rusak: kalimat
+       yang menyebut fungsi LAIN berarti 0114 terpasang tapi rusak: kalimat
        Postgres-nya harus terbaca, bukan disamarkan sebagai belum dipasang. */
     const petunjuk = 'No function matches the given name and argument types. You might need to add explicit type casts.'
     for (const n of RPC) {
@@ -313,7 +313,7 @@ describe.skipIf(!adaMigrasiNomor('0112'))('kontrak 0112', () => {
   })
 
   it('nilai kolom permintaan = daftar nilai console (status, lewat)', () => {
-    const nama = readdirSync(DIR_MIGRASI).find(n => n.startsWith('0112_'))!
+    const nama = readdirSync(DIR_MIGRASI).find(n => n.startsWith('0114_'))!
     const sql = readFileSync(join(DIR_MIGRASI, nama), 'utf8')
     const cek = (c: string) => urut(kutipan(new RegExp(`constraint hapus_akun_permintaan_${c} check \\(\\w+ in \\(([^)]*)\\)\\)`).exec(sql)?.[1] ?? ''))
     expect(cek('status')).toEqual(urut(STATUS_HAPUS))

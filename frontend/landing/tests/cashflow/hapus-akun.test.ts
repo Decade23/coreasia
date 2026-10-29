@@ -1,9 +1,9 @@
 /**
- * Halaman Hapus akun (0112): adapter, tombol per izin, galat RPC belum ada dan P0001,
+ * Halaman Hapus akun (0114): adapter, tombol per izin, galat RPC belum ada dan P0001,
  * argumen RPC, kamus, dan penjaga halaman.
  *
- * Kontrak DTO terhadap migrasi ada di kontrak-0112.test.ts. Halaman sendiri
- * tetap aman sebelum 0112 terpasang karena RPC yang belum ada (PGRST202, atau
+ * Kontrak DTO terhadap migrasi ada di kontrak-0114.test.ts. Halaman sendiri
+ * tetap aman sebelum 0114 terpasang karena RPC yang belum ada (PGRST202, atau
  * 42883 yang menyebut RPC itu sendiri) dibaca sebagai "fitur belum aktif".
  * 42883 dari fungsi lain di dalamnya tetap galat biasa.
  *
@@ -176,7 +176,7 @@ const CACHE_BASI = { code: '42883', hint: PETUNJUK_42883, message: 'function pub
 const DALAM_HILANG = { code: '42883', hint: PETUNJUK_42883, message: 'function public.hapus_foto_milik(uuid) does not exist' }
 
 describe('galat: RPC yang belum ada = fitur belum aktif, P0001 dijelaskan', () => {
-  it('PGRST202 → belum-aktif (console boleh tayang sebelum 0112)', () => {
+  it('PGRST202 → belum-aktif (console boleh tayang sebelum 0114)', () => {
     expect(petakanGalat(BELUM_ADA).jenis).toBe('belum-aktif')
     expect(petakanGalat(BELUM_ADA, 'admin_hapus_akun_daftar').jenis).toBe('belum-aktif')
     expect(jenisGagalHapus(petakanGalat(BELUM_ADA))).toBe('belum-aktif')
@@ -189,7 +189,7 @@ describe('galat: RPC yang belum ada = fitur belum aktif, P0001 dijelaskan', () =
     expect(petakanGalat({ ...CACHE_BASI, message: 'function public.admin_hapus_akun_daftar_v2(text) does not exist' }, 'admin_hapus_akun_daftar').jenis).toBe('lain')
     expect(petakanGalat({ code: '42883' }, 'admin_hapus_akun_daftar').jenis).toBe('lain')
   })
-  it('fungsi di dalam RPC yang hilang (0112 terpasang tapi rusak) → lain, kalimat Postgres-nya terbaca', () => {
+  it('fungsi di dalam RPC yang hilang (0114 terpasang tapi rusak) → lain, kalimat Postgres-nya terbaca', () => {
     for (const n of ['admin_hapus_akun_daftar', 'admin_hapus_akun_permanen', 'admin_hapus_akun_batalkan']) {
       const g = petakanGalat(DALAM_HILANG, n)
       expect(g, n).toMatchObject({ jenis: 'lain', message: DALAM_HILANG.message })
@@ -457,7 +457,7 @@ describe('penjaga halaman (keputusan P3: satu konfirmasi, tanpa kolom alasan)', 
     expect(baca('components/cashflow/CashflowPalet.vue')).toMatch(/\{ kunci: 'hapusAkun', ke: '\/console\/cashflow\/hapus-akun'/)
   })
   it('repo publik: berkas baru tanpa jalur lokal, email nyata, atau angka produksi', () => {
-    for (const f of [HAL, KARTU, KONF, 'adapters/cashflowHapusAkun.ts', 'tests/cashflow/hapus-akun.test.ts', 'tests/cashflow/kontrak-0112.test.ts']) {
+    for (const f of [HAL, KARTU, KONF, 'adapters/cashflowHapusAkun.ts', 'tests/cashflow/hapus-akun.test.ts', 'tests/cashflow/kontrak-0114.test.ts']) {
       const isi = baca(f)
       expect(isi, f).not.toMatch(/\/Users\/|@gmail\.|@coreasia\.id/)
     }

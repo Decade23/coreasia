@@ -34,11 +34,11 @@
  * dimatikan. Cabang tersamar juga membulatkan masuk/aktif terakhir ke awal
  * hari WIB — halaman ini memang hanya menampilkan tanggal.
  *
- * MENUNGGU DIHAPUS (0112). Akun yang meminta hapus akun di-ban server sampai
+ * MENUNGGU DIHAPUS (0114). Akun yang meminta hapus akun di-ban server sampai
  * admin menghapusnya permanen, jadi banned_until-nya sama dengan akun yang
  * ditangguhkan. Daftar permintaan yang menunggu (admin_hapus_akun_daftar, izin
  * view) dimuat terpisah; akun di sana berstatus "Menunggu dihapus" dan tidak
- * ikut segmen Ditangguhkan. Gagal memuatnya (mis. 0112 belum terpasang) tidak
+ * ikut segmen Ditangguhkan. Gagal memuatnya (mis. 0114 belum terpasang) tidak
  * mengganggu daftar: badge-nya saja yang tidak ada.
  */
 definePageMeta({ layout: 'console', middleware: ['console', 'cashflow-admin'] })

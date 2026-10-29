@@ -733,3 +733,21 @@ versionCode-nya ada di `toko/catatan-rilis-<versi>.md` repo CashFlow.
     sebelum sampai ke gateway (batas gateway 5 MB).
   - Panggilan panjang seperti `POST /admin/ai/generate` tunduk pada batas
     durasi fungsi proyek Vercel.
+
+## Hapus akun bertahap (0114) dan pembatas cetak sesi
+
+Hapus akun bertahap memakai migrasi **0114** di repo CashFlow. Nomor 0112
+dipakai retensi telemetri dan 0113 aturan ubah. Saat menguji, arahkan
+`CASHFLOW_MIGRASI` ke folder migrasi yang sudah memuat 0114 supaya semua
+kontrak 0114 ikut dijalankan. Console boleh tayang lebih dulu dari
+migrasinya: selama 0114 belum terpasang, halaman Hapus akun menulis "fitur
+belum aktif" dan daftar pengguna tetap bisa dimuat.
+
+Pembatas cetak sesi (30 per 15 menit per IP) hidup di memori tiap instans.
+Jatahnya terpisah dari serah terima login dan bukan kuota terpusat lintas
+instans. Permintaan yang ditolak penjaga asal atau ikatan tidak memakai
+jatah cetak. Setiap jawaban cetak sesi memakai no-store dan nosniff. Izin
+tetap mengikuti peran dan kesegaran MFA. Bila kunci ikatan khusus
+(`NUXT_KONSOL_IKAT_KUNCI`) belum dipasang, tiap instans di Vercel mencatat
+peringatan sekali; nilainya tidak dicetak dan turunan kunci layanan tetap
+dipakai.

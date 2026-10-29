@@ -2,12 +2,12 @@
  * Hapus akun bertahap: permintaan dari aplikasi → antrean console → admin
  * menghapus permanen atau membatalkan.
  *
- * Sejak migrasi 0112, "Hapus akun" di aplikasi tidak lagi menghapus apa pun.
+ * Sejak migrasi 0114, "Hapus akun" di aplikasi tidak lagi menghapus apa pun.
  * Akunnya ditandai menunggu, pemiliknya keluar dan tidak bisa masuk lagi,
  * lalu permintaannya muncul di halaman console Hapus akun. Data, buku, foto
  * struk, dan lampiran baru hilang saat admin menekan Hapus permanen.
  *
- * KONTRAK RPC 0112 (dibandingkan dengan migrasi oleh tests/cashflow/hapus-akun.test.ts):
+ * KONTRAK RPC 0114 (dibandingkan dengan migrasi oleh tests/cashflow/hapus-akun.test.ts):
  * - admin_hapus_akun_daftar(p_status, p_batas) returns jsonb
  *   {status, batas, jumlah: {menunggu, selesai, dibatalkan}, baris: [...]}.
  *   Izin view, email selalu tersamar, nama hanya untuk sesi ber-pii. `isi`
@@ -296,8 +296,8 @@ export function keHasilHapus(d: unknown): HasilHapus | 'lain' {
  *                dicabut dulu. Cukup toast bahasa awam, server belum mengubah apa pun;
  *  'izin'        42501 izin-kurang: CashflowIzinKurang di atas daftar;
  *  'belum-aktif' RPC-nya belum ada (PGRST202, atau 42883 yang menyebut RPC
- *                itu sendiri): migrasi 0112 belum terpasang. 42883 fungsi lain
- *                di dalamnya = 0112 rusak, jatuh ke 'lain';
+ *                itu sendiri): migrasi 0114 belum terpasang. 42883 fungsi lain
+ *                di dalamnya = 0114 rusak, jatuh ke 'lain';
  *  'lain'        sisanya (toast dari useCashflowMuat). */
 export function jenisGagalHapus(g: { jenis: string; hint?: string }): 'tertahan' | 'akun-admin' | 'izin' | 'belum-aktif' | 'lain' {
   if (g.hint === 'alihkan-kepemilikan') return 'tertahan'

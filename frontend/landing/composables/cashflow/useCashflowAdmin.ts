@@ -31,7 +31,7 @@
  *   'tidak-ada'   P0002 — pengguna/transaksi/dompet tidak ada
  *   'belum-aktif' RPC-nya belum ada di server (console boleh tayang lebih
  *                 dulu dari migrasinya, mis. hapus akun bertahap sebelum
- *                 0112): halaman menulis "fitur belum aktif". PostgREST
+ *                 0114): halaman menulis "fitur belum aktif". PostgREST
  *                 menjawab PGRST202; 42883 hanya bila kalimatnya menyebut RPC
  *                 yang dipanggil itu sendiri (hilang sesudah cache skema
  *                 dimuat). 42883 untuk fungsi LAIN berarti RPC-nya ada tapi
@@ -417,7 +417,7 @@ export const useCashflowAdmin = () => {
     setEntitlement: (user: string, tier: string, sampai: string | null, alasan: string) =>
       rpc<void>('admin_set_entitlement', { p_user: user, p_tier: tier, p_sampai: sampai, p_alasan: alasan }),
 
-    // ── hapus akun bertahap (0112) ─────────────────────────────────────
+    // ── hapus akun bertahap (0114) ─────────────────────────────────────
     /** Permintaan hapus akun per status + jumlah tiap status, email tersamar. Izin view, tanpa audit.
      *  Bawaan batas: semua yang menunggu (lihat batasDaftarHapus). Bawaannya di
      *  badan, bukan di daftar parameter: rpc-console.test.ts membaca daftar
