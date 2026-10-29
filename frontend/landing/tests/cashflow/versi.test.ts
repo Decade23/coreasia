@@ -209,18 +209,22 @@ describe('bacaNilaiVersi (KK-1, KK-9)', () => {
 describe('peringatan (KK-5, KK-7)', () => {
   const v = (terbaru: number, minimum: number | null = null) => ({ terbaru, minimum, catatan: null, catatanEn: null })
   const R = RILIS_PLAY_TERAKHIR.kode
+  /* Angka "di atas rilis" dihitung dari R, jadi uji ini tetap bermakna
+     sesudah RILIS_PLAY_TERAKHIR dinaikkan di setiap rilis Play. */
+  const ATAS = R + 88
   it('lembut: turun, di atas rilis, belum terlihat', () => {
     expect(peringatanLembut(v(26101003), v(26101412), null, R)).toEqual([{ jenis: 'turun', lama: 26101412 }])
-    expect(peringatanLembut(v(26101500), VERSI_KOSONG, null, R)).toEqual([{ jenis: 'diAtasRilis' }])
+    expect(peringatanLembut(v(ATAS), VERSI_KOSONG, null, R)).toEqual([{ jenis: 'diAtasRilis' }])
+    expect(peringatanLembut(v(R + 1), VERSI_KOSONG, null, R)).toEqual([{ jenis: 'diAtasRilis' }])
     expect(peringatanLembut(v(26101412, 26101412), VERSI_KOSONG, 26101003, R)).toEqual([{ jenis: 'belumTerlihat' }])
     expect(peringatanLembut(v(26101412, 26101003), v(26101412), 26101003, R)).toEqual([])
     expect(peringatanLembut(v(R), VERSI_KOSONG, null, R)).toEqual([])
   })
   it('di atas rilis Play hanya untuk kunci Play, bukan UAT atau IAS', () => {
     expect(([KUNCI_VERSI, KUNCI_VERSI_UAT, KUNCI_VERSI_IAS] as const).map(k => rilisAcuan(k))).toEqual([R, null, null])
-    expect(peringatanLembut(v(26101490, 26101450), VERSI_KOSONG, 26101490, rilisAcuan(KUNCI_VERSI_UAT))).toEqual([])
-    expect(peringatanLembut(v(26101490), VERSI_KOSONG, null, rilisAcuan(KUNCI_VERSI_IAS))).toEqual([])
-    expect(peringatanLembut(v(26101490), VERSI_KOSONG, null, rilisAcuan(KUNCI_VERSI))).toEqual([{ jenis: 'diAtasRilis' }])
+    expect(peringatanLembut(v(ATAS, R + 38), VERSI_KOSONG, ATAS, rilisAcuan(KUNCI_VERSI_UAT))).toEqual([])
+    expect(peringatanLembut(v(ATAS), VERSI_KOSONG, null, rilisAcuan(KUNCI_VERSI_IAS))).toEqual([])
+    expect(peringatanLembut(v(ATAS), VERSI_KOSONG, null, rilisAcuan(KUNCI_VERSI))).toEqual([{ jenis: 'diAtasRilis' }])
   })
   it('panel minimum hanya untuk minimum baru atau berubah', () => {
     expect(minimumBerubah(26101003, VERSI_KOSONG)).toBe(true)
