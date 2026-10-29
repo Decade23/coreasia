@@ -30,6 +30,7 @@ export const useCashflowSupabase = () => {
     if (!memuat) {
       memuat = import('@supabase/supabase-js').then(({ createClient }) => {
         klien = createClient(url, anon, {
+          global: { headers: { 'x-kabar-versi': '3' } },
           auth: {
             persistSession: true,
             autoRefreshToken: true,
