@@ -59,7 +59,7 @@ const hentikan = async () => {
   if (ok) { dihentikan.value = null; await muatDaftar() }
 }
 const waktu = (iso: string | null) => (iso ? `${formatTanggal(iso)} ${formatJam(iso)}` : '—')
-const labelLevel = (level: string) => (tcf('pengumuman.levelOpsi') as Record<string, string>)[level] ?? level
+const labelLevel = (level: string) => (tcf('pengumuman.levelOpsi') as unknown as Record<string, string>)[level] ?? level
 </script>
 
 <template>
