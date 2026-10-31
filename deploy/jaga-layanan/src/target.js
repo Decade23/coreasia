@@ -35,5 +35,5 @@ export const CADANGAN = [
   // Supabase CashFlow, dibuat di VPS coreasia-cad (coreasia-cadangan-supabase@cashflow.timer, 03:15 WIB).
   { id: 'cadangan-cashflow', nama: 'Cadangan DB CashFlow (Supabase)', prefix: 'cashflow/cashflow-supabase-', maksJam: 27, mulai: '2026-10-13T00:00:00Z' },
   // Sapa: cadangan tiap 10 menit; endpoint WhatsApp memeriksa umur setiap putaran.
-  { id: 'cadangan-sapa', nama: 'Cadangan Sapa (DB + sesi WhatsApp)', prefix: 'sapa/primesotech/', maksJam: 0.25, mulai: '2026-10-30T00:00:00Z' },
+  { id: 'cadangan-sapa', nama: 'Cadangan Sapa (DB + sesi WhatsApp)', prefix: 'sapa/primesotech/', tiapPutaran: true, maksJam: 0.25, mulai: '2026-10-30T00:00:00Z' },
 ]

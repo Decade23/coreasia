@@ -534,3 +534,18 @@ test('target dengan rahasia membawa Authorization dari secret Worker, target lai
   assert.equal(r.hasil[0].ok, false, 'secret belum dipasang berarti berbunyi, bukan dilewati')
   assert.match(r.hasil[0].alasan, /401/)
 })
+
+
+test('Sapa backup alarm is evaluated every five minutes without widening other backup schedules', async () => {
+  const d=pasangDunia(), now=Date.parse('2026-11-01T03:10:00Z')
+  const kv=kvTiruan({awal:{_meta:{laporan:'2026-11-01T03:00:00.000Z',harian:'2026-11-01T03:00:00.000Z'}}})
+  const env=envDari(d,kv), prefixes=[]
+  env.CADANGAN={async list({prefix}){prefixes.push(prefix);return {objects:[{uploaded:new Date(now-60*MENIT)}],truncated:false}}}
+  const cadangan=[{id:'cadangan-sapa',nama:'Cadangan Sapa',prefix:'sapa/primesotech/',maksJam:.25,tiapPutaran:true},{id:'other',nama:'Other',prefix:'other/',maksJam:27}]
+  const first=await jalan(d,env,now,false,{target:[],cadangan})
+  const second=await jalan(d,env,now+5*MENIT,false,{target:[],cadangan})
+  assert.deepEqual(prefixes,['sapa/primesotech/','sapa/primesotech/'])
+  assert.equal(first.hasil.length,1);assert.equal(second.hasil.length,1)
+  assert.equal(second.hasil[0].ok,false)
+  assert.ok(d.terkirim.some(e=>/Sapa/.test(e.teks)))
+})
