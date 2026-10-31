@@ -102,15 +102,16 @@ describe.skipIf(!adaMigrasiNomor('0118'))('kontrak 0118', () => {
     }
   })
 
-  it('penjaga is_platform_admin() lebih dulu; galat yang bisa dilempar dibaca console', () => {
+  it('penjaga is_platform_admin() lalu izin sesi cashflow:view; galat yang bisa dilempar dibaca console', () => {
     for (const n of ['admin_dukungan_ringkas', 'admin_dukungan_daftar']) {
       const { badan } = fungsiTerakhir(n)
       expect(badan.slice(badan.search(/\bbegin\b/)), n)
-        .toMatch(/^begin\s+if not public\.is_platform_admin\(\) then\s+raise exception 'Bukan admin platform\.' using errcode = '42501';/)
+        .toMatch(/^begin\s+if not public\.is_platform_admin\(\) then\s+raise exception 'Bukan admin platform\.' using errcode = '42501';\s+end if;\s+if not public\.konsol_boleh\('cashflow:view'\) then/)
     }
-    expect(galatDi(fungsiTerakhir('admin_dukungan_ringkas').badan)).toEqual(['22023:rentang', '42501:'])
-    expect(galatDi(fungsiTerakhir('admin_dukungan_daftar').badan)).toEqual(['22023:batas', '22023:rentang', '22023:status', '22023:sumber', '42501:'])
+    expect(galatDi(fungsiTerakhir('admin_dukungan_ringkas').badan)).toEqual(['22023:rentang', '42501:', '42501:izin-kurang'])
+    expect(galatDi(fungsiTerakhir('admin_dukungan_daftar').badan)).toEqual(['22023:batas', '22023:rentang', '22023:status', '22023:sumber', '42501:', '42501:izin-kurang'])
     expect(petakanGalat({ code: '42501', message: 'Bukan admin platform.' }).jenis).toBe('bukan-admin')
+    expect(petakanGalat({ code: '42501', hint: 'izin-kurang', message: 'Butuh izin cashflow:view.' }).jenis).toBe('izin')
     expect(petakanGalat({ code: '22023', hint: 'rentang', message: 'Rentang tanggal 1..366 hari.' }).jenis).toBe('argumen')
   })
 
