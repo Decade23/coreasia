@@ -1,0 +1,5 @@
+# esbuild dan workerd (dipakai wrangler untuk bundel dan `wrangler dev`) butuh
+# skrip postinstall. Tanpa izin ini pnpm 11 menolak `pnpm install` dan `pnpm test`.
+allowBuilds:
+  esbuild: true
+  workerd: true
