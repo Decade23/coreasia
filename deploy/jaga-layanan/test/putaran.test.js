@@ -76,7 +76,7 @@ function pasangDunia() {
     }
     const t = TARGET.filter((x) => u.startsWith(x.url)).sort((a, b) => b.url.length - a.url.length)[0]
     if (d.mati.has(t.id)) return new Response('', { status: 522 })
-    return new Response(t.isi ? `{"x":1} ${t.isi}` : 'ok', { status: t.harap === 'bukan5xx' ? 404 : t.harap })
+    return new Response(t.jsonStatus ? JSON.stringify({status:t.jsonStatus}) : t.isi ? `{"x":1} ${t.isi}` : 'ok', { status: t.harap === 'bukan5xx' ? 404 : t.harap })
   }
   d.r2 = {
     async list({ prefix }) {

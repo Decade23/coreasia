@@ -23,6 +23,10 @@ export const JENDELA_LAPORAN_JAM = 2
 export function cocok(target, status, badan) {
   const kodeOk = target.harap === 'bukan5xx' ? status > 0 && status < 500 : status === target.harap
   if (!kodeOk) return false
+  if (target.jsonStatus) {
+    try { if (JSON.parse(badan).status !== target.jsonStatus) return false }
+    catch { return false }
+  }
   if (target.isi && !(badan || '').includes(target.isi)) return false
   return true
 }
