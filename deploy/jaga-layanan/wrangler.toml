@@ -1,0 +1,27 @@
+name = "jaga-layanan"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+# Tanpa rute HTTP: Worker ini hanya berjalan dari jadwal.
+workers_dev = false
+
+[triggers]
+crons = ["*/5 * * * *"]
+
+[vars]
+EMAIL_DARI = "CoreAsia Jaga <hello@coreasia.id>"
+EMAIL_KE = "dedif15@gmail.com"
+# Opsional, belum dipasang: HC_PING_URL (heartbeat ke healthchecks.io atau sejenisnya).
+# Pasang sebagai secret (`npx wrangler secret put HC_PING_URL`) supaya deploy
+# berikutnya tidak menghapusnya.
+
+# id diisi setelah `wrangler kv namespace create JAGA_KV`.
+[[kv_namespaces]]
+binding = "JAGA_KV"
+id = "423c388dce8740cf84954bf33c40efcd"
+
+[[r2_buckets]]
+binding = "CADANGAN"
+bucket_name = "coreasia-backup"
+
+[observability]
+enabled = true
