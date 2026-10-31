@@ -21,7 +21,7 @@ export const TARGET = [
   // Sapa di VPS primesotech. Status WhatsApp hanya ok bila semua nomor tertaut yang
   // diharapkan tersambung (logout, diganti perangkat lain, atau putus >10 menit = MATI).
   { id: 'sapa-web', nama: 'Sapa (sapa.coreasia.id)', url: 'https://sapa.coreasia.id/login', harap: 200, penyedia: 'idcloudhost' },
-  { id: 'sapa-whatsapp', nama: 'Sapa: koneksi WhatsApp 3395', url: 'https://sapa.coreasia.id/api/v1/health/whatsapp', harap: 200, isi: '"status":"ok"', rahasia: 'SAPA_MONITOR_TOKEN' },
+  { id: 'sapa-whatsapp', nama: 'Sapa: koneksi WhatsApp 3395', url: 'https://sapa.coreasia.id/api/v1/health/whatsapp', harap: 200, jsonStatus: 'ok', rahasia: 'SAPA_MONITOR_TOKEN' },
 ]
 
 // Cadangan DB di bucket coreasia-backup. Dianggap basi bila objek terbaru
@@ -34,6 +34,6 @@ export const CADANGAN = [
   { id: 'cadangan-leadku', nama: 'Cadangan DB LeadKu', prefix: 'leadku/leadku-postgres-', maksJam: 27, mulai: '2026-10-06T00:00:00Z' },
   // Supabase CashFlow, dibuat di VPS coreasia-cad (coreasia-cadangan-supabase@cashflow.timer, 03:15 WIB).
   { id: 'cadangan-cashflow', nama: 'Cadangan DB CashFlow (Supabase)', prefix: 'cashflow/cashflow-supabase-', maksJam: 27, mulai: '2026-10-13T00:00:00Z' },
-  // Sapa: DB + sesi WhatsApp terenkripsi, coreasia-sapa-backup.timer 04:30 WIB di VPS primesotech.
-  { id: 'cadangan-sapa', nama: 'Cadangan Sapa (DB + sesi WhatsApp)', prefix: 'sapa/primesotech/', maksJam: 27, mulai: '2026-10-30T00:00:00Z' },
+  // Sapa: cadangan tiap 10 menit; endpoint WhatsApp memeriksa umur setiap putaran.
+  { id: 'cadangan-sapa', nama: 'Cadangan Sapa (DB + sesi WhatsApp)', prefix: 'sapa/primesotech/', tiapPutaran: true, maksJam: 0.25, mulai: '2026-10-30T00:00:00Z' },
 ]

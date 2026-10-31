@@ -91,9 +91,9 @@ async function periksa(t, slot, batasWaktuMs, jedaMs, kepala = {}) {
     // Slot tidak dipegang selama jeda, supaya target lain tetap jalan.
     if (coba) await tidur(jedaMs)
     try {
-      const { status, badan } = await ambil(t.url, slot, batasWaktuMs, Boolean(t.isi), kepala)
+      const { status, badan } = await ambil(t.url, slot, batasWaktuMs, Boolean(t.isi || t.jsonStatus), kepala)
       if (cocok(t, status, badan)) return { id: t.id, nama: t.nama, penyedia: t.penyedia, ok: true, alasan: '' }
-      alasan = t.isi && status === t.harap ? `HTTP ${status} tapi isi tidak memuat "${t.isi}"` : `HTTP ${status}`
+      alasan = t.jsonStatus && status === t.harap ? `HTTP ${status}, status layanan belum sehat` : t.isi && status === t.harap ? `HTTP ${status} tapi isi tidak memuat "${t.isi}"` : `HTTP ${status}`
     } catch (e) {
       alasan = e?.name === 'TimeoutError' ? `tidak menjawab dalam ${batasWaktuMs / 1000} detik` : `galat jaringan: ${e?.message || e}`
     }
@@ -201,14 +201,16 @@ export async function putaran(env, sekarangMs, denganCadangan, opsi = {}) {
   const slot = semafor(serentak)
   const hasil = await Promise.all(target.map((t) => periksa(t, slot, batasWaktuMs, jedaMs, kepalaUntuk(t, env))))
   let infoCadangan = null
-  if (denganCadangan || laporan) {
-    infoCadangan = await periksaCadangan(env.CADANGAN, cadangan, sekarangMs, catat)
-    // Hanya putaran jam-an yang mengubah status cadangan. Cek yang dipaksa laporan
+  const cepat = cadangan.filter((s) => s.tiapPutaran)
+  if (denganCadangan || laporan || cepat.length) {
+    infoCadangan = await periksaCadangan(env.CADANGAN, denganCadangan || laporan ? cadangan : cepat, sekarangMs, catat)
+    // Seri Sapa diperiksa setiap putaran; seri lain tetap mengikuti jadwal jam-an.
+    // Cek seri lain yang dipaksa laporan
     // (bisa diulang tiap 5 menit bila Resend gagal) cukup untuk isi laporan, supaya
     // ambang 2 untuk galat baca R2 tidak terlampaui dalam 5 menit.
-    if (denganCadangan) {
+    if (denganCadangan || cepat.length) {
       for (const i of infoCadangan) {
-        if (i.belumMulai) continue
+        if (i.belumMulai || (!denganCadangan && !i.seri.tiapPutaran)) continue
         hasil.push(i.galat ? galatCadangan(i.seri, i.galat) : nilaiCadangan(i.seri, i.terbaru, sekarangMs))
       }
     }
