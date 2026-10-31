@@ -98,6 +98,8 @@ import type { PerangkatPenggunaDTO, KabarPenggunaDTO, KursorKabar, SaringKabar }
 import type { VersiAplikasiDTO, AjakanPembaruanDTO, LangkahUsahaDTO } from '~/adapters/cashflowVersi'
 import type { HapusAkunDaftarDTO, HasilHapusDTO, StatusHapus } from '~/adapters/cashflowHapusAkun'
 import { alasanHapusOtomatis, alasanBatalOtomatis, batasDaftarHapus } from '~/adapters/cashflowHapusAkun'
+import type { RingkasDukunganDTO, DaftarDukunganDTO, SumberDukungan, StatusDukungan } from '~/adapters/cashflowDukungan'
+import { BATAS_DAFTAR_DUKUNGAN } from '~/adapters/cashflowDukungan'
 
 /* DTO sakelar pindah ke adapter (bertipe, tanpa any); diekspor ulang
    supaya impor lama dari berkas ini tetap jalan. */
@@ -430,5 +432,16 @@ export const useCashflowAdmin = () => {
     /** Izin tindak. Akun bisa masuk lagi; alasan otomatis, beraudit. */
     hapusAkunBatalkan: (permintaan: string) =>
       rpc<HasilHapusDTO>('admin_hapus_akun_batalkan', { p_permintaan: permintaan, p_alasan: alasanBatalOtomatis(permintaan) }),
+
+    // ── dukungan sukarela (0118) ───────────────────────────────────────
+    /** Angka rentang tanggal WIB inklusif ('YYYY-MM-DD'). Izin view, tanpa audit. */
+    dukunganRingkas: (dari: string, sampai: string) =>
+      rpc<RingkasDukunganDTO>('admin_dukungan_ringkas', { p_dari: dari, p_sampai: sampai }),
+    /** Terbaru dulu; `sebelum` = `dibuat` baris terakhir halaman sebelumnya (null = halaman pertama).
+     *  Nama dan pesan pengunjung ikut apa adanya, ditampilkan sebagai teks polos. */
+    dukunganDaftar: (sumber: SumberDukungan | null, status: StatusDukungan | null, dari: string, sampai: string, sebelum: string | null) =>
+      rpc<DaftarDukunganDTO>('admin_dukungan_daftar', {
+        p_sumber: sumber, p_status: status, p_dari: dari, p_sampai: sampai, p_batas: BATAS_DAFTAR_DUKUNGAN, p_sebelum: sebelum,
+      }),
   }
 }

@@ -31,6 +31,7 @@ const item = computed(() => [
   { kunci: 'kasus', to: '/console/cashflow/kasus' },
   { kunci: 'hapusAkun', to: '/console/cashflow/hapus-akun' },
   { kunci: 'audit', to: '/console/cashflow/audit' },
+  { kunci: 'dukungan', to: '/console/cashflow/dukungan' },
 ])
 const aktif = (jalur: string) => jalur === '/console/cashflow' ? route.path === jalur : route.path.startsWith(jalur)
 const kelas = (jalur: string) => ['rounded-full px-3 py-1.5 transition', aktif(jalur)

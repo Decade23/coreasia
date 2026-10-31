@@ -37,6 +37,10 @@
  * menamai tindakan yang sebenarnya (membuka vs mengubah), karena keduanya
  * masuk audit.
  *
+ * DUKUNG LEWAT WEB (0118). Kartu CashflowSakelarDukung menyalakan atau
+ * mematikan halaman /dukung (kunci dukung_web, tidak publik) tanpa mengubah
+ * batas QR dan nama penerima yang tersimpan.
+ *
  * VERSI APLIKASI (0110). Kartu CashflowKartuVersi menyunting tiga kunci versi
  * yang dibaca aplikasi 1.3.2 ke atas, dengan pemeriksaan bentuk, penjaga
  * timpa, dan sibuknya sendiri. Ia memakai daftar config halaman ini.
@@ -237,6 +241,9 @@ onBeforeUnmount(tutupSunting)
 
       <!-- Versi aplikasi (0110): versi_android, versi_android_uat, versi_android_ias -->
       <CashflowKartuVersi :config="config" :segarkan="segarkanDaftar" />
+
+      <!-- Dukung lewat web (0118): dukung_web, tidak publik -->
+      <CashflowSakelarDukung :config="config" :segarkan="segarkanDaftar" />
 
       <!-- Pengecualian ukuran keberhasilan -->
       <section class="ca-console-dialog p-5">
