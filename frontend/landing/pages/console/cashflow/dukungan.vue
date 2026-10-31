@@ -133,7 +133,7 @@ useConsoleRemah().pasang(() => [
         {{ tcf('dukungan.tutup') }} <NuxtLink to="/console/cashflow/sakelar" class="font-semibold underline">{{ tcf('nav.sakelar') }}</NuxtLink>.
       </p>
 
-      <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div class="grid gap-4 sm:grid-cols-2 2xl:grid-cols-4">
         <CashflowStatTile
           icon="lucide:heart-handshake" warna="emerald" :label="tcf('dukungan.ubin.masuk')(Number(q.hari))"
           :nilai="rupiah(ringkas.masuk)" :keterangan="tcf('dukungan.ubin.masukKet')(ringkas.lunas)"
@@ -152,7 +152,7 @@ useConsoleRemah().pasang(() => [
         />
       </div>
 
-      <div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_20rem]">
+      <div class="grid gap-6 2xl:grid-cols-[minmax(0,1fr)_20rem]">
         <section class="ca-console-dialog min-w-0 overflow-hidden" aria-labelledby="cf-dukungan-daftar">
           <div class="flex flex-wrap items-center justify-between gap-3 border-b border-[color:var(--ca-border)] p-4">
             <h2 id="cf-dukungan-daftar" class="font-display text-base font-bold text-[var(--ca-text)]">{{ tcf('dukungan.daftar') }}</h2>
@@ -218,7 +218,7 @@ useConsoleRemah().pasang(() => [
 
         <aside class="ca-console-dialog space-y-4 p-5" aria-labelledby="cf-dukungan-nominal">
           <h2 id="cf-dukungan-nominal" class="font-display text-base font-bold text-[var(--ca-text)]">{{ tcf('dukungan.perNominal') }}</h2>
-          <ul class="space-y-3" data-uji="dukungan-nominal">
+          <ul class="grid gap-x-8 gap-y-3 sm:grid-cols-2 2xl:grid-cols-1" data-uji="dukungan-nominal">
             <li v-for="n in ringkas.perNominal" :key="n.nominal">
               <div class="flex items-baseline justify-between gap-2 text-sm">
                 <span class="text-[var(--ca-text)]">{{ labelNominal(n.nominal) }}</span>

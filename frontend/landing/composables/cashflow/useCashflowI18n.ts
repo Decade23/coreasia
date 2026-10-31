@@ -1350,7 +1350,7 @@ const KAMUS = {
       kosong: 'No support in this range yet.',
       perNominal: 'By amount option', nominalLain: 'Other amount',
       dibayarDari: (a: number, b: number) => `${a} of ${b} QR codes paid`,
-      biayaCatatan: 'Fees are every QR code created times Rp 4,440, plus 0.7% for support above Rp 100,000. This is an estimate; the Xendit invoice is what counts.',
+      biayaCatatan: 'Fees are every QR code created times Rp 4,440, plus 0.7% for support above Rp 100,000. This is an estimate. The Xendit invoice is what counts.',
       playKosong: 'Google Play: no data yet. Support through Google Play is not switched on.',
       play: (n: number, r: string) => `Google Play: ${n} paid, ${r}.`,
       ujiDisembunyikan: (n: number) => `${n} test ${n === 1 ? 'contribution' : 'contributions'} in this range not counted.`,
