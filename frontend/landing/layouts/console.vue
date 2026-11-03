@@ -137,9 +137,11 @@ const handleLogout = async () => {
 
         <!-- Sidebar footer -->
         <!-- Kartu ringkas hanya mengulang judul halaman dan nama admin dari bilah
-             atas; di layar pendek ia disembunyikan supaya ruang menu cukup. -->
+             atas. Di bawah tinggi 64rem ia disembunyikan supaya ruang jatuh ke
+             menu: tanpa kartu, sebelas menu muat utuh mulai tinggi ±900 px
+             (layar laptop), dan di bawahnya menu bergulir. -->
         <div class="ca-console-sidebar-footer shrink-0 p-4">
-          <div class="ca-card-soft mb-3 rounded-[1.5rem] p-4 [@media(max-height:40rem)]:hidden">
+          <div class="ca-card-soft mb-3 rounded-[1.5rem] p-4 [@media(max-height:64rem)]:hidden">
             <p class="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-[var(--ca-subtle)]">{{ tc('layout.kicker') }}</p>
             <p class="mt-2 text-sm font-semibold text-[var(--ca-text)]">{{ currentPageLabel }}</p>
             <p class="mt-1 text-xs leading-relaxed text-[var(--ca-muted)]">{{ user?.full_name || 'Admin' }}</p>
