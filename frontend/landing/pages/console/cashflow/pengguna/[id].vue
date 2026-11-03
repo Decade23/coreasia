@@ -60,7 +60,10 @@ watch(() => kasus.keadaan.value.galat, (g) => {
 /* "Halaman aktif" untuk perpanjangan & pembukaan ulang otomatis. */
 let lepasHalaman: (() => void) | null = null
 onMounted(() => { lepasHalaman = kasus.pasangHalaman() })
-onBeforeUnmount(() => { batal(); lepasHalaman?.() })
+/* Kepala bisa membawa nomor WhatsApp utuh (0123, sesi ber-pii): keluar dari
+   Pengguna 360 membuangnya dari useState, bukan menunggu subjek berikutnya.
+   Hanya kepala subjek INI — halaman subjek baru bisa sudah terpasang lebih dulu. */
+onBeforeUnmount(() => { batal(); lepasHalaman?.(); if (kepala.value?.id === id.value) kepala.value = null })
 
 /* 360 dimuat sekali per kasus+lingkup: lencana tab + Ringkas + Ruang. */
 watch(kunci360, (k) => { if (k && !p360.value) muat360Diam.muat(muat360) }, { immediate: true })

@@ -26,6 +26,23 @@ export const adaMigrasi = existsSync(DIR_MIGRASI)
 export const adaMigrasiNomor = (nomor: string): boolean =>
   adaMigrasi && readdirSync(DIR_MIGRASI).some(n => n.startsWith(`${nomor}_`) && n.endsWith('.sql'))
 
+/**
+ * Nomor WhatsApp UTUH (`n.nomor` tanpa nomor_wa_samar) di badan fungsi hanya
+ * muncul di cabang ber-pii: setiap kemunculannya didahului `when v_pii then`
+ * atau `if v_pii then` dalam 240 aksara. Memulangkan kemunculan yang tidak
+ * terjaga (kosong = aman) dan apakah jalur tersamarnya ada.
+ */
+export function nomorUtuhHanyaPii(badan: string): { lepas: string[]; adaSamaran: boolean } {
+  const adaSamaran = /nomor_wa_samar\(\s*n\.nomor\s*\)/.test(badan)
+  const tanpaSamaran = badan.replace(/nomor_wa_samar\(\s*n\.nomor\s*\)/g, 'nomor_wa_samar(·)')
+  const lepas: string[] = []
+  for (const m of tanpaSamaran.matchAll(/\bn\.nomor\b/g)) {
+    const sebelum = tanpaSamaran.slice(Math.max(0, m.index - 240), m.index)
+    if (!/(?:when|if)\s+v_pii\s+then/i.test(sebelum)) lepas.push(tanpaSamaran.slice(Math.max(0, m.index - 60), m.index + 20))
+  }
+  return { lepas, adaSamaran }
+}
+
 /** Semua migrasi, urut nama (= urut terap), tanpa komentar baris `--`.
  *  Dibaca sekali per proses uji: rpc-console.test.ts memanggil fungsiTerakhir
  *  untuk setiap RPC console, dan membaca ulang 100+ berkas tiap kali pernah

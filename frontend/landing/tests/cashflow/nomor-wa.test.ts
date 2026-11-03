@@ -21,7 +21,7 @@ import {
 } from '~/adapters/cashflow'
 import { keKepala, type KepalaPenggunaDTO } from '~/adapters/cashflowBuku'
 import { KAMUS_CASHFLOW } from '~/composables/cashflow/useCashflowI18n'
-import { adaMigrasiNomor, fungsiTerakhir, kolomKembalian } from './migrasi'
+import { adaMigrasiNomor, fungsiTerakhir, kolomKembalian, nomorUtuhHanyaPii } from './migrasi'
 
 const UTUH = '6281234567890'
 const LOKAL = '0812 3456 7890'
@@ -62,10 +62,16 @@ describe.skipIf(!adaMigrasiNomor('0121'))('kontrak 0121: admin_daftar_pengguna_v
       expect(samarkanNomorWa(p), p).toBe(server(p))
     }
   })
-  it('kepala hanya membawa bentuk tersamar', () => {
+  it('kepala: tersamar saja (0121), atau utuh HANYA di cabang pii (0123)', () => {
     const { badan } = fungsiTerakhir('admin_pengguna_kepala')
-    expect(badan).toMatch(/'nomor_wa',\s*\(select public\.nomor_wa_samar\(n\.nomor\)/)
-    expect(badan).not.toMatch(/'nomor_wa',\s*\(select n\.nomor\b/)
+    if (adaMigrasiNomor('0123')) {
+      const n = nomorUtuhHanyaPii(badan)
+      expect(n.lepas).toEqual([])
+      expect(n.adaSamaran).toBe(true)
+    } else {
+      expect(badan).toMatch(/'nomor_wa',\s*\(select public\.nomor_wa_samar\(n\.nomor\)/)
+      expect(badan).not.toMatch(/'nomor_wa',\s*\(select n\.nomor\b/)
+    }
   })
 })
 
@@ -184,20 +190,61 @@ describe('nomorWaCocok (pencarian lokal, hanya saat terbuka)', () => {
   })
 })
 
-describe('keKepala: nomor tersamar, atau tidak ada baris sama sekali', () => {
+describe('penjaga uji: nomor utuh hanya di cabang pii', () => {
+  it('menerima case/if v_pii, menolak nomor utuh tanpa penjaga', () => {
+    const aman = `'nomor_wa', (select case when v_pii then n.nomor else public.nomor_wa_samar(n.nomor) end from public.nomor_wa n where n.user_id = u.id)`
+    expect(nomorUtuhHanyaPii(aman)).toEqual({ lepas: [], adaSamaran: true })
+    const amanIf = `if v_pii then select n.nomor into v_nomor from public.nomor_wa n where n.user_id = p_user; else select public.nomor_wa_samar(n.nomor) into v_nomor from public.nomor_wa n where n.user_id = p_user; end if;`
+    expect(nomorUtuhHanyaPii(amanIf).lepas).toEqual([])
+    const bocor = `'nomor_wa', (select n.nomor from public.nomor_wa n where n.user_id = u.id)`
+    expect(nomorUtuhHanyaPii(bocor).lepas).toHaveLength(1)
+    expect(nomorUtuhHanyaPii(bocor).adaSamaran).toBe(false)
+  })
+})
+
+describe('keKepala: utuh untuk sesi ber-pii (0123), tersamar bila tidak, tanpa baris bila null', () => {
+  const RUANG = [{ workspace_id: 'w1', nama: 'Bi······', jenis: 'usaha', peran: 'owner', pemilik: true, bekas_anggota: false, jumlah_anggota: 1, tx_oleh_dia: 3 }]
+  /** `ruang` hanya dikirim server kepada pemegang cashflow:pii. */
   const kepala = (lain: Partial<KepalaPenggunaDTO> = {}): KepalaPenggunaDTO => ({
     user_id: 'u01', email: 'ora***@contoh.id', daftar: '2026-09-01T00:00:00+00:00', masuk_terakhir: null,
-    banned_until: null, jumlah_ruang: 1, jumlah_transaksi: 3, akses_30hari: 0, ruang: null, ...lain,
+    banned_until: null, jumlah_ruang: 1, jumlah_transaksi: 3, akses_30hari: 0, ruang: RUANG, ...lain,
   })
-  it('kunci tidak dikirim → nomorDikirim false', () => {
-    expect(keKepala(kepala())).toMatchObject({ nomorDikirim: false, nomorTersamar: null })
+  it('utuh dari server untuk sesi ber-pii → gaya lokal, tidak disamarkan (Master 3 Nov)', () => {
+    expect(keKepala(kepala({ nomor_wa: UTUH })).nomorWa).toBe(LOKAL)
   })
-  it('tersamar → tampil; null → dikirim tapi belum punya nomor', () => {
-    expect(keKepala(kepala({ nomor_wa: SAMAR }))).toMatchObject({ nomorDikirim: true, nomorTersamar: SAMAR })
-    expect(keKepala(kepala({ nomor_wa: null }))).toMatchObject({ nomorDikirim: true, nomorTersamar: null })
+  it('tersamar dari server (sesi tanpa pii, atau server 0121) → apa adanya', () => {
+    expect(keKepala(kepala({ nomor_wa: SAMAR })).nomorWa).toBe(SAMAR)
+    expect(keKepala(kepala({ nomor_wa: SAMAR, ruang: null })).nomorWa).toBe(SAMAR)
   })
-  it('nomor utuh yang terkirim keliru tetap disamarkan di kepala', () => {
-    expect(keKepala(kepala({ nomor_wa: UTUH })).nomorTersamar).toBe(SAMAR)
+  it('null atau kunci tidak dikirim → null (baris WhatsApp disembunyikan)', () => {
+    expect(keKepala(kepala({ nomor_wa: null })).nomorWa).toBeNull()
+    expect(keKepala(kepala()).nomorWa).toBeNull()
+  })
+  it('sabuk kedua: nomor utuh kepada kepala tanpa ruang (sesi tanpa pii) tetap disamarkan', () => {
+    expect(keKepala(kepala({ nomor_wa: UTUH, ruang: null })).nomorWa).toBe(SAMAR)
+  })
+})
+
+describe('kepala Pengguna 360: tampilan dan jejak nomor utuh', () => {
+  const baca = (f: string) => readFileSync(fileURLToPath(new URL(`../../${f}`, import.meta.url)), 'utf8')
+  it('baris WhatsApp hanya bila ada nomor, menampilkan nomorWa apa adanya', () => {
+    const f = baca('components/cashflow/CashflowKepala360.vue')
+    expect(f).toMatch(/<div v-if="kepala\.nomorWa">/)
+    expect(f).toMatch(/\{\{ kepala\.nomorWa \}\}/)
+    expect(f).not.toMatch(/nomorTersamar|nomorDikirim/)
+  })
+  it('kepala tidak pernah masuk indeks palet atau remah: label subjek tetap email tersamar', () => {
+    const induk = baca('pages/console/cashflow/pengguna/[id].vue')
+    expect(induk).not.toMatch(/indeks\.isi\(/)
+    expect(induk).toMatch(/const labelSubjek = computed\(\(\) => kepala\.value\?\.emailTersamar \?\?/)
+    expect(induk).not.toMatch(/kepala\.value\?\.nomorWa/)
+    expect(baca('composables/cashflow/useCashflowPengguna.ts')).not.toMatch(/indeks|nomorWa/)
+  })
+  it('kepala (dengan nomornya) dibuang saat subjek berganti, saat keluar dari Pengguna 360, dan saat logout', () => {
+    const induk = baca('pages/console/cashflow/pengguna/[id].vue')
+    expect(induk).toMatch(/^kepala\.value = null$/m)
+    expect(induk).toMatch(/onBeforeUnmount\(\(\) => \{[\s\S]*?if \(kepala\.value\?\.id === id\.value\) kepala\.value = null[\s\S]*?\}\)/)
+    expect(baca('composables/cashflow/useCashflowSesi.ts')).toMatch(/useState<unknown>\('cf_kepala', \(\) => null\)\.value = null/)
   })
 })
 

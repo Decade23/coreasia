@@ -15,7 +15,7 @@
  *
  * adapters/ tidak di-auto-import Nuxt — selalu impor eksplisit.
  */
-import { POLA_UUID, samarkanEmail, samarkanNomorWa, keArahUang, type ArahUang } from './cashflow'
+import { POLA_UUID, samarkanEmail, samarkanNomorWa, formatNomorWa, keArahUang, type ArahUang } from './cashflow'
 import { tanggalPendek, type BahasaWaktu } from './cashflowWaktu'
 import type { RuangCalon } from './cashflowKasus'
 
@@ -42,8 +42,10 @@ export interface KepalaPenggunaDTO {
   akses_30hari: number
   /** null = pemanggil tanpa izin pii (lingkup kasus otomatis tidak dikirim). */
   ruang: RuangKepalaDTO[] | null
-  /** Nomor WhatsApp, selalu tersamar ('0812 •••• 7890'); null = belum punya.
-   *  Kunci ini hanya ada di server yang sudah memasang migrasinya. */
+  /** Nomor WhatsApp; null = belum punya. 0121: selalu tersamar
+   *  ('0812 •••• 7890'). 0123: utuh ('628…') untuk pemanggil ber-pii,
+   *  tersamar untuk yang tidak. Kunci ini hanya ada di server yang sudah
+   *  memasang 0121. */
   nomor_wa?: string | null
 }
 export interface KepalaPengguna {
@@ -58,10 +60,15 @@ export interface KepalaPengguna {
   akses30: number
   /** null = tanpa pii: kasus tidak bisa dibuka dari sesi ini (masuk ulang ber-TOTP). */
   ruang: RuangCalon[] | null
-  /** false = server tidak mengirim kunci nomor_wa: kepala tidak menampilkan baris WhatsApp. */
-  nomorDikirim: boolean
-  /** Selalu tersamar, juga bila server keliru mengirim nomor utuh; null = belum punya nomor. */
-  nomorTersamar: string | null
+  /**
+   * Nomor WhatsApp siap tampil di kepala; null = tidak ada (belum punya, atau
+   * server tidak mengirim kuncinya) dan barisnya disembunyikan. Utuh bergaya
+   * lokal ('0812 3456 7890') HANYA bila server mengirim bentuk utuh kepada
+   * sesi ber-pii (0123; Master 3 Nov: kepala tidak perlu disamarkan). Penanda
+   * pii-nya `ruang` yang memang hanya dikirim ke pemegang cashflow:pii: kepala
+   * tanpa `ruang` yang membawa nomor utuh tetap disamarkan di sini.
+   */
+  nomorWa: string | null
 }
 
 export function keKepala(d: KepalaPenggunaDTO, sekarang: number = Date.now()): KepalaPengguna {
@@ -74,8 +81,7 @@ export function keKepala(d: KepalaPenggunaDTO, sekarang: number = Date.now()): K
     jumlahRuang: angkaAtauNull(d.jumlah_ruang),
     jumlahTransaksi: angkaAtauNull(d.jumlah_transaksi),
     akses30: angka(d.akses_30hari),
-    nomorDikirim: d.nomor_wa !== undefined,
-    nomorTersamar: samarkanNomorWa(d.nomor_wa),
+    nomorWa: (Array.isArray(d.ruang) ? formatNomorWa(d.nomor_wa) : null) ?? samarkanNomorWa(d.nomor_wa),
     ruang: Array.isArray(d.ruang)
       ? d.ruang.map(r => ({
           id: r.workspace_id,
