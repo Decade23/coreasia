@@ -87,6 +87,20 @@ describe('label versi dan platform', () => {
   })
 })
 
+describe('sel versi ramping: nomor versi + info platform untuk ikon', () => {
+  it('versiAplikasi = nomornya saja; platform: dasar, varian, label untuk title/aria-label', () => {
+    expect(kePengguna(dto(1, ' 1.3.6-rc.2 ', 'android-uat'))).toMatchObject({
+      versiAplikasi: '1.3.6-rc.2', platform: { dasar: 'android', varian: 'uat', label: 'Android UAT' },
+    })
+    expect(kePengguna(dto(1, '1.3.6', 'ios')).platform).toEqual({ dasar: 'ios', varian: null, label: 'iPhone' })
+    expect(kePengguna(dto(1, '1.3.6', 'android')).platform).toEqual({ dasar: 'android', varian: null, label: 'Android' })
+    // Bentuk asing: tanpa ikon (dasar null), labelnya apa adanya.
+    expect(kePengguna(dto(1, '1.3.6', 'harmony')).platform).toEqual({ dasar: null, varian: null, label: 'harmony' })
+    expect(kePengguna(dto(1, null, null))).toMatchObject({ versiAplikasi: null, platform: null })
+    expect(kePengguna(dto(1))).toMatchObject({ versiAplikasi: null, platform: null })
+  })
+})
+
 describe('kePengguna: kolom versi', () => {
   it('server sebelum 0123 (tanpa kolom) → semuanya kosong, tanpa galat', () => {
     expect(kePengguna(dto(1))).toMatchObject({ labelVersi: null, kunciVersi: null, kelompokVersi: '' })
@@ -132,6 +146,21 @@ describe('halaman daftar pengguna: kolom Versi', () => {
     expect(SRC).toMatch(/key: 'versi'[^\n]*class: 'hidden[^']*sm:table-cell', headerClass: 'hidden sm:table-cell'/)
     expect(SRC).toMatch(/versi: \{ jenis: 'teks', nilai: b => b\.p\.kunciVersi \}/)
     expect(SRC).toMatch(/const URUT = \[[^\]]*'versi'/)
+  })
+  it('sel versi: ikon platform ber-aria-label, titik untuk varian uji, nomor versinya saja', () => {
+    expect(SRC).toMatch(/role="img" :aria-label="row\.p\.platform\.label" :title="row\.p\.platform\.label"/)
+    expect(SRC).toMatch(/v-if="row\.p\.platform\.varian"/)
+    expect(SRC).toMatch(/\{\{ row\.p\.versiAplikasi \?\? '—' \}\}/)
+    expect(SRC).toMatch(/android: 'bi:android2', ios: 'bi:apple'/)
+  })
+  it('muat tanpa gulir samping mulai 1280 px: email terpotong dengan title, kolom hitungan tanpa tombol saring', () => {
+    expect(SRC).toMatch(/class="block max-w-\[10rem\] truncate font-mono[^"]*" :title="row\.email"/)
+    expect(SRC).toMatch(/key: 'ruang'[^\n]*filterable: false/)
+    expect(SRC).toMatch(/key: 'tx'[^\n]*filterable: false/)
+    // Isian saringan lama untuk kolom tanpa tombol tidak ikut menyaring.
+    expect(SRC).toMatch(/saringKolom\(lolos\.map\(keBaris\), filterKolom\.value, kolom\.value\.filter\(c => c\.filterable !== false\)\)/)
+    const tabel = readFileSync(fileURLToPath(new URL('../../components/ui/DataTable.vue', import.meta.url)), 'utf8')
+    expect(tabel).toMatch(/<CaTooltip v-if="col\.filterable !== false"/)
   })
   it('versi terbaru dihitung atas SEMUA baris, bukan halaman yang tampil', () => {
     expect(SRC).toMatch(/const versiTerbaru = computed\(\(\) => versiTerbaruPer\(semua\.value\)\)/)

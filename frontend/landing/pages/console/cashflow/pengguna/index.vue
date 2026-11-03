@@ -56,7 +56,8 @@
  */
 definePageMeta({ layout: 'console', middleware: ['console', 'cashflow-admin'] })
 import {
-  kePengguna, nomorWaCocok, tanpaKontakUtuh, versiTerbaruPer, versiTertinggal, type Pengguna, type PenggunaDTO, type StatusPengguna,
+  kePengguna, nomorWaCocok, tanpaKontakUtuh, versiTerbaruPer, versiTertinggal,
+  type InfoPlatform, type Pengguna, type PenggunaDTO, type StatusPengguna,
 } from '~/adapters/cashflow'
 import { idMenungguHapus, BATAS_BADGE_HAPUS } from '~/adapters/cashflowHapusAkun'
 import { urutkan, saringKolom, potongHalaman, halamanAman, jumlahHalaman, type AturanUrut } from '~/adapters/cashflowDaftar'
@@ -164,12 +165,13 @@ const keBaris = (p: Pengguna): Baris => ({
 
 const kolom = computed(() => [
   { key: 'email', label: tcf('pengguna.email'), type: 'text' as const, class: 'font-mono text-[var(--ca-text)]', sortable: true },
-  { key: 'wa', label: tcf('pengguna.wa'), type: 'text' as const, width: '150px', sortable: true, class: 'hidden whitespace-nowrap font-mono tabular-nums text-[var(--ca-text)] sm:table-cell', headerClass: 'hidden sm:table-cell' },
-  { key: 'versi', label: tcf('pengguna.versi'), type: 'text' as const, width: '130px', sortable: true, class: 'hidden whitespace-nowrap tabular-nums sm:table-cell', headerClass: 'hidden sm:table-cell' },
+  { key: 'wa', label: tcf('pengguna.wa'), type: 'text' as const, sortable: true, class: 'hidden whitespace-nowrap tabular-nums text-[var(--ca-text)] sm:table-cell', headerClass: 'hidden sm:table-cell' },
+  { key: 'versi', label: tcf('pengguna.versi'), type: 'text' as const, sortable: true, class: 'hidden whitespace-nowrap tabular-nums sm:table-cell', headerClass: 'hidden sm:table-cell' },
   { key: 'daftar', label: tcf('pengguna.daftar'), type: 'text' as const, width: '120px', sortable: true, class: 'hidden text-[var(--ca-muted)] sm:table-cell', headerClass: 'hidden sm:table-cell' },
   { key: 'aktif', label: tcf('pengguna.aktifTerakhir'), type: 'text' as const, width: '130px', sortable: true },
-  { key: 'ruang', label: tcf('pengguna.ruang'), type: 'text' as const, width: '70px', sortable: true, class: 'hidden tabular-nums text-right md:table-cell', headerClass: 'hidden md:table-cell' },
-  { key: 'tx', label: tcf('pengguna.tx'), type: 'text' as const, width: '90px', sortable: true, class: 'tabular-nums text-right' },
+  { key: 'ruang', label: tcf('pengguna.ruang'), type: 'text' as const, width: '70px', sortable: true, filterable: false, class: 'hidden tabular-nums text-right md:table-cell', headerClass: 'hidden md:table-cell' },
+  // 'Tx' seperti tabel ruang Pengguna 360: label panjang membuat tabel tidak muat di 1280 px.
+  { key: 'tx', label: tcf('pengguna.kolom.tx'), type: 'text' as const, width: '90px', sortable: true, filterable: false, class: 'tabular-nums text-right' },
   {
     key: 'status', label: tcf('pengguna.status'), type: 'status' as const, width: '140px',
     options: (['aktif', 'ditangguhkan', 'menunggu_hapus'] as const).map(s => labelStatus(s)).map((v: string) => ({ label: v, value: v })),
@@ -199,7 +201,9 @@ const tersaring = computed(() => {
     if (q.value.seg === 'catat7') return p.tx !== null && p.tx > 0 && p.hariSejakAktif <= 7
     return true
   })
-  return saringKolom(lolos.map(keBaris), filterKolom.value, kolom.value)
+  // Kolom tanpa tombol saring (filterable: false) tidak ikut menyaring, walau
+  // useState masih menyimpan isian lama untuknya.
+  return saringKolom(lolos.map(keBaris), filterKolom.value, kolom.value.filter(c => c.filterable !== false))
 })
 const terurut = computed(() => urutkan(tersaring.value, ATURAN[q.value.urut], q.value.arah, b => b.id))
 /* ?hal dibaca SETELAH data dimuat: sebelum itu daftar kosong, dan hal=2 akan
@@ -232,6 +236,10 @@ const serverKirimWa = computed(() => mentah.value.some(d => d.nomor_wa !== undef
 /** Versi tertinggi per platform di SELURUH daftar (bukan halaman ini saja). */
 const versiTerbaru = computed(() => versiTerbaruPer(semua.value))
 const serverKirimVersi = computed(() => mentah.value.some(d => d.versi_aplikasi !== undefined))
+/** Ikon platform di sel versi. Lucide tidak punya logo merek (ikon `apple`-nya
+ *  buah), jadi Android/Apple dari Bootstrap Icons yang sudah terpasang. */
+const IKON_PLATFORM: Readonly<Record<'android' | 'ios' | 'web', string>> = { android: 'bi:android2', ios: 'bi:apple', web: 'lucide:globe' }
+const ikonPlatform = (p: InfoPlatform): string | null => (p.dasar ? IKON_PLATFORM[p.dasar] : null)
 /** Server menahan hitungan per orang (sesi tanpa pii): segmen berbasis tx tidak bermakna. */
 const tanpaHitungan = computed(() => semua.value.length > 0 && semua.value.every(p => p.tx === null && p.ruang === null))
 const segmenButuhHitungan = (k: string) => k === 'belum' || k === 'catat7'
@@ -293,7 +301,7 @@ useCashflowPintasan([{ kunci: '/', aksi: () => kolomCari.value?.focus() }])
 
     <!-- Muat gagal tanpa baris = galat saja; "Belum ada data." di bawahnya terbaca
          seolah produk tidak punya pengguna. -->
-    <div v-if="!pesanGalat || semua.length" ref="wadahDaftar" class="ca-console-dialog scroll-mt-24 overflow-hidden">
+    <div v-if="!pesanGalat || semua.length" ref="wadahDaftar" class="ca-daftar-pengguna ca-console-dialog scroll-mt-24 overflow-hidden">
       <DataTable
         v-model:filters="filterKolom"
         :columns="kolom" :data="barisHalaman" :loading="memuat"
@@ -303,7 +311,8 @@ useCashflowPintasan([{ kunci: '/', aksi: () => kolomCari.value?.focus() }])
         @row-click="(row: Baris) => navigateTo(`/console/cashflow/pengguna/${row.id}`)"
       >
         <template #cell-email="{ row }">
-          <NuxtLink :to="`/console/cashflow/pengguna/${row.id}`" class="font-mono text-[var(--ca-text)] underline-offset-2 hover:underline" @click.stop>{{ row.email }}</NuxtLink>
+          <!-- Email panjang dipotong dengan elipsis; teks lengkapnya di title. -->
+          <NuxtLink :to="`/console/cashflow/pengguna/${row.id}`" class="block max-w-[10rem] truncate font-mono text-[var(--ca-text)] underline-offset-2 hover:underline" :title="row.email" @click.stop>{{ row.email }}</NuxtLink>
           <!-- Layar sempit: kolom WhatsApp disembunyikan, nomornya ikut di bawah email. -->
           <span v-if="row.wa" class="mt-0.5 block whitespace-nowrap font-mono text-xs tabular-nums text-[var(--ca-muted)] sm:hidden">
             <span class="sr-only">{{ tcf('pengguna.wa') }}: </span>{{ row.wa }}
@@ -315,13 +324,22 @@ useCashflowPintasan([{ kunci: '/', aksi: () => kolomCari.value?.focus() }])
           <span v-if="value === null" class="text-[var(--ca-subtle)]" :title="serverKirimWa ? tcf('pengguna.waBelum') : undefined">—<span v-if="serverKirimWa" class="sr-only"> ({{ tcf('pengguna.waBelum') }})</span></span>
           <template v-else>{{ value }}</template>
         </template>
-        <!-- Versi di bawah versi tertinggi platform yang sama di daftar ini: redup. -->
+        <!-- Versi ramping: ikon platform kecil (titik = varian uji seperti UAT) lalu
+             nomor versinya. Di bawah versi tertinggi platform yang sama: redup. -->
         <template #cell-versi="{ row }">
           <span v-if="row.versi === null" class="text-[var(--ca-subtle)]">—</span>
-          <span v-else-if="versiTertinggal(row.p, versiTerbaru)" class="text-[var(--ca-subtle)]" :title="tcf('pengguna.versiLama')">
-            {{ row.versi }}<span class="sr-only"> ({{ tcf('pengguna.versiLama') }})</span>
+          <span
+            v-else class="inline-flex items-center gap-1.5"
+            :class="versiTertinggal(row.p, versiTerbaru) ? 'text-[var(--ca-subtle)]' : 'text-[var(--ca-text)]'"
+            :title="versiTertinggal(row.p, versiTerbaru) ? `${row.versi} · ${tcf('pengguna.versiLama')}` : row.versi"
+          >
+            <span v-if="row.p.platform" class="relative inline-flex shrink-0" role="img" :aria-label="row.p.platform.label" :title="row.p.platform.label">
+              <Icon v-if="ikonPlatform(row.p.platform)" :name="ikonPlatform(row.p.platform)!" class="h-3.5 w-3.5" aria-hidden="true" />
+              <span v-else class="text-[0.65rem] font-semibold" aria-hidden="true">{{ row.p.platform.label.slice(0, 1) }}</span>
+              <span v-if="row.p.platform.varian" class="absolute -right-1 -top-0.5 h-1.5 w-1.5 rounded-full bg-[var(--ca-gold-text)]" aria-hidden="true" />
+            </span>
+            {{ row.p.versiAplikasi ?? '—' }}<span v-if="versiTertinggal(row.p, versiTerbaru)" class="sr-only"> ({{ tcf('pengguna.versiLama') }})</span>
           </span>
-          <span v-else class="text-[var(--ca-text)]">{{ row.versi }}</span>
         </template>
         <template #cell-status="{ row }">
           <span v-if="row.p.status === 'menunggu_hapus'" class="ca-pill-danger whitespace-nowrap text-[0.7rem]">{{ row.status }}</span>
@@ -346,3 +364,12 @@ useCashflowPintasan([{ kunci: '/', aksi: () => kolomCari.value?.focus() }])
     <p v-if="serverKirimVersi" class="text-xs text-[var(--ca-subtle)]">{{ tcf('pengguna.versiKet') }}</p>
   </div>
 </template>
+
+<style scoped>
+/* Delapan kolom harus muat tanpa gulir samping mulai jendela 1280 px: jarak sel
+   tabel di halaman ini sedikit lebih rapat daripada bawaan DataTable (1rem). */
+.ca-daftar-pengguna :deep(.ca-console-table th),
+.ca-daftar-pengguna :deep(.ca-console-table td) {
+  padding-inline: 0.625rem;
+}
+</style>

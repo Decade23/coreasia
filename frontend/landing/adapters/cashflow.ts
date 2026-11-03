@@ -140,8 +140,12 @@ export interface Pengguna {
   nomorTersamar: string | null
   /** Hanya terisi bersama emailPenuh: bentuk lokal '0812 3456 7890'. */
   nomorPenuh: string | null
-  /** '1.3.6 · Android' / '1.3.6 · iPhone'; null = server tidak tahu (atau sebelum 0123). */
+  /** '1.3.6 · Android' / '1.3.6 · iPhone' (saringan kolom, keterangan); null = server tidak tahu (atau sebelum 0123). */
   labelVersi: string | null
+  /** Nomor versinya saja ('1.3.6', '1.3.6-rc.2') untuk sel tabel; null = tidak ada. */
+  versiAplikasi: string | null
+  /** Platform untuk ikon kecil di sel versi; null = tidak ada. */
+  platform: InfoPlatform | null
   /** Kunci urut versi semantik (1.3.10 > 1.3.9; pra-rilis sebelum rilisnya),
    *  string digit berpanjang tetap; null = tidak terbaca. */
   kunciVersi: string | null
@@ -307,20 +311,22 @@ export function kunciVersi(versi: string | null | undefined): string | null {
 }
 
 const NAMA_PLATFORM: Readonly<Record<string, string>> = { android: 'Android', ios: 'iPhone', web: 'Web' }
+/** Platform terbaca: `dasar` null = bentuk asing (tanpa ikon); `varian` null = prod. */
+export interface InfoPlatform { dasar: 'android' | 'ios' | 'web' | null; varian: string | null; label: string }
 /** Platform → kunci kelompok dan label. 'android', 'ios', 'web', boleh diikuti
  *  varian: 0123 menulis 'android-uat', 'android-ias', 'android-lain' (prod
  *  tanpa penanda). Varian 'prod' tidak ditulis, uat/ias huruf besar, varian
  *  lain apa adanya. Bentuk lain tampil apa adanya. */
-export function bacaPlatform(platform: string | null | undefined): { kunci: string; label: string | null } {
+export function bacaPlatform(platform: string | null | undefined): { kunci: string; label: string | null; info: InfoPlatform | null } {
   const t = (platform ?? '').trim()
-  if (!t) return { kunci: '', label: null }
+  if (!t) return { kunci: '', label: null, info: null }
   const m = /^(android|ios|web)(?:[\s_:/-]+([a-z0-9]+))?$/i.exec(t)
-  if (!m) return { kunci: t.toLowerCase(), label: t }
-  const dasar = m[1]!.toLowerCase()
-  const varian = (m[2] ?? '').toLowerCase()
-  const kunci = varian && varian !== 'prod' ? `${dasar}:${varian}` : dasar
-  if (!varian || varian === 'prod') return { kunci, label: NAMA_PLATFORM[dasar]! }
-  return { kunci, label: `${NAMA_PLATFORM[dasar]} ${varian === 'uat' || varian === 'ias' ? varian.toUpperCase() : varian}` }
+  if (!m) return { kunci: t.toLowerCase(), label: t, info: { dasar: null, varian: null, label: t } }
+  const dasar = m[1]!.toLowerCase() as 'android' | 'ios' | 'web'
+  const v = (m[2] ?? '').toLowerCase()
+  const varian = v && v !== 'prod' ? v : null
+  const label = varian ? `${NAMA_PLATFORM[dasar]} ${varian === 'uat' || varian === 'ias' ? varian.toUpperCase() : varian}` : NAMA_PLATFORM[dasar]!
+  return { kunci: varian ? `${dasar}:${varian}` : dasar, label, info: { dasar, varian, label } }
 }
 
 /** '1.3.6 · Android'; hanya platform bila versinya tidak ada; null bila keduanya kosong. */
@@ -414,6 +420,8 @@ export function kePengguna(d: PenggunaDTO, bahasa: BahasaWaktu = 'id', menungguH
     nomorTersamar: samarkanNomorWa(d.nomor_wa),
     nomorPenuh: terbuka ? formatNomorWa(d.nomor_wa) : null,
     labelVersi: labelVersi(d.versi_aplikasi, d.platform),
+    versiAplikasi: (d.versi_aplikasi ?? '').trim() || null,
+    platform: bacaPlatform(d.platform).info,
     kunciVersi: kunciVersi(d.versi_aplikasi),
     kelompokVersi: bacaPlatform(d.platform).kunci,
     daftar: tanggalPendek(d.created_at, bahasa),

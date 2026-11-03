@@ -19,6 +19,9 @@ interface Column {
   /** Kelas untuk <th> (opt-in). Pasangan `class` milik <td>: kolom yang
    *  disembunyikan di layar sempit menyembunyikan kepalanya juga. */
   headerClass?: string
+  /** OPT-OUT: false = tanpa tombol saring kolom (mis. kolom hitungan, yang
+   *  saringan "teks memuat"-nya tidak bermakna). Bawaan: ada. */
+  filterable?: boolean
 }
 
 interface Props {
@@ -200,7 +203,7 @@ const formatDate = (d: string) => formatDateTime(d)
                 </button>
                 <span v-else>{{ col.label }}</span>
                 <!-- Column filter trigger -->
-                <CaTooltip :text="`Filter ${col.label}`">
+                <CaTooltip v-if="col.filterable !== false" :text="`Filter ${col.label}`">
                   <button
                     type="button"
                     class="rounded p-0.5 transition"
