@@ -34,14 +34,12 @@ const hitungan = computed(() => props.kepala
       <dl class="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm text-[var(--ca-muted)]">
         <div><dt class="inline">{{ tcf('pengguna.daftar') }}</dt> <dd class="inline text-[var(--ca-text)]">{{ formatTanggal(kepala.daftarIso) }}</dd></div>
         <div><dt class="inline">{{ tcf('pengguna.masuk') }}</dt> <dd class="inline text-[var(--ca-text)]">{{ formatTanggal(kepala.masukTerakhirIso) }}</dd></div>
-        <!-- Hitungan per orang hanya untuk sesi ber-pii (M/0089 §15 (d)); tanpa itu "—" (butuh TOTP), bukan "0". -->
         <!-- Nomor WhatsApp: tersamar seperti email di kepala ini. Server yang belum
              mengirim kuncinya → barisnya tidak ada sama sekali. -->
         <div v-if="kepala.nomorDikirim">
-          <dt class="inline">{{ tcf('pengguna.wa') }}</dt>
-          <dd v-if="kepala.nomorTersamar" class="inline font-mono tabular-nums text-[var(--ca-text)]">{{ kepala.nomorTersamar }}</dd>
-          <dd v-else class="inline text-[var(--ca-subtle)]">{{ tcf('pengguna.waBelum') }}</dd>
+          <dt class="inline">{{ tcf('pengguna.wa') }}</dt> <dd class="inline" :class="kepala.nomorTersamar ? 'font-mono tabular-nums text-[var(--ca-text)]' : 'text-[var(--ca-subtle)]'">{{ kepala.nomorTersamar ?? tcf('pengguna.waBelumPendek') }}</dd>
         </div>
+        <!-- Hitungan per orang hanya untuk sesi ber-pii (M/0089 §15 (d)); tanpa itu "—" (butuh TOTP), bukan "0". -->
         <div v-for="h in hitungan" :key="h.label">
           <dt class="inline">{{ h.label }}</dt>
           <dd v-if="h.n !== null" class="inline tabular-nums text-[var(--ca-text)]">{{ angka(h.n) }}</dd>

@@ -72,7 +72,7 @@ const KAMUS = {
     },
     pengguna: {
       judul: 'Pengguna', ket: 'Email dan nomor WhatsApp tersamar secara bawaan. Sakelar Kontak lengkap membukanya, dan setiap pembukaan tercatat di audit.',
-      email: 'Email', wa: 'WhatsApp', waBelum: 'Belum ada nomor WhatsApp', daftar: 'Daftar', masuk: 'Masuk terakhir', aktifTerakhir: 'Terakhir aktif', ruang: 'Ruang', tx: 'Transaksi', status: 'Status',
+      email: 'Email', wa: 'WhatsApp', waBelum: 'Belum ada nomor WhatsApp', waBelumPendek: 'belum ada', daftar: 'Daftar', masuk: 'Masuk terakhir', aktifTerakhir: 'Terakhir aktif', ruang: 'Ruang', tx: 'Transaksi', status: 'Status',
       aktif: 'Aktif', ditangguhkan: 'Ditangguhkan', menungguHapus: 'Menunggu dihapus', buka: 'Buka', belumCatat: 'Tidak pernah mencatat', catat7: 'Mencatat 7 hari',
       kontakPenuh: 'Kontak lengkap', emailSamar: 'Tersamar',
       kontakButuhTotp: 'Kontak lengkap butuh login console ber-TOTP.',
@@ -746,7 +746,7 @@ const KAMUS = {
     },
     pengguna: {
       judul: 'Users', ket: 'Emails and WhatsApp numbers are masked by default. The Full contact switch reveals them, and every reveal is recorded in the audit log.',
-      email: 'Email', wa: 'WhatsApp', waBelum: 'No WhatsApp number yet', daftar: 'Signed up', masuk: 'Last sign-in', aktifTerakhir: 'Last active', ruang: 'Workspaces', tx: 'Transactions', status: 'Status',
+      email: 'Email', wa: 'WhatsApp', waBelum: 'No WhatsApp number yet', waBelumPendek: 'none yet', daftar: 'Signed up', masuk: 'Last sign-in', aktifTerakhir: 'Last active', ruang: 'Workspaces', tx: 'Transactions', status: 'Status',
       aktif: 'Active', ditangguhkan: 'Suspended', menungguHapus: 'Pending deletion', buka: 'Open', belumCatat: 'Never recorded', catat7: 'Recorded in 7 days',
       kontakPenuh: 'Full contact', emailSamar: 'Masked',
       kontakButuhTotp: 'Full contact details require a console sign-in with TOTP.',

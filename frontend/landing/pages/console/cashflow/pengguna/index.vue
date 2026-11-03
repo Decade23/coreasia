@@ -290,6 +290,10 @@ useCashflowPintasan([{ kunci: '/', aksi: () => kolomCari.value?.focus() }])
       >
         <template #cell-email="{ row }">
           <NuxtLink :to="`/console/cashflow/pengguna/${row.id}`" class="font-mono text-[var(--ca-text)] underline-offset-2 hover:underline" @click.stop>{{ row.email }}</NuxtLink>
+          <!-- Layar sempit: kolom WhatsApp disembunyikan, nomornya ikut di bawah email. -->
+          <span v-if="row.wa" class="mt-0.5 block whitespace-nowrap font-mono text-xs tabular-nums text-[var(--ca-muted)] sm:hidden">
+            <span class="sr-only">{{ tcf('pengguna.wa') }}: </span>{{ row.wa }}
+          </span>
         </template>
         <!-- null = tidak ada nomor; title hanya bila server memang mengirim kolomnya
              (sebelum migrasinya terpasang, "belum ada nomor" belum tentu benar). -->
