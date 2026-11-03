@@ -101,9 +101,13 @@ const handleLogout = async () => {
       class="ca-console-sidebar fixed inset-y-0 left-0 z-40 w-72 transition-transform lg:translate-x-0"
       :class="isSidebarOpen ? 'translate-x-0' : '-translate-x-full'"
     >
+      <!-- Kepala dan kaki tetap; hanya menu di tengah yang bergulir. Tanpa
+           min-h-0 anak flex-1 tidak pernah menyusut di bawah tinggi isinya,
+           jadi di layar pendek (laptop kecil, zoom, HP lanskap) menu bawah
+           terdorong keluar aside yang fixed dan tidak bisa dicapai. -->
       <div class="flex h-full flex-col">
         <!-- Logo -->
-        <div class="flex h-[4.5rem] items-center gap-3 border-b border-[color:var(--ca-border)] px-5">
+        <div class="flex h-[4.5rem] shrink-0 items-center gap-3 border-b border-[color:var(--ca-border)] px-5">
           <div class="flex h-11 w-11 items-center justify-center rounded-[1.2rem] border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg-strong)] shadow-[var(--ca-card-soft-shadow)]">
             <NuxtImg src="/logo.svg" alt="CoreAsia" width="28" height="28" class="h-7 w-7" />
           </div>
@@ -114,7 +118,8 @@ const handleLogout = async () => {
         </div>
 
         <!-- Nav -->
-        <nav class="flex-1 space-y-1.5 px-3 py-5">
+        <!-- overscroll-contain: sampai ujung menu, gulir tidak merambat ke halaman di belakang laci. -->
+        <nav class="ca-scrollbar min-h-0 flex-1 space-y-1.5 overflow-y-auto overflow-x-hidden overscroll-contain px-3 py-5">
           <NuxtLink
             v-for="item in menuItems"
             :key="item.to"
@@ -131,8 +136,10 @@ const handleLogout = async () => {
         </nav>
 
         <!-- Sidebar footer -->
-        <div class="ca-console-sidebar-footer p-4">
-          <div class="ca-card-soft mb-3 rounded-[1.5rem] p-4">
+        <!-- Kartu ringkas hanya mengulang judul halaman dan nama admin dari bilah
+             atas; di layar pendek ia disembunyikan supaya ruang menu cukup. -->
+        <div class="ca-console-sidebar-footer shrink-0 p-4">
+          <div class="ca-card-soft mb-3 rounded-[1.5rem] p-4 [@media(max-height:40rem)]:hidden">
             <p class="text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-[var(--ca-subtle)]">{{ tc('layout.kicker') }}</p>
             <p class="mt-2 text-sm font-semibold text-[var(--ca-text)]">{{ currentPageLabel }}</p>
             <p class="mt-1 text-xs leading-relaxed text-[var(--ca-muted)]">{{ user?.full_name || 'Admin' }}</p>
