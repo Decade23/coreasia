@@ -242,20 +242,20 @@ export function formatNomorWa(nomor: string | null | undefined): string | null {
   return [d.slice(0, 4), d.slice(4, 8), d.slice(8)].filter(Boolean).join(' ')
 }
 
-/** Nomor tersamar: 4 digit depan dan paling banyak 4 digit belakang
- *  ('0812 •••• 7890'), dengan minimal 4 digit tengah selalu tersembunyi —
- *  nomor 10–11 digit hanya menyisakan 2–3 digit belakang. Idempoten atas
- *  bentuk server (yang sudah memuat '•' atau '*' dipulangkan apa adanya).
- *  Nomor yang terlalu pendek atau teks yang tidak dikenal hanya menjadi
- *  '••••', supaya tidak ada isian mentah yang lolos. null = tidak ada. */
+/** Nomor tersamar: 4 digit depan (bentuk lokal) dan 4 digit belakang
+ *  ('0812 •••• 7890'). Aturannya SAMA dengan public.nomor_wa_samar() di
+ *  server (0117) supaya bentuk sesudah sakelar dimatikan identik dengan
+ *  bentuk yang dikirim server, dan idempoten atas bentuk server (yang sudah
+ *  memuat '•' atau '*' dipulangkan apa adanya). Nomor yang terlalu pendek
+ *  atau teks yang tidak dikenal hanya menjadi '••••', supaya tidak ada isian
+ *  mentah yang lolos. null = tidak ada. */
 export function samarkanNomorWa(nomor: string | null | undefined): string | null {
   const t = (nomor ?? '').trim()
   if (!t) return null
   if (POLA_TANDA_SAMAR.test(t)) return t
   const d = digitLokal(t)
   if (!d || d.length < 10) return '••••'
-  const belakang = Math.min(4, d.length - 8)
-  return `${d.slice(0, 4)} •••• ${d.slice(-belakang)}`
+  return `${d.slice(0, 4)} •••• ${d.slice(-4)}`
 }
 
 /** Pencarian lokal atas nomor UTUH (hanya saat daftar terbuka). Hanya kueri

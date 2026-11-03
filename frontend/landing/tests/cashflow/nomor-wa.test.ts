@@ -53,6 +53,15 @@ describe.skipIf(!adaMigrasiNomor('0121'))('kontrak 0121: admin_daftar_pengguna_v
     // Pencarian tersamar tetap hanya pada email tersamar (anti-enumerasi nomor).
     expect(badan.slice(pecah)).not.toMatch(/nomor\s+ilike/)
   })
+  it('samaran peramban = public.nomor_wa_samar (0117) untuk setiap panjang nomor yang sah', () => {
+    const { badan } = fungsiTerakhir('nomor_wa_samar')
+    expect(badan).toMatch(/when p ~ '\^628\[0-9\]\{8,11\}\$' then '0' \|\| substr\(p, 3, 3\) \|\| ' •••• ' \|\| right\(p, 4\)/)
+    const server = (p: string) => (/^628[0-9]{8,11}$/.test(p) ? `0${p.slice(2, 5)} •••• ${p.slice(-4)}` : null)
+    for (let panjang = 8; panjang <= 11; panjang++) {
+      const p = `628${'1234567890123'.slice(0, panjang)}`
+      expect(samarkanNomorWa(p), p).toBe(server(p))
+    }
+  })
   it('kepala hanya membawa bentuk tersamar', () => {
     const { badan } = fungsiTerakhir('admin_pengguna_kepala')
     expect(badan).toMatch(/'nomor_wa',\s*\(select public\.nomor_wa_samar\(n\.nomor\)/)
@@ -92,14 +101,10 @@ describe('samarkanNomorWa', () => {
     expect(samarkanNomorWa(samarkanNomorWa(UTUH))).toBe(SAMAR)
     expect(samarkanNomorWa('0812****7890')).toBe('0812****7890')
   })
-  it('selalu menyembunyikan minimal 4 digit, juga untuk nomor pendek', () => {
-    // 10 digit lokal: 4 depan + 2 belakang; 11 digit: 4 + 3.
-    expect(samarkanNomorWa('62812345678')).toBe('0812 •••• 78')
-    expect(samarkanNomorWa('628123456789')).toBe('0812 •••• 789')
-    for (const n of ['62812345678', '628123456789', UTUH, '62812345678901']) {
-      const tampak = samarkanNomorWa(n)!.replace(/\D/g, '').length
-      expect(n.length - 1 - tampak, n).toBeGreaterThanOrEqual(4)
-    }
+  it('semua panjang nomor yang sah: 4 depan dan 4 belakang, seperti nomor_wa_samar', () => {
+    expect(samarkanNomorWa('62812345678')).toBe('0812 •••• 5678')
+    expect(samarkanNomorWa('628123456789')).toBe('0812 •••• 6789')
+    expect(samarkanNomorWa('62812345678901')).toBe('0812 •••• 8901')
   })
   it('teks tak dikenal → ••••, kosong → null', () => {
     expect(samarkanNomorWa('nomor rahasia')).toBe('••••')
