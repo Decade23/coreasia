@@ -56,6 +56,11 @@ export interface PenggunaDTO {
    *  belum punya nomor. Kolom TIDAK ADA di jawaban server yang belum memasang
    *  migrasinya: adapter memperlakukannya sama dengan null. */
   nomor_wa?: string | null
+  /** 0123: versi aplikasi terakhir yang dilaporkan HP orang itu ('1.3.6') dan
+   *  platformnya ('android', 'ios', boleh berpenanda varian). Kolomnya TIDAK
+   *  ADA di server sebelum 0123: adapter memperlakukannya sama dengan null. */
+  versi_aplikasi?: string | null
+  platform?: string | null
   banned_until: string | null
   /** null = sesi tanpa cashflow:pii (M/0089 §15 (d)): hitungan per orang yang
    *  di-poll bersama hitungan per ruang menyusun graf keanggotaan. */
@@ -135,6 +140,13 @@ export interface Pengguna {
   nomorTersamar: string | null
   /** Hanya terisi bersama emailPenuh: bentuk lokal '0812 3456 7890'. */
   nomorPenuh: string | null
+  /** '1.3.6 · Android' / '1.3.6 · iPhone'; null = server tidak tahu (atau sebelum 0123). */
+  labelVersi: string | null
+  /** Kunci urut versi semantik (1.3.10 > 1.3.9; pra-rilis sebelum rilisnya),
+   *  string digit berpanjang tetap; null = tidak terbaca. */
+  kunciVersi: string | null
+  /** Kunci kelompok "versi terbaru" (platform yang dinormalkan); '' = tanpa platform. */
+  kelompokVersi: string
   daftar: string            // 'DD Mon YYYY' (WIB)
   masukTerakhir: string     // 'DD Mon YYYY' | '—'
   aktivitasTerakhir: string // 'DD Mon YYYY' | '—'
@@ -271,6 +283,70 @@ export function nomorWaCocok(nomorPenuh: string | null | undefined, kueri: strin
   return lokal.includes(q) || `62${lokal.slice(1)}`.includes(q)
 }
 
+// ── Versi aplikasi (0123) ────────────────────────────────────────────────
+/* Sama dengan pola versi server (0095/0123): 2–4 bagian angka, pra-rilis opsional. */
+const POLA_VERSI = /^v?(\d{1,4})\.(\d{1,4})(?:\.(\d{1,4}))?(?:\.(\d{1,4}))?(?:-([0-9A-Za-z.-]+))?(?:\+[0-9A-Za-z.-]+)?$/
+
+/**
+ * Versi semantik → kunci urut: 1.3.10 > 1.3.9 > 1.3.9-rc.10 > 1.3.9-rc.2 >
+ * 1.3.8. Pra-rilis diurutkan SEBELUM rilisnya (SemVer 2.0.0, sama dengan
+ * toko/versi.sh di aplikasi). Kuncinya STRING digit berpanjang tetap (empat
+ * bagian × 4 digit, penanda rilis, nomor pra-rilis 5 digit), jadi urutan
+ * teksnya sama dengan urutan versinya. Bukan angka: 22 digit melampaui
+ * presisi number dan pecahan pra-rilis akan hilang. Bentuk yang tidak dikenal
+ * → null (urut paling bawah, tidak pernah dianggap tertinggal).
+ */
+export function kunciVersi(versi: string | null | undefined): string | null {
+  const m = POLA_VERSI.exec((versi ?? '').trim())
+  if (!m) return null
+  const isi = (s: string | undefined, panjang: number) => String(Number(s ?? 0)).padStart(panjang, '0')
+  const inti = [m[1], m[2], m[3], m[4]].map(b => isi(b, 4)).join('')
+  if (!m[5]) return `${inti}100000`
+  // Nomor pra-rilis terakhir (rc.10 > rc.2); tanpa angka = 0.
+  return `${inti}0${isi(String(Math.min(99_999, Number(/(\d+)$/.exec(m[5])?.[1] ?? 0))), 5)}`
+}
+
+const NAMA_PLATFORM: Readonly<Record<string, string>> = { android: 'Android', ios: 'iPhone', web: 'Web' }
+/** Platform → kunci kelompok dan label. 'android', 'ios', 'web', boleh diikuti
+ *  varian: 0123 menulis 'android-uat', 'android-ias', 'android-lain' (prod
+ *  tanpa penanda). Varian 'prod' tidak ditulis, uat/ias huruf besar, varian
+ *  lain apa adanya. Bentuk lain tampil apa adanya. */
+export function bacaPlatform(platform: string | null | undefined): { kunci: string; label: string | null } {
+  const t = (platform ?? '').trim()
+  if (!t) return { kunci: '', label: null }
+  const m = /^(android|ios|web)(?:[\s_:/-]+([a-z0-9]+))?$/i.exec(t)
+  if (!m) return { kunci: t.toLowerCase(), label: t }
+  const dasar = m[1]!.toLowerCase()
+  const varian = (m[2] ?? '').toLowerCase()
+  const kunci = varian && varian !== 'prod' ? `${dasar}:${varian}` : dasar
+  if (!varian || varian === 'prod') return { kunci, label: NAMA_PLATFORM[dasar]! }
+  return { kunci, label: `${NAMA_PLATFORM[dasar]} ${varian === 'uat' || varian === 'ias' ? varian.toUpperCase() : varian}` }
+}
+
+/** '1.3.6 · Android'; hanya platform bila versinya tidak ada; null bila keduanya kosong. */
+export function labelVersi(versi: string | null | undefined, platform: string | null | undefined): string | null {
+  const v = (versi ?? '').trim()
+  const p = bacaPlatform(platform).label
+  return [v, p].filter(Boolean).join(' · ') || null
+}
+
+/** Versi tertinggi per kelompok platform di daftar ini (yang terbaca saja). */
+export function versiTerbaruPer(daftar: ReadonlyArray<Pick<Pengguna, 'kunciVersi' | 'kelompokVersi'>>): Map<string, string> {
+  const peta = new Map<string, string>()
+  for (const p of daftar) {
+    if (p.kunciVersi === null) continue
+    const ada = peta.get(p.kelompokVersi)
+    if (ada === undefined || p.kunciVersi > ada) peta.set(p.kelompokVersi, p.kunciVersi)
+  }
+  return peta
+}
+
+/** Di bawah versi terbaru platformnya di daftar ini? Versi tak terbaca = tidak. */
+export function versiTertinggal(p: Pick<Pengguna, 'kunciVersi' | 'kelompokVersi'>, terbaru: ReadonlyMap<string, string>): boolean {
+  const t = terbaru.get(p.kelompokVersi)
+  return p.kunciVersi !== null && t !== undefined && p.kunciVersi < t
+}
+
 /** Nama ruang buatan pengguna bisa memuat rahasia ("catatan rahasia", nama
  *  usaha). Hanya nama BAWAAN yang tampil apa adanya. */
 const NAMA_BAWAAN = new Set(['Keuangan Saya', 'Bisnis', 'My Finances', 'Business'])
@@ -337,6 +413,9 @@ export function kePengguna(d: PenggunaDTO, bahasa: BahasaWaktu = 'id', menungguH
     // kebetulan utuh tetap disamarkan di sini (sabuk kedua, seperti email).
     nomorTersamar: samarkanNomorWa(d.nomor_wa),
     nomorPenuh: terbuka ? formatNomorWa(d.nomor_wa) : null,
+    labelVersi: labelVersi(d.versi_aplikasi, d.platform),
+    kunciVersi: kunciVersi(d.versi_aplikasi),
+    kelompokVersi: bacaPlatform(d.platform).kunci,
     daftar: tanggalPendek(d.created_at, bahasa),
     masukTerakhir: tanggalPendek(d.last_sign_in, bahasa),
     aktivitasTerakhir: tanggalPendek(aktifIso, bahasa),

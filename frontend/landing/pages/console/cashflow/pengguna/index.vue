@@ -20,6 +20,12 @@
  * kolom itu; adapter memperlakukannya sebagai tidak ada nomor ("—"). Indeks
  * palet tidak pernah menerima nomor dalam bentuk apa pun.
  *
+ * VERSI APLIKASI (0123): versi terakhir yang dilaporkan HP orang itu dan
+ * platformnya ('1.3.6 · Android'), diurutkan sebagai versi semantik. Versi di
+ * bawah versi tertinggi PLATFORM YANG SAMA di daftar ini diredupkan: iPhone
+ * yang menunggu tinjauan App Store tidak ikut tertinggal karena Android lebih
+ * dulu. Server sebelum 0123 tidak mengirim kolomnya ("—").
+ *
  * Mulai Fase 1 (0089) server hanya melayani jalur ini untuk sesi console yang
  * memegang izin cashflow:pii (login ber-TOTP); sakelarnya tetap satu ketukan.
  * Tanpa izin itu server menjawab 42501 izin-kurang: daftar tetap tersamar dan
@@ -49,7 +55,9 @@
  * mengganggu daftar: badge-nya saja yang tidak ada.
  */
 definePageMeta({ layout: 'console', middleware: ['console', 'cashflow-admin'] })
-import { kePengguna, nomorWaCocok, tanpaKontakUtuh, type Pengguna, type PenggunaDTO, type StatusPengguna } from '~/adapters/cashflow'
+import {
+  kePengguna, nomorWaCocok, tanpaKontakUtuh, versiTerbaruPer, versiTertinggal, type Pengguna, type PenggunaDTO, type StatusPengguna,
+} from '~/adapters/cashflow'
 import { idMenungguHapus, BATAS_BADGE_HAPUS } from '~/adapters/cashflowHapusAkun'
 import { urutkan, saringKolom, potongHalaman, halamanAman, jumlahHalaman, type AturanUrut } from '~/adapters/cashflowDaftar'
 import type { SkemaQuery } from '~/adapters/cashflowQuery'
@@ -65,7 +73,7 @@ const { memuat, galat, pesanGalat, muat } = useCashflowMuat({ awal: true })
 const MAKS = 500
 const PER = 25
 const SEGMEN = ['semua', 'catat7', 'belum', 'ditangguhkan'] as const
-const URUT = ['email', 'wa', 'daftar', 'aktif', 'ruang', 'tx'] as const
+const URUT = ['email', 'wa', 'versi', 'daftar', 'aktif', 'ruang', 'tx'] as const
 type KunciUrut = typeof URUT[number]
 const SKEMA = {
   seg: { jenis: 'pilihan', opsi: SEGMEN, bawaan: 'semua' },
@@ -140,11 +148,12 @@ const labelStatus = (s: StatusPengguna): string =>
   s === 'menunggu_hapus' ? tcf('pengguna.menungguHapus') : s === 'ditangguhkan' ? tcf('pengguna.ditangguhkan') : tcf('pengguna.aktif')
 
 /* ruang/tx null = sesi tanpa pii: server tidak mengirim hitungan (M/0089 §15 (d)); tabel menulis '—'. */
-interface Baris { id: string; email: string; wa: string | null; daftar: string; aktif: string; ruang: number | null; tx: number | null; status: string; p: Pengguna }
+interface Baris { id: string; email: string; wa: string | null; versi: string | null; daftar: string; aktif: string; ruang: number | null; tx: number | null; status: string; p: Pengguna }
 const keBaris = (p: Pengguna): Baris => ({
   id: p.id,
   email: p.emailPenuh ?? p.emailTersamar,
   wa: p.nomorPenuh ?? p.nomorTersamar,
+  versi: p.labelVersi,
   daftar: p.daftar,
   aktif: p.aktivitasTerakhir,
   ruang: p.ruang,
@@ -156,6 +165,7 @@ const keBaris = (p: Pengguna): Baris => ({
 const kolom = computed(() => [
   { key: 'email', label: tcf('pengguna.email'), type: 'text' as const, class: 'font-mono text-[var(--ca-text)]', sortable: true },
   { key: 'wa', label: tcf('pengguna.wa'), type: 'text' as const, width: '150px', sortable: true, class: 'hidden whitespace-nowrap font-mono tabular-nums text-[var(--ca-text)] sm:table-cell', headerClass: 'hidden sm:table-cell' },
+  { key: 'versi', label: tcf('pengguna.versi'), type: 'text' as const, width: '130px', sortable: true, class: 'hidden whitespace-nowrap tabular-nums sm:table-cell', headerClass: 'hidden sm:table-cell' },
   { key: 'daftar', label: tcf('pengguna.daftar'), type: 'text' as const, width: '120px', sortable: true, class: 'hidden text-[var(--ca-muted)] sm:table-cell', headerClass: 'hidden sm:table-cell' },
   { key: 'aktif', label: tcf('pengguna.aktifTerakhir'), type: 'text' as const, width: '130px', sortable: true },
   { key: 'ruang', label: tcf('pengguna.ruang'), type: 'text' as const, width: '70px', sortable: true, class: 'hidden tabular-nums text-right md:table-cell', headerClass: 'hidden md:table-cell' },
@@ -170,6 +180,7 @@ const kolom = computed(() => [
 const ATURAN: Record<KunciUrut, AturanUrut<Baris>> = {
   email: { jenis: 'teks', nilai: b => b.email },
   wa: { jenis: 'teks', nilai: b => b.wa },
+  versi: { jenis: 'teks', nilai: b => b.p.kunciVersi },
   daftar: { jenis: 'waktu', nilai: b => b.p.daftarIso },
   aktif: { jenis: 'waktu', nilai: b => b.p.aktivitasTerakhirIso },
   ruang: { jenis: 'angka', nilai: b => b.ruang },
@@ -218,6 +229,9 @@ const segmenOpsi = computed(() => [
 const terpotong = computed(() => total.value > semua.value.length)
 /** Server sudah memasang migrasi nomor WA (kolomnya ada di jawaban). */
 const serverKirimWa = computed(() => mentah.value.some(d => d.nomor_wa !== undefined))
+/** Versi tertinggi per platform di SELURUH daftar (bukan halaman ini saja). */
+const versiTerbaru = computed(() => versiTerbaruPer(semua.value))
+const serverKirimVersi = computed(() => mentah.value.some(d => d.versi_aplikasi !== undefined))
 /** Server menahan hitungan per orang (sesi tanpa pii): segmen berbasis tx tidak bermakna. */
 const tanpaHitungan = computed(() => semua.value.length > 0 && semua.value.every(p => p.tx === null && p.ruang === null))
 const segmenButuhHitungan = (k: string) => k === 'belum' || k === 'catat7'
@@ -301,6 +315,14 @@ useCashflowPintasan([{ kunci: '/', aksi: () => kolomCari.value?.focus() }])
           <span v-if="value === null" class="text-[var(--ca-subtle)]" :title="serverKirimWa ? tcf('pengguna.waBelum') : undefined">—<span v-if="serverKirimWa" class="sr-only"> ({{ tcf('pengguna.waBelum') }})</span></span>
           <template v-else>{{ value }}</template>
         </template>
+        <!-- Versi di bawah versi tertinggi platform yang sama di daftar ini: redup. -->
+        <template #cell-versi="{ row }">
+          <span v-if="row.versi === null" class="text-[var(--ca-subtle)]">—</span>
+          <span v-else-if="versiTertinggal(row.p, versiTerbaru)" class="text-[var(--ca-subtle)]" :title="tcf('pengguna.versiLama')">
+            {{ row.versi }}<span class="sr-only"> ({{ tcf('pengguna.versiLama') }})</span>
+          </span>
+          <span v-else class="text-[var(--ca-text)]">{{ row.versi }}</span>
+        </template>
         <template #cell-status="{ row }">
           <span v-if="row.p.status === 'menunggu_hapus'" class="ca-pill-danger whitespace-nowrap text-[0.7rem]">{{ row.status }}</span>
           <template v-else>{{ row.status }}</template>
@@ -321,5 +343,6 @@ useCashflowPintasan([{ kunci: '/', aksi: () => kolomCari.value?.focus() }])
     <p v-if="terpotong" class="text-xs ca-tone-gold">{{ tcf('pengguna.potong')(semua.length, total) }}</p>
     <p v-if="tanpaHitungan" class="text-xs text-[var(--ca-subtle)]">{{ tcf('umum.hitunganButuhTotp') }}</p>
     <p class="text-xs text-[var(--ca-subtle)]">{{ tcf('pengguna.aktifTerakhirKet') }}</p>
+    <p v-if="serverKirimVersi" class="text-xs text-[var(--ca-subtle)]">{{ tcf('pengguna.versiKet') }}</p>
   </div>
 </template>
