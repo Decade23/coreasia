@@ -48,5 +48,6 @@ export const useCashflowSupabase = () => {
     return memuat
   }
 
-  return { ambil, terkonfigurasi }
+  /* `url`: asal tautan berkas foto lampiran diperiksa terhadapnya (0122). */
+  return { ambil, terkonfigurasi, url }
 }

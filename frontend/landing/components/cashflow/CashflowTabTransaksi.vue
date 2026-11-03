@@ -24,7 +24,9 @@
  * semuanya dibuang saat kasus habis.
  *
  * Catatan (T3) lewat CashflowTeksTerkunci — membuka catatan baris yang
- * diklik SAJA (satu id, satu baris audit baca_teks).
+ * diklik SAJA (satu id, satu baris audit baca_teks). Foto lampiran (0122)
+ * lewat CashflowLampiranTombol pada baris ber-`ada_lampiran`, sama: satu
+ * baris, satu audit buka_foto.
  * Tampilan < 640 px: kartu, saringan dilipat ke tombol "Saring (n)".
  * Pintasan: j/k pindah baris, ↵ buka laci, [ ] halaman keyset, c salin id.
  */
@@ -35,6 +37,7 @@ import {
   type TransaksiCariDTO, type SaringTransaksi, type TransaksiBaris,
 } from '~/adapters/cashflowBuku'
 import { tulisQuery, type SkemaQuery } from '~/adapters/cashflowQuery'
+import { lampiranTransaksi } from '~/adapters/cashflowLampiran'
 import type { NominalSaring } from '~/composables/cashflow/useCashflowNominal'
 
 const { tcf, bahasa, formatWaktu } = useCashflowI18n()
@@ -286,7 +289,7 @@ const pilihBaris = (t: TransaksiBaris, i: number) => { sorot.value = i; bukaLaci
                     <span v-if="t.transfer" class="ca-pill-info whitespace-nowrap text-[0.7rem]">{{ tcf('transaksi.transfer') }}</span>
                     <span v-if="t.masaDepan" class="ca-pill-gold whitespace-nowrap text-[0.7rem]">{{ tcf('transaksi.masaDepan') }}</span>
                     <span v-if="t.cicilanKe != null" class="ca-pill-muted whitespace-nowrap text-[0.7rem]">{{ tcf('transaksi.cicilan')(t.cicilanKe) }}</span>
-                    <span v-if="t.adaLampiran" class="ca-pill-muted whitespace-nowrap text-[0.7rem]">{{ tcf('transaksi.lampiran') }}</span>
+                    <CashflowLampiranTombol :sasaran="lampiranTransaksi(t)" />
                     <CashflowTeksTerkunci v-if="t.adaCatatan" jenis="transaksi" :id="t.id" />
                   </span>
                 </td>

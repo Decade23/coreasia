@@ -131,7 +131,9 @@ describe('Fase 1: membuka data satu klik, tanpa dialog (keputusan Master 21 Sep 
   it('kasus dibuka otomatis: preset, ranah Fase 1, dan alasan otomatis — bukan masukan orang', () => {
     const f = baca('composables/cashflow/useCashflowKasus.ts')
     expect(f).toMatch(/api\.kasusBuka\(subjek, SKENARIO_OTOMATIS, PRESET_OTOMATIS, RANAH_FASE1, lingkup, alasanOtomatis\(new Date\(\)\)\)/)
-    expect(f).toMatch(/api\.kasusInvestigasi\(k\.id, PRESET_T3_OTOMATIS, alasanT3Otomatis\(new Date\(\)\)\)/)
+    // Anak T3 per ranah (teks, foto 0122): preset dan alasan tetap otomatis.
+    expect(f).toMatch(/api\.kasusInvestigasi\(k\.id, PRESET_T3_OTOMATIS, ALASAN_ANAK\[ranah\]\(new Date\(\)\), ranah\)/)
+    expect(f).toMatch(/const ALASAN_ANAK: Readonly<Record<RanahAnak, \(sekarang: Date\) => string>> = \{ teks: alasanT3Otomatis, foto: alasanFotoOtomatis \}/)
     // Lingkup = semua ruang subjek dari kepala.
     expect(baca('composables/cashflow/useCashflowPengguna.ts')).toMatch(/kasus\.aturLingkup\(subjek, kep\.ruang \? lingkupSemua\(kep\.ruang\) : null\)/)
   })

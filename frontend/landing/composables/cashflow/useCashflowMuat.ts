@@ -56,6 +56,13 @@ export const useCashflowMuat = (opsi: { awal?: boolean } = {}) => {
     if (g.hint === 'alihkan-kepemilikan') return tcf('galat.alihkanKepemilikan')
     // 0114: akun yang masih admin console tidak bisa dihapus permanen (P0001).
     if (g.hint === 'akun-admin') return tcf('galat.akunAdmin')
+    // 0122: fungsi edge admin-lampiran (useCashflowAdmin petakanGalatLampiran).
+    if (g.hint === 'lampiran-masukan') return tcf('lampiran.galat.masukan')
+    if (g.hint === 'lampiran-asal') return tcf('lampiran.galat.asal')
+    if (g.hint === 'tanpa-lampiran') return tcf('lampiran.galat.tanpaLampiran')
+    if (g.hint === 'lampiran-server') return tcf('lampiran.galat.server')
+    if (g.hint === 'lampiran-penyimpanan') return tcf('lampiran.galat.penyimpanan')
+    if (g.hint === 'lampiran-jaringan') return tcf('lampiran.galat.jaringan')
     switch (g.jenis) {
       case 'kasus': return tcf('galat.kasusHabis')
       case 'ranah': return tcf('galat.diLuarRanah')

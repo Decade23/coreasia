@@ -10,6 +10,7 @@
  * laci (temuan fe p3 #2).
  */
 import { tanggalJam, type TransaksiBaris } from '~/adapters/cashflowBuku'
+import { lampiranTransaksi } from '~/adapters/cashflowLampiran'
 
 defineProps<{ t: TransaksiBaris; ruang: string; sorot?: boolean }>()
 const emit = defineEmits<{ buka: [id: string] }>()
@@ -35,7 +36,7 @@ const { tcf, bahasa } = useCashflowI18n()
         <span v-if="t.transfer" class="ca-pill-info whitespace-nowrap text-[0.7rem]">{{ tcf('transaksi.transfer') }}</span>
         <span v-if="t.masaDepan" class="ca-pill-gold whitespace-nowrap text-[0.7rem]">{{ tcf('transaksi.masaDepan') }}</span>
         <span v-if="t.cicilanKe != null" class="ca-pill-muted whitespace-nowrap text-[0.7rem]">{{ tcf('transaksi.cicilan')(t.cicilanKe) }}</span>
-        <span v-if="t.adaLampiran" class="ca-pill-muted whitespace-nowrap text-[0.7rem]">{{ tcf('transaksi.lampiran') }}</span>
+        <CashflowLampiranTombol :sasaran="lampiranTransaksi(t)" />
         <CashflowTeksTerkunci v-if="t.adaCatatan" jenis="transaksi" :id="t.id" />
       </div>
     </div>

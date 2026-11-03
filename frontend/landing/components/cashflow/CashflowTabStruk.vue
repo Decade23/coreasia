@@ -15,6 +15,7 @@
  */
 import { angka, rupiah } from '~/adapters/cashflow'
 import { OCR_STRUK, SARING_STRUK_KOSONG, saringStrukSah, type RingkasStruk, type SaringStruk, type Struk } from '~/adapters/cashflowRanahBuku'
+import { lampiranStruk } from '~/adapters/cashflowLampiran'
 
 const props = defineProps<{
   baris: Struk[]
@@ -125,6 +126,7 @@ const nadaOcr = (o: Struk['ocr']) => (o === 'failed' ? 'ca-pill-danger' : o === 
             <span v-if="s.adaFoto" class="inline-flex items-center gap-1 text-xs text-[var(--ca-subtle)]">
               <Icon name="lucide:image" class="h-3.5 w-3.5" aria-hidden="true" />{{ tcf('struk.foto')(s.foto || 1) }}
             </span>
+            <CashflowLampiranTombol :sasaran="lampiranStruk(s)" />
             <button
               v-if="s.kontakSidik" type="button" class="ca-pill-muted inline-flex items-center gap-1 text-[0.7rem]"
               :title="tcf('struk.kontakKet')" :aria-pressed="sorot === s.kontakSidik"

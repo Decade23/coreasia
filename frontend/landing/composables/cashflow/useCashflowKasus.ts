@@ -53,6 +53,17 @@
  * lalu admin_teks untuk id baris yang diklik saja (CashflowTeksTerkunci).
  * Teks disimpan per kasus anak dan dibuang saat anaknya habis.
  *
+ * FOTO LAMPIRAN (0122) = satu klik "Lihat foto" (CashflowLampiranTombol):
+ * kasus anak ber-ranah `foto` dibuka otomatis (alasanFotoOtomatis), lalu
+ * fungsi edge admin-lampiran untuk baris itu saja (satu audit buka_foto).
+ * SATU ANAK PER RANAH: anak teks tidak bisa membuka foto dan sebaliknya, dan
+ * anak gabungan ['teks','foto'] membuat alasan audit setiap pembacaan tidak
+ * lagi menyebut apa yang dibuka. Anak yang hidup dipakai ulang selama 10
+ * menit untuk ranahnya, jadi jatah 12 anak per 2 jam hanya terpakai sekali
+ * per ranah per 10 menit. Berkasnya diambil saat itu juga (tanpa cache) dan
+ * dipegang sebagai blob URL; blob dicabut (revokeObjectURL) saat penampil
+ * ditutup, foto lain dibuka, anaknya habis, data dibuang, atau logout.
+ *
  * RUANG 360 (Fase 2, 0094) memakai store yang SAMA dengan subjek bertipe
  * 'workspace' (pulihkan(W, 'workspace')): admin_kasus_aktif_ruang memulihkan
  * kasus aktif milik pelaku yang lingkupnya memuat W — termasuk kasus PENGGUNA
@@ -66,7 +77,7 @@
  * Semua keadaan di modul ini hidup di memori tab (console ssr:false) dan
  * dibuang saat logout (lupakanKasus, dipanggil useCashflowSesi).
  */
-import { computed, readonly, ref, shallowReactive } from 'vue'
+import { computed, readonly, ref, shallowReactive, shallowRef } from 'vue'
 import { GalatAdmin, petakanGalat } from './useCashflowAdmin'
 import {
   keKasus, adalahBatasAkses, kasusBerlaku, sisaDetik, bisaPerpanjang, kurangDariKasus,
@@ -75,6 +86,7 @@ import {
   type Kasus, type BatasAksesDTO, type PresetKasus,
 } from '~/adapters/cashflowKasus'
 import { keTeks, BATAS_TEKS, type JenisTeks, type PotongTeks } from '~/adapters/cashflowBuku'
+import { alasanFotoOtomatis, keLampiran, type JenisBerkas, type RanahAnak, type SasaranLampiran } from '~/adapters/cashflowLampiran'
 import { RANAH_RUANG, SKENARIO_RUANG, alasanOtomatisRuang } from '~/adapters/cashflowRuang'
 
 /** Jenis subjek halaman: Pengguna 360 ('user') atau Ruang 360 ('workspace'). */
@@ -121,6 +133,25 @@ const keadaan = ref<Keadaan>(awal())
 const simpanan = shallowReactive(new Map<string, unknown>())
 const berjalan = new Map<string, Promise<unknown>>()
 const teksTerbuka = shallowReactive(new Map<string, { anak: string; potong: PotongTeks[] }>())
+
+/** Satu berkas foto di penampil. `src` = blob URL milik tab ini (dicabut saat dibuang). */
+export interface BerkasFoto { jenis: JenisBerkas | null; src: string | null; keadaan: 'siap' | 'belum' | 'gagal' }
+/** Foto yang sedang terbuka (paling banyak satu baris sekaligus). */
+export interface FotoTerbuka { anak: string; sasaran: SasaranLampiran; berkas: BerkasFoto[]; berlakuDetik: number }
+const fotoTerbuka = shallowRef<FotoTerbuka | null>(null)
+/** Naik setiap kali foto dibuka atau dibuang: jawaban yang tiba sesudahnya basi. */
+let fotoGiliran = 0
+/** Alasan otomatis kasus anak per ranah (berbeda dari alasan induk). */
+const ALASAN_ANAK: Readonly<Record<RanahAnak, (sekarang: Date) => string>> = { teks: alasanT3Otomatis, foto: alasanFotoOtomatis }
+
+/** Cabut blob URL foto yang terbuka dan lupakan fotonya. */
+function buangFoto() {
+  fotoGiliran++
+  const f = fotoTerbuka.value
+  if (!f) return
+  fotoTerbuka.value = null
+  for (const b of f.berkas) if (b.src) URL.revokeObjectURL(b.src)
+}
 const detik = ref(Date.now())
 let pengatur: ReturnType<typeof setInterval> | null = null
 
@@ -135,9 +166,9 @@ let aktivitasTerakhir = Date.now()
 /** Pembukaan otomatis yang sedang berjalan (satu untuk semua pemanggil) dan subjeknya. */
 let bukaBerjalan: Promise<void> | null = null
 let bukaUntuk: string | null = null
-let anakBerjalan: Promise<Kasus> | null = null
-/** Induk kasus anak yang sedang dibuka — anak itu hanya untuk induk yang sama. */
-let anakUntuk: string | null = null
+/** Kasus anak yang sedang dibuka per ranah, beserta induknya — anak itu hanya
+ *  untuk induk yang sama. */
+const anakBerjalan = new Map<RanahAnak, { induk: string | null; janji: Promise<Kasus> }>()
 let perpanjangBerjalan = false
 let perpanjangGagalPada = 0
 /** Cap waktu pembukaan otomatis terakhir — penjaga putaran (lihat bukaOtomatis). */
@@ -170,6 +201,7 @@ function kosongkanData() {
   simpanan.clear()
   berjalan.clear()
   teksTerbuka.clear()
+  buangFoto()
   // Isi halaman diganti kerangka / dikosongkan: peristiwa yang dipicu tata
   // letak sesudah ini tidak dihitung sebagai orang (catatAktivitas).
   abaikanAktivitasSampai = Date.now() + REDAM_AKTIVITAS_MS
@@ -211,6 +243,7 @@ function detak() {
     if (hidup.length !== s.anak.length) {
       const idHidup = new Set(hidup.map(a => a.id))
       for (const [kunci, t] of teksTerbuka) if (!idHidup.has(t.anak)) teksTerbuka.delete(kunci)
+      if (fotoTerbuka.value && !idHidup.has(fotoTerbuka.value.anak)) buangFoto()
       keadaan.value = { ...s, anak: hidup }
     }
   }
@@ -231,8 +264,7 @@ export function lupakanKasus() {
   tundaBuka = null
   bukaBerjalan = null
   bukaUntuk = null
-  anakBerjalan = null
-  anakUntuk = null
+  anakBerjalan.clear()
   riwayatBuka = []
   pulihKosongPada = 0
   keadaan.value = { ...awal(), versi: keadaan.value.versi + 1 }
@@ -436,6 +468,11 @@ export const useCashflowKasus = () => {
 
   const kasus = computed(() => keadaan.value.kasus)
   const anakAktif = computed(() => keadaan.value.anak.find(a => kasusBerlaku(a, detik.value)) ?? null)
+  /** Ranah T3 yang sedang terbuka lewat anak yang hidup (untuk bilah kasus). */
+  const ranahAnakHidup = computed(() => new Set(keadaan.value.anak.filter(a => kasusBerlaku(a, detik.value)).flatMap(a => a.ranah)))
+  /** Kasus anak hidup yang memegang ranah ini, atau null. */
+  const anakUntukRanah = (r: RanahAnak): Kasus | null =>
+    keadaan.value.anak.find(a => a.ranah.includes(r) && kasusBerlaku(a, Date.now())) ?? null
   const sisa = computed(() => (kasus.value ? sisaDetik(kasus.value, detik.value) : 0))
   /** Awalan kunci simpanan: id kasus + lingkup ruangnya. null = tanpa kasus. */
   const kunciKasus = computed(() => (kasus.value ? `${kasus.value.id}:${kasus.value.ruang.join(',')}` : null))
@@ -594,13 +631,15 @@ export const useCashflowKasus = () => {
   const teks = (jenis: JenisTeks, id: string | number): PotongTeks[] | null =>
     teksTerbuka.get(kunciTeks(jenis, id))?.potong ?? null
 
-  /** Kasus anak yang hidup, atau yang baru dibuka otomatis (satu untuk semua pemanggil). */
-  function anakOtomatis(): Promise<Kasus> {
-    const hidup = anakAktif.value
+  /** Kasus anak hidup untuk ranah ini, atau yang baru dibuka otomatis (satu
+   *  pembukaan per ranah untuk semua pemanggil). Anak ranah lain tidak dipakai. */
+  function anakOtomatis(ranah: RanahAnak): Promise<Kasus> {
+    const hidup = anakUntukRanah(ranah)
     if (hidup) return Promise.resolve(hidup)
-    if (anakBerjalan && anakUntuk === keadaan.value.kasus?.id) return anakBerjalan
-    anakUntuk = keadaan.value.kasus?.id ?? null
-    const janji: Promise<Kasus> = jalankan(k => api.kasusInvestigasi(k.id, PRESET_T3_OTOMATIS, alasanT3Otomatis(new Date())))
+    const induk = keadaan.value.kasus?.id ?? null
+    const ada = anakBerjalan.get(ranah)
+    if (ada && ada.induk === induk) return ada.janji
+    const janji: Promise<Kasus> = jalankan(k => api.kasusInvestigasi(k.id, PRESET_T3_OTOMATIS, ALASAN_ANAK[ranah](new Date()), ranah))
       .then((d) => {
         const anak = keKasus(d)
         if (keadaan.value.kasus?.id === anak.induk) {
@@ -609,9 +648,14 @@ export const useCashflowKasus = () => {
         }
         return anak
       })
-      .finally(() => { if (anakBerjalan === janji) { anakBerjalan = null; anakUntuk = null } })
-    anakBerjalan = janji
+      .finally(() => { if (anakBerjalan.get(ranah)?.janji === janji) anakBerjalan.delete(ranah) })
+    anakBerjalan.set(ranah, { induk, janji })
     return janji
+  }
+
+  /** Anak yang ditolak server (habis lebih dulu dari jam klien) dilepas dari daftar. */
+  const lepasAnak = (id: string) => {
+    keadaan.value = { ...keadaan.value, anak: keadaan.value.anak.filter(a => a.id !== id) }
   }
 
   async function bacaTeks(anak: Kasus, jenis: JenisTeks, ids: readonly string[]): Promise<void> {
@@ -633,22 +677,70 @@ export const useCashflowKasus = () => {
   async function mintaTeks(jenis: JenisTeks, ids: readonly (string | number)[]): Promise<void> {
     const perlu = [...new Set(ids.map(String))].filter(id => !teksTerbuka.has(kunciTeks(jenis, id))).slice(0, BATAS_TEKS)
     if (!perlu.length) return
-    const anak = await anakOtomatis()
+    const anak = await anakOtomatis('teks')
     try {
       await bacaTeks(anak, jenis, perlu)
     } catch (e) {
       const g = petakanGalat(e)
       if (g.jenis !== 'kasus' || !keadaan.value.kasus) throw g
-      keadaan.value = { ...keadaan.value, anak: keadaan.value.anak.filter(a => a.id !== anak.id) }
-      await bacaTeks(await anakOtomatis(), jenis, perlu)
+      lepasAnak(anak.id)
+      await bacaTeks(await anakOtomatis('teks'), jenis, perlu)
     }
   }
 
+  // ── T3: foto lampiran lewat kasus anak foto OTOMATIS (0122) ──────────
+  /** Foto yang sedang terbuka (blob URL), atau null. */
+  const foto = computed(() => fotoTerbuka.value)
+
+  /**
+   * "Lihat foto" (satu klik) untuk SATU baris: tautan dari admin-lampiran
+   * (satu audit buka_foto), lalu setiap berkas diambil tanpa cache menjadi
+   * blob URL. Anak foto yang ternyata sudah habis di server diganti SEKALI.
+   * Jawaban yang tiba sesudah penampil ditutup, foto lain diminta, data
+   * dibuang, atau anaknya habis tidak dipasang, dan blob-nya langsung dicabut.
+   */
+  async function lihatFoto(sasaran: SasaranLampiran): Promise<void> {
+    const giliran = ++fotoGiliran
+    const versi = keadaan.value.versi
+    let anak = await anakOtomatis('foto')
+    let d: unknown
+    try {
+      d = await api.lampiran(anak.id, sasaran.jenis, sasaran.id)
+    } catch (e) {
+      const g = petakanGalat(e)
+      if (g.jenis !== 'kasus' || !keadaan.value.kasus) throw g
+      lepasAnak(anak.id)
+      anak = await anakOtomatis('foto')
+      d = await api.lampiran(anak.id, sasaran.jenis, sasaran.id)
+    }
+    const basi = () => giliran !== fotoGiliran || keadaan.value.versi !== versi || !anakUntukRanah('foto')
+    if (basi()) return
+    const l = keLampiran(d)
+    const berkas = await Promise.all(l.berkas.map(async (b): Promise<BerkasFoto> => {
+      if (!b.url) return { jenis: b.jenis, src: null, keadaan: 'belum' }
+      try {
+        return { jenis: b.jenis, src: URL.createObjectURL(await api.ambilBerkas(b.url)), keadaan: 'siap' }
+      } catch {
+        return { jenis: b.jenis, src: null, keadaan: 'gagal' }
+      }
+    }))
+    if (basi()) {
+      for (const b of berkas) if (b.src) URL.revokeObjectURL(b.src)
+      return
+    }
+    buangFoto()
+    fotoTerbuka.value = { anak: anak.id, sasaran, berkas, berlakuDetik: l.berlakuDetik }
+  }
+
+  /** Penampil ditutup (atau halaman berganti): blob dicabut, foto dilupakan. */
+  const tutupFoto = () => buangFoto()
+
   return {
     keadaan: readonly(keadaan),
-    kasus, anakAktif, sisa, detik: readonly(detik), kunciKasus, punyaRanah,
+    kasus, anakAktif, ranahAnakHidup, sisa, detik: readonly(detik), kunciKasus, punyaRanah,
     pulihkan, aturLingkup, cobaLagi, pasangHalaman, buka, tambah, jalankan,
     data, muatData, buang,
     teks, mintaTeks,
+    foto, lihatFoto, tutupFoto,
   }
 }

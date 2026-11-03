@@ -8,12 +8,15 @@
  *
  * Catatan (T3) lewat CashflowTeksTerkunci: jenis 'transaksi' untuk transaksi
  * hidup, 'sampah' (id baris sampah) untuk yang dihapus. Judul riwayat lewat
- * jenis 'jejak'. Pencatat & aktor bertaut ke Pengguna 360 orangnya — kasus
+ * jenis 'jejak'. Foto lampiran (0122): tombol Lihat foto untuk transaksi
+ * hidup yang berlampiran (bukan baris sampah) dan untuk grup struk penuh
+ * yang berfoto. Pencatat & aktor bertaut ke Pengguna 360 orangnya — kasus
  * atas orang itu dibuka otomatis di sana (tercatat, ikut batas laju).
  */
 import { keRinci, terbatas, tanggalJam, type TransaksiRinciDTO } from '~/adapters/cashflowBuku'
 import { angka } from '~/adapters/cashflow'
 import { jedaTiba } from '~/adapters/cashflowJejak'
+import { lampiranGrup, lampiranRinci } from '~/adapters/cashflowLampiran'
 
 const props = defineProps<{ tx: string; subjek: string; namaRuang: (id: string) => string }>()
 const emit = defineEmits<{ pindah: [tx: string] }>()
@@ -103,10 +106,11 @@ const teksJeda = (d: number | null) => {
       <section v-if="r.grup || r.jadwal || r.produk || r.lampiran.adaBukti || r.lampiran.jumlah">
         <h4 class="text-xs font-semibold uppercase tracking-wide text-[var(--ca-muted)]">{{ tcf('laci.konteks') }}</h4>
         <ul class="mt-1 space-y-1 text-[var(--ca-text)]">
-          <li v-if="r.grup">
+          <li v-if="r.grup" class="flex flex-wrap items-center gap-x-1.5 gap-y-1">
             {{ tcf('laci.struk') }}
             <span v-if="terbatas(r.grup)" class="text-xs text-[var(--ca-subtle)]">· {{ tcf('laci.terbatas')(tcf('ranah.struk')) }}</span>
             <span v-else class="text-xs text-[var(--ca-muted)]">· {{ r.grup.ocr_status || '—' }} · {{ tcf('laci.baris')(r.grup.jumlah_baris) }}</span>
+            <CashflowLampiranTombol :sasaran="lampiranGrup(r.grup)" />
           </li>
           <li v-if="r.jadwal">
             {{ tcf('laci.jadwal') }}: {{ r.jadwal.nama || '—' }}
@@ -117,7 +121,10 @@ const teksJeda = (d: number | null) => {
             {{ tcf('laci.produk') }}: {{ r.produk.nama || '—' }}
             <span v-if="terbatas(r.produk)" class="text-xs text-[var(--ca-subtle)]">· {{ tcf('laci.terbatas')(tcf('ranah.usaha')) }}</span>
           </li>
-          <li v-if="r.lampiran.adaBukti || r.lampiran.jumlah">{{ tcf('laci.lampiran')(r.lampiran.jumlah ?? (r.lampiran.adaBukti ? 1 : 0)) }}</li>
+          <li v-if="r.lampiran.adaBukti || r.lampiran.jumlah" class="flex flex-wrap items-center gap-x-1.5 gap-y-1">
+            {{ tcf('laci.lampiran')(r.lampiran.jumlah ?? (r.lampiran.adaBukti ? 1 : 0)) }}
+            <CashflowLampiranTombol :sasaran="lampiranRinci(r)" />
+          </li>
         </ul>
       </section>
 

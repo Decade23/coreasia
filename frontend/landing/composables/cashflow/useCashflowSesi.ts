@@ -52,7 +52,7 @@ const simpanIzin = (izin: string[] | null) => {
 }
 
 export const useCashflowSesi = () => {
-  const { ambil, terkonfigurasi } = useCashflowSupabase()
+  const { ambil, terkonfigurasi, url: supabaseUrl } = useCashflowSupabase()
   const sibuk = useState<boolean>('cf_sibuk_sesi', () => false)
   /** Email admin console yang sesinya dibuat — untuk tampilan; buktinya di server. */
   const pelaku = useState<string>('cf_pelaku', () => '')
@@ -140,5 +140,5 @@ export const useCashflowSesi = () => {
     }
   }
 
-  return { ambil, sibuk, pelaku, izin: readonly(izin), boleh, terkonfigurasi, sambung, keluar }
+  return { ambil, sibuk, pelaku, izin: readonly(izin), boleh, terkonfigurasi, sambung, keluar, supabaseUrl }
 }

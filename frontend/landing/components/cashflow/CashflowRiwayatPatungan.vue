@@ -6,11 +6,13 @@
  *          saldo" (0073), bukan disembunyikan;
  *   lunas  pelunasan — dari, ke, pencatat, bukti ada/tidak, dan apakah
  *          kaki transfernya masih hidup.
- * Catatan, foto bukti, dan identitas orang tidak dikirim. Baris bagi
- * bertaut ke laci transaksi (?tx= tab Transaksi).
+ * Catatan, foto bukti, dan identitas orang tidak dikirim. Foto bukti
+ * pelunasan dibuka per baris lewat tombol Lihat foto (0122, satu audit
+ * buka_foto). Baris bagi bertaut ke laci transaksi (?tx= tab Transaksi).
  */
 import { rupiah } from '~/adapters/cashflow'
 import type { BagiBaris, LunasBaris } from '~/adapters/cashflowRanahBuku'
+import { lampiranPelunasan } from '~/adapters/cashflowLampiran'
 
 defineProps<{
   jenis: 'bagi' | 'lunas'
@@ -63,6 +65,7 @@ const { tcf, formatTanggal, formatWaktu } = useCashflowI18n()
               <span v-if="!l.transferGroup" class="ca-pill-gold text-[0.7rem]">{{ tcf('patungan.tanpaTransfer') }}</span>
               <span v-else-if="!l.transferHidup" class="ca-pill-danger text-[0.7rem]">{{ tcf('patungan.transferHilang') }}</span>
               <span v-if="l.adaBukti" class="ca-pill-muted text-[0.7rem]">{{ tcf('patungan.adaBukti') }}</span>
+              <CashflowLampiranTombol :sasaran="lampiranPelunasan(l)" />
             </div>
             <p class="mt-0.5 text-xs text-[var(--ca-muted)]">
               {{ tcf('patungan.dicatatOleh') }} <span class="font-mono">{{ labelOrang(l.dicatatOleh) }}</span>

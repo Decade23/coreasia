@@ -154,5 +154,8 @@ useCashflowPintasan([
 
       <NuxtPage />
     </template>
+
+    <!-- Foto lampiran (0122) yang dibuka tombol Lihat foto di tab mana pun. -->
+    <CashflowLampiranPenampil />
   </div>
 </template>

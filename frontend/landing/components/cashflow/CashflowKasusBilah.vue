@@ -12,6 +12,13 @@ const kasus = useCashflowKasus()
 const k = computed(() => kasus.kasus.value)
 const membuka = computed(() => !k.value && (kasus.keadaan.value.tahap === 'membuka' || kasus.keadaan.value.pulih === 'memuat'))
 const judul = computed(() => (k.value ? tcf('kasus.bilah.sampai')(formatJam(k.value.sampaiIso)) : ''))
+/** Kasus anak T3 yang hidup: catatan, foto lampiran (0122), atau keduanya. */
+const labelAnak = computed(() => {
+  const r = kasus.ranahAnakHidup.value
+  if (r.has('teks') && r.has('foto')) return tcf('kasus.bilah.catatanFotoTerbuka')
+  if (r.has('foto')) return tcf('kasus.bilah.fotoTerbuka')
+  return r.has('teks') ? tcf('kasus.bilah.catatanTerbuka') : ''
+})
 </script>
 
 <template>
@@ -26,6 +33,6 @@ const judul = computed(() => (k.value ? tcf('kasus.bilah.sampai')(formatJam(k.va
       aria-hidden="true"
     />
     <span>{{ k ? tcf('kasus.bilah.dibuka') : tcf('kasus.bilah.membuka') }}</span>
-    <span v-if="kasus.anakAktif.value" class="text-[var(--ca-subtle)]">· {{ tcf('kasus.bilah.catatanTerbuka') }}</span>
+    <span v-if="labelAnak" class="text-[var(--ca-subtle)]">· {{ labelAnak }}</span>
   </p>
 </template>

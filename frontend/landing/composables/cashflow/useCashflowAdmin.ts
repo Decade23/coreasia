@@ -98,6 +98,8 @@ import type { PerangkatPenggunaDTO, KabarPenggunaDTO, KursorKabar, SaringKabar }
 import type { VersiAplikasiDTO, AjakanPembaruanDTO, LangkahUsahaDTO } from '~/adapters/cashflowVersi'
 import type { HapusAkunDaftarDTO, HasilHapusDTO, StatusHapus } from '~/adapters/cashflowHapusAkun'
 import { alasanHapusOtomatis, alasanBatalOtomatis, batasDaftarHapus } from '~/adapters/cashflowHapusAkun'
+import type { JenisLampiran, LampiranDTO, RanahAnak } from '~/adapters/cashflowLampiran'
+import { urlBerkasSah } from '~/adapters/cashflowLampiran'
 import type { RingkasDukunganDTO, DaftarDukunganDTO, SumberDukungan, StatusDukungan } from '~/adapters/cashflowDukungan'
 import { BATAS_DAFTAR_DUKUNGAN } from '~/adapters/cashflowDukungan'
 
@@ -167,6 +169,49 @@ export function petakanGalat(e: unknown, rpc?: string): GalatAdmin {
   return new GalatAdmin('lain', pesan, hint)
 }
 
+/**
+ * Galat fungsi edge admin-lampiran (kontrak 0122 §5) → GalatAdmin, supaya
+ * tombolnya memakai jalur galat yang sama dengan RPC (useCashflowMuat.aksi:
+ * toast, atau ke /masuk bila sesi hilang). Badan galatnya {galat, hint?}.
+ * `status` null = permintaan tidak sampai (jaringan, CORS).
+ *   400 masukan-salah                   → argumen, hint lampiran-masukan
+ *   401 (tanpa-sesi, atau gateway)      → sesi: cetak sesi ulang sekali
+ *   403 asal                            → lain, hint lampiran-asal
+ *   403 tanpa-hak + hint 42501 dikenal  → jenis yang sama dengan RPC (izin,
+ *                                         sesi, kasus, ranah, lingkup)
+ *   403 tanpa-hak tanpa hint            → bukan-admin
+ *   404 tidak-ada (baris/tanpa-lampiran)→ tidak-ada, hint dipertahankan
+ *   503 belum-terpasang                 → belum-aktif ("belum aktif di server")
+ *   502 penyimpanan                     → lain, hint lampiran-penyimpanan
+ *   lainnya (405, 500, …)               → lain, hint lampiran-server
+ */
+export function petakanGalatLampiran(status: number | null, badan: unknown): GalatAdmin {
+  const b: { galat?: unknown; hint?: unknown } = badan && typeof badan === 'object' ? (badan as { galat?: unknown; hint?: unknown }) : {}
+  const kode = teks(b.galat)
+  const hint = teks(b.hint)
+  if (status === null) return new GalatAdmin('lain', 'Server tidak terjangkau.', 'lampiran-jaringan')
+  if (status === 400) return new GalatAdmin('argumen', 'Permintaan foto tidak sah.', 'lampiran-masukan')
+  if (status === 401) return new GalatAdmin('sesi', 'Sesi tidak dikenali.', 'tanpa-sesi')
+  if (status === 403 && kode === 'asal') return new GalatAdmin('lain', 'Asal permintaan ditolak.', 'lampiran-asal')
+  if (status === 403) return new GalatAdmin(HINT_42501[hint] ?? 'bukan-admin', 'Akses foto ditolak.', hint)
+  if (status === 404) return new GalatAdmin('tidak-ada', 'Foto tidak ditemukan.', hint === 'tanpa-lampiran' ? 'tanpa-lampiran' : 'baris')
+  if (status === 503 && kode === 'belum-terpasang') return new GalatAdmin('belum-aktif', 'Fitur belum aktif di server.', 'belum-terpasang')
+  if (status === 502) return new GalatAdmin('lain', 'Penyimpanan gagal.', 'lampiran-penyimpanan')
+  return new GalatAdmin('lain', 'Server gagal menyiapkan foto.', 'lampiran-server')
+}
+
+/**
+ * Ambil satu berkas foto dari tautan bertanda tangan (kontrak 0122 §6): hanya
+ * asal Supabase CashFlow, tanpa cache peramban (Storage menjawab max-age=3600)
+ * dan tanpa Referer. Dipanggil sekali per klik, tidak pernah lebih dulu.
+ */
+export async function ambilBerkas(url: string, supabaseUrl: string, ambil: typeof fetch = fetch): Promise<Blob> {
+  if (!urlBerkasSah(url, supabaseUrl)) throw new GalatAdmin('lain', 'Tautan berkas di luar Supabase CashFlow.', 'lampiran-server')
+  const r = await ambil(url, { cache: 'no-store', referrerPolicy: 'no-referrer', credentials: 'omit' })
+  if (!r.ok) throw new GalatAdmin('lain', `Berkas gagal diambil (${r.status}).`, 'lampiran-penyimpanan')
+  return r.blob()
+}
+
 /** p_alasan RPC 0b yang dikirim: "[pelaku] alasan". Syarat 8 aksara diukur
  *  pada bagian yang ditulis orang, SEBELUM awalan pelaku ditambahkan. */
 export function alasanBerpelaku(siapa: string, alasan: string): string {
@@ -230,6 +275,34 @@ export const useCashflowAdmin = () => {
     return data as T
   }
 
+  /** Status + badan galat fungsi edge. FunctionsHttpError/RelayError membawa
+   *  Response di `context`; FunctionsFetchError (jaringan) tidak. */
+  async function galatFungsi(error: unknown): Promise<GalatAdmin> {
+    const ctx = (error as { context?: unknown } | null)?.context as { status?: unknown; clone?: () => { json: () => Promise<unknown> } } | undefined
+    if (!ctx || typeof ctx.status !== 'number' || typeof ctx.clone !== 'function') return petakanGalatLampiran(null, null)
+    const badan = await ctx.clone().json().catch(() => null)
+    return petakanGalatLampiran(ctx.status, badan)
+  }
+
+  /** Fungsi edge Supabase CashFlow dengan JWT sesi console (invoke mengirim
+   *  Authorization dan apikey). Sesi ditolak = cetak ulang sekali, sama
+   *  dengan rpc(). */
+  async function fungsi<T>(nama: string, badan: Record<string, unknown>): Promise<T> {
+    const sb = await pastikanSesi()
+    const panggil = async (): Promise<{ data: T } | { galat: GalatAdmin }> => {
+      const { data, error } = await sb.functions.invoke(nama, { body: badan })
+      return error ? { galat: await galatFungsi(error) } : { data: data as T }
+    }
+    let h = await panggil()
+    if ('galat' in h && h.galat.jenis === 'sesi') {
+      await sb.auth.signOut({ scope: 'local' }).catch(() => {})
+      const s = await sesiKonsol.sambung()
+      if (s.ok) h = await panggil()
+    }
+    if ('galat' in h) throw h.galat
+    return h.data
+  }
+
   return {
     // ── agregat, tanpa alasan ──────────────────────────────────────────
     stats: () => rpc<StatsDTO>('admin_stats'),
@@ -286,9 +359,17 @@ export const useCashflowAdmin = () => {
       rpc<KasusPeristiwaDTO>('admin_kasus_buka_dari_peristiwa', {
         p_peristiwa: peristiwa, p_preset: 'keluhan', p_ranah: [...RANAH_RUANG], p_alasan: alasan, p_skenario: SKENARIO_SELIDIKI,
       }, { tanpaPelaku: true }),
-    /** Kasus anak T3 (10 menit, ranah teks), alasan BARU, butuh investigasi. */
-    kasusInvestigasi: (induk: string, preset: PresetInvestigasi, alasan: string) =>
-      rpc<KasusDTO>('admin_kasus_investigasi', { p_induk: induk, p_ranah: ['teks'], p_preset: preset, p_alasan: alasan }, { tanpaPelaku: true }),
+    /** Kasus anak T3 (10 menit), alasan BARU, butuh investigasi. Satu ranah
+     *  per anak: 'teks' (catatan) atau 'foto' (0122, lampiran). */
+    kasusInvestigasi: (induk: string, preset: PresetInvestigasi, alasan: string, ranah: RanahAnak = 'teks') =>
+      rpc<KasusDTO>('admin_kasus_investigasi', { p_induk: induk, p_ranah: [ranah], p_preset: preset, p_alasan: alasan }, { tanpaPelaku: true }),
+    /** 0122: tautan sementara foto lampiran SATU baris, lewat fungsi edge
+     *  admin-lampiran dengan kasus anak foto. Setiap panggilan = satu baris
+     *  audit buka_foto; jangan dipanggil sebelum orangnya mengeklik. */
+    lampiran: (kasusAnak: string, jenis: JenisLampiran, id: string) =>
+      fungsi<LampiranDTO>('admin-lampiran', { kasus_anak: kasusAnak, jenis, id }),
+    /** Berkas dari tautan admin-lampiran (lihat ambilBerkas). */
+    ambilBerkas: (url: string) => ambilBerkas(url, sesiKonsol.supabaseUrl ?? ''),
     /** Tambah ranah T1/T2 dan/atau ruang; alasan diwarisi. */
     kasusTambah: (kasus: string, ranah: readonly string[], ruang: readonly string[]) =>
       rpc<KasusDTO>('admin_kasus_tambah', { p_kasus: kasus, p_ranah: [...ranah], p_ruang: [...ruang] }),
