@@ -51,6 +51,11 @@ export interface PenggunaDTO {
   aktivitas_terakhir?: string | null
   /** true = server memulangkan email utuh (daftar dibuka dengan alasan). */
   terbuka?: boolean
+  /** Nomor WhatsApp yang sudah terbukti lewat kode. Tersamar oleh server
+   *  ('0812 •••• 7890') kecuali `terbuka`; utuh berbentuk '628…'. null = akun
+   *  belum punya nomor. Kolom TIDAK ADA di jawaban server yang belum memasang
+   *  migrasinya: adapter memperlakukannya sama dengan null. */
+  nomor_wa?: string | null
   banned_until: string | null
   /** null = sesi tanpa cashflow:pii (M/0089 §15 (d)): hitungan per orang yang
    *  di-poll bersama hitungan per ruang menyusun graf keanggotaan. */
@@ -125,6 +130,11 @@ export interface Pengguna {
   emailTersamar: string
   /** Hanya terisi bila server memulangkan email utuh (daftar dibuka dengan alasan). */
   emailPenuh: string | null
+  /** Nomor WhatsApp, SELALU tersamar ('0812 •••• 7890'); null = tidak ada nomor
+   *  (atau server belum mengirim kolomnya). */
+  nomorTersamar: string | null
+  /** Hanya terisi bersama emailPenuh: bentuk lokal '0812 3456 7890'. */
+  nomorPenuh: string | null
   daftar: string            // 'DD Mon YYYY' (WIB)
   masukTerakhir: string     // 'DD Mon YYYY' | '—'
   aktivitasTerakhir: string // 'DD Mon YYYY' | '—'
@@ -206,6 +216,61 @@ export function samarkanEmail(email: string | null | undefined): string {
   return `${lokal.slice(0, tampak)}***@${domain}`
 }
 
+// ── Nomor WhatsApp ───────────────────────────────────────────────────────
+/** Bentuk nomor yang sudah tersamar: memuat penanda, bukan hanya angka. */
+const POLA_TANDA_SAMAR = /[•*·]/
+/** Pemisah yang boleh ada di nomor utuh ('+62 812-3456-7890'). */
+const POLA_NOMOR_UTUH = /^[\d\s+\-().]+$/
+
+/** Digit nomor dalam bentuk LOKAL ('08…'), atau null bila bukan nomor utuh.
+ *  Server menyimpan '628…'; '62' diganti '0', '8…' diberi '0' di depan. */
+function digitLokal(nomor: string | null | undefined): string | null {
+  const t = (nomor ?? '').trim()
+  if (!t || POLA_TANDA_SAMAR.test(t) || !POLA_NOMOR_UTUH.test(t)) return null
+  const d = t.replace(/\D/g, '')
+  if (d.startsWith('62')) return `0${d.slice(2)}`
+  if (d.startsWith('8')) return `0${d}`
+  return d.startsWith('0') ? d : null
+}
+
+/** '6281234567890' → '0812 3456 7890' (kelompok 4-4-sisa, gaya nomor lokal).
+ *  Bentuk tersamar atau teks lain → null: pemanggil jatuh ke bentuk tersamar,
+ *  bukan menampilkan isian yang tidak dikenal sebagai nomor utuh. */
+export function formatNomorWa(nomor: string | null | undefined): string | null {
+  const d = digitLokal(nomor)
+  if (!d || d.length < 10) return null
+  return [d.slice(0, 4), d.slice(4, 8), d.slice(8)].filter(Boolean).join(' ')
+}
+
+/** Nomor tersamar: 4 digit depan dan paling banyak 4 digit belakang
+ *  ('0812 •••• 7890'), dengan minimal 4 digit tengah selalu tersembunyi —
+ *  nomor 10–11 digit hanya menyisakan 2–3 digit belakang. Idempoten atas
+ *  bentuk server (yang sudah memuat '•' atau '*' dipulangkan apa adanya).
+ *  Nomor yang terlalu pendek atau teks yang tidak dikenal hanya menjadi
+ *  '••••', supaya tidak ada isian mentah yang lolos. null = tidak ada. */
+export function samarkanNomorWa(nomor: string | null | undefined): string | null {
+  const t = (nomor ?? '').trim()
+  if (!t) return null
+  if (POLA_TANDA_SAMAR.test(t)) return t
+  const d = digitLokal(t)
+  if (!d || d.length < 10) return '••••'
+  const belakang = Math.min(4, d.length - 8)
+  return `${d.slice(0, 4)} •••• ${d.slice(-belakang)}`
+}
+
+/** Pencarian lokal atas nomor UTUH (hanya saat daftar terbuka). Hanya kueri
+ *  yang berbentuk nomor (≥ 3 digit, tanpa huruf) yang dicocokkan, supaya
+ *  'orang2@…' tidak menangkap setiap nomor yang memuat angka 2. Bentuk lokal
+ *  ('0812…') dan internasional ('62812…') sama-sama cocok, dengan atau tanpa spasi. */
+export function nomorWaCocok(nomorPenuh: string | null | undefined, kueri: string): boolean {
+  const lokal = digitLokal(nomorPenuh)
+  const k = kueri.trim()
+  if (!lokal || !POLA_NOMOR_UTUH.test(k)) return false
+  const q = k.replace(/\D/g, '')
+  if (q.length < 3) return false
+  return lokal.includes(q) || `62${lokal.slice(1)}`.includes(q)
+}
+
 /** Nama ruang buatan pengguna bisa memuat rahasia ("catatan rahasia", nama
  *  usaha). Hanya nama BAWAAN yang tampil apa adanya. */
 const NAMA_BAWAAN = new Set(['Keuangan Saya', 'Bisnis', 'My Finances', 'Business'])
@@ -268,6 +333,10 @@ export function kePengguna(d: PenggunaDTO, bahasa: BahasaWaktu = 'id', menungguH
     id: d.user_id,
     emailTersamar: samarkanEmail(d.email),
     emailPenuh: terbuka ? d.email : null,
+    // Satu sakelar membuka email dan nomor: tanpa `terbuka`, nomor yang
+    // kebetulan utuh tetap disamarkan di sini (sabuk kedua, seperti email).
+    nomorTersamar: samarkanNomorWa(d.nomor_wa),
+    nomorPenuh: terbuka ? formatNomorWa(d.nomor_wa) : null,
     daftar: tanggalPendek(d.created_at, bahasa),
     masukTerakhir: tanggalPendek(d.last_sign_in, bahasa),
     aktivitasTerakhir: tanggalPendek(aktifIso, bahasa),
@@ -280,6 +349,19 @@ export function kePengguna(d: PenggunaDTO, bahasa: BahasaWaktu = 'id', menungguH
     hariAktif,
     hariSejakAktif,
   }
+}
+
+/** Buang email utuh DAN nomor utuh dari baris daftar, tanpa jaringan: dipakai
+ *  saat sakelar Kontak lengkap dimatikan atau batas waktunya lewat, dan untuk
+ *  muatan tanpa alasan (yang tidak boleh membawa kontak utuh, apa pun jawaban
+ *  server). Kolom nomor_wa yang tidak dikirim server tetap tidak ada. */
+export function tanpaKontakUtuh(rows: readonly PenggunaDTO[]): PenggunaDTO[] {
+  return rows.map(d => ({
+    ...d,
+    email: samarkanEmail(d.email),
+    ...(d.nomor_wa !== undefined ? { nomor_wa: samarkanNomorWa(d.nomor_wa) } : {}),
+    terbuka: false,
+  }))
 }
 
 /** Persen dihitung terhadap PENDAFTAR (langkah 1), bukan langkah sebelumnya:

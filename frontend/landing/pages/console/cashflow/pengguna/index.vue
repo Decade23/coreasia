@@ -4,14 +4,21 @@
  *
  * - bawaan: admin_daftar_pengguna_v2 tanpa alasan → server menyamarkan dan
  *   tidak menulis audit (0082);
- * - sakelar "Email lengkap" (keputusan Master 18 Sep 2026: harus langsung
- *   bekerja, tanpa modal alasan) memuat ulang dengan alasan tetap
+ * - sakelar "Kontak lengkap" (dulu "Email lengkap"; keputusan Master 18 Sep
+ *   2026: harus langsung bekerja, tanpa modal alasan) memuat ulang dengan alasan tetap
  *   ALASAN_SAKELAR → satu baris audit per muat, lengkap dengan detail.ids
  *   orang yang emailnya dikirim utuh (0087), jadi setiap pembukaan tetap
  *   muncul di riwayat akses orangnya. Keadaan terbuka diingat 30 menit di
  *   memori tab (useCashflowAlasanDaftar) supaya kembali dari detail tidak
  *   menutupnya; lewat 30 menit layar tersamar lagi sendiri;
  * - mematikan sakelar membuang email utuh dari memori, tanpa jaringan.
+ *
+ * NOMOR WHATSAPP ikut sakelar yang sama: kolom nomor_wa tersamar dari server
+ * ('0812 •••• 7890') kecuali daftar dibuka dengan alasan, jalur audit yang
+ * sama dengan email utuh. Mematikan sakelar menyamarkan nomor juga
+ * (tanpaKontakUtuh). Server yang belum memasang migrasinya tidak mengirim
+ * kolom itu; adapter memperlakukannya sebagai tidak ada nomor ("—"). Indeks
+ * palet tidak pernah menerima nomor dalam bentuk apa pun.
  *
  * Mulai Fase 1 (0089) server hanya melayani jalur ini untuk sesi console yang
  * memegang izin cashflow:pii (login ber-TOTP); sakelarnya tetap satu ketukan.
@@ -42,7 +49,7 @@
  * mengganggu daftar: badge-nya saja yang tidak ada.
  */
 definePageMeta({ layout: 'console', middleware: ['console', 'cashflow-admin'] })
-import { kePengguna, samarkanEmail, type Pengguna, type PenggunaDTO, type StatusPengguna } from '~/adapters/cashflow'
+import { kePengguna, nomorWaCocok, tanpaKontakUtuh, type Pengguna, type PenggunaDTO, type StatusPengguna } from '~/adapters/cashflow'
 import { idMenungguHapus, BATAS_BADGE_HAPUS } from '~/adapters/cashflowHapusAkun'
 import { urutkan, saringKolom, potongHalaman, halamanAman, jumlahHalaman, type AturanUrut } from '~/adapters/cashflowDaftar'
 import type { SkemaQuery } from '~/adapters/cashflowQuery'
@@ -58,7 +65,7 @@ const { memuat, galat, pesanGalat, muat } = useCashflowMuat({ awal: true })
 const MAKS = 500
 const PER = 25
 const SEGMEN = ['semua', 'catat7', 'belum', 'ditangguhkan'] as const
-const URUT = ['email', 'daftar', 'aktif', 'ruang', 'tx'] as const
+const URUT = ['email', 'wa', 'daftar', 'aktif', 'ruang', 'tx'] as const
 type KunciUrut = typeof URUT[number]
 const SKEMA = {
   seg: { jenis: 'pilihan', opsi: SEGMEN, bawaan: 'semua' },
@@ -78,11 +85,8 @@ const cari = useState('cf_cari_pengguna', () => '')
 const kolomCari = ref<HTMLInputElement | null>(null)
 const filterKolom = useState<Record<string, string>>('cf_saring_kolom_pengguna', () => ({}))
 /** Alasan audit untuk sakelar — tetap, karena pembukaan ini satu ketukan. */
-const ALASAN_SAKELAR = 'Sakelar Email lengkap di daftar pengguna console'
+const ALASAN_SAKELAR = 'Sakelar Kontak lengkap (email dan WhatsApp) di daftar pengguna console'
 const terbuka = ref<AlasanDaftar | null>(null)
-
-/** Buang email utuh dari memori, tanpa jaringan (samarkanEmail idempoten). */
-const tanpaEmailUtuh = (rows: PenggunaDTO[]) => rows.map(d => ({ ...d, email: samarkanEmail(d.email), terbuka: false }))
 
 /* `alasan` adalah salinan yang diambil SEBELUM permintaan, bukan ambil()
    sesudahnya: kalau batas 30 menit lewat selagi permintaan berjalan, ambil()
@@ -93,8 +97,8 @@ const muatDaftar = (alasan: AlasanDaftar | null) => muat(async (terbaru) => {
   const rows = await api.daftarPengguna(MAKS, 0, '', alasan?.alasan ?? null)
   // Muatan tersamar awal yang tiba SESUDAH daftar dibuka tidak boleh menimpanya.
   if (!terbaru()) return
-  // Dimuat tanpa alasan = tidak boleh ada email utuh, apa pun jawabannya.
-  mentah.value = alasan ? rows : tanpaEmailUtuh(rows)
+  // Dimuat tanpa alasan = tidak boleh ada email atau nomor utuh, apa pun jawabannya.
+  mentah.value = alasan ? rows : tanpaKontakUtuh(rows)
   total.value = rows.length ? Number(rows[0]?.total_semua ?? rows.length) : 0
   // Indeks palet hanya menerima bentuk tersamar, sekalipun daftar sedang terbuka.
   indeks.isi(semua.value, total.value)
@@ -111,7 +115,7 @@ const buka = async () => {
 const samarkan = () => {
   alasanDaftar.lupakan()
   terbuka.value = null
-  mentah.value = tanpaEmailUtuh(mentah.value)
+  mentah.value = tanpaKontakUtuh(mentah.value)
 }
 let pengatur: ReturnType<typeof setTimeout> | undefined
 watch(terbuka, (t) => {
@@ -136,10 +140,11 @@ const labelStatus = (s: StatusPengguna): string =>
   s === 'menunggu_hapus' ? tcf('pengguna.menungguHapus') : s === 'ditangguhkan' ? tcf('pengguna.ditangguhkan') : tcf('pengguna.aktif')
 
 /* ruang/tx null = sesi tanpa pii: server tidak mengirim hitungan (M/0089 §15 (d)); tabel menulis '—'. */
-interface Baris { id: string; email: string; daftar: string; aktif: string; ruang: number | null; tx: number | null; status: string; p: Pengguna }
+interface Baris { id: string; email: string; wa: string | null; daftar: string; aktif: string; ruang: number | null; tx: number | null; status: string; p: Pengguna }
 const keBaris = (p: Pengguna): Baris => ({
   id: p.id,
   email: p.emailPenuh ?? p.emailTersamar,
+  wa: p.nomorPenuh ?? p.nomorTersamar,
   daftar: p.daftar,
   aktif: p.aktivitasTerakhir,
   ruang: p.ruang,
@@ -150,6 +155,7 @@ const keBaris = (p: Pengguna): Baris => ({
 
 const kolom = computed(() => [
   { key: 'email', label: tcf('pengguna.email'), type: 'text' as const, class: 'font-mono text-[var(--ca-text)]', sortable: true },
+  { key: 'wa', label: tcf('pengguna.wa'), type: 'text' as const, width: '150px', sortable: true, class: 'hidden whitespace-nowrap font-mono tabular-nums text-[var(--ca-text)] sm:table-cell', headerClass: 'hidden sm:table-cell' },
   { key: 'daftar', label: tcf('pengguna.daftar'), type: 'text' as const, width: '120px', sortable: true, class: 'hidden text-[var(--ca-muted)] sm:table-cell', headerClass: 'hidden sm:table-cell' },
   { key: 'aktif', label: tcf('pengguna.aktifTerakhir'), type: 'text' as const, width: '130px', sortable: true },
   { key: 'ruang', label: tcf('pengguna.ruang'), type: 'text' as const, width: '70px', sortable: true, class: 'hidden tabular-nums text-right md:table-cell', headerClass: 'hidden md:table-cell' },
@@ -163,6 +169,7 @@ const kolom = computed(() => [
 
 const ATURAN: Record<KunciUrut, AturanUrut<Baris>> = {
   email: { jenis: 'teks', nilai: b => b.email },
+  wa: { jenis: 'teks', nilai: b => b.wa },
   daftar: { jenis: 'waktu', nilai: b => b.p.daftarIso },
   aktif: { jenis: 'waktu', nilai: b => b.p.aktivitasTerakhirIso },
   ruang: { jenis: 'angka', nilai: b => b.ruang },
@@ -173,7 +180,8 @@ const ATURAN: Record<KunciUrut, AturanUrut<Baris>> = {
 const tersaring = computed(() => {
   const k = cari.value.trim().toLowerCase()
   const lolos = semua.value.filter((p) => {
-    if (k && !`${p.emailPenuh ?? ''} ${p.emailTersamar}`.toLowerCase().includes(k)) return false
+    // Nomor hanya dicocokkan selagi terbuka (nomorPenuh null saat tersamar).
+    if (k && !`${p.emailPenuh ?? ''} ${p.emailTersamar}`.toLowerCase().includes(k) && !nomorWaCocok(p.nomorPenuh, k)) return false
     if (q.value.seg === 'belum') return p.tx === 0
     if (q.value.seg === 'ditangguhkan') return p.status === 'ditangguhkan'
     // "Mencatat 7 hari" = pernah mencatat DAN masih aktif dalam 7 hari terakhir.
@@ -197,7 +205,7 @@ const pilihSegmen = (s: typeof SEGMEN[number]) => setel({ seg: s, hal: 1 })
 const urutKolom = (key: string) => {
   const k = URUT.find(u => u === key)
   if (!k) return
-  const arah = q.value.urut === k ? (q.value.arah === 'asc' ? 'desc' : 'asc') : (k === 'email' ? 'asc' : 'desc')
+  const arah = q.value.urut === k ? (q.value.arah === 'asc' ? 'desc' : 'asc') : (k === 'email' || k === 'wa' ? 'asc' : 'desc')
   setel({ urut: k, arah, hal: 1 })
 }
 
@@ -208,6 +216,8 @@ const segmenOpsi = computed(() => [
   { kunci: 'ditangguhkan' as const, label: tcf('pengguna.ditangguhkan') },
 ])
 const terpotong = computed(() => total.value > semua.value.length)
+/** Server sudah memasang migrasi nomor WA (kolomnya ada di jawaban). */
+const serverKirimWa = computed(() => mentah.value.some(d => d.nomor_wa !== undefined))
 /** Server menahan hitungan per orang (sesi tanpa pii): segmen berbasis tx tidak bermakna. */
 const tanpaHitungan = computed(() => semua.value.length > 0 && semua.value.every(p => p.tx === null && p.ruang === null))
 const segmenButuhHitungan = (k: string) => k === 'belum' || k === 'catat7'
@@ -237,15 +247,15 @@ useCashflowPintasan([{ kunci: '/', aksi: () => kolomCari.value?.focus() }])
       </div>
       <span class="text-xs text-[var(--ca-subtle)] tabular-nums">{{ terurut.length }} / {{ semua.length }}</span>
 
-      <!-- Sakelar email lengkap: satu ketukan, tercatat di audit; mematikannya
-           menyamarkan lagi tanpa jaringan. -->
+      <!-- Sakelar kontak lengkap (email dan WhatsApp): satu ketukan, tercatat di
+           audit; mematikannya menyamarkan lagi tanpa jaringan. -->
       <button
         type="button" role="switch" :aria-checked="!!terbuka"
         class="ml-auto inline-flex items-center gap-3 rounded-full border border-[color:var(--ca-border)] py-1.5 pl-4 pr-1.5 text-sm font-semibold text-[var(--ca-text)] transition hover:bg-[var(--ca-panel-bg-strong)] disabled:cursor-not-allowed disabled:opacity-60"
         :disabled="memuat" @click="terbuka ? samarkan() : buka()"
       >
         <Icon :name="terbuka ? 'lucide:eye' : 'lucide:eye-off'" class="h-4 w-4 text-[var(--ca-muted)]" />
-        {{ tcf('pengguna.emailPenuh') }}
+        {{ tcf('pengguna.kontakPenuh') }}
         <span
           class="relative inline-flex h-6 w-11 shrink-0 rounded-full border transition-colors duration-200"
           :class="terbuka ? 'border-[color:var(--ca-brand-deep)] bg-[var(--ca-brand)]' : 'border-[color:var(--ca-border)] bg-[var(--ca-toggle-track)]'"
@@ -264,7 +274,7 @@ useCashflowPintasan([{ kunci: '/', aksi: () => kolomCari.value?.focus() }])
       {{ tcf('pengguna.terbukaSampai')(formatJam(new Date(terbuka.sampai))) }}
     </p>
 
-    <CashflowIzinKurang v-if="galat?.jenis === 'izin'" :pesan="tcf('pengguna.emailButuhTotp')" />
+    <CashflowIzinKurang v-if="galat?.jenis === 'izin'" :pesan="tcf('pengguna.kontakButuhTotp')" />
     <p v-else-if="pesanGalat" class="text-sm ca-tone-danger">{{ pesanGalat }}</p>
 
     <!-- Muat gagal tanpa baris = galat saja; "Belum ada data." di bawahnya terbaca
@@ -280,6 +290,12 @@ useCashflowPintasan([{ kunci: '/', aksi: () => kolomCari.value?.focus() }])
       >
         <template #cell-email="{ row }">
           <NuxtLink :to="`/console/cashflow/pengguna/${row.id}`" class="font-mono text-[var(--ca-text)] underline-offset-2 hover:underline" @click.stop>{{ row.email }}</NuxtLink>
+        </template>
+        <!-- null = tidak ada nomor; title hanya bila server memang mengirim kolomnya
+             (sebelum migrasinya terpasang, "belum ada nomor" belum tentu benar). -->
+        <template #cell-wa="{ value }">
+          <span v-if="value === null" class="text-[var(--ca-subtle)]" :title="serverKirimWa ? tcf('pengguna.waBelum') : undefined">—<span v-if="serverKirimWa" class="sr-only"> ({{ tcf('pengguna.waBelum') }})</span></span>
+          <template v-else>{{ value }}</template>
         </template>
         <template #cell-status="{ row }">
           <span v-if="row.p.status === 'menunggu_hapus'" class="ca-pill-danger whitespace-nowrap text-[0.7rem]">{{ row.status }}</span>
