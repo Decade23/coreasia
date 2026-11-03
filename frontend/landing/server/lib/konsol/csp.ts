@@ -19,6 +19,12 @@
  *     (/api/admin/sesi). Dokumen login tidak memuat modul CashFlow, jadi tanpa
  *     Supabase.
  *
+ * img-src menerima `blob:` (0122): foto lampiran CashFlow diambil dari tautan
+ * bertanda tangan Storage (connect-src, asal Supabase CashFlow) lalu
+ * ditampilkan sebagai blob URL yang dicabut saat penampil ditutup, supaya
+ * bytenya tidak tertinggal di cache peramban. Tidak ada sumber skrip, bingkai,
+ * atau koneksi yang ikut dibuka.
+ *
  * MURNI (node:crypto + utils/konsol) supaya bisa diuji vitest.
  */
 import { createHash } from 'node:crypto'
@@ -68,7 +74,7 @@ export function cspKonsol(html: string, opsi: OpsiCsp = {}): string {
     ['script-src', ["'self'", ...hash]],
     ['script-src-attr', ["'none'"]],
     ['style-src', ["'self'", "'unsafe-inline'"]],
-    ['img-src', ["'self'", 'data:', 'https:']],
+    ['img-src', ["'self'", 'data:', 'blob:', 'https:']],
     ['font-src', ["'self'", 'https://fonts.gstatic.com']],
     ['connect-src', ["'self'", ...tujuan]],
     ['worker-src', ["'self'"]],

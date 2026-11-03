@@ -78,6 +78,13 @@ describe('cspKonsol', () => {
     expect(csp).not.toMatch(/api\.coreasia\.id|localhost:8084|\*\.coreasia\.id/)
   })
 
+  it('img-src: self, data:, blob: (foto lampiran 0122), https: — blob: tidak ikut ke direktif lain', () => {
+    expect(direktif['img-src']).toEqual(["'self'", 'data:', 'blob:', 'https:'])
+    for (const d of ['script-src', 'connect-src', 'frame-src', 'worker-src', 'default-src', 'object-src']) {
+      expect(direktif[d], d).not.toContain('blob:')
+    }
+  })
+
   it('direktif pengaman lain ada', () => {
     expect(direktif['object-src']).toEqual(["'none'"])
     expect(direktif['base-uri']).toEqual(["'self'"])
