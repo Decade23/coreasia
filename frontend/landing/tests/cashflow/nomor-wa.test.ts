@@ -40,10 +40,13 @@ const tanpaKolom = (): PenggunaDTO => {
 }
 
 describe.skipIf(!adaMigrasiNomor('0121'))('kontrak 0121: admin_daftar_pengguna_v2 dan admin_pengguna_kepala', () => {
-  it('contoh DTO = kolom kembalian server, nomor_wa di akhir', () => {
+  it('contoh DTO = kolom kembalian server; nomor_wa di akhir (0121), lalu versi_aplikasi dan platform (0123)', () => {
     const kolom = kolomKembalian('admin_daftar_pengguna_v2')
-    expect(kolom.at(-1)).toBe('nomor_wa')
-    expect(Object.keys(dto({ nomor_wa: SAMAR })).sort()).toEqual([...kolom].sort())
+    const ada0123 = adaMigrasiNomor('0123')
+    const ekor = ada0123 ? ['nomor_wa', 'versi_aplikasi', 'platform'] : ['nomor_wa']
+    expect(kolom.slice(-ekor.length)).toEqual(ekor)
+    const contoh = { ...dto({ nomor_wa: SAMAR }), ...(ada0123 ? { versi_aplikasi: '1.3.6', platform: 'android' } : {}) }
+    expect(Object.keys(contoh).sort()).toEqual([...kolom].sort())
   })
   it('nomor utuh hanya di cabang beralasan; cabang tersamar lewat nomor_wa_samar', () => {
     const { badan } = fungsiTerakhir('admin_daftar_pengguna_v2')
@@ -65,9 +68,7 @@ describe.skipIf(!adaMigrasiNomor('0121'))('kontrak 0121: admin_daftar_pengguna_v
   it('kepala: tersamar saja (0121), atau utuh HANYA di cabang pii (0123)', () => {
     const { badan } = fungsiTerakhir('admin_pengguna_kepala')
     if (adaMigrasiNomor('0123')) {
-      const n = nomorUtuhHanyaPii(badan)
-      expect(n.lepas).toEqual([])
-      expect(n.adaSamaran).toBe(true)
+      expect(nomorUtuhHanyaPii(badan)).toEqual({ terjaga: true, lepas: [] })
     } else {
       expect(badan).toMatch(/'nomor_wa',\s*\(select public\.nomor_wa_samar\(n\.nomor\)/)
       expect(badan).not.toMatch(/'nomor_wa',\s*\(select n\.nomor\b/)
@@ -191,14 +192,19 @@ describe('nomorWaCocok (pencarian lokal, hanya saat terbuka)', () => {
 })
 
 describe('penjaga uji: nomor utuh hanya di cabang pii', () => {
-  it('menerima case/if v_pii, menolak nomor utuh tanpa penjaga', () => {
-    const aman = `'nomor_wa', (select case when v_pii then n.nomor else public.nomor_wa_samar(n.nomor) end from public.nomor_wa n where n.user_id = u.id)`
-    expect(nomorUtuhHanyaPii(aman)).toEqual({ lepas: [], adaSamaran: true })
-    const amanIf = `if v_pii then select n.nomor into v_nomor from public.nomor_wa n where n.user_id = p_user; else select public.nomor_wa_samar(n.nomor) into v_nomor from public.nomor_wa n where n.user_id = p_user; end if;`
-    expect(nomorUtuhHanyaPii(amanIf).lepas).toEqual([])
-    const bocor = `'nomor_wa', (select n.nomor from public.nomor_wa n where n.user_id = u.id)`
-    expect(nomorUtuhHanyaPii(bocor).lepas).toHaveLength(1)
-    expect(nomorUtuhHanyaPii(bocor).adaSamaran).toBe(false)
+  const BACA = `select n.nomor into v_nomor from public.nomor_wa n where n.user_id = p_user;`
+  const PENANDA = `|| case when v_pii and v_nomor is not null then jsonb_build_object('nomor_utuh', true) else '{}'::jsonb end`
+  const KELUAR = `'nomor_wa', case when v_pii then v_nomor else public.nomor_wa_samar(v_nomor) end)`
+  it('menerima keluaran case v_pii (variabel maupun langsung)', () => {
+    expect(nomorUtuhHanyaPii(`${BACA} ${PENANDA} ${KELUAR}`)).toEqual({ terjaga: true, lepas: [] })
+    expect(nomorUtuhHanyaPii(`'nomor_wa', case when v_pii then n.nomor else public.nomor_wa_samar(n.nomor) end`)).toEqual({ terjaga: true, lepas: [] })
+  })
+  it('menolak keluaran tanpa penjaga, dan variabel nomor yang ikut ke detail audit', () => {
+    expect(nomorUtuhHanyaPii(`'nomor_wa', v_nomor`).terjaga).toBe(false)
+    expect(nomorUtuhHanyaPii(`'nomor_wa', (select n.nomor from public.nomor_wa n where n.user_id = u.id)`).terjaga).toBe(false)
+    const bocor = nomorUtuhHanyaPii(`${BACA} jsonb_build_object('nomor', v_nomor) ${KELUAR}`)
+    expect(bocor.terjaga).toBe(true)
+    expect(bocor.lepas).toHaveLength(1)
   })
 })
 

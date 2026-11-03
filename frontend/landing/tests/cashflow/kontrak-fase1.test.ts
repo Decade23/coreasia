@@ -254,9 +254,9 @@ describe('kontrak KepalaPenggunaDTO ↔ admin_pengguna_kepala', () => {
     expect(badan).toMatch(/'email',\s*public\.samar_email\(u\.email\)/)
     if (ADA_0123) {
       // 0123: nomor utuh hanya di cabang pii; selain itu tetap lewat nomor_wa_samar.
-      const n = nomorUtuhHanyaPii(badan)
-      expect(n.lepas).toEqual([])
-      expect(n.adaSamaran).toBe(true)
+      expect(nomorUtuhHanyaPii(badan)).toEqual({ terjaga: true, lepas: [] })
+      // Penanda audit tanpa nomornya sendiri.
+      expect(badan).toMatch(/jsonb_build_object\('nomor_utuh', true\)/)
     } else if (ADA_0121) {
       // 0121: kepala tidak pernah membawa nomor utuh, juga untuk pemegang pii.
       expect(badan).toMatch(/'nomor_wa',\s*\(select public\.nomor_wa_samar\(n\.nomor\) from public\.nomor_wa n where n\.user_id = u\.id\)/)

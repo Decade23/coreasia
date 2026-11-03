@@ -27,20 +27,26 @@ export const adaMigrasiNomor = (nomor: string): boolean =>
   adaMigrasi && readdirSync(DIR_MIGRASI).some(n => n.startsWith(`${nomor}_`) && n.endsWith('.sql'))
 
 /**
- * Nomor WhatsApp UTUH (`n.nomor` tanpa nomor_wa_samar) di badan fungsi hanya
- * muncul di cabang ber-pii: setiap kemunculannya didahului `when v_pii then`
- * atau `if v_pii then` dalam 240 aksara. Memulangkan kemunculan yang tidak
- * terjaga (kosong = aman) dan apakah jalur tersamarnya ada.
+ * Kunci jsonb 'nomor_wa' membawa nomor UTUH hanya di cabang ber-pii (0123):
+ * keluarannya `case when v_pii then X else public.nomor_wa_samar(X) end`.
+ * Bila X variabel (0123 membaca nomor SEKALI ke v_nomor sebelum audit),
+ * variabel itu tidak boleh keluar di tempat lain (kunci lain, detail audit):
+ * pemakaian yang diizinkan hanya `into X`, `X is [not] null`, dan ekspresi
+ * keluaran itu sendiri. `lepas` = pemakaian lain (kosong = aman).
  */
-export function nomorUtuhHanyaPii(badan: string): { lepas: string[]; adaSamaran: boolean } {
-  const adaSamaran = /nomor_wa_samar\(\s*n\.nomor\s*\)/.test(badan)
-  const tanpaSamaran = badan.replace(/nomor_wa_samar\(\s*n\.nomor\s*\)/g, 'nomor_wa_samar(·)')
-  const lepas: string[] = []
-  for (const m of tanpaSamaran.matchAll(/\bn\.nomor\b/g)) {
-    const sebelum = tanpaSamaran.slice(Math.max(0, m.index - 240), m.index)
-    if (!/(?:when|if)\s+v_pii\s+then/i.test(sebelum)) lepas.push(tanpaSamaran.slice(Math.max(0, m.index - 60), m.index + 20))
-  }
-  return { lepas, adaSamaran }
+export function nomorUtuhHanyaPii(badan: string): { terjaga: boolean; lepas: string[] } {
+  const m = /'nomor_wa',\s*case\s+when\s+v_pii\s+then\s+(\w+(?:\.\w+)?)\s+else\s+public\.nomor_wa_samar\(\s*\1\s*\)\s+end/i.exec(badan)
+  if (!m) return { terjaga: false, lepas: [] }
+  const x = m[1]!
+  if (x.includes('.')) return { terjaga: true, lepas: [] }
+  const sisa = badan
+    .replace(m[0], '·')
+    .replace(new RegExp(`\\binto\\s+${x}\\b`, 'gi'), '·')
+    .replace(new RegExp(`\\b${x}\\s+is\\s+(?:not\\s+)?null\\b`, 'gi'), '·')
+    // Deklarasi di blok declare: `v_nomor text;`.
+    .replace(new RegExp(`\\b${x}\\s+[a-z ]+(?:\\[\\])?\\s*;`, 'gi'), '·')
+  const lepas = [...sisa.matchAll(new RegExp(`\\b${x}\\b`, 'g'))].map(k => sisa.slice(Math.max(0, k.index - 60), k.index + 20))
+  return { terjaga: true, lepas }
 }
 
 /** Semua migrasi, urut nama (= urut terap), tanpa komentar baris `--`.
