@@ -21,6 +21,7 @@ import {
 } from '~/adapters/cashflow'
 import { keKepala, type KepalaPenggunaDTO } from '~/adapters/cashflowBuku'
 import { KAMUS_CASHFLOW } from '~/composables/cashflow/useCashflowI18n'
+import { adaMigrasiNomor, fungsiTerakhir, kolomKembalian } from './migrasi'
 
 const UTUH = '6281234567890'
 const LOKAL = '0812 3456 7890'
@@ -37,6 +38,27 @@ const tanpaKolom = (): PenggunaDTO => {
   delete d.nomor_wa
   return d
 }
+
+describe.skipIf(!adaMigrasiNomor('0121'))('kontrak 0121: admin_daftar_pengguna_v2 dan admin_pengguna_kepala', () => {
+  it('contoh DTO = kolom kembalian server, nomor_wa di akhir', () => {
+    const kolom = kolomKembalian('admin_daftar_pengguna_v2')
+    expect(kolom.at(-1)).toBe('nomor_wa')
+    expect(Object.keys(dto({ nomor_wa: SAMAR })).sort()).toEqual([...kolom].sort())
+  })
+  it('nomor utuh hanya di cabang beralasan; cabang tersamar lewat nomor_wa_samar', () => {
+    const { badan } = fungsiTerakhir('admin_daftar_pengguna_v2')
+    const pecah = badan.lastIndexOf('return query')
+    expect(badan.slice(0, pecah)).toMatch(/true,\s*\(select n\.nomor from public\.nomor_wa n where n\.user_id = u\.id\)/)
+    expect(badan.slice(pecah)).toMatch(/false,\s*\(select public\.nomor_wa_samar\(n\.nomor\) from public\.nomor_wa n where n\.user_id = u\.id\)/)
+    // Pencarian tersamar tetap hanya pada email tersamar (anti-enumerasi nomor).
+    expect(badan.slice(pecah)).not.toMatch(/nomor\s+ilike/)
+  })
+  it('kepala hanya membawa bentuk tersamar', () => {
+    const { badan } = fungsiTerakhir('admin_pengguna_kepala')
+    expect(badan).toMatch(/'nomor_wa',\s*\(select public\.nomor_wa_samar\(n\.nomor\)/)
+    expect(badan).not.toMatch(/'nomor_wa',\s*\(select n\.nomor\b/)
+  })
+})
 
 describe('formatNomorWa', () => {
   it('628… → 0 + digit, kelompok 4-4-sisa', () => {

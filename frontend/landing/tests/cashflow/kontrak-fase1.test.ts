@@ -230,10 +230,14 @@ describe('kontrak daftar kasus / riwayat akses / audit v3', () => {
 })
 
 // ── Kepala & Pengguna 360 (0090) ─────────────────────────────────────────
+/* 0121 menambah kunci nomor_wa (selalu tersamar atau null). Folder migrasi
+   tanpa 0121 menguji bentuk lama; tanpa folder migrasi sama sekali, contohnya
+   bentuk terbaru. */
+const ADA_0121 = !adaMigrasi || adaMigrasiNomor('0121')
 const KEPALA = `{"user_id": "${SUBJEK}", "email": "ded***@gmail.com", "daftar": "2026-09-01T16:30:00+00:00",
   "masuk_terakhir": "2026-09-17T18:45:10.5+00:00", "banned_until": null, "jumlah_ruang": 2, "jumlah_transaksi": 42,
   "akses_30hari": 3, "ruang": [{"workspace_id": "${RUANG}", "nama": "Bi······", "jenis": "usaha", "peran": "owner",
-  "pemilik": true, "bekas_anggota": false, "jumlah_anggota": 1, "tx_oleh_dia": 40}]}`
+  "pemilik": true, "bekas_anggota": false, "jumlah_anggota": 1, "tx_oleh_dia": 40}]${ADA_0121 ? ', "nomor_wa": "0812 •••• 7890"' : ''}}`
 
 describe('kontrak KepalaPenggunaDTO ↔ admin_pengguna_kepala', () => {
   it.skipIf(!adaMigrasi)('contoh = kunci server; ruang[] hanya untuk pii', () => {
@@ -245,12 +249,16 @@ describe('kontrak KepalaPenggunaDTO ↔ admin_pengguna_kepala', () => {
     expect(badan).toMatch(/v_pii\s*:=\s*public\.konsol_boleh\('cashflow:pii'\)/)
     expect(badan).toMatch(/if\s+v_pii\s+then[\s\S]*?into v_ruang[\s\S]*?end if;/)
     expect(badan).toMatch(/'email',\s*public\.samar_email\(u\.email\)/)
+    // Kepala tidak pernah membawa nomor utuh, juga untuk pemegang pii.
+    if (ADA_0121) expect(badan).toMatch(/'nomor_wa',\s*\(select public\.nomor_wa_samar\(n\.nomor\) from public\.nomor_wa n where n\.user_id = u\.id\)/)
+    else expect(badan).not.toMatch(/'nomor_wa'/)
   })
   it('keKepala: ruang calon lingkup; null = tanpa pii', () => {
     const k = keKepala(JSON.parse(KEPALA) as KepalaPenggunaDTO)
     expect(k).toMatchObject({ emailTersamar: 'ded***@gmail.com', akses30: 3, jumlahRuang: 2 })
     expect(k.ruang).toEqual([{ id: RUANG, nama: 'Bi······', jenis: 'usaha', peran: 'owner', pemilik: true, bekas: false, anggota: 1, tx: 40 }])
     expect(keKepala({ ...(JSON.parse(KEPALA) as KepalaPenggunaDTO), ruang: null }).ruang).toBeNull()
+    expect(k).toMatchObject(ADA_0121 ? { nomorDikirim: true, nomorTersamar: '0812 •••• 7890' } : { nomorDikirim: false, nomorTersamar: null })
   })
 })
 
