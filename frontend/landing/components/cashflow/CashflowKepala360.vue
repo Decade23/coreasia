@@ -34,18 +34,18 @@ const hitungan = computed(() => props.kepala
         <span v-if="kepala.ditangguhkan" class="ca-pill-danger">{{ tcf('pengguna.ditangguhkan') }}</span>
       </div>
       <dl class="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm text-[var(--ca-muted)]">
-        <div><dt class="inline">{{ tcf('pengguna.daftar') }}</dt> <dd class="inline text-[var(--ca-text)]">{{ formatTanggal(kepala.daftarIso) }}</dd></div>
-        <div><dt class="inline">{{ tcf('pengguna.masuk') }}</dt> <dd class="inline text-[var(--ca-text)]">{{ formatTanggal(kepala.masukTerakhirIso) }}</dd></div>
+        <div><dt class="inline">{{ tcf('pengguna.daftar') }}</dt> <dd class="ml-1 inline text-[var(--ca-text)]">{{ formatTanggal(kepala.daftarIso) }}</dd></div>
+        <div><dt class="inline">{{ tcf('pengguna.masuk') }}</dt> <dd class="ml-1 inline text-[var(--ca-text)]">{{ formatTanggal(kepala.masukTerakhirIso) }}</dd></div>
         <!-- Nomor WhatsApp: utuh untuk sesi ber-pii, tersamar bila tidak (keKepala);
              tanpa nomor barisnya tidak ada. -->
         <div v-if="kepala.nomorWa">
-          <dt class="inline">{{ tcf('pengguna.wa') }}</dt> <dd class="inline font-mono tabular-nums text-[var(--ca-text)]">{{ kepala.nomorWa }}</dd>
+          <dt class="inline">{{ tcf('pengguna.wa') }}</dt> <dd class="ml-1 inline font-mono tabular-nums text-[var(--ca-text)]">{{ kepala.nomorWa }}</dd>
         </div>
         <!-- Hitungan per orang hanya untuk sesi ber-pii (M/0089 §15 (d)); tanpa itu "—" (butuh TOTP), bukan "0". -->
         <div v-for="h in hitungan" :key="h.label">
           <dt class="inline">{{ h.label }}</dt>
-          <dd v-if="h.n !== null" class="inline tabular-nums text-[var(--ca-text)]">{{ angka(h.n) }}</dd>
-          <dd v-else class="inline text-[var(--ca-text)]" :title="tcf('umum.butuhTotp')">— <span class="text-xs text-[var(--ca-subtle)]">({{ tcf('umum.butuhTotp') }})</span></dd>
+          <dd v-if="h.n !== null" class="ml-1 inline tabular-nums text-[var(--ca-text)]">{{ angka(h.n) }}</dd>
+          <dd v-else class="ml-1 inline text-[var(--ca-text)]" :title="tcf('umum.butuhTotp')">— <span class="text-xs text-[var(--ca-subtle)]">({{ tcf('umum.butuhTotp') }})</span></dd>
         </div>
         <div>
           <NuxtLink :to="aksesKe" class="underline-offset-2 hover:underline">{{ tcf('p360.dilihat')(kepala.akses30) }}</NuxtLink>

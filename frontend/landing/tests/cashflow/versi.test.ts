@@ -109,7 +109,7 @@ describe.skipIf(!adaApp)(`paritas dengan aplikasi (${PEMBARUAN})`, () => {
       [...(new RegExp(`type ${nama} =([^;]+);`).exec(teks)?.[1] ?? '').matchAll(/'([^']+)'/g)].map(m => m[1]!)
     expect([...LANGKAH_PEMBARUAN].sort()).toEqual(tipe(tel, 'LangkahPembaruan').sort())
     expect([...JALUR_PERBARUI].sort()).toEqual(tipe(pem, 'JalurToko').sort())
-    expect([...LANGKAH_USAHA].sort()).toEqual(tipe(tel, 'LangkahOnboarding').filter(l => !l.startsWith('pembaruan.')).sort())
+    expect([...LANGKAH_USAHA].sort()).toEqual(tipe(tel, 'LangkahOnboarding').filter(l => /^(ruang|ajakan_usaha|usaha)\./.test(l)).sort())
     expect([...new Set([...tipe(tel, 'AsalPanelRuang'), ...tipe(tel, 'AsalTonggakUsaha')])].sort()).toEqual([...ISI_USAHA.asal].sort())
     expect([...ISI_USAHA.keadaan].sort()).toEqual(tipe(tel, 'KeadaanMeja').sort())
     expect([...ISI_USAHA.tahap].sort()).toEqual(tipe(tel, 'TahapMeja').sort())

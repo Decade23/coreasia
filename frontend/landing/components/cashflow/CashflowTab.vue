@@ -16,12 +16,12 @@
 /** `judul` = arti lencana bila bukan "banyaknya isi tab" (mis. Sampah Ruang 360: masih terhapus). */
 interface ItemTab { kunci: string; label: string; to: string; jumlah: number | null; aktif: boolean; judul?: string }
 
-const props = defineProps<{ items: ItemTab[] }>()
+const props = defineProps<{ items: ItemTab[]; semuaTerlihat?: boolean }>()
 const { tcf } = useCashflowI18n()
 const aktivasi = useCashflowAktivasiTab()
 const tandai = (to: string, e: MouseEvent) => { aktivasi.catat(to, e) }
 
-const utama = computed(() => props.items.filter(i => i.aktif || i.jumlah !== 0 || i.kunci === ''))
+const utama = computed(() => props.items.filter(i => props.semuaTerlihat || i.aktif || i.jumlah !== 0 || i.kunci === ''))
 const kosong = computed(() => props.items.filter(i => !utama.value.includes(i)))
 const lainnyaBuka = ref(false)
 const route = useRoute()
@@ -60,7 +60,7 @@ const kelas = (i: ItemTab) => ['inline-flex shrink-0 items-center gap-1.5 rounde
          akan terpotong — tab kosong tampil sebaris, redup, di belakang pemisah. -->
     <template v-if="kosong.length">
       <span class="mx-1 h-4 w-px shrink-0 bg-[var(--ca-border)] sm:hidden" aria-hidden="true" />
-      <NuxtLink v-for="i in kosong" :key="`m-${i.kunci}`" :to="i.to" @click="tandai(i.to, $event)" class="inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-sm text-[var(--ca-subtle)] sm:hidden">
+      <NuxtLink v-for="i in kosong" :key="`m-${i.kunci}`" :to="i.to" class="inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-sm text-[var(--ca-subtle)] sm:hidden" @click="tandai(i.to, $event)">
         {{ i.label }} <span class="tabular-nums">0</span>
       </NuxtLink>
     </template>
@@ -72,7 +72,7 @@ const kelas = (i: ItemTab) => ['inline-flex shrink-0 items-center gap-1.5 rounde
         {{ tcf('tab.lainnya') }}<Icon name="lucide:chevron-down" class="h-3.5 w-3.5" aria-hidden="true" />
       </button>
       <div v-if="lainnyaBuka" class="absolute left-0 top-full z-30 mt-1 min-w-40 rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-dropdown-bg)] p-1 shadow-lg">
-        <NuxtLink v-for="i in kosong" :key="i.kunci" :to="i.to" @click="tandai(i.to, $event)" class="block rounded-lg px-3 py-1.5 text-sm text-[var(--ca-muted)] hover:bg-[var(--ca-panel-bg-strong)] hover:text-[var(--ca-text)]">
+        <NuxtLink v-for="i in kosong" :key="i.kunci" :to="i.to" class="block rounded-lg px-3 py-1.5 text-sm text-[var(--ca-muted)] hover:bg-[var(--ca-panel-bg-strong)] hover:text-[var(--ca-text)]" @click="tandai(i.to, $event)">
           {{ i.label }} <span class="tabular-nums text-[var(--ca-subtle)]">0</span>
         </NuxtLink>
       </div>

@@ -33,12 +33,12 @@ const hitungan = computed(() => props.kepala
         <span v-if="kepala.jenis" class="ca-pill-muted text-[0.7rem]">{{ tcf(`ruang.jenisOpsi.${kepala.jenis}`) }}</span>
       </div>
       <dl class="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm text-[var(--ca-muted)]">
-        <div><dt class="inline">{{ tcf('ruang.pemilik') }}</dt> <dd class="inline font-mono text-[var(--ca-text)]">{{ kepala.pemilikTersamar }}</dd></div>
-        <div><dt class="inline">{{ tcf('ruang.dibuat') }}</dt> <dd class="inline text-[var(--ca-text)]">{{ formatTanggal(kepala.dibuatIso) }}</dd></div>
+        <div><dt class="inline">{{ tcf('ruang.pemilik') }}</dt> <dd class="ml-1 inline font-mono text-[var(--ca-text)]">{{ kepala.pemilikTersamar }}</dd></div>
+        <div><dt class="inline">{{ tcf('ruang.dibuat') }}</dt> <dd class="ml-1 inline text-[var(--ca-text)]">{{ formatTanggal(kepala.dibuatIso) }}</dd></div>
         <div v-for="h in hitungan" :key="h.label">
           <dt class="inline">{{ h.label }}</dt>
-          <dd v-if="h.n !== null" class="inline tabular-nums text-[var(--ca-text)]">{{ angka(h.n) }}</dd>
-          <dd v-else class="inline text-[var(--ca-text)]" :title="tcf('umum.butuhTotp')">— <span class="text-xs text-[var(--ca-subtle)]">({{ tcf('umum.butuhTotp') }})</span></dd>
+          <dd v-if="h.n !== null" class="ml-1 inline tabular-nums text-[var(--ca-text)]">{{ angka(h.n) }}</dd>
+          <dd v-else class="ml-1 inline text-[var(--ca-text)]" :title="tcf('umum.butuhTotp')">— <span class="text-xs text-[var(--ca-subtle)]">({{ tcf('umum.butuhTotp') }})</span></dd>
         </div>
         <div>
           <NuxtLink :to="aksesKe" class="underline-offset-2 hover:underline">{{ tcf('p360.dilihat')(kepala.akses30) }}</NuxtLink>

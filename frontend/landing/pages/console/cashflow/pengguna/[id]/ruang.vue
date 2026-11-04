@@ -87,6 +87,9 @@ const peran = (r: RuangSubjek) => (r.pemilik ? tcf('pengguna.pemilik') : r.peran
                   <dt class="text-[var(--ca-muted)]">{{ tcf('ruangTab.terakhir') }}</dt><dd class="text-right text-[var(--ca-text)]">{{ formatTanggal(r.agregat.terakhirCatatIso) }}</dd>
                 </template>
               </dl>
+              <NuxtLink :to="`/console/cashflow/ruang/${r.id}`" class="ca-btn-secondary mt-4 inline-flex items-center gap-2 !px-3 !py-1.5 text-xs">
+                {{ tcf('ruangTab.bukaRuang') }} <Icon name="lucide:arrow-right" class="h-3.5 w-3.5" aria-hidden="true" />
+              </NuxtLink>
             </li>
           </ul>
           <p class="mt-2 text-xs text-[var(--ca-subtle)]">{{ tcf('ringkas.bersihKet') }}</p>

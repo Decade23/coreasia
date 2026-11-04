@@ -1,66 +1,13 @@
 <script setup lang="ts">
-/**
- * Daftar pengguna — TERSAMAR secara bawaan, dibuka dengan SATU ketukan.
- *
- * - bawaan: admin_daftar_pengguna_v2 tanpa alasan → server menyamarkan dan
- *   tidak menulis audit (0082);
- * - sakelar "Kontak lengkap" (dulu "Email lengkap"; keputusan Master 18 Sep
- *   2026: harus langsung bekerja, tanpa modal alasan) memuat ulang dengan alasan tetap
- *   ALASAN_SAKELAR → satu baris audit per muat, lengkap dengan detail.ids
- *   orang yang emailnya dikirim utuh (0087), jadi setiap pembukaan tetap
- *   muncul di riwayat akses orangnya. Keadaan terbuka diingat 30 menit di
- *   memori tab (useCashflowAlasanDaftar) supaya kembali dari detail tidak
- *   menutupnya; lewat 30 menit layar tersamar lagi sendiri;
- * - mematikan sakelar membuang email utuh dari memori, tanpa jaringan.
- *
- * NOMOR WHATSAPP ikut sakelar yang sama: kolom nomor_wa tersamar dari server
- * ('0812 •••• 7890') kecuali daftar dibuka dengan alasan, jalur audit yang
- * sama dengan email utuh. Mematikan sakelar menyamarkan nomor juga
- * (tanpaKontakUtuh). Server yang belum memasang migrasinya tidak mengirim
- * kolom itu; adapter memperlakukannya sebagai tidak ada nomor ("—"). Indeks
- * palet tidak pernah menerima nomor dalam bentuk apa pun.
- *
- * VERSI APLIKASI (0123): versi terakhir yang dilaporkan HP orang itu dan
- * platformnya ('1.3.6 · Android'), diurutkan sebagai versi semantik. Versi di
- * bawah versi tertinggi PLATFORM YANG SAMA di daftar ini diredupkan: iPhone
- * yang menunggu tinjauan App Store tidak ikut tertinggal karena Android lebih
- * dulu. Server sebelum 0123 tidak mengirim kolomnya ("—").
- *
- * Mulai Fase 1 (0089) server hanya melayani jalur ini untuk sesi console yang
- * memegang izin cashflow:pii (login ber-TOTP); sakelarnya tetap satu ketukan.
- * Tanpa izin itu server menjawab 42501 izin-kurang: daftar tetap tersamar dan
- * halaman menjelaskan "butuh login ber-TOTP" dengan jalan ke Keamanan akun
- * (CashflowIzinKurang) — bukan "bukan admin".
- *
- * Saring, urut, dan paginasi di KLIEN atas ≤ 500 baris, berurutan saring →
- * urut (nilai mentah) → potong per halaman. Pencarian tidak dikirim ke
- * server: saat daftar terbuka, satu ketikan akan berarti satu baris audit.
- *
- * Posisi ada di URL (?seg&urut&arah&hal, replace), jadi refresh dan Back dari
- * detail kembali ke tempat yang sama. Teks cari dan saringan kolom sengaja
- * tidak di URL (isinya bisa potongan email) — keduanya di useState, supaya
- * Back mengembalikan saringan yang menjadi dasar ?hal.
- *
- * Jumlah ruang dan transaksi per orang dikirim server HANYA ke sesi ber-pii
- * (M/0089 §15 (d)); selain itu null → tabel menulis "—" (butuh TOTP), dan
- * segmen yang bergantung padanya (Tidak pernah mencatat, Mencatat 7 hari)
- * dimatikan. Cabang tersamar juga membulatkan masuk/aktif terakhir ke awal
- * hari WIB — halaman ini memang hanya menampilkan tanggal.
- *
- * MENUNGGU DIHAPUS (0114). Akun yang meminta hapus akun di-ban server sampai
- * admin menghapusnya permanen, jadi banned_until-nya sama dengan akun yang
- * ditangguhkan. Daftar permintaan yang menunggu (admin_hapus_akun_daftar, izin
- * view) dimuat terpisah; akun di sana berstatus "Menunggu dihapus" dan tidak
- * ikut segmen Ditangguhkan. Gagal memuatnya (mis. 0114 belum terpasang) tidak
- * mengganggu daftar: badge-nya saja yang tidak ada.
- */
+/** Daftar tersamar. Pencarian, saringan, urutan dan halaman dikerjakan
+ * server atas seluruh akun. Kontak lengkap tetap satu klik dan setiap
+ * halaman yang dibuka tercatat dalam audit. Teks pencarian tidak di URL. */
 definePageMeta({ layout: 'console', middleware: ['console', 'cashflow-admin'] })
 import {
-  kePengguna, nomorWaCocok, tanpaKontakUtuh, versiTerbaruPer, versiTertinggal,
+  kePengguna, tanpaKontakUtuh, versiTertinggal,
   type InfoPlatform, type Pengguna, type PenggunaDTO, type StatusPengguna,
 } from '~/adapters/cashflow'
-import { idMenungguHapus, BATAS_BADGE_HAPUS } from '~/adapters/cashflowHapusAkun'
-import { urutkan, saringKolom, potongHalaman, halamanAman, jumlahHalaman, type AturanUrut } from '~/adapters/cashflowDaftar'
+import { halamanAman, jumlahHalaman } from '~/adapters/cashflowDaftar'
 import type { SkemaQuery } from '~/adapters/cashflowQuery'
 import type { AlasanDaftar } from '~/composables/cashflow/useCashflowAlasanDaftar'
 
@@ -69,13 +16,12 @@ const api = useCashflowAdmin()
 const route = useRoute()
 const indeks = useCashflowIndeks()
 const alasanDaftar = useCashflowAlasanDaftar()
-const { memuat, galat, pesanGalat, muat } = useCashflowMuat({ awal: true })
+const { memuat, galat, pesanGalat, muat, batal } = useCashflowMuat({ awal: true })
+const sesi = useCashflowSesi()
 
-const MAKS = 500
 const PER = 25
 const SEGMEN = ['semua', 'catat7', 'belum', 'ditangguhkan'] as const
 const URUT = ['email', 'wa', 'versi', 'daftar', 'aktif', 'ruang', 'tx'] as const
-type KunciUrut = typeof URUT[number]
 const SKEMA = {
   seg: { jenis: 'pilihan', opsi: SEGMEN, bawaan: 'semua' },
   urut: { jenis: 'pilihan', opsi: URUT, bawaan: 'daftar' },
@@ -87,51 +33,109 @@ const { nilai: q, setel } = useCashflowQuery(SKEMA)
 /* DTO disimpan mentah dan dipetakan ulang saat bahasa berganti: tanggal
    tampilan ('3 Agu 2026' / '3 Aug 2026') dibentuk adapter. */
 const mentah = shallowRef<PenggunaDTO[]>([])
-const menungguHapus = shallowRef<ReadonlySet<string>>(new Set())
-const semua = computed<Pengguna[]>(() => mentah.value.map(d => kePengguna(d, bahasa.value, menungguHapus.value)))
+const semua = computed<Pengguna[]>(() => mentah.value.map(d => kePengguna(d, bahasa.value)))
 const total = ref(0)
 const cari = useState('cf_cari_pengguna', () => '')
 const kolomCari = ref<HTMLInputElement | null>(null)
 const filterKolom = useState<Record<string, string>>('cf_saring_kolom_pengguna', () => ({}))
+const cariDiterapkan = useState('cf_cari_diterapkan_pengguna', () => cari.value)
+const filterDiterapkan = shallowRef<Record<string, string>>({ ...filterKolom.value })
+const versiTerbaru = shallowRef<Map<string, string>>(new Map())
+const hapusTersedia = ref(true)
+const paletBuka = ref(false)
 /** Alasan audit untuk sakelar — tetap, karena pembukaan ini satu ketukan. */
 const ALASAN_SAKELAR = 'Sakelar Kontak lengkap (email dan WhatsApp) di daftar pengguna console'
 const terbuka = ref<AlasanDaftar | null>(null)
 
-/* `alasan` adalah salinan yang diambil SEBELUM permintaan, bukan ambil()
-   sesudahnya: kalau batas 30 menit lewat selagi permintaan berjalan, ambil()
-   sudah null padahal server memulangkan email utuh — tabel terbuka tanpa
-   spanduk dan tanpa pengatur waktu. Dengan salinan, pengatur waktu tetap
-   dipasang dan langsung menyamarkan bila batasnya sudah lewat. */
+/* Jawaban basi tidak boleh menimpa halaman atau membuka kontak kembali. */
 const muatDaftar = (alasan: AlasanDaftar | null) => muat(async (terbaru) => {
-  const rows = await api.daftarPengguna(MAKS, 0, '', alasan?.alasan ?? null)
-  // Muatan tersamar awal yang tiba SESUDAH daftar dibuka tidak boleh menimpanya.
+  // Jangan menampilkan halaman atau hitungan lama sebagai hasil saringan baru
+  // bila permintaan berikutnya gagal.
+  mentah.value = []
+  total.value = 0
+  const filter: Record<string, string> = {}
+  for (const [k, v] of Object.entries(filterDiterapkan.value)) {
+    if (!v || !['email', 'wa', 'versi', 'daftar', 'aktif', 'status'].includes(k)) continue
+    if (k === 'status') {
+      const nilai = (['aktif', 'ditangguhkan', 'menunggu_hapus'] as const).find(x => x === v || labelStatus(x) === v)
+      if (nilai) filter[k] = nilai
+    } else filter[k] = v
+  }
+  const hasil = await api.daftarPenggunaHalaman({
+    limit: PER, offset: (q.value.hal - 1) * PER, cari: cariDiterapkan.value.trim(),
+    segmen: q.value.seg, urut: q.value.urut, arah: q.value.arah, filter,
+    bahasa: bahasa.value, alasan: alasan?.alasan ?? null,
+  })
   if (!terbaru()) return
-  // Dimuat tanpa alasan = tidak boleh ada email atau nomor utuh, apa pun jawabannya.
-  mentah.value = alasan ? rows : tanpaKontakUtuh(rows)
-  total.value = rows.length ? Number(rows[0]?.total_semua ?? rows.length) : 0
-  // Indeks palet hanya menerima bentuk tersamar, sekalipun daftar sedang terbuka.
-  indeks.isi(semua.value, total.value)
+  mentah.value = alasan ? hasil.baris : tanpaKontakUtuh(hasil.baris)
+  total.value = Number(hasil.total)
+  versiTerbaru.value = new Map(Object.entries(hasil.versi_terbaru ?? {}))
+  hapusTersedia.value = hasil.hapus_tersedia
+  // Pencarian palet tidak boleh menganggap hasil tersaring daftar lengkap.
+  const lengkap = q.value.seg === 'semua' && !cariDiterapkan.value.trim() && !Object.keys(filter).length && q.value.hal === 1
+  indeks.isi(semua.value, lengkap ? total.value : Number.MAX_SAFE_INTEGER)
   terbuka.value = alasan
+  const aman = halamanAman(q.value.hal, total.value, PER)
+  if (aman !== q.value.hal) void setel({ hal: aman })
 })
-onMounted(() => {
-  muatDaftar(alasanDaftar.ambil())
-  api.hapusAkunDaftar('menunggu', BATAS_BADGE_HAPUS).then((r) => { menungguHapus.value = idMenungguHapus(r) }).catch(() => {})
+let aktif = false
+let dilepas = false
+onMounted(async () => {
+  // URL lama dari sesi ber-pii tidak boleh meminta hitungan saat izin turun.
+  if (!sesi.boleh('cashflow:pii')) {
+    alasanDaftar.lupakan()
+    if (['catat7', 'belum'].includes(q.value.seg) || ['ruang', 'tx'].includes(q.value.urut)) {
+      await setel({ seg: 'semua', urut: 'daftar', arah: 'desc', hal: 1 })
+    }
+  }
+  if (dilepas) return
+  aktif = true
+  void muatDaftar(alasanDaftar.ambil())
 })
 
 const buka = async () => {
   if (!(await muatDaftar(alasanDaftar.ingat(ALASAN_SAKELAR)))) alasanDaftar.lupakan()
 }
 const samarkan = () => {
+  batal()
   alasanDaftar.lupakan()
   terbuka.value = null
   mentah.value = tanpaKontakUtuh(mentah.value)
+  // Penyaringan/urutan atas kontak utuh perlu dihitung ulang dalam bentuk samar.
+  if (cariDiterapkan.value || Object.keys(filterDiterapkan.value).length || ['email', 'wa'].includes(q.value.urut)) void muatDaftar(null)
 }
 let pengatur: ReturnType<typeof setTimeout> | undefined
+let jedaFilter: ReturnType<typeof setTimeout> | undefined
+let jedaMuat: ReturnType<typeof setTimeout> | undefined
 watch(terbuka, (t) => {
   clearTimeout(pengatur)
   if (t) pengatur = setTimeout(samarkan, Math.max(0, t.sampai - Date.now()))
 })
-onBeforeUnmount(() => clearTimeout(pengatur))
+onBeforeUnmount(() => { dilepas = true; aktif = false; batal(); clearTimeout(pengatur); clearTimeout(jedaFilter); clearTimeout(jedaMuat) })
+
+// Saringan kolom menunggu selesai mengetik; teks sensitif tetap hanya di memori.
+watch(filterKolom, (f) => {
+  clearTimeout(jedaFilter)
+  jedaFilter = setTimeout(() => {
+    filterDiterapkan.value = { ...f }
+    if (q.value.hal !== 1) void setel({ hal: 1 })
+  }, 600)
+}, { deep: true })
+const jalankanCari = async () => {
+  if (q.value.hal !== 1) await setel({ hal: 1 })
+  cariDiterapkan.value = cari.value
+}
+// Satu permintaan untuk perubahan yang terjadi dalam satu rangkaian tindakan.
+watch([() => q.value.seg, () => q.value.urut, () => q.value.arah, () => q.value.hal, cariDiterapkan, filterDiterapkan, bahasa], () => {
+  if (!aktif) return
+  clearTimeout(jedaMuat)
+  batal()
+  mentah.value = []
+  total.value = 0
+  galat.value = null
+  memuat.value = true
+  jedaMuat = setTimeout(() => { void muatDaftar(alasanDaftar.ambil()) }, 80)
+})
 
 /* Pindah halaman: wadah tabel DataTable elemen yang sama antarhalaman dan
    menyimpan scrollTop-nya, jadi halaman 2 tampil dari baris ±40 — terbaca
@@ -169,59 +173,25 @@ const kolom = computed(() => [
   { key: 'versi', label: tcf('pengguna.versi'), type: 'text' as const, sortable: true, class: 'hidden whitespace-nowrap tabular-nums sm:table-cell', headerClass: 'hidden sm:table-cell' },
   { key: 'daftar', label: tcf('pengguna.daftar'), type: 'text' as const, width: '120px', sortable: true, class: 'hidden text-[var(--ca-muted)] sm:table-cell', headerClass: 'hidden sm:table-cell' },
   { key: 'aktif', label: tcf('pengguna.aktifTerakhir'), type: 'text' as const, width: '130px', sortable: true },
-  { key: 'ruang', label: tcf('pengguna.ruang'), type: 'text' as const, width: '70px', sortable: true, filterable: false, class: 'hidden tabular-nums text-right md:table-cell', headerClass: 'hidden md:table-cell' },
+  { key: 'ruang', label: tcf('pengguna.ruang'), type: 'text' as const, width: '70px', sortable: !tanpaHitungan.value, filterable: false, class: 'hidden tabular-nums text-right md:table-cell', headerClass: 'hidden md:table-cell' },
   // 'Tx' seperti tabel ruang Pengguna 360: label panjang membuat tabel tidak muat di 1280 px.
-  { key: 'tx', label: tcf('pengguna.kolom.tx'), type: 'text' as const, width: '90px', sortable: true, filterable: false, class: 'tabular-nums text-right' },
+  { key: 'tx', label: tcf('pengguna.kolom.tx'), type: 'text' as const, width: '90px', sortable: !tanpaHitungan.value, filterable: false, class: 'tabular-nums text-right' },
   {
     key: 'status', label: tcf('pengguna.status'), type: 'status' as const, width: '140px',
-    options: (['aktif', 'ditangguhkan', 'menunggu_hapus'] as const).map(s => labelStatus(s)).map((v: string) => ({ label: v, value: v })),
+    options: (['aktif', 'ditangguhkan', 'menunggu_hapus'] as const).map(s => ({ label: labelStatus(s), value: s })),
     class: 'hidden text-[var(--ca-muted)] sm:table-cell', headerClass: 'hidden sm:table-cell',
   },
 ])
 
-const ATURAN: Record<KunciUrut, AturanUrut<Baris>> = {
-  email: { jenis: 'teks', nilai: b => b.email },
-  wa: { jenis: 'teks', nilai: b => b.wa },
-  versi: { jenis: 'teks', nilai: b => b.p.kunciVersi },
-  daftar: { jenis: 'waktu', nilai: b => b.p.daftarIso },
-  aktif: { jenis: 'waktu', nilai: b => b.p.aktivitasTerakhirIso },
-  ruang: { jenis: 'angka', nilai: b => b.ruang },
-  tx: { jenis: 'angka', nilai: b => b.tx },
-}
-
-// saring (cari + segmen + kolom) → urut atas nilai mentah → potong per halaman
-const tersaring = computed(() => {
-  const k = cari.value.trim().toLowerCase()
-  const lolos = semua.value.filter((p) => {
-    // Nomor hanya dicocokkan selagi terbuka (nomorPenuh null saat tersamar).
-    if (k && !`${p.emailPenuh ?? ''} ${p.emailTersamar}`.toLowerCase().includes(k) && !nomorWaCocok(p.nomorPenuh, k)) return false
-    if (q.value.seg === 'belum') return p.tx === 0
-    if (q.value.seg === 'ditangguhkan') return p.status === 'ditangguhkan'
-    // "Mencatat 7 hari" = pernah mencatat DAN masih aktif dalam 7 hari terakhir.
-    if (q.value.seg === 'catat7') return p.tx !== null && p.tx > 0 && p.hariSejakAktif <= 7
-    return true
-  })
-  // Kolom tanpa tombol saring (filterable: false) tidak ikut menyaring, walau
-  // useState masih menyimpan isian lama untuknya.
-  return saringKolom(lolos.map(keBaris), filterKolom.value, kolom.value.filter(c => c.filterable !== false))
-})
-const terurut = computed(() => urutkan(tersaring.value, ATURAN[q.value.urut], q.value.arah, b => b.id))
-/* ?hal dibaca SETELAH data dimuat: sebelum itu daftar kosong, dan hal=2 akan
-   dijepit ke 1 lalu tertulis balik ke URL — posisi hilang saat refresh. */
-const hal = computed(() => (memuat.value ? q.value.hal : halamanAman(q.value.hal, terurut.value.length, PER)))
-const jumlahHal = computed(() => jumlahHalaman(terurut.value.length, PER))
-const barisHalaman = computed(() => potongHalaman(terurut.value, hal.value, PER))
-
-// Halaman kembali ke 1 hanya saat saringan (atau urutan) berubah, tidak saat data dimuat.
-const keHalamanSatu = () => { if (q.value.hal !== 1) setel({ hal: 1 }) }
-watch(cari, keHalamanSatu)
-watch(filterKolom, keHalamanSatu, { deep: true })
+const hal = computed(() => q.value.hal)
+const jumlahHal = computed(() => jumlahHalaman(total.value, PER))
+const barisHalaman = computed(() => semua.value.map(keBaris))
 const pilihSegmen = (s: typeof SEGMEN[number]) => setel({ seg: s, hal: 1 })
 const urutKolom = (key: string) => {
   const k = URUT.find(u => u === key)
-  if (!k) return
+  if (!k || (tanpaHitungan.value && (k === 'ruang' || k === 'tx'))) return
   const arah = q.value.urut === k ? (q.value.arah === 'asc' ? 'desc' : 'asc') : (k === 'email' || k === 'wa' ? 'asc' : 'desc')
-  setel({ urut: k, arah, hal: 1 })
+  void setel({ urut: k, arah, hal: 1 })
 }
 
 const segmenOpsi = computed(() => [
@@ -230,18 +200,15 @@ const segmenOpsi = computed(() => [
   { kunci: 'belum' as const, label: tcf('pengguna.belumCatat') },
   { kunci: 'ditangguhkan' as const, label: tcf('pengguna.ditangguhkan') },
 ])
-const terpotong = computed(() => total.value > semua.value.length)
 /** Server sudah memasang migrasi nomor WA (kolomnya ada di jawaban). */
 const serverKirimWa = computed(() => mentah.value.some(d => d.nomor_wa !== undefined))
-/** Versi tertinggi per platform di SELURUH daftar (bukan halaman ini saja). */
-const versiTerbaru = computed(() => versiTerbaruPer(semua.value))
 const serverKirimVersi = computed(() => mentah.value.some(d => d.versi_aplikasi !== undefined))
 /** Ikon platform di sel versi. Lucide tidak punya logo merek (ikon `apple`-nya
  *  buah), jadi Android/Apple dari Bootstrap Icons yang sudah terpasang. */
 const IKON_PLATFORM: Readonly<Record<'android' | 'ios' | 'web', string>> = { android: 'bi:android2', ios: 'bi:apple', web: 'lucide:globe' }
 const ikonPlatform = (p: InfoPlatform): string | null => (p.dasar ? IKON_PLATFORM[p.dasar] : null)
 /** Server menahan hitungan per orang (sesi tanpa pii): segmen berbasis tx tidak bermakna. */
-const tanpaHitungan = computed(() => semua.value.length > 0 && semua.value.every(p => p.tx === null && p.ruang === null))
+const tanpaHitungan = computed(() => !sesi.boleh('cashflow:pii'))
 const segmenButuhHitungan = (k: string) => k === 'belum' || k === 'catat7'
 
 useCashflowPintasan([{ kunci: '/', aksi: () => kolomCari.value?.focus() }])
@@ -255,7 +222,13 @@ useCashflowPintasan([{ kunci: '/', aksi: () => kolomCari.value?.focus() }])
     <p class="text-sm text-[var(--ca-muted)]">{{ tcf('pengguna.ket') }}</p>
 
     <div class="flex flex-wrap items-center gap-3">
-      <input ref="kolomCari" v-model="cari" type="search" class="ca-input w-full sm:w-64" :placeholder="tcf('umum.cari')" />
+      <form class="flex w-full gap-2 sm:w-auto" @submit.prevent="jalankanCari">
+        <input ref="kolomCari" v-model="cari" type="search" maxlength="200" class="ca-input min-w-0 flex-1 sm:w-64" :aria-label="tcf('pengguna.cariLabel')" :placeholder="tcf('pengguna.cariLabel')">
+        <button type="submit" class="rounded-xl border border-[color:var(--ca-border)] px-4 py-2 text-sm font-semibold text-[var(--ca-text)] hover:bg-[var(--ca-panel-bg-strong)]">{{ tcf('pengguna.cariTombol') }}</button>
+      </form>
+      <button type="button" class="rounded-xl border border-[color:var(--ca-border)] px-4 py-2 text-sm font-semibold text-[var(--ca-text)] hover:bg-[var(--ca-panel-bg-strong)]" @click="paletBuka = true">
+        {{ tcf('cari.server') }}
+      </button>
       <div class="flex flex-wrap gap-1 rounded-full border border-[color:var(--ca-border)] p-1 text-sm">
         <button
           v-for="s in segmenOpsi" :key="s.kunci" type="button"
@@ -267,10 +240,9 @@ useCashflowPintasan([{ kunci: '/', aksi: () => kolomCari.value?.focus() }])
           @click="pilihSegmen(s.kunci)"
         >{{ s.label }}</button>
       </div>
-      <span class="text-xs text-[var(--ca-subtle)] tabular-nums">{{ terurut.length }} / {{ semua.length }}</span>
+      <span v-if="!pesanGalat" class="text-xs text-[var(--ca-subtle)] tabular-nums">{{ memuat ? tcf('umum.memuat') : tcf('pengguna.jumlahHasil')(total) }}</span>
 
-      <!-- Sakelar kontak lengkap (email dan WhatsApp): satu ketukan, tercatat di
-           audit; mematikannya menyamarkan lagi tanpa jaringan. -->
+      <!-- Kontak lengkap: satu ketukan dan tercatat di audit. -->
       <button
         type="button" role="switch" :aria-checked="!!terbuka"
         class="ml-auto inline-flex items-center gap-3 rounded-full border border-[color:var(--ca-border)] py-1.5 pl-4 pr-1.5 text-sm font-semibold text-[var(--ca-text)] transition hover:bg-[var(--ca-panel-bg-strong)] disabled:cursor-not-allowed disabled:opacity-60"
@@ -291,28 +263,37 @@ useCashflowPintasan([{ kunci: '/', aksi: () => kolomCari.value?.focus() }])
         </span>
       </button>
     </div>
+    <p class="text-xs text-[var(--ca-subtle)]">{{ tcf('pengguna.cariKet') }}</p>
 
     <p v-if="terbuka" class="rounded-xl border border-[color:var(--ca-gold-border)] bg-[var(--ca-gold-bg)] px-4 py-2 text-xs text-[var(--ca-text)]">
       {{ tcf('pengguna.terbukaSampai')(formatJam(new Date(terbuka.sampai))) }}
     </p>
 
     <CashflowIzinKurang v-if="galat?.jenis === 'izin'" :pesan="tcf('pengguna.kontakButuhTotp')" />
-    <p v-else-if="pesanGalat" class="text-sm ca-tone-danger">{{ pesanGalat }}</p>
+    <div v-else-if="pesanGalat" class="flex flex-wrap items-center gap-3 text-sm ca-tone-danger" role="alert">
+      <span>{{ pesanGalat }}</span>
+      <button type="button" class="ca-btn-secondary !px-3 !py-1.5 text-xs" @click="muatDaftar(alasanDaftar.ambil())">{{ tcf('masuk.cobaLagi') }}</button>
+    </div>
 
     <!-- Muat gagal tanpa baris = galat saja; "Belum ada data." di bawahnya terbaca
          seolah produk tidak punya pengguna. -->
     <div v-if="!pesanGalat || semua.length" ref="wadahDaftar" class="ca-daftar-pengguna ca-console-dialog scroll-mt-24 overflow-hidden">
+      <div class="flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--ca-border)] px-4 py-4 sm:px-5">
+        <div><h2 class="font-display text-base font-bold text-[var(--ca-text)]">{{ tcf('pengguna.daftarJudul') }}</h2><p class="mt-1 text-xs text-[var(--ca-muted)]">{{ tcf('pengguna.daftarKet') }}</p></div>
+        <span class="ca-pill-muted text-xs">{{ terbuka ? tcf('pengguna.kontakPenuh') : tcf('pengguna.emailSamar') }}</span>
+      </div>
       <DataTable
         v-model:filters="filterKolom"
         :columns="kolom" :data="barisHalaman" :loading="memuat"
         :sort="{ key: q.urut, arah: q.arah }" :show-count="false"
-        empty-icon="lucide:users" :empty-text="semua.length ? tcf('umum.kosongSaring') : tcf('umum.kosong')"
+        empty-icon="lucide:users" :empty-text="cariDiterapkan || Object.keys(filterDiterapkan).length || q.seg !== 'semua' ? tcf('umum.kosongSaring') : tcf('umum.kosong')"
         @sort="urutKolom"
         @row-click="(row: Baris) => navigateTo(`/console/cashflow/pengguna/${row.id}`)"
       >
         <template #cell-email="{ row }">
           <!-- Email panjang dipotong dengan elipsis; teks lengkapnya di title. -->
           <NuxtLink :to="`/console/cashflow/pengguna/${row.id}`" class="block max-w-[10rem] truncate font-mono text-[var(--ca-text)] underline-offset-2 hover:underline" :title="row.email" @click.stop>{{ row.email }}</NuxtLink>
+          <span class="mt-0.5 block font-mono text-xs text-[var(--ca-subtle)]">ID {{ row.id.slice(0, 8) }}</span>
           <!-- Layar sempit: kolom WhatsApp disembunyikan, nomornya ikut di bawah email. -->
           <span v-if="row.wa" class="mt-0.5 block whitespace-nowrap font-mono text-xs tabular-nums text-[var(--ca-muted)] sm:hidden">
             <span class="sr-only">{{ tcf('pengguna.wa') }}: </span>{{ row.wa }}
@@ -353,15 +334,16 @@ useCashflowPintasan([{ kunci: '/', aksi: () => kolomCari.value?.focus() }])
     </div>
 
     <CashflowHalaman
-      v-if="!memuat && terurut.length"
-      :hal="hal" :jumlah-halaman="jumlahHal" :total="terurut.length" :per="PER"
+      v-if="!memuat && total"
+      :hal="hal" :jumlah-halaman="jumlahHal" :total="total" :per="PER" lompat
       @ganti="gantiHalaman"
     />
 
-    <p v-if="terpotong" class="text-xs ca-tone-gold">{{ tcf('pengguna.potong')(semua.length, total) }}</p>
+    <p v-if="!hapusTersedia" class="text-xs text-[var(--ca-subtle)]">{{ tcf('pengguna.hapusBelumTersedia') }}</p>
     <p v-if="tanpaHitungan" class="text-xs text-[var(--ca-subtle)]">{{ tcf('umum.hitunganButuhTotp') }}</p>
     <p class="text-xs text-[var(--ca-subtle)]">{{ tcf('pengguna.aktifTerakhirKet') }}</p>
     <p v-if="serverKirimVersi" class="text-xs text-[var(--ca-subtle)]">{{ tcf('pengguna.versiKet') }}</p>
+    <CashflowPalet :show="paletBuka" @close="paletBuka = false" />
   </div>
 </template>
 

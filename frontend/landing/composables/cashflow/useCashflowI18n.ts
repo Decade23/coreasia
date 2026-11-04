@@ -22,6 +22,7 @@ const KAMUS = {
       belumKonfigurasi: 'Modul CashFlow belum dikonfigurasi: NUXT_PUBLIC_CASHFLOW_SUPABASE_URL dan ANON_KEY belum dipasang.',
       tidakAda: 'Data tidak ditemukan.', tersimpan: 'Tersimpan.', kosongSaring: 'Tidak ada yang cocok dengan saringan.',
       sebelumnya: 'Sebelumnya', berikutnya: 'Berikutnya',
+      keHalaman: 'Ke halaman', pergi: 'Buka',
       halaman: (hal: number, n: number) => `Halaman ${hal} dari ${n}`,
       rentang: (a: number, b: number, total: number) => `${a}–${b} dari ${total}`,
       potong: (n: number, total: number) => `Menampilkan ${n} dari ${total} baris; sisanya terpotong batas server.`,
@@ -59,6 +60,7 @@ const KAMUS = {
       },
     },
     ringkasan: {
+      aksesCepat: 'Yang perlu ditinjau', aksesCepatKet: 'Buka daftar yang sering diperlukan.',
       judul: 'Ringkasan', ket: 'Hidup atau tidaknya produk, dalam lima detik.',
       keberhasilan: 'Orang di luar lingkaran pemilik dengan ≥ 10 transaksi dalam 14 hari',
       keberhasilanKet: (n: number) => `Ukuran keberhasilan yang disepakati. ${n} email tidak dihitung: admin dan pengecualian di Sakelar.`,
@@ -73,6 +75,10 @@ const KAMUS = {
     pengguna: {
       judul: 'Pengguna', ket: 'Email dan nomor WhatsApp tersamar secara bawaan. Sakelar Kontak lengkap membukanya, dan setiap pembukaan tercatat di audit.',
       email: 'Email', wa: 'WhatsApp', waBelum: 'Belum ada nomor WhatsApp',
+      cariLabel: 'Cari email atau WhatsApp', cariTombol: 'Cari', jumlahHasil: (n: number) => `${n} pengguna`,
+      cariKet: 'Saat tersamar, pencarian memakai email tersamar. Untuk mencari nomor atau email lengkap, buka Kontak lengkap.',
+      daftarJudul: 'Daftar pengguna', daftarKet: 'Saringan dan urutan berlaku untuk seluruh pengguna.',
+      hapusBelumTersedia: 'Status permintaan hapus akun belum tersedia di server.',
       versi: 'Versi', versiLama: 'Belum versi terbaru di daftar ini untuk platform yang sama.',
       versiKet: 'Versi = versi aplikasi terakhir yang dilaporkan HP orang itu. Warna redup berarti masih di bawah versi terbaru di daftar ini untuk platform yang sama.', daftar: 'Daftar', masuk: 'Masuk terakhir', aktifTerakhir: 'Terakhir aktif', ruang: 'Ruang', tx: 'Transaksi', status: 'Status',
       aktif: 'Aktif', ditangguhkan: 'Ditangguhkan', menungguHapus: 'Menunggu dihapus', buka: 'Buka', belumCatat: 'Tidak pernah mencatat', catat7: 'Mencatat 7 hari',
@@ -420,6 +426,7 @@ const KAMUS = {
       pertama: 'Halaman pertama',
     },
     ringkas: {
+      isiPengguna: 'Isi data pengguna', isiRuang: 'Isi data ruang', isiKet: 'Pilih bagian untuk melihat rincian dan riwayat.',
       nama: 'Nama', konfirmasi: 'Email dikonfirmasi', belumKonfirmasi: 'Belum', provider: 'Masuk lewat', sesi: 'Sesi',
       sesiNilai: (n: number, w: string) => `${n} sesi · terakhir ${w}`, mfa: 'MFA', tangguhSampai: 'Ditangguhkan sampai',
       dalamLingkup: (n: number) => `${n} dalam lingkup kasus`, dicatatDalamLingkup: 'Dicatat olehnya, dalam lingkup',
@@ -427,6 +434,7 @@ const KAMUS = {
       catatanAngka: 'Angka transaksi dari ruang dalam lingkup kasus. Bersih = uang yang benar-benar berpindah (tanpa kaki transfer, penjualan kasbon, dan dompet terarsip), sama dengan Beranda aplikasi.',
     },
     ruangTab: {
+      bukaRuang: 'Buka isi ruang',
       dalam: (n: number) => `Dalam lingkup kasus (${n})`, luar: (n: number) => `Di luar lingkup (${n})`,
       luarKet: 'Di luar lingkup: nama tersamar, tanpa angka anggota lain. Memasukkan ruang ke lingkup tercatat di kasus.',
       bekas: 'bekas anggota', txDiaJumlah: (n: number) => `${n} transaksi olehnya`,
@@ -616,6 +624,7 @@ const KAMUS = {
       gagal: 'Gagal membuka kasus.',
     },
     hapusAkun: {
+      dataTetap: 'Data tetap tersimpan sampai penghapusan permanen. Selama menunggu, pengguna tidak dapat masuk.',
       judul: 'Hapus akun',
       ket: 'Permintaan hapus akun dari aplikasi dan surel. Datanya baru hilang setelah dihapus permanen di sini.',
       saring: 'Saring status',
@@ -717,6 +726,7 @@ const KAMUS = {
       belumKonfigurasi: 'CashFlow module is not configured: NUXT_PUBLIC_CASHFLOW_SUPABASE_URL and ANON_KEY are missing.',
       tidakAda: 'Not found.', tersimpan: 'Saved.', kosongSaring: 'Nothing matches the filters.',
       sebelumnya: 'Previous', berikutnya: 'Next',
+      keHalaman: 'Go to page', pergi: 'Go',
       halaman: (hal: number, n: number) => `Page ${hal} of ${n}`,
       rentang: (a: number, b: number, total: number) => `${a}–${b} of ${total}`,
       potong: (n: number, total: number) => `Showing ${n} of ${total} rows; the rest is cut off by the server limit.`,
@@ -754,6 +764,7 @@ const KAMUS = {
       },
     },
     ringkasan: {
+      aksesCepat: 'Quick access', aksesCepatKet: 'Open frequently used lists.',
       judul: 'Overview', ket: 'Whether the product is alive, in five seconds.',
       keberhasilan: 'People outside the owner\'s circle with ≥ 10 transactions in 14 days',
       keberhasilanKet: (n: number) => `The agreed success metric. ${n} ${n === 1 ? 'email is' : 'emails are'} not counted: admins and exclusions in Switches.`,
@@ -768,6 +779,10 @@ const KAMUS = {
     pengguna: {
       judul: 'Users', ket: 'Emails and WhatsApp numbers are masked by default. The Full contact switch reveals them, and every reveal is recorded in the audit log.',
       email: 'Email', wa: 'WhatsApp', waBelum: 'No WhatsApp number yet',
+      cariLabel: 'Search email or WhatsApp', cariTombol: 'Search', jumlahHasil: (n: number) => `${n} users`,
+      cariKet: 'While masked, search uses masked emails. Turn on Full contact to search full emails or numbers.',
+      daftarJudul: 'Users', daftarKet: 'Filters and sorting apply to all users.',
+      hapusBelumTersedia: 'Account deletion request status is not available on the server yet.',
       versi: 'Version', versiLama: 'Not the newest version in this list for the same platform.',
       versiKet: 'Version = the last app version this person\'s phone reported. Dimmed means it is still below the newest version in this list for the same platform.', daftar: 'Signed up', masuk: 'Last sign-in', aktifTerakhir: 'Last active', ruang: 'Workspaces', tx: 'Transactions', status: 'Status',
       aktif: 'Active', ditangguhkan: 'Suspended', menungguHapus: 'Pending deletion', buka: 'Open', belumCatat: 'Never recorded', catat7: 'Recorded in 7 days',
@@ -1119,6 +1134,7 @@ const KAMUS = {
       pertama: 'First page',
     },
     ringkas: {
+      isiPengguna: 'User data', isiRuang: 'Workspace data', isiKet: 'Choose a section to see its details and history.',
       nama: 'Name', konfirmasi: 'Email confirmed', belumKonfirmasi: 'Not yet', provider: 'Signs in with', sesi: 'Sessions',
       sesiNilai: (n: number, w: string) => `${n} ${n === 1 ? 'session' : 'sessions'} · last ${w}`, mfa: 'MFA', tangguhSampai: 'Suspended until',
       dalamLingkup: (n: number) => `${n} in the case's scope`, dicatatDalamLingkup: 'Recorded by them, in scope',
@@ -1126,6 +1142,7 @@ const KAMUS = {
       catatanAngka: 'Transaction figures cover workspaces in the case\'s scope. Net = money that actually moved (no transfer legs, credit sales, or archived wallets), same as the app\'s Home.',
     },
     ruangTab: {
+      bukaRuang: 'Open workspace',
       dalam: (n: number) => `In the case's scope (${n})`, luar: (n: number) => `Outside the scope (${n})`,
       luarKet: 'Outside the scope: masked names, no figures of other members. Adding a workspace to the scope is recorded in the case.',
       bekas: 'former member', txDiaJumlah: (n: number) => `${n} ${n === 1 ? 'transaction' : 'transactions'} by them`,
@@ -1315,6 +1332,7 @@ const KAMUS = {
       gagal: 'Could not open the case.',
     },
     hapusAkun: {
+      dataTetap: 'Data remains available until permanent deletion. The user cannot sign in while the request is pending.',
       judul: 'Account deletion',
       ket: 'Deletion requests from the app and by email. Nothing is removed until you delete it permanently here.',
       saring: 'Filter by status',

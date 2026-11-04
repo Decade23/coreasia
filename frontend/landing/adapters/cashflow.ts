@@ -67,6 +67,8 @@ export interface PenggunaDTO {
   jumlah_ruang: number | null
   jumlah_tx: number | null
   total_semua: number
+  /** null bila fitur permintaan hapus belum tersedia di server. */
+  menunggu_hapus?: boolean | null
 }
 export interface CorongDTO { urut: number; langkah: string; jumlah: number }
 /** Nilai jsonb apa adanya (app_config.value, admin_audit.detail, admin_config_buka). */
@@ -432,7 +434,7 @@ export function kePengguna(d: PenggunaDTO, bahasa: BahasaWaktu = 'id', menungguH
     aktivitasTerakhirIso: aktifIso ?? null,
     ruang: angkaAtauNull(d.jumlah_ruang),
     tx: angkaAtauNull(d.jumlah_tx),
-    status: menungguHapus.has(d.user_id) ? 'menunggu_hapus' : ditangguhkan ? 'ditangguhkan' : 'aktif',
+    status: (d.menunggu_hapus === true || menungguHapus.has(d.user_id)) ? 'menunggu_hapus' : ditangguhkan ? 'ditangguhkan' : 'aktif',
     hariAktif,
     hariSejakAktif,
   }

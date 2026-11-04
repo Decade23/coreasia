@@ -47,7 +47,8 @@ describe('Fase 2: rute Ruang 360', () => {
     const tautan = /:to="`\/console\/cashflow\/ruang\/\$\{r\.id\}`"/g
     const dalam = f.slice(f.indexOf('v-for="r in dalam"'), f.indexOf('v-for="r in luar"'))
     const luar = f.slice(f.indexOf('v-for="r in luar"'))
-    expect((dalam.match(tautan) ?? []).length).toBe(1)
+    // Nama dan tombol "Buka isi ruang" sama-sama hanya ada di dalam lingkup.
+    expect((dalam.match(tautan) ?? []).length).toBe(2)
     // Ruang di luar lingkup → Ruang 360 akan membuka kasus ruang kedua; lewat "Masukkan ke lingkup" dulu.
     expect(luar).not.toMatch(/\/console\/cashflow\/ruang\/|<NuxtLink/)
     expect(luar).toMatch(/@click="masukkan\(r\)"/)

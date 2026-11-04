@@ -113,16 +113,17 @@ describe('useCashflowAdmin ↔ toko/uji-console-rpc.sql', () => {
     expect(namaRpcAdmin().length).toBeGreaterThan(20)
   })
 
-  it.skipIf(!adaUji)(`blok ⟦rpc-console⟧ memanggil persis RPC useCashflowAdmin (${BERKAS_UJI})`, () => {
+  it.skipIf(!adaUji)(`blok ⟦rpc-console⟧ mencakup semua RPC useCashflowAdmin (${BERKAS_UJI})`, () => {
     const uji = namaRpcUji()
     expect(new Set(uji).size).toBe(uji.length)
-    expect(uji).toEqual(namaRpcAdmin())
+    // Repo backend boleh sudah menguji RPC untuk frontend yang lebih baru.
+    for (const nama of namaRpcAdmin()) expect(uji).toContain(nama)
   })
 
-  it.skipIf(!adaUji)('daftar di kepala uji = pasangan metode → RPC di useCashflowAdmin', () => {
+  it.skipIf(!adaUji)('daftar di kepala uji mencakup pasangan metode → RPC di useCashflowAdmin', () => {
     const kepala = daftarKepalaUji()
     const admin = rpcAdmin()
-    expect([...kepala.entries()].sort()).toEqual([...admin.entries()].sort())
+    for (const [metode, rpc] of admin) expect(kepala.get(metode), metode).toBe(rpc)
   })
 
   it.skipIf(!adaUji)('uji menerapkan penjagaan 0088 dan berakhir rollback', () => {

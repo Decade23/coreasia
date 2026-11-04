@@ -13,19 +13,30 @@ definePageMeta({
   scrollToTop: (to, from) => to.params.id !== from.params.id,
 })
 import { rupiah, angka } from '~/adapters/cashflow'
+import { TAB_RUANG, lencanaTabRuang, type TabRuang } from '~/adapters/cashflowRuang'
 
 const { tcf, formatTanggal, formatWaktu } = useCashflowI18n()
-const { kunci360, r360, muat360, labelOrang } = useCashflowRuang()
+const { dasar, kepala, kunci360, r360, muat360, labelOrang } = useCashflowRuang()
 const { memuat, galat, pesanGalat, muat } = useCashflowMuat()
 
 watch(kunci360, (k) => { if (k && !r360.value) muat(muat360) }, { immediate: true })
 
 const ruang = computed(() => r360.value?.ruang ?? null)
+const ikon: Record<Exclude<TabRuang, ''>, string> = {
+  anggota: 'lucide:users', transaksi: 'lucide:receipt-text', dompet: 'lucide:wallet',
+  katalog: 'lucide:book-open', jadwal: 'lucide:calendar', usaha: 'lucide:store',
+  struk: 'lucide:receipt', jejak: 'lucide:history', sampah: 'lucide:trash-2', akses: 'lucide:shield-check',
+}
+const bagian = computed(() => TAB_RUANG.filter((t): t is Exclude<TabRuang, ''> => !!t).map(t => ({
+  kunci: t, label: tcf(`tabRuang.${t}`), to: `${dasar.value}/${t}`, ikon: ikon[t],
+  jumlah: lencanaTabRuang(t, r360.value?.hitung ?? null, kepala.value?.akses30 ?? null),
+})))
 </script>
 
 <template>
   <CashflowPanelTab ranah="ruang" :memuat="memuat" :galat="galat" :pesan-galat="pesanGalat" :ada-data="!!r360">
     <div v-if="r360 && ruang" class="space-y-4">
+      <div class="grid items-start gap-4 xl:grid-cols-2">
       <section class="ca-console-dialog p-4 sm:p-5">
         <div class="flex flex-wrap items-center gap-2">
           <h3 class="break-all text-base font-bold text-[var(--ca-text)] sm:text-lg">{{ ruang.nama }}</h3>
@@ -50,6 +61,8 @@ const ruang = computed(() => r360.value?.ruang ?? null)
         </dl>
         <p class="mt-2 text-xs text-[var(--ca-subtle)]">{{ tcf('r360.caraBayarKet') }}</p>
       </section>
+      <CashflowIsiData :judul="tcf('ringkas.isiRuang')" :keterangan="tcf('ringkas.isiKet')" :bagian="bagian" />
+      </div>
 
       <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <CashflowStatTile icon="lucide:users" warna="sky" :label="tcf('r360.anggota')" :nilai="angka(r360.hitung.anggota)" :keterangan="tcf('r360.bekasJumlah')(r360.hitung.bekas_anggota)" />

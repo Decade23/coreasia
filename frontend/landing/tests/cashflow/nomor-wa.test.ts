@@ -279,13 +279,14 @@ describe('indeks palet tidak memegang nomor', () => {
 describe('halaman daftar pengguna memakai satu jalur pembersih', () => {
   const SRC = readFileSync(fileURLToPath(new URL('../../pages/console/cashflow/pengguna/index.vue', import.meta.url)), 'utf8')
   it('muat tanpa alasan dan sakelar mati sama-sama lewat tanpaKontakUtuh', () => {
-    expect(SRC).toMatch(/mentah\.value = alasan \? rows : tanpaKontakUtuh\(rows\)/)
+    expect(SRC).toMatch(/mentah\.value = alasan \? hasil\.baris : tanpaKontakUtuh\(hasil\.baris\)/)
     expect(SRC).toMatch(/mentah\.value = tanpaKontakUtuh\(mentah\.value\)/)
     // Pembersih lama yang hanya menyamarkan email tidak boleh kembali.
     expect(SRC).not.toMatch(/tanpaEmailUtuh/)
   })
-  it('pencarian nomor lewat nomorPenuh (null selagi tersamar)', () => {
-    expect(SRC).toMatch(/nomorWaCocok\(p\.nomorPenuh, k\)/)
+  it('pencarian nomor dikirim ke server bersama keadaan kontak', () => {
+    expect(SRC).toMatch(/cari: cariDiterapkan\.value\.trim\(\)/)
+    expect(SRC).toMatch(/alasan: alasan\?\.alasan \?\? null/)
   })
   it('alasan audit sakelar cukup panjang untuk server (≥ 8 aksara) dan menyebut kontak', () => {
     const alasan = SRC.match(/const ALASAN_SAKELAR = '([^']+)'/)?.[1] ?? ''

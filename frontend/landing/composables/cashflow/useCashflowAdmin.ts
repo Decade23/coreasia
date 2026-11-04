@@ -103,6 +103,11 @@ import { urlBerkasSah } from '~/adapters/cashflowLampiran'
 import type { RingkasDukunganDTO, DaftarDukunganDTO, SumberDukungan, StatusDukungan } from '~/adapters/cashflowDukungan'
 import { BATAS_DAFTAR_DUKUNGAN } from '~/adapters/cashflowDukungan'
 
+interface OpsiDaftarPengguna {
+  limit: number; offset: number; cari: string; segmen: string; urut: string; arah: string
+  filter: Record<string, string>; bahasa: string; alasan: string | null
+}
+
 /* DTO sakelar pindah ke adapter (bertipe, tanpa any); diekspor ulang
    supaya impor lama dari berkas ini tetap jalan. */
 export type { ConfigDTO } from '~/adapters/cashflow'
@@ -331,6 +336,12 @@ export const useCashflowAdmin = () => {
      *  utuh dan menulis SATU baris audit untuk seluruh daftar (0081). */
     daftarPengguna: (limit = 50, offset = 0, cari = '', alasan: string | null = null) =>
       rpc<PenggunaDTO[]>('admin_daftar_pengguna_v2', { p_limit: limit, p_offset: offset, p_cari: cari || null, p_alasan: alasan }),
+    /** v3: saring, urut, dan potong dilakukan server atas seluruh pengguna. */
+    daftarPenggunaHalaman: (p: OpsiDaftarPengguna) =>
+      rpc<{ total: number; baris: PenggunaDTO[]; versi_terbaru: Record<string, string>; hapus_tersedia: boolean }>('admin_daftar_pengguna_v3', {
+        p_limit: p.limit, p_offset: p.offset, p_cari: p.cari || null, p_segmen: p.segmen,
+        p_urut: p.urut, p_arah: p.arah, p_filter: p.filter, p_bahasa: p.bahasa, p_alasan: p.alasan,
+      }),
     /** v2: nama & pemilik tersamar DI SERVER; `cari` hanya mencocokkan bentuk
      *  tersamar (atau id ruang persis), jadi aman dikirim tanpa alasan. */
     daftarRuang: (limit = 50, offset = 0, cari = '', jenis: JenisRuang | null = null) =>

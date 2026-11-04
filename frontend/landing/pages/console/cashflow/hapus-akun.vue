@@ -138,6 +138,11 @@ useConsoleRemah().pasang(() => [
     <ConsolePageHeader :title="tcf('hapusAkun.judul')" kicker="CashFlow"><template #meta><CashflowNav /></template></ConsolePageHeader>
     <p class="text-sm text-[var(--ca-muted)]">{{ tcf('hapusAkun.ket') }}</p>
 
+    <div class="flex items-start gap-3 rounded-xl border border-[color:var(--ca-gold-border)] bg-[var(--ca-gold-bg)] px-4 py-3 text-sm text-[var(--ca-text)]">
+      <Icon name="lucide:shield-check" class="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
+      <span>{{ tcf('hapusAkun.dataTetap') }}</span>
+    </div>
+
     <div class="flex flex-wrap items-center gap-2">
       <div class="flex flex-wrap gap-1 rounded-full border border-[color:var(--ca-border)] p-1 text-sm" role="group" :aria-label="tcf('hapusAkun.saring')">
         <button

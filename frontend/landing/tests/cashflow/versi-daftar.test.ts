@@ -144,7 +144,7 @@ describe('halaman daftar pengguna: kolom Versi', () => {
     expect(SRC.indexOf("key: 'versi'")).toBeGreaterThan(SRC.indexOf("key: 'wa'"))
     expect(SRC.indexOf("key: 'versi'")).toBeLessThan(SRC.indexOf("key: 'daftar'"))
     expect(SRC).toMatch(/key: 'versi'[^\n]*class: 'hidden[^']*sm:table-cell', headerClass: 'hidden sm:table-cell'/)
-    expect(SRC).toMatch(/versi: \{ jenis: 'teks', nilai: b => b\.p\.kunciVersi \}/)
+    expect(SRC).toMatch(/urut: q\.value\.urut/)
     expect(SRC).toMatch(/const URUT = \[[^\]]*'versi'/)
   })
   it('sel versi: ikon platform ber-aria-label, titik untuk varian uji, nomor versinya saja', () => {
@@ -157,13 +157,13 @@ describe('halaman daftar pengguna: kolom Versi', () => {
     expect(SRC).toMatch(/class="block max-w-\[10rem\] truncate font-mono[^"]*" :title="row\.email"/)
     expect(SRC).toMatch(/key: 'ruang'[^\n]*filterable: false/)
     expect(SRC).toMatch(/key: 'tx'[^\n]*filterable: false/)
-    // Isian saringan lama untuk kolom tanpa tombol tidak ikut menyaring.
-    expect(SRC).toMatch(/saringKolom\(lolos\.map\(keBaris\), filterKolom\.value, kolom\.value\.filter\(c => c\.filterable !== false\)\)/)
+    // Server hanya menerima saringan kolom yang memang disediakan.
+    expect(SRC).toMatch(/\['email', 'wa', 'versi', 'daftar', 'aktif', 'status'\]\.includes\(k\)/)
     const tabel = readFileSync(fileURLToPath(new URL('../../components/ui/DataTable.vue', import.meta.url)), 'utf8')
     expect(tabel).toMatch(/<CaTooltip v-if="col\.filterable !== false"/)
   })
   it('versi terbaru dihitung atas SEMUA baris, bukan halaman yang tampil', () => {
-    expect(SRC).toMatch(/const versiTerbaru = computed\(\(\) => versiTerbaruPer\(semua\.value\)\)/)
+    expect(SRC).toMatch(/versiTerbaru\.value = new Map\(Object\.entries\(hasil\.versi_terbaru/)
   })
   it('label dan keterangan ada di ID dan EN', () => {
     for (const b of ['id', 'en'] as const) {

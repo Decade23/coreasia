@@ -208,6 +208,7 @@ const formatDate = (d: string) => formatDateTime(d)
                     type="button"
                     class="rounded p-0.5 transition"
                     :class="columnFilters[col.key] ? 'text-brand-primary' : 'text-[var(--ca-subtle)] hover:text-[var(--ca-muted)]'"
+                    :aria-label="`Filter ${col.label}`"
                     @click.stop="toggleFilter(col.key)"
                   >
                     <Icon name="lucide:more-vertical" class="h-3.5 w-3.5" />

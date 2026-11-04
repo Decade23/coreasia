@@ -59,7 +59,7 @@ const kohort = computed(() => keKohort(retensi.value))
         <CashflowStatTile icon="lucide:layers" warna="sky" :label="tcf('ringkasan.ruang')" :nilai="angka(stats.total_ruang)" />
       </div>
 
-      <div class="grid gap-6 lg:grid-cols-2">
+      <div class="grid gap-6 lg:grid-cols-[2fr_1fr]">
         <section class="ca-console-dialog p-5">
           <h2 class="font-display text-base font-bold text-[var(--ca-text)]">{{ tcf('ringkasan.perHari') }}</h2>
           <div class="mt-4">
@@ -67,7 +67,21 @@ const kohort = computed(() => keKohort(retensi.value))
             <CashflowKeadaanKosong v-else :pesan="tcf('ringkasan.sedikit')(titikIsi, 3)" icon="lucide:activity" />
           </div>
         </section>
+        <section class="ca-console-dialog p-5">
+          <h2 class="font-display text-base font-bold text-[var(--ca-text)]">{{ tcf('ringkasan.aksesCepat') }}</h2>
+          <p class="mt-1 text-xs text-[var(--ca-subtle)]">{{ tcf('ringkasan.aksesCepatKet') }}</p>
+          <div class="mt-4 divide-y divide-[color:var(--ca-border)]">
+            <NuxtLink to="/console/cashflow/hapus-akun" class="flex items-center justify-between gap-3 py-3 text-sm font-semibold text-[var(--ca-text)] hover:text-[var(--ca-brand-deep)]">
+              {{ tcf('nav.hapusAkun') }} <Icon name="lucide:chevron-right" class="h-4 w-4" aria-hidden="true" />
+            </NuxtLink>
+            <NuxtLink to="/console/cashflow/pengguna" class="flex items-center justify-between gap-3 py-3 text-sm font-semibold text-[var(--ca-text)] hover:text-[var(--ca-brand-deep)]">
+              {{ tcf('pengguna.daftarJudul') }} <Icon name="lucide:chevron-right" class="h-4 w-4" aria-hidden="true" />
+            </NuxtLink>
+          </div>
+        </section>
+      </div>
 
+      <div class="grid gap-6 lg:grid-cols-2">
         <section class="ca-console-dialog p-5">
           <h2 class="font-display text-base font-bold text-[var(--ca-text)]">{{ tcf('ringkasan.corong') }}</h2>
           <p class="mt-1 text-xs text-[var(--ca-subtle)]">{{ tcf('ringkasan.corongKet') }}</p>
@@ -76,15 +90,14 @@ const kohort = computed(() => keKohort(retensi.value))
             <CashflowKeadaanKosong v-else :pesan="tcf('umum.kosong')" />
           </div>
         </section>
+        <section class="ca-console-dialog p-5">
+          <h2 class="font-display text-base font-bold text-[var(--ca-text)]">{{ tcf('ringkasan.kohort') }}</h2>
+          <div class="mt-4">
+            <CashflowCohortGrid v-if="kohort.some(k => k.mendaftar > 0)" :baris="kohort" />
+            <CashflowKeadaanKosong v-else :pesan="tcf('umum.kosong')" icon="lucide:grid-2x2" />
+          </div>
+        </section>
       </div>
-
-      <section class="ca-console-dialog p-5">
-        <h2 class="font-display text-base font-bold text-[var(--ca-text)]">{{ tcf('ringkasan.kohort') }}</h2>
-        <div class="mt-4">
-          <CashflowCohortGrid v-if="kohort.some(k => k.mendaftar > 0)" :baris="kohort" />
-          <CashflowKeadaanKosong v-else :pesan="tcf('umum.kosong')" icon="lucide:grid-2x2" />
-        </div>
-      </section>
     </template>
   </div>
 </template>

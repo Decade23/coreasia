@@ -327,12 +327,12 @@ describe('daftar pengguna: "Menunggu dihapus" menggantikan "Ditangguhkan"', () =
       expect(baca(f), f).not.toMatch(/\.map\(kePengguna\)/)
     }
   })
-  it('halaman daftar memuat permintaan menunggu terpisah, gagalnya tidak menutup daftar', () => {
+  it('status menunggu dikirim per halaman, tanpa batas 500 permintaan', () => {
     const f = baca('pages/console/cashflow/pengguna/index.vue')
-    expect(f).toMatch(/api\.hapusAkunDaftar\('menunggu', BATAS_BADGE_HAPUS\)\.then\(\(r\) => \{ menungguHapus\.value = idMenungguHapus\(r\) \}\)\.catch\(\(\) => \{\}\)/)
-    expect(BATAS_BADGE_HAPUS).toBeLessThanOrEqual(500)
-    expect(f).toMatch(/kePengguna\(d, bahasa\.value, menungguHapus\.value\)/)
-    expect(f).toMatch(/if \(q\.value\.seg === 'ditangguhkan'\) return p\.status === 'ditangguhkan'/)
+    expect(f).toMatch(/api\.daftarPenggunaHalaman/)
+    expect(f).toMatch(/hapusTersedia\.value = hasil\.hapus_tersedia/)
+    expect(kePengguna({ ...pengguna(U1, '2126-01-01T00:00:00Z'), menunggu_hapus: true }).status).toBe('menunggu_hapus')
+    expect(kePengguna({ ...pengguna(U1, null), menunggu_hapus: null }).status).toBe('aktif')
     expect(f).toMatch(/tcf\('pengguna\.menungguHapus'\)/)
   })
 })

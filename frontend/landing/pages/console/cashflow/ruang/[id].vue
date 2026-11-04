@@ -112,7 +112,7 @@ useCashflowPintasan([
 
       <CashflowKasusBilah />
 
-      <div ref="barisTab" class="scroll-mt-24"><CashflowTab :items="tab" /></div>
+      <div ref="barisTab" class="scroll-mt-24"><CashflowTab :items="tab" semua-terlihat /></div>
 
       <NuxtPage />
     </template>

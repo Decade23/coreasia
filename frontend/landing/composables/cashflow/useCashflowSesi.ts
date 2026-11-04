@@ -107,6 +107,7 @@ export const useCashflowSesi = () => {
     simpanIzin(null)
     useCashflowIndeks().kosongkan()
     useState<string>('cf_cari_pengguna', () => '').value = ''
+    useState<string>('cf_cari_diterapkan_pengguna', () => '').value = ''
     useState<Record<string, string>>('cf_saring_kolom_pengguna', () => ({})).value = {}
     // Pengguna 360 (Fase 1): kepala T0, id sorotan, saringan kasus di /audit,
     // total riwayat akses, dan nominal saringan transaksi per subjek.
