@@ -1,0 +1,101 @@
+/** Nuxt lengkap + backend/Reatime Supabase LOKAL. Chrome headless/CDP.
+ * Jalankan setelah build dan migrasi stack cf-pengumuman lokal.
+ * CF_QA_CASHFLOW_SOURCE dan PLAYWRIGHT_CORE_PATH wajib menunjuk checkout/modul.
+ * Kredensial dibuat hanya untuk stack lokal; gateway login saja yang ditiru.
+ */
+import assert from 'node:assert/strict';
+import {spawn,execFileSync} from 'node:child_process';
+import {createHmac,randomUUID} from 'node:crypto';
+import {mkdir,mkdtemp,rm,writeFile} from 'node:fs/promises';
+import {createServer} from 'node:net';
+import {tmpdir} from 'node:os';
+import {dirname,resolve,join} from 'node:path';
+import {fileURLToPath,pathToFileURL} from 'node:url';
+import {createRequire} from 'node:module';
+const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
+assert.ok(process.env.CF_QA_CASHFLOW_SOURCE);assert.ok(process.env.PLAYWRIGHT_CORE_PATH);
+const require=createRequire(join(process.env.CF_QA_CASHFLOW_SOURCE,'package.json'));
+const {createClient}=require('@supabase/supabase-js');
+const {chromium}=await import(pathToFileURL(process.env.PLAYWRIGHT_CORE_PATH).href);
+const wadah='supabase_db_cf-pengumuman-20261105';
+const env=JSON.parse(execFileSync('docker',['inspect',wadah.replace('_db_','_realtime_')],{encoding:'utf8'}))[0].Config.Env;
+const secret=env.find(v=>v.startsWith('API_JWT_SECRET=')).split('=').slice(1).join('=');
+const jwt=claims=>{const b=v=>Buffer.from(JSON.stringify(v)).toString('base64url');const s=b({alg:'HS256',typ:'JWT'})+'.'+b({iss:'supabase',iat:Math.floor(Date.now()/1000),exp:Math.floor(Date.now()/1000)+3600,...claims});return s+'.'+createHmac('sha256',secret).update(s).digest('base64url');};
+const id=randomUUID(),judulAwal='Kabar CashFlow '+id.slice(0,8),judulAkhir='Pengumuman diperbarui '+id.slice(0,8),token=jwt({sub:id,role:'authenticated',aal:'aal2'}),anon=jwt({role:'anon'});
+const sql=q=>execFileSync('docker',['exec','-i',wadah,'psql','-U','postgres','-X','-q','-v','ON_ERROR_STOP=1'],{input:q,encoding:'utf8'});
+sql(`insert into auth.users(id,email) values('${id}','${id}@contoh.invalid');insert into public.admin_users(user_id,role,lewat_konsol) values('${id}','superadmin',false);`);
+const sb=createClient('http://127.0.0.1:55321',anon,{accessToken:async()=>token,auth:{persistSession:false,autoRefreshToken:false}});
+const free=async()=>{const s=createServer();await new Promise(r=>s.listen(0,'127.0.0.1',r));const p=s.address().port;await new Promise(r=>s.close(r));return p;};
+const port=await free(),cdp=await free(),base=`http://127.0.0.1:${port}`;
+const output=process.env.CF_QA_ARTIFACTS;assert.ok(output);await mkdir(output,{recursive:true});
+const logs=[];
+const server=spawn(process.execPath,['.output/server/index.mjs'],{cwd:root,env:{...process.env,NITRO_HOST:'127.0.0.1',NITRO_PORT:String(port),NUXT_PUBLIC_CASHFLOW_SUPABASE_URL:'http://127.0.0.1:55321',NUXT_PUBLIC_CASHFLOW_SUPABASE_ANON_KEY:anon},stdio:['ignore','pipe','pipe']});
+server.stdout.on('data',b=>logs.push(b.toString()));server.stderr.on('data',b=>logs.push(b.toString()));
+const profile=await mkdtemp(join(tmpdir(),'cf-pengumuman-qa-'));
+const chrome=spawn('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',['--headless=new',`--user-data-dir=${profile}`,`--remote-debugging-port=${cdp}`,'--no-first-run','--no-default-browser-check','--window-size=1440,1000','about:blank'],{stdio:'ignore'});
+let browser;const checks=[],errors=[];
+const check=(n,v=true)=>{assert.ok(v,n);checks.push(n);};
+const pause=ms=>new Promise(r=>setTimeout(r,ms));
+const poll=async(fn)=>{for(let i=0;i<100;i++){try{if(await fn())return;}catch{}await pause(100);}throw Error('Layanan belum siap');};
+const rpc=async(n,p)=>{const r=await sb.rpc(n,p);if(r.error)throw Error(`${n}: ${r.error.code}`);return r.data;};
+try {
+  await poll(async()=> (await fetch(base+'/console/cashflow/pengumuman')).ok);
+  await poll(async()=> (await fetch(`http://127.0.0.1:${cdp}/json/version`)).ok);
+  browser=await chromium.connectOverCDP(`http://127.0.0.1:${cdp}`);const ctx=browser.contexts()[0];
+  await ctx.addInitScript(({token,id})=>{sessionStorage.setItem('cf-console-sesi',JSON.stringify({access_token:token,refresh_token:'lokal-tidak-diperpanjang',expires_at:Math.floor(Date.now()/1000)+3600,expires_in:3600,token_type:'bearer',user:{id,aud:'authenticated',role:'authenticated',email:'admin@contoh.invalid'}}));sessionStorage.setItem('cf_izin',JSON.stringify(['cashflow:view','cashflow:pii','cashflow:investigasi','cashflow:tindak']));},{token,id});
+  await ctx.route('**/*',r=>{const u=new URL(r.request().url());
+    if(u.origin===base&&u.pathname==='/api/gw/admin/auth/me')return r.fulfill({json:{data:{id,email:'admin@contoh.invalid',full_name:'Admin Contoh',role:'super_admin',is_active:true,mfa:true,mfa_at:new Date().toISOString()}}});
+    if(u.origin===base||u.origin==='http://127.0.0.1:55321')return r.continue();
+    return r.abort();
+  });
+  const a=ctx.pages()[0],b=await ctx.newPage();for(const p of [a,b]){await p.setViewportSize({width:1440,height:1000});p.on('pageerror',e=>errors.push(e.message));}
+  await a.goto(base+'/console/cashflow/pengumuman',{waitUntil:'domcontentloaded'});
+  await a.getByText('Tersambung',{exact:true}).waitFor();check('saluran realtime diizinkan CSP dan tersambung');
+  await a.getByRole('button',{name:'Buat pengumuman',exact:true}).click();
+  await a.locator('#cf-p-judul').fill(judulAwal);await a.locator('#cf-p-isi').fill('Catatan pengeluaran kini lebih mudah dibaca.');
+  await a.locator('#cf-p-tombol').fill('Lihat panduan');await a.locator('#cf-p-url').fill('https://coreasia.id/panduan');await a.locator('#cf-p-alasan').fill('Uji antarmuka lokal');
+  check('pratinjau menampilkan judul isi dan tombol',await a.locator('.cf-spanduk').getByRole('link',{name:'Lihat panduan'}).isVisible());
+  check('pratinjau menampilkan domain',await a.locator('.cf-domain').innerText()==='coreasia.id');
+  check('tautan membuka tab terpisah tanpa opener',await a.locator('.cf-tombol').getAttribute('target')==='_blank'&&(await a.locator('.cf-tombol').getAttribute('rel')).includes('noopener'));
+  await a.locator('#cf-p-url').fill('http://coreasia.id');await a.getByRole('button',{name:'Simpan',exact:true}).click();
+  check('URL HTTP ditolak sebelum diterbitkan',await a.locator('#cf-p-judul').isVisible()&&!(await rpc('admin_daftar_pengumuman')).some(x=>x.title===judulAwal));
+  await a.locator('#cf-p-url').fill('https://coreasia.id/panduan');await a.getByRole('button',{name:'Simpan',exact:true}).click();
+  const row=p=>p.locator('tbody tr').filter({hasText:judulAwal});
+  await row(a).waitFor();check('buat tersimpan melalui RPC nyata',true);
+  const dibuat=(await rpc('admin_daftar_pengumuman')).find(x=>x.title===judulAwal);
+  await b.goto(base+'/console/cashflow/pengumuman',{waitUntil:'domcontentloaded'});await b.getByText('Tersambung',{exact:true}).waitFor();await row(b).waitFor();
+  await row(a).getByRole('button',{name:'Sunting',exact:true}).click();await a.locator('#cf-p-judul').fill('Draf tab pertama');
+  await row(b).getByRole('button',{name:'Sunting',exact:true}).click();await b.locator('#cf-p-judul').fill('Hasil tab kedua');await b.locator('#cf-p-alasan').fill('Sunting dari tab kedua');await b.getByRole('button',{name:'Simpan perubahan',exact:true}).click();
+  await a.getByRole('button',{name:'Muat versi terbaru',exact:true}).waitFor();
+  check('edit tab kedua memperbarui tab pertama secara realtime',true);
+  check('draf tidak ditimpa oleh pembaruan',await a.locator('#cf-p-judul').inputValue()==='Draf tab pertama');
+  check('simpan versi lama dinonaktifkan',await a.getByRole('button',{name:'Simpan perubahan',exact:true}).isDisabled());
+  await a.getByRole('button',{name:'Muat versi terbaru',exact:true}).click();
+  check('muat versi terbaru mengisi hasil tab kedua',await a.locator('#cf-p-judul').inputValue()==='Hasil tab kedua');
+  await a.locator('#cf-p-judul').fill(judulAkhir);await a.locator('#cf-p-level').selectOption('warning');await a.locator('#cf-p-alasan').fill('Sunting lanjutan lokal');
+  await a.waitForFunction(()=>document.querySelectorAll('.ca-toast').length===0,{},{timeout:12000});
+  await a.waitForTimeout(350);
+  await a.screenshot({path:join(output,'console-sunting-terang.png')});
+  await a.setViewportSize({width:390,height:844});await a.evaluate(()=>document.documentElement.dataset.theme='dark');
+  await a.waitForTimeout(300);
+  check('form ponsel tidak meluber',await a.evaluate(()=>document.documentElement.scrollWidth<=390));await a.screenshot({path:join(output,'console-sunting-ponsel-gelap.png')});
+  check('isian tema gelap mengikuti warna Console',await a.locator('#cf-p-judul').evaluate(e=>{const s=getComputedStyle(e);return s.color==='rgb(248, 250, 252)'&&s.backgroundColor.startsWith('rgba(15, 23, 42');}));
+  await a.locator('.cf-pratinjau').scrollIntoViewIfNeeded();check('pratinjau dan tombol dapat dijangkau pada ponsel',await a.locator('.cf-tombol').isVisible());await a.screenshot({path:join(output,'console-pratinjau-ponsel-gelap.png')});
+  await a.setViewportSize({width:1440,height:1000});await a.evaluate(()=>document.documentElement.dataset.theme='light');
+  await a.getByRole('button',{name:'Simpan perubahan',exact:true}).click();await a.locator('tbody tr').filter({hasText:judulAkhir}).waitFor();await b.locator('tbody tr').filter({hasText:judulAkhir}).waitFor();
+  check('sunting lanjutan sampai di tab kedua',true);
+  const terbaru=(await rpc('admin_daftar_pengumuman')).find(x=>x.id===dibuat.id);check('jadwal yang tidak diubah tetap persis',terbaru.starts_at===dibuat.starts_at);
+  const r=a.locator('tbody tr').filter({hasText:judulAkhir});await r.getByRole('button',{name:'Sunting',exact:true}).click();
+  await a.locator('#cf-p-tombol').fill('');await a.locator('#cf-p-url').fill('');await a.locator('#cf-p-alasan').fill('Hapus tombol opsional');check('pratinjau tanpa tombol',await a.locator('.cf-tombol').count()===0);
+  await a.getByRole('button',{name:'Simpan perubahan',exact:true}).click();await a.locator('#cf-p-judul').waitFor({state:'hidden'});
+  const akhir=(await rpc('admin_daftar_pengumuman')).find(x=>x.id===dibuat.id);check('tombol dapat dihapus',akhir.action_label===null&&akhir.action_url===null);
+  await r.getByRole('button',{name:'Hentikan',exact:true}).click();await a.locator('#cf-p-alasan-henti').fill('Pengujian lokal selesai');await a.getByRole('dialog').getByRole('button',{name:'Hentikan',exact:true}).click();
+  await a.locator('#cf-p-alasan-henti').waitFor({state:'hidden'});await b.locator('tbody tr').filter({hasText:judulAkhir}).getByText('Berakhir',{exact:true}).waitFor();check('penghentian memperbarui tab lain',true);
+  check('tanpa galat JavaScript',errors.length===0);
+  await writeFile(join(output,'console-browser.json'),JSON.stringify({checks,count:checks.length,errors,backend:'Supabase lokal nyata, gateway autentikasi sintetis'},null,2));console.log(`${checks.length} lulus, 0 gagal.`);
+} finally {
+  if(browser)try{await(await browser.newBrowserCDPSession()).send('Browser.close');}catch{}
+  chrome.kill();server.kill();await sb.removeAllChannels();
+  if(chrome.exitCode===null)await Promise.race([new Promise(r=>chrome.once('exit',r)),pause(1500)]);
+  await rm(profile,{recursive:true,force:true,maxRetries:10,retryDelay:200});await writeFile(join(output,'console-server.log'),logs.join(''));
+}

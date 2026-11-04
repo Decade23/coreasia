@@ -10,6 +10,8 @@ import {
   kePengumuman, pengumumanBelumBerakhir, LEVEL_PENGUMUMAN, type PengumumanDTO,
 } from '../../adapters/cashflow'
 import { adaMigrasi, fungsiTerakhir, kolomTabel } from './migrasi'
+import { statusPengumuman } from '../../adapters/cashflowPengumuman'
+import { tombolPengumuman } from '../../adapters/cashflowPengumumanTautan'
 
 // Satu baris public.announcements seperti yang dikirim PostgREST.
 const BARIS = `{
@@ -20,7 +22,10 @@ const BARIS = `{
   "starts_at": "2026-09-18T17:00:00+00:00",
   "ends_at": "2026-09-18T19:00:00+00:00",
   "created_by": "3f0c2a4e-8b1d-4c6a-9e2f-1a2b3c4d5e6f",
-  "created_at": "2026-09-18T08:12:45.123456+00:00"
+  "created_at": "2026-09-18T08:12:45.123456+00:00",
+  "updated_at": "2026-09-18T08:12:45.654321+00:00",
+  "action_label": null,
+  "action_url": null
 }`
 const contoh = (): PengumumanDTO => JSON.parse(BARIS) as PengumumanDTO
 
@@ -51,11 +56,38 @@ describe('kePengumuman', () => {
       mulai: '2026-09-18T17:00:00+00:00',
       sampai: '2026-09-18T19:00:00+00:00',
       dibuat: '2026-09-18T08:12:45.123456+00:00',
+      diubah: '2026-09-18T08:12:45.654321+00:00',
+      tombol: null,
+      url: null,
     })
   })
 
   it('ends_at null = tanpa akhir', () => {
     expect(kePengumuman({ ...contoh(), ends_at: null }).sampai).toBeNull()
+  })
+
+  it('server lama tanpa updated_at memakai created_at, tanpa menghilangkan mikrodetik', () => {
+    expect(kePengumuman({ ...contoh(), updated_at: undefined }).diubah).toBe('2026-09-18T08:12:45.123456+00:00')
+  })
+
+  it('tombol HTTPS dinormalisasi, alamat tidak sah hanya menyembunyikan tombol', () => {
+    expect(kePengumuman({ ...contoh(), action_label: ' Buka ', action_url: 'https://coreasia.id' })).toMatchObject({ tombol: 'Buka', url: 'https://coreasia.id/' })
+    expect(kePengumuman({ ...contoh(), action_label: 'Buka', action_url: 'javascript:alert(1)' })).toMatchObject({ judul: 'Pemeliharaan server', tombol: null, url: null })
+  })
+})
+
+describe('status dan tombol pengumuman', () => {
+  it('jadwal mendatang, aktif, dan berakhir tepat pada batasnya', () => {
+    const p = kePengumuman(contoh())
+    expect(statusPengumuman(p, Date.parse(p.mulai) - 1)).toBe('terjadwal')
+    expect(statusPengumuman(p, Date.parse(p.mulai))).toBe('aktif')
+    expect(statusPengumuman(p, Date.parse(p.sampai!))).toBe('berakhir')
+  })
+  it('jadwal yang dibatalkan sudah berakhir walau waktu mulai belum tiba', () => {
+    expect(statusPengumuman({ mulai: '2026-11-06T00:00:00Z', sampai: '2026-11-04T00:00:00Z' }, Date.parse('2026-11-05T00:00:00Z'))).toBe('berakhir')
+  })
+  it.each(['http://coreasia.id', 'https://a@coreasia.id', 'https://127.0.0.1', 'https://x.local', 'https://coreasia.id:0'])('tombol menolak %s', url => {
+    expect(tombolPengumuman('Buka', url)).toBeNull()
   })
 })
 

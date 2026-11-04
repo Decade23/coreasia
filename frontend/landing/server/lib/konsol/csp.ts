@@ -68,7 +68,9 @@ export interface OpsiCsp {
 
 export function cspKonsol(html: string, opsi: OpsiCsp = {}): string {
   const hash = [...new Set(skripSebaris(html).map(hashSkrip))]
-  const tujuan = [...new Set([originHttp(opsi.supabaseUrl), originHttp(opsi.gatewayUrl)].filter((o): o is string => !!o))]
+  const supabase = originHttp(opsi.supabaseUrl)
+  const socket = supabase?.replace(/^http/, 'ws')
+  const tujuan = [...new Set([supabase, socket, originHttp(opsi.gatewayUrl)].filter((o): o is string => !!o))]
   const direktif: Array<[string, string[]]> = [
     ['default-src', ["'self'"]],
     ['script-src', ["'self'", ...hash]],

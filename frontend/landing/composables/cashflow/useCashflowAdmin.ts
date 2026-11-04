@@ -102,6 +102,7 @@ import type { JenisLampiran, LampiranDTO, RanahAnak } from '~/adapters/cashflowL
 import { urlBerkasSah } from '~/adapters/cashflowLampiran'
 import type { RingkasDukunganDTO, DaftarDukunganDTO, SumberDukungan, StatusDukungan } from '~/adapters/cashflowDukungan'
 import { BATAS_DAFTAR_DUKUNGAN } from '~/adapters/cashflowDukungan'
+import type { SimpanPengumuman } from '~/adapters/cashflowPengumuman'
 
 interface OpsiDaftarPengguna {
   limit: number; offset: number; cari: string; segmen: string; urut: string; arah: string
@@ -507,6 +508,14 @@ export const useCashflowAdmin = () => {
     daftarPengumuman: () => rpc<PengumumanDTO[]>('admin_daftar_pengumuman'),
     buatPengumuman: (judul: string, isi: string, level: string, mulai: string, sampai: string | null, alasan: string) =>
       rpc<string>('admin_buat_pengumuman', { p_judul: judul, p_isi: isi, p_level: level, p_mulai: mulai, p_sampai: sampai, p_alasan: alasan }),
+    buatPengumumanV2: (p: SimpanPengumuman) => rpc<string>('admin_buat_pengumuman_v2', {
+      p_id: p.id, p_judul: p.judul, p_isi: p.isi, p_level: p.level, p_mulai: p.mulai, p_sampai: p.sampai,
+      p_tombol: p.tombol, p_url: p.url, p_alasan: p.alasan,
+    }),
+    ubahPengumuman: (p: SimpanPengumuman) => rpc<string>('admin_ubah_pengumuman', {
+      p_id: p.id, p_versi: p.versi, p_judul: p.judul, p_isi: p.isi, p_level: p.level, p_mulai: p.mulai, p_sampai: p.sampai,
+      p_tombol: p.tombol, p_url: p.url, p_alasan: p.alasan,
+    }),
     hentikanPengumuman: (id: string, alasan: string) => rpc<void>('admin_hentikan_pengumuman', { p_id: id, p_alasan: alasan }),
     setEntitlement: (user: string, tier: string, sampai: string | null, alasan: string) =>
       rpc<void>('admin_set_entitlement', { p_user: user, p_tier: tier, p_sampai: sampai, p_alasan: alasan }),

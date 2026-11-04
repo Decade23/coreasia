@@ -26,6 +26,7 @@
  * adapters/ TIDAK di-auto-import Nuxt — selalu impor eksplisit.
  */
 import { tanggalPendek, hariIniWib, geserHari, type BahasaWaktu } from './cashflowWaktu'
+import { tombolPengumuman } from './cashflowPengumumanTautan'
 
 export {
   ZONA_WIB, BULAN, BULAN_EN, tanggalPendek, tanggalWib, hariIniWib, geserHari,
@@ -120,6 +121,7 @@ export type ObjekJson = { [kunci: string]: unknown }
 export interface PengumumanDTO {
   id: string; title: string; body: string; level: string
   starts_at: string; ends_at: string | null; created_by: string | null; created_at: string
+  action_label?: string | null; action_url?: string | null; updated_at?: string
 }
 /* admin_kesehatan (M/0017:379-411). `tabel` adalah OBJEK jsonb_object_agg
    (nama tabel → {baris, ukuran}), bukan larik, dan kedua ukuran dalam BYTE
@@ -193,6 +195,9 @@ export interface Pengumuman {
   mulai: string             // ISO; diformat di halaman sesuai bahasa
   sampai: string | null     // null = tanpa akhir
   dibuat: string
+  diubah: string
+  tombol: string | null
+  url: string | null
 }
 
 export interface Keberhasilan { jumlah: number; pembanding: number; pengecualian: number }
@@ -512,9 +517,11 @@ export function keKesehatan(d: KesehatanDTO): Kesehatan {
 }
 
 export function kePengumuman(d: PengumumanDTO): Pengumuman {
+  const tombol = tombolPengumuman(d.action_label, d.action_url)
   return {
     id: d.id, judul: d.title ?? '', isi: d.body ?? '', level: d.level,
     mulai: d.starts_at, sampai: d.ends_at ?? null, dibuat: d.created_at,
+    diubah: d.updated_at ?? d.created_at, tombol: tombol?.label ?? null, url: tombol?.url ?? null,
   }
 }
 

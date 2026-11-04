@@ -73,8 +73,8 @@ describe('cspKonsol', () => {
     expect(csp).not.toMatch(/googletagmanager|google-analytics|googleadservices|doubleclick|google\.com/)
   })
 
-  it('connect-src: self (BFF) + origin Supabase CashFlow saja, tanpa gateway langsung', () => {
-    expect(direktif['connect-src']).toEqual(["'self'", 'https://abc.supabase.co'])
+  it('connect-src: self (BFF) + HTTP dan WebSocket Supabase CashFlow, tanpa gateway langsung', () => {
+    expect(direktif['connect-src']).toEqual(["'self'", 'https://abc.supabase.co', 'wss://abc.supabase.co'])
     expect(csp).not.toMatch(/api\.coreasia\.id|localhost:8084|\*\.coreasia\.id/)
   })
 
