@@ -185,7 +185,7 @@ onBeforeUnmount(lupakanTantangan)
 
       <form v-else class="ca-console-dialog p-6 sm:p-8" @submit.prevent="kirimKode">
         <label class="mb-5 flex cursor-pointer items-start gap-3 rounded-xl border border-[color:var(--ca-border)] p-3 text-sm text-[var(--ca-text)]">
-          <input v-model="percayaPerangkat" type="checkbox" class="mt-1 h-4 w-4 accent-[var(--ca-gold)]" :disabled="pending">
+          <input v-model="percayaPerangkat" type="checkbox" class="mt-1 h-4 w-4 accent-[var(--ca-gold-text)]" :disabled="pending">
           <span><span class="block font-medium">{{ tc('perangkat.percaya') }}</span><span class="mt-1 block text-xs leading-relaxed text-[var(--ca-muted)]">{{ tc('perangkat.keteranganLogin') }}</span></span>
         </label>
         <label for="kode-totp" class="ca-field-label">{{ tc('login.totpCode') }}</label>
