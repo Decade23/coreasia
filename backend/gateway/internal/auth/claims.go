@@ -29,11 +29,13 @@ type Claims struct {
 	MFA bool `json:"mfa"`
 	// MFAAt = saat (unix detik) kode TOTP diverifikasi; 0 untuk token tanpa MFA.
 	// Refresh menyalinnya apa adanya, dan masa berlaku token ber-MFA tidak
-	// pernah melewati MFAAt + MFAMaxAge (lihat GenerateTokenPairMFA).
+	// pada sesi biasa melewati MFAAt + MFAMaxAge (lihat GenerateTokenPairMFA).
+	// Perangkat tepercaya boleh mempertahankan login, tetapi bukan MFA segar.
 	MFAAt int64 `json:"mfa_at,omitempty"`
 	// TV = admin_users.token_version saat token diterbitkan. /me dan /refresh
 	// menolak token yang TV-nya berbeda dari nilai di DB.
-	TV int `json:"tv"`
+	TV       int    `json:"tv"`
+	DeviceID string `json:"device_id,omitempty"`
 }
 
 // MFATime memulangkan saat kode TOTP diverifikasi, atau waktu nol bila token

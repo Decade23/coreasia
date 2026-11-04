@@ -110,6 +110,7 @@ type AuthHandler struct {
 	totp          *auth.TOTPCipher    // nil = fitur TOTP tidak tersedia (JWT secret kosong)
 	attempts      totpAttemptLimiter  // nil = verifikasi TOTP tidak tersedia
 	loginAttempts loginAttemptLimiter // nil = tanpa batas per akun (hanya batas per IP)
+	devices       auth.TrustedDeviceStore
 	// now: jam untuk evaluasi kode TOTP; hanya dipanggil tepat sebelum
 	// auth.VerifyTOTP (uji menghitung evaluasi lewat jam ini).
 	now func() time.Time
@@ -420,6 +421,7 @@ func (h *AuthHandler) Me(c fiber.Ctx) error {
 		AdminUserResponse: user.ToResponse(),
 		MFA:               claims.HasFreshMFA(h.wallNow()),
 		TOTPEnabled:       user.TOTPEnabled(),
+		TrustedDeviceID:   claims.DeviceID,
 	}
 	if resp.MFA {
 		at := claims.MFATime()
@@ -464,10 +466,28 @@ func (h *AuthHandler) Refresh(c fiber.Ctx) error {
 	// itu), lalu refresh ditolak dan admin login ulang memakai TOTP. Sesi tanpa
 	// TOTP tidak pernah naik kelas lewat refresh. Refresh token ber-mfa tanpa
 	// mfa_at (terbit sebelum klaim itu ada) ditolak.
-	if claims.MFA && !claims.HasFreshMFA(h.wallNow()) {
+	if claims.DeviceID == "" && claims.MFA && !claims.HasFreshMFA(h.wallNow()) {
 		return errResponse(c, errMFASessionExpired())
 	}
-	tokens, err := h.jwt.GenerateTokenPairMFA(user.ID, user.Email, user.Role, user.FullName, claims.MFATime(), user.TokenVersion)
+	var tokens *auth.TokenPair
+	if claims.DeviceID != "" {
+		id, parseErr := uuid.Parse(claims.DeviceID)
+		if parseErr != nil || id == uuid.Nil || h.devices == nil || !user.TOTPEnabled() || claims.MFATime().IsZero() {
+			return errResponse(c, errSessionRevoked())
+		}
+		now := h.wallNow()
+		var renewed bool
+		renewed, err = h.devices.Renew(c.Context(), id, user.ID, user.TokenVersion, now, now.Add(auth.TrustedDeviceTTL))
+		if err != nil {
+			return errResponse(c, apperr.NewServiceUnavailable("Perangkat belum dapat diperiksa. Coba lagi sebentar lagi."))
+		}
+		if !renewed {
+			return errResponse(c, errSessionRevoked())
+		}
+		tokens, err = h.jwt.GenerateTrustedPair(user.ID, user.Email, user.Role, user.FullName, claims.MFATime(), user.TokenVersion, id)
+	} else {
+		tokens, err = h.jwt.GenerateTokenPairMFA(user.ID, user.Email, user.Role, user.FullName, claims.MFATime(), user.TokenVersion)
+	}
 	if errors.Is(err, auth.ErrMFAExpired) {
 		return errResponse(c, errMFASessionExpired())
 	}
@@ -507,6 +527,15 @@ func (h *AuthHandler) Permissions(c fiber.Ctx) error {
 }
 
 func (h *AuthHandler) Logout(c fiber.Ctx) error {
+	if claims := middleware.GetClaims(c); claims != nil && claims.DeviceID != "" {
+		id, err := uuid.Parse(claims.DeviceID)
+		if err != nil || h.devices == nil {
+			return errResponse(c, errSessionRevoked())
+		}
+		if _, err = h.devices.Revoke(c.Context(), id, claims.UserID, h.wallNow()); err != nil {
+			return errResponse(c, apperr.NewInternal(err))
+		}
+	}
 	clearAuthCookies(c)
 	return c.Status(fiber.StatusNoContent).Send(nil)
 }
@@ -609,6 +638,9 @@ func (h *AuthHandler) TOTPVerify(c fiber.Ctx) error {
 	}
 	h.resetFailures(c, user.ID)
 
+	if req.TrustDevice {
+		return h.completeTrustedLogin(c, user)
+	}
 	return h.completeLogin(c, user, true, "Admin login (TOTP)")
 }
 

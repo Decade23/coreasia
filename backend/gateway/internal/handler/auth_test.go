@@ -566,6 +566,7 @@ func (f *fakeAPIKeys) Delete(c fiber.Ctx) error  { return f.hit(c) }
 func passThrough(c fiber.Ctx) error { return c.Next() }
 
 type envOpts struct {
+	devices  auth.TrustedDeviceStore
 	attempts totpAttemptLimiter // nil = fakeLimiter
 	// attemptsFor: pembatas yang butuh repositori in-memory env ini (mis.
 	// auth.RedisTOTPLimiter dengan lapis panjang di fakeAdminStore).
@@ -621,6 +622,7 @@ func newAuthEnvWith(t *testing.T, o envOpts) *authEnv {
 		store = o.wrap(env.store)
 	}
 	h := &AuthHandler{
+		devices:       o.devices,
 		userRepo:      store,
 		auditLog:      env.audit,
 		jwt:           env.jwt,
@@ -638,7 +640,7 @@ func newAuthEnvWith(t *testing.T, o envOpts) *authEnv {
 	api := app.Group("/api")
 	admin := registerAdminAuthRoutes(api, adminRoutes{
 		auth:        h,
-		requireAuth: mw.AuthMiddleware(env.jwt),
+		requireAuth: mw.AuthMiddleware(env.jwt, o.devices),
 		loginLimit:  loginLimit,
 		verifyLimit: verifyLimit,
 	})

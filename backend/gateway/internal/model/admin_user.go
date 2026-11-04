@@ -73,8 +73,9 @@ type LoginMFAResponse struct {
 }
 
 type TOTPVerifyRequest struct {
-	Challenge string `json:"challenge" validate:"required"`
-	Code      string `json:"code" validate:"required"`
+	Challenge   string `json:"challenge" validate:"required"`
+	Code        string `json:"code" validate:"required"`
+	TrustDevice bool   `json:"trust_device"`
 }
 
 type TOTPCodeRequest struct {
@@ -102,10 +103,11 @@ type TOTPSetupResponse struct {
 // TOTP sesi ini diverifikasi, untuk menuntut kesegaran MFA di izin T1+.
 type MeResponse struct {
 	AdminUserResponse
-	MFA           bool       `json:"mfa"`
-	MFAAt         *time.Time `json:"mfa_at"`
-	TOTPEnabled   bool       `json:"totp_enabled"`
-	TOTPEnabledAt *time.Time `json:"totp_enabled_at"`
+	MFA             bool       `json:"mfa"`
+	MFAAt           *time.Time `json:"mfa_at"`
+	TOTPEnabled     bool       `json:"totp_enabled"`
+	TOTPEnabledAt   *time.Time `json:"totp_enabled_at"`
+	TrustedDeviceID string     `json:"trusted_device_id,omitempty"`
 }
 
 type CreateAdminRequest struct {

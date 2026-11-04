@@ -16,10 +16,11 @@ const MFAChallengeTTL = 5 * time.Minute
 
 // MFAMaxAge adalah umur maksimal sesi ber-MFA, dihitung dari saat kode TOTP
 // diverifikasi (klaim mfa_at). Access maupun refresh token ber-MFA tidak pernah
-// berlaku melewati mfa_at + MFAMaxAge, berapa kali pun di-refresh. Sesudahnya
+// pada sesi biasa melewati mfa_at + MFAMaxAge, berapa kali pun di-refresh. Sesudahnya
 // admin login ulang memakai sandi + TOTP. Tanpa batas ini, refresh token
 // ber-MFA yang bocor menjadi sesi mfa=true yang hidup selamanya asal dipakai
-// sekali per JWT_REFRESH_TTL.
+// sekali per JWT_REFRESH_TTL. Perangkat tepercaya memakai sesi 7 hari yang
+// dapat dicabut per perangkat; kesegaran MFA tetap dibatasi 12 jam.
 const MFAMaxAge = 12 * time.Hour
 
 // ErrWrongTokenType dikembalikan validator saat tanda tangan dan masa berlaku
@@ -92,22 +93,38 @@ func (p *JWTProvider) GenerateTokenPair(userID uuid.UUID, email, role, fullName 
 // berlaku kedua token dipotong di mfaAt + MFAMaxAge; bila batas itu sudah
 // lewat, tidak ada token yang terbit (ErrMFAExpired).
 func (p *JWTProvider) GenerateTokenPairMFA(userID uuid.UUID, email, role, fullName string, mfaAt time.Time, tokenVersion int) (*TokenPair, error) {
+	return p.generatePair(userID, email, role, fullName, mfaAt, tokenVersion, "")
+}
+
+// Perangkat tepercaya mempertahankan login, bukan kesegaran MFA. mfa_at tetap
+// waktu verifikasi asli; izin sensitif tetap memakai HasFreshMFA (12 jam).
+func (p *JWTProvider) GenerateTrustedPair(userID uuid.UUID, email, role, fullName string, mfaAt time.Time, tokenVersion int, deviceID uuid.UUID) (*TokenPair, error) {
+	if deviceID == uuid.Nil || mfaAt.IsZero() {
+		return nil, errors.New("bukti perangkat tepercaya tidak lengkap")
+	}
+	return p.generatePair(userID, email, role, fullName, mfaAt, tokenVersion, deviceID.String())
+}
+
+func (p *JWTProvider) generatePair(userID uuid.UUID, email, role, fullName string, mfaAt time.Time, tokenVersion int, deviceID string) (*TokenPair, error) {
 	now := p.now()
 	accessExpiry := now.Add(p.accessTTL)
 	refreshExpiry := now.Add(p.refreshTTL)
+	if deviceID != "" {
+		refreshExpiry = now.Add(TrustedDeviceTTL)
+	}
 
 	mfa := !mfaAt.IsZero()
 	var mfaUnix int64
 	if mfa {
 		mfaUnix = mfaAt.Unix()
 		limit := time.Unix(mfaUnix, 0).Add(MFAMaxAge)
-		if !limit.After(now) {
+		if deviceID == "" && !limit.After(now) {
 			return nil, ErrMFAExpired
 		}
-		if accessExpiry.After(limit) {
+		if deviceID == "" && accessExpiry.After(limit) {
 			accessExpiry = limit
 		}
-		if refreshExpiry.After(limit) {
+		if deviceID == "" && refreshExpiry.After(limit) {
 			refreshExpiry = limit
 		}
 	}
@@ -122,6 +139,7 @@ func (p *JWTProvider) GenerateTokenPairMFA(userID uuid.UUID, email, role, fullNa
 		MFA:              mfa,
 		MFAAt:            mfaUnix,
 		TV:               tokenVersion,
+		DeviceID:         deviceID,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("signing access token: %w", err)
@@ -136,6 +154,7 @@ func (p *JWTProvider) GenerateTokenPairMFA(userID uuid.UUID, email, role, fullNa
 		MFA:              mfa,
 		MFAAt:            mfaUnix,
 		TV:               tokenVersion,
+		DeviceID:         deviceID,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("signing refresh token: %w", err)

@@ -151,6 +151,8 @@ func (s *Server) setupRoutes() {
 		loginAttempts = auth.NewRedisLoginLimiter(s.rdb, loginMaxFailures, loginFailureWindow, loginOriginTTL)
 	}
 	authHandler := NewAuthHandler(adminUserRepo, auditLogRepo, jwtProvider, totpCipher, totpAttempts, loginAttempts)
+	deviceRepo := repository.NewTrustedDeviceRepo(s.pool)
+	authHandler.devices = deviceRepo
 	articleHandler := NewArticleHandler(articleRepo, auditLogRepo)
 	contactLeadHandler := NewContactLeadHandler(contactLeadRepo)
 	adminUserHandler := NewAdminUserHandler(adminUserRepo, auditLogRepo, totpAttempts)
@@ -180,7 +182,7 @@ func (s *Server) setupRoutes() {
 	cadHandler := NewCADHandler(cadRepo, auditLogRepo, emailService, cadSigner, mounterSigner, s.cfg.Payments, mayarClient)
 
 	// Auth middleware
-	authMiddleware := mw.AuthMiddleware(jwtProvider)
+	authMiddleware := mw.AuthMiddleware(jwtProvider, deviceRepo)
 
 	// Routes
 	healthHandler.RegisterRoutes(s.app)
@@ -332,6 +334,10 @@ func registerAdminAuthRoutes(api fiber.Router, d adminRoutes) fiber.Router {
 	admin.Post("/auth/totp/setup", d.auth.TOTPSetup)
 	admin.Post("/auth/totp/enable", d.auth.TOTPEnable)
 	admin.Post("/auth/totp/disable", d.auth.TOTPDisable)
+	admin.Post("/auth/totp/step-up", d.auth.TOTPStepUp)
+	admin.Get("/auth/devices", d.auth.TrustedDevices)
+	admin.Post("/auth/devices/enroll", d.auth.EnrollTrustedDevice)
+	admin.Delete("/auth/devices/:id", d.auth.RevokeTrustedDevice)
 	return admin
 }
 

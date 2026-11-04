@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"strings"
+	"time"
 
 	"github.com/coreasia/gateway/internal/auth"
 	"github.com/coreasia/gateway/internal/model"
@@ -17,7 +18,7 @@ const ClaimsKey = "claims"
 // LiveUserKey: admin pemilik sesi, dimuat RequireLiveSession dari DB.
 const LiveUserKey = "live_admin"
 
-func AuthMiddleware(jwt *auth.JWTProvider) fiber.Handler {
+func AuthMiddleware(jwt *auth.JWTProvider, deviceStores ...auth.TrustedDeviceStore) fiber.Handler {
 	return func(c fiber.Ctx) error {
 		tokenStr := extractToken(c)
 		if tokenStr == "" {
@@ -44,6 +45,20 @@ func AuthMiddleware(jwt *auth.JWTProvider) fiber.Handler {
 		}
 
 		c.Locals(ClaimsKey, claims)
+		// Perangkat dicabut/kedaluwarsa ditolak di SEMUA rute, termasuk baca.
+		if claims.DeviceID != "" {
+			id, parseErr := uuid.Parse(claims.DeviceID)
+			if parseErr != nil || id == uuid.Nil || len(deviceStores) == 0 || deviceStores[0] == nil {
+				return c.Status(401).JSON(fiber.Map{"data": nil, "errors": ErrSessionRevoked()})
+			}
+			active, err := deviceStores[0].Active(c.Context(), id, claims.UserID, claims.TV, time.Now())
+			if err != nil {
+				return c.Status(503).JSON(fiber.Map{"data": nil, "errors": fiber.Map{"code": "DEVICE_CHECK_UNAVAILABLE", "message": "Pemeriksaan perangkat sedang tidak tersedia. Coba lagi sebentar lagi."}})
+			}
+			if !active {
+				return c.Status(401).JSON(fiber.Map{"data": nil, "errors": ErrSessionRevoked()})
+			}
+		}
 		return c.Next()
 	}
 }
