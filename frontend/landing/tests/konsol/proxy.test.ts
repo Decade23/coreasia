@@ -43,6 +43,17 @@ const minta = (over: Partial<Parameters<typeof teruskan>[0]> = {}) => ({
   ...over,
 })
 
+it('cabut perangkat mencabut sesi CashFlow pemilik tanpa mengakhiri cookie perangkat lain', async () => {
+  const id = '1f8abcc0-63f1-4fad-b41c-87993aaf6702'
+  const akses = jwt({ typ: 'access', sub: id, user_id: id, exp: 4102444800 })
+  const jalur = 'admin/auth/devices/2f8abcc0-63f1-4fad-b41c-87993aaf6702'
+  const gw = gatewayPalsu(() => new Response(null, { status: 204 }))
+  const hasil = await teruskan(minta({ metode: 'DELETE', jalur, tujuan: rakitTujuan(GW, jalur, '')!, akses }), { gatewayUrl: GW, fetch: gw.fetch })
+  expect(hasil.adminLainBerakhir).toBe(id)
+  expect(hasil.hapusCookie).toBe(false)
+  expect(hasil.pemilikSesiBerakhir).toBeNull()
+})
+
 describe('saringHeaderMasuk — cookie, Host, hop-by-hop tidak diteruskan', () => {
   it('hanya daftar putih', () => {
     const h = saringHeaderMasuk(new Headers({

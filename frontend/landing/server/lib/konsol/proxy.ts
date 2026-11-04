@@ -235,6 +235,11 @@ export async function teruskan(p: PermintaanProxy, ctx: KonteksGateway): Promise
       tokenBaru = null
     } else if (sasaran && !diriSendiri) {
       adminLainBerakhir = sasaran
+    } else if (p.metode.toUpperCase() === 'DELETE' && /^admin\/auth\/devices\/[0-9a-f-]{36}$/i.test(p.jalur)) {
+      // Semua sesi modul pemilik dicabut agar token Supabase perangkat yang
+      // dicabut juga berhenti. Perangkat lain boleh menyambung ulang lewat
+      // sesi gateway yang masih sah; cookie pemanggil tidak dihapus.
+      adminLainBerakhir = milik?.id ?? null
     }
   }
   return { respons, tokenBaru, hapusCookie, pemilikSesiBerakhir, adminLainBerakhir }

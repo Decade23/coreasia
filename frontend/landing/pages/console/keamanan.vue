@@ -166,6 +166,7 @@ onBeforeUnmount(lupakan)
         <p v-if="totpAktif && user?.totp_enabled_at" class="mt-3 text-xs text-[var(--ca-subtle)]">
           {{ tc('keamanan.sejak', { waktu: formatDateTime(user.totp_enabled_at) }) }}
         </p>
+        <ConsoleTotpSesi v-if="totpAktif && !sesiMfa" @verified="muat" />
 
         <!-- Belum aktif: pasang -->
         <template v-if="!totpAktif">
@@ -291,6 +292,8 @@ onBeforeUnmount(lupakan)
         </button>
       </section>
     </div>
+
+    <ConsolePerangkatTepercaya v-if="!memuat && !gagalMuat" />
 
     <ConsoleModal
       :show="tampilKeluarSemua"

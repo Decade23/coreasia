@@ -75,6 +75,12 @@ describe('awalan __Host-Http- menahan cookie sesi tanaman skrip', () => {
 })
 
 describe('rencanaCookieToken', () => {
+  it('perangkat tepercaya memakai masa refresh 7 hari dari token, bukan cadangan 30 hari', () => {
+    const token = { akses: jwt({ typ: 'access', exp: detik + 3600, device_id: 'perangkat' }), segar: jwt({ typ: 'refresh', exp: detik + 7 * 86400, device_id: 'perangkat' }) }
+    const cookies = rencanaCookieToken(token, true, SEKARANG)
+    expect(cookies[1]?.opsi.maxAge).toBe(7 * 86400)
+    expect(cookies.every(c => c.opsi.httpOnly && c.opsi.secure)).toBe(true)
+  })
   const akses = jwt({ typ: 'access', exp: detik + 3600, email: 'a@coreasia.id' })
   const segar = jwt({ typ: 'refresh', exp: detik + 720 * 3600 })
 

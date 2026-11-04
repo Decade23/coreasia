@@ -86,7 +86,7 @@ export default defineEventHandler(async (event) => {
     // Per id admin gateway (cashflow-cabut.ts); id dari token yang baru diterima gateway.
     setResponseHeader(event, HEADER_CABUT_CASHFLOW, await cabutSesiCashflowAdmin(bahanCashflow, hasil.pemilikSesiBerakhir))
   } else if (hasil.adminLainBerakhir) {
-    // Admin LAIN: id dari jalur (adminDiakhiri).
+    // Admin sasaran, atau pemilik perangkat yang baru dicabut.
     const cf = await cabutSesiCashflowAdmin(bahanCashflow, { id: hasil.adminLainBerakhir })
     catat(event, 'cabut-admin-lain', { admin_gw_id: hasil.adminLainBerakhir, jalur: cek.jalur, cashflow: cf })
     setResponseHeader(event, HEADER_CABUT_CASHFLOW, cf)

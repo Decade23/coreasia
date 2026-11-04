@@ -36,6 +36,7 @@ export interface AdminUser {
   /** Dari /me: TOTP akun ini aktif. */
   totp_enabled?: boolean
   totp_enabled_at?: string | null
+  trusted_device_id?: string
   /** Dari /me: akun dibuat (syarat umur "sesi kuat" gateway, utils/rbac.ts sesiKuat). */
   created_at?: string | null
 }
@@ -82,7 +83,7 @@ export const useAdminAuth = () => {
 
   /** POST JSON ke gateway publik. credentials:'omit': cookie domain gateway
    *  tidak dikirim dan Set-Cookie gateway diabaikan (sesi hanya milik BFF). */
-  const keGateway = (jalur: string, badan: Record<string, string>) =>
+  const keGateway = (jalur: string, badan: Record<string, string | boolean>) =>
     $fetch<{ data?: JawabanToken | null }>(`${gatewayPublik()}${jalur}`, {
       method: 'POST',
       body: badan,
@@ -140,7 +141,7 @@ export const useAdminAuth = () => {
     }
   }
 
-  const verifikasiTotp = async (kode: string): Promise<boolean> => {
+  const verifikasiTotp = async (kode: string, percayaPerangkat = false): Promise<boolean> => {
     loginError.value = ''
     galat.value = null
     if (!tantangan) {
@@ -151,7 +152,7 @@ export const useAdminAuth = () => {
     try {
       let res: { data?: JawabanToken | null } | null
       try {
-        res = await keGateway('/admin/auth/totp/verify', { challenge: tantangan, code: kode })
+        res = await keGateway('/admin/auth/totp/verify', { challenge: tantangan, code: kode, trust_device: percayaPerangkat })
       } catch (err) {
         if (catatGalat(err, tc('login.totpFailed'), 'gateway').kode === 'MFA_CHALLENGE_INVALID') tantangan = null
         return false

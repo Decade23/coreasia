@@ -3,6 +3,7 @@ import type { Remah } from '~/composables/useConsoleRemah'
 
 // GTM/iklan yang terlanjur termuat di dokumen ini → muat ulang penuh (Fase 0c).
 useKonsolBersih()
+useKonsolPerangkatAktif()
 
 const { theme, setTheme } = useCoreTheme()
 const toggleTheme = () => setTheme(theme.value === 'dark' ? 'light' : 'dark')

@@ -20,6 +20,7 @@ const langkah = ref<'sandi' | 'kode'>('sandi')
 const email = ref('')
 const password = ref('')
 const kode = ref('')
+const percayaPerangkat = ref(false)
 const pesan = ref('')
 const inputKode = ref<HTMLInputElement | null>(null)
 
@@ -78,7 +79,7 @@ const handleSubmit = async () => {
 const kirimKode = async () => {
   if (pending.value || kode.value.length !== 6) return
   pesan.value = ''
-  const ok = await verifikasiTotp(kode.value)
+  const ok = await verifikasiTotp(kode.value, percayaPerangkat.value)
   if (ok) {
     kode.value = ''
     keConsole()
@@ -106,6 +107,7 @@ const ketikKode = (e: Event) => {
 
 const kembali = () => {
   lupakanTantangan()
+  percayaPerangkat.value = false
   langkah.value = 'sandi'
   kode.value = ''
   pesan.value = ''
@@ -182,6 +184,10 @@ onBeforeUnmount(lupakanTantangan)
       </form>
 
       <form v-else class="ca-console-dialog p-6 sm:p-8" @submit.prevent="kirimKode">
+        <label class="mb-5 flex cursor-pointer items-start gap-3 rounded-xl border border-[color:var(--ca-border)] p-3 text-sm text-[var(--ca-text)]">
+          <input v-model="percayaPerangkat" type="checkbox" class="mt-1 h-4 w-4 accent-[var(--ca-gold)]" :disabled="pending">
+          <span><span class="block font-medium">{{ tc('perangkat.percaya') }}</span><span class="mt-1 block text-xs leading-relaxed text-[var(--ca-muted)]">{{ tc('perangkat.keteranganLogin') }}</span></span>
+        </label>
         <label for="kode-totp" class="ca-field-label">{{ tc('login.totpCode') }}</label>
         <input
           id="kode-totp"

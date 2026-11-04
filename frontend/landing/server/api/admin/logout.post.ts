@@ -9,15 +9,16 @@
  *    0092) — lib/konsol/cashflow-cabut.ts.
  * 3. Cookie akses, refresh, dan tantangan MFA dihapus.
  *
- * Gateway /admin/auth/logout tidak dipanggil: ia hanya menghapus cookie milik
- * domain gateway dan tidak mencabut token apa pun. Untuk mematikan token di
- * semua perangkat, console memanggil /admin/auth/logout-all lewat proxy.
- * Selalu 200 walau langkah 1–2 gagal: keluar tidak boleh tertahan gateway.
+ * Sesi perangkat tepercaya juga dicabut di gateway /admin/auth/logout.
+ * Bila gateway gagal, cookie dipertahankan dan pengguna bisa mencoba lagi.
+ * Sesi biasa tetap dapat keluar walau pencabutan CashFlow gagal.
  * Tidak mewajibkan token ikatan: keluar hanya mengurangi hak, dan harus tetap
  * jalan walau dokumen console kehilangan tokennya.
  */
 import { cabutSesiCashflowAdmin, idAdminGateway, type PemilikSesi } from '../../lib/konsol/cashflow-cabut'
-import { HEADER_KLIEN_IP, segarkanToken } from '../../lib/konsol/proxy'
+import { HEADER_KLIEN_IP, segarkanToken, teruskan } from '../../lib/konsol/proxy'
+import { klaimJwt } from '../../lib/konsol/cookie'
+import { rakitTujuan } from '../../lib/konsol/jalur'
 import { bacaCookie, catat, hapusCookie, ipKlien, tanpaCache, wajibSatuAsal } from '../../lib/konsol/h3'
 
 /** Id (+ email sebagai label log) dari data admin gateway (/me atau user hasil
@@ -62,6 +63,18 @@ export default defineEventHandler(async (event) => {
   let pemilik: PemilikSesi | null = null
   if (akses || segar) {
     pemilik = await pemilikSesi(config.public.gatewayUrl as string, akses, segar, ipKlien(event))
+    // Perangkat tepercaya punya pencabutan server, bukan sekadar hapus cookie.
+    // Gangguan gateway mempertahankan cookie agar pengguna bisa mencoba lagi.
+    if (klaimJwt(akses ?? '')?.device_id || klaimJwt(segar ?? '')?.device_id) {
+      const gatewayUrl = config.public.gatewayUrl as string
+      const hasil = await teruskan({ metode: 'POST', jalur: 'admin/auth/logout', tujuan: rakitTujuan(gatewayUrl, 'admin/auth/logout', '')!,
+        header: new Headers({ accept: 'application/json' }), akses, segar,
+      }, { gatewayUrl, fetch, klienIp: ipKlien(event) })
+      if (!hasil.respons.ok && hasil.respons.status !== 401) {
+        setResponseStatus(event, 502)
+        return { data: null, errors: { code: 'LOGOUT_FAILED', message: 'Perangkat belum dapat dicabut. Coba keluar lagi sebentar lagi.' } }
+      }
+    }
     if (pemilik) {
       cashflow = await cabutSesiCashflowAdmin(
         { url: config.public.cashflowSupabaseUrl as string, service: config.cashflowSupabaseServiceKey as string },

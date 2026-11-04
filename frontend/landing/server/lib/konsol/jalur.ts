@@ -26,6 +26,8 @@ export const KHUSUS_BFF = new Set([
   'admin/auth/login',
   'admin/auth/refresh',
   'admin/auth/totp/verify',
+  'admin/auth/totp/step-up',
+  'admin/auth/devices/enroll',
   'admin/auth/logout',
 ])
 

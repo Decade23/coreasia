@@ -6,24 +6,30 @@
  * batasIzinMfa). Aktif langsung, tanpa masa tenggang sejak TOTP dipasang
  * (keputusan Master 21 Sep 2026). Jalan keluarnya:
  * - TOTP terpasang tapi login ini belum/tidak lagi ber-TOTP (mfa false) →
- *   "Masuk ulang dengan TOTP": keluar dari console lalu ke halaman login,
- *   yang mengembalikan ke halaman ini sesudah kode TOTP diterima;
+ *   verifikasi kode di dalam Console lalu sambung ulang sesi CashFlow;
  * - login SUDAH ber-TOTP tapi sesi CashFlow tab ini dicetak sebelumnya →
  *   "Sambung ulang CashFlow" mencetak sesi baru yang membawa izinnya;
  * - TOTP belum dipasang → Keamanan akun (/console/keamanan).
  */
 withDefaults(defineProps<{ pesan?: string }>(), { pesan: '' })
 const { tcf } = useCashflowI18n()
-const { user, logout } = useAdminAuth()
+const { user, logout, fetchMe } = useAdminAuth()
+const { tc } = useConsoleI18n()
 const sesi = useCashflowSesi()
 const route = useRoute()
 const toast = useToast()
 const sibuk = ref(false)
+const tampilKode = ref(false)
 
 const sambungUlang = async () => {
   if (sibuk.value) return
   sibuk.value = true
   try {
+    await fetchMe()
+    if (user.value?.totp_enabled && !user.value.mfa) {
+      tampilKode.value = true
+      return
+    }
     const sb = await sesi.ambil()
     await sb?.auth.signOut({ scope: 'local' }).catch(() => {})
     const h = await sesi.sambung()
@@ -58,10 +64,12 @@ const masukUlang = async () => {
         {{ sibuk ? tcf('izin.menyambung') : tcf('izin.sambungUlang') }}
       </button>
       <!-- /me belum dimuat (user null) = anggap TOTP terpasang: masuk ulang tetap jalan yang benar. -->
+      <button v-else-if="user?.totp_enabled" type="button" class="ca-btn-primary !px-3 !py-1.5 text-xs" :disabled="sibuk" @click="tampilKode = !tampilKode">{{ tc('perangkat.verifikasi') }}</button>
       <button v-else-if="user?.totp_enabled !== false" type="button" class="ca-btn-primary !px-3 !py-1.5 text-xs" :disabled="sibuk" @click="masukUlang">
         {{ sibuk ? tcf('izin.keluarMasuk') : tcf('izin.masukUlang') }}
       </button>
       <NuxtLink v-else to="/console/keamanan" class="ca-btn-primary !px-3 !py-1.5 text-xs">{{ tcf('izin.keKeamanan') }}</NuxtLink>
     </span>
+    <div v-if="tampilKode" class="w-full"><ConsoleTotpSesi @verified="sambungUlang" /></div>
   </div>
 </template>

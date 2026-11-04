@@ -16,6 +16,14 @@ const AKSES = jwt({ typ: 'access', sub: SUB, tv: 2, exp: detik + 3600 })
 const SEGAR = jwt({ typ: 'refresh', sub: SUB, tv: 2, exp: detik + 30 * 86400 })
 
 describe('periksaBadanSesi', () => {
+  it('token akses dan refresh harus terikat pada perangkat yang sama', () => {
+    const akses = jwt({ typ: 'access', sub: SUB, tv: 2, exp: detik + 3600, device_id: 'perangkat-a' })
+    const segar = jwt({ typ: 'refresh', sub: SUB, tv: 2, exp: detik + 7 * 86400, device_id: 'perangkat-a' })
+    const lain = jwt({ typ: 'refresh', sub: SUB, tv: 2, exp: detik + 7 * 86400, device_id: 'perangkat-b' })
+    expect(periksaBadanSesi({ access_token: akses, refresh_token: segar }, SEKARANG).ok).toBe(true)
+    expect(periksaBadanSesi({ access_token: akses, refresh_token: lain }, SEKARANG)).toEqual({ ok: false, sebab: 'pasangan' })
+    expect(periksaBadanSesi({ access_token: akses, refresh_token: SEGAR }, SEKARANG)).toEqual({ ok: false, sebab: 'pasangan' })
+  })
   it('pasangan sah → token + sub', () => {
     expect(periksaBadanSesi({ access_token: AKSES, refresh_token: SEGAR }, SEKARANG)).toEqual({
       ok: true,

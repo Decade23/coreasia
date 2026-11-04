@@ -37,7 +37,7 @@ export function periksaBadanSesi(badan: unknown, sekarangMs: number): HasilSesi 
   if (ka?.typ !== 'access' || ks?.typ !== 'refresh') return { ok: false, sebab: 'jenis' }
 
   const sub = ka.sub
-  if (typeof sub !== 'string' || !sub || ks.sub !== sub || ka.tv !== ks.tv) {
+  if (typeof sub !== 'string' || !sub || ks.sub !== sub || ka.tv !== ks.tv || ka.device_id !== ks.device_id) {
     return { ok: false, sebab: 'pasangan' }
   }
   const detik = sekarangMs / 1000
