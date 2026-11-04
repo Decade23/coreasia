@@ -149,7 +149,13 @@ const formatDate = (d: string) => formatDateTime(d)
 </script>
 
 <template>
-  <div>
+  <div class="relative">
+    <!-- Pembaruan tidak melepas tabel: kepala, baris, fokus dan scroll tetap.
+         Status di luar area sibuk tetap bisa diumumkan pembaca layar. -->
+    <div v-if="loading && filteredData.length" class="pointer-events-none absolute inset-x-0 top-0 z-20 h-0.5 overflow-hidden rounded-full bg-[var(--ca-border)]" aria-hidden="true">
+      <div class="ca-table-progress h-full w-1/3 rounded-full bg-[var(--ca-gold-text)]" />
+    </div>
+    <span class="sr-only" role="status">{{ loading ? tc(filteredData.length ? 'common.updating' : 'common.loading') : '' }}</span>
     <!-- Active filters indicator -->
     <div v-if="activeFilterCount > 0" class="mb-3 flex items-center gap-2">
       <span class="text-xs text-[var(--ca-muted)]">{{ activeFilterCount }} filter aktif</span>
@@ -163,7 +169,7 @@ const formatDate = (d: string) => formatDateTime(d)
     </div>
 
     <!-- Loading -->
-    <div v-if="loading" class="ca-card p-10 text-center">
+    <div v-if="loading && !filteredData.length" class="ca-card p-10 text-center" aria-busy="true">
       <Icon name="lucide:loader-2" class="mx-auto h-8 w-8 animate-spin text-[var(--ca-subtle)]" />
     </div>
 
@@ -174,7 +180,7 @@ const formatDate = (d: string) => formatDateTime(d)
     </div>
 
     <!-- Table -->
-    <div v-else class="ca-console-table-wrap ca-scrollbar">
+    <div v-else class="ca-console-table-wrap ca-scrollbar" :aria-busy="loading">
       <table class="ca-console-table">
         <thead class="sticky top-0 z-10">
           <tr>
@@ -275,10 +281,10 @@ const formatDate = (d: string) => formatDateTime(d)
             </th>
           </tr>
         </thead>
-        <tbody>
+        <tbody :inert="loading">
           <tr
             v-for="(row, i) in filteredData"
-            :key="i"
+            :key="row.id ?? i"
             class="cursor-pointer"
             @click="emit('row-click', row)"
           >
@@ -316,3 +322,9 @@ const formatDate = (d: string) => formatDateTime(d)
     </div>
   </div>
 </template>
+
+<style scoped>
+.ca-table-progress { animation: ca-table-progress 1.2s ease-in-out infinite; }
+@keyframes ca-table-progress { from { transform: translateX(-100%); } to { transform: translateX(400%); } }
+@media (prefers-reduced-motion: reduce) { .ca-table-progress { animation: none; width: 100%; opacity: .7; } }
+</style>

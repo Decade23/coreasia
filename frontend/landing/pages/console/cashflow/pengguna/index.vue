@@ -2,7 +2,6 @@
 /** Daftar tersamar. Pencarian, saringan, urutan dan halaman dikerjakan
  * server atas seluruh akun. Kontak lengkap tetap satu klik dan setiap
  * halaman yang dibuka tercatat dalam audit. Teks pencarian tidak di URL. */
-definePageMeta({ layout: 'console', middleware: ['console', 'cashflow-admin'] })
 import {
   kePengguna, tanpaKontakUtuh, versiTertinggal,
   type InfoPlatform, type Pengguna, type PenggunaDTO, type StatusPengguna,
@@ -10,6 +9,7 @@ import {
 import { halamanAman, jumlahHalaman } from '~/adapters/cashflowDaftar'
 import type { SkemaQuery } from '~/adapters/cashflowQuery'
 import type { AlasanDaftar } from '~/composables/cashflow/useCashflowAlasanDaftar'
+definePageMeta({ layout: 'console', middleware: ['console', 'cashflow-admin'] })
 
 const { tcf, bahasa, formatJam } = useCashflowI18n()
 const api = useCashflowAdmin()
@@ -35,6 +35,7 @@ const { nilai: q, setel } = useCashflowQuery(SKEMA)
 const mentah = shallowRef<PenggunaDTO[]>([])
 const semua = computed<Pengguna[]>(() => mentah.value.map(d => kePengguna(d, bahasa.value)))
 const total = ref(0)
+const halamanHasil = ref(q.value.hal)
 const cari = useState('cf_cari_pengguna', () => '')
 const kolomCari = ref<HTMLInputElement | null>(null)
 const filterKolom = useState<Record<string, string>>('cf_saring_kolom_pengguna', () => ({}))
@@ -49,10 +50,8 @@ const terbuka = ref<AlasanDaftar | null>(null)
 
 /* Jawaban basi tidak boleh menimpa halaman atau membuka kontak kembali. */
 const muatDaftar = (alasan: AlasanDaftar | null) => muat(async (terbaru) => {
-  // Jangan menampilkan halaman atau hitungan lama sebagai hasil saringan baru
-  // bila permintaan berikutnya gagal.
-  mentah.value = []
-  total.value = 0
+  // Baris yang sudah tampil bertahan sampai jawaban terbaru siap. Spinner
+  // tidak boleh meruntuhkan tabel, paginasi, fokus, atau posisi gulir.
   const filter: Record<string, string> = {}
   for (const [k, v] of Object.entries(filterDiterapkan.value)) {
     if (!v || !['email', 'wa', 'versi', 'daftar', 'aktif', 'status'].includes(k)) continue
@@ -67,16 +66,28 @@ const muatDaftar = (alasan: AlasanDaftar | null) => muat(async (terbaru) => {
     bahasa: bahasa.value, alasan: alasan?.alasan ?? null,
   })
   if (!terbaru()) return
+  const aman = halamanAman(q.value.hal, Number(hasil.total), PER)
+  if (aman !== q.value.hal) { await setel({ hal: aman }); return }
+  // Alasan yang habis selagi menunggu tidak boleh membuka kontak kembali.
+  if (alasan && alasan.sampai <= Date.now()) alasan = null
   mentah.value = alasan ? hasil.baris : tanpaKontakUtuh(hasil.baris)
   total.value = Number(hasil.total)
+  halamanHasil.value = q.value.hal
   versiTerbaru.value = new Map(Object.entries(hasil.versi_terbaru ?? {}))
   hapusTersedia.value = hasil.hapus_tersedia
   // Pencarian palet tidak boleh menganggap hasil tersaring daftar lengkap.
   const lengkap = q.value.seg === 'semua' && !cariDiterapkan.value.trim() && !Object.keys(filter).length && q.value.hal === 1
   indeks.isi(semua.value, lengkap ? total.value : Number.MAX_SAFE_INTEGER)
   terbuka.value = alasan
-  const aman = halamanAman(q.value.hal, total.value, PER)
-  if (aman !== q.value.hal) void setel({ hal: aman })
+})
+// Mempertahankan hasil saat jaringan lambat tidak berlaku bila hak baca hilang.
+watch(galat, (g) => {
+  if (!g || !['izin', 'sesi', 'totp', 'bukan-admin'].includes(g.jenis)) return
+  mentah.value = []
+  total.value = 0
+  terbuka.value = null
+  alasanDaftar.lupakan()
+  indeks.kosongkan()
 })
 let aktif = false
 let dilepas = false
@@ -130,8 +141,6 @@ watch([() => q.value.seg, () => q.value.urut, () => q.value.arah, () => q.value.
   if (!aktif) return
   clearTimeout(jedaMuat)
   batal()
-  mentah.value = []
-  total.value = 0
   galat.value = null
   memuat.value = true
   jedaMuat = setTimeout(() => { void muatDaftar(alasanDaftar.ambil()) }, 80)
@@ -183,7 +192,7 @@ const kolom = computed(() => [
   },
 ])
 
-const hal = computed(() => q.value.hal)
+const hal = computed(() => halamanHasil.value)
 const jumlahHal = computed(() => jumlahHalaman(total.value, PER))
 const barisHalaman = computed(() => semua.value.map(keBaris))
 const pilihSegmen = (s: typeof SEGMEN[number]) => setel({ seg: s, hal: 1 })
@@ -246,7 +255,7 @@ useCashflowPintasan([{ kunci: '/', aksi: () => kolomCari.value?.focus() }])
       <button
         type="button" role="switch" :aria-checked="!!terbuka"
         class="ml-auto inline-flex items-center gap-3 rounded-full border border-[color:var(--ca-border)] py-1.5 pl-4 pr-1.5 text-sm font-semibold text-[var(--ca-text)] transition hover:bg-[var(--ca-panel-bg-strong)] disabled:cursor-not-allowed disabled:opacity-60"
-        :disabled="memuat" @click="terbuka ? samarkan() : buka()"
+        :disabled="memuat && !terbuka" @click="terbuka ? samarkan() : buka()"
       >
         <Icon :name="terbuka ? 'lucide:eye' : 'lucide:eye-off'" class="h-4 w-4 text-[var(--ca-muted)]" />
         {{ tcf('pengguna.kontakPenuh') }}
@@ -272,6 +281,7 @@ useCashflowPintasan([{ kunci: '/', aksi: () => kolomCari.value?.focus() }])
     <CashflowIzinKurang v-if="galat?.jenis === 'izin'" :pesan="tcf('pengguna.kontakButuhTotp')" />
     <div v-else-if="pesanGalat" class="flex flex-wrap items-center gap-3 text-sm ca-tone-danger" role="alert">
       <span>{{ pesanGalat }}</span>
+      <span v-if="semua.length">{{ tcf('pengguna.hasilSebelumnya') }}</span>
       <button type="button" class="ca-btn-secondary !px-3 !py-1.5 text-xs" @click="muatDaftar(alasanDaftar.ambil())">{{ tcf('masuk.cobaLagi') }}</button>
     </div>
 
@@ -334,8 +344,8 @@ useCashflowPintasan([{ kunci: '/', aksi: () => kolomCari.value?.focus() }])
     </div>
 
     <CashflowHalaman
-      v-if="!memuat && total"
-      :hal="hal" :jumlah-halaman="jumlahHal" :total="total" :per="PER" lompat
+      v-if="total"
+      :hal="hal" :jumlah-halaman="jumlahHal" :total="total" :per="PER" :memuat="memuat || !!galat" lompat
       @ganti="gantiHalaman"
     />
 

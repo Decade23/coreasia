@@ -76,7 +76,8 @@ try {
   if(rows1!==25||page2.p_offset!==25||page2.p_limit!==25)throw Error(`Paginasi salah: ${rows1}, ${JSON.stringify(page2)}`);
   await page.getByRole('button',{name:'Berikutnya',exact:true}).click();
   await page.getByRole('alert').getByText('Gangguan sintetis').waitFor();
-  if(await page.locator('tbody tr').count())throw Error('Halaman lama masih tampil setelah gagal');
+  if(await page.locator('tbody tr').count()!==25||!await page.getByRole('alert').getByText('Perubahan belum diterapkan. Menampilkan hasil sebelumnya.',{exact:true}).isVisible())throw Error('Hasil sebelumnya tidak dipertahankan dengan penjelasan saat gagal');
+  if(!await page.getByText('Halaman 2 dari 25',{exact:true}).isVisible())throw Error('Pager mengaku menampilkan halaman yang gagal dimuat');
   await page.getByRole('button',{name:'Coba lagi',exact:true}).click();
   await page.waitForFunction(()=>[...document.querySelectorAll('a')].some(a=>a.getAttribute('href')?.includes('000000000051')));
   await page.getByLabel('Ke halaman').fill('25');
