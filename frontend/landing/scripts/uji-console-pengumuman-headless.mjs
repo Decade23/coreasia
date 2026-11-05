@@ -54,9 +54,9 @@ try {
   await a.getByRole('button',{name:'Buat pengumuman',exact:true}).click();
   await a.locator('#cf-p-judul').fill(judulAwal);await a.locator('#cf-p-isi').fill('Catatan pengeluaran kini lebih mudah dibaca.');
   await a.locator('#cf-p-tombol').fill('Lihat panduan');await a.locator('#cf-p-url').fill('https://coreasia.id/panduan');await a.locator('#cf-p-alasan').fill('Uji antarmuka lokal');
-  check('pratinjau menampilkan judul isi dan tombol',await a.locator('.cf-spanduk').getByRole('link',{name:'Lihat panduan'}).isVisible());
+  check('pratinjau menampilkan judul isi dan tombol',await a.locator('.cf-spanduk').locator('a.cf-cardlink').isVisible());
   check('pratinjau menampilkan domain',await a.locator('.cf-domain').innerText()==='coreasia.id');
-  check('tautan membuka tab terpisah tanpa opener',await a.locator('.cf-tombol').getAttribute('target')==='_blank'&&(await a.locator('.cf-tombol').getAttribute('rel')).includes('noopener'));
+  check('tautan membuka tab terpisah tanpa opener',await a.locator('.cf-cardlink').getAttribute('target')==='_blank'&&(await a.locator('.cf-cardlink').getAttribute('rel')).includes('noopener'));
   await a.locator('#cf-p-url').fill('http://coreasia.id');await a.getByRole('button',{name:'Simpan',exact:true}).click();
   check('URL HTTP ditolak sebelum diterbitkan',await a.locator('#cf-p-judul').isVisible()&&!(await rpc('admin_daftar_pengumuman')).some(x=>x.title===judulAwal));
   await a.locator('#cf-p-url').fill('https://coreasia.id/panduan');await a.getByRole('button',{name:'Simpan',exact:true}).click();
@@ -91,6 +91,63 @@ try {
   const akhir=(await rpc('admin_daftar_pengumuman')).find(x=>x.id===dibuat.id);check('tombol dapat dihapus',akhir.action_label===null&&akhir.action_url===null);
   await r.getByRole('button',{name:'Hentikan',exact:true}).click();await a.locator('#cf-p-alasan-henti').fill('Pengujian lokal selesai');await a.getByRole('dialog').getByRole('button',{name:'Hentikan',exact:true}).click();
   await a.locator('#cf-p-alasan-henti').waitFor({state:'hidden'});await b.locator('tbody tr').filter({hasText:judulAkhir}).getByText('Berakhir',{exact:true}).waitFor();check('penghentian memperbarui tab lain',true);
+  // Targeting memakai UI Console dan RPC lokal nyata, tanpa data produksi.
+  const penerima=Array.from({length:30},()=>randomUUID());
+  sql(penerima.map((u,i)=>`insert into auth.users(id,email) values('${u}','qa-penerima-${i}-${u}@contoh.invalid');`).join('\n'));
+  const pilihAkun=async(scope,u)=>{
+    await scope.getByRole('textbox',{name:'Cari penerima',exact:true}).fill(u);
+    await scope.getByRole('button',{name:'Cari',exact:true}).click();
+    const label=scope.locator('label').filter({hasText:u.slice(0,8)});
+    await label.locator('input').check();
+  };
+  const bukaTarget=async(type)=>{
+    await a.getByRole('button',{name:'Buat pengumuman',exact:true}).click();
+    await a.locator('#cf-p-penerima').selectOption(type);
+    await a.locator('#cf-p-judul').fill('Target '+type+' '+id.slice(0,8));
+    await a.locator('#cf-p-isi').fill('Pengumuman uji pilihan penerima.');
+    await a.locator('#cf-p-alasan').fill('Pengujian penerima lokal');
+  };
+  const simpanTarget=async(type)=>{
+    await a.getByRole('button',{name:'Simpan',exact:true}).click();
+    await a.locator('#cf-p-judul').waitFor({state:'hidden'});
+    return (await rpc('admin_daftar_pengumuman_v3')).find(x=>x.title==='Target '+type+' '+id.slice(0,8));
+  };
+  await bukaTarget('single');
+  check('tunggal kosong tidak dapat disimpan',await a.getByRole('button',{name:'Simpan',exact:true}).isDisabled());
+  await pilihAkun(a,penerima[0]);let target=await simpanTarget('single');
+  check('satu penerima tersimpan',target.audience_type==='single'&&target.user_ids.length===1&&target.user_ids[0]===penerima[0]);
+  await a.locator('tbody tr').filter({hasText:target.title}).getByRole('button',{name:'Sunting',exact:true}).click();
+  check('sunting memulihkan penerima',await a.locator('#cf-p-penerima').inputValue()==='single');
+  await a.getByRole('button',{name:'Batal',exact:true}).click();
+  await bukaTarget('users');
+  await a.getByRole('button',{name:'Berikutnya',exact:true}).click();
+  check('akun halaman kedua dapat diakses',await a.getByText(/2 \/ \d+ · \d+ pengguna/).isVisible());
+  await pilihAkun(a,penerima[1]);await pilihAkun(a,penerima[2]);
+  await a.getByText('2 pengguna dipilih',{exact:true}).waitFor();
+  await a.locator('#cf-p-penerima').scrollIntoViewIfNeeded();await a.waitForTimeout(250);
+  await a.screenshot({path:join(output,'console-penerima-beberapa.png')});
+  target=await simpanTarget('users');check('pilihan bertahan lintas pencarian',target.user_ids.length===2&&target.user_ids.includes(penerima[1])&&target.user_ids.includes(penerima[2]));
+  await bukaTarget('groups');await a.getByRole('button',{name:'Buat kelompok',exact:true}).click();
+  const editor=a.getByRole('group',{name:'Sunting kelompok',exact:true});
+  await editor.getByRole('textbox',{name:'Nama kelompok',exact:true}).fill('Penguji '+id.slice(0,8));
+  await pilihAkun(editor,penerima[3]);await pilihAkun(editor,penerima[4]);
+  await editor.getByRole('textbox',{name:'Alasan perubahan kelompok',exact:true}).fill('Kelompok uji Console');
+  check('draf kelompok menahan penerbitan',await a.getByRole('button',{name:'Simpan',exact:true}).isDisabled());
+  await editor.getByRole('button',{name:'Simpan kelompok',exact:true}).click();await editor.waitFor({state:'hidden'});
+  await a.getByText('1 kelompok dipilih',{exact:true}).waitFor();
+  await a.locator('#cf-p-penerima').scrollIntoViewIfNeeded();await a.waitForTimeout(250);
+  await a.screenshot({path:join(output,'console-penerima-kelompok.png')});
+  await a.setViewportSize({width:390,height:844});await a.evaluate(()=>document.documentElement.dataset.theme='dark');
+  check('pilihan penerima ponsel tidak meluber',await a.evaluate(()=>document.documentElement.scrollWidth<=390));
+  await a.locator('#cf-p-penerima').scrollIntoViewIfNeeded();await a.screenshot({path:join(output,'console-penerima-ponsel-gelap.png')});
+  await a.setViewportSize({width:1440,height:1000});await a.evaluate(()=>document.documentElement.dataset.theme='light');
+  target=await simpanTarget('groups');check('kelompok tersimpan dan jumlahnya benar',target.group_ids.length===1&&target.recipient_count===2);
+  await a.locator('tbody tr').filter({hasText:target.title}).getByRole('button',{name:'Sunting',exact:true}).click();
+  await a.getByText('1 kelompok dipilih',{exact:true}).waitFor();
+  await a.locator('div').filter({has:a.locator('input[type="checkbox"]')}).filter({hasText:'Penguji '+id.slice(0,8)}).getByRole('button',{name:'Sunting',exact:true}).last().click();
+  await editor.waitFor();check('anggota kelompok dapat dimuat untuk disunting',await editor.getByText('2 pengguna dipilih',{exact:true}).isVisible());
+  await editor.getByRole('button',{name:'Batal',exact:true}).click();
+  await a.getByRole('button',{name:'Batal',exact:true}).click();
   check('tanpa galat JavaScript',errors.length===0);
   await writeFile(join(output,'console-browser.json'),JSON.stringify({checks,count:checks.length,errors,backend:'Supabase lokal nyata, gateway autentikasi sintetis'},null,2));console.log(`${checks.length} lulus, 0 gagal.`);
 } finally {

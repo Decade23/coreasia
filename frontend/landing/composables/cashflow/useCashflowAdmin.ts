@@ -1,3 +1,4 @@
+import type { AkunPenerima, HalamanPenerima, KelompokPengumuman } from '~/adapters/cashflowPengumuman'
 /**
  * Pembungkus RPC admin CashFlow — satu tempat untuk semua panggilan ke Supabase.
  *
@@ -505,17 +506,24 @@ export const useCashflowAdmin = () => {
     hapusConfig: (key: string, alasan: string) => rpc<void>('admin_hapus_config', { p_key: key, p_alasan: alasan }),
 
     // ── pengumuman & entitlement ───────────────────────────────────────
-    daftarPengumuman: () => rpc<PengumumanDTO[]>('admin_daftar_pengumuman'),
+    daftarPengumuman: () => rpc<PengumumanDTO[]>('admin_daftar_pengumuman_v3'),
     buatPengumuman: (judul: string, isi: string, level: string, mulai: string, sampai: string | null, alasan: string) =>
       rpc<string>('admin_buat_pengumuman', { p_judul: judul, p_isi: isi, p_level: level, p_mulai: mulai, p_sampai: sampai, p_alasan: alasan }),
-    buatPengumumanV2: (p: SimpanPengumuman) => rpc<string>('admin_buat_pengumuman_v2', {
+    buatPengumumanV2: (p: SimpanPengumuman) => rpc<string>('admin_simpan_pengumuman_v3', {
+      p_versi: null, p_penerima: p.penerima ?? 'all', p_pengguna: p.pengguna ?? [], p_kelompok: p.kelompok ?? [],
       p_id: p.id, p_judul: p.judul, p_isi: p.isi, p_level: p.level, p_mulai: p.mulai, p_sampai: p.sampai,
       p_tombol: p.tombol, p_url: p.url, p_alasan: p.alasan,
     }),
-    ubahPengumuman: (p: SimpanPengumuman) => rpc<string>('admin_ubah_pengumuman', {
+    ubahPengumuman: (p: SimpanPengumuman) => rpc<string>('admin_simpan_pengumuman_v3', {
+      p_penerima: p.penerima ?? 'all', p_pengguna: p.pengguna ?? [], p_kelompok: p.kelompok ?? [],
       p_id: p.id, p_versi: p.versi, p_judul: p.judul, p_isi: p.isi, p_level: p.level, p_mulai: p.mulai, p_sampai: p.sampai,
       p_tombol: p.tombol, p_url: p.url, p_alasan: p.alasan,
     }),
+    jumlahPenerimaPengumuman: (jenis: string, pengguna: string[], kelompok: string[]) => rpc<number>('admin_jumlah_penerima_pengumuman', { p_penerima: jenis, p_pengguna: pengguna, p_kelompok: kelompok }),
+    penggunaPengumuman: (cari = '', offset = 0, ids: string[] | null = null) => rpc<HalamanPenerima<AkunPenerima>>('admin_pengumuman_pengguna', { p_cari: cari, p_limit: ids ? 1000 : 25, p_offset: offset, p_ids: ids }),
+    kelompokPengumuman: (cari = '', offset = 0) => rpc<HalamanPenerima<KelompokPengumuman>>('admin_daftar_kelompok_pengumuman', { p_cari: cari, p_limit: 25, p_offset: offset }),
+    detailKelompokPengumuman: (id: string) => rpc<KelompokPengumuman>('admin_detail_kelompok_pengumuman', { p_id: id }),
+    simpanKelompokPengumuman: (id: string, versi: string | null, nama: string, pengguna: string[], alasan: string) => rpc<string>('admin_simpan_kelompok_pengumuman', { p_id: id, p_versi: versi, p_nama: nama, p_pengguna: pengguna, p_alasan: alasan }),
     hentikanPengumuman: (id: string, alasan: string) => rpc<void>('admin_hentikan_pengumuman', { p_id: id, p_alasan: alasan }),
     setEntitlement: (user: string, tier: string, sampai: string | null, alasan: string) =>
       rpc<void>('admin_set_entitlement', { p_user: user, p_tier: tier, p_sampai: sampai, p_alasan: alasan }),

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { keDatetimeLokalWib, dariDatetimeLokalWib, kePengumuman, pengumumanBelumBerakhir, LEVEL_PENGUMUMAN, type Pengumuman, type LevelPengumuman } from '~/adapters/cashflow'
-import { statusPengumuman, type SimpanPengumuman } from '~/adapters/cashflowPengumuman'
+import { statusPengumuman, penerimaSah, PILIHAN_PENERIMA, type JenisPenerima, type SimpanPengumuman } from '~/adapters/cashflowPengumuman'
 import { tombolPengumuman } from '~/adapters/cashflowPengumumanTautan'
 import { ikutiPengumuman } from '~/utils/cashflow/pengumumanLangsung'
 definePageMeta({ layout: 'console', middleware: ['console', 'cashflow-admin'] })
@@ -14,8 +14,9 @@ const jam = ref(Date.now())
 const bukaForm = ref(false)
 const menyunting = ref(false)
 const menyimpan = ref(false)
+const penerimaSibuk = ref(false)
 const hubungan = ref<'menyambung' | 'tersambung' | 'terputus'>('menyambung')
-const f = reactive({ id: '', versi: null as string | null, judul: '', isi: '', level: 'info' as LevelPengumuman,
+const f = reactive({ penerima: 'all' as JenisPenerima, pengguna: [] as string[], kelompok: [] as string[], id: '', versi: null as string | null, judul: '', isi: '', level: 'info' as LevelPengumuman,
   mulai: '', sampai: '', tombol: '', url: '', alasan: '', awalMulai: '', awalSampai: null as string | null })
 const muatDaftar = () => muat(async terbaru => {
   const hasil = (await api.daftarPengumuman()).map(kePengumuman)
@@ -23,13 +24,13 @@ const muatDaftar = () => muat(async terbaru => {
 })
 const bukaBaru = () => {
   menyunting.value = false
-  Object.assign(f, { id: crypto.randomUUID(), versi: null, judul: '', isi: '', level: 'info',
+  Object.assign(f, { penerima: 'all', pengguna: [], kelompok: [], id: crypto.randomUUID(), versi: null, judul: '', isi: '', level: 'info',
     mulai: keDatetimeLokalWib(new Date()), sampai: '', tombol: '', url: '', alasan: '', awalMulai: '', awalSampai: null })
   bukaForm.value = true
 }
 const sunting = (p: Pengumuman) => {
   menyunting.value = true
-  Object.assign(f, { id: p.id, versi: p.diubah, judul: p.judul, isi: p.isi,
+  Object.assign(f, { penerima: p.penerima, pengguna: [...p.pengguna], kelompok: [...p.kelompok], id: p.id, versi: p.diubah, judul: p.judul, isi: p.isi,
     level: LEVEL_PENGUMUMAN.includes(p.level as LevelPengumuman) ? p.level : 'info',
     mulai: keDatetimeLokalWib(new Date(p.mulai)), sampai: p.sampai ? keDatetimeLokalWib(new Date(p.sampai)) : '',
     tombol: p.tombol ?? '', url: p.url ?? '', alasan: '', awalMulai: p.mulai, awalSampai: p.sampai })
@@ -39,7 +40,8 @@ const versiTerbaru = computed(() => rows.value.find(p => p.id === f.id))
 const basi = computed(() => bukaForm.value && menyunting.value && !menyimpan.value && !!versiTerbaru.value && versiTerbaru.value.diubah !== f.versi)
 const tutupForm = () => { if (!menyimpan.value) bukaForm.value = false }
 const simpan = async () => {
-  if (menyimpan.value || basi.value) return
+  if (menyimpan.value || basi.value || penerimaSibuk.value) return
+  if (!penerimaSah(f.penerima, f.pengguna, f.kelompok)) { toast.error('Pilih penerima pengumuman.'); return }
   if (!f.judul.trim() || !f.isi.trim()) { toast.error(tcf('pengumuman.wajibIsi')); return }
   if (f.alasan.trim().length < 8) { toast.error(tcf('alasan.pendek')); return }
   const mulai = f.awalMulai && keDatetimeLokalWib(new Date(f.awalMulai)) === f.mulai ? f.awalMulai : dariDatetimeLokalWib(f.mulai)
@@ -48,7 +50,7 @@ const simpan = async () => {
   if (sampai && Date.parse(sampai) <= Date.parse(mulai)) { toast.error(tcf('pengumuman.sampaiSebelumMulai')); return }
   const tombol = tombolPengumuman(f.tombol, f.url)
   if ((f.tombol.trim() || f.url.trim()) && !tombol) { toast.error(tcf('pengumuman.tautanTidakSah')); return }
-  const p: SimpanPengumuman = { id: f.id, versi: f.versi, judul: f.judul.trim(), isi: f.isi.trim(),
+  const p: SimpanPengumuman = { penerima: f.penerima, pengguna: f.pengguna, kelompok: f.kelompok, id: f.id, versi: f.versi, judul: f.judul.trim(), isi: f.isi.trim(),
     level: f.level, mulai, sampai, tombol: tombol?.label ?? null, url: tombol?.url ?? null, alasan: f.alasan.trim() }
   menyimpan.value = true
   try {
@@ -59,6 +61,14 @@ const simpan = async () => {
     if (ok) { bukaForm.value = false; await muatDaftar() }
   } finally { menyimpan.value = false }
 }
+
+const gantiPenerima = (jenis: JenisPenerima) => {
+  f.penerima = jenis
+  if (jenis === 'single') f.pengguna = f.pengguna.slice(0, 1)
+  if (jenis === 'all' || jenis === 'groups') f.pengguna = []
+  if (jenis !== 'groups') f.kelompok = []
+}
+const labelPenerima = (p: Pengumuman) => PILIHAN_PENERIMA.find(x => x.id === p.penerima)?.label ?? '—'
 
 const dihentikan = ref<Pengumuman | null>(null)
 const alasanHenti = ref('')
@@ -81,6 +91,7 @@ const labelLevel = (level: string) => (tcf('pengumuman.levelOpsi') as unknown as
 const aktif = computed(() => rows.value.filter(p => statusPengumuman(p, jam.value) === 'aktif').length)
 const kolom = computed(() => [
   { key: 'judul', label: tcf('pengumuman.judulKolom'), filterable: false },
+  { key: 'penerima', label: 'Penerima', filterable: false },
   { key: 'level', label: tcf('pengumuman.level'), filterable: false },
   { key: 'status', label: tcf('pengumuman.statusLabel'), filterable: false },
   { key: 'mulai', label: tcf('pengumuman.mulaiWib'), filterable: false },
@@ -128,6 +139,7 @@ onBeforeUnmount(() => {
     <div class="ca-console-dialog overflow-hidden [&_tbody_tr]:!cursor-default">
       <DataTable :columns="kolom" :data="rows" :loading="memuat" :show-count="false" :empty-text="tcf('pengumuman.kosong')" empty-icon="lucide:megaphone">
         <template #cell-judul="{ row }"><div class="max-w-md"><strong>{{ row.judul }}</strong><p class="mt-1 whitespace-pre-wrap text-xs text-[var(--ca-muted)]">{{ row.isi }}</p><span v-if="row.tombol" class="mt-1 block text-xs text-[var(--ca-subtle)]">{{ row.tombol }} · {{ domain(row.url) }}</span></div></template>
+        <template #cell-penerima="{ row }"><span class="block text-xs">{{ labelPenerima(row) }}</span><span class="block text-xs text-[var(--ca-muted)]">{{ row.jumlahPenerima ?? '—' }} pengguna</span><span v-if="row.namaKelompok.length" class="block max-w-48 text-xs text-[var(--ca-muted)]">{{ row.namaKelompok.join(', ') }}</span></template>
         <template #cell-level="{ row }">{{ labelLevel(row.level) }}</template>
         <template #cell-status="{ row }"><span class="ca-pill-muted whitespace-nowrap text-xs">{{ tcf(`pengumuman.status.${statusPengumuman(row, jam)}`) }}</span></template>
         <template #cell-mulai="{ row }"><span class="whitespace-nowrap text-xs tabular-nums">{{ waktu(row.mulai) }}</span></template>
@@ -140,6 +152,7 @@ onBeforeUnmount(() => {
       <form @submit.prevent="simpan">
         <fieldset :disabled="menyimpan" class="grid min-w-0 gap-6 md:grid-cols-[1.2fr_1fr]">
           <div class="min-w-0 space-y-4">
+            <CashflowPengumumanPenerima v-if="bukaForm" :key="f.id" :jenis="f.penerima" v-model:pengguna="f.pengguna" v-model:kelompok="f.kelompok" :disabled="menyimpan" @update:jenis="gantiPenerima" @sibuk="penerimaSibuk = $event" />
             <label for="cf-p-judul" class="block text-xs font-semibold text-[var(--ca-muted)]">{{ tcf('pengumuman.judulKolom') }}<input id="cf-p-judul" v-model="f.judul" class="ca-input mt-2 w-full" maxlength="80" required></label>
             <label for="cf-p-isi" class="block text-xs font-semibold text-[var(--ca-muted)]">{{ tcf('pengumuman.isi') }}<textarea id="cf-p-isi" v-model="f.isi" rows="4" class="ca-input mt-2 w-full" maxlength="500" required /></label>
             <div class="grid gap-3 sm:grid-cols-2">
@@ -157,7 +170,7 @@ onBeforeUnmount(() => {
           <div class="min-w-0"><h4 class="mb-3 text-xs font-semibold text-[var(--ca-muted)]">{{ tcf('pengumuman.pratinjau') }}</h4><CashflowPengumumanPratinjau :judul="f.judul" :isi="f.isi" :level="f.level" :tombol="f.tombol" :url="f.url" /></div>
         </fieldset>
         <div v-if="basi" class="mt-4 flex flex-wrap items-center gap-2 text-sm ca-tone-warning" role="alert"><span>{{ tcf('pengumuman.basi') }}</span><button v-if="versiTerbaru" type="button" class="ca-btn-secondary text-xs" @click="sunting(versiTerbaru)">{{ tcf('pengumuman.muatVersi') }}</button></div>
-        <div class="mt-6 flex justify-end gap-2 border-t border-[color:var(--ca-border)] pt-4"><button type="button" class="ca-btn-secondary" :disabled="menyimpan" @click="tutupForm">{{ tcf('umum.batal') }}</button><button type="submit" class="ca-btn-primary" :disabled="menyimpan || basi">{{ tcf(menyimpan ? 'pengumuman.menyimpan' : menyunting ? 'pengumuman.simpanPerubahan' : 'umum.simpan') }}</button></div>
+        <div class="mt-6 flex justify-end gap-2 border-t border-[color:var(--ca-border)] pt-4"><button type="button" class="ca-btn-secondary" :disabled="menyimpan" @click="tutupForm">{{ tcf('umum.batal') }}</button><button type="submit" class="ca-btn-primary" :disabled="menyimpan || basi || penerimaSibuk || !penerimaSah(f.penerima, f.pengguna, f.kelompok)">{{ tcf(menyimpan ? 'pengumuman.menyimpan' : menyunting ? 'pengumuman.simpanPerubahan' : 'umum.simpan') }}</button></div>
       </form>
     </ConsoleModal>
     <ConsoleModal :show="!!dihentikan" :title="tcf('pengumuman.hentikanJudul')" size="sm" @close="!menghentikan && (dihentikan = null)">

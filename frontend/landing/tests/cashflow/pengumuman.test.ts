@@ -10,7 +10,7 @@ import {
   kePengumuman, pengumumanBelumBerakhir, LEVEL_PENGUMUMAN, type PengumumanDTO,
 } from '../../adapters/cashflow'
 import { adaMigrasi, fungsiTerakhir, kolomTabel } from './migrasi'
-import { statusPengumuman } from '../../adapters/cashflowPengumuman'
+import { penerimaSah, statusPengumuman } from '../../adapters/cashflowPengumuman'
 import { tombolPengumuman } from '../../adapters/cashflowPengumumanTautan'
 
 // Satu baris public.announcements seperti yang dikirim PostgREST.
@@ -25,7 +25,8 @@ const BARIS = `{
   "created_at": "2026-09-18T08:12:45.123456+00:00",
   "updated_at": "2026-09-18T08:12:45.654321+00:00",
   "action_label": null,
-  "action_url": null
+  "action_url": null,
+  "audience_type": "all"
 }`
 const contoh = (): PengumumanDTO => JSON.parse(BARIS) as PengumumanDTO
 
@@ -58,7 +59,7 @@ describe('kePengumuman', () => {
       dibuat: '2026-09-18T08:12:45.123456+00:00',
       diubah: '2026-09-18T08:12:45.654321+00:00',
       tombol: null,
-      url: null,
+      url: null, penerima: 'all', pengguna: [], kelompok: [], namaKelompok: [], jumlahPenerima: null,
     })
   })
 
@@ -106,5 +107,22 @@ describe('pengumumanBelumBerakhir (tombol Hentikan)', () => {
   })
   it('tanpa akhir → selalu bisa', () => {
     expect(pengumumanBelumBerakhir({ ...p, sampai: null }, jam('2030-01-01T00:00:00Z'))).toBe(true)
+  })
+})
+
+
+describe('penerima pengumuman', () => {
+  it('membaca target tersimpan', () => {
+    expect(kePengumuman({ ...contoh(), audience_type: 'groups', group_ids: ['g1'], group_names: ['Penguji'], recipient_count: 12 })).toMatchObject({ penerima: 'groups', kelompok: ['g1'], namaKelompok: ['Penguji'], jumlahPenerima: 12 })
+  })
+  it('menolak penerima kosong dan tunggal lebih dari satu akun', () => {
+    expect(penerimaSah('all', [], [])).toBe(true)
+    expect(penerimaSah('single', [], [])).toBe(false)
+    expect(penerimaSah('single', ['u1'], [])).toBe(true)
+    expect(penerimaSah('single', ['u1', 'u2'], [])).toBe(false)
+    expect(penerimaSah('users', [], [])).toBe(false)
+    expect(penerimaSah('users', ['u1', 'u2'], [])).toBe(true)
+    expect(penerimaSah('groups', [], [])).toBe(false)
+    expect(penerimaSah('groups', [], ['g1'])).toBe(true)
   })
 })

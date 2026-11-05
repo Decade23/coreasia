@@ -1,3 +1,4 @@
+import type { JenisPenerima } from './cashflowPengumuman'
 /**
  * Adapter modul CashFlow — DTO dari RPC Supabase → bentuk yang dibutuhkan UI.
  *
@@ -121,6 +122,7 @@ export type ObjekJson = { [kunci: string]: unknown }
 export interface PengumumanDTO {
   id: string; title: string; body: string; level: string
   starts_at: string; ends_at: string | null; created_by: string | null; created_at: string
+  audience_type?: JenisPenerima; user_ids?: string[]; group_ids?: string[]; group_names?: string[]; recipient_count?: number
   action_label?: string | null; action_url?: string | null; updated_at?: string
 }
 /* admin_kesehatan (M/0017:379-411). `tabel` adalah OBJEK jsonb_object_agg
@@ -188,6 +190,11 @@ export interface Kesehatan {
 export const LEVEL_PENGUMUMAN = ['info', 'warning', 'critical'] as const
 export type LevelPengumuman = typeof LEVEL_PENGUMUMAN[number]
 export interface Pengumuman {
+  penerima: JenisPenerima
+  pengguna: string[]
+  kelompok: string[]
+  namaKelompok: string[]
+  jumlahPenerima: number | null
   id: string
   judul: string
   isi: string
@@ -519,6 +526,7 @@ export function keKesehatan(d: KesehatanDTO): Kesehatan {
 export function kePengumuman(d: PengumumanDTO): Pengumuman {
   const tombol = tombolPengumuman(d.action_label, d.action_url)
   return {
+    penerima: d.audience_type ?? 'all', pengguna: d.user_ids ?? [], kelompok: d.group_ids ?? [], namaKelompok: d.group_names ?? [], jumlahPenerima: d.recipient_count ?? null,
     id: d.id, judul: d.title ?? '', isi: d.body ?? '', level: d.level,
     mulai: d.starts_at, sampai: d.ends_at ?? null, dibuat: d.created_at,
     diubah: d.updated_at ?? d.created_at, tombol: tombol?.label ?? null, url: tombol?.url ?? null,
