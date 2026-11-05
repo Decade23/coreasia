@@ -18,6 +18,7 @@ type LeadkuMobileEvent struct {
 	TargetCode *int   `json:"target_code,omitempty"`
 }
 type LeadkuMobilePulse struct {
+	CollectionMode string              `json:"collection_mode,omitempty"`
 	UsageConsent   bool                `json:"usage_consent"`
 	InstallationID string              `json:"installation_id"`
 	Package        string              `json:"package"`

@@ -56,7 +56,10 @@ func validLeadkuPulse(p model.LeadkuMobilePulse) bool {
 	if _, err := uuid.Parse(p.InstallationID); err != nil {
 		return false
 	}
-	if !p.UsageConsent || leadkuChannel(p.Package) == "" || !leadkuVersionPattern.MatchString(p.AppVersion) || len(p.AppVersion) > 40 || p.VersionCode <= 0 || p.VersionCode > 2100000000 || !regexp.MustCompile(`^[0-9]{1,2}(?:\.[0-9]{1,3}){0,2}$`).MatchString(p.OSVersion) || len(p.Events) == 0 || len(p.Events) > 20 {
+	// Existing UAT builds explicitly opted in. New builds report the automatic
+	// collection mode directly rather than claiming an explicit user consent.
+	validMode := p.CollectionMode == "automatic" || p.CollectionMode == "" && p.UsageConsent
+	if !validMode || leadkuChannel(p.Package) == "" || !leadkuVersionPattern.MatchString(p.AppVersion) || len(p.AppVersion) > 40 || p.VersionCode <= 0 || p.VersionCode > 2100000000 || !regexp.MustCompile(`^[0-9]{1,2}(?:\.[0-9]{1,3}){0,2}$`).MatchString(p.OSVersion) || len(p.Events) == 0 || len(p.Events) > 20 {
 		return false
 	}
 	for _, e := range p.Events {

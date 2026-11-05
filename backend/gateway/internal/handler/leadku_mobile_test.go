@@ -44,3 +44,23 @@ func TestLeadkuPolicyCannotForceUnavailableOrInvalidVersion(t *testing.T) {
 		t.Fatal("minimum above latest accepted")
 	}
 }
+
+func TestLeadkuAutomaticReportingAndLegacyOptIn(t *testing.T) {
+	p := model.LeadkuMobilePulse{CollectionMode: "automatic", InstallationID: uuid.NewString(), Package: "id.coreasia.leadku.qa.prod", AppVersion: "1.6.3", VersionCode: 14, OSVersion: "17", Events: []model.LeadkuMobileEvent{{ID: uuid.NewString(), Kind: "session_start"}}}
+	if !validLeadkuPulse(p) {
+		t.Fatal("automatic reporting rejected")
+	}
+	p.CollectionMode = "unknown"
+	p.UsageConsent = true
+	if validLeadkuPulse(p) {
+		t.Fatal("unknown collection mode accepted")
+	}
+	p.CollectionMode = ""
+	if !validLeadkuPulse(p) {
+		t.Fatal("legacy opt-in rejected")
+	}
+	p.UsageConsent = false
+	if validLeadkuPulse(p) {
+		t.Fatal("unidentified reporting mode accepted")
+	}
+}
