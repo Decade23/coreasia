@@ -23,3 +23,6 @@ frontend/landing/node_modules/
 frontend/landing/.nuxt/
 frontend/landing/dist/
 frontend/landing/.output/
+
+# Vercel project cache and downloaded private environment
+.vercel/

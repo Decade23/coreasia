@@ -8,6 +8,11 @@ const data = ref<LeadkuSummary|null>(null); const loading = ref(true); const sav
 const draft = ref<LeadkuPolicy|null>(null); const report = ref<HTMLInputElement|null>(null)
 const integer = (n: number) => new Intl.NumberFormat('id-ID').format(n)
 const date = (s: string) => new Intl.DateTimeFormat('id-ID',{dateStyle:'medium'}).format(new Date(s))
+function errorMessage(error: unknown, fallback: string): string {
+ const response = error as { data?: { errors?: { message?: unknown } } } | null
+ const message = response?.data?.errors?.message
+ return typeof message === 'string' ? message : fallback
+}
 let generation = 0
 async function load() {
  const current = ++generation; loading.value=true; failure.value=''
@@ -24,15 +29,15 @@ async function save() {
  if(!draft.value||saving.value)return
  saving.value=true
  try {const res=await api.put<LeadkuPolicy>('/admin/leadku/mobile-policy',{...draft.value,expected_updated_at:draft.value.updated_at});draft.value={...res.data};if(data.value)data.value.policy=res.data;toast.success('Pengaturan versi tersimpan.')}
- catch(error:any){toast.error(error?.data?.errors?.message??'Pengaturan belum tersimpan.')}
+ catch(error:unknown){toast.error(errorMessage(error,'Pengaturan belum tersimpan.'))}
  finally {saving.value=false}
 }
-async function syncPlay() { saving.value=true;try{await api.post('/admin/leadku/play-sync');await load();toast.success('Laporan Google Play diperbarui.')}catch(error:any){toast.error(error?.data?.errors?.message??'Sinkronisasi belum berhasil.')}finally{saving.value=false} }
+async function syncPlay() { saving.value=true;try{await api.post('/admin/leadku/play-sync');await load();toast.success('Laporan Google Play diperbarui.')}catch(error:unknown){toast.error(errorMessage(error,'Sinkronisasi belum berhasil.'))}finally{saving.value=false} }
 async function importReport(event:Event) {
  const input=event.target as HTMLInputElement;const file=input.files?.[0];if(!file)return
  saving.value=true
  try {const form=new FormData();form.append('report',file);await api.post('/admin/leadku/play-report',form);toast.success('Laporan Google Play tersimpan.');await load()}
- catch(error:any){toast.error(error?.data?.errors?.message??'Laporan belum dapat diimpor.')}
+ catch(error:unknown){toast.error(errorMessage(error,'Laporan belum dapat diimpor.'))}
  finally{saving.value=false;input.value=''}
 }
 </script>
