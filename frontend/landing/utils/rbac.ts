@@ -23,6 +23,7 @@ export type Permission = string
 
 export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
   super_admin: [
+    'leadku:view', 'leadku:settings',
     'briefs:list', 'briefs:view',
     'dashboard:view',
     'cashflow:view', 'cashflow:pii', 'cashflow:investigasi', 'cashflow:tindak', 'cashflow:ekspor',
@@ -42,6 +43,7 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     'cad:devices:list', 'cad:devices:manage', 'cad:analytics:view',
   ],
   admin: [
+    'leadku:view',
     'briefs:list', 'briefs:view',
     'dashboard:view',
     'articles:list', 'articles:view', 'articles:create', 'articles:update', 'articles:stats',

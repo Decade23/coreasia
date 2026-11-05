@@ -31,6 +31,15 @@ export default defineNuxtConfig({
         emitRouteChunkError: 'manual',
     },
     modules: ['@nuxtjs/seo', '@nuxt/eslint', '@nuxt/fonts', '@nuxt/icon', '@nuxt/image', '@pinia/nuxt'],
+    icon: {
+        provider: 'server',
+        fallbackToApi: false,
+        serverBundle: { collections: ['lucide', 'bi'] },
+        clientBundle: {
+            scan: true,
+            icons: ['lucide:download', 'lucide:trash-2', 'lucide:check', 'lucide:smartphone', 'lucide:activity', 'lucide:users', 'lucide:calendar', 'lucide:plus', 'lucide:eye', 'lucide:eye-off', 'lucide:mail', 'lucide:shield-check'],
+        },
+    },
     // Composable modul CashFlow hidup di subfolder sendiri supaya tidak
     // bercampur dengan composable console; Nuxt hanya memindai satu tingkat.
     imports: { dirs: ['composables/cashflow'] },

@@ -3,6 +3,11 @@ package rbac
 // Permission represents a granular access control permission.
 type Permission string
 
+const (
+	LeadkuView     Permission = "leadku:view"
+	LeadkuSettings Permission = "leadku:settings"
+)
+
 // Dashboard
 const (
 	DashboardView Permission = "dashboard:view"
@@ -123,6 +128,8 @@ const (
 // tests/cashflow/rbac-paritas.test.ts dan permissions_test.go).
 var RolePermissions = map[string]map[Permission]bool{
 	"super_admin": {
+		LeadkuView:          true,
+		LeadkuSettings:      true,
 		BriefsList:          true,
 		BriefsView:          true,
 		DashboardView:       true,
@@ -178,6 +185,7 @@ var RolePermissions = map[string]map[Permission]bool{
 		CADAnalyticsView:    true,
 	},
 	"admin": {
+		LeadkuView:        true,
 		BriefsList:        true,
 		BriefsView:        true,
 		DashboardView:     true,

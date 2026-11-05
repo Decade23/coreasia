@@ -35,6 +35,7 @@ const menuItems = computed(() => [
      di gateway) membuka menu ini; izin yang sama diperiksa ulang server Nitro
      sebelum ia mencetak sesi Supabase modul dari cookie console
      (server/api/cashflow/sesi.post.ts). Satu login, dua pemeriksaan. */
+  ...(can('leadku:view') ? [{ label: 'LeadKu', icon: 'lucide:users-round', to: '/console/leadku' }] : []),
   ...(can('cashflow:view')
     ? [{ label: tc('layout.cashflow'), icon: 'lucide:wallet', to: '/console/cashflow' }]
     : []),

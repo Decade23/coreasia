@@ -19,6 +19,7 @@ require (
 )
 
 require (
+	cloud.google.com/go/compute/metadata v0.8.0 // indirect
 	github.com/BurntSushi/toml v1.2.1 // indirect
 	github.com/andybalholm/brotli v1.2.0 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.41.5 // indirect
@@ -63,6 +64,7 @@ require (
 	github.com/valyala/fasthttp v1.69.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	golang.org/x/net v0.60.0 // indirect
+	golang.org/x/oauth2 v0.34.0 // indirect
 	golang.org/x/sync v0.23.0 // indirect
 	golang.org/x/sys v0.48.0 // indirect
 	golang.org/x/text v0.42.0 // indirect

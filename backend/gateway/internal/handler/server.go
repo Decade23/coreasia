@@ -21,10 +21,11 @@ import (
 )
 
 type Server struct {
-	app  *fiber.App
-	cfg  *config.Config
-	pool *pgxpool.Pool
-	rdb  *redis.Client
+	app            *fiber.App
+	cfg            *config.Config
+	pool           *pgxpool.Pool
+	rdb            *redis.Client
+	stopLeadkuSync func()
 }
 
 func NewServer(cfg *config.Config, pool *pgxpool.Pool, rdb *redis.Client) *Server {
@@ -167,6 +168,8 @@ func (s *Server) setupRoutes() {
 	apiKeyHandler := NewAPIKeyHandler(apiKeyRepo, auditLogRepo, s.rdb)
 	botScheduleRepo := repository.NewBotScheduleRepo(s.pool)
 	botScheduleHandler := NewBotScheduleHandler(botScheduleRepo, auditLogRepo, articleBot)
+	leadkuMobile := NewLeadkuMobileHandler(repository.NewLeadkuMobileRepo(s.pool), auditLogRepo)
+	s.stopLeadkuSync = leadkuMobile.StartPlaySync()
 	cadRepo := repository.NewCADRepo(s.pool)
 	mayarClient := service.NewMayarClient(s.cfg.Payments)
 	cadSigner, err := service.NewCADKeySigner(s.cfg.CAD.SigningKey)
@@ -189,6 +192,9 @@ func (s *Server) setupRoutes() {
 
 	api := s.app.Group("/api")
 	public := api.Group("/public")
+	mobileLimit := mw.NewIPRateLimiter(1200, time.Minute, false)
+	public.Get("/leadku/mobile-policy", mobileLimit.MiddlewareBy(mw.ClientIPKey), leadkuMobile.Policy)
+	public.Post("/leadku/pulse", mobileLimit.MiddlewareBy(mw.ClientIPKey), leadkuMobile.Pulse)
 
 	// Public lead capture. A successful response is only returned after the
 	// submission has been persisted by PostgreSQL.
@@ -284,6 +290,11 @@ func (s *Server) setupRoutes() {
 	admin.Delete("/cad/licenses/:id", mw.RequirePermission(rbac.CADLicensesDelete), cadHandler.Delete)
 	admin.Get("/cad/devices", mw.RequirePermission(rbac.CADDevicesList), cadHandler.ListDevices)
 	admin.Post("/cad/devices/:id/deactivate", mw.RequirePermission(rbac.CADDevicesManage), cadHandler.DeviceDeactivate)
+	admin.Get("/leadku/analytics", mw.RequirePermission(rbac.LeadkuView), leadkuMobile.Summary)
+	admin.Put("/leadku/mobile-policy", mw.RequirePermission(rbac.LeadkuSettings), leadkuMobile.UpdatePolicy)
+	admin.Post("/leadku/play-sync", mw.RequirePermission(rbac.LeadkuSettings), leadkuMobile.SyncPlay)
+	admin.Post("/leadku/play-report", mw.RequirePermission(rbac.LeadkuSettings), leadkuMobile.ImportPlay)
+
 	admin.Get("/cad/analytics", mw.RequirePermission(rbac.CADAnalyticsView), cadHandler.Analytics)
 
 	// CAD public (app-facing) — the desktop app calls these; no admin auth
@@ -420,6 +431,9 @@ func (s *Server) Start() error {
 }
 
 func (s *Server) Shutdown() error {
+	if s.stopLeadkuSync != nil {
+		s.stopLeadkuSync()
+	}
 	return s.app.Shutdown()
 }
 
