@@ -75,4 +75,27 @@ type LeadkuMobileSummary struct {
 	Daily    []LeadkuMobileDay     `json:"daily"`
 	Play     []LeadkuPlayDay       `json:"play"`
 	Policy   LeadkuMobilePolicy    `json:"policy"`
+	Funnel   LeadkuMobileFunnel    `json:"funnel"`
+}
+
+type LeadkuMobileFunnel struct {
+	FirstOpen          int64 `json:"first_open"`
+	WelcomeView        int64 `json:"welcome_view"`
+	DemoStarted        int64 `json:"demo_started"`
+	DemoKeyAction      int64 `json:"demo_key_action"`
+	GuideOpened        int64 `json:"guide_opened"`
+	GuideCompleted     int64 `json:"guide_completed"`
+	SignupStarted      int64 `json:"signup_started"`
+	SignupDirect       int64 `json:"signup_direct"`
+	SignupViaDemo      int64 `json:"signup_via_demo"`
+	SignupCompleted    int64 `json:"signup_completed"`
+	SetupHelpRequested int64 `json:"setup_help_requested"`
+}
+
+type LeadkuSetupRequest struct {
+	ID        string    `json:"id"`
+	Channel   string    `json:"channel"`
+	Contact   string    `json:"contact"`
+	Topic     string    `json:"topic"`
+	CreatedAt time.Time `json:"created_at"`
 }

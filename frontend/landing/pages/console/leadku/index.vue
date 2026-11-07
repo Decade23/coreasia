@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { playTotals, screenLabels, updateImpact } from '~/adapters/leadkuMobile'
 import type { LeadkuSummary, LeadkuPolicy } from '~/adapters/leadkuMobile'
+import LeadkuOnboardingFunnel from '~/components/leadku/OnboardingFunnel.vue'
+import LeadkuSetupRequests from '~/components/leadku/SetupRequests.vue'
 definePageMeta({ layout: 'console', middleware: ['console','leadku-admin'] })
 const api = useAdminApi(); const { can } = usePermissions(); const toast = useToast()
 const channel = ref<'production'|'uat'>('production')
@@ -91,6 +93,8 @@ async function importReport(event:Event) {
     <p v-else class="text-sm text-[var(--ca-muted)]">Belum ada laporan instalasi Google Play.</p>
     <p v-if="data.play_sync.error" role="status" class="text-sm ca-tone-gold">{{data.play_sync.error}}</p>
    </section>
+   <LeadkuOnboardingFunnel :funnel="data.funnel" />
+   <LeadkuSetupRequests v-if="data.funnel && can('leadku:settings')" :key="channel" :channel="channel" />
    <section aria-labelledby="leadku-telemetry-heading" class="space-y-4">
     <h2 id="leadku-telemetry-heading" class="font-display text-lg font-bold">Telemetri aplikasi</h2>
     <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">

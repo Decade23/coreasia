@@ -24,6 +24,21 @@ lama ditolak 409 agar tidak menimpa perubahan admin lain. Minimum 0 berarti
 opsional. Rilis yang belum tersedia tidak diiklankan melalui endpoint publik.
 Produksi yang aktif saat pemulihan adalah 1.6.3 kode 14, minimum 0, tersedia.
 
+## Funnel pengguna baru
+
+Funnel memakai ID instalasi dengan event buka pertama dalam 30 hari terakhir,
+terpisah untuk Produksi dan UAT. Aksi demo dan progres panduan dihitung per ID.
+Pendaftaran berhasil berarti email terverifikasi di LeadKu Web. LeadKu
+mengirim referensi acak ke gateway CoreAsia tanpa menyertakan identitas akun.
+
+Permintaan bantuan memakai endpoint tersendiri. Hanya admin dengan izin
+`leadku:settings` yang dapat memuat kontak yang diserahkan pengguna.
+
+Aktifkan bridge dengan `LEADKU_FUNNEL_BRIDGE_SECRET` minimal 32 byte pada
+gateway CoreAsia dan tenant-service LeadKu. Atur `LEADKU_FUNNEL_BRIDGE_URL`
+di tenant-service ke URL dasar CoreAsia `/api/public/leadku`. Pasang gateway
+dan bridge sebelum mengedarkan APK yang mengirim event funnel.
+
 ## Pemulihan 5 November 2026
 
 Rilis web `69a84df` tidak membawa modul LeadKu dari checkout terpisah sehingga

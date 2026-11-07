@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { playTotals, updateImpact } from '../../adapters/leadkuMobile'
+import { funnelRate, playTotals, updateImpact } from '../../adapters/leadkuMobile'
 import type { LeadkuSummary } from '../../adapters/leadkuMobile'
 const summary = (partial: Partial<LeadkuSummary>) => ({ play: [], versions: [], ...partial } as LeadkuSummary)
 describe('analitik LeadKu', () => {
@@ -20,5 +20,11 @@ describe('analitik LeadKu', () => {
  it('limits mandatory update impact to active installations below the minimum', () => {
   const value=summary({versions:[{code:12,active_7d:2},{code:13,active_7d:5}] as LeadkuSummary['versions']})
   expect(updateImpact(value,0)).toBe(0);expect(updateImpact(value,13)).toBe(2)
+ })
+ it('distinguishes zero verified signups from an undefined conversion rate', () => {
+  expect(funnelRate(0, 0)).toBeNull()
+  expect(funnelRate(0, 5)).toBe(0)
+  expect(funnelRate(3, 4)).toBe(0.75)
+  expect(funnelRate(5, 4)).toBeNull()
  })
 })

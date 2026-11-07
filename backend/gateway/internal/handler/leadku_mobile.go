@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -24,8 +25,12 @@ import (
 const leadkuPlayURL = "https://play.google.com/store/apps/details?id=id.coreasia.leadku"
 
 var leadkuVersionPattern = regexp.MustCompile(`^[0-9]+\.[0-9]+\.[0-9]+(?:[-+][a-zA-Z0-9.-]+)?$`)
+var leadkuOSVersionPattern = regexp.MustCompile(`^[0-9]{1,2}(?:\.[0-9]{1,3}){0,2}$`)
 var leadkuScreens = map[string]bool{"": true, "home": true, "contacts": true, "pipeline": true, "tasks": true, "profile": true, "contact": true, "deal": true, "task": true, "company": true, "agenda": true, "reports": true, "commerce": true, "document": true, "activities": true, "activity": true, "tim": true, "anggota": true, "kolamLead": true, "notifications": true, "sinkron": true, "login": true, "other": true}
-var leadkuEvents = map[string]bool{"session_start": true, "screen_view": true, "update_shown": true, "update_clicked": true, "update_dismissed": true, "api_error": true}
+var leadkuEvents = map[string]bool{
+	"session_start": true, "screen_view": true, "update_shown": true, "update_clicked": true, "update_dismissed": true, "api_error": true,
+	"first_open": true, "welcome_view": true, "demo_started": true, "demo_key_action": true, "guide_opened": true, "guide_completed": true,
+}
 
 type leadkuMobileStore interface {
 	Pulse(context.Context, string, model.LeadkuMobilePulse) error
@@ -33,15 +38,20 @@ type leadkuMobileStore interface {
 	UpdatePolicy(context.Context, model.LeadkuMobilePolicy, string) (model.LeadkuMobilePolicy, error)
 	Summary(context.Context, string) (*model.LeadkuMobileSummary, error)
 	ImportPlay(context.Context, []model.LeadkuPlayDay) error
+	SignupHandoff(context.Context, string, model.LeadkuMobilePulse, bool) (string, error)
+	CompleteSignup(context.Context, string) (bool, error)
+	CreateSetupRequest(context.Context, string, model.LeadkuMobilePulse, model.LeadkuSetupRequest) error
+	SetupRequests(context.Context, string) ([]model.LeadkuSetupRequest, error)
 }
 type LeadkuMobileHandler struct {
-	playSync *service.LeadkuPlaySync
-	repo     leadkuMobileStore
-	audit    auditLogger
+	playSync           *service.LeadkuPlaySync
+	repo               leadkuMobileStore
+	audit              auditLogger
+	funnelBridgeSecret string
 }
 
 func NewLeadkuMobileHandler(repo *repository.LeadkuMobileRepo, audit auditLogger) *LeadkuMobileHandler {
-	return &LeadkuMobileHandler{repo: repo, audit: audit, playSync: service.NewLeadkuPlaySync(repo)}
+	return &LeadkuMobileHandler{repo: repo, audit: audit, playSync: service.NewLeadkuPlaySync(repo), funnelBridgeSecret: os.Getenv("LEADKU_FUNNEL_BRIDGE_SECRET")}
 }
 func leadkuChannel(pkg string) string {
 	switch pkg {
@@ -52,14 +62,19 @@ func leadkuChannel(pkg string) string {
 	}
 	return ""
 }
-func validLeadkuPulse(p model.LeadkuMobilePulse) bool {
-	if _, err := uuid.Parse(p.InstallationID); err != nil {
+func validLeadkuInstallation(p model.LeadkuMobilePulse) bool {
+	if id, err := uuid.Parse(p.InstallationID); err != nil || id == uuid.Nil {
 		return false
 	}
 	// Existing UAT builds explicitly opted in. New builds report the automatic
 	// collection mode directly rather than claiming an explicit user consent.
 	validMode := p.CollectionMode == "automatic" || p.CollectionMode == "" && p.UsageConsent
-	if !validMode || leadkuChannel(p.Package) == "" || !leadkuVersionPattern.MatchString(p.AppVersion) || len(p.AppVersion) > 40 || p.VersionCode <= 0 || p.VersionCode > 2100000000 || !regexp.MustCompile(`^[0-9]{1,2}(?:\.[0-9]{1,3}){0,2}$`).MatchString(p.OSVersion) || len(p.Events) == 0 || len(p.Events) > 20 {
+	return validMode && leadkuChannel(p.Package) != "" && len(p.AppVersion) <= 40 && leadkuVersionPattern.MatchString(p.AppVersion) &&
+		p.VersionCode > 0 && p.VersionCode <= 2100000000 && leadkuOSVersionPattern.MatchString(p.OSVersion)
+}
+
+func validLeadkuPulse(p model.LeadkuMobilePulse) bool {
+	if !validLeadkuInstallation(p) || len(p.Events) == 0 || len(p.Events) > 20 {
 		return false
 	}
 	for _, e := range p.Events {
@@ -67,6 +82,9 @@ func validLeadkuPulse(p model.LeadkuMobilePulse) bool {
 			return false
 		}
 		if !leadkuEvents[e.Kind] || !leadkuScreens[e.Screen] || e.TargetCode != nil && (*e.TargetCode <= 0 || *e.TargetCode > 2100000000) {
+			return false
+		}
+		if e.Kind == "demo_key_action" && !leadkuSetupAreas[e.Screen] {
 			return false
 		}
 	}

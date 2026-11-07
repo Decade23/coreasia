@@ -195,6 +195,11 @@ func (s *Server) setupRoutes() {
 	mobileLimit := mw.NewIPRateLimiter(1200, time.Minute, false)
 	public.Get("/leadku/mobile-policy", mobileLimit.MiddlewareBy(mw.ClientIPKey), leadkuMobile.Policy)
 	public.Post("/leadku/pulse", mobileLimit.MiddlewareBy(mw.ClientIPKey), leadkuMobile.Pulse)
+	signupHandoffLimit := mw.NewIPRateLimiter(60, time.Minute, false)
+	setupHelpLimit := mw.NewIPRateLimiter(10, 15*time.Minute, false)
+	public.Post("/leadku/signup-handoff", signupHandoffLimit.MiddlewareBy(mw.ClientIPKey), leadkuMobile.SignupHandoff)
+	public.Post("/leadku/signup-completed", leadkuMobile.CompleteSignup)
+	public.Post("/leadku/setup-help", setupHelpLimit.MiddlewareBy(mw.ClientIPKey), leadkuMobile.RequestSetupHelp)
 
 	// Public lead capture. A successful response is only returned after the
 	// submission has been persisted by PostgreSQL.
@@ -291,6 +296,7 @@ func (s *Server) setupRoutes() {
 	admin.Get("/cad/devices", mw.RequirePermission(rbac.CADDevicesList), cadHandler.ListDevices)
 	admin.Post("/cad/devices/:id/deactivate", mw.RequirePermission(rbac.CADDevicesManage), cadHandler.DeviceDeactivate)
 	admin.Get("/leadku/analytics", mw.RequirePermission(rbac.LeadkuView), leadkuMobile.Summary)
+	admin.Get("/leadku/setup-requests", liveSession, mw.RequirePermission(rbac.LeadkuSettings), leadkuMobile.SetupRequests)
 	admin.Put("/leadku/mobile-policy", mw.RequirePermission(rbac.LeadkuSettings), leadkuMobile.UpdatePolicy)
 	admin.Post("/leadku/play-sync", mw.RequirePermission(rbac.LeadkuSettings), leadkuMobile.SyncPlay)
 	admin.Post("/leadku/play-report", mw.RequirePermission(rbac.LeadkuSettings), leadkuMobile.ImportPlay)

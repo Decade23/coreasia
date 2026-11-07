@@ -42,16 +42,41 @@ try{
   check('LeadKu navigation is visible',await p.getByRole('link',{name:'LeadKu',exact:true}).isVisible());
   const play=p.getByRole('region',{name:'Instalasi Google Play',exact:true});
   const telemetry=p.getByRole('region',{name:'Telemetri aplikasi',exact:true});
+  const funnel=p.getByRole('region',{name:'Funnel pengguna baru',exact:true});
+  const setup=p.getByRole('region',{name:'Permintaan bantuan setup',exact:true});
   const tile=(region,label)=>region.locator('.ca-console-stat').filter({has:p.getByText(label,{exact:true})});
   const metric=async(region,label)=>await tile(region,label).locator('p').nth(1).innerText();
+  const checkFunnel=async(channel)=>{
+    const {data:summary}=(await json(`/admin/leadku/analytics?channel=${channel}`,owner)).value;
+    const number=new Intl.NumberFormat('id-ID');
+    check(`${channel} funnel shows only its channel's first opens and registration outcomes`,
+      await metric(funnel,'Buka pertama')===number.format(summary.funnel.first_open)
+        && await metric(funnel,'Mulai daftar')===number.format(summary.funnel.signup_started)
+        && await metric(funnel,'Email terverifikasi')===number.format(summary.funnel.signup_completed)
+        && !Object.hasOwn(summary,'setup_requests'));
+    return summary;
+  };
   check('production telemetry count rendered',await metric(telemetry,'ID instalasi tercatat')==='3');
   check('unavailable Play report has an empty state and no numeric tile',
     await play.getByText('Belum ada laporan instalasi Google Play.',{exact:true}).isVisible()
       && await tile(play,'Pemasangan perangkat baru').count()===0);
   await p.screenshot({path:join(output,'leadku-belum-ada-laporan.png')});
-  const before=(await json('/admin/leadku/analytics?channel=production',owner)).value.data.policy;
+  const before=(await checkFunnel('production')).policy;
+  const requestResponse=p.waitForResponse(r=>r.url().includes('/admin/leadku/setup-requests?channel=production'));
+  await setup.getByRole('button',{name:'Lihat permintaan',exact:true}).click();
+  const loaded=await requestResponse;
+  assert.equal(loaded.status(),200);
+  const setupList=(await loaded.json()).data;
+  await setup.getByRole('button',{name:'Muat ulang permintaan',exact:true}).waitFor();
+  check('owner can load the separate opt-in contact list',setupList.length
+    ? await setup.getByText(setupList[0].contact,{exact:true}).first().isVisible()
+      && await setup.getByRole('button',{name:'Salin kontak',exact:true}).count()===setupList.length
+    : await setup.getByText('Belum ada permintaan bantuan setup.',{exact:true}).isVisible());
   await p.getByRole('tab',{name:'UAT',exact:true}).click();await p.getByRole('heading',{name:'Pembaruan versi · UAT',exact:true}).waitFor();
   check('UAT telemetry is isolated and has no Play region',await metric(telemetry,'ID instalasi tercatat')==='1'&&await play.count()===0);
+  await checkFunnel('uat');
+  check('switching channel clears the contact list',await setup.getByRole('button',{name:'Lihat permintaan',exact:true}).isVisible()
+    && await setup.getByRole('button',{name:'Salin kontak',exact:true}).count()===0);
   const save=async()=>{
     const response=p.waitForResponse(r=>r.url().includes('/admin/leadku/mobile-policy')&&r.request().method()==='PUT');
     await p.getByRole('button',{name:'Simpan pengaturan',exact:true}).click();assert.equal((await response).status(),200);
@@ -90,8 +115,15 @@ try{
   await p.setViewportSize({width:390,height:844});check('mobile page does not overflow',await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
   await p.evaluate(()=>document.documentElement.dataset.theme='dark');await p.screenshot({path:join(output,'leadku-mobile-dark.png'),fullPage:true});
   await p.setViewportSize({width:1440,height:1000});await ctx.clearCookies();await p.goto(base+'/console/login?ke=/console/leadku',{waitUntil:'domcontentloaded'});
+  const requestsByViewer=[];
+  const observeViewerRequest=request=>{if(request.url().includes('/admin/leadku/setup-requests'))requestsByViewer.push(request.url());};
+  p.on('request',observeViewerRequest);
   const viewer=await login('qa-leadku-view@example.invalid');check('read-only admin can view both sources',await metric(telemetry,'ID instalasi tercatat')==='3'
     &&await metric(play,'Pemasangan perangkat baru')==='11');
+  p.off('request',observeViewerRequest);
+  check('read-only admin sees aggregated funnel without a contact request',await funnel.isVisible()
+    && await setup.count()===0 && requestsByViewer.length===0);
+  check('read-only admin cannot read opt-in contacts via API',(await json('/admin/leadku/setup-requests?channel=production',viewer)).status===403);
   check('read-only admin cannot import or sync Play data',await play.getByRole('button',{name:/Impor laporan|Sinkronkan/}).count()===0);
   check('read-only admin cannot see settings',await p.getByRole('button',{name:'Simpan pengaturan',exact:true}).count()===0);
   check('read-only admin cannot mutate settings via API',(await json('/admin/leadku/mobile-policy',viewer,'PUT',{...after,expected_updated_at:after.updated_at})).status===403);

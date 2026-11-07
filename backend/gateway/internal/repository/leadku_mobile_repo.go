@@ -2,7 +2,7 @@ package repository
 
 import (
 	"context"
-	"fmt"
+
 	"github.com/coreasia/gateway/internal/model"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -16,16 +16,11 @@ func (r *LeadkuMobileRepo) Pulse(ctx context.Context, channel string, p model.Le
 		return err
 	}
 	defer tx.Rollback(ctx)
-	var existing string
-	err = tx.QueryRow(ctx, `INSERT INTO public.leadku_mobile_installations(id,channel,app_version,version_code,os_version)
- VALUES($1,$2,$3,$4,$5) ON CONFLICT(id) DO UPDATE SET app_version=excluded.app_version,
- version_code=excluded.version_code,os_version=excluded.os_version,last_seen=now()
- WHERE leadku_mobile_installations.channel=excluded.channel RETURNING channel`, p.InstallationID, channel, p.AppVersion, p.VersionCode, p.OSVersion).Scan(&existing)
-	if err != nil {
-		return fmt.Errorf("record installation: %w", err)
+	if err = recordLeadkuInstallation(ctx, tx, channel, p); err != nil {
+		return err
 	}
 	for _, e := range p.Events {
-		_, err = tx.Exec(ctx, `INSERT INTO public.leadku_mobile_events(id,installation_id,kind,screen,target_code) VALUES($1,$2,$3,$4,$5) ON CONFLICT(id) DO NOTHING`, e.ID, p.InstallationID, e.Kind, e.Screen, e.TargetCode)
+		_, err = tx.Exec(ctx, `INSERT INTO public.leadku_mobile_events(id,installation_id,kind,screen,target_code) VALUES($1,$2,$3,$4,$5) ON CONFLICT DO NOTHING`, e.ID, p.InstallationID, e.Kind, e.Screen, e.TargetCode)
 		if err != nil {
 			return err
 		}
@@ -119,6 +114,10 @@ func (r *LeadkuMobileRepo) Summary(ctx context.Context, channel string) (*model.
 		}
 	}
 	s.Policy, err = r.Policy(ctx, channel)
+	if err != nil {
+		return nil, err
+	}
+	s.Funnel, err = r.Funnel(ctx, channel)
 	return s, err
 }
 func (r *LeadkuMobileRepo) ImportPlay(ctx context.Context, days []model.LeadkuPlayDay) error {
