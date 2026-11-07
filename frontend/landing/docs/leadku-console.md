@@ -7,12 +7,17 @@ Gateway tetap menegakkan izin; menyembunyikan tombol bukan pengaman utama.
 
 ## Data dan versi
 
-Kanal Google Play dan UAT dibaca terpisah dari `/admin/leadku/analytics`.
-Identitas instalasi dari pulse aplikasi menunjukkan penggunaan yang tercatat,
-bukan jumlah download resmi Play. Bagian laporan Play tetap kosong sampai
-CSV resmi diimpor atau sinkronisasi diberi akses. Tidak mengganti angka Play
-yang belum ada dengan telemetri aplikasi. Izin akun layanan laporan Play masih
-ditunda Master; pemulihan halaman tidak mengubah keputusan tersebut.
+Kanal Produksi dan UAT dibaca terpisah dari `/admin/leadku/analytics`.
+Pada kanal Produksi, **Instalasi Google Play** menampilkan jumlah pemasangan
+perangkat baru untuk tanggal yang tercakup dalam laporan resmi. Metrik basis
+instalasi memakai tanggal laporan terbaru. **Telemetri aplikasi** menghitung
+ID instalasi yang melapor, termasuk aktivitas sebelum rilis publik.
+
+Jika laporan tersedia, unduh CSV instalasi bulanan LeadKu dari **Play Console
+→ Kelola akun → Laporan aplikasi Play → Statistik**. Admin dengan izin
+`leadku:settings` dapat mengunggah file asli lewat **Impor laporan**. Kartu
+Google Play menampilkan status belum ada laporan hingga CSV diimpor atau
+sinkronisasi berhasil. [Panduan Google Play](https://support.google.com/googleplay/android-developer/answer/6135870?hl=id)
 
 Pengaturan versi menggunakan `expected_updated_at`. Editor yang membaca data
 lama ditolak 409 agar tidak menimpa perubahan admin lain. Minimum 0 berarti

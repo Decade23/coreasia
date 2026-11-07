@@ -25,6 +25,8 @@ const json=async(path,token,method='GET',body)=>{
 try{
   for(let i=0;i<100;i++){try{browser=await chromium.connectOverCDP(`http://127.0.0.1:${port}`);break;}catch{await pause(100);}}
   assert.ok(browser);const ctx=browser.contexts()[0],p=ctx.pages()[0];
+  const cdp=await ctx.newCDPSession(p);
+  await cdp.send('Emulation.setTimezoneOverride',{timezoneId:'America/Los_Angeles'});
   await p.setViewportSize({width:1440,height:1000});p.on('pageerror',e=>errors.push(e.message));
   await ctx.route('**/*',r=>new URL(r.request().url()).hostname==='127.0.0.1'?r.continue():r.abort());
   await p.goto(base+'/console/leadku',{waitUntil:'domcontentloaded'});await p.waitForURL(/\/console\/login/);
@@ -38,12 +40,18 @@ try{
   const owner=await login(identity.email);
   check('authenticated owner opens LeadKu without a 404');
   check('LeadKu navigation is visible',await p.getByRole('link',{name:'LeadKu',exact:true}).isVisible());
-  const metric=async label=>await p.locator('.ca-console-stat').filter({has:p.getByText(label,{exact:true})}).locator('p').nth(1).innerText();
-  check('production fixture count rendered',await metric('Instalasi tercatat')==='3');
-  check('unavailable Play report is not replaced with app telemetry',await p.getByText('Belum ada laporan instalasi Google Play.',{exact:true}).isVisible());
+  const play=p.getByRole('region',{name:'Instalasi Google Play',exact:true});
+  const telemetry=p.getByRole('region',{name:'Telemetri aplikasi',exact:true});
+  const tile=(region,label)=>region.locator('.ca-console-stat').filter({has:p.getByText(label,{exact:true})});
+  const metric=async(region,label)=>await tile(region,label).locator('p').nth(1).innerText();
+  check('production telemetry count rendered',await metric(telemetry,'ID instalasi tercatat')==='3');
+  check('unavailable Play report has an empty state and no numeric tile',
+    await play.getByText('Belum ada laporan instalasi Google Play.',{exact:true}).isVisible()
+      && await tile(play,'Pemasangan perangkat baru').count()===0);
+  await p.screenshot({path:join(output,'leadku-belum-ada-laporan.png')});
   const before=(await json('/admin/leadku/analytics?channel=production',owner)).value.data.policy;
   await p.getByRole('tab',{name:'UAT',exact:true}).click();await p.getByRole('heading',{name:'Pembaruan versi · UAT',exact:true}).waitFor();
-  check('UAT fixture count is isolated',await metric('Instalasi tercatat')==='1');
+  check('UAT telemetry is isolated and has no Play region',await metric(telemetry,'ID instalasi tercatat')==='1'&&await play.count()===0);
   const save=async()=>{
     const response=p.waitForResponse(r=>r.url().includes('/admin/leadku/mobile-policy')&&r.request().method()==='PUT');
     await p.getByRole('button',{name:'Simpan pengaturan',exact:true}).click();assert.equal((await response).status(),200);
@@ -58,15 +66,33 @@ try{
   check('stale editor cannot overwrite a newer policy',(await json('/admin/leadku/mobile-policy',owner,'PUT',{...old,expected_updated_at:old.updated_at})).status===409);
   policy=(await json('/public/leadku/mobile-policy?package=id.coreasia.leadku.qa.prod')).value.data.policy;check('draft policy is not advertised',policy.latest_code===0&&!policy.available&&policy.minimum_code===0);
   const after=(await json('/admin/leadku/analytics?channel=production',owner)).value.data.policy;check('production policy unchanged',JSON.stringify(before)===JSON.stringify(after));
-  await p.getByRole('tab',{name:'Google Play',exact:true}).click();await p.getByRole('heading',{name:'Google Play',exact:true}).waitFor();
-  await p.locator('input[type=file]').setInputFiles({name:'installs_id.coreasia.leadku_202611_overview.csv',mimeType:'text/csv',buffer:Buffer.from('Date,Package Name,Daily Device Installs,Daily Device Uninstalls,Current Device Installs,Active Device Installs\n2026-11-04,id.coreasia.leadku,7,1,20,15\n2026-11-05,id.coreasia.leadku,4,0,23,18\n')});
-  await p.getByText('Laporan Google Play tersimpan.',{exact:true}).waitFor();await p.getByText('Instalasi dari laporan',{exact:true}).waitFor();
-  check('local CSV report is rendered separately',await metric('Instalasi dari laporan')==='11'&&await metric('Instalasi tercatat')==='3');
-  await p.screenshot({path:join(output,'leadku-desktop.png'),fullPage:true});
+  await p.getByRole('tab',{name:'Produksi',exact:true}).click();await play.waitFor();
+  const importPlay=async(csv)=>{
+    const response=p.waitForResponse(r=>r.url().includes('/admin/leadku/play-report')&&r.request().method()==='POST');
+    await play.locator('input[type=file]').setInputFiles({name:'installs_id.coreasia.leadku_202611_overview.csv',mimeType:'text/csv',buffer:Buffer.from(csv)});
+    assert.equal((await response).status(),200);
+  };
+  await importPlay('Date,Package Name,Daily Device Installs,Daily Device Uninstalls,Current Device Installs\n2026-11-04,id.coreasia.leadku,0,0,0\n');
+  await tile(play,'Pemasangan perangkat baru').getByText('0',{exact:true}).waitFor();
+  check('reported zero is distinct from an unavailable device snapshot',await metric(play,'Masih terpasang')==='0'
+    &&await metric(play,'Perangkat aktif')==='Belum tersedia'
+    &&await play.getByText(/4 Nov 2026.*1 hari tercatat/).isVisible());
+  await importPlay('Date,Package Name,Daily Device Installs,Daily Device Uninstalls,Current Device Installs,Installs on active devices\n2026-11-04,id.coreasia.leadku,7,1,20,15\n2026-11-06,id.coreasia.leadku,4,0,23,18\n');
+  await tile(play,'Pemasangan perangkat baru').getByText('11',{exact:true}).waitFor();
+  check('reported totals are rendered separately from telemetry',await metric(play,'Uninstal perangkat')==='1'&&await metric(telemetry,'ID instalasi tercatat')==='3');
+  check('period counts only reported dates without browser timezone shift',await play.getByText(/4 Nov 2026.*6 Nov 2026.*2 hari tercatat/).isVisible());
+  check('device snapshots use the latest report date',await play.getByText('Per 6 Nov 2026',{exact:true}).isVisible()
+    &&await metric(play,'Masih terpasang')==='23'&&await metric(play,'Perangkat aktif')==='18');
+  await p.reload({waitUntil:'domcontentloaded'});
+  await tile(play,'Pemasangan perangkat baru').getByText('11',{exact:true}).waitFor();
+  check('imported Play figures persist after reload',await metric(telemetry,'ID instalasi tercatat')==='3');
+  await p.screenshot({path:join(output,'leadku-desktop.png')});
   await p.setViewportSize({width:390,height:844});check('mobile page does not overflow',await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
   await p.evaluate(()=>document.documentElement.dataset.theme='dark');await p.screenshot({path:join(output,'leadku-mobile-dark.png'),fullPage:true});
   await p.setViewportSize({width:1440,height:1000});await ctx.clearCookies();await p.goto(base+'/console/login?ke=/console/leadku',{waitUntil:'domcontentloaded'});
-  const viewer=await login('qa-leadku-view@example.invalid');check('read-only admin can view statistics',await metric('Instalasi tercatat')==='3');
+  const viewer=await login('qa-leadku-view@example.invalid');check('read-only admin can view both sources',await metric(telemetry,'ID instalasi tercatat')==='3'
+    &&await metric(play,'Pemasangan perangkat baru')==='11');
+  check('read-only admin cannot import or sync Play data',await play.getByRole('button',{name:/Impor laporan|Sinkronkan/}).count()===0);
   check('read-only admin cannot see settings',await p.getByRole('button',{name:'Simpan pengaturan',exact:true}).count()===0);
   check('read-only admin cannot mutate settings via API',(await json('/admin/leadku/mobile-policy',viewer,'PUT',{...after,expected_updated_at:after.updated_at})).status===403);
   check('anonymous analytics denied',(await json('/admin/leadku/analytics?channel=production')).status===401);

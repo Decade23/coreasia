@@ -12,6 +12,16 @@ export interface LeadkuSummary {
 export const screenLabels: Record<string, string> = { home: 'Hari ini', contacts: 'Kontak', pipeline: 'Deal', tasks: 'Tugas', profile: 'Menu', contact: 'Detail kontak', deal: 'Detail deal', task: 'Detail tugas', login: 'Login', other: 'Lainnya' }
 export function updateImpact(summary: LeadkuSummary, minimum: number) { return summary.versions.filter(v => v.code < minimum).reduce((count,v) => count + v.active_7d,0) }
 export function playTotals(summary: LeadkuSummary) {
- if (!summary.play.length) return null
- return { first: [...summary.play].sort((a,b)=>a.day.localeCompare(b.day))[0]!, installs: summary.play.reduce((n,d) => n+d.installs,0), uninstalls: summary.play.reduce((n,d) => n+d.uninstalls,0), latest: [...summary.play].sort((a,b) => b.day.localeCompare(a.day))[0]! }
+ const days = [...summary.play].sort((a, b) => a.day.localeCompare(b.day))
+ const first = days[0]
+ const latest = days[days.length - 1]
+ if (!first || !latest) return null
+ return {
+  first,
+  latest,
+  reportedDays: days.length,
+  installs: days.reduce((sum, row) => sum + row.installs, 0),
+  uninstalls: days.reduce((sum, row) => sum + row.uninstalls, 0),
+  importedAt: days.reduce((latestImport, row) => Date.parse(row.imported_at) > Date.parse(latestImport) ? row.imported_at : latestImport, first.imported_at),
+ }
 }
