@@ -1,27 +1,31 @@
 <script setup lang="ts">
-/** Daftar tersamar. Pencarian, saringan, urutan dan halaman dikerjakan
- * server atas seluruh akun. Kontak lengkap tetap satu klik dan setiap
- * halaman yang dibuka tercatat dalam audit. Teks pencarian tidak di URL. */
+/** Pencarian, saringan, urutan, dan paginasi berlaku atas seluruh akun.
+ * Server mengaudit setiap halaman yang diminta dengan kontak lengkap. */
 import {
-  kePengguna, tanpaKontakUtuh, versiTertinggal,
+  angka, kePengguna, rupiah, tanpaKontakUtuh, versiTertinggal,
   type InfoPlatform, type Pengguna, type PenggunaDTO, type StatusPengguna,
 } from '~/adapters/cashflow'
 import { halamanAman, jumlahHalaman } from '~/adapters/cashflowDaftar'
 import type { SkemaQuery } from '~/adapters/cashflowQuery'
-import type { AlasanDaftar } from '~/composables/cashflow/useCashflowAlasanDaftar'
+import { GalatAdmin } from '~/composables/cashflow/useCashflowAdmin'
 definePageMeta({ layout: 'console', middleware: ['console', 'cashflow-admin'] })
 
-const { tcf, bahasa, formatJam } = useCashflowI18n()
+const { tcf, bahasa } = useCashflowI18n()
+const { tc } = useConsoleI18n()
 const api = useCashflowAdmin()
 const route = useRoute()
 const indeks = useCashflowIndeks()
-const alasanDaftar = useCashflowAlasanDaftar()
 const { memuat, galat, pesanGalat, muat, batal } = useCashflowMuat({ awal: true })
 const sesi = useCashflowSesi()
+const { user } = useAdminAuth()
 
 const PER = 25
 const SEGMEN = ['semua', 'catat7', 'belum', 'ditangguhkan'] as const
-const URUT = ['email', 'wa', 'versi', 'daftar', 'aktif', 'ruang', 'tx'] as const
+const URUT = ['email', 'wa', 'versi', 'daftar', 'aktif', 'ruang', 'tx', 'nominal'] as const
+type KolomUrut = typeof URUT[number]
+const URUT_PRIBADI: readonly KolomUrut[] = ['ruang', 'tx', 'nominal']
+const FILTER = ['email', 'wa', 'versi', 'daftar', 'aktif', 'status'] as const
+const segmenButuhHitungan = (k: string) => k === 'belum' || k === 'catat7'
 const SKEMA = {
   seg: { jenis: 'pilihan', opsi: SEGMEN, bawaan: 'semua' },
   urut: { jenis: 'pilihan', opsi: URUT, bawaan: 'daftar' },
@@ -44,33 +48,67 @@ const filterDiterapkan = shallowRef<Record<string, string>>({ ...filterKolom.val
 const versiTerbaru = shallowRef<Map<string, string>>(new Map())
 const hapusTersedia = ref(true)
 const paletBuka = ref(false)
-/** Alasan audit untuk sakelar — tetap, karena pembukaan ini satu ketukan. */
-const ALASAN_SAKELAR = 'Sakelar Kontak lengkap (email dan WhatsApp) di daftar pengguna console'
-const terbuka = ref<AlasanDaftar | null>(null)
+const ALASAN_DAFTAR = 'Kontak lengkap (email dan WhatsApp) di daftar pengguna Console'
+const terbuka = ref(false)
+const kontakDisamarkanOleh = useState<string | null>('cf_kontak_disamarkan_oleh', () => null)
+const samarkanKontak = computed(() => !!user.value?.id && kontakDisamarkanOleh.value === user.value.id)
+const ditolak = ref(false)
+const perluVerifikasi = ref(false)
+const izinPribadi = computed(() => sesi.boleh('cashflow:pii'))
+const tanpaHitungan = computed(() => !izinPribadi.value || ditolak.value)
+
+const bersihkanData = (rows: readonly PenggunaDTO[]) => tanpaKontakUtuh(rows)
+  .map(row => ({ ...row, jumlah_ruang: null, jumlah_tx: null, jumlah_nominal: null }))
+const samarkanBaris = (tanpaDataPribadi = false) => {
+  terbuka.value = false
+  mentah.value = tanpaDataPribadi ? bersihkanData(mentah.value) : tanpaKontakUtuh(mentah.value)
+}
+
+const urutAman = async (): Promise<boolean> => {
+  if (!tanpaHitungan.value || (!segmenButuhHitungan(q.value.seg) && !URUT_PRIBADI.includes(q.value.urut))) return false
+  await setel({ seg: 'semua', urut: 'daftar', arah: 'desc', hal: 1 })
+  return true
+}
 
 /* Jawaban basi tidak boleh menimpa halaman atau membuka kontak kembali. */
-const muatDaftar = (alasan: AlasanDaftar | null) => muat(async (terbaru) => {
+const muatDaftar = () => muat(async (terbaru) => {
   // Baris yang sudah tampil bertahan sampai jawaban terbaru siap. Spinner
   // tidak boleh meruntuhkan tabel, paginasi, fokus, atau posisi gulir.
   const filter: Record<string, string> = {}
-  for (const [k, v] of Object.entries(filterDiterapkan.value)) {
-    if (!v || !['email', 'wa', 'versi', 'daftar', 'aktif', 'status'].includes(k)) continue
+  for (const k of FILTER) {
+    const v = filterDiterapkan.value[k]
+    if (!v) continue
     if (k === 'status') {
       const nilai = (['aktif', 'ditangguhkan', 'menunggu_hapus'] as const).find(x => x === v || labelStatus(x) === v)
       if (nilai) filter[k] = nilai
     } else filter[k] = v
   }
-  const hasil = await api.daftarPenggunaHalaman({
+  const baca = (alasan: string | null) => api.daftarPenggunaHalaman({
     limit: PER, offset: (q.value.hal - 1) * PER, cari: cariDiterapkan.value.trim(),
     segmen: q.value.seg, urut: q.value.urut, arah: q.value.arah, filter,
-    bahasa: bahasa.value, alasan: alasan?.alasan ?? null,
+    bahasa: bahasa.value, alasan,
   })
+  let alasan = !tanpaHitungan.value && !samarkanKontak.value ? ALASAN_DAFTAR : null
+  let hasil
+  try {
+    hasil = await baca(alasan)
+  } catch (e) {
+    if (!terbaru()) return
+    if (!(e instanceof GalatAdmin && e.jenis === 'izin') || (!alasan && !URUT_PRIBADI.includes(q.value.urut) && !segmenButuhHitungan(q.value.seg))) throw e
+    // Sesi bisa diturunkan oleh server sementara tab masih terbuka. Ambil
+    // kembali daftar tersamar hanya setelah server memeriksa hak baca dasar.
+    ditolak.value = true
+    perluVerifikasi.value = true
+    samarkanBaris(true)
+    if (await urutAman() || !terbaru()) return
+    alasan = null
+    hasil = await baca(null)
+  }
   if (!terbaru()) return
   const aman = halamanAman(q.value.hal, Number(hasil.total), PER)
   if (aman !== q.value.hal) { await setel({ hal: aman }); return }
-  // Alasan yang habis selagi menunggu tidak boleh membuka kontak kembali.
-  if (alasan && alasan.sampai <= Date.now()) alasan = null
-  mentah.value = alasan ? hasil.baris : tanpaKontakUtuh(hasil.baris)
+  const bolehBuka = !!alasan && !tanpaHitungan.value && !samarkanKontak.value
+  mentah.value = tanpaHitungan.value ? bersihkanData(hasil.baris) : bolehBuka ? hasil.baris : tanpaKontakUtuh(hasil.baris)
   total.value = Number(hasil.total)
   halamanHasil.value = q.value.hal
   versiTerbaru.value = new Map(Object.entries(hasil.versi_terbaru ?? {}))
@@ -78,57 +116,53 @@ const muatDaftar = (alasan: AlasanDaftar | null) => muat(async (terbaru) => {
   // Pencarian palet tidak boleh menganggap hasil tersaring daftar lengkap.
   const lengkap = q.value.seg === 'semua' && !cariDiterapkan.value.trim() && !Object.keys(filter).length && q.value.hal === 1
   indeks.isi(semua.value, lengkap ? total.value : Number.MAX_SAFE_INTEGER)
-  terbuka.value = alasan
+  terbuka.value = bolehBuka
 })
 // Mempertahankan hasil saat jaringan lambat tidak berlaku bila hak baca hilang.
 watch(galat, (g) => {
   if (!g || !['izin', 'sesi', 'totp', 'bukan-admin'].includes(g.jenis)) return
   mentah.value = []
   total.value = 0
-  terbuka.value = null
-  alasanDaftar.lupakan()
+  terbuka.value = false
   indeks.kosongkan()
 })
 let aktif = false
 let dilepas = false
 onMounted(async () => {
-  // URL lama dari sesi ber-pii tidak boleh meminta hitungan saat izin turun.
-  if (!sesi.boleh('cashflow:pii')) {
-    alasanDaftar.lupakan()
-    if (['catat7', 'belum'].includes(q.value.seg) || ['ruang', 'tx'].includes(q.value.urut)) {
-      await setel({ seg: 'semua', urut: 'daftar', arah: 'desc', hal: 1 })
-    }
-  }
+  await urutAman()
   if (dilepas) return
   aktif = true
-  void muatDaftar(alasanDaftar.ambil())
+  void muatDaftar()
 })
 
-const buka = async () => {
-  if (!(await muatDaftar(alasanDaftar.ingat(ALASAN_SAKELAR)))) alasanDaftar.lupakan()
-}
-const samarkan = () => {
+const gantiKontak = () => {
+  const pelaku = user.value?.id
+  if (!pelaku || tanpaHitungan.value) {
+    perluVerifikasi.value = true
+    return
+  }
   batal()
-  alasanDaftar.lupakan()
-  terbuka.value = null
-  mentah.value = tanpaKontakUtuh(mentah.value)
-  // Penyaringan/urutan atas kontak utuh perlu dihitung ulang dalam bentuk samar.
-  if (cariDiterapkan.value || Object.keys(filterDiterapkan.value).length || ['email', 'wa'].includes(q.value.urut)) void muatDaftar(null)
+  kontakDisamarkanOleh.value = samarkanKontak.value ? null : pelaku
+  if (samarkanKontak.value) samarkanBaris()
+  void muatDaftar()
 }
-let pengatur: ReturnType<typeof setTimeout> | undefined
 let jedaFilter: ReturnType<typeof setTimeout> | undefined
 let jedaMuat: ReturnType<typeof setTimeout> | undefined
-watch(terbuka, (t) => {
-  clearTimeout(pengatur)
-  if (t) pengatur = setTimeout(samarkan, Math.max(0, t.sampai - Date.now()))
+watch(izinPribadi, async (izin) => {
+  if (!aktif) return
+  batal()
+  ditolak.value = false
+  if (izin) perluVerifikasi.value = false
+  else samarkanBaris(true)
+  if (!(await urutAman()) && !dilepas) void muatDaftar()
 })
-onBeforeUnmount(() => { dilepas = true; aktif = false; batal(); clearTimeout(pengatur); clearTimeout(jedaFilter); clearTimeout(jedaMuat) })
+onBeforeUnmount(() => { dilepas = true; aktif = false; batal(); clearTimeout(jedaFilter); clearTimeout(jedaMuat) })
 
 // Saringan kolom menunggu selesai mengetik; teks sensitif tetap hanya di memori.
 watch(filterKolom, (f) => {
   clearTimeout(jedaFilter)
   jedaFilter = setTimeout(() => {
-    filterDiterapkan.value = { ...f }
+    filterDiterapkan.value = Object.fromEntries(Object.entries(f).filter(([, v]) => v))
     if (q.value.hal !== 1) void setel({ hal: 1 })
   }, 600)
 }, { deep: true })
@@ -143,7 +177,7 @@ watch([() => q.value.seg, () => q.value.urut, () => q.value.arah, () => q.value.
   batal()
   galat.value = null
   memuat.value = true
-  jedaMuat = setTimeout(() => { void muatDaftar(alasanDaftar.ambil()) }, 80)
+  jedaMuat = setTimeout(() => { void muatDaftar() }, 80)
 })
 
 /* Pindah halaman: wadah tabel DataTable elemen yang sama antarhalaman dan
@@ -161,8 +195,8 @@ watch(() => route.fullPath, p => indeks.ingatDaftar(p), { immediate: true })
 const labelStatus = (s: StatusPengguna): string =>
   s === 'menunggu_hapus' ? tcf('pengguna.menungguHapus') : s === 'ditangguhkan' ? tcf('pengguna.ditangguhkan') : tcf('pengguna.aktif')
 
-/* ruang/tx null = sesi tanpa pii: server tidak mengirim hitungan (M/0089 §15 (d)); tabel menulis '—'. */
-interface Baris { id: string; email: string; wa: string | null; versi: string | null; daftar: string; aktif: string; ruang: number | null; tx: number | null; status: string; p: Pengguna }
+/* Hitungan dan nominal null berarti hak baca tidak tersedia. */
+interface Baris { id: string; email: string; wa: string | null; versi: string | null; daftar: string; aktif: string; ruang: number | null; tx: number | null; nominal: number | null; status: string; p: Pengguna }
 const keBaris = (p: Pengguna): Baris => ({
   id: p.id,
   email: p.emailPenuh ?? p.emailTersamar,
@@ -172,23 +206,25 @@ const keBaris = (p: Pengguna): Baris => ({
   aktif: p.aktivitasTerakhir,
   ruang: p.ruang,
   tx: p.tx,
+  nominal: p.nominal,
   status: labelStatus(p.status),
   p,
 })
 
 const kolom = computed(() => [
   { key: 'email', label: tcf('pengguna.email'), type: 'text' as const, class: 'font-mono text-[var(--ca-text)]', sortable: true },
-  { key: 'wa', label: tcf('pengguna.wa'), type: 'text' as const, sortable: true, class: 'hidden whitespace-nowrap tabular-nums text-[var(--ca-text)] sm:table-cell', headerClass: 'hidden sm:table-cell' },
-  { key: 'versi', label: tcf('pengguna.versi'), type: 'text' as const, sortable: true, class: 'hidden whitespace-nowrap tabular-nums sm:table-cell', headerClass: 'hidden sm:table-cell' },
-  { key: 'daftar', label: tcf('pengguna.daftar'), type: 'text' as const, width: '120px', sortable: true, class: 'hidden text-[var(--ca-muted)] sm:table-cell', headerClass: 'hidden sm:table-cell' },
-  { key: 'aktif', label: tcf('pengguna.aktifTerakhir'), type: 'text' as const, width: '130px', sortable: true },
-  { key: 'ruang', label: tcf('pengguna.ruang'), type: 'text' as const, width: '70px', sortable: !tanpaHitungan.value, filterable: false, class: 'hidden tabular-nums text-right md:table-cell', headerClass: 'hidden md:table-cell' },
+  { key: 'wa', label: tcf('pengguna.wa'), type: 'text' as const, sortable: true, class: 'whitespace-nowrap tabular-nums text-[var(--ca-text)]' },
+  { key: 'versi', label: tcf('pengguna.versi'), type: 'text' as const, sortable: true, class: 'whitespace-nowrap tabular-nums' },
+  { key: 'daftar', label: tcf('pengguna.daftar'), type: 'text' as const, sortable: true, class: 'whitespace-nowrap text-[var(--ca-muted)]' },
+  { key: 'aktif', label: tcf('pengguna.aktifTerakhir'), type: 'text' as const, sortable: true, class: 'whitespace-nowrap text-[var(--ca-muted)]' },
+  { key: 'ruang', label: tcf('pengguna.ruang'), type: 'text' as const, sortable: !tanpaHitungan.value, filterable: false, class: 'tabular-nums text-right' },
   // 'Tx' seperti tabel ruang Pengguna 360: label panjang membuat tabel tidak muat di 1280 px.
-  { key: 'tx', label: tcf('pengguna.kolom.tx'), type: 'text' as const, width: '90px', sortable: !tanpaHitungan.value, filterable: false, class: 'tabular-nums text-right' },
+  { key: 'tx', label: tcf('pengguna.kolom.tx'), type: 'text' as const, sortable: !tanpaHitungan.value, filterable: false, class: 'tabular-nums text-right' },
+  { key: 'nominal', label: tcf('pengguna.nominal'), type: 'text' as const, sortable: !tanpaHitungan.value, filterable: false, class: 'whitespace-nowrap tabular-nums text-right' },
   {
-    key: 'status', label: tcf('pengguna.status'), type: 'status' as const, width: '140px',
+    key: 'status', label: tcf('pengguna.status'), type: 'status' as const,
     options: (['aktif', 'ditangguhkan', 'menunggu_hapus'] as const).map(s => ({ label: labelStatus(s), value: s })),
-    class: 'hidden text-[var(--ca-muted)] sm:table-cell', headerClass: 'hidden sm:table-cell',
+    class: 'text-[var(--ca-muted)]',
   },
 ])
 
@@ -196,11 +232,27 @@ const hal = computed(() => halamanHasil.value)
 const jumlahHal = computed(() => jumlahHalaman(total.value, PER))
 const barisHalaman = computed(() => semua.value.map(keBaris))
 const pilihSegmen = (s: typeof SEGMEN[number]) => setel({ seg: s, hal: 1 })
+const arahBawaan = (k: KolomUrut) => k === 'email' || k === 'wa' ? 'asc' : 'desc'
 const urutKolom = (key: string) => {
   const k = URUT.find(u => u === key)
-  if (!k || (tanpaHitungan.value && (k === 'ruang' || k === 'tx'))) return
-  const arah = q.value.urut === k ? (q.value.arah === 'asc' ? 'desc' : 'asc') : (k === 'email' || k === 'wa' ? 'asc' : 'desc')
+  if (!k || (tanpaHitungan.value && URUT_PRIBADI.includes(k))) return
+  const arah = q.value.urut === k ? (q.value.arah === 'asc' ? 'desc' : 'asc') : arahBawaan(k)
   void setel({ urut: k, arah, hal: 1 })
+}
+const urutPonsel = computed({ get: () => q.value.urut, set: (k: KolomUrut) => urutKolom(k) })
+const arahPonsel = computed({ get: () => q.value.arah, set: (arah: 'asc' | 'desc') => { void setel({ arah, hal: 1 }) } })
+const opsiUrut = computed(() => kolom.value.filter(k => k.sortable))
+const kolomSaring = computed(() => kolom.value.filter(k => k.filterable !== false))
+const adaSaringan = computed(() => Object.values(filterKolom.value).some(Boolean))
+const tanpaBaris = computed(() => cariDiterapkan.value || Object.keys(filterDiterapkan.value).length || q.value.seg !== 'semua'
+  ? tcf('umum.kosongSaring') : tcf('umum.kosong'))
+const kolomKartu = computed(() => kolom.value.filter(k => !['email', 'wa', 'status'].includes(k.key)))
+const nilaiKartu = (row: Baris, k: string) => {
+  if (k === 'versi') return row.versi ?? '—'
+  if (k === 'daftar' || k === 'aktif') return row[k]
+  if (k === 'nominal') return row.nominal === null ? '—' : rupiah(row.nominal)
+  if (k === 'ruang' || k === 'tx') return row[k] === null ? '—' : angka(row[k])
+  return '—'
 }
 
 const segmenOpsi = computed(() => [
@@ -216,10 +268,6 @@ const serverKirimVersi = computed(() => mentah.value.some(d => d.versi_aplikasi 
  *  buah), jadi Android/Apple dari Bootstrap Icons yang sudah terpasang. */
 const IKON_PLATFORM: Readonly<Record<'android' | 'ios' | 'web', string>> = { android: 'bi:android2', ios: 'bi:apple', web: 'lucide:globe' }
 const ikonPlatform = (p: InfoPlatform): string | null => (p.dasar ? IKON_PLATFORM[p.dasar] : null)
-/** Server menahan hitungan per orang (sesi tanpa pii): segmen berbasis tx tidak bermakna. */
-const tanpaHitungan = computed(() => !sesi.boleh('cashflow:pii'))
-const segmenButuhHitungan = (k: string) => k === 'belum' || k === 'catat7'
-
 useCashflowPintasan([{ kunci: '/', aksi: () => kolomCari.value?.focus() }])
 </script>
 
@@ -255,7 +303,7 @@ useCashflowPintasan([{ kunci: '/', aksi: () => kolomCari.value?.focus() }])
       <button
         type="button" role="switch" :aria-checked="!!terbuka"
         class="ml-auto inline-flex items-center gap-3 rounded-full border border-[color:var(--ca-border)] py-1.5 pl-4 pr-1.5 text-sm font-semibold text-[var(--ca-text)] transition hover:bg-[var(--ca-panel-bg-strong)] disabled:cursor-not-allowed disabled:opacity-60"
-        :disabled="memuat && !terbuka" @click="terbuka ? samarkan() : buka()"
+        :disabled="memuat && !terbuka" @click="gantiKontak"
       >
         <Icon :name="terbuka ? 'lucide:eye' : 'lucide:eye-off'" class="h-4 w-4 text-[var(--ca-muted)]" />
         {{ tcf('pengguna.kontakPenuh') }}
@@ -272,48 +320,81 @@ useCashflowPintasan([{ kunci: '/', aksi: () => kolomCari.value?.focus() }])
         </span>
       </button>
     </div>
-    <p class="text-xs text-[var(--ca-subtle)]">{{ tcf('pengguna.cariKet') }}</p>
+    <p v-if="!memuat && !terbuka" class="text-xs text-[var(--ca-subtle)]">{{ tcf('pengguna.cariKet') }}</p>
 
-    <p v-if="terbuka" class="rounded-xl border border-[color:var(--ca-gold-border)] bg-[var(--ca-gold-bg)] px-4 py-2 text-xs text-[var(--ca-text)]">
-      {{ tcf('pengguna.terbukaSampai')(formatJam(new Date(terbuka.sampai))) }}
-    </p>
+    <div class="grid grid-cols-[minmax(0,1fr)_minmax(0,0.75fr)] gap-2 lg:hidden">
+      <label class="grid min-w-0 gap-1 text-xs font-semibold text-[var(--ca-muted)]">
+        {{ tcf('pengguna.urut') }}
+        <select v-model="urutPonsel" class="ca-input min-w-0 w-full">
+          <option v-for="k in opsiUrut" :key="k.key" :value="k.key">{{ k.label }}</option>
+        </select>
+      </label>
+      <label class="grid min-w-0 gap-1 text-xs font-semibold text-[var(--ca-muted)]">
+        <span class="sr-only">{{ tcf('pengguna.urut') }}</span>
+        <select v-model="arahPonsel" class="ca-input min-w-0 w-full self-end">
+          <option value="desc">{{ tcf('pengguna.turun') }}</option>
+          <option value="asc">{{ tcf('pengguna.naik') }}</option>
+        </select>
+      </label>
+      <details class="ca-console-dialog col-span-2 min-w-0 px-3 py-2">
+        <summary class="cursor-pointer rounded text-sm font-semibold text-[var(--ca-text)]">
+          {{ tcf('pengguna.saringan') }}
+          <span v-if="adaSaringan" class="ca-pill-muted ml-1 text-xs">{{ Object.values(filterKolom).filter(Boolean).length }}</span>
+        </summary>
+        <div class="mt-3 grid grid-cols-2 gap-2">
+          <label v-for="k in kolomSaring" :key="k.key" class="grid min-w-0 gap-1 text-xs text-[var(--ca-muted)]">
+            {{ k.label }}
+            <select v-if="k.type === 'status'" v-model="filterKolom[k.key]" class="ca-input min-w-0 w-full">
+              <option value="">{{ tc('common.all') }}</option>
+              <option v-for="opt in k.options" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+            </select>
+            <input v-else v-model="filterKolom[k.key]" type="search" maxlength="200" class="ca-input min-w-0 w-full">
+          </label>
+        </div>
+        <button v-if="adaSaringan" type="button" class="ca-btn-secondary mt-3 !px-3 !py-1.5 text-xs" @click="filterKolom = {}">
+          {{ tc('common.clearAll') }}
+        </button>
+      </details>
+    </div>
 
-    <CashflowIzinKurang v-if="galat?.jenis === 'izin'" :pesan="tcf('pengguna.kontakButuhTotp')" />
+    <CashflowIzinKurang v-if="perluVerifikasi || galat?.jenis === 'izin'" baca :pesan="tcf('pengguna.kontakButuhTotp')" />
     <div v-else-if="pesanGalat" class="flex flex-wrap items-center gap-3 text-sm ca-tone-danger" role="alert">
       <span>{{ pesanGalat }}</span>
       <span v-if="semua.length">{{ tcf('pengguna.hasilSebelumnya') }}</span>
-      <button type="button" class="ca-btn-secondary !px-3 !py-1.5 text-xs" @click="muatDaftar(alasanDaftar.ambil())">{{ tcf('masuk.cobaLagi') }}</button>
+      <button type="button" class="ca-btn-secondary !px-3 !py-1.5 text-xs" @click="muatDaftar()">{{ tcf('masuk.cobaLagi') }}</button>
     </div>
 
     <!-- Muat gagal tanpa baris = galat saja; "Belum ada data." di bawahnya terbaca
          seolah produk tidak punya pengguna. -->
-    <div v-if="!pesanGalat || semua.length" ref="wadahDaftar" class="ca-daftar-pengguna ca-console-dialog scroll-mt-24 overflow-hidden">
-      <div class="flex flex-wrap items-center justify-between gap-2 border-b border-[color:var(--ca-border)] px-4 py-4 sm:px-5">
+    <div v-if="!pesanGalat || semua.length" ref="wadahDaftar" class="ca-daftar-pengguna min-w-0 scroll-mt-24">
+      <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
         <div><h2 class="font-display text-base font-bold text-[var(--ca-text)]">{{ tcf('pengguna.daftarJudul') }}</h2><p class="mt-1 text-xs text-[var(--ca-muted)]">{{ tcf('pengguna.daftarKet') }}</p></div>
         <span class="ca-pill-muted text-xs">{{ terbuka ? tcf('pengguna.kontakPenuh') : tcf('pengguna.emailSamar') }}</span>
       </div>
       <DataTable
+        class="hidden lg:block"
         v-model:filters="filterKolom"
         :columns="kolom" :data="barisHalaman" :loading="memuat"
         :sort="{ key: q.urut, arah: q.arah }" :show-count="false"
-        empty-icon="lucide:users" :empty-text="cariDiterapkan || Object.keys(filterDiterapkan).length || q.seg !== 'semua' ? tcf('umum.kosongSaring') : tcf('umum.kosong')"
+        empty-icon="lucide:users" :empty-text="tanpaBaris"
         @sort="urutKolom"
         @row-click="(row: Baris) => navigateTo(`/console/cashflow/pengguna/${row.id}`)"
       >
         <template #cell-email="{ row }">
-          <!-- Email panjang dipotong dengan elipsis; teks lengkapnya di title. -->
-          <NuxtLink :to="`/console/cashflow/pengguna/${row.id}`" class="block max-w-[10rem] truncate font-mono text-[var(--ca-text)] underline-offset-2 hover:underline" :title="row.email" @click.stop>{{ row.email }}</NuxtLink>
+          <div class="flex min-w-0 items-center gap-1">
+            <NuxtLink :to="`/console/cashflow/pengguna/${row.id}`" class="min-w-0 max-w-[12rem] whitespace-normal break-all font-mono text-[var(--ca-text)] underline-offset-2 hover:underline" :title="row.email" @click.stop>{{ row.email }}</NuxtLink>
+            <CashflowSalinKontak v-if="row.p.emailPenuh" jenis="email" :nilai="row.p.emailPenuh" />
+          </div>
+          <span v-if="row.p.nama" class="block max-w-[12rem] truncate text-xs text-[var(--ca-muted)]" :title="row.p.nama">{{ row.p.nama }}</span>
           <span class="mt-0.5 block font-mono text-xs text-[var(--ca-subtle)]">ID {{ row.id.slice(0, 8) }}</span>
-          <!-- Layar sempit: kolom WhatsApp disembunyikan, nomornya ikut di bawah email. -->
-          <span v-if="row.wa" class="mt-0.5 block whitespace-nowrap font-mono text-xs tabular-nums text-[var(--ca-muted)] sm:hidden">
-            <span class="sr-only">{{ tcf('pengguna.wa') }}: </span>{{ row.wa }}
-          </span>
         </template>
         <!-- null = tidak ada nomor; title hanya bila server memang mengirim kolomnya
              (sebelum migrasinya terpasang, "belum ada nomor" belum tentu benar). -->
-        <template #cell-wa="{ value }">
+        <template #cell-wa="{ row, value }">
           <span v-if="value === null" class="text-[var(--ca-subtle)]" :title="serverKirimWa ? tcf('pengguna.waBelum') : undefined">—<span v-if="serverKirimWa" class="sr-only"> ({{ tcf('pengguna.waBelum') }})</span></span>
-          <template v-else>{{ value }}</template>
+          <span v-else class="inline-flex items-center gap-1">
+            {{ value }}<CashflowSalinKontak v-if="row.p.nomorPenuh" jenis="wa" :nilai="row.p.nomorPenuh" />
+          </span>
         </template>
         <!-- Versi ramping: ikon platform kecil (titik = varian uji seperti UAT) lalu
              nomor versinya. Di bawah versi tertinggi platform yang sama: redup. -->
@@ -336,11 +417,60 @@ useCashflowPintasan([{ kunci: '/', aksi: () => kolomCari.value?.focus() }])
           <span v-if="row.p.status === 'menunggu_hapus'" class="ca-pill-danger whitespace-nowrap text-[0.7rem]">{{ row.status }}</span>
           <template v-else>{{ row.status }}</template>
         </template>
+        <template #cell-aktif="{ row, value }">
+          {{ value }}
+          <div class="mt-0.5 text-xs text-[var(--ca-subtle)]">{{ tcf('pengguna.masuk') }} · {{ row.p.masukTerakhir }}</div>
+        </template>
         <template v-for="k in (['ruang', 'tx'] as const)" :key="k" #[`cell-${k}`]="{ value }">
           <span v-if="value === null" :title="tcf('umum.butuhTotp')">—<span class="sr-only"> ({{ tcf('umum.butuhTotp') }})</span></span>
-          <template v-else>{{ value }}</template>
+          <template v-else>{{ angka(value) }}</template>
+        </template>
+        <template #cell-nominal="{ value }">
+          <span v-if="value === null" :title="tcf('umum.butuhTotp')">—<span class="sr-only"> ({{ tcf('umum.butuhTotp') }})</span></span>
+          <template v-else>{{ rupiah(value) }}</template>
         </template>
       </DataTable>
+      <div class="min-w-0 space-y-3 lg:hidden" :aria-busy="memuat">
+        <div v-if="memuat && !barisHalaman.length" class="ca-console-dialog p-6 text-center" role="status">
+          <Icon name="lucide:loader-2" class="mx-auto h-6 w-6 animate-spin text-[var(--ca-subtle)]" aria-hidden="true" />
+          <span class="sr-only">{{ tcf('umum.memuat') }}</span>
+        </div>
+        <p v-else-if="!barisHalaman.length" class="ca-console-dialog p-6 text-center text-sm text-[var(--ca-muted)]">{{ tanpaBaris }}</p>
+        <ul v-else class="space-y-3" :inert="memuat">
+          <li v-for="row in barisHalaman" :key="row.id" class="ca-console-dialog min-w-0 p-4">
+            <div class="flex flex-wrap items-start justify-between gap-2">
+              <div class="min-w-0 grow">
+                <div class="flex items-center gap-1">
+                  <NuxtLink :to="`/console/cashflow/pengguna/${row.id}`" class="min-w-0 break-all font-mono text-sm font-semibold text-[var(--ca-text)] underline-offset-2 hover:underline">{{ row.email }}</NuxtLink>
+                  <CashflowSalinKontak v-if="row.p.emailPenuh" jenis="email" :nilai="row.p.emailPenuh" />
+                </div>
+                <span v-if="row.p.nama" class="block break-words text-xs text-[var(--ca-muted)]">{{ row.p.nama }}</span>
+                <span class="block font-mono text-xs text-[var(--ca-subtle)]">ID {{ row.id.slice(0, 8) }}</span>
+              </div>
+              <span class="text-xs" :class="row.p.status === 'aktif' ? 'ca-pill-muted' : 'ca-pill-danger'">{{ row.status }}</span>
+            </div>
+            <dl class="mt-3 grid grid-cols-2 gap-x-3 gap-y-2.5 text-sm">
+              <div class="col-span-2 min-w-0">
+                <dt class="text-xs text-[var(--ca-subtle)]">{{ tcf('pengguna.wa') }}</dt>
+                <dd class="flex items-center gap-1 break-all font-mono tabular-nums text-[var(--ca-text)]">
+                  {{ row.wa ?? '—' }}
+                  <CashflowSalinKontak v-if="row.p.nomorPenuh" jenis="wa" :nilai="row.p.nomorPenuh" />
+                </dd>
+              </div>
+              <div v-for="k in kolomKartu" :key="k.key" class="min-w-0">
+                <dt class="text-xs text-[var(--ca-subtle)]">{{ k.key === 'tx' ? tcf('pengguna.tx') : k.label }}</dt>
+                <dd class="break-words tabular-nums text-[var(--ca-text)]" :class="k.key === 'versi' && versiTertinggal(row.p, versiTerbaru) ? 'opacity-70' : ''">
+                  {{ nilaiKartu(row, k.key) }}
+                  <span v-if="k.key === 'aktif'" class="block text-xs text-[var(--ca-subtle)]">{{ tcf('pengguna.masuk') }} · {{ row.p.masukTerakhir }}</span>
+                </dd>
+              </div>
+            </dl>
+            <NuxtLink :to="`/console/cashflow/pengguna/${row.id}`" class="ca-btn-secondary mt-3 flex min-h-10 w-full items-center justify-between !px-3 !py-1.5 text-xs">
+              {{ tcf('pengguna.detail') }}<Icon name="lucide:chevron-right" class="h-4 w-4" aria-hidden="true" />
+            </NuxtLink>
+          </li>
+        </ul>
+      </div>
     </div>
 
     <CashflowHalaman

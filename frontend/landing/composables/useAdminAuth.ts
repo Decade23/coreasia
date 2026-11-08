@@ -37,6 +37,8 @@ export interface AdminUser {
   totp_enabled?: boolean
   totp_enabled_at?: string | null
   trusted_device_id?: string
+  /** Dari /me: masa berlaku catatan perangkat yang diperiksa gateway. */
+  trusted_device_expires_at?: string
   /** Dari /me: akun dibuat (syarat umur "sesi kuat" gateway, utils/rbac.ts sesiKuat). */
   created_at?: string | null
 }

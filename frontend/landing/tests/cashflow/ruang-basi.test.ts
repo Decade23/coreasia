@@ -78,6 +78,7 @@ beforeAll(async () => {
   vi.stubGlobal('navigateTo', vi.fn())
   vi.stubGlobal('useCashflowI18n', () => ({ tcf: (k: string) => k }))
   vi.stubGlobal('useCashflowAdmin', () => api)
+  vi.stubGlobal('useCashflowSesi', () => ({ boleh: () => true }))
   vi.stubGlobal('useState', (k: string, awal: () => unknown) => {
     if (!keadaanNuxt.has(k)) keadaanNuxt.set(k, ref(awal()))
     return keadaanNuxt.get(k)

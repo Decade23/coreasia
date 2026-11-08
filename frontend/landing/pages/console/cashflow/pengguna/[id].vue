@@ -12,7 +12,7 @@
  * Fase 1, semua ruang subjek, alasan otomatis. Tidak ada dialog alasan,
  * skenario, atau lingkup. Kasus tetap tercatat server dan setiap pembacaan
  * tetap diaudit; keterangannya kecil di bawah kepala ("Dibuka · tercatat di
- * audit"). Syarat satu-satunya sesi console ber-TOTP (cashflow:pii): tanpa
+ * audit"). Syaratnya izin cashflow:pii: tanpa
  * itu kepala datang tanpa `ruang` dan tab data menampilkan CashflowIzinKurang
  * ("Masuk ulang dengan TOTP"). Selama halaman ini aktif kasusnya diperpanjang
  * otomatis; lewat batas 2 jam dibuka kasus baru otomatis (pasangHalaman).
@@ -37,6 +37,7 @@ const router = useRouter()
 const toast = useToast()
 const indeks = useCashflowIndeks()
 const kasus = useCashflowKasus()
+const sesi = useCashflowSesi()
 const { id, dasar, kepala, kunci360, p360, muat360, muatKepala } = useCashflowPengguna()
 const { galat, pesanGalat, muat, batal, keMasukBilaSesi } = useCashflowMuat({ awal: true })
 const muat360Diam = useCashflowMuat()
@@ -102,9 +103,12 @@ const asal = (): string | null => {
 /** Panah kembali & remah "Pengguna": ke DAFTAR, apa pun asalnya. */
 const keDaftar = () => (asal() === kembali.value ? router.back() : navigateTo(kembali.value, { replace: true }))
 
-/* Label subjek selalu TERSAMAR (juga sesudah kasus terbuka): bilah atas
-   terlihat dari seberang ruangan dan ikut tangkapan layar. */
-const labelSubjek = computed(() => kepala.value?.emailTersamar ?? indeks.labelUntuk(id.value) ?? id.value.slice(0, 8))
+const izinPribadi = computed(() => sesi.boleh('cashflow:pii'))
+const emailUtuh = computed(() => {
+  const akun = p360.value?.akun
+  return izinPribadi.value && akun?.id === id.value && akun.email !== '—' ? akun.email : null
+})
+const labelSubjek = computed(() => emailUtuh.value ?? kepala.value?.emailTersamar ?? indeks.labelUntuk(id.value) ?? id.value.slice(0, 8))
 useConsoleRemah().pasang(() => [
   { label: tc('layout.cashflow'), to: '/console/cashflow' },
   { label: tcf('nav.pengguna'), to: kembali.value, aksi: keDaftar },
@@ -145,11 +149,11 @@ useCashflowPintasan([
     <p v-if="galat?.jenis === 'tidak-ada'" class="rounded-xl border border-dashed border-[color:var(--ca-border)] px-4 py-5 text-sm text-[var(--ca-muted)]">
       {{ tcf('p360.tidakAda') }}
     </p>
-    <CashflowIzinKurang v-else-if="galat?.jenis === 'izin'" />
+    <CashflowIzinKurang v-else-if="galat?.jenis === 'izin'" baca />
     <p v-else-if="pesanGalat" class="text-sm text-[var(--ca-danger-text)]" role="alert">{{ pesanGalat }}</p>
 
     <template v-else>
-      <CashflowKepala360 :kepala="kepala" :akses-ke="keTab('akses')" />
+      <CashflowKepala360 :kepala="kepala" :akses-ke="keTab('akses')" :email-utuh="emailUtuh" :izin-pribadi="izinPribadi" />
 
       <CashflowKasusBilah />
 

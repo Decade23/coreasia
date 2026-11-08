@@ -51,6 +51,7 @@ const pendengar = new Map<string, () => void>()
 
 beforeAll(() => {
   vi.stubGlobal('useCashflowAdmin', () => api)
+  vi.stubGlobal('useCashflowSesi', () => ({ boleh: () => true }))
   vi.stubGlobal('window', {
     addEventListener: (p: string, f: () => void) => pendengar.set(p, f),
     removeEventListener: (p: string) => pendengar.delete(p),

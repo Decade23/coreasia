@@ -68,6 +68,7 @@ export interface PenggunaDTO {
    *  di-poll bersama hitungan per ruang menyusun graf keanggotaan. */
   jumlah_ruang: number | null
   jumlah_tx: number | null
+  jumlah_nominal?: number | string | null
   total_semua: number
   /** null bila fitur permintaan hapus belum tersedia di server. */
   menunggu_hapus?: boolean | null
@@ -138,6 +139,7 @@ export interface KesehatanDTO {
 // ── Domain: yang dibutuhkan UI ───────────────────────────────────────────
 export interface Pengguna {
   id: string
+  nama: string | null
   emailTersamar: string
   /** Hanya terisi bila server memulangkan email utuh (daftar dibuka dengan alasan). */
   emailPenuh: string | null
@@ -167,6 +169,7 @@ export interface Pengguna {
   /** null = server tidak mengirim hitungan (sesi tanpa pii) — bukan 0. */
   ruang: number | null
   tx: number | null
+  nominal: number | null
   /** 'menunggu_hapus' (0114): akun yang meminta hapus akun juga di-ban server,
    *  jadi tanpa penanda ini ia terbaca "Ditangguhkan". */
   status: StatusPengguna
@@ -427,6 +430,7 @@ export function kePengguna(d: PenggunaDTO, bahasa: BahasaWaktu = 'id', menungguH
   const terbuka = d.terbuka === true || (d.terbuka === undefined && !!d.email && !d.email.includes('***'))
   return {
     id: d.user_id,
+    nama: terbuka ? d.display_name?.trim() || null : null,
     emailTersamar: samarkanEmail(d.email),
     emailPenuh: terbuka ? d.email : null,
     // Satu sakelar membuka email dan nomor: tanpa `terbuka`, nomor yang
@@ -446,6 +450,7 @@ export function kePengguna(d: PenggunaDTO, bahasa: BahasaWaktu = 'id', menungguH
     aktivitasTerakhirIso: aktifIso ?? null,
     ruang: angkaAtauNull(d.jumlah_ruang),
     tx: angkaAtauNull(d.jumlah_tx),
+    nominal: angkaAtauNull(d.jumlah_nominal),
     status: (d.menunggu_hapus === true || menungguHapus.has(d.user_id)) ? 'menunggu_hapus' : ditangguhkan ? 'ditangguhkan' : 'aktif',
     hariAktif,
     hariSejakAktif,
@@ -459,6 +464,7 @@ export function kePengguna(d: PenggunaDTO, bahasa: BahasaWaktu = 'id', menungguH
 export function tanpaKontakUtuh(rows: readonly PenggunaDTO[]): PenggunaDTO[] {
   return rows.map(d => ({
     ...d,
+    display_name: '',
     email: samarkanEmail(d.email),
     ...(d.nomor_wa !== undefined ? { nomor_wa: samarkanNomorWa(d.nomor_wa) } : {}),
     terbuka: false,

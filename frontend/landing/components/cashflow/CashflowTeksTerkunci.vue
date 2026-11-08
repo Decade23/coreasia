@@ -1,7 +1,8 @@
 <script setup lang="ts">
 /**
  * Teks bebas (T3) — SATU KLIK "Tampilkan catatan" (keputusan Master 21 Sep
- * 2026, tanpa dialog). Server T2 hanya mengirim `ada_catatan` / `ada_judul`;
+ * 2026, tanpa dialog). Pada laci yang dipilih, catatan baris ini langsung
+ * diminta jika sesi berhak. Server T2 hanya mengirim `ada_catatan` / `ada_judul`;
  * isinya dibuka lewat kasus anak yang dibuka OTOMATIS (10 menit, alasan
  * otomatis, izin cashflow:investigasi) lalu admin_teks untuk BARIS INI SAJA
  * (satu id, satu baris audit baca_teks). Sengaja tanpa "buka sekaligus":
@@ -16,10 +17,12 @@ import type { JenisTeks } from '~/adapters/cashflowBuku'
 const props = defineProps<{
   jenis: JenisTeks
   id: string | number
+  otomatis?: boolean
 }>()
 
 const { tcf } = useCashflowI18n()
 const kasus = useCashflowKasus()
+const sesi = useCashflowSesi()
 const { aksi } = useCashflowMuat()
 const sibuk = ref(false)
 
@@ -34,6 +37,14 @@ const tampilkan = async () => {
     sibuk.value = false
   }
 }
+
+watch(
+  () => props.otomatis && sesi.boleh('cashflow:investigasi') && kasus.kunciKasus.value
+    ? `${kasus.kunciKasus.value}:${props.jenis}:${props.id}`
+    : null,
+  (kunci) => { if (import.meta.client && kunci && !isi.value) void tampilkan() },
+  { immediate: true },
+)
 </script>
 
 <template>

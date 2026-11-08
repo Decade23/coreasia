@@ -91,6 +91,9 @@ export interface BuktiMfa {
   /** Saat TOTP akun ini diaktifkan (RFC 3339); null bila TOTP mati. Hanya
    *  keberadaannya yang dibaca (TOTP masih aktif), bukan umurnya. */
   totp_enabled_at?: unknown
+  /** ID dan batas waktu catatan perangkat yang sudah diperiksa gateway. */
+  trusted_device_id?: unknown
+  trusted_device_expires_at?: unknown
 }
 
 const waktuMs = (v: unknown): number | null => {
@@ -122,6 +125,18 @@ export function batasIzinMfa(bukti: BuktiMfa | null | undefined, sekarang: numbe
   return sampai > sekarang ? sampai : null
 }
 
+/** Bukti perangkat tepercaya hanya dari /me gateway yang memeriksa catatan aktif. */
+export function batasPerangkatTepercaya(bukti: BuktiMfa | null | undefined, sekarang: number = Date.now()): number | null {
+  const id = bukti?.trusted_device_id
+  if (typeof id !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
+    || id === '00000000-0000-0000-0000-000000000000' || waktuMs(bukti?.totp_enabled_at) === null) return null
+  const sampai = waktuMs(bukti?.trusted_device_expires_at)
+  return sampai !== null && sampai > sekarang ? sampai : null
+}
+
+const izinBacaCashflow = (izin: IzinCashflow): boolean =>
+  izin === 'cashflow:pii' || izin === 'cashflow:investigasi'
+
 /** Masa tenggang "sesi kuat" gateway (mfaEnrollmentGrace, admin_user.go). */
 export const TENGGANG_SESI_KUAT_MS = 24 * 60 * 60 * 1000
 
@@ -145,14 +160,16 @@ export function sesiKuat(bukti: (BuktiMfa & { created_at?: unknown }) | null | u
  *
  * - peran tanpa cashflow:view → [] (sesi tidak dicetak: 403 tanpa-izin);
  * - cashflow:view SELALU ikut bila perannya boleh;
- * - empat lainnya HANYA bila batasIzinMfa(bukti) tidak null (login gateway
- *   lolos TOTP yang masih segar dan TOTP akunnya masih aktif — langsung,
- *   tanpa masa tenggang) DAN perannya memegang izin itu.
+ * - pii/investigasi dapat memakai TOTP segar atau perangkat tepercaya aktif;
+ * - tindak/ekspor tetap membutuhkan TOTP segar. Semua tetap dibatasi peran.
  */
 export function izinSesiCashflow(
   role: string | null | undefined, bukti: BuktiMfa | null | undefined, sekarang: number = Date.now(),
 ): IzinCashflow[] {
   if (!peranBoleh(role, 'cashflow:view')) return []
   const mfaSah = batasIzinMfa(bukti, sekarang) !== null
-  return IZIN_CASHFLOW.filter(i => i === 'cashflow:view' || (mfaSah && peranBoleh(role, i)))
+  const tepercaya = batasPerangkatTepercaya(bukti, sekarang) !== null
+  return IZIN_CASHFLOW.filter(i =>
+    peranBoleh(role, i) && (i === 'cashflow:view' || mfaSah || (tepercaya && izinBacaCashflow(i))),
+  )
 }

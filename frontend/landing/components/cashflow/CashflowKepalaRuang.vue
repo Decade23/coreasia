@@ -1,15 +1,14 @@
 <script setup lang="ts">
 /**
  * Kepala Ruang 360 — T0 (admin_ruang_kepala): ruang mana ini tanpa membuka
- * isinya. Nama dan pemilik SELALU tersamar di sini, juga sesudah kasus
- * terbuka (kepala ikut tangkapan layar); nama utuh ada di tab Ringkas, di
- * balik kasus. Hitungan hanya untuk sesi ber-pii ("—", butuh TOTP, bukan 0).
+ * isinya. Nama utuh berasal dari Ringkas yang sudah diaudit. Identitas
+ * pemilik tetap berasal dari kepala tersamar.
  * Setiap kunjungan tercatat (lihat_kepala), jadi "dilihat n×" jujur.
  */
 import type { KepalaRuang } from '~/adapters/cashflowRuang'
 import { angka } from '~/adapters/cashflow'
 
-const props = defineProps<{ kepala: KepalaRuang | null; aksesKe: string }>()
+const props = defineProps<{ kepala: KepalaRuang | null; namaLengkap?: string; izinPribadi: boolean; aksesKe: string }>()
 const { tcf, formatTanggal } = useCashflowI18n()
 const hitungan = computed(() => props.kepala
   ? [
@@ -28,7 +27,7 @@ const hitungan = computed(() => props.kepala
     </div>
     <template v-else>
       <div class="flex flex-wrap items-center gap-2">
-        <h2 class="break-all font-mono text-lg font-bold text-[var(--ca-text)] sm:text-xl">{{ kepala.namaTersamar }}</h2>
+        <h2 class="break-all font-mono text-lg font-bold text-[var(--ca-text)] sm:text-xl">{{ namaLengkap ?? kepala.namaTersamar }}</h2>
         <CashflowSalinId :id="kepala.id" />
         <span v-if="kepala.jenis" class="ca-pill-muted text-[0.7rem]">{{ tcf(`ruang.jenisOpsi.${kepala.jenis}`) }}</span>
       </div>
@@ -37,7 +36,7 @@ const hitungan = computed(() => props.kepala
         <div><dt class="inline">{{ tcf('ruang.dibuat') }}</dt> <dd class="ml-1 inline text-[var(--ca-text)]">{{ formatTanggal(kepala.dibuatIso) }}</dd></div>
         <div v-for="h in hitungan" :key="h.label">
           <dt class="inline">{{ h.label }}</dt>
-          <dd v-if="h.n !== null" class="ml-1 inline tabular-nums text-[var(--ca-text)]">{{ angka(h.n) }}</dd>
+          <dd v-if="izinPribadi && h.n !== null" class="ml-1 inline tabular-nums text-[var(--ca-text)]">{{ angka(h.n) }}</dd>
           <dd v-else class="ml-1 inline text-[var(--ca-text)]" :title="tcf('umum.butuhTotp')">— <span class="text-xs text-[var(--ca-subtle)]">({{ tcf('umum.butuhTotp') }})</span></dd>
         </div>
         <div>

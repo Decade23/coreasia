@@ -16,7 +16,7 @@ const sb = {
   rpc: async (nama: string, a: Record<string, unknown>) => { panggilan.push({ nama, a }); return { data: {}, error: null } },
 }
 vi.stubGlobal('useAdminAuth', () => ({ user: ref({ id: 'a', email: 'staf@coreasia.id' }) }))
-vi.stubGlobal('useCashflowSesi', () => ({ ambil: async () => sb, sambung: async () => ({ ok: true }), pelaku: ref('staf@coreasia.id') }))
+vi.stubGlobal('useCashflowSesi', () => ({ ambil: async () => sb, sambung: async () => ({ ok: true }), perluSambung: () => false, pelaku: ref('staf@coreasia.id') }))
 const { useCashflowAdmin } = await import('~/composables/cashflow/useCashflowAdmin')
 
 const U = '3f0c2a4e-8b1d-4c6a-9e2f-1a2b3c4d5e6f'

@@ -25,6 +25,7 @@ const { tc } = useConsoleI18n()
 const route = useRoute()
 const toast = useToast()
 const kasus = useCashflowKasus()
+const sesi = useCashflowSesi()
 const { id, dasar, kepala, kunci360, r360, muat360, muatKepala } = useCashflowRuang()
 const { galat, pesanGalat, muat, batal, keMasukBilaSesi } = useCashflowMuat({ awal: true })
 const muat360Diam = useCashflowMuat()
@@ -63,8 +64,8 @@ const tab = computed(() => TAB_RUANG.map(t => ({
 })))
 
 // ── Remah ──────────────────────────────────────────────────────────────
-/* Label ruang selalu TERSAMAR di remah (terlihat dari seberang ruangan). */
-const labelSubjek = computed(() => kepala.value?.namaTersamar ?? id.value.slice(0, 8))
+const namaLengkap = computed(() => r360.value?.ruang.id === id.value ? r360.value.ruang.nama : undefined)
+const labelSubjek = computed(() => namaLengkap.value ?? kepala.value?.namaTersamar ?? id.value.slice(0, 8))
 useConsoleRemah().pasang(() => [
   { label: tc('layout.cashflow'), to: '/console/cashflow' },
   { label: tcf('nav.ruang'), to: AKAR_RUANG },
@@ -104,11 +105,11 @@ useCashflowPintasan([
     <p v-if="galat?.jenis === 'tidak-ada'" class="rounded-xl border border-dashed border-[color:var(--ca-border)] px-4 py-5 text-sm text-[var(--ca-muted)]">
       {{ tcf('r360.tidakAda') }}
     </p>
-    <CashflowIzinKurang v-else-if="galat?.jenis === 'izin'" />
+    <CashflowIzinKurang v-else-if="galat?.jenis === 'izin'" baca />
     <p v-else-if="pesanGalat" class="text-sm text-[var(--ca-danger-text)]" role="alert">{{ pesanGalat }}</p>
 
     <template v-else>
-      <CashflowKepalaRuang :kepala="kepala" :akses-ke="keTab('akses')" />
+      <CashflowKepalaRuang :kepala="kepala" :nama-lengkap="namaLengkap" :izin-pribadi="sesi.boleh('cashflow:pii')" :akses-ke="keTab('akses')" />
 
       <CashflowKasusBilah />
 

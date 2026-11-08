@@ -75,10 +75,13 @@ describe('kontrak server/ ↔ migrasi CashFlow (0092)', () => {
 
   it.skipIf(!ADA_0092)('kolom yang ditulis sesi.post.ts ke admin_konsol_sesi ada (admin_gw_id sejak 0092)', () => {
     const isi = SERVER.find(x => x.f.endsWith('api/cashflow/sesi.post.ts'))!.isi
-    const m = /from\('admin_konsol_sesi'\)\.insert\(\{([^}]*)\}\)/.exec(isi)
+    const m = /from\('admin_konsol_sesi'\)\.insert\(\{([\s\S]*?)\n\s*\}\)/.exec(isi)
     expect(m).not.toBeNull()
-    const kolom = m![1]!.split(',').map(b => /^\s*(\w+)/.exec(b)?.[1]).filter((k): k is string => !!k)
+    const kolom = m![1]!.split(',')
+      .map(b => /^\s*(?:\.\.\.\([^{}]*\{\s*)?(\w+)/.exec(b)?.[1])
+      .filter((k): k is string => !!k)
     expect(kolom).toContain('admin_gw_id')
+    expect(kolom).toContain('izin_baca_sampai')
     expect(kolomTabel('admin_konsol_sesi').kolom).toEqual(expect.arrayContaining(kolom))
   })
 

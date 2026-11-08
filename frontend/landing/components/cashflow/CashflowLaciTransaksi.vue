@@ -84,8 +84,8 @@ const teksJeda = (d: number | null) => {
       <section v-if="r.adaCatatan">
         <h4 class="text-xs font-semibold uppercase tracking-wide text-[var(--ca-muted)]">{{ tcf('teks.label.transaksi') }}</h4>
         <div class="mt-1">
-          <CashflowTeksTerkunci v-if="r.sumber === 'sampah' && r.sampahId" jenis="sampah" :id="r.sampahId" />
-          <CashflowTeksTerkunci v-else jenis="transaksi" :id="r.id" />
+          <CashflowTeksTerkunci v-if="r.sumber === 'sampah' && r.sampahId" :key="`sampah:${r.sampahId}`" jenis="sampah" :id="r.sampahId" otomatis />
+          <CashflowTeksTerkunci v-else :key="`transaksi:${r.id}`" jenis="transaksi" :id="r.id" otomatis />
         </div>
       </section>
 

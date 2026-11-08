@@ -233,6 +233,7 @@ describe('useCashflowKasus: Lihat foto', () => {
 
   beforeAll(() => {
     vi.stubGlobal('useCashflowAdmin', () => api)
+    vi.stubGlobal('useCashflowSesi', () => ({ boleh: () => true }))
     vi.stubGlobal('window', { addEventListener: () => {}, removeEventListener: () => {} })
     vi.stubGlobal('document', { visibilityState: 'visible', addEventListener: () => {}, removeEventListener: () => {} })
   })

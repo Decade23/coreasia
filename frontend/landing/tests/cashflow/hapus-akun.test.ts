@@ -37,7 +37,7 @@ const toast = { success: vi.fn(), error: vi.fn(), info: vi.fn() }
 vi.stubGlobal('ref', ref)
 vi.stubGlobal('computed', computed)
 vi.stubGlobal('useAdminAuth', () => ({ user: ref({ id: 'a', email: 'staf@contoh.id' }) }))
-vi.stubGlobal('useCashflowSesi', () => ({ ambil: async () => sb, sambung: async () => ({ ok: true }), pelaku: ref('staf@contoh.id') }))
+vi.stubGlobal('useCashflowSesi', () => ({ ambil: async () => sb, sambung: async () => ({ ok: true }), perluSambung: () => false, pelaku: ref('staf@contoh.id') }))
 vi.stubGlobal('useCashflowI18n', () => ({ tcf: (k: string) => k }))
 vi.stubGlobal('useRoute', () => ({ fullPath: '/console/cashflow/hapus-akun' }))
 vi.stubGlobal('useToast', () => toast)

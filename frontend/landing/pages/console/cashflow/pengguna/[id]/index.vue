@@ -20,11 +20,12 @@ import { TAB_PENGGUNA, lencanaTabPengguna, type TabPengguna } from '~/adapters/c
 
 const { tcf, formatTanggal, formatWaktu } = useCashflowI18n()
 const { dasar, kepala, kunci360, p360, muat360 } = useCashflowPengguna()
+const sesi = useCashflowSesi()
 const { memuat, galat, pesanGalat, muat } = useCashflowMuat()
 
 watch(kunci360, (k) => { if (k && !p360.value) muat(muat360) }, { immediate: true })
 
-const akun = computed(() => p360.value?.akun ?? null)
+const akun = computed(() => sesi.boleh('cashflow:pii') ? p360.value?.akun ?? null : null)
 const jeda = computed(() => (p360.value ? jedaDaftarKeCatatan(p360.value.akun.daftarIso, p360.value.pertamaCatatIso) : null))
 const ikon: Record<Exclude<TabPengguna, ''>, string> = {
   ruang: 'lucide:layers', transaksi: 'lucide:receipt-text', jejak: 'lucide:history',
@@ -47,6 +48,7 @@ const bagian = computed(() => TAB_PENGGUNA.filter((t): t is Exclude<TabPengguna,
       <section class="ca-console-dialog p-4 sm:p-5">
         <div class="flex flex-wrap items-center gap-2">
           <h3 class="break-all font-mono text-base font-bold text-[var(--ca-text)] sm:text-lg">{{ akun.email }}</h3>
+          <CashflowSalinKontak v-if="akun.email !== '—'" jenis="email" :nilai="akun.email" />
           <CashflowSalinId :id="akun.id" />
           <span v-if="akun.ditangguhkan" class="ca-pill-danger">{{ tcf('pengguna.ditangguhkan') }}</span>
         </div>

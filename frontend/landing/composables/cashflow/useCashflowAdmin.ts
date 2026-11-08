@@ -247,7 +247,7 @@ export const useCashflowAdmin = () => {
     const sb = await sesiKonsol.ambil()
     if (!sb) throw new GalatAdmin('konfigurasi', 'Modul CashFlow belum dikonfigurasi.')
     const { data } = await sb.auth.getSession()
-    if (!data.session) {
+    if (!data.session || sesiKonsol.perluSambung()) {
       const h = await sesiKonsol.sambung()
       if (!h.ok) throw new GalatAdmin('sesi', h.sebab)
     }

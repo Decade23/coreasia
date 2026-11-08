@@ -23,15 +23,10 @@
  *   2. peran pemegangnya harus punya izin cashflow:view — peta yang sama
  *      dengan sidebar (utils/rbac.ts). Izin sesi (Fase 1, migrasi 0089)
  *      dihitung izinSesiCashflow(role, /me): cashflow:view bila perannya
- *      boleh; pii/investigasi/tindak/ekspor HANYA bila /me menjawab mfa=true
- *      (login ber-TOTP yang masih segar), TOTP akunnya masih aktif
- *      (totp_enabled_at ada), DAN perannya memegang izin itu. Aktif LANGSUNG,
- *      TANPA masa tenggang sejak TOTP dipasang (keputusan Master 21 Sep 2026;
- *      risiko sisa: pemegang sandi bocor super admin tanpa TOTP bisa memasang
- *      TOTP sendiri lalu langsung membuka data — utils/rbac.ts). Batas waktunya
- *      (mfa_at + 12 jam = umur MFA gateway) ditulis ke `izin_sampai`:
- *      konsol_boleh menolak izin selain view sesudahnya, walaupun sesi
- *      CashFlow-nya sendiri masih hidup (umurnya 12 jam sejak DICETAK).
+ *      boleh. TOTP segar memberi izin sesuai peran hingga mfa_at + 12 jam.
+ *      Perangkat tepercaya memberi tambahan izin baca pii/investigasi,
+ *      diperiksa ulang saat pencetakan sesi dan berbatas waktu terpisah.
+ *      Penegak izin tetap Postgres (konsol_boleh).
  *   3. identitas konsol harus ADA dan bertanda admin_users.lewat_konsol — kalau
  *      env salah ketik, generateLink bisa diam-diam membuat pengguna baru;
  *      cek ini menutupnya.
@@ -64,7 +59,7 @@
  *   belum-konfigurasi · mint-gagal · lintas-situs · ikatan · dibatasi (429)
  */
 import { createClient } from '@supabase/supabase-js'
-import { batasIzinMfa, izinSesiCashflow } from '~/utils/rbac'
+import { batasIzinMfa, batasPerangkatTepercaya, izinSesiCashflow } from '~/utils/rbac'
 import { idAdminGateway } from '../../lib/konsol/cashflow-cabut'
 import { batasi, bacaCookie, catat, hapusCookie, ipKlien, pasangToken, tanpaCache, wajibIkatan } from '../../lib/konsol/h3'
 import { rakitTujuan } from '../../lib/konsol/jalur'
@@ -78,8 +73,16 @@ interface JawabanMe {
   data?: {
     id: string; email: string; role: string; is_active: boolean
     mfa?: unknown; mfa_at?: unknown; totp_enabled_at?: unknown
+    trusted_device_id?: unknown; trusted_device_expires_at?: unknown
   } | null
 }
+
+async function bacaMe(respons: Response): Promise<JawabanMe['data']> {
+  return ((await respons.json().catch(() => null)) as JawabanMe | null)?.data ?? null
+}
+
+/** Batasi sisa akses langsung ke RPC jika pencabutan lintas layanan gagal. */
+const UMUR_BUKTI_BACA_MS = 60 * 60 * 1000
 
 /** Klaim JWT tanpa verifikasi tanda tangan — cukup, karena token ini baru saja
  *  diterbitkan Supabase kepada kita dan hanya session_id-nya yang dibaca. */
@@ -114,29 +117,39 @@ export default defineEventHandler(async (event) => {
   const gatewayUrl = config.public.gatewayUrl as string
   const tujuan = rakitTujuan(gatewayUrl, 'admin/auth/me', '')
   if (!tujuan) throw createError({ statusCode: 502, statusMessage: 'gateway-gagal' })
-  const hasil = await teruskan(
-    { metode: 'GET', jalur: 'admin/auth/me', tujuan, header: new Headers({ accept: 'application/json' }), akses, segar },
-    { gatewayUrl, fetch, timeoutMs: 8000, klienIp: ipKlien(event) },
-  )
-  if (hasil.hapusCookie) hapusCookie(event, ['akses', 'segar'])
-  else if (hasil.tokenBaru) pasangToken(event, hasil.tokenBaru)
+  const periksaGateway = async (tokenAkses: string | null | undefined, tokenSegar: string | null | undefined) => {
+    const hasil = await teruskan(
+      {
+        metode: 'GET', jalur: 'admin/auth/me', tujuan, header: new Headers({ accept: 'application/json' }),
+        akses: tokenAkses, segar: tokenSegar,
+      },
+      { gatewayUrl, fetch, timeoutMs: 8000, klienIp: ipKlien(event) },
+    )
+    if (hasil.hapusCookie) hapusCookie(event, ['akses', 'segar'])
+    else if (hasil.tokenBaru) pasangToken(event, hasil.tokenBaru)
+    return hasil
+  }
+  const hasil = await periksaGateway(akses, segar)
   const status = hasil.respons.status
   if (status === 401 || status === 403) throw createError({ statusCode: 401, statusMessage: 'cookie-ditolak' })
   if (!hasil.respons.ok) {
     console.error('[cashflow/sesi] gateway tidak menjawab:', status)
     throw createError({ statusCode: 502, statusMessage: 'gateway-gagal' })
   }
-  const me: JawabanMe['data'] = ((await hasil.respons.json().catch(() => null)) as JawabanMe | null)?.data ?? null
+  const me = await bacaMe(hasil.respons)
   if (!me || !me.is_active) throw createError({ statusCode: 401, statusMessage: 'cookie-ditolak' })
 
-  // 2. Peran yang boleh melihat pintunya = peran yang boleh masuk. Izin
-  //    sesi: view untuk peran yang boleh, empat lainnya hanya bila ber-MFA
-  //    segar (langsung, tanpa masa tenggang pendaftaran TOTP) — berlaku
-  //    sampai izinSampai (mfa_at + 12 jam), bukan 12 jam sejak dicetak.
+  // 2. Pisahkan masa berlaku TOTP dan akses baca yang didukung perangkat.
   const sekarang = Date.now()
   const izin = izinSesiCashflow(me.role, me, sekarang)
-  const batas = batasIzinMfa(me, sekarang)
-  const izinSampai = batas !== null && izin.some(i => i !== 'cashflow:view') ? new Date(batas).toISOString() : null
+  const batasMfa = izin.some(i => i !== 'cashflow:view') ? batasIzinMfa(me, sekarang) : null
+  const batasPerangkat = batasPerangkatTepercaya(me, sekarang)
+  const dapatBaca = izin.includes('cashflow:pii') || izin.includes('cashflow:investigasi')
+  const batasBacaPerangkat = dapatBaca && batasPerangkat !== null
+    ? Math.min(batasPerangkat, sekarang + UMUR_BUKTI_BACA_MS) : null
+  const izinSampai = batasMfa === null ? null : new Date(batasMfa).toISOString()
+  const izinBacaPerangkatSampai = batasBacaPerangkat === null ? null : new Date(batasBacaPerangkat).toISOString()
+  const batasBaca = dapatBaca ? Math.max(batasMfa ?? 0, batasBacaPerangkat ?? 0) : 0
   if (!izin.includes('cashflow:view')) {
     throw createError({ statusCode: 403, statusMessage: 'tanpa-izin' })
   }
@@ -201,12 +214,35 @@ export default defineEventHandler(async (event) => {
   //    dimatikan lagi supaya tidak ada token setengah jadi di peramban.
   const sessionId = klaimJwt(sesi.access_token)?.session_id
   const { error: eCatat } = typeof sessionId === 'string'
-    ? await admin.from('admin_konsol_sesi').insert({ session_id: sessionId, admin_gw_id: adminGwId, pelaku: me.email, izin, izin_sampai: izinSampai })
+    ? await admin.from('admin_konsol_sesi').insert({
+        session_id: sessionId, admin_gw_id: adminGwId, pelaku: me.email, izin, izin_sampai: izinSampai,
+        ...(izinBacaPerangkatSampai ? { izin_baca_sampai: izinBacaPerangkatSampai } : {}),
+      })
     : { error: { message: 'JWT tanpa session_id' } }
   if (eCatat) {
     console.error('[cashflow/sesi] pencatatan sesi gagal:', eCatat.message)
     await admin.auth.admin.signOut(sesi.access_token, 'local').catch(() => {})
     throw createError({ statusCode: 502, statusMessage: 'mint-gagal' })
+  }
+
+  if (batasBacaPerangkat !== null) {
+    // Pencabutan dapat terjadi di antara /me pertama dan INSERT. Periksa
+    // kembali sesudah INSERT, sebelum token meninggalkan server. Bila
+    // pencabutan datang sesudah pemeriksaan, baris ini sudah bisa dicabut.
+    const cek = await periksaGateway(hasil.tokenBaru?.akses ?? akses, hasil.tokenBaru?.segar ?? segar)
+    const aktif = cek.respons.ok ? await bacaMe(cek.respons) : null
+    const sampai = batasPerangkatTepercaya(aktif)
+    if (!aktif?.is_active || idAdminGateway(aktif.id) !== adminGwId || aktif.role !== me.role
+      || aktif.trusted_device_id !== me.trusted_device_id || sampai === null || sampai < batasBacaPerangkat) {
+      await Promise.allSettled([
+        admin.rpc('admin_konsol_sesi_cabut', { p_session: sessionId }),
+        admin.auth.admin.signOut(sesi.access_token, 'local'),
+      ])
+      if (!cek.respons.ok && ![401, 403].includes(cek.respons.status)) {
+        throw createError({ statusCode: 502, statusMessage: 'gateway-gagal' })
+      }
+      throw createError({ statusCode: 401, statusMessage: 'cookie-ditolak' })
+    }
   }
 
   // Rumah tangga: cabut catatan yang lewat umur (12 jam) dan buang yang > 7
@@ -225,5 +261,8 @@ export default defineEventHandler(async (event) => {
     pelaku: me.email,
     /** Izin yang tercatat untuk sesi ini — petunjuk tampilan saja; Postgres yang menegakkan. */
     izin,
+    tepercaya: batasPerangkat !== null,
+    izin_sampai: izinSampai,
+    izin_baca_sampai: batasBaca > 0 ? new Date(batasBaca).toISOString() : null,
   }
 })

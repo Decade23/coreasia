@@ -233,16 +233,19 @@ describe('keKepala: utuh untuk sesi ber-pii (0123), tersamar bila tidak, tanpa b
 
 describe('kepala Pengguna 360: tampilan dan jejak nomor utuh', () => {
   const baca = (f: string) => readFileSync(fileURLToPath(new URL(`../../${f}`, import.meta.url)), 'utf8')
-  it('baris WhatsApp hanya bila ada nomor, menampilkan nomorWa apa adanya', () => {
+  it('baris WhatsApp tampil bila ada nomor, dan hanya nomor utuh yang dapat disalin', () => {
     const f = baca('components/cashflow/CashflowKepala360.vue')
-    expect(f).toMatch(/<div v-if="kepala\.nomorWa">/)
-    expect(f).toMatch(/\{\{ kepala\.nomorWa \}\}/)
-    expect(f).not.toMatch(/nomorTersamar|nomorDikirim/)
+    expect(f).toMatch(/props\.izinPribadi \? formatNomorWa\(props\.kepala\?\.nomorWa\) : null/)
+    expect(f).toMatch(/nomorUtuh\.value \?\? samarkanNomorWa/)
+    expect(f).toMatch(/<div v-if="nomorTampil">/)
+    expect(f).toMatch(/<CashflowSalinKontak v-if="nomorUtuh" jenis="wa" :nilai="nomorUtuh"/)
   })
-  it('kepala tidak pernah masuk indeks palet atau remah: label subjek tetap email tersamar', () => {
+  it('remah dan kepala mendapat email utuh hanya dari kasus aktif dan subjek yang sesuai', () => {
     const induk = baca('pages/console/cashflow/pengguna/[id].vue')
     expect(induk).not.toMatch(/indeks\.isi\(/)
-    expect(induk).toMatch(/const labelSubjek = computed\(\(\) => kepala\.value\?\.emailTersamar \?\?/)
+    expect(induk).toMatch(/const akun = p360\.value\?\.akun/)
+    expect(induk).toMatch(/izinPribadi\.value && akun\?\.id === id\.value && akun\.email !== '—' \? akun\.email : null/)
+    expect(induk).toMatch(/const labelSubjek = computed\(\(\) => emailUtuh\.value \?\? kepala\.value\?\.emailTersamar/)
     expect(induk).not.toMatch(/kepala\.value\?\.nomorWa/)
     expect(baca('composables/cashflow/useCashflowPengguna.ts')).not.toMatch(/indeks|nomorWa/)
   })
@@ -279,19 +282,30 @@ describe('indeks palet tidak memegang nomor', () => {
 describe('halaman daftar pengguna memakai satu jalur pembersih', () => {
   const SRC = readFileSync(fileURLToPath(new URL('../../pages/console/cashflow/pengguna/index.vue', import.meta.url)), 'utf8')
   it('muat tanpa alasan dan sakelar mati sama-sama lewat tanpaKontakUtuh', () => {
-    expect(SRC).toMatch(/mentah\.value = alasan \? hasil\.baris : tanpaKontakUtuh\(hasil\.baris\)/)
-    expect(SRC).toMatch(/mentah\.value = tanpaKontakUtuh\(mentah\.value\)/)
+    expect(SRC).toMatch(/bolehBuka \? hasil\.baris : tanpaKontakUtuh\(hasil\.baris\)/)
+    expect(SRC).toMatch(/mentah\.value = tanpaDataPribadi \? bersihkanData\(mentah\.value\) : tanpaKontakUtuh\(mentah\.value\)/)
     // Pembersih lama yang hanya menyamarkan email tidak boleh kembali.
     expect(SRC).not.toMatch(/tanpaEmailUtuh/)
   })
   it('pencarian nomor dikirim ke server bersama keadaan kontak', () => {
     expect(SRC).toMatch(/cari: cariDiterapkan\.value\.trim\(\)/)
-    expect(SRC).toMatch(/alasan: alasan\?\.alasan \?\? null/)
+    expect(SRC).toMatch(/const baca = \(alasan: string \| null\) => api\.daftarPenggunaHalaman/)
+    expect(SRC).toMatch(/let alasan = !tanpaHitungan\.value && !samarkanKontak\.value \? ALASAN_DAFTAR : null/)
   })
-  it('alasan audit sakelar cukup panjang untuk server (≥ 8 aksara) dan menyebut kontak', () => {
-    const alasan = SRC.match(/const ALASAN_SAKELAR = '([^']+)'/)?.[1] ?? ''
+  it('alasan audit kontak otomatis cukup panjang untuk server (≥ 8 aksara) dan menyebut kontak', () => {
+    const alasan = SRC.match(/const ALASAN_DAFTAR = '([^']+)'/)?.[1] ?? ''
     expect(alasan.trim().length).toBeGreaterThanOrEqual(8)
     expect(alasan).toMatch(/Kontak lengkap/)
+  })
+  it('pembukaan ditolak: bersihkan nilai pribadi lalu minta daftar tersamar', () => {
+    expect(SRC).toMatch(/e instanceof GalatAdmin && e\.jenis === 'izin'/)
+    expect(SRC).toMatch(/samarkanBaris\(true\)[\s\S]*?hasil = await baca\(null\)/)
+  })
+  it('ponsel dan desktop memakai halaman yang sama dan hanya menyalin kontak utuh', () => {
+    expect(SRC).toMatch(/<DataTable\s+class="hidden lg:block"/)
+    expect(SRC).toMatch(/<li v-for="row in barisHalaman"/)
+    expect(SRC.match(/<CashflowSalinKontak v-if="row\.p\.emailPenuh"/g)).toHaveLength(2)
+    expect(SRC.match(/<CashflowSalinKontak v-if="row\.p\.nomorPenuh"/g)).toHaveLength(2)
   })
   it('label sakelar dan kolom tersedia ID dan EN', () => {
     expect(KAMUS_CASHFLOW.id.pengguna.kontakPenuh).toBe('Kontak lengkap')

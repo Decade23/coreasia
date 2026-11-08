@@ -217,7 +217,7 @@ const pilih = (i: Item | undefined) => {
       </li>
     </ul>
     <p v-if="memuatServer" class="mt-3 text-sm text-[var(--ca-muted)]">{{ tcf('cari.memuat') }}</p>
-    <CashflowIzinKurang v-else-if="galatServer?.jenis === 'izin'" class="mt-3" />
+    <CashflowIzinKurang v-else-if="galatServer?.jenis === 'izin'" baca class="mt-3" />
     <p v-else-if="galatServer" class="mt-3 text-sm text-[var(--ca-danger-text)]" role="alert">{{ pesanUntuk(galatServer) }}</p>
     <p v-else-if="server && server.untuk === q.trim() && !server.hasil.length" class="mt-3 text-sm text-[var(--ca-muted)]">{{ tcf('cari.tanpaHasil') }}</p>
     <p v-if="!item.length" class="mt-3 text-sm text-[var(--ca-muted)]">

@@ -11,7 +11,9 @@
  *   "Sambung ulang CashFlow" mencetak sesi baru yang membawa izinnya;
  * - TOTP belum dipasang → Keamanan akun (/console/keamanan).
  */
-withDefaults(defineProps<{ pesan?: string }>(), { pesan: '' })
+import { batasPerangkatTepercaya } from '~/utils/rbac'
+
+const props = withDefaults(defineProps<{ pesan?: string; baca?: boolean }>(), { pesan: '' })
 const { tcf } = useCashflowI18n()
 const { user, logout, fetchMe } = useAdminAuth()
 const { tc } = useConsoleI18n()
@@ -20,13 +22,14 @@ const route = useRoute()
 const toast = useToast()
 const sibuk = ref(false)
 const tampilKode = ref(false)
+const perangkatBaca = computed(() => props.baca && batasPerangkatTepercaya(user.value) !== null)
 
 const sambungUlang = async () => {
   if (sibuk.value) return
   sibuk.value = true
   try {
     await fetchMe()
-    if (user.value?.totp_enabled && !user.value.mfa) {
+    if (user.value?.totp_enabled && !user.value.mfa && !perangkatBaca.value) {
       tampilKode.value = true
       return
     }
@@ -60,7 +63,7 @@ const masukUlang = async () => {
     <Icon name="lucide:shield-alert" class="h-4 w-4 shrink-0 text-[var(--ca-gold-text)]" aria-hidden="true" />
     <span class="min-w-0 flex-1">{{ pesan || tcf('izin.kurang') }}</span>
     <span class="flex flex-wrap gap-2">
-      <button v-if="user?.mfa" type="button" class="ca-btn-primary !px-3 !py-1.5 text-xs" :disabled="sibuk" @click="sambungUlang">
+      <button v-if="user?.mfa || perangkatBaca" type="button" class="ca-btn-primary !px-3 !py-1.5 text-xs" :disabled="sibuk" @click="sambungUlang">
         {{ sibuk ? tcf('izin.menyambung') : tcf('izin.sambungUlang') }}
       </button>
       <!-- /me belum dimuat (user null) = anggap TOTP terpasang: masuk ulang tetap jalan yang benar. -->

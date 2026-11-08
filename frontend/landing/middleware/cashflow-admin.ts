@@ -22,15 +22,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
   if (import.meta.server) return
   if (to.path === '/console/cashflow/masuk') return
 
-  const sb = await useCashflowSupabase().ambil()
-  if (!sb) {
-    return navigateTo({ path: '/console/cashflow/masuk', query: { sebab: 'konfigurasi', ke: to.fullPath } })
-  }
-
-  const { data: { session } } = await sb.auth.getSession()
-  if (session) return
-
-  const hasil = await useCashflowSesi().sambung()
+  const hasil = await useCashflowSesi().siapkan()
   if (!hasil.ok) {
     return navigateTo({ path: '/console/cashflow/masuk', query: { sebab: hasil.sebab, ke: to.fullPath } })
   }

@@ -464,6 +464,7 @@ export type HasilBuka = { ok: true; kasus: Kasus } | { ok: false; batas: BatasAk
 
 export const useCashflowKasus = () => {
   const api = useCashflowAdmin()
+  const sesi = useCashflowSesi()
   apiTerakhir = api
 
   const kasus = computed(() => keadaan.value.kasus)
@@ -604,7 +605,7 @@ export const useCashflowKasus = () => {
 
   /** Nilai tersimpan (reaktif) untuk kunci ini, atau undefined. */
   const data = <T>(kunci: string | null): T | undefined =>
-    (kunci ? (simpanan.get(kunci) as T | undefined) : undefined)
+    (kunci && sesi.boleh('cashflow:pii') ? (simpanan.get(kunci) as T | undefined) : undefined)
 
   /** Muat sekali per kunci (panggilan yang sama sedang berjalan = ditunggu bersama). */
   function muatData<T>(kunci: string, kerja: (k: Kasus) => Promise<T>): Promise<T> {
@@ -629,7 +630,7 @@ export const useCashflowKasus = () => {
   const kunciTeks = (jenis: JenisTeks, id: string | number) => `${jenis}:${id}`
   /** Potongan teks yang sudah dibuka, atau null (masih terkunci). */
   const teks = (jenis: JenisTeks, id: string | number): PotongTeks[] | null =>
-    teksTerbuka.get(kunciTeks(jenis, id))?.potong ?? null
+    sesi.boleh('cashflow:investigasi') ? teksTerbuka.get(kunciTeks(jenis, id))?.potong ?? null : null
 
   /** Kasus anak hidup untuk ranah ini, atau yang baru dibuka otomatis (satu
    *  pembukaan per ranah untuk semua pemanggil). Anak ranah lain tidak dipakai. */
@@ -690,7 +691,7 @@ export const useCashflowKasus = () => {
 
   // ── T3: foto lampiran lewat kasus anak foto OTOMATIS (0122) ──────────
   /** Foto yang sedang terbuka (blob URL), atau null. */
-  const foto = computed(() => fotoTerbuka.value)
+  const foto = computed(() => sesi.boleh('cashflow:investigasi') ? fotoTerbuka.value : null)
 
   /**
    * "Lihat foto" (satu klik) untuk SATU baris: tautan dari admin-lampiran

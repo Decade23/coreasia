@@ -140,10 +140,12 @@ describe('penanda versi tertinggal: per platform, atas seluruh daftar', () => {
 
 describe('halaman daftar pengguna: kolom Versi', () => {
   const SRC = readFileSync(fileURLToPath(new URL('../../pages/console/cashflow/pengguna/index.vue', import.meta.url)), 'utf8')
-  it('kolom sesudah WhatsApp, kecil di HP seperti kolom lain, urut atas kunci versi', () => {
+  it('kolom sesudah WhatsApp, versi tampil di tabel desktop dan kartu ponsel, urut atas kunci versi', () => {
     expect(SRC.indexOf("key: 'versi'")).toBeGreaterThan(SRC.indexOf("key: 'wa'"))
     expect(SRC.indexOf("key: 'versi'")).toBeLessThan(SRC.indexOf("key: 'daftar'"))
-    expect(SRC).toMatch(/key: 'versi'[^\n]*class: 'hidden[^']*sm:table-cell', headerClass: 'hidden sm:table-cell'/)
+    expect(SRC).toMatch(/<DataTable\s+class="hidden lg:block"/)
+    expect(SRC).toMatch(/if \(k === 'versi'\) return row\.versi/)
+    expect(SRC).toMatch(/<div v-for="k in kolomKartu"/)
     expect(SRC).toMatch(/urut: q\.value\.urut/)
     expect(SRC).toMatch(/const URUT = \[[^\]]*'versi'/)
   })
@@ -153,12 +155,15 @@ describe('halaman daftar pengguna: kolom Versi', () => {
     expect(SRC).toMatch(/\{\{ row\.p\.versiAplikasi \?\? '—' \}\}/)
     expect(SRC).toMatch(/android: 'bi:android2', ios: 'bi:apple'/)
   })
-  it('muat tanpa gulir samping mulai 1280 px: email terpotong dengan title, kolom hitungan tanpa tombol saring', () => {
-    expect(SRC).toMatch(/class="block max-w-\[10rem\] truncate font-mono[^"]*" :title="row\.email"/)
+  it('email desktop membungkus teks lengkap dan hanya kolom yang didukung server bisa disaring', () => {
+    expect(SRC).toMatch(/class="min-w-0 max-w-\[12rem\] whitespace-normal break-all font-mono[^"]*" :title="row\.email"/)
     expect(SRC).toMatch(/key: 'ruang'[^\n]*filterable: false/)
     expect(SRC).toMatch(/key: 'tx'[^\n]*filterable: false/)
+    expect(SRC).toMatch(/key: 'nominal'[^\n]*filterable: false/)
     // Server hanya menerima saringan kolom yang memang disediakan.
-    expect(SRC).toMatch(/\['email', 'wa', 'versi', 'daftar', 'aktif', 'status'\]\.includes\(k\)/)
+    expect(SRC).toMatch(/const FILTER = \['email', 'wa', 'versi', 'daftar', 'aktif', 'status'\]/)
+    expect(SRC).toMatch(/const kolomSaring = computed\(\(\) => kolom\.value\.filter\(k => k\.filterable !== false\)\)/)
+    expect(SRC).toMatch(/<label v-for="k in kolomSaring"/)
     const tabel = readFileSync(fileURLToPath(new URL('../../components/ui/DataTable.vue', import.meta.url)), 'utf8')
     expect(tabel).toMatch(/<CaTooltip v-if="col\.filterable !== false"/)
   })

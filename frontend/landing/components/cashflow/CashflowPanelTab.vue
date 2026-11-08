@@ -82,7 +82,7 @@ const cobaLagi = async () => {
 <template>
   <div>
     <template v-if="tanpaKasus">
-      <CashflowIzinKurang v-if="tahap === 'izin'" />
+      <CashflowIzinKurang v-if="tahap === 'izin'" baca />
       <p v-else-if="tahap === 'sesi'" class="rounded-xl border border-dashed border-[color:var(--ca-border)] px-4 py-3 text-sm text-[var(--ca-muted)]" role="status">
         {{ tcf('galat.sesiBerakhir') }}
       </p>
@@ -121,7 +121,7 @@ const cobaLagi = async () => {
       </button>
     </div>
 
-    <CashflowIzinKurang v-else-if="galat?.jenis === 'izin'" />
+    <CashflowIzinKurang v-else-if="galat?.jenis === 'izin'" baca />
 
     <p v-else-if="galat" class="rounded-xl border border-[color:var(--ca-danger-border)] bg-[var(--ca-danger-bg)] px-4 py-3 text-sm text-[var(--ca-danger-text)]" role="alert">
       {{ pesanGalat || galat.message }}

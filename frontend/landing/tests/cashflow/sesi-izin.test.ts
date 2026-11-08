@@ -3,8 +3,8 @@
  *
  * Diuji pada HANDLER-nya, dengan klien Supabase TIRUAN (tidak ada kunci
  * service, tidak ada jaringan) dan gateway /me tiruan:
- * - cashflow:view selalu untuk peran yang boleh; pii/investigasi/tindak/ekspor
- *   HANYA bila /me menjawab mfa=true (dan TOTP akunnya masih aktif) —
+ * - cashflow:view selalu untuk peran yang boleh; pii/investigasi juga boleh
+ *   lewat perangkat tepercaya. Semua izin sesuai peran bila /me menjawab mfa=true —
  *   LANGSUNG, tanpa masa tenggang sejak TOTP dipasang (keputusan Master
  *   21 Sep 2026, menggantikan temuan fe p2 #1);
  * - batas izin selain view (izin_sampai) = mfa_at + 12 jam, bukan 12 jam
@@ -32,26 +32,37 @@ const panggilan = { gateway: 0, mint: 0 }
 interface Me {
   id: string; email: string; role: string; is_active: boolean
   mfa?: unknown; mfa_at?: unknown; totp_enabled_at?: unknown
+  trusted_device_id?: unknown; trusted_device_expires_at?: unknown
 }
-const keadaan: { me: Me | null; galatInsert: string | null } = { me: null, galatInsert: null }
+const keadaan: { me: Me | null; statusCekUlang: number; galatInsert: string | null } = {
+  me: null, statusCekUlang: 200, galatInsert: null,
+}
 const tulis: Array<{ tabel: string; baris: Record<string, unknown> }> = []
 const dicabut: string[] = []
+const sesiDicabut: string[] = []
 
 const jwt = (klaim: Record<string, unknown>) => `h.${Buffer.from(JSON.stringify(klaim)).toString('base64url')}.t`
 
 vi.mock('../../server/lib/konsol/proxy', () => ({
   teruskan: async () => {
     panggilan.gateway++
-    return ({
-    respons: new Response(JSON.stringify({ data: keadaan.me }), { status: 200, headers: { 'content-type': 'application/json' } }),
-    hapusCookie: false,
-    tokenBaru: null,
-  }) },
+    const status = panggilan.gateway === 1 ? 200 : keadaan.statusCekUlang
+    return {
+      respons: new Response(JSON.stringify({ data: status === 200 ? keadaan.me : null }),
+        { status, headers: { 'content-type': 'application/json' } }),
+      hapusCookie: false,
+      tokenBaru: null,
+    }
+  },
 }))
 vi.mock('@supabase/supabase-js', () => ({
   createClient: (_url: string, kunci: string) => (kunci === 'kunci-layanan-tiruan'
     ? {
-        rpc: async (nama: string) => (nama === 'otp_longgar_cari' ? { data: [{ id: 'konsol-id' }], error: null } : { data: null, error: null }),
+        rpc: async (nama: string, args?: { p_session?: string }) => {
+          if (nama === 'otp_longgar_cari') return { data: [{ id: 'konsol-id' }], error: null }
+          if (nama === 'admin_konsol_sesi_cabut' && args?.p_session) sesiDicabut.push(args.p_session)
+          return { data: null, error: null }
+        },
         from: (tabel: string) => ({
           select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: { lewat_konsol: true } }) }) }),
           insert: async (baris: Record<string, unknown>) => {
@@ -77,7 +88,7 @@ vi.mock('@supabase/supabase-js', () => ({
       }),
 }))
 
-interface Hasil { izin: string[]; pelaku: string }
+interface Hasil { izin: string[]; pelaku: string; tepercaya: boolean; izin_sampai: string | null; izin_baca_sampai: string | null }
 let handler: unknown
 /** POST /api/cashflow/sesi lewat h3 asli; galat jadi { status, statusMessage }. */
 async function cetak(header: Record<string, string> = headerKonsol({ 'x-cf-sesi': '1' })) {
@@ -86,6 +97,7 @@ async function cetak(header: Record<string, string> = headerKonsol({ 'x-cf-sesi'
 }
 afterAll(() => { vi.useRealTimers(); vi.unstubAllGlobals(); vi.unstubAllEnvs() })
 const ADMIN_GW = '0b6e7c1e-2a55-4d59-9c5f-0a8d2f9d1b11'
+const DEVICE = 'fe7e4511-2d7b-4557-94ca-579df3e2ca08'
 const KINI = Date.parse('2026-09-21T15:00:00Z')
 const JAM = 3_600_000
 const iso = (ms: number) => new Date(ms).toISOString()
@@ -101,6 +113,8 @@ beforeEach(async () => {
   panggilan.mint = 0
   tulis.length = 0
   dicabut.length = 0
+  sesiDicabut.length = 0
+  keadaan.statusCekUlang = 200
   keadaan.galatInsert = null
   vi.spyOn(console, 'error').mockImplementation(() => {})
   vi.spyOn(console, 'info').mockImplementation(() => {})
@@ -127,6 +141,7 @@ describe('sesi.post: izin sesi CashFlow', () => {
     }])
     expect(r.izin).toEqual(tulis[0]!.baris.izin)
     expect(r.pelaku).toBe('admin@coreasia.id')
+    expect(panggilan.gateway).toBe(1)
   })
 
   it('super_admin TANPA MFA → hanya cashflow:view, izin_sampai null', async () => {
@@ -134,6 +149,74 @@ describe('sesi.post: izin sesi CashFlow', () => {
     await cetak()
     expect(tulis[0]!.baris.izin).toEqual(['cashflow:view'])
     expect(tulis[0]!.baris.izin_sampai).toBeNull()
+  })
+
+  it('perangkat tepercaya tanpa MFA segar hanya mencetak izin baca dengan batas satu jam', async () => {
+    keadaan.me = me('super_admin', false, { trusted_device_id: DEVICE, trusted_device_expires_at: iso(KINI + 7 * 24 * JAM) })
+    const { isi } = await cetak()
+    expect(tulis[0]!.baris).toMatchObject({
+      izin: ['cashflow:view', 'cashflow:pii', 'cashflow:investigasi'],
+      izin_sampai: null,
+      izin_baca_sampai: iso(KINI + JAM),
+    })
+    expect(isi).toMatchObject({ tepercaya: true, izin_sampai: null, izin_baca_sampai: iso(KINI + JAM) })
+  })
+
+  it('bila perangkat dicabut saat mint, catatan sesi ikut dicabut dan token tidak dikirim', async () => {
+    keadaan.me = me('super_admin', false, { trusted_device_id: DEVICE, trusted_device_expires_at: iso(KINI + JAM) })
+    keadaan.statusCekUlang = 401
+    expect(await cetak()).toMatchObject({ status: 401, statusMessage: 'cookie-ditolak' })
+    expect(panggilan.gateway).toBe(2)
+    expect(sesiDicabut).toEqual(['sesi-uji-1'])
+    expect(dicabut).toHaveLength(1)
+  })
+
+  it('bila gateway gagal saat cek ulang perangkat, sesi baru dibatalkan tanpa meminta login', async () => {
+    keadaan.me = me('super_admin', false, { trusted_device_id: DEVICE, trusted_device_expires_at: iso(KINI + JAM) })
+    keadaan.statusCekUlang = 503
+    expect(await cetak()).toMatchObject({ status: 502, statusMessage: 'gateway-gagal' })
+    expect(panggilan.gateway).toBe(2)
+    expect(sesiDicabut).toEqual(['sesi-uji-1'])
+    expect(dicabut).toHaveLength(1)
+  })
+
+  it('perangkat tepercaya dengan MFA segar memakai batas terpisah untuk baca dan tindakan', async () => {
+    keadaan.me = me('super_admin', true, {
+      mfa_at: iso(KINI - 12 * JAM + 60_000),
+      trusted_device_id: DEVICE, trusted_device_expires_at: iso(KINI + 10 * 60_000),
+    })
+    const { isi } = await cetak()
+    expect(tulis[0]!.baris).toMatchObject({
+      izin: ['cashflow:view', 'cashflow:pii', 'cashflow:investigasi', 'cashflow:tindak', 'cashflow:ekspor'],
+      izin_sampai: iso(KINI + 60_000), izin_baca_sampai: iso(KINI + 10 * 60_000),
+    })
+    expect(isi).toMatchObject({
+      tepercaya: true, izin_sampai: iso(KINI + 60_000), izin_baca_sampai: iso(KINI + 10 * 60_000),
+    })
+  })
+
+  it('batas efektif membaca tetap memakai MFA bila bukti perangkat habis lebih dulu', async () => {
+    keadaan.me = me('super_admin', true, {
+      trusted_device_id: DEVICE, trusted_device_expires_at: iso(KINI + 60_000),
+    })
+    const { isi } = await cetak()
+    expect(tulis[0]!.baris.izin_baca_sampai).toBe(iso(KINI + 60_000))
+    expect(isi.izin_baca_sampai).toBe(iso(KINI + 11 * JAM))
+  })
+
+  it('klaim perangkat yang tidak lengkap atau kedaluwarsa tidak memberi akses baca', async () => {
+    for (const lain of [
+      { trusted_device_id: DEVICE },
+      { trusted_device_expires_at: iso(KINI + JAM) },
+      { trusted_device_id: DEVICE, trusted_device_expires_at: iso(KINI) },
+      { trusted_device_id: DEVICE, trusted_device_expires_at: iso(KINI + JAM), totp_enabled_at: null },
+    ]) {
+      tulis.length = 0
+      keadaan.me = me('super_admin', false, lain)
+      const { isi } = await cetak()
+      expect(tulis[0]!.baris).not.toHaveProperty('izin_baca_sampai')
+      expect(isi).toMatchObject({ izin: ['cashflow:view'], tepercaya: false, izin_baca_sampai: null })
+    }
   })
 
   it('keputusan Master 21 Sep 2026: TOTP baru dipasang (< 24 jam) → kelima izin LANGSUNG, tanpa masa tenggang', async () => {
@@ -183,7 +266,7 @@ describe('sesi.post: izin sesi CashFlow', () => {
   })
 
   it('peran tanpa cashflow:view → 403 tanpa-izin; tidak ada sesi yang dicatat', async () => {
-    keadaan.me = me('admin', true)
+    keadaan.me = me('admin', true, { trusted_device_id: DEVICE, trusted_device_expires_at: iso(KINI + JAM) })
     expect(await cetak()).toMatchObject({ status: 403, statusMessage: 'tanpa-izin' })
     expect(tulis).toEqual([])
   })
