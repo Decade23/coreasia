@@ -104,6 +104,7 @@ import { urlBerkasSah } from '~/adapters/cashflowLampiran'
 import type { RingkasDukunganDTO, DaftarDukunganDTO, SumberDukungan, StatusDukungan } from '~/adapters/cashflowDukungan'
 import { BATAS_DAFTAR_DUKUNGAN } from '~/adapters/cashflowDukungan'
 import type { SimpanPengumuman } from '~/adapters/cashflowPengumuman'
+import type { RingkasAiDTO, SetelanAiDTO } from '~/adapters/cashflowAi'
 
 interface OpsiDaftarPengguna {
   limit: number; offset: number; cari: string; segmen: string; urut: string; arah: string
@@ -552,5 +553,17 @@ export const useCashflowAdmin = () => {
       rpc<DaftarDukunganDTO>('admin_dukungan_daftar', {
         p_sumber: sumber, p_status: status, p_dari: dari, p_sampai: sampai, p_batas: BATAS_DAFTAR_DUKUNGAN, p_sebelum: sebelum,
       }),
+
+    // ── asisten AI (November 2026) ─────────────────────────────────────
+    /** Sembilan kunci app_config ai_* dalam satu objek. Izin view, tanpa audit.
+     *  Kunci penyedia TIDAK ikut: hanya ada di env server. */
+    aiSetelan: () => rpc<SetelanAiDTO>('admin_ai_setelan'),
+    /** Satu objek berisi semua kunci ai_* (lihat nilaiSimpanAi). Butuh
+     *  cashflow:pii; server menolak sesi tanpa TOTP dengan 42501 izin-kurang. */
+    aiSetelanSimpan: (nilai: Record<string, unknown>) =>
+      rpc<unknown>('admin_ai_setelan_simpan', { p: nilai }),
+    /** Jumlah pesan, token, biaya, dan saldo kredit beredar. Izin view,
+     *  tanpa audit karena tidak memuat data akun pengguna. */
+    aiRingkas: () => rpc<RingkasAiDTO>('admin_ai_ringkas'),
   }
 }
