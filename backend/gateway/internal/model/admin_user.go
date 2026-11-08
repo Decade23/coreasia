@@ -103,11 +103,12 @@ type TOTPSetupResponse struct {
 // TOTP sesi ini diverifikasi, untuk menuntut kesegaran MFA di izin T1+.
 type MeResponse struct {
 	AdminUserResponse
-	MFA             bool       `json:"mfa"`
-	MFAAt           *time.Time `json:"mfa_at"`
-	TOTPEnabled     bool       `json:"totp_enabled"`
-	TOTPEnabledAt   *time.Time `json:"totp_enabled_at"`
-	TrustedDeviceID string     `json:"trusted_device_id,omitempty"`
+	MFA                    bool       `json:"mfa"`
+	MFAAt                  *time.Time `json:"mfa_at"`
+	TOTPEnabled            bool       `json:"totp_enabled"`
+	TOTPEnabledAt          *time.Time `json:"totp_enabled_at"`
+	TrustedDeviceID        string     `json:"trusted_device_id,omitempty"`
+	TrustedDeviceExpiresAt *time.Time `json:"trusted_device_expires_at,omitempty"`
 }
 
 type CreateAdminRequest struct {

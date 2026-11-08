@@ -24,7 +24,7 @@ type TrustedDevice struct {
 
 type TrustedDeviceStore interface {
 	Create(context.Context, *TrustedDevice) (bool, error)
-	Active(context.Context, uuid.UUID, uuid.UUID, int, time.Time) (bool, error)
+	ActiveUntil(context.Context, uuid.UUID, uuid.UUID, int, time.Time) (time.Time, error)
 	Renew(context.Context, uuid.UUID, uuid.UUID, int, time.Time, time.Time) (bool, error)
 	List(context.Context, uuid.UUID, int, time.Time) ([]TrustedDevice, error)
 	Revoke(context.Context, uuid.UUID, uuid.UUID, time.Time) (bool, error)

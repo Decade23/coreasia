@@ -4,7 +4,9 @@ Pengguna dapat memilih **Percayai perangkat ini** saat memasukkan TOTP, atau dar
 
 Sesi berlaku 7 hari. Refresh yang sah memperpanjang catatan perangkat dan cookie refresh menjadi 7 hari dari saat itu. Perangkat yang sudah kedaluwarsa tidak dapat dihidupkan kembali lewat refresh. Tanpa pilihan ini, batas sesi TOTP tetap 12 jam.
 
-Kesegaran TOTP tetap 12 jam, termasuk untuk izin data pribadi CashFlow. Refresh tidak mengubah `mfa_at`. Bila verifikasi sudah lama, pengguna mengisi kode di Console, lalu menyambungkan kembali sesi CashFlow. Pengguna tidak perlu keluar untuk melakukan verifikasi ini.
+Perangkat tepercaya yang masih aktif dapat membaca data CashFlow sesuai peran admin. Console memeriksa ulang perangkat saat memperbarui akses baca. Akses baca tersebut berlaku paling lama satu jam per pemeriksaan dan tidak melampaui masa berlaku perangkat. Pembacaan data tetap diaudit.
+
+TOTP berlaku 12 jam untuk tindakan sensitif, termasuk tindakan atas akun, ekspor, dan perubahan daftar pengecualian email. Refresh tidak mengubah `mfa_at`. Admin dapat memverifikasi kode di Console untuk memperbarui izin tindakan dalam sesi yang sama.
 
 ## Pencabutan
 
@@ -22,6 +24,8 @@ Token gateway tetap memakai cookie HttpOnly. BFF menangani enrollment dan verifi
 3. Uji migrasi `000019` naik, turun, lalu naik pada hasil pemulihan.
 4. Rilis gateway lebih dahulu. Startup menerapkan `000019_admin_trusted_devices`. Pastikan versi migrasi 19, `dirty=false`, health baik, dan login lama tetap berfungsi.
 5. Rilis frontend. Uji login TOTP, cookie 7 hari, refresh otomatis, verifikasi dalam sesi, dan pencabutan perangkat.
+
+Untuk akses baca CashFlow dari perangkat tepercaya, terapkan migrasi CashFlow `console_perangkat_tepercaya_baca` sebelum gateway dan frontend baru. Uji bahwa pembacaan diaudit dan akses dicabut bersama perangkat. Uji juga bahwa sesi tanpa TOTP segar ditolak saat mencoba tindakan sensitif.
 
 ## Rollback
 

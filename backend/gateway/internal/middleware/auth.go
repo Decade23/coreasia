@@ -14,6 +14,7 @@ import (
 )
 
 const ClaimsKey = "claims"
+const trustedDeviceExpiresKey = "trusted_device_expires"
 
 // LiveUserKey: admin pemilik sesi, dimuat RequireLiveSession dari DB.
 const LiveUserKey = "live_admin"
@@ -51,16 +52,26 @@ func AuthMiddleware(jwt *auth.JWTProvider, deviceStores ...auth.TrustedDeviceSto
 			if parseErr != nil || id == uuid.Nil || len(deviceStores) == 0 || deviceStores[0] == nil {
 				return c.Status(401).JSON(fiber.Map{"data": nil, "errors": ErrSessionRevoked()})
 			}
-			active, err := deviceStores[0].Active(c.Context(), id, claims.UserID, claims.TV, time.Now())
+			expiresAt, err := deviceStores[0].ActiveUntil(c.Context(), id, claims.UserID, claims.TV, time.Now())
 			if err != nil {
 				return c.Status(503).JSON(fiber.Map{"data": nil, "errors": fiber.Map{"code": "DEVICE_CHECK_UNAVAILABLE", "message": "Pemeriksaan perangkat sedang tidak tersedia. Coba lagi sebentar lagi."}})
 			}
-			if !active {
+			if !expiresAt.After(time.Now()) {
 				return c.Status(401).JSON(fiber.Map{"data": nil, "errors": ErrSessionRevoked()})
 			}
+			c.Locals(trustedDeviceExpiresKey, expiresAt)
 		}
 		return c.Next()
 	}
+}
+
+// TrustedDeviceExpiresAt is set only after the signed device claim and live record are verified.
+func TrustedDeviceExpiresAt(c fiber.Ctx) *time.Time {
+	expiresAt, ok := c.Locals(trustedDeviceExpiresKey).(time.Time)
+	if !ok {
+		return nil
+	}
+	return &expiresAt
 }
 
 // AdminUserFinder adalah bagian repositori admin_users yang dibutuhkan

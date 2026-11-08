@@ -2,10 +2,12 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/coreasia/gateway/internal/auth"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -25,13 +27,18 @@ func (r *TrustedDeviceRepo) Create(ctx context.Context, d *auth.TrustedDevice) (
       SELECT $1,id,$3,$4,$5,$5,$6 FROM owner`, d.ID, d.AdminID, d.TokenVersion, d.Name, d.CreatedAt, d.ExpiresAt)
 	return tag.RowsAffected() == 1, err
 }
-func (r *TrustedDeviceRepo) Active(ctx context.Context, id, owner uuid.UUID, tv int, now time.Time) (bool, error) {
-	var active bool
-	err := r.pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM public.admin_trusted_devices d
+
+// ActiveUntil returns a zero time if the device or its owning session is no longer valid.
+func (r *TrustedDeviceRepo) ActiveUntil(ctx context.Context, id, owner uuid.UUID, tv int, now time.Time) (time.Time, error) {
+	var expiresAt time.Time
+	err := r.pool.QueryRow(ctx, `SELECT d.expires_at FROM public.admin_trusted_devices d
       JOIN public.admin_users u ON u.id=d.admin_id
       WHERE d.id=$1 AND d.admin_id=$2 AND d.token_version=$3 AND d.revoked_at IS NULL AND d.expires_at>$4
-        AND u.is_active AND u.token_version=$3 AND u.totp_enabled_at IS NOT NULL AND u.totp_secret_enc IS NOT NULL)`, id, owner, tv, now).Scan(&active)
-	return active, err
+        AND u.is_active AND u.token_version=$3 AND u.totp_enabled_at IS NOT NULL AND u.totp_secret_enc IS NOT NULL`, id, owner, tv, now).Scan(&expiresAt)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return time.Time{}, nil
+	}
+	return expiresAt, err
 }
 func (r *TrustedDeviceRepo) Renew(ctx context.Context, id, owner uuid.UUID, tv int, now, until time.Time) (bool, error) {
 	tag, err := r.pool.Exec(ctx, `UPDATE public.admin_trusted_devices d SET last_used_at=GREATEST(last_used_at,$4),expires_at=GREATEST(expires_at,$5)

@@ -22,11 +22,11 @@ func TestTrustedDevicesSQL(t *testing.T) {
 	if ok, err := devices.Create(ctx, &d); err != nil || !ok {
 		t.Fatalf("create %v %v", ok, err)
 	}
-	if ok, err := devices.Active(ctx, d.ID, u.ID, u.TokenVersion, now); err != nil || !ok {
-		t.Fatalf("active %v %v", ok, err)
+	if until, err := devices.ActiveUntil(ctx, d.ID, u.ID, u.TokenVersion, now); err != nil || !until.Equal(d.ExpiresAt) {
+		t.Fatalf("active %v %v", until, err)
 	}
-	if ok, _ := devices.Active(ctx, d.ID, uuid.New(), u.TokenVersion, now); ok {
-		t.Fatal("owner lain diterima")
+	if until, err := devices.ActiveUntil(ctx, d.ID, uuid.New(), u.TokenVersion, now); err != nil || !until.IsZero() {
+		t.Fatal("owner lain diterima", err)
 	}
 	if ok, _ := devices.Revoke(ctx, d.ID, uuid.New(), now); ok {
 		t.Fatal("owner lain mencabut perangkat")

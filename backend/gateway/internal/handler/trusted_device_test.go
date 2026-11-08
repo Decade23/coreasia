@@ -30,10 +30,13 @@ func (d *fakeDevices) active(id, owner uuid.UUID, tv int, now time.Time) bool {
 	p, ok := d.rows[id]
 	return ok && !d.revoked[id] && p.AdminID == owner && p.TokenVersion == tv && p.ExpiresAt.After(now)
 }
-func (d *fakeDevices) Active(_ context.Context, id, owner uuid.UUID, tv int, now time.Time) (bool, error) {
+func (d *fakeDevices) ActiveUntil(_ context.Context, id, owner uuid.UUID, tv int, now time.Time) (time.Time, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
-	return d.active(id, owner, tv, now), nil
+	if !d.active(id, owner, tv, now) {
+		return time.Time{}, nil
+	}
+	return d.rows[id].ExpiresAt, nil
 }
 func (d *fakeDevices) Renew(_ context.Context, id, owner uuid.UUID, tv int, now, until time.Time) (bool, error) {
 	d.mu.Lock()
@@ -116,8 +119,13 @@ func TestTrustedDevices_LoginRenewRevoke(t *testing.T) {
 		t.Fatal("tidak diperpanjang 7 hari")
 	}
 	me := e.do(t, http.MethodGet, "/api/admin/auth/me", renewed.data()["access_token"].(string), nil)
-	if me.status != 200 || me.data()["mfa"] != false {
+	if me.status != 200 || me.data()["mfa"] != false || me.data()["mfa_at"] != nil {
 		t.Fatalf("me stale: %v", me.body)
+	}
+	rawExpiry, _ := me.data()["trusted_device_expires_at"].(string)
+	expiry, err := time.Parse(time.RFC3339Nano, rawExpiry)
+	if err != nil || !expiry.Equal(devices.rows[id].ExpiresAt) || me.data()["trusted_device_id"] != id.String() {
+		t.Fatalf("proof expired or not tied to the active device: %v", me.body)
 	}
 	// Admin lain tidak boleh melihat atau mencabutnya.
 	other, _ := e.addTOTPAdmin(t, "other@contoh.invalid")

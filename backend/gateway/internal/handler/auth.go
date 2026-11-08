@@ -418,10 +418,11 @@ func (h *AuthHandler) Me(c fiber.Ctx) error {
 	// mfa hanya true untuk sesi yang lolos TOTP kurang dari auth.MFAMaxAge lalu
 	// (token ber-mfa tanpa mfa_at dianggap tidak segar).
 	resp := model.MeResponse{
-		AdminUserResponse: user.ToResponse(),
-		MFA:               claims.HasFreshMFA(h.wallNow()),
-		TOTPEnabled:       user.TOTPEnabled(),
-		TrustedDeviceID:   claims.DeviceID,
+		AdminUserResponse:      user.ToResponse(),
+		MFA:                    claims.HasFreshMFA(h.wallNow()),
+		TOTPEnabled:            user.TOTPEnabled(),
+		TrustedDeviceID:        claims.DeviceID,
+		TrustedDeviceExpiresAt: middleware.TrustedDeviceExpiresAt(c),
 	}
 	if resp.MFA {
 		at := claims.MFATime()
