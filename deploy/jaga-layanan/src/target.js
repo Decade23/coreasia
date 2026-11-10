@@ -27,6 +27,17 @@ export const TARGET = [
 // Cadangan DB di bucket coreasia-backup. Dianggap basi bila objek terbaru
 // lebih tua dari `maksJam`. `mulai`: sebelum tanggal ini seri belum diperiksa
 // (dipakai saat seri baru dipasang supaya tidak langsung berbunyi).
+// Target yang putusnya langsung terasa pengguna. Judul emailnya memakai [PENTING],
+// isinya menyebut akibat dan langkah perbaikan, dan pengingatnya lebih sering.
+export const PENTING = {
+  'sapa-whatsapp': {
+    judul: 'OTP CashFlow tidak jalan, WhatsApp Sapa putus',
+    dampak: 'Selama putus, pengguna baru CashFlow mendaftar tanpa OTP WhatsApp, dan pesan ke nomor 3395 tidak masuk ke Sapa.',
+    langkah: 'Yang perlu dilakukan: buka https://sapa.coreasia.id, lalu tautkan ulang WhatsApp dari HP nomor 3395.',
+    ingatkanMs: 60 * 60 * 1000,
+  },
+}
+
 export const CADANGAN = [
   { id: 'cadangan-cad', nama: 'Cadangan DB lisensi CAD', prefix: 'coreasia-cad/coreasia-cad-db-', maksJam: 27 },
   { id: 'cadangan-pantau', nama: 'Cadangan DB Pantau', prefix: 'coreasia-cad/pantau-db-', maksJam: 27 },

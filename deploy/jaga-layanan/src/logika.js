@@ -1,5 +1,7 @@
 // Logika status tanpa I/O, supaya bisa diuji dengan node --test.
 
+import { PENTING } from './target.js'
+
 export const GAGAL_BERUNTUN = 2 // 2 putaran x 5 menit sebelum dinyatakan mati
 // Pulih juga butuh 2 putaran sehat beruntun. Dengan ambang 1, target yang
 // berkedip (gagal, gagal, sehat) mengirim sepasang email tiap 15 menit.
@@ -83,7 +85,7 @@ export function nilai(keadaan, hasil, sekarangMs) {
     } else {
       if (lama.sehat) k = tanpa({ ...lama }, 'sehat', 'sejakSehat')
       const terakhir = Date.parse(lama.diingatkan || lama.sejak)
-      if (!lama.goyang && sekarangMs - terakhir >= INGATKAN_SETIAP_MS) {
+      if (!lama.goyang && sekarangMs - terakhir >= (PENTING[h.id]?.ingatkanMs ?? INGATKAN_SETIAP_MS)) {
         kabar.ingat.push({ ...h, lamaMs: sekarangMs - Date.parse(lama.sejak) })
         k = { ...k, alasan: h.alasan, diingatkan: iso }
       }
@@ -184,14 +186,21 @@ export function susunEmail({ mati, pulih, ingat, goyang = [], stabil = [] }, sek
   const bagian = []
   const judul = []
   const nama = (d) => d.map((m) => m.nama).join(', ')
+  // Target penting punya judul sendiri, jadi tidak diulang di daftar biasa.
+  const biasa = (d) => d.filter((m) => !PENTING[m.id])
+  const tambahJudul = (awal, d) => {
+    if (biasa(d).length) judul.push(`${awal}: ${nama(biasa(d))}`)
+  }
+  const penting = [...mati, ...ingat, ...stabil.filter((s) => !s.naik)].filter((m) => PENTING[m.id])
+  const isiPenting = [...new Map(penting.map((m) => [m.id, PENTING[m.id]])).values()]
   if (mati.length) {
-    judul.push(`MATI: ${nama(mati)}`)
+    tambahJudul('MATI', mati)
     bagian.push('Tidak menjawab sejak beberapa menit lalu:\n' + mati.map((m) => `- ${m.nama}: ${m.alasan}`).join('\n'))
     const petunjuk = petunjukIdcloudhost(mati)
     if (petunjuk) bagian.push(petunjuk)
   }
   if (ingat.length) {
-    judul.push(`MASIH MATI: ${nama(ingat)}`)
+    tambahJudul('MASIH MATI', ingat)
     bagian.push('Masih belum pulih:\n' + ingat.map((m) => `- ${m.nama}, sudah ${durasi(m.lamaMs)}: ${m.alasan}`).join('\n'))
   }
   if (pulih.length) {
@@ -210,13 +219,18 @@ export function susunEmail({ mati, pulih, ingat, goyang = [], stabil = [] }, sek
     const normal = stabil.filter((s) => s.naik)
     const masih = stabil.filter((s) => !s.naik)
     if (normal.length) judul.push(`STABIL: ${nama(normal)}`)
-    if (masih.length) judul.push(`MASIH MATI: ${nama(masih)}`)
+    tambahJudul('MASIH MATI', masih)
     bagian.push(
       'Sudah 2 jam tidak naik-turun lagi. Keadaannya sekarang:\n' +
         stabil.map((s) => (s.naik ? `- ${s.nama}: normal` : `- ${s.nama}: mati, sudah ${durasi(s.lamaMs)}: ${s.alasan}`)).join('\n'),
     )
   }
   bagian.push(`Dicek ${wib(sekarangMs)}. Yang sedang mati saat ini: ${jumlahMati(keadaan)}.`)
+  if (isiPenting.length) {
+    bagian.unshift(isiPenting.map((p) => `${p.judul}.\n${p.dampak}\n${p.langkah}`).join('\n\n'))
+    const utama = isiPenting.map((p) => p.judul).join(', ')
+    return { subjek: `[PENTING] ${[utama, ...judul].join(' | ')}`, teks: bagian.join('\n\n') }
+  }
   return { subjek: `[Jaga] ${judul.join(' | ')}`, teks: bagian.join('\n\n') }
 }
 
