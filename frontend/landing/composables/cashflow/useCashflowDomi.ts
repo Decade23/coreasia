@@ -4,8 +4,8 @@
  * Semua pembacaan memakai SATU kasus anak gabungan {teks, foto} beralasan Domi
  * (useCashflowKasus.anakDomiOtomatis), dibuka satu klik, tanpa dialog. Isi
  * yang termuat hidup di modul ini (memori tab, console ssr:false) dan dibuang
- * lewat `saatDibuang` begitu data kasus dibuang atau anak Domi habis, sama
- * dengan teks T3.
+ * saat tab ditinggal, atau lewat `saatDibuang` begitu data kasus dibuang atau
+ * anak Domi habis.
  *
  * FOTO. Satu halaman pesan = satu panggilan admin-lampiran jenis ai per 12
  * pesan berfoto (satu baris audit buka_foto per panggilan). Tautan sementara
@@ -42,6 +42,9 @@ const foto = shallowRef<ReadonlyMap<string, FotoDomi>>(new Map())
 let peta = new Map<string, FotoDomi>()
 let versi = 0
 let pendengarTerpasang = false
+/** Urutan klik percakapan: jawaban klik lama tidak boleh menimpa klik terakhir. */
+let bukaKe = 0
+let muatDaftarBerjalan = false
 
 function terbitkanFoto() { foto.value = new Map(peta) }
 
@@ -70,7 +73,8 @@ export const useCashflowDomi = () => {
   // sudah ditinggal (mis. pindah ke tab lain selagi anak Domi habis).
   if (!pendengarTerpasang) {
     pendengarTerpasang = true
-    kasus.saatDibuang(() => { if (sudahDibuka.value || panel.value) buangIsi(true) })
+    // Tanpa isi pun versi naik, supaya pembukaan yang masih di jalan tidak disimpan.
+    kasus.saatDibuang(() => { if (sudahDibuka.value || panel.value) buangIsi(true); else versi++ })
   }
 
   /** Ganti subjek = isi subjek lama dibuang, tanpa jejak. */
@@ -110,14 +114,19 @@ export const useCashflowDomi = () => {
   }
 
   async function muatDaftarLagi(user: string): Promise<void> {
-    if (!kursorBerikut.value) return
-    const v = versi
-    const kursor = kursorBerikut.value
-    const d = await denganAnak(anak => api.aiPercakapanDaftar(anak.id, user, kursor, LIMIT_DAFTAR_DOMI))
-    if (versi !== v) return
-    const h = keDaftarPercakapan(d)
-    daftar.value = [...daftar.value, ...h.baris]
-    kursorBerikut.value = h.kursorBerikut
+    if (!kursorBerikut.value || muatDaftarBerjalan) return
+    muatDaftarBerjalan = true
+    try {
+      const v = versi
+      const kursor = kursorBerikut.value
+      const d = await denganAnak(anak => api.aiPercakapanDaftar(anak.id, user, kursor, LIMIT_DAFTAR_DOMI))
+      if (versi !== v) return
+      const h = keDaftarPercakapan(d)
+      daftar.value = [...daftar.value, ...h.baris]
+      kursorBerikut.value = h.kursorBerikut
+    } finally {
+      muatDaftarBerjalan = false
+    }
   }
 
   function terapkanHalaman(h: HalamanPesan, lanjutan: boolean) {
@@ -177,8 +186,9 @@ export const useCashflowDomi = () => {
 
   async function bukaPercakapan(id: string): Promise<void> {
     const v = versi
+    const g = ++bukaKe
     const d = await denganAnak(anak => api.aiPesanDaftar(anak.id, id, null, LIMIT_PESAN_DOMI))
-    if (versi !== v) return
+    if (versi !== v || g !== bukaKe) return
     const h = kePesanDaftar(d)
     terapkanHalaman(h, false)
     void muatFoto(id, h.pesan, v)
@@ -212,6 +222,8 @@ export const useCashflowDomi = () => {
   return {
     subjek: subjekIni, sudahDibuka, daftar, kursorBerikut, totalDaftar, panel, foto, dibuang,
     pasangSubjek, buka, muatDaftarLagi, bukaPercakapan, muatLebihLama, bukaFoto, tutupPanel,
+    /** Dipanggil saat tab ditinggal: membuka lagi berarti baca baru dan audit baru. */
+    buangSekarang: () => buangIsi(false),
   }
 }
 

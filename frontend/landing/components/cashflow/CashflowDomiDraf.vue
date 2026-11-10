@@ -13,10 +13,15 @@ const emit = defineEmits<{ foto: [jalur: readonly string[], klik: string] }>()
 const { tcf, formatTanggal } = useCashflowI18n()
 const t: AlatDraf['t'] = (kunci, ...arg) => {
   const v = tcf(`domi.${kunci}`) as unknown
-  return typeof v === 'function' ? (v as (...x: unknown[]) => string)(...arg) : String(v ?? kunci)
+  if (typeof v !== 'function') return String(v ?? kunci)
+  // Nilai enum rusak bisa menunjuk Object.prototype.valueOf: jangan dipanggil.
+  return arg.length > 0 ? (v as (...x: unknown[]) => string)(...arg) : kunci
 }
 const alat: AlatDraf = { t, tanggal: iso => formatTanggal(iso) }
-const kartu = computed(() => (props.s.jenis === 'draf' ? rancangDraf(props.s, alat) : null))
+const kartu = computed(() => {
+  if (props.s.jenis !== 'draf') return null
+  try { return rancangDraf(props.s, alat) } catch { return null }
+})
 const trx = computed(() => (props.s.jenis === 'transaksi' ? rancangTransaksi(props.s.draf, alat) : null))
 const WARNA: Record<string, string> = {
   sky: 'var(--d-sky)', iris: 'var(--d-iris)', rose: 'var(--d-rose)', mint: 'var(--d-mint)', amber: 'var(--d-amber)', abu: 'var(--d-txt2)',

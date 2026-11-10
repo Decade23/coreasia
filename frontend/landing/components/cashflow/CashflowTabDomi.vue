@@ -17,6 +17,7 @@ const memuatPesan = ref(false)
 const pilihan = ref<string | null>(null)
 
 domi.pasangSubjek(props.user)
+onBeforeUnmount(() => domi.buangSekarang())
 const aktifOlehPengguna = aktivasiTab.ambil(route.path)
 const bisaBuka = computed(() => !!kasus.kasus.value && !domi.sudahDibuka.value)
 

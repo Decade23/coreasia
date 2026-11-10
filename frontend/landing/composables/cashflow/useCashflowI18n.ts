@@ -310,6 +310,7 @@ const KAMUS = {
       draf: {
         transfer: 'Draf transfer', ubah: 'Draf ubah transaksi', hapus: 'Draf hapus transaksi', jadwal: 'Draf jadwal baru', bayar: 'Draf bayar jadwal', terima: 'Draf terima pemasukan',
         lewati: 'Draf lewati periode', arsip: 'Draf arsipkan jadwal', target: 'Draf target anggaran', dompetBaru: 'Draf dompet baru', kategoriBaru: 'Draf kategori baru',
+        setoran: 'Draf setoran rencana', bayarPos: 'Draf bayar pos', rencanaNama: 'Rencana', terkumpul: 'Terkumpul', targetNominal: 'Target', pos: 'Pos', nominalPos: 'Nominal pos', terbayarSebelum: 'Sudah dibayar',
         rencana: 'Draf rencana', dari: 'Dari', ke: 'Ke', tanggal: 'Tanggal', catatan: 'Catatan', nominal: 'Nominal', kategori: 'Kategori', dompet: 'Dompet', sifat: 'Jenis', irama: 'Seberapa sering',
         periode: 'Periode', biaya: 'Biaya admin', alasan: 'Alasan', bulan: 'Bulan', berlaku: 'Berlaku', saldoAwal: 'Saldo awal', batasMinus: 'Batas minus', tenggat: 'Tenggat', target_label: 'Target',
         masuk: 'Pemasukan', keluar: 'Pengeluaran', tanpaKategori: 'Tanpa kategori', berulang: 'Berulang', sekaliSaja: 'Sekali saja', cicilanN: (n: number) => `Cicilan ${n} kali`, lunasiSisa: 'Lunasi seluruh sisa',
@@ -1057,6 +1058,7 @@ const KAMUS = {
       draf: {
         transfer: 'Transfer draft', ubah: 'Edit transaction draft', hapus: 'Delete transaction draft', jadwal: 'New schedule draft', bayar: 'Schedule payment draft', terima: 'Receive income draft',
         lewati: 'Skip period draft', arsip: 'Archive schedule draft', target: 'Budget target draft', dompetBaru: 'New wallet draft', kategoriBaru: 'New category draft',
+        setoran: 'Plan deposit draft', bayarPos: 'Item payment draft', rencanaNama: 'Plan', terkumpul: 'Collected', targetNominal: 'Target', pos: 'Item', nominalPos: 'Item amount', terbayarSebelum: 'Paid so far',
         rencana: 'Plan draft', dari: 'From', ke: 'To', tanggal: 'Date', catatan: 'Note', nominal: 'Amount', kategori: 'Category', dompet: 'Wallet', sifat: 'Type', irama: 'How often',
         periode: 'Period', biaya: 'Admin fee', alasan: 'Reason', bulan: 'Month', berlaku: 'Applies', saldoAwal: 'Opening balance', batasMinus: 'Overdraft limit', tenggat: 'Deadline', target_label: 'Target',
         masuk: 'Income', keluar: 'Expense', tanpaKategori: 'No category', berulang: 'Recurring', sekaliSaja: 'One time', cicilanN: (n: number) => `${n} installments`, lunasiSisa: 'Pay off the rest',

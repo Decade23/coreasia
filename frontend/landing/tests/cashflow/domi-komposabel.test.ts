@@ -51,6 +51,59 @@ beforeEach(() => {
 
 const tungguFoto = () => new Promise(r => setTimeout(r, 0))
 
+const P2 = '44444444-4444-4444-8444-444444444444'
+const ditunda = <T,>() => { let bereskan!: (v: T) => void; const janji = new Promise<T>((r) => { bereskan = r }); return { janji, bereskan } }
+const baris = (id: string, judul: string) => ({ id, judul, jumlah_pesan: 1, dibuat: '', diperbarui: '' })
+const hal = (id: string, judul: string) => ({ percakapan: baris(id, judul), pesan: [], kursor_sebelum: null, ada_lagi: false, halaman_pertama: true })
+
+describe('isi tidak tertinggal dan jawaban tidak bertabrakan', () => {
+  it('tab ditinggal: isi hilang, membuka lagi berarti baca baru', async () => {
+    const d = useCashflowDomi(); d.pasangSubjek(SUBJEK)
+    api.aiPercakapanDaftar.mockResolvedValue({ baris: [baris(P, 'A')], kursor_berikut: null, total: 1, halaman_pertama: true })
+    await d.buka(SUBJEK)
+    api.aiPesanDaftar.mockResolvedValue(hal(P, 'ISI'))
+    await d.bukaPercakapan(P)
+    d.buangSekarang()
+    expect(d.panel.value).toBeNull()
+    expect(d.daftar.value).toEqual([])
+    expect(d.sudahDibuka.value).toBe(false)
+    await d.buka(SUBJEK)
+    expect(api.aiPercakapanDaftar).toHaveBeenCalledTimes(2)
+  })
+  it('pembukaan yang masih di jalan saat data dibuang tidak disimpan', async () => {
+    const d = useCashflowDomi(); d.pasangSubjek(SUBJEK)
+    const a = ditunda<unknown>()
+    api.aiPercakapanDaftar.mockReturnValueOnce(a.janji)
+    const p = d.buka(SUBJEK)
+    await Promise.resolve(); await Promise.resolve()
+    for (const f of pendengar) f()
+    a.bereskan({ baris: [baris(P, 'A')], kursor_berikut: null, total: 1, halaman_pertama: true })
+    await p
+    expect(d.sudahDibuka.value).toBe(false)
+    expect(d.daftar.value).toEqual([])
+  })
+  it('klik A lalu B: jawaban A yang terlambat tidak menimpa B', async () => {
+    const d = useCashflowDomi(); d.pasangSubjek(SUBJEK)
+    api.aiPercakapanDaftar.mockResolvedValue({ baris: [baris(P, 'A'), baris(P2, 'B')], kursor_berikut: null, total: 2, halaman_pertama: true })
+    await d.buka(SUBJEK)
+    const a = ditunda<unknown>(); const b = ditunda<unknown>()
+    api.aiPesanDaftar.mockReturnValueOnce(a.janji).mockReturnValueOnce(b.janji)
+    const pa = d.bukaPercakapan(P); const pb = d.bukaPercakapan(P2)
+    b.bereskan(hal(P2, 'B')); await pb
+    a.bereskan(hal(P, 'A')); await pa
+    expect(d.panel.value?.percakapan.id).toBe(P2)
+  })
+  it('muat daftar lagi dua kali serentak: satu panggilan, tanpa baris kembar', async () => {
+    const d = useCashflowDomi(); d.pasangSubjek(SUBJEK)
+    api.aiPercakapanDaftar.mockResolvedValueOnce({ baris: [baris(P, 'A')], kursor_berikut: { d: 'x', i: P }, total: 2, halaman_pertama: true })
+    await d.buka(SUBJEK)
+    api.aiPercakapanDaftar.mockResolvedValue({ baris: [baris(P2, 'B')], kursor_berikut: null, total: null, halaman_pertama: false })
+    await Promise.all([d.muatDaftarLagi(SUBJEK), d.muatDaftarLagi(SUBJEK)])
+    expect(d.daftar.value).toHaveLength(2)
+    expect(api.aiPercakapanDaftar).toHaveBeenCalledTimes(2)
+  })
+})
+
 describe('useCashflowDomi', () => {
   it('buka memakai anak Domi lalu mengisi daftar', async () => {
     api.aiPercakapanDaftar.mockResolvedValue({ baris: [{ id: P, judul: 'Belanja', jumlah_pesan: 2, dibuat: '', diperbarui: '' }], kursor_berikut: null, total: 1, halaman_pertama: true })

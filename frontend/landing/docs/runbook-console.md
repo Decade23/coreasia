@@ -682,12 +682,13 @@ menyebut percakapan Domi), jadi butuh login console ber-TOTP
   gambar lewat fungsi edge `admin-lampiran` jenis `ai` (audit `buka_foto`).
 - Dibuka lewat klik tab atau tombol "Buka percakapan Domi"; URL, refresh, dan
   Back tidak membuka otomatis.
-- Isi dan foto hidup di memori tab dan dibuang saat anak Domi habis, kasus
-  berganti, atau subjek berganti. Tidak ada tombol tulis, simpan, atau hapus.
+- Isi dan foto hidup di memori tab dan dibuang saat tab ditinggal, anak Domi
+  habis, kasus berganti, atau subjek berganti. Membuka lagi berarti baca baru
+  dan audit baru. Tidak ada tombol tulis, simpan, atau hapus.
 - Keadaan simpan draf tidak disimpan server, jadi kartu draf tampil tanpa cap
   TERSIMPAN. Blok yang tidak dikenal tampil sebagai kotak kecil berisi nama
-  tipenya. Pemakaian kredit per jawaban tidak disimpan server; yang tampil
-  biaya, token, dan model (info admin, tidak ada di aplikasi).
+  tipenya. Di bawah jawaban tampil kredit (jawaban baru saja), biaya, token,
+  dan model sebagai info admin yang tidak ada di aplikasi.
 
 Pasang (urut): SQL CashFlow, fungsi edge `admin-lampiran`, lalu landing.
 Mundur landing cukup; tab menjawab "belum aktif" bila RPC belum terpasang.

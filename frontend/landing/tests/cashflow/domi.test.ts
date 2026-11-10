@@ -108,6 +108,10 @@ describe('susunBlok', () => {
   it('blok teks kosong jadi kotak, bukan hilang', () => {
     expect(susunBlok([{ tipe: 'teks', teks: '   ' }])[0]).toMatchObject({ jenis: 'asing' })
   })
+  it('setoran rencana dan bayar pos bukan kotak asing', () => {
+    const s = susunBlok(['setoran_rencana', 'bayar_pos'].map(aksi => ({ tipe: 'draf', aksi, kunci: 'k', ruang: { id: P, nama: 'r' }, isi: { nominal: 1000 } })))
+    expect(s.map(x => x.jenis)).toEqual(['draf', 'draf'])
+  })
   it('draf rencana diterima sebagai aksi', () => {
     const s = susunBlok([{ tipe: 'draf', aksi: 'rencana', kunci: 'k', ruang: { id: P, nama: 'r' }, isi: { nama: 'Nikah', target: 90000000, tenggat: '2027-06-01', pos: [{ nama: 'Gedung', nominal: 30000000 }] } }])
     expect(s[0]).toMatchObject({ jenis: 'draf', aksi: 'rencana' })
@@ -132,6 +136,8 @@ describe('rancangDraf: semua jenis tergambar', () => {
     tambah_kategori: { nama: 'Kopi', jenis: 'expense' },
     struk: { toko: 'Toko', tanggal: '2026-11-01', dompet_nama: 'A', total: 5000, subtotal: 5000, pajak: 0, layanan: 0, diskon: 0, item: [{ nama: 'Teh', jumlah: 5000, qty: 1, harga: 5000, tambahan: false }] },
     rencana: { nama: 'Nikah', target: 90000000, pos: [{ nama: 'Gedung', nominal: 30000000 }] },
+    setoran_rencana: { nama: 'Nikah', nominal: 5000000, terkumpul_sebelum: 1000000, target_nominal: 90000000 },
+    bayar_pos: { rencana_nama: 'Nikah', pos_nama: 'Gedung', nominal: 1000000, nominal_pos: 30000000, terbayar_sebelum: 0, dompet_nama: 'A', tanggal: '2026-11-01' },
   }
   for (const [aksi, isi] of Object.entries(contoh)) {
     it(`${aksi} tidak null`, () => {

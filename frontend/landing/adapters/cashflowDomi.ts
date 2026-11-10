@@ -57,7 +57,7 @@ export interface PesanUser {
   jumlahGambar: number | null
 }
 export interface InfoJawaban {
-  /** Kredit bila suatu saat disimpan server; sekarang null, biaya yang tampil. */
+  /** Kredit yang dipotong. Jawaban lama belum menyimpannya, jadi null. */
   kredit: number | null
   biaya: number | null; tokenMasuk: number | null; tokenKeluar: number | null; model: string | null
 }
@@ -255,7 +255,7 @@ export type SusunanDomi =
   | { jenis: 'asing'; kunci: string; label: string; pertama: boolean }
 
 const AKSI_DRAF = new Set(['transfer', 'ubah_transaksi', 'hapus_transaksi', 'buat_jadwal', 'bayar_jadwal', 'lewati_jadwal',
-  'arsip_jadwal', 'target_anggaran', 'tambah_dompet', 'tambah_kategori', 'struk', 'rencana'])
+  'arsip_jadwal', 'target_anggaran', 'tambah_dompet', 'tambah_kategori', 'struk', 'rencana', 'setoran_rencana', 'bayar_pos'])
 
 function bacaSpek(o: Obj): SpekGrafik | null {
   const s = objek(o.spec)
@@ -267,7 +267,8 @@ function bacaSpek(o: Obj): SpekGrafik | null {
     return label && nilai !== null ? [{ label, nilai }] : []
   }).slice(0, 12)
   if (!data.length) return null
-  return { jenis: s.jenis === 'garis' ? 'garis' : 'batang', judul: teks(s.judul), satuan: teks(s.satuan) || 'angka', data }
+  // Sama dengan GrafikAi di aplikasi: selain batang digambar garis.
+  return { jenis: s.jenis === 'batang' ? 'batang' : 'garis', judul: teks(s.judul), satuan: teks(s.satuan) || 'angka', data }
 }
 
 function bacaAngka(o: Obj): AngkaTampil | null {
@@ -543,6 +544,38 @@ export function rancangDraf(s: Extract<SusunanDomi, { jenis: 'draf' }>, a: AlatD
       }
     case 'struk': return rancangStruk(s, a)
     case 'rencana': return rancangRencana(isi, a)
+    case 'setoran_rencana': {
+      const nominal = uang(isi.nominal)
+      if (nominal === null) return null
+      const sebelum = uang(isi.terkumpul_sebelum) ?? 0
+      const target = uang(isi.target_nominal)
+      return {
+        jenis: 'kartu', ikon: 'lucide:target', warna: 'iris', judul: t('draf.setoran'), sub: teks(isi.nama), tanggal: null,
+        nominal: rupiah(nominal),
+        baris: [
+          { label: t('draf.rencanaNama'), nilai: teks(isi.nama) },
+          { label: t('draf.terkumpul'), nilai: rupiah(sebelum + nominal), lama: rupiah(sebelum) },
+          ...bersyarat(target !== null && { label: t('draf.targetNominal'), nilai: rupiah(target) }),
+        ],
+      }
+    }
+    case 'bayar_pos': {
+      const nominal = uang(isi.nominal)
+      if (nominal === null) return null
+      const nominalPos = uang(isi.nominal_pos)
+      const dompet = teks(isi.dompet_nama)
+      return {
+        jenis: 'kartu', ikon: 'lucide:trending-down', warna: 'rose', judul: t('draf.bayarPos'), sub: teks(isi.pos_nama),
+        tanggal: dompet ? teksAtauNull(isi.tanggal) : null, nominal: `−${rupiah(nominal)}`,
+        baris: [
+          { label: t('draf.rencanaNama'), nilai: teks(isi.rencana_nama) },
+          { label: t('draf.pos'), nilai: teks(isi.pos_nama) },
+          ...bersyarat(nominalPos !== null && { label: t('draf.nominalPos'), nilai: rupiah(nominalPos) }),
+          { label: t('draf.terbayarSebelum'), nilai: rupiah(uang(isi.terbayar_sebelum) ?? 0) },
+          ...bersyarat(!!dompet && { label: t('draf.dompet'), nilai: dompet }),
+        ],
+      }
+    }
     default: return null
   }
 }
