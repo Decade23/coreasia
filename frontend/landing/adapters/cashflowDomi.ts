@@ -255,7 +255,7 @@ export type SusunanDomi =
   | { jenis: 'asing'; kunci: string; label: string; pertama: boolean }
 
 const AKSI_DRAF = new Set(['transfer', 'ubah_transaksi', 'hapus_transaksi', 'buat_jadwal', 'bayar_jadwal', 'lewati_jadwal',
-  'arsip_jadwal', 'target_anggaran', 'tambah_dompet', 'tambah_kategori', 'struk', 'rencana', 'setoran_rencana', 'bayar_pos'])
+  'arsip_jadwal', 'target_anggaran', 'tambah_dompet', 'tambah_kategori', 'struk', 'rencana', 'setoran_rencana', 'bayar_pos', 'ubah_rencana', 'pos_rencana'])
 
 function bacaSpek(o: Obj): SpekGrafik | null {
   const s = objek(o.spec)
@@ -544,6 +544,37 @@ export function rancangDraf(s: Extract<SusunanDomi, { jenis: 'draf' }>, a: AlatD
       }
     case 'struk': return rancangStruk(s, a)
     case 'rencana': return rancangRencana(isi, a)
+    case 'ubah_rencana': {
+      const se = objek(isi.sesudah)
+      const so = objek(isi.sebelum)
+      if (!se || !so) return null
+      const targetBaru = uang(se.target_nominal)
+      if (targetBaru === null) return null
+      const targetLama = uang(so.target_nominal)
+      const perBaru = uang(isi.per_bulan_sesudah)
+      const perLama = uang(isi.per_bulan_sebelum)
+      const tgl = (v: unknown) => (teks(v) ? tanggal(teks(v)) : t('draf.tanpaTenggat'))
+      return {
+        jenis: 'kartu', ikon: 'lucide:calendar-clock', warna: 'iris', judul: t('draf.ubahRencana'), sub: teks(isi.nama), tanggal: null,
+        nominal: rupiah(perBaru ?? targetBaru),
+        baris: [
+          { label: t('draf.tenggat'), nilai: tgl(se.tenggat), lama: teks(se.tenggat) !== teks(so.tenggat) ? tgl(so.tenggat) : null },
+          { label: t('draf.targetNominal'), nilai: rupiah(targetBaru), lama: targetLama !== null && Math.abs(targetBaru - targetLama) >= 0.005 ? rupiah(targetLama) : null },
+          ...bersyarat(perBaru !== null && { label: t('draf.perBulan'), nilai: rupiah(perBaru), lama: perLama !== null ? rupiah(perLama) : null }),
+        ],
+      }
+    }
+    case 'pos_rencana': {
+      const pos = (Array.isArray(isi.pos) ? isi.pos : []).map(objek).filter((x): x is Obj => !!x)
+      if (!pos.length) return null
+      return {
+        jenis: 'kartu', ikon: 'lucide:list-checks', warna: 'iris', judul: t('draf.posRencana'), sub: teks(isi.nama), tanggal: null,
+        baris: pos.map((p) => {
+          const n = uang(p.nominal)
+          return { label: teks(p.nama), nilai: n !== null ? rupiah(n) : t('draf.tanpaNominal') }
+        }),
+      }
+    }
     case 'setoran_rencana': {
       const nominal = uang(isi.nominal)
       if (nominal === null) return null

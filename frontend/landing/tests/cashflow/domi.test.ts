@@ -136,6 +136,8 @@ describe('rancangDraf: semua jenis tergambar', () => {
     tambah_kategori: { nama: 'Kopi', jenis: 'expense' },
     struk: { toko: 'Toko', tanggal: '2026-11-01', dompet_nama: 'A', total: 5000, subtotal: 5000, pajak: 0, layanan: 0, diskon: 0, item: [{ nama: 'Teh', jumlah: 5000, qty: 1, harga: 5000, tambahan: false }] },
     rencana: { nama: 'Nikah', target: 90000000, pos: [{ nama: 'Gedung', nominal: 30000000 }] },
+    ubah_rencana: { nama: 'Nikah', sebelum: { target_nominal: 90000000, tenggat: '2027-06-30' }, sesudah: { target_nominal: 90000000, tenggat: '2027-09-30' }, per_bulan_sebelum: 12000000, per_bulan_sesudah: 9000000 },
+    pos_rencana: { nama: 'Nikah', pos: [{ nama: 'Cincin', nominal: null }, { nama: 'Undangan', nominal: 3500000 }] },
     setoran_rencana: { nama: 'Nikah', nominal: 5000000, terkumpul_sebelum: 1000000, target_nominal: 90000000 },
     bayar_pos: { rencana_nama: 'Nikah', pos_nama: 'Gedung', nominal: 1000000, nominal_pos: 30000000, terbayar_sebelum: 0, dompet_nama: 'A', tanggal: '2026-11-01' },
   }
@@ -144,6 +146,14 @@ describe('rancangDraf: semua jenis tergambar', () => {
       expect(rancangDraf(draf(aksi, isi), alat)).not.toBeNull()
     })
   }
+  it('ubah rencana mencoret tenggat lama, pos tanpa nominal tertulis belum diisi', () => {
+    const u = rancangDraf(draf('ubah_rencana', contoh.ubah_rencana!), alat)
+    expect(u?.jenis === 'kartu' && u.baris[0]?.lama).toBeTruthy()
+    expect(u?.jenis === 'kartu' && u.baris[1]?.lama).toBeNull()
+    const p = rancangDraf(draf('pos_rencana', contoh.pos_rencana!), alat)
+    expect(p?.jenis === 'kartu' && p.baris.map(b => b.label)).toEqual(['Cincin', 'Undangan'])
+    expect(rancangDraf(draf('pos_rencana', { nama: 'x', pos: [] }), alat)).toBeNull()
+  })
   it('ubah transaksi mencoret nilai lama yang berubah saja', () => {
     const r = rancangDraf(draf('ubah_transaksi', contoh.ubah_transaksi!), alat)
     expect(r?.jenis === 'kartu' && r.baris.find(b => b.label === 'draf.nominal')?.lama).toBe('Rp 1.000')
