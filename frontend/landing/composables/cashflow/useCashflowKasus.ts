@@ -64,6 +64,13 @@
  * dipegang sebagai blob URL; blob dicabut (revokeObjectURL) saat penampil
  * ditutup, foto lain dibuka, anaknya habis, data dibuang, atau logout.
  *
+ * PERCAKAPAN DOMI (tab Domi AI, 20261110110000): satu anak gabungan
+ * ['teks', 'foto'] beralasan khusus (alasanDomiOtomatis), satu slot sendiri
+ * yang tidak dipakai tombol catatan/foto dan sebaliknya, supaya alasan audit
+ * tetap menyebut apa yang dibuka. Isi percakapan dan fotonya hidup di
+ * useCashflowDomi dan ikut dibuang lewat pendengar `saatDibuang` saat data
+ * dibuang atau anak Domi habis.
+ *
  * RUANG 360 (Fase 2, 0094) memakai store yang SAMA dengan subjek bertipe
  * 'workspace' (pulihkan(W, 'workspace')): admin_kasus_aktif_ruang memulihkan
  * kasus aktif milik pelaku yang lingkupnya memuat W — termasuk kasus PENGGUNA
@@ -88,6 +95,7 @@ import {
 import { keTeks, BATAS_TEKS, type JenisTeks, type PotongTeks } from '~/adapters/cashflowBuku'
 import { alasanFotoOtomatis, keLampiran, type JenisBerkas, type RanahAnak, type SasaranLampiran } from '~/adapters/cashflowLampiran'
 import { RANAH_RUANG, SKENARIO_RUANG, alasanOtomatisRuang } from '~/adapters/cashflowRuang'
+import { alasanDomiOtomatis } from '~/adapters/cashflowDomi'
 
 /** Jenis subjek halaman: Pengguna 360 ('user') atau Ruang 360 ('workspace'). */
 export type TipeSubjek = 'user' | 'workspace'
@@ -132,17 +140,27 @@ const awal = (): Keadaan => ({
 const keadaan = ref<Keadaan>(awal())
 const simpanan = shallowReactive(new Map<string, unknown>())
 const berjalan = new Map<string, Promise<unknown>>()
+/** Pendengar pembuangan data (useCashflowDomi): dipanggil saat data dibuang atau anak Domi habis. */
+const pendengarBuang = new Set<() => void>()
 const teksTerbuka = shallowReactive(new Map<string, { anak: string; potong: PotongTeks[] }>())
 
 /** Satu berkas foto di penampil. `src` = blob URL milik tab ini (dicabut saat dibuang). */
 export interface BerkasFoto { jenis: JenisBerkas | null; src: string | null; keadaan: 'siap' | 'belum' | 'gagal' }
 /** Foto yang sedang terbuka (paling banyak satu baris sekaligus). */
-export interface FotoTerbuka { anak: string; sasaran: SasaranLampiran; berkas: BerkasFoto[]; berlakuDetik: number }
+export interface FotoTerbuka {
+  anak: string; sasaran: SasaranLampiran | null; berkas: BerkasFoto[]; berlakuDetik: number
+  /** Indeks foto yang pertama tampil (penampil Domi membuka foto yang diklik). */
+  mulai?: number
+}
 const fotoTerbuka = shallowRef<FotoTerbuka | null>(null)
+/** Blob di penampil dipegang pemanggil lain (panel Domi): jangan dicabut di sini. */
+let pinjaman = false
 /** Naik setiap kali foto dibuka atau dibuang: jawaban yang tiba sesudahnya basi. */
 let fotoGiliran = 0
 /** Alasan otomatis kasus anak per ranah (berbeda dari alasan induk). */
 const ALASAN_ANAK: Readonly<Record<RanahAnak, (sekarang: Date) => string>> = { teks: alasanT3Otomatis, foto: alasanFotoOtomatis }
+/** Anak gabungan {teks, foto} milik tab Domi: slot sendiri, alasan sendiri. */
+const adalahAnakDomi = (a: Pick<Kasus, 'ranah'>): boolean => a.ranah.includes('teks') && a.ranah.includes('foto')
 
 /** Cabut blob URL foto yang terbuka dan lupakan fotonya. */
 function buangFoto() {
@@ -150,7 +168,9 @@ function buangFoto() {
   const f = fotoTerbuka.value
   if (!f) return
   fotoTerbuka.value = null
-  for (const b of f.berkas) if (b.src) URL.revokeObjectURL(b.src)
+  /* Foto pinjaman (panel Domi) dicabut oleh pemiliknya, useCashflowDomi. */
+  if (!pinjaman) for (const b of f.berkas) if (b.src) URL.revokeObjectURL(b.src)
+  pinjaman = false
 }
 const detik = ref(Date.now())
 let pengatur: ReturnType<typeof setInterval> | null = null
@@ -166,9 +186,9 @@ let aktivitasTerakhir = Date.now()
 /** Pembukaan otomatis yang sedang berjalan (satu untuk semua pemanggil) dan subjeknya. */
 let bukaBerjalan: Promise<void> | null = null
 let bukaUntuk: string | null = null
-/** Kasus anak yang sedang dibuka per ranah, beserta induknya — anak itu hanya
- *  untuk induk yang sama. */
-const anakBerjalan = new Map<RanahAnak, { induk: string | null; janji: Promise<Kasus> }>()
+/** Kasus anak yang sedang dibuka per slot (ranah, atau 'domi'), beserta
+ *  induknya — anak itu hanya untuk induk yang sama. */
+const anakBerjalan = new Map<RanahAnak | 'domi', { induk: string | null; janji: Promise<Kasus> }>()
 let perpanjangBerjalan = false
 let perpanjangGagalPada = 0
 /** Cap waktu pembukaan otomatis terakhir — penjaga putaran (lihat bukaOtomatis). */
@@ -202,6 +222,7 @@ function kosongkanData() {
   berjalan.clear()
   teksTerbuka.clear()
   buangFoto()
+  for (const f of pendengarBuang) f()
   // Isi halaman diganti kerangka / dikosongkan: peristiwa yang dipicu tata
   // letak sesudah ini tidak dihitung sebagai orang (catatAktivitas).
   abaikanAktivitasSampai = Date.now() + REDAM_AKTIVITAS_MS
@@ -244,6 +265,8 @@ function detak() {
       const idHidup = new Set(hidup.map(a => a.id))
       for (const [kunci, t] of teksTerbuka) if (!idHidup.has(t.anak)) teksTerbuka.delete(kunci)
       if (fotoTerbuka.value && !idHidup.has(fotoTerbuka.value.anak)) buangFoto()
+      // Anak Domi habis: isi percakapan dan fotonya ikut dibuang.
+      if (s.anak.some(a => adalahAnakDomi(a) && !idHidup.has(a.id))) for (const f of pendengarBuang) f()
       keadaan.value = { ...s, anak: hidup }
     }
   }
@@ -470,9 +493,12 @@ export const useCashflowKasus = () => {
   const anakAktif = computed(() => keadaan.value.anak.find(a => kasusBerlaku(a, detik.value)) ?? null)
   /** Ranah T3 yang sedang terbuka lewat anak yang hidup (untuk bilah kasus). */
   const ranahAnakHidup = computed(() => new Set(keadaan.value.anak.filter(a => kasusBerlaku(a, detik.value)).flatMap(a => a.ranah)))
-  /** Kasus anak hidup yang memegang ranah ini, atau null. */
+  /** Kasus anak hidup yang memegang ranah ini, atau null. Anak Domi (slot sendiri) tidak ikut. */
   const anakUntukRanah = (r: RanahAnak): Kasus | null =>
-    keadaan.value.anak.find(a => a.ranah.includes(r) && kasusBerlaku(a, Date.now())) ?? null
+    keadaan.value.anak.find(a => a.ranah.includes(r) && !adalahAnakDomi(a) && kasusBerlaku(a, Date.now())) ?? null
+  /** Anak Domi hidup, atau null. */
+  const anakDomi = (): Kasus | null =>
+    keadaan.value.anak.find(a => adalahAnakDomi(a) && kasusBerlaku(a, Date.now())) ?? null
   const sisa = computed(() => (kasus.value ? sisaDetik(kasus.value, detik.value) : 0))
   /** Awalan kunci simpanan: id kasus + lingkup ruangnya. null = tanpa kasus. */
   const kunciKasus = computed(() => (kasus.value ? `${kasus.value.id}:${kasus.value.ruang.join(',')}` : null))
@@ -631,15 +657,17 @@ export const useCashflowKasus = () => {
   const teks = (jenis: JenisTeks, id: string | number): PotongTeks[] | null =>
     teksTerbuka.get(kunciTeks(jenis, id))?.potong ?? null
 
-  /** Kasus anak hidup untuk ranah ini, atau yang baru dibuka otomatis (satu
-   *  pembukaan per ranah untuk semua pemanggil). Anak ranah lain tidak dipakai. */
-  function anakOtomatis(ranah: RanahAnak): Promise<Kasus> {
-    const hidup = anakUntukRanah(ranah)
+  /** Kasus anak hidup untuk ranah (atau slot Domi), atau yang baru dibuka otomatis
+   *  (satu pembukaan per slot untuk semua pemanggil). Anak slot lain tidak dipakai. */
+  function anakOtomatis(ranah: RanahAnak | 'domi'): Promise<Kasus> {
+    const hidup = ranah === 'domi' ? anakDomi() : anakUntukRanah(ranah)
     if (hidup) return Promise.resolve(hidup)
     const induk = keadaan.value.kasus?.id ?? null
     const ada = anakBerjalan.get(ranah)
     if (ada && ada.induk === induk) return ada.janji
-    const janji: Promise<Kasus> = jalankan(k => api.kasusInvestigasi(k.id, PRESET_T3_OTOMATIS, ALASAN_ANAK[ranah](new Date()), ranah))
+    const janji: Promise<Kasus> = jalankan((k) => (ranah === 'domi'
+      ? api.kasusInvestigasi(k.id, PRESET_T3_OTOMATIS, alasanDomiOtomatis(new Date()), ['teks', 'foto'])
+      : api.kasusInvestigasi(k.id, PRESET_T3_OTOMATIS, ALASAN_ANAK[ranah](new Date()), ranah)))
       .then((d) => {
         const anak = keKasus(d)
         if (keadaan.value.kasus?.id === anak.induk) {
@@ -735,12 +763,30 @@ export const useCashflowKasus = () => {
   /** Penampil ditutup (atau halaman berganti): blob dicabut, foto dilupakan. */
   const tutupFoto = () => buangFoto()
 
+  /**
+   * Penampil untuk foto yang sudah diambil pemanggil (panel Domi). Blob-nya
+   * tetap milik pemanggil; buangFoto() hanya mencabut blob yang dibuat di
+   * sini, jadi pemanggil menjaga umur blob-nya sendiri lewat `pinjaman`.
+   */
+  function tampilkanFoto(berkas: BerkasFoto[], mulai = 0, berlakuDetik = 300): void {
+    const anak = anakDomi()
+    if (!anak || !berkas.length) return
+    buangFoto()
+    pinjaman = true
+    fotoTerbuka.value = { anak: anak.id, sasaran: null, berkas, berlakuDetik, mulai }
+  }
+  const saatDibuang = (f: () => void): (() => void) => {
+    pendengarBuang.add(f)
+    return () => { pendengarBuang.delete(f) }
+  }
+
   return {
     keadaan: readonly(keadaan),
     kasus, anakAktif, ranahAnakHidup, sisa, detik: readonly(detik), kunciKasus, punyaRanah,
     pulihkan, aturLingkup, cobaLagi, pasangHalaman, buka, tambah, jalankan,
     data, muatData, buang,
     teks, mintaTeks,
-    foto, lihatFoto, tutupFoto,
+    foto, lihatFoto, tutupFoto, tampilkanFoto,
+    anakDomi, anakDomiOtomatis: () => anakOtomatis('domi'), lepasAnak, saatDibuang,
   }
 }

@@ -100,6 +100,8 @@ import type { VersiAplikasiDTO, AjakanPembaruanDTO, LangkahUsahaDTO } from '~/ad
 import type { HapusAkunDaftarDTO, HasilHapusDTO, StatusHapus } from '~/adapters/cashflowHapusAkun'
 import { alasanHapusOtomatis, alasanBatalOtomatis, batasDaftarHapus } from '~/adapters/cashflowHapusAkun'
 import type { JenisLampiran, LampiranDTO, RanahAnak } from '~/adapters/cashflowLampiran'
+import type { GambarDaftarDomiDTO, KursorPercakapan, PercakapanDaftarDTO, PesanDaftarDTO } from '~/adapters/cashflowDomi'
+import { LIMIT_DAFTAR_DOMI, LIMIT_PESAN_DOMI } from '~/adapters/cashflowDomi'
 import { urlBerkasSah } from '~/adapters/cashflowLampiran'
 import type { RingkasDukunganDTO, DaftarDukunganDTO, SumberDukungan, StatusDukungan } from '~/adapters/cashflowDukungan'
 import { BATAS_DAFTAR_DUKUNGAN } from '~/adapters/cashflowDukungan'
@@ -373,9 +375,10 @@ export const useCashflowAdmin = () => {
         p_peristiwa: peristiwa, p_preset: 'keluhan', p_ranah: [...RANAH_RUANG], p_alasan: alasan, p_skenario: SKENARIO_SELIDIKI,
       }, { tanpaPelaku: true }),
     /** Kasus anak T3 (10 menit), alasan BARU, butuh investigasi. Satu ranah
-     *  per anak: 'teks' (catatan) atau 'foto' (0122, lampiran). */
-    kasusInvestigasi: (induk: string, preset: PresetInvestigasi, alasan: string, ranah: RanahAnak = 'teks') =>
-      rpc<KasusDTO>('admin_kasus_investigasi', { p_induk: induk, p_ranah: [ranah], p_preset: preset, p_alasan: alasan }, { tanpaPelaku: true }),
+     *  per anak: 'teks' (catatan) atau 'foto' (0122, lampiran); tab Domi
+     *  memakai satu anak gabungan ['teks', 'foto'] beralasan Domi. */
+    kasusInvestigasi: (induk: string, preset: PresetInvestigasi, alasan: string, ranah: RanahAnak | readonly RanahAnak[] = 'teks') =>
+      rpc<KasusDTO>('admin_kasus_investigasi', { p_induk: induk, p_ranah: typeof ranah === 'string' ? [ranah] : [...ranah], p_preset: preset, p_alasan: alasan }, { tanpaPelaku: true }),
     /** 0122: tautan sementara foto lampiran SATU baris, lewat fungsi edge
      *  admin-lampiran dengan kasus anak foto. Setiap panggilan = satu baris
      *  audit buka_foto; jangan dipanggil sebelum orangnya mengeklik. */
@@ -383,6 +386,15 @@ export const useCashflowAdmin = () => {
       fungsi<LampiranDTO>('admin-lampiran', { kasus_anak: kasusAnak, jenis, id }),
     /** Berkas dari tautan admin-lampiran (lihat ambilBerkas). */
     ambilBerkas: (url: string) => ambilBerkas(url, sesiKonsol.supabaseUrl ?? ''),
+    /** Percakapan Domi (T3, kasus anak {teks, foto}): daftar per halaman. Audit baca_teks. */
+    aiPercakapanDaftar: (kasusAnak: string, user: string, kursor: KursorPercakapan | null, limit = LIMIT_DAFTAR_DOMI) =>
+      rpc<PercakapanDaftarDTO>('admin_ai_percakapan_daftar', { p_kasus_anak: kasusAnak, p_user: user, p_kursor: kursor, p_limit: limit }),
+    /** Pesan satu percakapan, halaman dari yang terbaru. Audit baca_teks. */
+    aiPesanDaftar: (kasusAnak: string, percakapan: string, sebelum: number | null, limit = LIMIT_PESAN_DOMI) =>
+      rpc<PesanDaftarDTO>('admin_ai_pesan_daftar', { p_kasus_anak: kasusAnak, p_percakapan: percakapan, p_sebelum: sebelum, p_limit: limit }),
+    /** Tautan sementara foto satu halaman pesan (admin-lampiran jenis ai). Audit buka_foto. */
+    aiGambar: (kasusAnak: string, percakapan: string, pesan: readonly number[]) =>
+      fungsi<GambarDaftarDomiDTO>('admin-lampiran', { kasus_anak: kasusAnak, jenis: 'ai', id: percakapan, pesan: [...pesan] }),
     /** Tambah ranah T1/T2 dan/atau ruang; alasan diwarisi. */
     kasusTambah: (kasus: string, ranah: readonly string[], ruang: readonly string[]) =>
       rpc<KasusDTO>('admin_kasus_tambah', { p_kasus: kasus, p_ranah: [...ranah], p_ruang: [...ruang] }),

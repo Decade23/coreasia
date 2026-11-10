@@ -671,6 +671,27 @@ Naikkan `RILIS_PLAY_TERAKHIR` (dan tambahkan namanya di `RILIS_PLAY`) di
 dari kartu Versi aplikasi. `tests/cashflow/versi.test.ts` memeriksa
 versionCode-nya ada di `toko/catatan-rilis-<versi>.md` repo CashFlow.
 
+## Percakapan Domi (tab Domi AI di Pengguna 360)
+
+Isi percakapan adalah data pribadi tingkat tinggi. Tab Domi AI memakai kasus
+anak gabungan `{teks, foto}` yang dibuka otomatis satu klik (alasan otomatis
+menyebut percakapan Domi), jadi butuh login console ber-TOTP
+(`cashflow:investigasi`) dan kasus induk memegang ranah `akun`.
+
+- RPC: `admin_ai_percakapan_daftar`, `admin_ai_pesan_daftar` (audit `baca_teks`),
+  gambar lewat fungsi edge `admin-lampiran` jenis `ai` (audit `buka_foto`).
+- Dibuka lewat klik tab atau tombol "Buka percakapan Domi"; URL, refresh, dan
+  Back tidak membuka otomatis.
+- Isi dan foto hidup di memori tab dan dibuang saat anak Domi habis, kasus
+  berganti, atau subjek berganti. Tidak ada tombol tulis, simpan, atau hapus.
+- Keadaan simpan draf tidak disimpan server, jadi kartu draf tampil tanpa cap
+  TERSIMPAN. Blok yang tidak dikenal tampil sebagai kotak kecil berisi nama
+  tipenya. Pemakaian kredit per jawaban tidak disimpan server; yang tampil
+  biaya, token, dan model (info admin, tidak ada di aplikasi).
+
+Pasang (urut): SQL CashFlow, fungsi edge `admin-lampiran`, lalu landing.
+Mundur landing cukup; tab menjawab "belum aktif" bila RPC belum terpasang.
+
 ## Batas yang diketahui
 
 - **Console dan halaman publik satu origin (risiko sisa yang disadari, K6).**
