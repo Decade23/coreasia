@@ -229,8 +229,9 @@ export function hitungMundur(detik: number): string {
 
 // ── Tab Pengguna 360 ─────────────────────────────────────────────────────
 /** Tab Pengguna 360 (segmen path; '' = Ringkas). Fase 2: dompet; Fase 3
- *  (0095): perangkat dan kabar — ranah milik orang, hanya di halaman ini. */
-export const TAB_PENGGUNA = ['', 'ruang', 'transaksi', 'jejak', 'akses', 'dompet', 'perangkat', 'kabar'] as const
+ *  (0095): perangkat dan kabar — ranah milik orang, hanya di halaman ini;
+ *  domi (20261110110000): percakapan Domi, T3 lewat kasus anak. */
+export const TAB_PENGGUNA = ['', 'ruang', 'transaksi', 'jejak', 'akses', 'dompet', 'perangkat', 'kabar', 'domi'] as const
 export type TabPengguna = typeof TAB_PENGGUNA[number]
 /** Ranah Fase 3 milik orang: ditambah hanya saat tabnya DIAKTIFKAN pengguna
  *  (spek §6), tidak ikut kasus otomatis (RANAH_FASE1 tetap). */

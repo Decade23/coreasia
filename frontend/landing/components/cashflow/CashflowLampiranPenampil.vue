@@ -167,7 +167,7 @@ watch(foto, async (f, sebelumnya) => {
   if (!import.meta.client) return
   if (!f) { pulihkan(); return }
   gagalPratinjau.value.clear()
-  indeks.value = 0; sesuaikan(); putaran.value = 0
+  indeks.value = Math.min(Math.max(0, f.mulai ?? 0), Math.max(0, f.berkas.length - 1)); sesuaikan(); putaran.value = 0
   tandaAir.value = tcf('lampiran.tandaAir')(sesi.pelaku.value || user.value?.email || 'console', formatJam(new Date()))
   if (!sebelumnya) {
     const aktif = document.activeElement
