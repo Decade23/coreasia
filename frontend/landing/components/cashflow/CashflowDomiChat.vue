@@ -85,6 +85,8 @@ html[data-theme='light'] .domi-chat {
   display: flex; flex-direction: column; gap: 10px; padding: 14px 12px;
   max-height: 72vh; overflow-y: auto;
 }
+/* Kolom selebar layar ponsel: kertas, grafik, dan tabel berproporsi seperti di aplikasi. */
+.domi-bidang > * { width: 100%; max-width: 480px; margin-inline: auto; }
 .domi-pengguna {
   max-width: 86%; padding: 9px 14px; font-size: 14px; font-weight: 600; line-height: 19px;
   border-radius: 20px 20px 6px 20px; background: var(--d-user-bg); color: var(--d-user-tx);

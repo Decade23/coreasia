@@ -17,7 +17,7 @@ const sel = (ri: number, ci: number) => {
 
 <template>
   <div>
-    <div class="domi-tabel-gulir" :class="banyak ? 'overflow-x-auto' : ''">
+    <div class="domi-tabel-gulir overflow-x-auto">
       <table class="domi-tabel" :class="{ 'domi-tabel-lebar': banyak }">
         <thead>
           <tr>
@@ -45,5 +45,6 @@ const sel = (ri: number, ci: number) => {
 .domi-tabel { width: 100%; border-collapse: collapse; font-size: 12px; font-weight: 600; }
 .domi-tabel-lebar { min-width: 468px; }
 .domi-tabel th { padding: 8px 10px; font-size: 9.2px; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; color: var(--d-txt3); background: var(--d-line2); }
-.domi-tabel td { padding: 9px 10px; border-top: 1px solid var(--d-line2); vertical-align: top; overflow-wrap: anywhere; }
+.domi-tabel td { padding: 9px 10px; border-top: 1px solid var(--d-line2); vertical-align: top; overflow-wrap: break-word; }
+.domi-tabel td.text-right { white-space: nowrap; }
 </style>

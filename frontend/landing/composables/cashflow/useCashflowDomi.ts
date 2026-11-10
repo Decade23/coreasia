@@ -15,7 +15,7 @@
  * mintaTeks dan lihatFoto. Jawaban yang tiba sesudah data dibuang tidak
  * disimpan (`versi`).
  */
-import { onScopeDispose, ref, shallowRef } from 'vue'
+import { ref, shallowRef } from 'vue'
 import { petakanGalat } from './useCashflowAdmin'
 import type { BerkasFoto } from './useCashflowKasus'
 import {
@@ -41,6 +41,7 @@ const dibuang = ref(false)
 const foto = shallowRef<ReadonlyMap<string, FotoDomi>>(new Map())
 let peta = new Map<string, FotoDomi>()
 let versi = 0
+let pendengarTerpasang = false
 
 function terbitkanFoto() { foto.value = new Map(peta) }
 
@@ -65,9 +66,12 @@ function buangIsi(tandaHabis: boolean) {
 export const useCashflowDomi = () => {
   const api = useCashflowAdmin()
   const kasus = useCashflowKasus()
-  // Sekali per pemasangan: pendengar pembuangan data kasus.
-  const lepasPendengar = kasus.saatDibuang(() => { if (sudahDibuka.value || panel.value) buangIsi(true) })
-  onScopeDispose(lepasPendengar)
+  // Sekali seumur modul: isi yang tersimpan di sini tetap dibuang walau tab
+  // sudah ditinggal (mis. pindah ke tab lain selagi anak Domi habis).
+  if (!pendengarTerpasang) {
+    pendengarTerpasang = true
+    kasus.saatDibuang(() => { if (sudahDibuka.value || panel.value) buangIsi(true) })
+  }
 
   /** Ganti subjek = isi subjek lama dibuang, tanpa jejak. */
   function pasangSubjek(id: string) {
