@@ -40,6 +40,8 @@ const kohort = computed(() => keKohort(retensi.value))
       <template #meta><CashflowNav /></template>
     </ConsolePageHeader>
 
+    <CashflowStatusWa ringkas />
+
     <p v-if="memuat" class="text-sm text-[var(--ca-muted)]">{{ tcf('umum.memuat') }}</p>
 
     <div v-else-if="galat" class="ca-console-dialog p-6 text-sm">

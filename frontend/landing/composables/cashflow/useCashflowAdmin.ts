@@ -101,6 +101,7 @@ import type { HapusAkunDaftarDTO, HasilHapusDTO, StatusHapus } from '~/adapters/
 import { alasanHapusOtomatis, alasanBatalOtomatis, batasDaftarHapus } from '~/adapters/cashflowHapusAkun'
 import type { JenisLampiran, LampiranDTO, RanahAnak } from '~/adapters/cashflowLampiran'
 import type { GambarDaftarDomiDTO, KursorPercakapan, PercakapanDaftarDTO, PesanDaftarDTO } from '~/adapters/cashflowDomi'
+import type { WaStatusDTO } from '~/adapters/cashflowWa'
 import { LIMIT_DAFTAR_DOMI, LIMIT_PESAN_DOMI } from '~/adapters/cashflowDomi'
 import { urlBerkasSah } from '~/adapters/cashflowLampiran'
 import type { RingkasDukunganDTO, DaftarDukunganDTO, SumberDukungan, StatusDukungan } from '~/adapters/cashflowDukungan'
@@ -316,6 +317,7 @@ export const useCashflowAdmin = () => {
     // ── agregat, tanpa alasan ──────────────────────────────────────────
     stats: () => rpc<StatsDTO>('admin_stats'),
     kesehatan: () => rpc<KesehatanDTO>('admin_kesehatan'),
+    waStatus: () => rpc<WaStatusDTO>('admin_wa_status'),
     corong: (hari = 90) => rpc<CorongDTO[]>('admin_corong_aktivasi', { p_hari: hari }),
     /** v2: angka yang sama dengan v1, tanpa daftar email — hanya jumlah_pengecualian. */
     ukuranKeberhasilan: (jendela = 14, minTx = 10) =>

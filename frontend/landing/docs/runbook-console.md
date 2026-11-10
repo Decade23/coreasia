@@ -691,6 +691,13 @@ menyebut percakapan Domi), jadi butuh login console ber-TOTP
   dan model sebagai info admin yang tidak ada di aplikasi.
 
 Pasang (urut): SQL CashFlow, fungsi edge `admin-lampiran`, lalu landing.
+
+## Status WhatsApp OTP
+
+Ringkasan CashFlow menampilkan keadaan singkat, Kesehatan menampilkan rinciannya, dari RPC
+`admin_wa_status` (agregat T0, tanpa kasus dan audit). Daftar gangguannya sama dengan gerbang
+aplikasi. Menyegarkan tiap 60 detik. Pasang: SQL CashFlow dulu, baru landing. Sebelum SQL
+terpasang kartunya menulis status belum bisa dibaca, ubin lain tetap tampil.
 Mundur landing cukup; tab menjawab "belum aktif" bila RPC belum terpasang.
 
 ## Batas yang diketahui
