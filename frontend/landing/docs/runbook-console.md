@@ -726,6 +726,38 @@ CASHFLOW_MIGRASI=<repo cashflow>/supabase/migrations npx vitest run tests/cashfl
 node scripts/cek-komponen-cashflow.mjs
 ```
 
+## Pembelian kredit Domi
+
+Halaman `/console/cashflow/pembelian` menjawab siapa yang membeli kredit Domi, paket apa, lewat
+Google Play atau QRIS, dan statusnya. Isinya hanya baca, tidak ada tombol tulis.
+
+- RPC: `admin_ai_pembelian_daftar(p_batas, p_sebelum, p_status, p_jalur)`. Terbaru dulu, 50 baris
+  per halaman. "Muat lebih banyak" mengirim `lanjut` dari jawaban terakhir sebagai `p_sebelum`.
+- Ringkasan di atas (lunas, nominal kotor, perkiraan diterima, batal) dihitung server atas semua
+  pembelian yang cocok saringan, tanpa pembelian uji. Halaman menyebutnya di bawah ubin. Pembelian
+  uji tetap tampil di daftar, lebih redup dan bercap Uji.
+- Saringan status dan jalur ada di URL (`?status=`, `?jalur=`). Nilai yang ditolak server
+  (22023 `masukan_tidak_sah`) ditulis dengan kalimat awam.
+- Daftar memuat email pembeli, jadi server mencatat setiap panggilan di audit. Halaman tidak memuat
+  berkala. Server hanya dipanggil saat halaman dibuka, saringan diganti, atau admin menekan
+  Muat ulang, Coba lagi, atau Muat lebih banyak.
+- Sesi tanpa izin membuka data pengguna (42501 `izin-kurang`) melihat penjelasan dan jalan keluarnya,
+  sama dengan halaman lain yang membuka data pengguna.
+
+Pasang: SQL CashFlow dulu, baru landing. Sebelum SQL terpasang halaman menulis "fitur belum aktif".
+Mundur landing cukup.
+
+Uji kontrak terhadap migrasi berjalan begitu fungsinya ada di folder `CASHFLOW_MIGRASI`. Sebelum itu
+bagiannya terlihat "skipped", dan `rpc-console.test.ts` melewatinya lewat `MENDAHULUI_MIGRASI`.
+Sesudah migrasinya tergabung, hapus namanya dari daftar itu dan pastikan
+`toko/uji-console-rpc.sql` di repo CashFlow memuatnya (blok rpc-console dan baris kepala
+`admin_ai_pembelian_daftar ← aiPembelianDaftar`).
+
+```bash
+CASHFLOW_MIGRASI=<repo cashflow>/supabase/migrations npx vitest run tests/cashflow/pembelian.test.ts tests/cashflow/rpc-console.test.ts
+node scripts/cek-komponen-cashflow.mjs
+```
+
 ## Batas yang diketahui
 
 - **Console dan halaman publik satu origin (risiko sisa yang disadari, K6).**
