@@ -107,6 +107,7 @@ import { urlBerkasSah } from '~/adapters/cashflowLampiran'
 import type { RingkasDukunganDTO, DaftarDukunganDTO, SumberDukungan, StatusDukungan } from '~/adapters/cashflowDukungan'
 import { BATAS_DAFTAR_DUKUNGAN } from '~/adapters/cashflowDukungan'
 import type { SimpanPengumuman } from '~/adapters/cashflowPengumuman'
+import type { DaftarPaketDTO, MuatanPaket, MuatanSebagian } from '~/adapters/cashflowPaket'
 
 interface OpsiDaftarPengguna {
   limit: number; offset: number; cari: string; segmen: string; urut: string; arah: string
@@ -220,6 +221,18 @@ export async function ambilBerkas(url: string, supabaseUrl: string, ambil: typeo
   const r = await ambil(url, { cache: 'no-store', referrerPolicy: 'no-referrer', credentials: 'omit' })
   if (!r.ok) throw new GalatAdmin('lain', `Berkas gagal diambil (${r.status}).`, 'lampiran-penyimpanan')
   return r.blob()
+}
+
+/**
+ * Simpan dan hapus paket kredit menolak sesi tanpa cashflow:pii dengan 42501
+ * TANPA hint (pola admin_ai_setelan_simpan), yang di petakanGalat jatuh ke
+ * 'bukan-admin' dan berbunyi "bukan admin". Sesi yang sama sudah lolos
+ * penjaga admin saat membaca daftar, jadi 42501 di tulisan paket berarti izin
+ * pii kurang: dipetakan ke 'izin' supaya halaman menawarkan CashflowIzinKurang.
+ */
+export function galatTulisPaket(e: unknown): never {
+  const g = petakanGalat(e)
+  throw g.jenis === 'bukan-admin' ? new GalatAdmin('izin', g.message, g.hint || 'izin-kurang') : g
 }
 
 /** p_alasan RPC 0b yang dikirim: "[pelaku] alasan". Syarat 8 aksara diukur
@@ -566,5 +579,17 @@ export const useCashflowAdmin = () => {
       rpc<DaftarDukunganDTO>('admin_dukungan_daftar', {
         p_sumber: sumber, p_status: status, p_dari: dari, p_sampai: sampai, p_batas: BATAS_DAFTAR_DUKUNGAN, p_sebelum: sebelum,
       }),
+
+    // ── paket kredit Domi (adapters/cashflowPaket) ──────────────────────
+    /** Semua paket termasuk nonaktif dan khusus uji, plus jumlah terjual. Izin view, tanpa audit. */
+    aiPaketDaftar: () => rpc<DaftarPaketDTO>('admin_ai_paket_daftar'),
+    /** Tambah atau ubah per kode (kunci yang dikirim menimpa, sisanya tetap);
+     *  memulangkan daftar terbaru. Server menjaga satu bawaan dan mencatat
+     *  audit. Butuh cashflow:pii. Isian ditolak: 22023 paket_tidak_sah, hint = kolom. */
+    aiPaketSimpan: (paket: MuatanPaket | MuatanSebagian) =>
+      rpc<DaftarPaketDTO>('admin_ai_paket_simpan', { p_paket: paket }).catch(galatTulisPaket),
+    /** Memulangkan daftar terbaru. Pernah dibeli: 23503 paket_sudah_dibeli;
+     *  tidak ada: P0002 paket_tidak_ada. Butuh cashflow:pii. */
+    aiPaketHapus: (kode: string) => rpc<DaftarPaketDTO>('admin_ai_paket_hapus', { p_kode: kode }).catch(galatTulisPaket),
   }
 }
