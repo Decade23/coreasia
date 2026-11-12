@@ -2,8 +2,8 @@
 /**
  * Tabel paket kredit, urut seperti yang dilihat pengguna (urutan, lalu kode).
  * Setiap baris: kredit dengan labelnya (seperti di kartu aplikasi), harga
- * normal, promo dengan statusnya, keadaan (bawaan, aktif, khusus uji), jumlah
- * terjual, dan aksi.
+ * normal, promo dengan statusnya, keadaan (bawaan, aktif, khusus uji), id
+ * produk Google Play (atau "belum di Play"), jumlah terjual, dan aksi.
  *
  * Hanya menampilkan dan memancarkan aksi; halaman yang memanggil server.
  * `bolehUbah` false (sesi tanpa cashflow:pii) mematikan semua aksi tulis.
@@ -31,7 +31,7 @@ const mati = computed(() => !props.bolehUbah || props.terkunci)
 
 <template>
   <div class="ca-console-dialog overflow-x-auto p-0">
-    <table class="w-full min-w-[56rem] text-sm">
+    <table class="w-full min-w-[62rem] text-sm">
       <thead>
         <tr class="text-left text-xs uppercase tracking-wide text-[var(--ca-muted)]">
           <th scope="col" class="px-4 py-3">{{ tcf('paket.kolom.urutan') }}</th>
@@ -39,6 +39,7 @@ const mati = computed(() => !props.bolehUbah || props.terkunci)
           <th scope="col" class="px-3 py-3 text-right">{{ tcf('paket.kolom.harga') }}</th>
           <th scope="col" class="px-3 py-3">{{ tcf('paket.kolom.promo') }}</th>
           <th scope="col" class="px-3 py-3">{{ tcf('paket.kolom.tanda') }}</th>
+          <th scope="col" class="px-3 py-3">{{ tcf('paket.kolom.play') }}</th>
           <th scope="col" class="px-3 py-3 text-right">{{ tcf('paket.kolom.terjual') }}</th>
           <th scope="col" class="min-w-[16rem] px-4 py-3 text-right">{{ tcf('paket.kolom.aksi') }}</th>
         </tr>
@@ -87,6 +88,10 @@ const mati = computed(() => !props.bolehUbah || props.terkunci)
               <span :class="p.aktif ? 'ca-pill-emerald' : 'ca-pill-danger'" class="whitespace-nowrap text-xs">{{ p.aktif ? tcf('paket.tanda.aktif') : tcf('paket.tanda.nonaktif') }}</span>
               <span v-if="p.khususUji" class="ca-pill-blue whitespace-nowrap text-xs">{{ tcf('paket.tanda.khususUji') }}</span>
             </div>
+          </td>
+          <td class="max-w-[12rem] px-3 py-3">
+            <span v-if="p.playProdukId" class="break-all font-mono text-xs" :title="tcf('paket.kolom.play')">{{ p.playProdukId }}</span>
+            <span v-else class="whitespace-nowrap text-xs text-[var(--ca-subtle)]">{{ tcf('paket.belumPlay') }}</span>
           </td>
           <td class="px-3 py-3 text-right tabular-nums">
             <template v-if="p.terjual !== null">{{ angka(p.terjual) }}</template>

@@ -4,16 +4,21 @@
  *
  * Pemeriksaan isian = periksaIsian (adapter), aturan yang sama dengan CHECK
  * server. Galat tampil per kolom sesudah kolom itu diubah atau ditinggalkan,
- * atau sesudah Simpan ditekan. Galat server (22023 paket_tidak_sah, hint = kolom) datang
- * lewat `galatServer` dan menempel di kolomnya sampai kolom itu diubah.
+ * atau sesudah Simpan ditekan. Galat server (22023 paket_tidak_sah, hint = kolom,
+ * atau produk Play yang dipakai paket lain) datang lewat `galatServer` dan
+ * menempel di kolomnya sampai kolom itu diubah.
+ *
+ * Produk Google Play: id produk di Play Console, boleh kosong. Harganya diatur
+ * di Play Console, jadi form hanya mengingatkan supaya sama dengan harga normal.
  *
  * Komponen ini tidak memanggil server. Halaman yang membaca ulang daftar,
  * menolak kode yang sudah dipakai, memeriksa versi, lalu menyimpan.
  * Isian disalin dari `isianAwal` saat dipasang: halaman memberi :key baru
  * setiap kali form dibuka.
  */
+import { rupiah } from '~/adapters/cashflow'
 import {
-  KOLOM_PAKET, LABEL_MAKS, hargaSaatPromo, hargaTampil, paketDariIsian, panjangHuruf, periksaIsian,
+  KOLOM_PAKET, LABEL_MAKS, PLAY_PRODUK_MAKS, hargaSaatPromo, hargaTampil, paketDariIsian, panjangHuruf, periksaIsian,
   type GalatIsian, type IsianPaket, type KolomPaket, type MuatanPaket, type PaketKredit,
 } from '~/adapters/cashflowPaket'
 
@@ -24,6 +29,8 @@ const props = defineProps<{
   asal: PaketKredit | null
   /** Kode paket lain (hanya untuk mode baru). */
   kodeLain: readonly string[]
+  /** Id produk Play milik paket lain (unik di server). */
+  playLain: readonly string[]
   galatServer: GalatIsian
   sibuk: boolean
   basi: boolean
@@ -38,7 +45,7 @@ const dicoba = ref(false)
 const galatServerLokal = ref<GalatIsian>({ ...props.galatServer })
 watch(() => props.galatServer, (g) => { galatServerLokal.value = { ...g } })
 
-const hasil = computed(() => periksaIsian(f, { kodeTerpakai: props.mode === 'baru' ? props.kodeLain : [], asal: props.asal }))
+const hasil = computed(() => periksaIsian(f, { kodeTerpakai: props.mode === 'baru' ? props.kodeLain : [], playTerpakai: props.playLain, asal: props.asal }))
 const galatKolom = (k: KolomPaket): string => {
   const server = galatServerLokal.value[k]
   if (server) return tcf(`paket.galat.${server}`)
@@ -71,6 +78,11 @@ const pratinjau = computed(() => paketDariIsian(f, props.asal))
 const tampilKini = computed(() => hargaTampil(pratinjau.value, props.kini))
 const tampilPromo = computed(() => (tampilKini.value.status === 'terjadwal' ? hargaSaatPromo(pratinjau.value) : null))
 const waktu = (iso: string | null) => (iso ? `${formatTanggal(iso)} ${formatJam(iso)}` : '')
+/** Pengingat harga Play: muncul begitu id produk diisi, dengan harga normal yang sah. */
+const adaPlay = computed(() => f.playProdukId.trim() !== '')
+const ketHargaPlay = computed(() => (pratinjau.value.harga > 0 && !hasil.value.galat.harga
+  ? tcf('paket.form.playHarga')(rupiah(pratinjau.value.harga))
+  : tcf('paket.form.playHargaUmum')))
 
 const kirim = () => {
   if (props.sibuk || props.basi) return
@@ -196,6 +208,21 @@ const tutup = () => { if (!props.sibuk) emit('tutup') }
                 <span v-if="galatKolom(c.kolom)" class="mt-1 block text-xs ca-tone-danger" role="alert">{{ galatKolom(c.kolom) }}</span>
               </span>
             </label>
+          </div>
+
+          <div>
+            <label :for="ID.play_produk_id" class="block text-xs font-semibold text-[var(--ca-muted)]">{{ tcf('paket.form.play') }}</label>
+            <input
+              :id="ID.play_produk_id" v-model="f.playProdukId" type="text" class="ca-input mt-2 w-full font-mono" :maxlength="PLAY_PRODUK_MAKS"
+              autocomplete="off" autocapitalize="off" spellcheck="false"
+              :aria-invalid="galatKolom('play_produk_id') ? 'true' : undefined" :aria-describedby="`${ID.play_produk_id}-ket ${idGalat('play_produk_id')}`"
+              @blur="tinggal('play_produk_id')" @input="ubah('play_produk_id')"
+            >
+            <p :id="`${ID.play_produk_id}-ket`" class="mt-1 text-xs text-[var(--ca-subtle)]">
+              {{ tcf('paket.form.playKet') }}
+              <span v-if="adaPlay" class="mt-1 block text-[var(--ca-muted)]">{{ ketHargaPlay }}</span>
+            </p>
+            <p v-if="galatKolom('play_produk_id')" :id="idGalat('play_produk_id')" class="mt-1 text-xs ca-tone-danger" role="alert">{{ galatKolom('play_produk_id') }}</p>
           </div>
         </div>
 
