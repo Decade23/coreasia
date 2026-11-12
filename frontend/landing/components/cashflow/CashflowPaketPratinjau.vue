@@ -40,16 +40,22 @@ const batas = computed(() => (props.tampil.promoSampai ? `${formatTanggal(props.
   </div>
 </template>
 
-<style scoped>
-/* Token aplikasi CashFlow (src/theme/tokens.ts), tanpa palet baru. */
+<style>
+/* Token aplikasi CashFlow (src/theme/tokens.ts), tanpa palet baru. Sengaja
+   TIDAK scoped: pemilih global di blok scoped dikompilasi menjadi pemilih
+   html-nya saja, jadi token gelap jatuh ke <html> dan token terang milik
+   kartu tetap menang. Nama kelasnya khusus komponen ini. */
 .cf-paket-pratinjau {
   --cf-layar:#ffffff; --cf-txt:#0E1730; --cf-txt2:#45506A; --cf-txt3:#646E85; --cf-line:rgba(14,23,48,0.10);
   --cf-inti:#1A2445; --cf-on-inti:#ffffff; --cf-mint:#0A7A5C; --cf-mint-bg:#E6F2EF; --cf-emas:#7a5500; --cf-emas-bg:#FFF2D8;
 }
-:global(html[data-theme="dark"]) .cf-paket-pratinjau {
+html[data-theme="dark"] .cf-paket-pratinjau {
   --cf-layar:#0A0F1F; --cf-txt:#EEF2FA; --cf-txt2:#B3BDD2; --cf-txt3:#8C97AE; --cf-line:rgba(160,178,220,0.14);
   --cf-inti:#E9EEF8; --cf-on-inti:#1A2445; --cf-mint:#1BC49E; --cf-mint-bg:#173A33; --cf-emas:#FFBE3D; --cf-emas-bg:#3D3318;
 }
+</style>
+
+<style scoped>
 .cf-paket-pratinjau { display:flex; flex-direction:column; gap:12px; padding:18px 16px 16px; border-radius:24px; background:var(--cf-layar); color:var(--cf-txt); border:1px solid var(--cf-line); }
 .cf-lembar-judul { margin:0; font-size:16px; font-weight:800; line-height:22px; }
 .cf-kartu { display:flex; align-items:center; gap:12px; min-height:60px; padding:10px 14px; border-radius:16px; border:2px solid var(--cf-inti); background:var(--cf-layar); }

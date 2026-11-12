@@ -15,7 +15,7 @@ import { fileURLToPath } from 'node:url'
 import { computed, ref } from 'vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
-  HARGA_MAKS, KOLOM_PAKET, KREDIT_MAKS, LABEL_MAKS, POLA_KODE_PAKET, STATUS_PROMO,
+  HARGA_MAKS, HEMAT_MAKS, HEMAT_MIN, KOLOM_PAKET, KREDIT_MAKS, LABEL_MAKS, POLA_KODE_PAKET, STATUS_PROMO, promoSah,
   barisPaket, bolehJadiBawaan, daftarPaket, geserUrutan, hargaSaatPromo, hargaTampil, hematPersen, isianBaru, isianDariPaket,
   kePaket, kiniServer, kolomDariGalat, muatanAktif, paketDariIsian, paketSudahDibeli, paketTidakAda, periksaIsian, ringkasPaket,
   statusPromo, urutkanPaket,
@@ -204,8 +204,22 @@ describe('adapter: aturan isian sama dengan server', () => {
     expect(galat({ harga: '25000', hargaPromo: 'murah' }).harga_promo).toBe('promoRentang')
     expect(galat({ harga: '25000', hargaPromo: '25000' }).harga_promo).toBe('promoTidakLebihMurah')
     expect(galat({ harga: '25000', hargaPromo: '27500' }).harga_promo).toBe('promoTidakLebihMurah')
-    expect(galat({ harga: '25000', hargaPromo: '24999' }).harga_promo).toBeUndefined()
-    expect(galat({ harga: '25000', hargaPromo: '1' }).harga_promo).toBeUndefined()
+    expect(galat({ harga: '25000', hargaPromo: '24750' }).harga_promo).toBeUndefined() // hemat 1%
+    expect(galat({ harga: '25000', hargaPromo: '250' }).harga_promo).toBeUndefined() // hemat 99%
+  })
+
+  it('hemat promo (dibulatkan) harus 1 sampai 99 persen', () => {
+    expect(HEMAT_MIN).toBe(1)
+    expect(HEMAT_MAKS).toBe(99)
+    expect(galat({ harga: '25000', hargaPromo: '24999' }).harga_promo).toBe('promoHemat') // 0,004% jadi 0
+    expect(galat({ harga: '25000', hargaPromo: '24876' }).harga_promo).toBe('promoHemat') // 0,496% jadi 0
+    expect(galat({ harga: '25000', hargaPromo: '24875' }).harga_promo).toBeUndefined() // tepat 0,5% jadi 1
+    expect(galat({ harga: '25000', hargaPromo: '125' }).harga_promo).toBe('promoHemat') // tepat 99,5% jadi 100
+    expect(galat({ harga: '25000', hargaPromo: '126' }).harga_promo).toBeUndefined()
+    expect(galat({ harga: '1', hargaPromo: '' }).harga_promo).toBeUndefined()
+    expect(promoSah(2, 1)).toBe(true) // 50%
+    expect(promoSah(100, 100)).toBe(false)
+    expect(paketDariIsian(isian({ harga: '25000', hargaPromo: '24999' })).hargaPromo).toBeNull()
   })
 
   it('jendela promo WIB: sampai harus sesudah mulai, tanggal rusak ditolak', () => {
@@ -394,7 +408,7 @@ function semuaTeks(v: unknown): string[] {
 
 describe('kamus dan halaman', () => {
   const KODE_GALAT: KodeGalatPaket[] = [
-    'kodePola', 'kodeTerpakai', 'kreditRentang', 'hargaRentang', 'promoRentang', 'promoTidakLebihMurah',
+    'kodePola', 'kodeTerpakai', 'kreditRentang', 'hargaRentang', 'promoRentang', 'promoTidakLebihMurah', 'promoHemat',
     'tanggalRusak', 'sampaiSebelumMulai', 'labelPanjang', 'labelKarakter', 'urutanAngka', 'bawaanSyarat', 'server',
   ]
 
@@ -438,10 +452,12 @@ describe('kamus dan halaman', () => {
       expect(baca(`components/cashflow/${k}.vue`), k).not.toMatch(/#[0-9a-fA-F]{3,8}\b|bg-white|text-black|bg-black|text-white/)
     }
     expect(baca('pages/console/cashflow/paket.vue')).not.toMatch(/#[0-9a-fA-F]{3,8}\b|bg-white|text-black/)
-    const gaya = baca('components/cashflow/CashflowPaketPratinjau.vue').split('<style scoped>')[1] ?? ''
-    const blok = [...gaya.matchAll(/\{([^}]*)\}/g)].map(m => m[1]!)
-    const terang = blok[0] ?? ''
-    const gelap = /html\[data-theme="dark"\][^{]*\{([^}]*)\}/.exec(gaya)?.[1] ?? ''
+    const sumber = baca('components/cashflow/CashflowPaketPratinjau.vue')
+    // Token di blok TIDAK scoped: `:global(...) .x` di blok scoped hanya menyisakan `:global(...)`.
+    const gaya = /<style>([\s\S]*?)<\/style>/.exec(sumber)?.[1] ?? ''
+    expect(sumber).not.toMatch(/:global\(/)
+    const terang = /(?:^|\})\s*\.cf-paket-pratinjau\s*\{([^}]*)\}/.exec(gaya.replace(/\/\*[\s\S]*?\*\//g, ''))?.[1] ?? ''
+    const gelap = /html\[data-theme="dark"\] \.cf-paket-pratinjau\s*\{([^}]*)\}/.exec(gaya)?.[1] ?? ''
     const token = (s: string) => [...s.matchAll(/(--cf-[a-z0-9-]+):/g)].map(m => m[1]).sort()
     expect(token(terang).length).toBeGreaterThan(8)
     expect(token(gelap)).toEqual(token(terang))
@@ -482,7 +498,7 @@ describe.skipIf(!adaPaket)(`kontrak migrasi paket kredit (${DIR_MIGRASI})`, () =
     expect(sql).toContain("check (kode ~ '^[a-z0-9_-]{1,24}$')")
     expect(sql).toContain('check (kredit between 1 and 10000)')
     expect(sql).toContain('check (harga between 1 and 10000000)')
-    expect(sql).toContain('check (harga_promo is null or (harga_promo >= 1 and harga_promo < harga))')
+    expect(sql.replace(/\s+/g, ' ')).toContain('check (harga_promo is null or (harga_promo >= 1 and harga_promo < harga and round((1 - harga_promo::numeric / harga) * 100) between 1 and 99))')
     expect(sql).toContain('check (promo_mulai is null or promo_sampai is null or promo_sampai > promo_mulai)')
     expect(sql).toContain('check (label is null or char_length(label) between 1 and 24)')
     expect(sql).toContain('check (not bawaan or (aktif and not khusus_uji))')

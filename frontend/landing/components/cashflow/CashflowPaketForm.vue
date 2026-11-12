@@ -3,8 +3,8 @@
  * Form tambah dan ubah paket kredit, dengan pratinjau seperti di aplikasi.
  *
  * Pemeriksaan isian = periksaIsian (adapter), aturan yang sama dengan CHECK
- * server. Galat tampil per kolom sesudah kolom itu ditinggalkan atau sesudah
- * Simpan ditekan. Galat server (22023 paket_tidak_sah, hint = kolom) datang
+ * server. Galat tampil per kolom sesudah kolom itu diubah atau ditinggalkan,
+ * atau sesudah Simpan ditekan. Galat server (22023 paket_tidak_sah, hint = kolom) datang
  * lewat `galatServer` dan menempel di kolomnya sampai kolom itu diubah.
  *
  * Komponen ini tidak memanggil server. Halaman yang membaca ulang daftar,
@@ -46,8 +46,14 @@ const galatKolom = (k: KolomPaket): string => {
   return lokal && (dicoba.value || disentuh.has(k)) ? tcf(`paket.galat.${lokal}`) : ''
 }
 const tinggal = (k: KolomPaket) => { disentuh.add(k) }
-/** Kolom yang diubah melepas galat server miliknya. */
+/**
+ * Kolom yang diubah melepas galat server miliknya dan langsung dinilai.
+ * Galatnya muncul sambil mengetik, bukan saat kolom ditinggalkan: blur
+ * terjadi di mousedown klik berikutnya, dan baris galat yang baru muncul
+ * menggeser tata letak sebelum mouseup sehingga klik itu hilang.
+ */
 const ubah = (k: KolomPaket) => {
+  disentuh.add(k)
   if (galatServerLokal.value[k]) galatServerLokal.value = { ...galatServerLokal.value, [k]: undefined }
 }
 const ID: Record<KolomPaket, string> = Object.fromEntries(KOLOM_PAKET.map(k => [k, `cf-pk-${k.replace(/_/g, '-')}`])) as Record<KolomPaket, string>
@@ -165,7 +171,7 @@ const tutup = () => { if (!props.sibuk) emit('tutup') }
               >
               <p :id="`${ID.label}-ket`" class="mt-1 flex flex-wrap justify-between gap-2 text-xs text-[var(--ca-subtle)]">
                 <span>{{ tcf('paket.form.labelKet') }}</span>
-                <span class="tabular-nums" :class="sisaLabel < 0 ? 'ca-tone-danger' : ''">{{ tcf('paket.form.sisaHuruf')(sisaLabel) }}</span>
+                <span class="tabular-nums" :class="sisaLabel < 0 ? 'ca-tone-danger' : ''">{{ sisaLabel < 0 ? tcf('paket.form.lebihHuruf')(-sisaLabel) : tcf('paket.form.sisaHuruf')(sisaLabel) }}</span>
               </p>
               <p v-if="galatKolom('label')" :id="idGalat('label')" class="mt-1 text-xs ca-tone-danger" role="alert">{{ galatKolom('label') }}</p>
             </div>

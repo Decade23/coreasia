@@ -31,8 +31,8 @@
  * supaya tidak meleset karena pecahan biner.
  *
  * Aturan isian (periksaIsian) menyalin CHECK server: kode ^[a-z0-9_-]{1,24}$,
- * kredit 1..10000, harga 1..10.000.000, harga promo >= 1 dan < harga,
- * sampai > mulai bila keduanya ada, label 1..24 huruf tanpa karakter kendali,
+ * kredit 1..10000, harga 1..10.000.000, harga promo >= 1 dan < harga dengan
+ * hemat (dibulatkan) 1..99 persen, sampai > mulai bila keduanya ada, label 1..24 huruf tanpa karakter kendali,
  * bawaan hanya untuk paket aktif yang bukan khusus uji. Server tetap penentu.
  *
  * Fungsi MURNI semua: tanpa jaringan, tanpa state.
@@ -45,6 +45,9 @@ export const KREDIT_MAKS = 10_000
 export const HARGA_MIN = 1
 export const HARGA_MAKS = 10_000_000
 export const LABEL_MAKS = 24
+/** Hemat promo yang sah (dibulatkan): 0 atau 100 persen ditolak server. */
+export const HEMAT_MIN = 1
+export const HEMAT_MAKS = 99
 const INT_MIN = -2_147_483_648
 const INT_MAKS = 2_147_483_647
 
@@ -195,6 +198,13 @@ export function statusPromo(p: Pick<PaketKredit, 'harga' | 'hargaPromo' | 'promo
   return 'berlaku'
 }
 
+/** Harga promo yang bisa disimpan: lebih murah, dengan hemat 1..99 persen. */
+export const promoSah = (normal: number, promo: number): boolean => {
+  if (!(promo >= 1) || promo >= normal) return false
+  const h = hematPersen(normal, promo)
+  return h >= HEMAT_MIN && h <= HEMAT_MAKS
+}
+
 /** round((1 - promo / normal) * 100) dengan bilangan bulat. */
 export function hematPersen(normal: number, promo: number): number {
   if (!(normal > 0) || !(promo >= 0) || promo >= normal) return 0
@@ -262,7 +272,7 @@ export interface MuatanPaket {
 export type MuatanSebagian = Pick<MuatanPaket, 'kode'> & Partial<Omit<MuatanPaket, 'kode'>>
 
 export type KodeGalatPaket =
-  | 'kodePola' | 'kodeTerpakai' | 'kreditRentang' | 'hargaRentang' | 'promoRentang' | 'promoTidakLebihMurah'
+  | 'kodePola' | 'kodeTerpakai' | 'kreditRentang' | 'hargaRentang' | 'promoRentang' | 'promoTidakLebihMurah' | 'promoHemat'
   | 'tanggalRusak' | 'sampaiSebelumMulai' | 'labelPanjang' | 'labelKarakter' | 'urutanAngka' | 'bawaanSyarat' | 'server'
 export type GalatIsian = Partial<Record<KolomPaket, KodeGalatPaket>>
 
@@ -347,6 +357,7 @@ export function periksaIsian(isian: IsianPaket, opsi: { kodeTerpakai?: readonly 
     hargaPromo = angkaKetik(isian.hargaPromo)
     if (hargaPromo === null || hargaPromo < 1) galat.harga_promo = 'promoRentang'
     else if (harga !== null && hargaPromo >= harga) galat.harga_promo = 'promoTidakLebihMurah'
+    else if (harga !== null && !promoSah(harga, hargaPromo)) galat.harga_promo = 'promoHemat'
     const m = tanggalKirim(isian.promoMulai, opsi.asal?.promoMulai ?? null)
     const s = tanggalKirim(isian.promoSampai, opsi.asal?.promoSampai ?? null)
     if (m === 'rusak') galat.promo_mulai = 'tanggalRusak'
@@ -394,7 +405,7 @@ export function paketDariIsian(isian: IsianPaket, asal: PaketKredit | null = nul
     kode: isian.kode.trim(),
     kredit: angkaKetik(isian.kredit) ?? 0,
     harga,
-    hargaPromo: promo !== null && promo >= 1 && promo < harga ? promo : null,
+    hargaPromo: promo !== null && promoSah(harga, promo) ? promo : null,
     promoMulai: sah(tanggalKirim(isian.promoMulai, asal?.promoMulai ?? null)),
     promoSampai: sah(tanggalKirim(isian.promoSampai, asal?.promoSampai ?? null)),
     label: isian.label.trim() || null,
