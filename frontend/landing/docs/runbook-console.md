@@ -717,9 +717,16 @@ tanpa rilis aplikasi. Harga yang ditagih tetap dihitung server saat pembelian di
   menawarkan Nonaktifkan.
 - Tanpa login ber-TOTP daftar tetap terbaca dan tombol tulis mati. Penolakan tulisan tanpa pii
   (42501 tanpa hint) dibaca console sebagai izin kurang, bukan "bukan admin".
+- Produk Google Play (`play_produk_id`, boleh kosong, unik, pola `^[a-z0-9_.]{1,40}$`) menautkan
+  paket ke produk sekali beli di Play Console. Kolom Google Play di tabel menulis id-nya atau
+  "Belum di Play". Harga Play diatur di Play Console, bukan di console ini, dan harus sama dengan
+  harga normal paket. Form hanya mengirim id ini bila berubah, mengosongkannya mengirim null.
+  Id yang sudah dipakai paket lain ditolak di kolomnya, dari daftar segar atau dari pelanggaran
+  unik server.
 
 Pasang: SQL CashFlow dulu, baru landing. Sebelum SQL terpasang halaman menulis "fitur belum
-aktif". Mundur landing cukup.
+aktif". Mundur landing cukup. Sebelum migrasi `play_produk_id` terpasang, semua paket tampil
+"Belum di Play" dan form tetap menyimpan selama isian Google Play tidak diisi.
 
 ```bash
 CASHFLOW_MIGRASI=<repo cashflow>/supabase/migrations npx vitest run tests/cashflow/paket.test.ts tests/cashflow/rpc-console.test.ts
