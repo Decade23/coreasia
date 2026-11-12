@@ -14,7 +14,8 @@
  *    lanjut}
  * - Terbaru dulu. `waktu` = saat lunas, atau saat dibuat bila belum lunas.
  *   Halaman berikutnya lewat p_sebelum = `lanjut` (null = sudah habis).
- * - `kode` sudah disingkat server (8 aksara terakhir kode pembelian).
+ * - `kode` sudah disingkat server (kode pendek yang sama dengan di surel
+ *   notifikasi). Console menampilkannya apa adanya.
  * - p_status dan p_jalur null = semua. p_batas dijepit server 1..200.
  *   Nilai saringan yang tidak dikenal: 22023 `masukan_tidak_sah`.
  * - Ringkasan dihitung atas SEMUA baris yang cocok saringan (bukan hanya
