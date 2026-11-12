@@ -700,6 +700,32 @@ aplikasi. Menyegarkan tiap 60 detik. Pasang: SQL CashFlow dulu, baru landing. Se
 terpasang kartunya menulis status belum bisa dibaca, ubin lain tetap tampil.
 Mundur landing cukup; tab menjawab "belum aktif" bila RPC belum terpasang.
 
+## Paket kredit Domi
+
+Halaman `/console/cashflow/paket` mengatur paket kredit Domi yang dilihat pengguna di aplikasi
+dan di halaman kredit. Sumbernya satu tabel di database CashFlow, jadi perubahan langsung berlaku
+tanpa rilis aplikasi. Harga yang ditagih tetap dihitung server saat pembelian dibuat.
+
+- RPC: `admin_ai_paket_daftar` (izin view, tanpa audit), `admin_ai_paket_simpan` dan
+  `admin_ai_paket_hapus` (izin pii, audit `set_ai_paket` dan `hapus_ai_paket`). Ketiganya
+  memulangkan daftar terbaru beserta jam server, dan status promo dihitung dengan jam itu.
+- Simpan menggabung per kode. Paket baru dengan kode yang sudah ada ditolak console sebelum
+  dikirim, ubah lewat form memeriksa `diubah` lebih dulu, dan aksi baris (aktif, bawaan, urutan)
+  hanya mengirim kolom yang berubah.
+- Paket bawaan harus aktif dan bukan khusus uji. Menonaktifkan paket bawaan ikut melepas bawaannya.
+- Paket yang pernah dibeli tidak bisa dihapus (23503 `paket_sudah_dibeli`). Dialog hapus lalu
+  menawarkan Nonaktifkan.
+- Tanpa login ber-TOTP daftar tetap terbaca dan tombol tulis mati. Penolakan tulisan tanpa pii
+  (42501 tanpa hint) dibaca console sebagai izin kurang, bukan "bukan admin".
+
+Pasang: SQL CashFlow dulu, baru landing. Sebelum SQL terpasang halaman menulis "fitur belum
+aktif". Mundur landing cukup.
+
+```bash
+CASHFLOW_MIGRASI=<repo cashflow>/supabase/migrations npx vitest run tests/cashflow/paket.test.ts tests/cashflow/rpc-console.test.ts
+node scripts/cek-komponen-cashflow.mjs
+```
+
 ## Batas yang diketahui
 
 - **Console dan halaman publik satu origin (risiko sisa yang disadari, K6).**
