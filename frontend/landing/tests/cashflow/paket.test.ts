@@ -57,6 +57,7 @@ const BARIS: PaketAdminDTO = {
   urutan: 20, diubah: W, diubah_oleh: '00000000-0000-4000-8000-000000000001', play_produk_id: 'kredit_50',
   efektif: { kode: 'hemat', kredit: 50, harga: 34000, harga_normal: 40000, hemat_persen: 15, label: 'Paling laris', promo_sampai: '2026-12-01T00:00:00+00:00', bawaan: true },
   promo: 'berlaku', terjual: 7, pernah_dibeli: true,
+  play_terjual: 3, play_harga_terakhir: { harga_mikro: 34000000000, mata_uang: 'IDR', pada: W },
 }
 const paket = (ubah: Partial<PaketKredit> = {}): PaketKredit => ({ ...kePaket(BARIS), ...ubah })
 const isian = (ubah: Partial<IsianPaket> = {}): IsianPaket => ({
@@ -649,9 +650,11 @@ describe.skipIf(!adaPaket)(`kontrak migrasi paket kredit (${DIR_MIGRASI})`, () =
   it('daftar, simpan, dan hapus memulangkan bentuk yang sama, dengan kunci yang dikenal adapter', () => {
     for (const rpc of RPC_PAKET) expect(fungsiTerakhir(rpc).badan, rpc).toMatch(/return public\.ai_paket_admin_bangun\(\);/)
     const kunci = semuaPohonJsonb(badanJawaban('admin_ai_paket_daftar')).flatMap(kunciPohon)
-    const dto: Array<keyof PaketAdminDTO> = [...KOLOM_DTO as Array<keyof PaketAdminDTO>, 'efektif', 'promo', 'terjual', 'pernah_dibeli']
-    expect(new Set(kunci)).toEqual(new Set(['paket', 'kini', ...dto]))
-    expect(Object.keys(BARIS).filter(k => adaPlay || k !== 'play_produk_id').sort()).toEqual([...dto].sort())
+    const play: Array<keyof PaketAdminDTO> = adaPlay ? ['play_terjual', 'play_harga_terakhir'] : []
+    const dto: Array<keyof PaketAdminDTO> = [...KOLOM_DTO as Array<keyof PaketAdminDTO>, 'efektif', 'promo', 'terjual', 'pernah_dibeli', ...play]
+    // play_harga_terakhir membawa {harga_mikro, mata_uang, pada} (migrasi Play Billing 20261112130000).
+    expect(new Set(kunci)).toEqual(new Set(['paket', 'kini', ...dto, ...(adaPlay ? ['harga_mikro', 'mata_uang', 'pada'] : [])]))
+    expect(Object.keys(BARIS).filter(k => adaPlay || !k.startsWith('play_')).sort()).toEqual([...dto].sort())
     // Bentuk efektif boleh membawa play_produk_id (untuk aplikasi); console tidak memakainya.
     const efektif = semuaPohonJsonb(fungsiTerakhir('ai_paket_kredit_efektif_inti').badan).flatMap(kunciPohon)
     expect(efektif.filter(k => k !== 'play_produk_id').sort()).toEqual(Object.keys(BARIS.efektif!).sort())

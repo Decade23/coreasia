@@ -113,6 +113,10 @@ export interface PaketAdminDTO {
   terjual?: Angka
   /** Ada pembelian apa pun (lunas, menunggu, kedaluwarsa, batal). Hapus ditolak. */
   pernah_dibeli?: boolean | null
+  /** Pembelian Google Play yang masuk untuk paket ini. Console belum menampilkannya. */
+  play_terjual?: Angka
+  /** Harga terakhir yang dilaporkan aplikasi dari Google Play. Console belum menampilkannya. */
+  play_harga_terakhir?: { harga_mikro?: Angka; mata_uang?: string | null; pada?: string | null } | null
 }
 export type DaftarPaketDTO = { paket: PaketAdminDTO[] | null; kini?: string | null } | PaketAdminDTO[] | null
 
