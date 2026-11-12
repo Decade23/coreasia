@@ -27,6 +27,7 @@
  * - sesi hilang    → /console/cashflow/masuk dengan `ke` = URL lengkap saat ini.
  */
 import { GalatAdmin, petakanGalat } from './useCashflowAdmin'
+import { playTerpakaiDariGalat } from '~/adapters/cashflowPaket'
 
 export const useCashflowMuat = (opsi: { awal?: boolean } = {}) => {
   const { tcf } = useCashflowI18n()
@@ -57,6 +58,8 @@ export const useCashflowMuat = (opsi: { awal?: boolean } = {}) => {
     if (g.message === 'paket_tidak_sah') return tcf('paket.galat.tidakSah')
     if (g.message === 'paket_sudah_dibeli') return tcf('paket.galat.sudahDibeli')
     if (g.message === 'paket_tidak_ada') return tcf('paket.galat.hilang')
+    // Pelanggaran unik produk Play (23505): kalimat Postgres mentah, jangan ditampilkan.
+    if (playTerpakaiDariGalat(g)) return tcf('paket.galat.playTerpakai')
     // 0114: hapus permanen ditolak penjaga yang sama dengan aplikasi (P0001).
     if (g.hint === 'alihkan-kepemilikan') return tcf('galat.alihkanKepemilikan')
     // 0114: akun yang masih admin console tidak bisa dihapus permanen (P0001).

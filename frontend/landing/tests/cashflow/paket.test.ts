@@ -5,7 +5,9 @@
  *
  * Kontrak dibandingkan dengan definisi TERAKHIR di folder migrasi CashFlow
  * (tests/cashflow/migrasi.ts). Sebelum migrasi paket kredit ada di folder
- * itu, bagian kontrak DILEWATI dan terlihat "skipped".
+ * itu, bagian kontrak DILEWATI dan terlihat "skipped". Kolom produk Google
+ * Play (play_produk_id) datang di migrasi sesudahnya: sebelum kolom itu ada
+ * di tabel, kontrak memeriksa bentuk lama dan uji "belum ada" terlihat.
  *
  * Semua kode paket, harga, dan tanggal di sini karangan.
  */
@@ -15,10 +17,11 @@ import { fileURLToPath } from 'node:url'
 import { computed, ref } from 'vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
-  HARGA_MAKS, HEMAT_MAKS, HEMAT_MIN, KOLOM_PAKET, KREDIT_MAKS, LABEL_MAKS, POLA_KODE_PAKET, STATUS_PROMO, promoSah,
-  barisPaket, bolehJadiBawaan, daftarPaket, geserUrutan, hargaSaatPromo, hargaTampil, hematPersen, isianBaru, isianDariPaket,
-  kePaket, kiniServer, kolomDariGalat, muatanAktif, paketDariIsian, paketSudahDibeli, paketTidakAda, periksaIsian, ringkasPaket,
-  statusPromo, urutkanPaket,
+  HARGA_MAKS, HEMAT_MAKS, HEMAT_MIN, KOLOM_PAKET, KREDIT_MAKS, LABEL_MAKS, PLAY_PRODUK_MAKS, POLA_KODE_PAKET, POLA_PLAY_PRODUK,
+  STATUS_PROMO, promoSah,
+  barisPaket, bolehJadiBawaan, daftarPaket, galatKolomServer, geserUrutan, hargaSaatPromo, hargaTampil, hematPersen, isianBaru,
+  isianDariPaket, kePaket, kiniServer, kolomDariGalat, muatanAktif, paketDariIsian, paketSudahDibeli, paketTidakAda, periksaIsian,
+  playPaketLain, playTerpakaiDariGalat, ringkasPaket, statusPromo, urutkanPaket,
   type IsianPaket, type KodeGalatPaket, type MuatanPaket, type PaketAdminDTO, type PaketKredit,
 } from '../../adapters/cashflowPaket'
 import { adaMigrasi, DIR_MIGRASI, fungsiTerakhir, kolomTabel, parameterFungsi, semuaPohonJsonb, type PohonKunci } from './migrasi'
@@ -51,21 +54,24 @@ const W = '2026-11-01T03:00:00.000Z'
 const BARIS: PaketAdminDTO = {
   kode: 'hemat', kredit: 50, harga: 40000, harga_promo: 34000, promo_mulai: '2026-11-01T00:00:00+00:00',
   promo_sampai: '2026-12-01T00:00:00+00:00', label: 'Paling laris', bawaan: true, aktif: true, khusus_uji: false,
-  urutan: 20, diubah: W, diubah_oleh: '00000000-0000-4000-8000-000000000001',
+  urutan: 20, diubah: W, diubah_oleh: '00000000-0000-4000-8000-000000000001', play_produk_id: 'kredit_50',
   efektif: { kode: 'hemat', kredit: 50, harga: 34000, harga_normal: 40000, hemat_persen: 15, label: 'Paling laris', promo_sampai: '2026-12-01T00:00:00+00:00', bawaan: true },
   promo: 'berlaku', terjual: 7, pernah_dibeli: true,
 }
 const paket = (ubah: Partial<PaketKredit> = {}): PaketKredit => ({ ...kePaket(BARIS), ...ubah })
 const isian = (ubah: Partial<IsianPaket> = {}): IsianPaket => ({
   kode: 'baru_1', kredit: '25', harga: '25.000', hargaPromo: '', promoMulai: '', promoSampai: '', label: '',
-  urutan: '30', bawaan: false, aktif: true, khususUji: false, ...ubah,
+  urutan: '30', bawaan: false, aktif: true, khususUji: false, playProdukId: '', ...ubah,
 })
+/** Kolom form tanpa produk Play: p_paket yang dikirim bila produk Play tidak berubah. */
+const KOLOM_TANPA_PLAY = KOLOM_PAKET.filter(k => k !== 'play_produk_id')
 
 describe('adapter: baris daftar', () => {
   it('memetakan setiap kolom, angka teks ikut terbaca', () => {
     expect(kePaket(BARIS)).toEqual({
       kode: 'hemat', kredit: 50, harga: 40000, hargaPromo: 34000, promoMulai: BARIS.promo_mulai, promoSampai: BARIS.promo_sampai,
       label: 'Paling laris', bawaan: true, aktif: true, khususUji: false, urutan: 20, diubah: W, terjual: 7, pernahDibeli: true,
+      playProdukId: 'kredit_50',
     })
     const teks = kePaket({ ...BARIS, kredit: '50', harga: '40000', harga_promo: null, urutan: '-5', terjual: '12' })
     expect([teks.kredit, teks.harga, teks.hargaPromo, teks.urutan, teks.terjual]).toEqual([50, 40000, null, -5, 12])
@@ -81,6 +87,13 @@ describe('adapter: baris daftar', () => {
     expect(p.khususUji).toBe(false)
     expect(p.terjual).toBeNull()
     expect(p.pernahDibeli).toBe(false)
+  })
+
+  it('produk Play: kosong, spasi, atau belum dikirim server (sebelum migrasinya) = belum di Play', () => {
+    expect(kePaket({ ...BARIS, play_produk_id: null }).playProdukId).toBeNull()
+    expect(kePaket({ ...BARIS, play_produk_id: '  ' }).playProdukId).toBeNull()
+    const { play_produk_id: _, ...lama } = BARIS
+    expect(kePaket(lama).playProdukId).toBeNull()
   })
 
   it('pernah dibeli: dari pernah_dibeli, atau bila terjual > 0', () => {
@@ -176,11 +189,15 @@ describe('adapter: aturan isian sama dengan server', () => {
   it('isian sah menghasilkan p_paket lengkap dengan kunci kolom tabel', () => {
     const h = periksaIsian(isian({ label: '  Hemat  ' }))
     expect(h.galat).toEqual({})
-    expect(Object.keys(h.muatan!).sort()).toEqual([...KOLOM_PAKET].sort())
+    // Produk Play kosong di paket baru tidak dikirim: server mengisi null.
+    expect(Object.keys(h.muatan!).sort()).toEqual([...KOLOM_TANPA_PLAY].sort())
     expect(h.muatan).toEqual({
       kode: 'baru_1', kredit: 25, harga: 25000, harga_promo: null, promo_mulai: null, promo_sampai: null,
       label: 'Hemat', urutan: 30, bawaan: false, aktif: true, khusus_uji: false,
     })
+    const play = periksaIsian(isian({ playProdukId: ' kredit_25 ' }))
+    expect(Object.keys(play.muatan!).sort()).toEqual([...KOLOM_PAKET].sort())
+    expect(play.muatan?.play_produk_id).toBe('kredit_25')
   })
 
   it('kode: pola ^[a-z0-9_-]{1,24}$ dan tidak boleh menimpa paket lain', () => {
@@ -267,7 +284,7 @@ describe('adapter: aturan isian sama dengan server', () => {
     const i = isianDariPaket(asal)
     expect(i).toEqual({
       kode: 'hemat', kredit: '50', harga: '40000', hargaPromo: '34000', promoMulai: '2026-11-01T07:00', promoSampai: '2026-12-01T07:00',
-      label: 'Paling laris', urutan: '20', bawaan: true, aktif: true, khususUji: false,
+      label: 'Paling laris', urutan: '20', bawaan: true, aktif: true, khususUji: false, playProdukId: 'kredit_50',
     })
     const h = periksaIsian(i, { asal })
     expect(h.muatan).toEqual({
@@ -278,8 +295,8 @@ describe('adapter: aturan isian sama dengan server', () => {
     expect(periksaIsian({ ...i, promoSampai: '2026-12-01T08:00' }, { asal }).muatan?.promo_sampai).toBe('2026-12-01T01:00:00.000Z')
   })
 
-  it('isian baru: aktif, urutan sesudah yang terakhir', () => {
-    expect(isianBaru([])).toMatchObject({ aktif: true, bawaan: false, khususUji: false, urutan: '10' })
+  it('isian baru: aktif, urutan sesudah yang terakhir, belum di Play', () => {
+    expect(isianBaru([])).toMatchObject({ aktif: true, bawaan: false, khususUji: false, urutan: '10', playProdukId: '' })
     expect(isianBaru([paket({ urutan: 20 }), paket({ kode: 'b', urutan: 5 })]).urutan).toBe('30')
   })
 
@@ -287,6 +304,40 @@ describe('adapter: aturan isian sama dengan server', () => {
     expect(paketDariIsian(isian({ harga: '25000', hargaPromo: '27500' })).hargaPromo).toBeNull()
     expect(paketDariIsian(isian({ harga: '25000', hargaPromo: '20000', label: ' Baru ' }))).toMatchObject({ hargaPromo: 20000, label: 'Baru', kredit: 25 })
     expect(paketDariIsian(isian({ kredit: 'x', harga: '' }))).toMatchObject({ kredit: 0, harga: 0 })
+  })
+
+  it('produk Play: pola ^[a-z0-9_.]{1,40}$, boleh kosong', () => {
+    expect(POLA_PLAY_PRODUK.source).toBe('^[a-z0-9_.]{1,40}$')
+    expect(PLAY_PRODUK_MAKS).toBe(40)
+    for (const v of ['Kredit_30', 'kredit-30', 'dua kata', 'a'.repeat(41), 'ü', 'kredit/30']) {
+      expect(galat({ playProdukId: v }).play_produk_id, v).toBe('playPola')
+    }
+    for (const v of ['', '   ', 'kredit_30', 'id.contoh.kredit_70', 'a'.repeat(40), '123', ' kredit_30 ']) {
+      expect(galat({ playProdukId: v }).play_produk_id, v).toBeUndefined()
+    }
+  })
+
+  it('produk Play tidak boleh dipakai paket lain; paket yang disunting boleh memakai miliknya sendiri', () => {
+    const d = [paket({ kode: 'a', playProdukId: 'kredit_10' }), paket({ kode: 'b', playProdukId: null }), paket({ kode: 'c', playProdukId: 'kredit_30' })]
+    expect(playPaketLain(d, null)).toEqual(['kredit_10', 'kredit_30'])
+    expect(playPaketLain(d, 'c')).toEqual(['kredit_10'])
+    expect(galat({ playProdukId: 'kredit_30' }, { playTerpakai: playPaketLain(d, null) }).play_produk_id).toBe('playTerpakai')
+    expect(galat({ playProdukId: ' kredit_30 ' }, { playTerpakai: playPaketLain(d, null) }).play_produk_id).toBe('playTerpakai')
+    const asal = d[2]!
+    expect(periksaIsian(isianDariPaket(asal), { playTerpakai: playPaketLain(d, 'c'), asal }).galat).toEqual({})
+  })
+
+  it('produk Play hanya dikirim bila berubah: diisi, diganti, atau dikosongkan (null)', () => {
+    const asal = paket({ playProdukId: 'kredit_50' })
+    const i = isianDariPaket(asal)
+    expect(periksaIsian(i, { asal }).muatan).not.toHaveProperty('play_produk_id')
+    expect(periksaIsian({ ...i, playProdukId: ' kredit_50 ' }, { asal }).muatan).not.toHaveProperty('play_produk_id')
+    expect(periksaIsian({ ...i, playProdukId: 'kredit_55' }, { asal }).muatan?.play_produk_id).toBe('kredit_55')
+    expect(periksaIsian({ ...i, playProdukId: '  ' }, { asal }).muatan?.play_produk_id).toBeNull()
+    // Paket lama yang belum di Play: tetap tidak dikirim, sampai diisi.
+    const tanpa = paket({ playProdukId: null })
+    expect(periksaIsian(isianDariPaket(tanpa), { asal: tanpa }).muatan).not.toHaveProperty('play_produk_id')
+    expect(periksaIsian({ ...isianDariPaket(tanpa), playProdukId: 'kredit_50' }, { asal: tanpa }).muatan?.play_produk_id).toBe('kredit_50')
   })
 
   it('aksi baris hanya mengirim kode + kolom yang berubah; menonaktifkan bawaan ikut melepasnya', () => {
@@ -337,6 +388,19 @@ describe('galat server', () => {
     expect(kolomDariGalat(null)).toBeNull()
   })
 
+  it('produk Play dipakai paket lain: pelanggaran unik 23505 menempel di kolom produk Play', () => {
+    const unik = petakanGalat({ code: '23505', message: 'duplicate key value violates unique constraint "ai_paket_kredit_play_produk_id_key"' })
+    expect(playTerpakaiDariGalat(unik)).toBe(true)
+    expect(galatKolomServer(unik)).toEqual({ kolom: 'play_produk_id', kode: 'playTerpakai' })
+    // Indeks unik lain di tabel yang sama bukan galat produk Play.
+    expect(galatKolomServer(petakanGalat({ code: '23505', message: 'duplicate key value violates unique constraint "ai_paket_kredit_pkey"' }))).toBeNull()
+    expect(galatKolomServer(petakanGalat({ code: '23505', message: 'duplicate key value violates unique constraint "ai_paket_kredit_satu_bawaan"' }))).toBeNull()
+    // 22023 dengan hint produk Play: galat server umum di kolom itu.
+    expect(galatKolomServer(petakanGalat({ code: '22023', message: 'paket_tidak_sah', hint: 'play_produk_id' }))).toEqual({ kolom: 'play_produk_id', kode: 'server' })
+    expect(galatKolomServer(petakanGalat({ code: '22023', message: 'paket_tidak_sah', hint: 'harga' }))).toEqual({ kolom: 'harga', kode: 'server' })
+    expect(galatKolomServer(null)).toBeNull()
+  })
+
   it('hapus ditolak: 23503 paket_sudah_dibeli; kode hilang: P0002 paket_tidak_ada', () => {
     const dibeli = petakanGalat({ code: '23503', message: 'paket_sudah_dibeli', hint: 'aktif' })
     expect(paketSudahDibeli(dibeli)).toBe(true)
@@ -352,6 +416,8 @@ describe('galat server', () => {
     expect(pesanUntuk(petakanGalat({ code: '22023', message: 'paket_tidak_sah', hint: 'harga' }))).toBe('paket.galat.tidakSah')
     expect(pesanUntuk(petakanGalat({ code: '23503', message: 'paket_sudah_dibeli', hint: 'aktif' }))).toBe('paket.galat.sudahDibeli')
     expect(pesanUntuk(petakanGalat({ code: 'P0002', message: 'paket_tidak_ada', hint: 'kode' }))).toBe('paket.galat.hilang')
+    expect(pesanUntuk(petakanGalat({ code: '23505', message: 'duplicate key value violates unique constraint "ai_paket_kredit_play_produk_id_key"' })))
+      .toBe('paket.galat.playTerpakai')
     expect(pesanUntuk(petakanGalat({ code: 'PGRST202', message: 'Could not find the function' }))).toBe('galat.belumAktif')
   })
 })
@@ -377,6 +443,17 @@ describe('lapisan RPC (Supabase tiruan)', () => {
       { nama: 'admin_ai_paket_simpan', a: { p_paket: { kode: 'hemat', aktif: false, bawaan: false } } },
       { nama: 'admin_ai_paket_hapus', a: { p_kode: 'hemat' } },
     ])
+  })
+
+  it('simpan membawa play_produk_id hanya bila produk Play berubah', async () => {
+    jawaban = { data: { paket: [BARIS] }, error: null }
+    const asal = paket()
+    const ganti = periksaIsian({ ...isianDariPaket(asal), playProdukId: 'kredit_55' }, { asal }).muatan!
+    const tetap = periksaIsian(isianDariPaket(asal), { asal }).muatan!
+    await api.aiPaketSimpan(ganti)
+    await api.aiPaketSimpan(tetap)
+    expect(panggilan.map(p => (p.a.p_paket as Record<string, unknown>).play_produk_id)).toEqual(['kredit_55', undefined])
+    expect(daftarPaket(await api.aiPaketDaftar())[0]?.playProdukId).toBe('kredit_50')
   })
 
   it('galat server diteruskan dengan pesan dan hint', async () => {
@@ -409,7 +486,8 @@ function semuaTeks(v: unknown): string[] {
 describe('kamus dan halaman', () => {
   const KODE_GALAT: KodeGalatPaket[] = [
     'kodePola', 'kodeTerpakai', 'kreditRentang', 'hargaRentang', 'promoRentang', 'promoTidakLebihMurah', 'promoHemat',
-    'tanggalRusak', 'sampaiSebelumMulai', 'labelPanjang', 'labelKarakter', 'urutanAngka', 'bawaanSyarat', 'server',
+    'tanggalRusak', 'sampaiSebelumMulai', 'labelPanjang', 'labelKarakter', 'urutanAngka', 'bawaanSyarat',
+    'playPola', 'playTerpakai', 'server',
   ]
 
   it('kunci dinamis punya teks ID dan EN', () => {
@@ -417,7 +495,8 @@ describe('kamus dan halaman', () => {
       'nav.paket',
       ...STATUS_PROMO.map(s => `paket.status.${s}`),
       ...KODE_GALAT.map(k => `paket.galat.${k}`),
-      ...['aktif', 'bawaan', 'khususUji'].flatMap(k => [`paket.form.${k}`, `paket.form.${k}Ket`]),
+      ...['aktif', 'bawaan', 'khususUji', 'play'].flatMap(k => [`paket.form.${k}`, `paket.form.${k}Ket`]),
+      'paket.form.playHargaUmum', 'paket.kolom.play', 'paket.belumPlay',
     ]
     const hilang = jalur.flatMap(j => (['id', 'en'] as const).filter(b => typeof ambil(b, j) !== 'string').map(b => `${b}:${j}`))
     expect(hilang).toEqual([])
@@ -471,7 +550,14 @@ const adaPaket = adaMigrasi && RPC_PAKET.every((n) => { try { fungsiTerakhir(n);
 const sqlSemua = () => (adaMigrasi ? readdirSync(DIR_MIGRASI).filter(n => n.endsWith('.sql')).sort()
   .map(n => readFileSync(join(DIR_MIGRASI, n), 'utf8').replace(/--[^\n]*/g, '')).join('\n') : '')
 const kunciPohon = (p: PohonKunci): string[] => Object.entries(p).flatMap(([k, v]) => [k, ...(v ? kunciPohon(v) : [])])
-const KOLOM_DTO = ['kode', 'kredit', 'harga', 'harga_promo', 'promo_mulai', 'promo_sampai', 'label', 'bawaan', 'aktif', 'khusus_uji', 'urutan', 'diubah', 'diubah_oleh']
+/** Migrasi produk Play sudah ada di folder: kolomnya ada di tabel. */
+const adaPlay = adaPaket && kolomTabel('ai_paket_kredit').kolom.includes('play_produk_id')
+const KOLOM_DTO = [
+  'kode', 'kredit', 'harga', 'harga_promo', 'promo_mulai', 'promo_sampai', 'label', 'bawaan', 'aktif', 'khusus_uji', 'urutan', 'diubah', 'diubah_oleh',
+  ...(adaPlay ? ['play_produk_id'] : []),
+]
+/** Kunci p_paket yang diterima server: tanpa produk Play sebelum migrasinya. */
+const KOLOM_TERIMA = adaPlay ? [...KOLOM_PAKET] : KOLOM_TANPA_PLAY
 /** Badan fungsi yang benar-benar membangun jawaban admin: RPC-nya, atau pembantu yang ia pulangkan. */
 const badanJawaban = (rpc: string): string => {
   const badan = fungsiTerakhir(rpc).badan
@@ -488,9 +574,9 @@ describe.skipIf(!adaPaket)(`kontrak migrasi paket kredit (${DIR_MIGRASI})`, () =
 
   it('kolom tabel ai_paket_kredit = kolom DTO, isian form = kolom yang bisa ditulis', () => {
     expect(kolomTabel('ai_paket_kredit').kolom).toEqual([...KOLOM_DTO].sort())
-    for (const k of KOLOM_PAKET) expect(KOLOM_DTO).toContain(k)
+    for (const k of KOLOM_TERIMA) expect(KOLOM_DTO).toContain(k)
     const terima = /v_kunci\s+not\s+in\s*\(([^)]*)\)/.exec(fungsiTerakhir('admin_ai_paket_simpan').badan)?.[1] ?? ''
-    expect([...terima.matchAll(/'([a-z_]+)'/g)].map(m => m[1]).sort()).toEqual([...KOLOM_PAKET].sort())
+    expect([...terima.matchAll(/'([a-z_]+)'/g)].map(m => m[1]).sort()).toEqual([...KOLOM_TERIMA].sort())
   })
 
   it('CHECK server sama dengan aturan isian console', () => {
@@ -503,6 +589,24 @@ describe.skipIf(!adaPaket)(`kontrak migrasi paket kredit (${DIR_MIGRASI})`, () =
     expect(sql).toContain('check (label is null or char_length(label) between 1 and 24)')
     expect(sql).toContain('check (not bawaan or (aktif and not khusus_uji))')
     expect(fungsiTerakhir('admin_ai_paket_simpan').badan).toContain("v_teks ~ '[[:cntrl:]]'")
+  })
+
+  it.skipIf(!adaPlay)('produk Play: pola server = POLA_PLAY_PRODUK, unik dengan nama yang dikenali console', () => {
+    const sql = sqlSemua()
+    expect(sql).toContain(`'${POLA_PLAY_PRODUK.source}'`)
+    // Pelanggaran unik harus bisa dipetakan ke kolomnya: nama indeks memuat "play"
+    // (unique di kolom memberi nama <tabel>_play_produk_id_key), atau simpan
+    // menolaknya sendiri dengan paket_tidak_sah hint play_produk_id.
+    const pesan = (nama: string) => `duplicate key value violates unique constraint "${nama}"`
+    const sebaris = /play_produk_id\s+text\b[^,;]*\bunique\b/i.test(sql) ? ['ai_paket_kredit_play_produk_id_key'] : []
+    const bernama = [
+      ...sql.matchAll(/create\s+unique\s+index\s+(?:if\s+not\s+exists\s+)?(\w+)\s+on\s+(?:public\.)?ai_paket_kredit\s*(?:using\s+\w+\s*)?\(\s*play_produk_id\b/gi),
+      ...sql.matchAll(/constraint\s+(\w+)\s+unique\s*\(\s*play_produk_id\s*\)/gi),
+    ].map(m => m[1]!)
+    const nama = [...sebaris, ...bernama]
+    const tolakSendiri = /'paket_tidak_sah' using errcode = '22023', hint = 'play_produk_id'/.test(fungsiTerakhir('admin_ai_paket_simpan').badan)
+    expect(nama.length > 0 || tolakSendiri, 'unique play_produk_id tidak ditemukan').toBe(true)
+    for (const n of nama) expect(playTerpakaiDariGalat({ message: pesan(n) }), n).toBe(true)
   })
 
   it('waktu yang dikirim console lolos pola waktu server', () => {
@@ -547,9 +651,10 @@ describe.skipIf(!adaPaket)(`kontrak migrasi paket kredit (${DIR_MIGRASI})`, () =
     const kunci = semuaPohonJsonb(badanJawaban('admin_ai_paket_daftar')).flatMap(kunciPohon)
     const dto: Array<keyof PaketAdminDTO> = [...KOLOM_DTO as Array<keyof PaketAdminDTO>, 'efektif', 'promo', 'terjual', 'pernah_dibeli']
     expect(new Set(kunci)).toEqual(new Set(['paket', 'kini', ...dto]))
-    expect(Object.keys(BARIS).sort()).toEqual([...dto].sort())
+    expect(Object.keys(BARIS).filter(k => adaPlay || k !== 'play_produk_id').sort()).toEqual([...dto].sort())
+    // Bentuk efektif boleh membawa play_produk_id (untuk aplikasi); console tidak memakainya.
     const efektif = semuaPohonJsonb(fungsiTerakhir('ai_paket_kredit_efektif_inti').badan).flatMap(kunciPohon)
-    expect(efektif.sort()).toEqual(Object.keys(BARIS.efektif!).sort())
+    expect(efektif.filter(k => k !== 'play_produk_id').sort()).toEqual(Object.keys(BARIS.efektif!).sort())
   })
 
   it('ketiga RPC bisa dipanggil sesi console (grant execute ke authenticated)', () => {
@@ -565,4 +670,8 @@ describe.skipIf(!adaPaket)(`kontrak migrasi paket kredit (${DIR_MIGRASI})`, () =
 
 it.skipIf(adaPaket || !adaMigrasi)('migrasi paket kredit belum ada di folder CashFlow: kontrak dilewati', () => {
   expect(existsSync(DIR_MIGRASI)).toBe(true)
+})
+
+it.skipIf(!adaPaket || adaPlay)('migrasi produk Play belum ada di folder CashFlow: kontrak memeriksa bentuk tanpa play_produk_id', () => {
+  expect(kolomTabel('ai_paket_kredit').kolom).not.toContain('play_produk_id')
 })

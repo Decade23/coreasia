@@ -7,8 +7,9 @@
  *   yang nonaktif dan khusus uji, urut urutan lalu kode (collate C). Baris =
  *   semua kolom tabel ai_paket_kredit (kode, kredit, harga normal,
  *   harga_promo, promo_mulai, promo_sampai, label, bawaan, aktif, khusus_uji,
- *   urutan, diubah, diubah_oleh) + efektif (paket efektif sekarang) + promo
- *   (status) + terjual (pembelian lunas) + pernah_dibeli (pembelian apa pun).
+ *   urutan, diubah, diubah_oleh, play_produk_id) + efektif (paket efektif
+ *   sekarang) + promo (status) + terjual (pembelian lunas) + pernah_dibeli
+ *   (pembelian apa pun).
  *   `kini` = jam server, dipakai sebagai jam halaman (kiniServer).
  * - admin_ai_paket_simpan(p_paket jsonb) → bentuk yang sama dengan daftar.
  *   Tambah atau ubah per kode dan MENGGABUNG: kunci yang dikirim menimpa,
@@ -19,6 +20,17 @@
  * - admin_ai_paket_hapus(p_kode text) → bentuk yang sama dengan daftar.
  *   Pernah dibeli: 23503 `paket_sudah_dibeli` (paketSudahDibeli). Kode tidak
  *   ada: P0002 `paket_tidak_ada`.
+ *
+ * PRODUK GOOGLE PLAY. play_produk_id (teks, unik, boleh null) memetakan paket
+ * ke produk sekali beli di Play Console. Harga Play diatur di Play Console,
+ * harga di tabel tetap untuk Xendit dan tampilan. Form hanya mengirim
+ * play_produk_id bila nilainya berubah dari paket asal (paket baru: bila
+ * terisi). Simpan menggabung per kode, jadi kunci yang tidak dikirim tetap,
+ * dan form tetap bisa menyimpan sebelum migrasi kolom itu terpasang. null
+ * mengosongkannya. Dipakai paket lain: kode yang sudah dibaca ulang ditolak
+ * di sini (playTerpakai), pelanggaran unik dari server dipetakan oleh
+ * galatKolomServer ke kolom yang sama.
+ *
  * Penjaganya sama dengan admin_ai_setelan_simpan: membaca butuh
  * cashflow:view, menulis butuh cashflow:pii. Audit ditulis server
  * (set_ai_paket, hapus_ai_paket).
@@ -33,13 +45,17 @@
  * Aturan isian (periksaIsian) menyalin CHECK server: kode ^[a-z0-9_-]{1,24}$,
  * kredit 1..10000, harga 1..10.000.000, harga promo >= 1 dan < harga dengan
  * hemat (dibulatkan) 1..99 persen, sampai > mulai bila keduanya ada, label 1..24 huruf tanpa karakter kendali,
- * bawaan hanya untuk paket aktif yang bukan khusus uji. Server tetap penentu.
+ * bawaan hanya untuk paket aktif yang bukan khusus uji, produk Play kosong atau
+ * ^[a-z0-9_.]{1,40}$ dan tidak dipakai paket lain. Server tetap penentu.
  *
  * Fungsi MURNI semua: tanpa jaringan, tanpa state.
  */
 import { dariDatetimeLokalWib, keDatetimeLokalWib } from './cashflowWaktu'
 
 export const POLA_KODE_PAKET = /^[a-z0-9_-]{1,24}$/
+/** Id produk Google Play (kolom play_produk_id). Kosong = belum di Play. */
+export const POLA_PLAY_PRODUK = /^[a-z0-9_.]{1,40}$/
+export const PLAY_PRODUK_MAKS = 40
 export const KREDIT_MIN = 1
 export const KREDIT_MAKS = 10_000
 export const HARGA_MIN = 1
@@ -54,6 +70,7 @@ const INT_MAKS = 2_147_483_647
 /** Kolom isian = kunci p_paket = nama kolom yang dipakai server sebagai hint galat. */
 export const KOLOM_PAKET = [
   'kode', 'kredit', 'harga', 'harga_promo', 'promo_mulai', 'promo_sampai', 'label', 'urutan', 'bawaan', 'aktif', 'khusus_uji',
+  'play_produk_id',
 ] as const
 export type KolomPaket = typeof KOLOM_PAKET[number]
 
@@ -70,6 +87,8 @@ export interface PaketEfektifDTO {
   label: string | null
   promo_sampai: string | null
   bawaan: boolean | null
+  /** Ikut di bentuk efektif sesudah migrasi produk Play; console tidak memakainya. */
+  play_produk_id?: string | null
 }
 export interface PaketAdminDTO {
   kode: string
@@ -85,6 +104,8 @@ export interface PaketAdminDTO {
   urutan: Angka
   diubah: string | null
   diubah_oleh: string | null
+  /** Id produk Google Play; null = belum di Play. Tidak ada sebelum migrasinya terpasang. */
+  play_produk_id?: string | null
   efektif?: PaketEfektifDTO | null
   /** tanpa | terjadwal | berlaku | berakhir, pada jam server `kini`. */
   promo?: string | null
@@ -115,6 +136,8 @@ export interface PaketKredit {
   terjual: number | null
   /** Ada pembelian apa pun dengan kode ini: server akan menolak hapus. */
   pernahDibeli: boolean
+  /** Id produk Google Play; null = belum di Play. */
+  playProdukId: string | null
 }
 
 export type StatusPromo = 'tanpa' | 'terjadwal' | 'berlaku' | 'berakhir'
@@ -149,6 +172,7 @@ export function kePaket(dto: PaketAdminDTO): PaketKredit {
     diubah: teksAtauNull(dto.diubah),
     terjual,
     pernahDibeli: dto.pernah_dibeli === true || (terjual ?? 0) > 0,
+    playProdukId: teksAtauNull(dto.play_produk_id),
   }
 }
 
@@ -251,9 +275,12 @@ export interface IsianPaket {
   bawaan: boolean
   aktif: boolean
   khususUji: boolean
+  /** Id produk Google Play; kosong = belum di Play. */
+  playProdukId: string
 }
 
-/** p_paket lengkap (form): kunci = kolom tabel yang bisa ditulis. */
+/** p_paket lengkap (form): kunci = kolom tabel yang bisa ditulis.
+ *  play_produk_id hanya ada bila berubah dari paket asal (lihat periksaIsian). */
 export interface MuatanPaket {
   kode: string
   kredit: number
@@ -266,6 +293,7 @@ export interface MuatanPaket {
   bawaan: boolean
   aktif: boolean
   khusus_uji: boolean
+  play_produk_id?: string | null
 }
 /** p_paket untuk aksi baris: kode + kolom yang berubah. Server menggabung,
  *  jadi kolom lain (yang mungkin baru diubah admin lain) tidak tertimpa. */
@@ -273,7 +301,8 @@ export type MuatanSebagian = Pick<MuatanPaket, 'kode'> & Partial<Omit<MuatanPake
 
 export type KodeGalatPaket =
   | 'kodePola' | 'kodeTerpakai' | 'kreditRentang' | 'hargaRentang' | 'promoRentang' | 'promoTidakLebihMurah' | 'promoHemat'
-  | 'tanggalRusak' | 'sampaiSebelumMulai' | 'labelPanjang' | 'labelKarakter' | 'urutanAngka' | 'bawaanSyarat' | 'server'
+  | 'tanggalRusak' | 'sampaiSebelumMulai' | 'labelPanjang' | 'labelKarakter' | 'urutanAngka' | 'bawaanSyarat'
+  | 'playPola' | 'playTerpakai' | 'server'
 export type GalatIsian = Partial<Record<KolomPaket, KodeGalatPaket>>
 
 /** Isian kosong untuk paket baru: aktif, urutan sesudah yang terakhir. */
@@ -281,7 +310,7 @@ export function isianBaru(daftar: readonly PaketKredit[]): IsianPaket {
   const terakhir = daftar.reduce((m, p) => Math.max(m, p.urutan), 0)
   return {
     kode: '', kredit: '', harga: '', hargaPromo: '', promoMulai: '', promoSampai: '', label: '',
-    urutan: String(daftar.length ? terakhir + 10 : 10), bawaan: false, aktif: true, khususUji: false,
+    urutan: String(daftar.length ? terakhir + 10 : 10), bawaan: false, aktif: true, khususUji: false, playProdukId: '',
   }
 }
 
@@ -298,6 +327,7 @@ export function isianDariPaket(p: PaketKredit): IsianPaket {
     bawaan: p.bawaan,
     aktif: p.aktif,
     khususUji: p.khususUji,
+    playProdukId: p.playProdukId ?? '',
   }
 }
 
@@ -334,12 +364,17 @@ export interface HasilPeriksa { galat: GalatIsian; muatan: MuatanPaket | null }
 /**
  * Periksa isian seperti server, lalu rakit p_paket. `kodeTerpakai` hanya
  * diisi untuk paket BARU: simpan server menimpa per kode, jadi kode yang
- * sudah ada akan mengubah paket lama tanpa sadar. `asal` = paket yang sedang
- * disunting (tanggal yang tidak diubah dikirim persis).
+ * sudah ada akan mengubah paket lama tanpa sadar. `playTerpakai` = id produk
+ * Play milik paket LAIN (unik di server). `asal` = paket yang sedang
+ * disunting (tanggal yang tidak diubah dikirim persis, produk Play yang tidak
+ * diubah tidak dikirim).
  * Tanpa harga promo, jendela promo dikirim kosong. Bawaan harus aktif dan
  * bukan khusus uji (CHECK ai_paket_kredit_bawaan_check, hint bawaan).
  */
-export function periksaIsian(isian: IsianPaket, opsi: { kodeTerpakai?: readonly string[]; asal?: PaketKredit | null } = {}): HasilPeriksa {
+export function periksaIsian(
+  isian: IsianPaket,
+  opsi: { kodeTerpakai?: readonly string[]; playTerpakai?: readonly string[]; asal?: PaketKredit | null } = {},
+): HasilPeriksa {
   const galat: GalatIsian = {}
   const kode = isian.kode.trim()
   if (!POLA_KODE_PAKET.test(kode)) galat.kode = 'kodePola'
@@ -374,16 +409,23 @@ export function periksaIsian(isian: IsianPaket, opsi: { kodeTerpakai?: readonly 
   const urutan = urutanKetik(isian.urutan)
   if (urutan === null) galat.urutan = 'urutanAngka'
   if (isian.bawaan && (!isian.aktif || isian.khususUji)) galat.bawaan = 'bawaanSyarat'
+  const play = isian.playProdukId.trim()
+  if (play && !POLA_PLAY_PRODUK.test(play)) galat.play_produk_id = 'playPola'
+  else if (play && opsi.playTerpakai?.includes(play)) galat.play_produk_id = 'playTerpakai'
 
   if (Object.keys(galat).length) return { galat, muatan: null }
-  return {
-    galat,
-    muatan: {
-      kode, kredit: kredit!, harga: harga!, harga_promo: hargaPromo,
-      promo_mulai: mulai, promo_sampai: sampai, label: labelBersih || null,
-      urutan: urutan!, bawaan: isian.bawaan, aktif: isian.aktif, khusus_uji: isian.khususUji,
-    },
+  const muatan: MuatanPaket = {
+    kode, kredit: kredit!, harga: harga!, harga_promo: hargaPromo,
+    promo_mulai: mulai, promo_sampai: sampai, label: labelBersih || null,
+    urutan: urutan!, bawaan: isian.bawaan, aktif: isian.aktif, khusus_uji: isian.khususUji,
   }
+  if ((play || null) !== (opsi.asal?.playProdukId ?? null)) muatan.play_produk_id = play || null
+  return { galat, muatan }
+}
+
+/** Id produk Play milik paket lain (unik di server), untuk opsi playTerpakai. */
+export function playPaketLain(daftar: readonly PaketKredit[], kode: string | null): string[] {
+  return daftar.filter(p => p.kode !== kode && p.playProdukId).map(p => p.playProdukId!)
 }
 
 /** Aksi baris Nonaktifkan / Aktifkan. Paket bawaan yang dinonaktifkan ikut
@@ -443,6 +485,23 @@ interface GalatBaca { message?: string; hint?: string }
 export function kolomDariGalat(g: GalatBaca | null | undefined): KolomPaket | null {
   if (!g || g.message !== 'paket_tidak_sah') return null
   return (KOLOM_PAKET as readonly string[]).includes(g.hint ?? '') ? (g.hint as KolomPaket) : null
+}
+
+/**
+ * Id produk Play dipakai paket lain: pelanggaran unik Postgres (23505) yang
+ * menyebut indeks play_produk_id. Pesan PostgREST-nya berbentuk
+ * `duplicate key value violates unique constraint "<nama>"`. Satu-satunya
+ * indeks unik lain di tabel ini (kode, bawaan) tidak memuat kata play.
+ */
+export function playTerpakaiDariGalat(g: GalatBaca | null | undefined): boolean {
+  return !!g && /unique constraint "[^"]*play[^"]*"/i.test(g.message ?? '')
+}
+
+/** Galat server yang menempel di satu kolom form: kolom dan kode pesannya. */
+export function galatKolomServer(g: GalatBaca | null | undefined): { kolom: KolomPaket; kode: KodeGalatPaket } | null {
+  if (playTerpakaiDariGalat(g)) return { kolom: 'play_produk_id', kode: 'playTerpakai' }
+  const kolom = kolomDariGalat(g)
+  return kolom ? { kolom, kode: 'server' } : null
 }
 
 /** Hapus ditolak karena paket pernah dibeli (23503). */
