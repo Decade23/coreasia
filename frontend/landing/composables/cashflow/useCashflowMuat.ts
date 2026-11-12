@@ -57,6 +57,8 @@ export const useCashflowMuat = (opsi: { awal?: boolean } = {}) => {
     if (g.message === 'paket_tidak_sah') return tcf('paket.galat.tidakSah')
     if (g.message === 'paket_sudah_dibeli') return tcf('paket.galat.sudahDibeli')
     if (g.message === 'paket_tidak_ada') return tcf('paket.galat.hilang')
+    // Pembelian kredit: saringan status/jalur yang tidak dikenal server (22023).
+    if (g.message === 'masukan_tidak_sah') return tcf('pembelian.galat.masukan')
     // 0114: hapus permanen ditolak penjaga yang sama dengan aplikasi (P0001).
     if (g.hint === 'alihkan-kepemilikan') return tcf('galat.alihkanKepemilikan')
     // 0114: akun yang masih admin console tidak bisa dihapus permanen (P0001).

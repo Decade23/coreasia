@@ -37,6 +37,20 @@ const BERKAS_UJI = join(DIR_TOKO, 'uji-console-rpc.sql')
 const adaUji = existsSync(BERKAS_UJI)
 const UJI = adaUji ? readFileSync(BERKAS_UJI, 'utf8') : ''
 
+/**
+ * RPC yang console-nya boleh tayang lebih dulu dari migrasinya (halamannya
+ * menulis "fitur belum aktif" selama RPC itu belum ada di server). Selama
+ * fungsinya BELUM ada di folder migrasi, pemeriksaan migrasi dan uji SQL di
+ * bawah melewatinya, dan uji "menunggu migrasi" menyebut namanya. Begitu
+ * fungsinya ada di folder migrasi, semua pemeriksaan berlaku penuh: nama
+ * argumen, blok ⟦rpc-console⟧, dan kepala uji SQL. Hapus namanya dari sini
+ * sesudah migrasinya tergabung di cabang rilis CashFlow.
+ */
+const MENDAHULUI_MIGRASI: readonly string[] = ['admin_ai_pembelian_daftar']
+const adaFungsi = (nama: string): boolean => { try { fungsiTerakhir(nama); return true } catch { return false } }
+/* Tanpa folder migrasi tidak ada yang bisa dipastikan: semuanya dianggap menunggu. */
+const menunggu: ReadonlySet<string> = new Set(adaMigrasi ? MENDAHULUI_MIGRASI.filter(n => !adaFungsi(n)) : MENDAHULUI_MIGRASI)
+
 /** Pasangan metode → RPC di useCashflowAdmin: `nama: (…) => rpc<…>('admin_x'`. */
 function rpcAdmin(): Map<string, string> {
   const peta = new Map<string, string>()
@@ -84,9 +98,10 @@ function panggilanRpc(teks: string): Array<{ nama: string; kunci: string[] }> {
   return hasil
 }
 /** Selisih kunci yang dikirim dengan parameter fungsi di migrasi; [] = cocok. */
-function selisihArgumen(teks: string): string[] {
+function selisihArgumen(teks: string, lewati: ReadonlySet<string> = new Set()): string[] {
   const galat: string[] = []
   for (const { nama, kunci } of panggilanRpc(teks)) {
+    if (lewati.has(nama)) continue
     const param = parameterFungsi(nama)
     const namaParam = param.map(p => p.nama)
     for (const k of kunci) if (!namaParam.includes(k)) galat.push(`${nama}: ${k} bukan parameter (${namaParam.join(', ') || 'tanpa parameter'})`)
@@ -117,13 +132,13 @@ describe('useCashflowAdmin ↔ toko/uji-console-rpc.sql', () => {
     const uji = namaRpcUji()
     expect(new Set(uji).size).toBe(uji.length)
     // Repo backend boleh sudah menguji RPC untuk frontend yang lebih baru.
-    for (const nama of namaRpcAdmin()) expect(uji).toContain(nama)
+    for (const nama of namaRpcAdmin()) if (!menunggu.has(nama)) expect(uji).toContain(nama)
   })
 
   it.skipIf(!adaUji)('daftar di kepala uji mencakup pasangan metode → RPC di useCashflowAdmin', () => {
     const kepala = daftarKepalaUji()
     const admin = rpcAdmin()
-    for (const [metode, rpc] of admin) expect(kepala.get(metode), metode).toBe(rpc)
+    for (const [metode, rpc] of admin) if (!menunggu.has(rpc)) expect(kepala.get(metode), metode).toBe(rpc)
   })
 
   it.skipIf(!adaUji)('uji menerapkan penjagaan 0088 dan berakhir rollback', () => {
@@ -142,13 +157,21 @@ describe('useCashflowAdmin ↔ toko/uji-console-rpc.sql', () => {
   })
 
   it.skipIf(!adaMigrasi)('setiap RPC console ada di migrasi (bukan salah ketik)', () => {
-    for (const nama of namaRpcAdmin()) expect(() => fungsiTerakhir(nama), nama).not.toThrow()
+    for (const nama of namaRpcAdmin()) if (!menunggu.has(nama)) expect(() => fungsiTerakhir(nama), nama).not.toThrow()
   })
 
   it.skipIf(!adaMigrasi)('nama argumen rpc() = parameter fungsi di migrasi (PostgREST memilih menurut nama)', () => {
     const panggilan = panggilanRpc(ADMIN)
     expect([...new Set(panggilan.map(p => p.nama))].sort()).toEqual(namaRpcAdmin())
-    expect(selisihArgumen(ADMIN)).toEqual([])
+    expect(selisihArgumen(ADMIN, menunggu)).toEqual([])
+  })
+
+  it('RPC yang mendahului migrasinya memang dipanggil useCashflowAdmin (tidak ada nama basi)', () => {
+    for (const nama of MENDAHULUI_MIGRASI) expect(namaRpcAdmin()).toContain(nama)
+  })
+
+  it.skipIf(!adaMigrasi || !menunggu.size)(`menunggu migrasi: ${[...menunggu].join(', ') || '-'} belum ada di folder migrasi, pemeriksaannya dilewati`, () => {
+    for (const nama of menunggu) expect(adaFungsi(nama), nama).toBe(false)
   })
 
   it.skipIf(!adaMigrasi)('penjaga argumen menangkap salah ketik, kunci asing, dan parameter wajib yang hilang', () => {

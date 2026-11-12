@@ -108,6 +108,8 @@ import type { RingkasDukunganDTO, DaftarDukunganDTO, SumberDukungan, StatusDukun
 import { BATAS_DAFTAR_DUKUNGAN } from '~/adapters/cashflowDukungan'
 import type { SimpanPengumuman } from '~/adapters/cashflowPengumuman'
 import type { DaftarPaketDTO, MuatanPaket, MuatanSebagian } from '~/adapters/cashflowPaket'
+import type { DaftarPembelianDTO, JalurPembelian, StatusPembelian } from '~/adapters/cashflowPembelian'
+import { BATAS_DAFTAR_PEMBELIAN } from '~/adapters/cashflowPembelian'
 
 interface OpsiDaftarPengguna {
   limit: number; offset: number; cari: string; segmen: string; urut: string; arah: string
@@ -591,5 +593,15 @@ export const useCashflowAdmin = () => {
     /** Memulangkan daftar terbaru. Pernah dibeli: 23503 paket_sudah_dibeli;
      *  tidak ada: P0002 paket_tidak_ada. Butuh cashflow:pii. */
     aiPaketHapus: (kode: string) => rpc<DaftarPaketDTO>('admin_ai_paket_hapus', { p_kode: kode }).catch(galatTulisPaket),
+
+    // ── pembelian kredit Domi (adapters/cashflowPembelian) ──────────────
+    /** Terbaru dulu. `sebelum` = `lanjut` dari jawaban sebelumnya (null = halaman
+     *  pertama). Status dan jalur null = semua. Ringkasan atas SEMUA yang cocok
+     *  saringan, tanpa pembelian uji. Membuka email pembeli: setiap panggilan
+     *  dicatat server di audit. Saringan tak dikenal: 22023 masukan_tidak_sah. */
+    aiPembelianDaftar: (status: StatusPembelian | null, jalur: JalurPembelian | null, sebelum: string | null) =>
+      rpc<DaftarPembelianDTO>('admin_ai_pembelian_daftar', {
+        p_batas: BATAS_DAFTAR_PEMBELIAN, p_sebelum: sebelum, p_status: status, p_jalur: jalur,
+      }),
   }
 }
