@@ -46,7 +46,7 @@ const UJI = adaUji ? readFileSync(BERKAS_UJI, 'utf8') : ''
  * argumen, blok ⟦rpc-console⟧, dan kepala uji SQL. Hapus namanya dari sini
  * sesudah migrasinya tergabung di cabang rilis CashFlow.
  */
-const MENDAHULUI_MIGRASI: readonly string[] = ['admin_ai_pembelian_daftar']
+const MENDAHULUI_MIGRASI: readonly string[] = []
 const adaFungsi = (nama: string): boolean => { try { fungsiTerakhir(nama); return true } catch { return false } }
 /* Tanpa folder migrasi tidak ada yang bisa dipastikan: semuanya dianggap menunggu. */
 const menunggu: ReadonlySet<string> = new Set(adaMigrasi ? MENDAHULUI_MIGRASI.filter(n => !adaFungsi(n)) : MENDAHULUI_MIGRASI)
