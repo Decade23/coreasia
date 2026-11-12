@@ -16,6 +16,8 @@
  * dengan menggabung kunci, tanpa nomor versi. Maka:
  * - paket baru: daftar dibaca ulang dulu, kode yang sudah ada ditolak di sini
  *   (kodeTerpakai), bukan diam-diam menggabung ke paket lama;
+ * - produk Google Play yang baru diisi dicocokkan dengan daftar segar yang
+ *   sama: id yang sudah dipakai paket lain ditolak di kolomnya (playTerpakai);
  * - ubah lewat form: daftar dibaca ulang dulu dan `diubah` dibandingkan
  *   dengan saat form dibuka; berbeda berarti ada yang menyimpan di tempat
  *   lain, form meminta muat ulang;
@@ -27,7 +29,8 @@
  * JAM. Status promo dihitung dengan jam server (`kini` di setiap jawaban)
  * yang terus berjalan di halaman, bukan jam laptop.
  *
- * GALAT. 22023 paket_tidak_sah (hint = kolom) menempel di kolom form.
+ * GALAT. 22023 paket_tidak_sah (hint = kolom) menempel di kolom form, begitu
+ * juga pelanggaran unik produk Play (galatKolomServer).
  * Hapus yang ditolak (paket_sudah_dibeli) mengganti isi dialog dengan
  * penjelasan dan tombol Nonaktifkan. RPC yang belum terpasang (console tayang
  * lebih dulu dari migrasinya) menulis "fitur belum aktif".
@@ -36,8 +39,8 @@
  */
 definePageMeta({ layout: 'console', middleware: ['console', 'cashflow-admin'] })
 import {
-  daftarPaket, geserUrutan, isianBaru, isianDariPaket, kiniServer, kolomDariGalat, muatanAktif, paketSudahDibeli,
-  paketTidakAda, ringkasPaket,
+  daftarPaket, galatKolomServer, geserUrutan, isianBaru, isianDariPaket, kiniServer, muatanAktif, paketSudahDibeli,
+  paketTidakAda, playPaketLain, ringkasPaket,
   type DaftarPaketDTO, type GalatIsian, type IsianPaket, type MuatanPaket, type PaketKredit,
 } from '~/adapters/cashflowPaket'
 import { petakanGalat, type GalatAdmin } from '~/composables/cashflow/useCashflowAdmin'
@@ -106,6 +109,7 @@ const form = reactive({
 const galatServer = ref<GalatIsian>({})
 const basi = ref(false)
 const kodeLain = computed(() => daftar.value.map(p => p.kode))
+const playLain = computed(() => playPaketLain(daftar.value, form.mode === 'ubah' ? form.asal?.kode ?? null : null))
 
 const bukaBaru = () => {
   if (sibuk.value || !bolehUbah.value) return
@@ -134,16 +138,21 @@ const simpanForm = (muatan: MuatanPaket) => jalankan(muatan.kode, 'simpan', asyn
   const mode = form.mode
   let hasil: DaftarPaketDTO | undefined
   const ok = await aksi(async () => {
-    const ada = (await segarkan()).find(p => p.kode === muatan.kode)
+    const segar = await segarkan()
+    const ada = segar.find(p => p.kode === muatan.kode)
     if (mode === 'baru' && ada) { galatServer.value = { kode: 'kodeTerpakai' }; return }
     if (mode === 'ubah' && !ada) { toast.error(tcf('paket.galat.hilang')); form.buka = false; return }
     if (mode === 'ubah' && ada && ada.diubah !== form.versi) { basi.value = true; return }
+    if (muatan.play_produk_id && playPaketLain(segar, muatan.kode).includes(muatan.play_produk_id)) {
+      galatServer.value = { play_produk_id: 'playTerpakai' }
+      return
+    }
     hasil = await api.aiPaketSimpan(muatan)
   }, {
     gagal: (g) => {
       catatIzin(g)
-      const k = kolomDariGalat(g)
-      if (k) galatServer.value = { [k]: 'server' }
+      const k = galatKolomServer(g)
+      if (k) galatServer.value = { [k.kolom]: k.kode }
     },
   })
   if (!ok || hasil === undefined) return
@@ -258,7 +267,7 @@ useConsoleRemah().pasang(() => [
 
     <CashflowPaketForm
       v-if="form.buka" :key="form.kunci" :show="form.buka" :mode="form.mode" :isian-awal="form.isian" :asal="form.asal"
-      :kode-lain="kodeLain" :galat-server="galatServer" :sibuk="sibuk?.jenis === 'simpan'" :basi="basi" :kini="jam"
+      :kode-lain="kodeLain" :play-lain="playLain" :galat-server="galatServer" :sibuk="sibuk?.jenis === 'simpan'" :basi="basi" :kini="jam"
       @simpan="simpanForm" @tutup="tutupForm" @muat-versi="muatVersi"
     />
     <CashflowPaketKonfirmasi
