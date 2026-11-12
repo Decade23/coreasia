@@ -53,6 +53,7 @@ const HALAMAN = [
   { kunci: 'audit', ke: '/console/cashflow/audit', ikon: 'lucide:scroll-text' },
   { kunci: 'dukungan', ke: '/console/cashflow/dukungan', ikon: 'lucide:heart-handshake' },
   { kunci: 'paket', ke: '/console/cashflow/paket', ikon: 'lucide:tags' },
+  { kunci: 'pembelian', ke: '/console/cashflow/pembelian', ikon: 'lucide:receipt' },
 ] as const
 
 const q = ref('')
