@@ -76,27 +76,27 @@ const lama = (l: LamaWa | null) => (l ? tcf('kesehatan.wa.terbalik.lama')(l.n, l
       <h3 class="mt-5 text-xs font-semibold uppercase tracking-wide text-[var(--ca-muted)]">{{ tcf('kesehatan.wa.terbalik.sapaJudul') }}</h3>
       <p v-if="!cara.sapa.ada" class="mt-2 text-sm text-[var(--ca-muted)]">{{ tcf('kesehatan.wa.terbalik.sapaBelum') }}</p>
       <dl v-else class="mt-2 grid grid-cols-2 gap-3 text-sm lg:grid-cols-5">
-        <div class="min-w-0">
+        <div class="flex min-w-0 flex-col">
           <dt class="text-xs text-[var(--ca-subtle)]">{{ tcf('kesehatan.wa.terbalik.sapaKeadaan') }}</dt>
-          <dd class="font-semibold" :class="cara.sapa.aktif === false ? 'ca-tone-danger' : 'text-[var(--ca-text)]'">
+          <dd class="mt-auto font-semibold" :class="cara.sapa.aktif === false ? 'ca-tone-danger' : 'text-[var(--ca-text)]'">
             {{ cara.sapa.aktif === null ? tcf('kesehatan.wa.terbalik.sapaTakTahu') : cara.sapa.aktif ? tcf('kesehatan.wa.terbalik.sapaAktif') : tcf('kesehatan.wa.terbalik.sapaMati') }}
           </dd>
         </div>
-        <div class="min-w-0">
+        <div class="flex min-w-0 flex-col">
           <dt class="text-xs text-[var(--ca-subtle)]">{{ tcf('kesehatan.wa.terbalik.sapaTertahan') }}</dt>
-          <dd class="font-semibold tabular-nums" :class="cara.sapa.tertahan ? 'ca-tone-gold' : 'text-[var(--ca-text)]'">{{ tcf('kesehatan.wa.terbalik.pesan')(cara.sapa.tertahan) }}</dd>
+          <dd class="mt-auto font-semibold tabular-nums" :class="cara.sapa.tertahan ? 'ca-tone-gold' : 'text-[var(--ca-text)]'">{{ tcf('kesehatan.wa.terbalik.pesan')(cara.sapa.tertahan) }}</dd>
         </div>
-        <div class="min-w-0">
+        <div class="flex min-w-0 flex-col">
           <dt class="text-xs text-[var(--ca-subtle)]">{{ tcf('kesehatan.wa.terbalik.sapaTertua') }}</dt>
-          <dd class="font-semibold tabular-nums text-[var(--ca-text)]">{{ cara.sapa.tertahan ? lama(cara.sapa.tertua) : tcf('kesehatan.wa.belumAda') }}</dd>
+          <dd class="mt-auto font-semibold tabular-nums text-[var(--ca-text)]">{{ cara.sapa.tertahan ? lama(cara.sapa.tertua) : tcf('kesehatan.wa.belumAda') }}</dd>
         </div>
-        <div class="min-w-0">
+        <div class="flex min-w-0 flex-col">
           <dt class="text-xs text-[var(--ca-subtle)]">{{ tcf('kesehatan.wa.terbalik.sapaTerakhir') }}</dt>
-          <dd class="font-semibold text-[var(--ca-text)]">{{ waktu(cara.sapa.terakhirOk) }}</dd>
+          <dd class="mt-auto font-semibold text-[var(--ca-text)]">{{ waktu(cara.sapa.terakhirOk) }}</dd>
         </div>
-        <div class="min-w-0">
+        <div class="flex min-w-0 flex-col">
           <dt class="text-xs text-[var(--ca-subtle)]">{{ tcf('kesehatan.wa.terbalik.sapaDicek') }}</dt>
-          <dd class="font-semibold text-[var(--ca-text)]">{{ waktu(cara.sapa.dicekPada) }}</dd>
+          <dd class="mt-auto font-semibold text-[var(--ca-text)]">{{ waktu(cara.sapa.dicekPada) }}</dd>
         </div>
       </dl>
     </template>

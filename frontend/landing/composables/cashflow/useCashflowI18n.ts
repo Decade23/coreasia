@@ -263,9 +263,9 @@ const KAMUS = {
           pengguna: {
             terverifikasi_masuk: 'Terverifikasi lewat pesan masuk', terverifikasi_kirim: 'Terverifikasi lewat kode terkirim',
             lewat_gangguan_7h: 'Lewat saat gangguan, 7 hari', kredit_ditahan: 'Kredit gratis ditahan',
-            nomor_ramai_30h: 'Nomor dipakai 3 akun atau lebih, 30 hari',
+            nomor_ramai_30h: 'Nomor dipakai banyak akun, 30 hari',
           },
-          penggunaKet: 'Lewat saat gangguan berarti akun dibuat atau masuk tanpa nomor selama WhatsApp bermasalah. Kredit Domi gratis akun itu ditahan sampai nomornya tersambung.',
+          penggunaKet: 'Lewat saat gangguan berarti akun dibuat atau masuk tanpa nomor selama WhatsApp bermasalah. Kredit Domi gratis akun itu ditahan sampai nomornya tersambung. Nomor dipakai banyak akun berarti satu nomor tersambung ke 3 akun atau lebih.',
           lihatBelum: 'Lihat pengguna yang belum WhatsApp',
         },
       },
@@ -1259,9 +1259,9 @@ const KAMUS = {
           pengguna: {
             terverifikasi_masuk: 'Verified by incoming message', terverifikasi_kirim: 'Verified by sent code',
             lewat_gangguan_7h: 'Got through during an issue, 7 days', kredit_ditahan: 'Free credit on hold',
-            nomor_ramai_30h: 'Numbers on 3 or more accounts, 30 days',
+            nomor_ramai_30h: 'Numbers on many accounts, 30 days',
           },
-          penggunaKet: 'Got through during an issue means the account was created or signed in without a number while WhatsApp had problems. Its free Domi credit is on hold until the number is connected.',
+          penggunaKet: 'Got through during an issue means the account was created or signed in without a number while WhatsApp had problems. Its free Domi credit is on hold until the number is connected. A number on many accounts is connected to 3 or more of them.',
           lihatBelum: 'See users without WhatsApp',
         },
       },

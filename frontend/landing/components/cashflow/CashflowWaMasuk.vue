@@ -37,9 +37,9 @@ const batasHabis = computed(() => {
         </p>
       </div>
       <dl class="mt-3 grid grid-cols-2 gap-3 text-sm sm:grid-cols-5">
-        <div v-for="k in ANGKA_MASUK_WA" :key="k" class="min-w-0">
+        <div v-for="k in ANGKA_MASUK_WA" :key="k" class="flex min-w-0 flex-col">
           <dt class="text-xs text-[var(--ca-subtle)]">{{ tcf(`kesehatan.wa.terbalik.angka.${k}`) }}</dt>
-          <dd class="font-bold tabular-nums" :class="PERHATIAN.has(k) && cara.angka24j[k] ? 'ca-tone-gold' : k === 'berhasil' && cara.angka24j[k] ? 'ca-tone-emerald' : 'text-[var(--ca-text)]'">{{ angka(cara.angka24j[k]) }}</dd>
+          <dd class="mt-auto font-bold tabular-nums" :class="PERHATIAN.has(k) && cara.angka24j[k] ? 'ca-tone-gold' : k === 'berhasil' && cara.angka24j[k] ? 'ca-tone-emerald' : 'text-[var(--ca-text)]'">{{ angka(cara.angka24j[k]) }}</dd>
         </div>
       </dl>
     </template>
@@ -73,9 +73,9 @@ const batasHabis = computed(() => {
         <NuxtLink :to="{ path: '/console/cashflow/pengguna', query: { seg: SEGMEN_BELUM_WA } }" class="text-xs font-semibold text-[var(--ca-text)] underline">{{ tcf('kesehatan.wa.terbalik.lihatBelum') }}</NuxtLink>
       </div>
       <dl class="mt-2 grid grid-cols-2 gap-3 text-sm sm:grid-cols-5">
-        <div v-for="k in ANGKA_PENGGUNA_WA" :key="k" class="min-w-0">
+        <div v-for="k in ANGKA_PENGGUNA_WA" :key="k" class="flex min-w-0 flex-col">
           <dt class="text-xs text-[var(--ca-subtle)]">{{ tcf(`kesehatan.wa.terbalik.pengguna.${k}`) }}</dt>
-          <dd class="font-bold tabular-nums" :class="PERHATIAN_PENGGUNA.has(k) && cara.pengguna[k] ? 'ca-tone-gold' : 'text-[var(--ca-text)]'">{{ angka(cara.pengguna[k]) }}</dd>
+          <dd class="mt-auto font-bold tabular-nums" :class="PERHATIAN_PENGGUNA.has(k) && cara.pengguna[k] ? 'ca-tone-gold' : 'text-[var(--ca-text)]'">{{ angka(cara.pengguna[k]) }}</dd>
         </div>
       </dl>
       <p class="mt-2 text-xs text-[var(--ca-subtle)]">{{ tcf('kesehatan.wa.terbalik.penggunaKet') }}</p>

@@ -24,12 +24,12 @@ const label = computed(() => (props.status.status === 'lewat' && props.status.se
 <template>
   <div class="min-w-0">
     <div :class="baris ? 'flex flex-wrap items-baseline gap-x-2' : ''">
-      <span class="text-sm font-semibold" :class="NADA[status.status]">{{ label }}</span>
+      <span class="font-semibold leading-snug" :class="[NADA[status.status], baris ? 'text-sm' : 'block text-xs']">{{ label }}</span>
       <span v-if="status.padaIso" class="text-xs tabular-nums text-[var(--ca-subtle)]" :class="baris ? '' : 'block'">{{ status.pada }}</span>
     </div>
     <div v-if="status.nomorRamai || status.kreditDitahan" class="mt-1 flex flex-wrap gap-1">
-      <span v-if="status.nomorRamai" class="ca-pill-gold whitespace-nowrap text-[0.7rem]" :title="tcf('pengguna.statusWa.ramaiKet')">{{ tcf('pengguna.statusWa.ramai') }}</span>
-      <span v-if="status.kreditDitahan" class="ca-pill-info whitespace-nowrap text-[0.7rem]" :title="tcf('pengguna.statusWa.kreditKet')">{{ tcf('pengguna.statusWa.kredit') }}</span>
+      <span v-if="status.nomorRamai" class="ca-pill-gold !rounded-lg !px-2 !py-0.5 text-[0.65rem] leading-tight" :title="tcf('pengguna.statusWa.ramaiKet')">{{ tcf('pengguna.statusWa.ramai') }}</span>
+      <span v-if="status.kreditDitahan" class="ca-pill-info !rounded-lg !px-2 !py-0.5 text-[0.65rem] leading-tight" :title="tcf('pengguna.statusWa.kreditKet')">{{ tcf('pengguna.statusWa.kredit') }}</span>
     </div>
   </div>
 </template>

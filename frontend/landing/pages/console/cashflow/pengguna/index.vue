@@ -246,7 +246,8 @@ const kolom = computed(() => [
   {
     key: 'status_wa', label: tcf('pengguna.statusWa.judul'), type: 'status' as const, filterable: serverStatusWa.value,
     options: STATUS_WA_AKUN.map(s => ({ label: labelStatusWa(s), value: s })),
-    class: 'min-w-[8.5rem] max-w-[10rem] whitespace-normal',
+    // Lebar tetap hanya bila ada isinya: kolom kosong (server lama) tidak boleh menyempitkan email.
+    class: serverStatusWa.value ? 'w-[7.5rem] min-w-[7rem] whitespace-normal' : 'whitespace-normal',
   },
   { key: 'versi', label: tcf('pengguna.versi'), type: 'text' as const, sortable: true, class: 'whitespace-nowrap tabular-nums' },
   { key: 'daftar', label: tcf('pengguna.daftar'), type: 'text' as const, sortable: true, class: 'whitespace-nowrap text-[var(--ca-muted)]' },
@@ -535,8 +536,9 @@ useCashflowPintasan([{ kunci: '/', aksi: () => kolomCari.value?.focus() }])
 </template>
 
 <style scoped>
-/* Delapan kolom harus muat tanpa gulir samping mulai jendela 1280 px: jarak sel
-   tabel di halaman ini sedikit lebih rapat daripada bawaan DataTable (1rem). */
+/* Jarak sel tabel di halaman ini sedikit lebih rapat daripada bawaan DataTable
+   (1rem). Dengan kolom Status WhatsApp, sepuluh kolom muat tanpa gulir samping
+   mulai jendela 1440 px. Di 1280 px tabel bergulir sedikit di dalam bingkainya. */
 .ca-daftar-pengguna :deep(.ca-console-table th),
 .ca-daftar-pengguna :deep(.ca-console-table td) {
   padding-inline: 0.625rem;
