@@ -20,11 +20,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   BATAS_DAFTAR_PEMBELIAN, JALUR_PEMBELIAN, SARING_JALUR_PEMBELIAN, SARING_STATUS_PEMBELIAN, STATUS_PEMBELIAN,
   barisPembelian, gabungPembelian, halamanPembelian, kePembelian, keRingkasPembelian, kursorSesudah, masukanTidakSah,
-  pillStatusPembelian, playBelumDikonsumsi, saringPembelianKeServer,
+  jedaKreditPlay, pillStatusPembelian, playBelumDikonsumsi, saringPembelianKeServer, uangPlay,
   type DaftarPembelianDTO, type PembelianDTO, type Pembelian,
 } from '../../adapters/cashflowPembelian'
 import {
-  adaMigrasi, DIR_MIGRASI, fungsiTerakhir, parameterFungsi, pohonContoh, semuaPohonJsonb, urutPohon, type PohonKunci,
+  adaMigrasi, adaMigrasiNomor, DIR_MIGRASI, fungsiTerakhir, parameterFungsi, pohonContoh, semuaPohonJsonb, urutPohon, type PohonKunci,
 } from './migrasi'
 import { KAMUS_CASHFLOW } from '../../composables/cashflow/useCashflowI18n'
 
@@ -53,6 +53,7 @@ const baca = (rel: string) => readFileSync(join(AKAR, rel), 'utf8')
 const RPC = 'admin_ai_pembelian_daftar'
 const W1 = '2026-11-12T08:15:00+00:00'
 const W2 = '2026-11-11T23:40:00+00:00'
+const MASUK = '2026-11-12T08:15:07+00:00'
 
 /* Kontrak terkunci: kunci jsonb persis seperti yang dijanjikan RPC. Elemen
    larik diwakili satu elemen; null = daun. */
@@ -83,6 +84,34 @@ const DAFTAR: Required<DaftarPembelianDTO> = {
   baris: [BARIS_PLAY, BARIS_QRIS],
   ringkas: { lunas: 3, nominal_lunas: '115000', perkiraan_diterima: 97750, batal: 1 },
   lanjut: W2,
+}
+const DAFTAR_ORDERS: Required<DaftarPembelianDTO> = {
+  ...DAFTAR,
+  baris: [{
+    ...BARIS_PLAY,
+    play: {
+      ...BARIS_PLAY.play!, harga_mikro: '42000000000', mata_uang: 'IDR', pajak_mikro: 4620000000,
+      total_mikro: 46620000000, diterima_mikro: 35700000000, sumber_harga: 'play_orders',
+      google_lunas_pada: W1, rtdn_pada: W1, aplikasi_lapor_pada: null, kredit_masuk_pada: MASUK,
+    },
+  }, BARIS_QRIS],
+  ringkas: {
+    ...DAFTAR.ringkas!, total_tidak_tersedia: 2, diterima_tidak_tersedia: 1, diterima_perkiraan: 1,
+  },
+}
+const KONTRAK_ORDERS: PohonKunci = {
+  ...KONTRAK,
+  baris: {
+    ...KONTRAK.baris,
+    play: {
+      ...KONTRAK.baris!.play, harga_mikro: null, mata_uang: null, pajak_mikro: null, total_mikro: null,
+      diterima_mikro: null, sumber_harga: null, google_lunas_pada: null, rtdn_pada: null,
+      aplikasi_lapor_pada: null, kredit_masuk_pada: null,
+    },
+  },
+  ringkas: {
+    ...KONTRAK.ringkas, total_tidak_tersedia: null, diterima_tidak_tersedia: null, diterima_perkiraan: null,
+  },
 }
 const beli = (ubah: Partial<Pembelian> = {}): Pembelian => ({ ...kePembelian(BARIS_PLAY), ...ubah })
 
@@ -126,7 +155,10 @@ describe('adapter: baris pembelian', () => {
   it('jawaban daftar: baris tanpa id dibuang, ringkasan dan kursor terbaca', () => {
     const h = halamanPembelian({ ...DAFTAR, baris: [BARIS_PLAY, { ...BARIS_QRIS, id: '' }, null, 'x'] })
     expect(h.baris.map(b => b.id)).toEqual([BARIS_PLAY.id])
-    expect(h.ringkas).toEqual({ lunas: 3, nominalLunas: 115000, perkiraanDiterima: 97750, batal: 1 })
+    expect(h.ringkas).toEqual({
+      lunas: 3, nominalLunas: 115000, perkiraanDiterima: 97750, batal: 1,
+      totalTidakTersedia: null, diterimaTidakTersedia: null, diterimaPerkiraan: null,
+    })
     expect(h.lanjut).toBe(W2)
     expect(halamanPembelian(null)).toEqual({ baris: [], ringkas: null, lanjut: null })
     expect(halamanPembelian({ baris: null, ringkas: null, lanjut: null })).toEqual({ baris: [], ringkas: null, lanjut: null })
@@ -135,8 +167,39 @@ describe('adapter: baris pembelian', () => {
 
   it('ringkasan: angka rusak jadi 0, bukan NaN', () => {
     expect(keRingkasPembelian({ lunas: 'x', nominal_lunas: null, perkiraan_diterima: '1,5', batal: 2 }))
-      .toEqual({ lunas: 0, nominalLunas: 0, perkiraanDiterima: 0, batal: 2 })
+      .toEqual({
+        lunas: 0, nominalLunas: 0, perkiraanDiterima: 0, batal: 2,
+        totalTidakTersedia: null, diterimaTidakTersedia: null, diterimaPerkiraan: null,
+      })
     expect(keRingkasPembelian(null)).toBeNull()
+  })
+})
+
+describe('data pembayaran Play', () => {
+  it('membaca total, pajak, penerimaan dan jeda dari bukti Google', () => {
+    const h = halamanPembelian(DAFTAR_ORDERS)
+    const play = h.baris[0]!.play!
+    expect(play.uang).toEqual({
+      mataUang: 'IDR', harga: 42000000000, pajak: 4620000000, total: 46620000000,
+      diterima: 35700000000, sumber: 'play_orders',
+    })
+    expect(play.waktu).toEqual({ googleLunas: W1, rtdn: W1, aplikasiLapor: null, kreditMasuk: MASUK })
+    expect(jedaKreditPlay(play.waktu!)).toBe(7)
+    expect(jedaKreditPlay({ ...play.waktu!, kreditMasuk: W1 })).toBe(0)
+    expect(jedaKreditPlay({ ...play.waktu!, kreditMasuk: W2 })).toBeNull()
+    expect(jedaKreditPlay({ ...play.waktu!, googleLunas: null })).toBeNull()
+    expect(h.ringkas).toMatchObject({ totalTidakTersedia: 2, diterimaTidakTersedia: 1, diterimaPerkiraan: 1 })
+  })
+
+  it('menahan perkiraan dari total, menyimpan pajak nol, dan memformat mata uang pesanan', () => {
+    const sumber = DAFTAR_ORDERS.baris![0]!
+    const play = { ...sumber.play!, mata_uang: 'USD', harga_mikro: 3250000, pajak_mikro: 0, total_mikro: 3250000 }
+    expect(kePembelian({ ...sumber, play }).play?.uang).toMatchObject({ mataUang: 'USD', pajak: 0, total: 3250000 })
+    expect(kePembelian({ ...sumber, play: { ...play, sumber_harga: 'perkiraan_aplikasi' } }).play?.uang)
+      .toMatchObject({ harga: 3250000, pajak: null, total: null, diterima: null, sumber: 'perkiraan_aplikasi' })
+    expect(kePembelian({ ...sumber, play: { ...play, mata_uang: 'rusak' } }).play?.uang).toBeUndefined()
+    expect(uangPlay(3250000, 'USD', 'en-US')).toBe('$3.25')
+    expect(uangPlay(46620000000, 'IDR', 'id-ID')).toContain('46.620')
   })
 })
 
@@ -183,6 +246,7 @@ describe('adapter: halaman berikutnya', () => {
 describe('kontrak terkunci: contoh jawaban dan Supabase tiruan', () => {
   it('contoh jawaban memuat persis kunci kontrak, tidak lebih dan tidak kurang', () => {
     expect(urutPohon(pohonContoh(DAFTAR))).toEqual(urutPohon(KONTRAK))
+    expect(urutPohon(pohonContoh(DAFTAR_ORDERS))).toEqual(urutPohon(KONTRAK_ORDERS))
   })
 
   it('halaman pertama: p_batas, p_sebelum null, saringan null = semua', async () => {
@@ -347,7 +411,8 @@ const adaPembelian = adaMigrasi && (() => { try { fungsiTerakhir(RPC); return tr
 /** Badan RPC, ditambah badan pembantu yang ia pulangkan (return public.x(...)). */
 const badanJawaban = (): string => {
   const badan = fungsiTerakhir(RPC).badan
-  const pembantu = [...badan.matchAll(/return\s+public\.(\w+)\s*\(/g)].map(m => m[1]!)
+  const pembantu = [...badan.matchAll(/(?:return\s+public\.(\w+)|public\.(ai_kredit_play_harga_inti))\s*\(/g)]
+    .map(m => (m[1] ?? m[2])!)
   return [badan, ...pembantu.map(n => fungsiTerakhir(n).badan)].join('\n')
 }
 /** Semua objek jsonb_build_object di badan, termasuk yang bersarang. */
@@ -372,11 +437,15 @@ describe.skipIf(!adaPembelian)(`kontrak migrasi pembelian kredit (${DIR_MIGRASI}
 
   it('bentuk jawaban = kontrak terkunci (atas, baris, pembeli, play, ringkas)', () => {
     const badan = badanJawaban()
-    expect(kunciObjek(badan, 'baris', 'ringkas', 'lanjut')).toEqual(kunci(KONTRAK))
-    expect(kunciObjek(badan, 'kode', 'jalur', 'nominal')).toEqual(kunci(KONTRAK.baris!))
-    expect(kunciObjek(badan, 'user_id', 'email')).toEqual(kunci(KONTRAK.baris!.pembeli!))
-    expect(kunciObjek(badan, 'order', 'dikonsumsi')).toEqual(kunci(KONTRAK.baris!.play!))
-    expect(kunciObjek(badan, 'nominal_lunas', 'perkiraan_diterima')).toEqual(kunci(KONTRAK.ringkas!))
+    const kontrak = adaMigrasiNomor('20261113210000') ? KONTRAK_ORDERS : KONTRAK
+    expect(kunciObjek(badan, 'baris', 'ringkas', 'lanjut')).toEqual(kunci(kontrak))
+    expect(kunciObjek(badan, 'kode', 'jalur', 'nominal')).toEqual(kunci(kontrak.baris!))
+    expect(kunciObjek(badan, 'user_id', 'email')).toEqual(kunci(kontrak.baris!.pembeli!))
+    const kunciPlay = adaMigrasiNomor('20261113210000')
+      ? [...(kunciObjek(badan, 'harga_mikro', 'order') ?? []), ...(kunciObjek(badan, 'dikonsumsi', 'batal_pada') ?? [])].sort()
+      : kunciObjek(badan, 'order', 'dikonsumsi')
+    expect(kunciPlay).toEqual(kunci(kontrak.baris!.play!))
+    expect(kunciObjek(badan, 'nominal_lunas', 'perkiraan_diterima')).toEqual(kunci(kontrak.ringkas!))
   })
 
   it('penjaga admin, galat saringan masukan_tidak_sah 22023, jepit batas 200', () => {

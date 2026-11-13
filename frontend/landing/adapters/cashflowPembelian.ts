@@ -9,8 +9,8 @@
  * returns jsonb
  *   {baris: [{id, kode, waktu, status, jalur, paket, kredit, nominal, uji,
  *             pembeli: {user_id, email, nama},
- *             play: {order, dikonsumsi, batal_pada} | null}],
- *    ringkas: {lunas, nominal_lunas, perkiraan_diterima, batal},
+ *             play: PlayPembelianDTO | null}],
+ *    ringkas: RingkasPembelianDTO,
  *    lanjut}
  * - Terbaru dulu. `waktu` = saat lunas, atau saat dibuat bila belum lunas.
  *   Halaman berikutnya lewat p_sebelum = `lanjut` (null = sudah habis).
@@ -56,6 +56,16 @@ export interface PlayPembelianDTO {
   order: string | null
   dikonsumsi: boolean | null
   batal_pada: string | null
+  harga_mikro?: Angka
+  mata_uang?: string | null
+  pajak_mikro?: Angka
+  total_mikro?: Angka
+  diterima_mikro?: Angka
+  sumber_harga?: string | null
+  google_lunas_pada?: string | null
+  rtdn_pada?: string | null
+  aplikasi_lapor_pada?: string | null
+  kredit_masuk_pada?: string | null
 }
 export interface PembelianDTO {
   id: string
@@ -75,6 +85,9 @@ export interface RingkasPembelianDTO {
   nominal_lunas: Angka
   perkiraan_diterima: Angka
   batal: Angka
+  total_tidak_tersedia?: Angka
+  diterima_tidak_tersedia?: Angka
+  diterima_perkiraan?: Angka
 }
 export interface DaftarPembelianDTO {
   baris: PembelianDTO[] | null
@@ -93,18 +106,39 @@ export interface Pembelian {
   jalur: JalurPembelian | null
   paket: string | null
   kredit: number | null
-  /** Harga yang ditagih, rupiah. null = tidak terbaca. */
+  /** Tagihan QRIS atau harga dasar paket Play, dalam rupiah. */
   nominal: number | null
   uji: boolean
   pembeli: { userId: string | null; email: string | null; nama: string | null }
   /** Hanya untuk jalur Google Play. */
-  play: { order: string | null; dikonsumsi: boolean; batalIso: string | null } | null
+  play: {
+    order: string | null
+    dikonsumsi: boolean
+    batalIso: string | null
+    uang?: {
+      mataUang: string
+      harga: number | null
+      pajak: number | null
+      total: number | null
+      diterima: number | null
+      sumber: 'play_orders' | 'perkiraan_aplikasi' | 'perkiraan_paket' | null
+    }
+    waktu?: {
+      googleLunas: string | null
+      rtdn: string | null
+      aplikasiLapor: string | null
+      kreditMasuk: string | null
+    }
+  } | null
 }
 export interface RingkasPembelian {
   lunas: number
   nominalLunas: number
   perkiraanDiterima: number
   batal: number
+  totalTidakTersedia: number | null
+  diterimaTidakTersedia: number | null
+  diterimaPerkiraan: number | null
 }
 export interface HalamanPembelian {
   baris: Pembelian[]
@@ -115,7 +149,7 @@ export interface HalamanPembelian {
 
 /** Bilangan bulat dari angka atau teks angka; selain itu null. */
 function bulat(v: unknown): number | null {
-  if (typeof v === 'number') return Number.isInteger(v) ? v : null
+  if (typeof v === 'number') return Number.isSafeInteger(v) ? v : null
   if (typeof v === 'string' && /^-?\d+$/.test(v.trim())) {
     const n = Number(v.trim())
     return Number.isSafeInteger(n) ? n : null
@@ -127,6 +161,55 @@ const dari = <T extends string>(daftar: readonly T[], v: unknown): T | null =>
   (typeof v === 'string' && (daftar as readonly string[]).includes(v) ? v as T : null)
 const objek = (v: unknown): Record<string, unknown> | null =>
   (v && typeof v === 'object' && !Array.isArray(v) ? v as Record<string, unknown> : null)
+
+function positifAtauNol(v: unknown): number | null {
+  const n = bulat(v)
+  return n !== null && n >= 0 ? n : null
+}
+
+function waktuIso(v: unknown): string | null {
+  const s = teks(v)
+  return s && Number.isFinite(Date.parse(s)) ? s : null
+}
+
+function kePlay(play: Record<string, unknown>): NonNullable<Pembelian['play']> {
+  const hasil: NonNullable<Pembelian['play']> = {
+    order: teks(play.order), dikonsumsi: play.dikonsumsi === true, batalIso: waktuIso(play.batal_pada),
+  }
+  const mataUang = teks(play.mata_uang)
+  if (mataUang && /^[A-Z]{3}$/.test(mataUang)) {
+    const sumber = dari(['play_orders', 'perkiraan_aplikasi', 'perkiraan_paket'] as const, play.sumber_harga)
+    const terverifikasi = sumber === 'play_orders'
+    hasil.uang = {
+      mataUang, sumber,
+      harga: positifAtauNol(play.harga_mikro),
+      pajak: terverifikasi ? positifAtauNol(play.pajak_mikro) : null,
+      total: terverifikasi ? positifAtauNol(play.total_mikro) : null,
+      diterima: terverifikasi ? bulat(play.diterima_mikro) : null,
+    }
+  }
+  const waktu = {
+    googleLunas: waktuIso(play.google_lunas_pada),
+    rtdn: waktuIso(play.rtdn_pada),
+    aplikasiLapor: waktuIso(play.aplikasi_lapor_pada),
+    kreditMasuk: waktuIso(play.kredit_masuk_pada),
+  }
+  if (Object.values(waktu).some(Boolean)) hasil.waktu = waktu
+  return hasil
+}
+
+export function uangPlay(mikro: number, mataUang: string, locale: string): string {
+  return new Intl.NumberFormat(locale, {
+    style: 'currency', currency: mataUang, maximumFractionDigits: 6,
+    minimumFractionDigits: 0,
+  }).format(mikro / 1_000_000)
+}
+
+export function jedaKreditPlay(waktu: NonNullable<NonNullable<Pembelian['play']>['waktu']>): number | null {
+  if (!waktu.googleLunas || !waktu.kreditMasuk) return null
+  const ms = Date.parse(waktu.kreditMasuk) - Date.parse(waktu.googleLunas)
+  return Number.isFinite(ms) && ms >= 0 ? Math.round(ms / 1000) : null
+}
 
 export function kePembelian(dto: PembelianDTO): Pembelian {
   const pembeli = objek(dto.pembeli)
@@ -146,9 +229,7 @@ export function kePembelian(dto: PembelianDTO): Pembelian {
       email: teks(pembeli?.email),
       nama: teks(pembeli?.nama),
     },
-    play: play
-      ? { order: teks(play.order), dikonsumsi: play.dikonsumsi === true, batalIso: teks(play.batal_pada) }
-      : null,
+    play: play ? kePlay(play) : null,
   }
 }
 
@@ -160,6 +241,9 @@ export function keRingkasPembelian(dto: RingkasPembelianDTO | null | undefined):
     nominalLunas: bulat(r.nominal_lunas) ?? 0,
     perkiraanDiterima: bulat(r.perkiraan_diterima) ?? 0,
     batal: bulat(r.batal) ?? 0,
+    totalTidakTersedia: positifAtauNol(r.total_tidak_tersedia),
+    diterimaTidakTersedia: positifAtauNol(r.diterima_tidak_tersedia),
+    diterimaPerkiraan: positifAtauNol(r.diterima_perkiraan),
   }
 }
 
@@ -209,8 +293,7 @@ export function pillStatusPembelian(s: StatusPembelian | null): string {
   }
 }
 
-/** Pembelian Play yang sudah lunas tapi belum dikonsumsi: kreditnya mungkin
- *  belum masuk, perlu dilihat. Pembelian yang sudah dibatalkan Google tidak. */
+/** Pembelian Play yang lunas dan belum selesai dikonsumsi di Google. */
 export const playBelumDikonsumsi = (p: Pick<Pembelian, 'status' | 'jalur' | 'play'>): boolean =>
   p.jalur === 'play' && p.status === 'lunas' && !!p.play && !p.play.dikonsumsi && !p.play.batalIso
 
