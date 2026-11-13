@@ -803,6 +803,73 @@ CASHFLOW_MIGRASI=<repo cashflow>/supabase/migrations npx vitest run tests/cashfl
 node scripts/cek-komponen-cashflow.mjs
 ```
 
+## Sasaran pengumuman berbasis aturan
+
+Pengumuman bisa dikirim ke penerima **Otomatis dengan aturan**, jadi tidak perlu memilih akun satu per
+satu. Penerimanya dihitung server setiap kali aplikasi bertanya, sehingga pendaftar baru yang cocok
+ikut menerima.
+
+Cara memakai:
+
+1. Di `/console/cashflow/pengumuman`, Buat pengumuman, lalu pilih penerima **Otomatis dengan aturan**.
+2. **Mulai dari** Semua pengguna atau sebuah segmen tersimpan. Untuk Semua pengguna, isi saringan yang
+   perlu saja: versi aplikasi (mulai versi, di bawah versi, dan apakah yang versinya tak diketahui ikut),
+   tanggal daftar WIB, aktif dalam N hari terakhir, ruang, Domi (pernah pakai, pernah beli kredit,
+   kredit habis), dan nomor WhatsApp. Versi memakai nama rilis Play bila kodenya dikenal (`RILIS_PLAY`
+   di `adapters/cashflowVersi.ts`), kode lain bisa diketik.
+3. **Kecualikan**: "Kecualikan akun internal" bawaannya nyala. Pengguna dan kelompok tertentu bisa
+   ditambahkan dengan pemilih yang sama dengan penerima lama.
+4. Kotak **Siapa yang menerima** di samping pratinjau menulis jumlah penerima saat ini, berapa tak
+   terjangkau karena aplikasinya di bawah 1.3.8, berapa versinya tak diketahui, berapa dikecualikan,
+   dan contoh email tersamar. Kotak ini disegarkan dengan jeda setiap isian berubah.
+5. **Simpan saringan sebagai segmen** menyimpan saringan yang sedang diisi dengan nama. Bila "Pakai
+   segmen ini" dicentang, pengumuman merujuk segmennya. Segmen dibaca hidup: mengubah segmen ikut
+   mengubah penerima pengumuman yang memakainya.
+6. Tombol **Segmen** di kepala halaman membuka daftar segmen: jumlah anggota, dipakai berapa pengumuman
+   aktif atau terjadwal, sunting, dan hapus. Segmen yang masih dipakai ditolak server (23503
+   `segmen-dipakai`) dan console menulis alasannya di kartu segmen itu.
+
+Tabel pengumuman menulis aturan dalam kalimat awam, misalnya "Semua pengguna, versi di bawah 1.4.1,
+kecuali akun internal". Penerima jenis lama (semua, satu, beberapa, kelompok) tidak berubah.
+
+Kartu **Akun internal** di Sakelar mengelola akun milik kita sendiri (pemilik, akun uji, peninjau
+Google) yang dikecualikan pengumuman beraturan. Tambah lewat email, ubah jenis dan catatan, atau hapus.
+Setiap tulisan beralasan dan beraudit. Email tampil utuh hanya untuk sesi ber-izin pii. Tahap ini hanya
+pengumuman yang membaca daftar itu.
+
+Batas yang perlu diingat: pengumuman beraturan hanya sampai ke aplikasi 1.3.8 ke atas
+(`pengumuman_aktif_v3`). Aplikasi lebih lama hanya menerima pengumuman Semua pengguna.
+
+RPC: `admin_daftar_pengumuman_v4`, `admin_simpan_pengumuman_v4`, `admin_pratinjau_penerima_pengumuman`,
+`admin_daftar_segmen_pengumuman`, `admin_simpan_segmen_pengumuman`, `admin_hapus_segmen_pengumuman`,
+`admin_daftar_akun_internal`, `admin_simpan_akun_internal`, `admin_hapus_akun_internal`.
+
+### Urutan rilis
+
+1. **SQL CashFlow dulu**: migrasi sasaran pengumuman dan isi awal akun internal, lewat `toko/sql.sh`
+   dengan gladi seperti biasa.
+2. **Landing sesudahnya.** Console memeriksa sendiri: bila `admin_daftar_pengumuman_v4` belum ada
+   (PGRST202), halaman kembali ke v3, pilihan aturan, tombol Segmen, dan kotak pratinjau penerima tidak
+   tampil, dan kartu Akun internal menulis "belum aktif". Jadi landing yang tayang lebih dulu tidak
+   rusak, hanya belum menawarkan fitur baru.
+3. Sesudah tayang, tambahkan akun internal yang belum ada di isi awal lewat kartu Akun internal.
+
+Mundur landing cukup. Pengumuman beraturan yang sudah terbit tetap dibaca aplikasi lewat server.
+
+Uji kontrak terhadap migrasi berjalan begitu fungsinya ada di folder `CASHFLOW_MIGRASI`. Sebelum itu
+bagiannya terlihat "skipped", dan `rpc-console.test.ts` melewatinya lewat `MENDAHULUI_MIGRASI`. Sesudah
+migrasinya tergabung, hapus kesembilan nama dari daftar itu dan pastikan `toko/uji-console-rpc.sql` di
+repo CashFlow memuatnya (blok rpc-console dan baris kepala metode ke RPC).
+
+```bash
+CASHFLOW_MIGRASI=<repo cashflow>/supabase/migrations CASHFLOW_TOKO=<repo cashflow>/toko \
+  npx vitest run tests/cashflow/pengumuman-aturan.test.ts tests/cashflow/pengumuman.test.ts tests/cashflow/rpc-console.test.ts
+node scripts/cek-komponen-cashflow.mjs
+# Tampilan (data sintetis, Chrome headless, server dev tanpa .env di port 4399):
+PLAYWRIGHT_CORE_PATH=<playwright-core/index.mjs> CF_QA_ARTIFACTS=<folder> \
+  node scripts/uji-console-pengumuman-sasaran-headless.mjs
+```
+
 ## Batas yang diketahui
 
 - **Console dan halaman publik satu origin (risiko sisa yang disadari, K6).**
