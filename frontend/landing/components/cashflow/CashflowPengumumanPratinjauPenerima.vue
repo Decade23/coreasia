@@ -13,8 +13,8 @@ defineProps<{
   belumAktif: boolean
   lengkap: boolean
 }>()
-const { tcf } = useCashflowI18n()
-const angka = (n: number | null) => (n === null ? '—' : n.toLocaleString('id-ID'))
+const { tcf, bahasa } = useCashflowI18n()
+const angka = (n: number | null) => (n === null ? '—' : n.toLocaleString(bahasa.value === 'en' ? 'en-US' : 'id-ID'))
 </script>
 
 <template>

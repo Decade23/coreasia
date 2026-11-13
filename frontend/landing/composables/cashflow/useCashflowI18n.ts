@@ -480,7 +480,7 @@ const KAMUS = {
         anggota: (n: number) => `${n} pengguna`, dipakai: (n: number) => (n ? `${n} pengumuman` : 'Belum dipakai'),
         nama: 'Nama segmen', alasan: 'Alasan', simpan: 'Simpan segmen', menyimpan: 'Menyimpan…', tersimpan: 'Segmen disimpan.',
         alasanSimpan: 'Ubah segmen pengumuman dari console CashFlow', alasanHapus: 'Hapus segmen pengumuman dari console CashFlow',
-        hapusJudul: 'Hapus segmen?', hapusKet: (nama: string) => `Segmen "${nama}" dihapus. Alasannya dicatat di audit.`, terhapus: 'Segmen dihapus.',
+        hapusJudul: 'Hapus segmen?', hapusKet: (nama: string) => `Segmen "${nama}" akan dihapus. Alasannya dicatat di audit.`, terhapus: 'Segmen dihapus.',
         dipakaiKet: 'Masih dipakai pengumuman aktif atau terjadwal, jadi belum bisa dihapus.',
         namaGalat: { kosong: 'Isi nama segmen.', panjang: 'Nama segmen paling panjang 60 aksara.', ganda: 'Nama itu sudah dipakai segmen lain.' },
         basi: 'Segmen sudah berubah di tempat lain. Daftarnya dimuat ulang, coba lagi.',

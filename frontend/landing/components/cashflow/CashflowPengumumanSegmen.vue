@@ -119,7 +119,7 @@ const hapus = async (s: Segmen) => {
     <ul v-else class="space-y-2" :aria-busy="memuat">
       <li v-for="s in daftar" :key="s.id" class="rounded-xl border border-[color:var(--ca-border)] p-3" :data-uji="`segmen-${s.id}`">
         <div class="flex flex-wrap items-start justify-between gap-3">
-          <div class="min-w-0 flex-1">
+          <div class="min-w-[12rem] flex-1">
             <p class="break-words text-sm font-semibold text-[var(--ca-text)]">{{ s.nama }}</p>
             <p class="mt-1 break-words text-xs text-[var(--ca-muted)]">{{ kalimatSaring(s.saring, ringkas, bahasa) }}<template v-if="s.asing.length">. {{ tcf('pengumuman.segmen.asing') }}</template></p>
             <p class="mt-1 text-xs text-[var(--ca-subtle)]">

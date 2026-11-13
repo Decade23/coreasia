@@ -119,10 +119,12 @@ const labelJenis = (a: AkunInternal) => (a.jenis ? tcf(`sakelar.internal.jenisOp
           <label for="cf-internal-jenis" class="block text-xs font-semibold text-[var(--ca-muted)]">{{ tcf('sakelar.internal.jenis') }}
             <select id="cf-internal-jenis" v-model="tambah.jenis" class="ca-input mt-1 w-full"><option v-for="j in JENIS_AKUN_INTERNAL" :key="j" :value="j">{{ tcf(`sakelar.internal.jenisOpsi.${j}`) }}</option></select>
           </label>
-          <label for="cf-internal-catatan" class="block text-xs font-semibold text-[var(--ca-muted)] sm:col-span-2">{{ tcf('sakelar.internal.catatan') }}
-            <input id="cf-internal-catatan" v-model="tambah.catatan" :maxlength="CATATAN_INTERNAL_MAKS" class="ca-input mt-1 w-full">
-            <span class="mt-1 block font-normal text-[var(--ca-subtle)]">{{ tcf('sakelar.internal.catatanKet') }}</span>
-          </label>
+          <div class="sm:col-span-2">
+            <label for="cf-internal-catatan" class="block text-xs font-semibold text-[var(--ca-muted)]">{{ tcf('sakelar.internal.catatan') }}
+              <input id="cf-internal-catatan" v-model="tambah.catatan" :maxlength="CATATAN_INTERNAL_MAKS" class="ca-input mt-1 w-full" aria-describedby="cf-internal-catatan-ket">
+            </label>
+            <p id="cf-internal-catatan-ket" class="mt-1 text-xs text-[var(--ca-subtle)]">{{ tcf('sakelar.internal.catatanKet') }}</p>
+          </div>
           <label for="cf-internal-alasan" class="block text-xs font-semibold text-[var(--ca-muted)] sm:col-span-2">{{ tcf('sakelar.internal.alasan') }}
             <input id="cf-internal-alasan" v-model="tambah.alasan" class="ca-input mt-1 w-full" minlength="8">
           </label>
@@ -138,8 +140,8 @@ const labelJenis = (a: AkunInternal) => (a.jenis ? tcf(`sakelar.internal.jenisOp
       <ul v-else-if="daftar.length" class="mt-4 space-y-2">
         <li v-for="a in daftar" :key="a.userId" class="rounded-xl border border-[color:var(--ca-border)] p-3">
           <div class="flex flex-wrap items-start justify-between gap-3">
-            <div class="min-w-0 flex-1">
-              <p class="break-all font-mono text-xs text-[var(--ca-text)]">{{ a.email || a.userId.slice(0, 8) }}</p>
+            <div class="min-w-[12rem] flex-1">
+              <p class="font-mono text-xs text-[var(--ca-text)] [overflow-wrap:anywhere]">{{ a.email || a.userId.slice(0, 8) }}</p>
               <p class="mt-1 flex flex-wrap items-center gap-2 text-xs">
                 <span class="ca-pill-muted" :class="a.jenis ? '' : 'ca-tone-gold'">{{ labelJenis(a) }}</span>
                 <span v-if="a.catatan" class="break-words text-[var(--ca-muted)]">{{ a.catatan }}</span>
