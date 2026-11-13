@@ -28,6 +28,7 @@
  */
 import { GalatAdmin, petakanGalat } from './useCashflowAdmin'
 import { playTerpakaiDariGalat } from '~/adapters/cashflowPaket'
+import { segmenGandaDariGalat } from '~/adapters/cashflowPengumumanAturan'
 
 export const useCashflowMuat = (opsi: { awal?: boolean } = {}) => {
   const { tcf } = useCashflowI18n()
@@ -54,6 +55,14 @@ export const useCashflowMuat = (opsi: { awal?: boolean } = {}) => {
     if (g.jenis === 'argumen' && g.hint === 'hari') return tcf('galat.hari')
     if (g.jenis === 'argumen' && g.hint === 'saringan') return tcf('galat.saringan')
     if (g.hint === 'pengumuman-basi') return tcf('pengumuman.basi')
+    // Sasaran pengumuman berbasis aturan: 23503 segmen-dipakai, 22023 hint saring/aturan/penerima/segmen,
+    // nama segmen ganda (pelanggaran unik 23505, kalimat Postgres mentah jangan ditampilkan).
+    if (g.hint === 'segmen-dipakai') return tcf('galat.segmenDipakai')
+    if (g.jenis === 'argumen' && g.hint === 'saring') return tcf('galat.saringDitolak')
+    if (g.jenis === 'argumen' && g.hint === 'aturan') return tcf('galat.aturanDitolak')
+    if (g.jenis === 'argumen' && g.hint === 'penerima') return tcf('galat.penerimaDitolak')
+    if (g.jenis === 'argumen' && g.hint === 'segmen') return tcf('galat.segmenDitolak')
+    if (segmenGandaDariGalat(g)) return tcf('galat.namaSegmenGanda')
     // Paket kredit: pesan server berupa kode, hint = nama kolom (adapters/cashflowPaket).
     if (g.message === 'paket_tidak_sah') return tcf('paket.galat.tidakSah')
     if (g.message === 'paket_sudah_dibeli') return tcf('paket.galat.sudahDibeli')

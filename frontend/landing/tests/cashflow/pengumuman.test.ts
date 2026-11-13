@@ -10,6 +10,11 @@ import {
   kePengumuman, pengumumanBelumBerakhir, LEVEL_PENGUMUMAN, type PengumumanDTO,
 } from '../../adapters/cashflow'
 import { adaMigrasi, fungsiTerakhir, kolomTabel } from './migrasi'
+
+/* Sasaran berbasis aturan (spek 13 Nov 2026) menambah kolom audience_rules.
+   Penandanya fungsi v4 di folder migrasi, bukan kolomnya sendiri, supaya uji
+   kolom tetap membandingkan dua sumber yang berbeda. */
+const adaSasaran = adaMigrasi && (() => { try { fungsiTerakhir('admin_simpan_pengumuman_v4'); return true } catch { return false } })()
 import { penerimaSah, statusPengumuman } from '../../adapters/cashflowPengumuman'
 import { tombolPengumuman } from '../../adapters/cashflowPengumumanTautan'
 
@@ -36,7 +41,8 @@ describe('kontrak PengumumanDTO ↔ public.announcements', () => {
   })
 
   it.skipIf(!adaMigrasi)('contoh memuat persis kolom tabel', () => {
-    expect(Object.keys(JSON.parse(BARIS)).sort()).toEqual(kolomTabel('announcements').kolom)
+    const contohKunci = [...Object.keys(JSON.parse(BARIS)), ...(adaSasaran ? ['audience_rules'] : [])]
+    expect(contohKunci.sort()).toEqual(kolomTabel('announcements').kolom)
   })
 
   it.skipIf(!adaMigrasi)('LEVEL_PENGUMUMAN = nilai CHECK kolom level dan penjaga admin_buat_pengumuman', () => {
@@ -60,6 +66,7 @@ describe('kePengumuman', () => {
       diubah: '2026-09-18T08:12:45.654321+00:00',
       tombol: null,
       url: null, penerima: 'all', pengguna: [], kelompok: [], namaKelompok: [], jumlahPenerima: null,
+      aturan: null, namaSegmen: null,
     })
   })
 

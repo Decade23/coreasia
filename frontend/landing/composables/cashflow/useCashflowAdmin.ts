@@ -107,6 +107,9 @@ import { urlBerkasSah } from '~/adapters/cashflowLampiran'
 import type { RingkasDukunganDTO, DaftarDukunganDTO, SumberDukungan, StatusDukungan } from '~/adapters/cashflowDukungan'
 import { BATAS_DAFTAR_DUKUNGAN } from '~/adapters/cashflowDukungan'
 import type { SimpanPengumuman } from '~/adapters/cashflowPengumuman'
+import type {
+  AturanDTO, SaringDTO, PratinjauPenerimaDTO, SegmenDTO, AkunInternalDTO, JenisAkunInternal,
+} from '~/adapters/cashflowPengumumanAturan'
 import type { DaftarPaketDTO, MuatanPaket, MuatanSebagian } from '~/adapters/cashflowPaket'
 import type { DaftarPembelianDTO, JalurPembelian, StatusPembelian } from '~/adapters/cashflowPembelian'
 import { BATAS_DAFTAR_PEMBELIAN } from '~/adapters/cashflowPembelian'
@@ -157,6 +160,8 @@ export const HINT_42501: Readonly<Record<string, JenisGalat>> = {
 export const HINT_22023 = [
   'batas-2jam', 'kueri-tidak-didukung', 'kursor', 'ranah-ruang', 'nilai-tersamar', 'nilai-pribadi-publik',
   'bulan', 'hari', 'saringan',
+  // Sasaran pengumuman berbasis aturan (spek 13 Nov 2026).
+  'saring', 'aturan', 'penerima', 'segmen',
 ] as const
 
 /** 42883 menyebut RPC `nama` sendiri ("function public.<nama>(p_a => text) does not exist")? */
@@ -554,6 +559,28 @@ export const useCashflowAdmin = () => {
     detailKelompokPengumuman: (id: string) => rpc<KelompokPengumuman>('admin_detail_kelompok_pengumuman', { p_id: id }),
     simpanKelompokPengumuman: (id: string, versi: string | null, nama: string, pengguna: string[], alasan: string) => rpc<string>('admin_simpan_kelompok_pengumuman', { p_id: id, p_versi: versi, p_nama: nama, p_pengguna: pengguna, p_alasan: alasan }),
     hentikanPengumuman: (id: string, alasan: string) => rpc<void>('admin_hentikan_pengumuman', { p_id: id, p_alasan: alasan }),
+
+    // ── sasaran pengumuman berbasis aturan (spek 13 Nov 2026) ──────────
+    // Server lama tidak punya RPC ini (PGRST202 → 'belum-aktif'): halaman
+    // kembali ke v3 dan menyembunyikan pilihan aturan, bukan menulis galat.
+    daftarPengumumanV4: () => rpc<PengumumanDTO[]>('admin_daftar_pengumuman_v4'),
+    simpanPengumumanV4: (p: SimpanPengumuman) => rpc<string>('admin_simpan_pengumuman_v4', {
+      p_id: p.id, p_versi: p.versi, p_judul: p.judul, p_isi: p.isi, p_level: p.level, p_mulai: p.mulai, p_sampai: p.sampai,
+      p_tombol: p.tombol, p_url: p.url, p_alasan: p.alasan,
+      p_penerima: p.penerima ?? 'all', p_pengguna: p.pengguna ?? [], p_kelompok: p.kelompok ?? [],
+      p_aturan: p.penerima === 'aturan' ? p.aturan ?? null : null,
+    }),
+    pratinjauPenerimaPengumuman: (jenis: string, pengguna: string[], kelompok: string[], aturan: AturanDTO | null) =>
+      rpc<PratinjauPenerimaDTO>('admin_pratinjau_penerima_pengumuman', { p_penerima: jenis, p_pengguna: pengguna, p_kelompok: kelompok, p_aturan: aturan }),
+    daftarSegmenPengumuman: () => rpc<SegmenDTO[]>('admin_daftar_segmen_pengumuman'),
+    simpanSegmenPengumuman: (id: string, versi: string | null, nama: string, saring: SaringDTO, alasan: string) =>
+      rpc<string>('admin_simpan_segmen_pengumuman', { p_id: id, p_versi: versi, p_nama: nama, p_saring: saring, p_alasan: alasan }),
+    hapusSegmenPengumuman: (id: string, alasan: string) => rpc<void>('admin_hapus_segmen_pengumuman', { p_id: id, p_alasan: alasan }),
+    daftarAkunInternal: () => rpc<AkunInternalDTO[]>('admin_daftar_akun_internal'),
+    /** Tepat satu dari user (ubah jenis/catatan) atau email (tambah). */
+    simpanAkunInternal: (user: string | null, email: string | null, jenis: JenisAkunInternal, catatan: string | null, alasan: string) =>
+      rpc<string>('admin_simpan_akun_internal', { p_user: user, p_email: email, p_jenis: jenis, p_catatan: catatan, p_alasan: alasan }),
+    hapusAkunInternal: (user: string, alasan: string) => rpc<void>('admin_hapus_akun_internal', { p_user: user, p_alasan: alasan }),
     setEntitlement: (user: string, tier: string, sampai: string | null, alasan: string) =>
       rpc<void>('admin_set_entitlement', { p_user: user, p_tier: tier, p_sampai: sampai, p_alasan: alasan }),
 

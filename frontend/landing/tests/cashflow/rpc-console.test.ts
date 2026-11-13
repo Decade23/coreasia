@@ -46,7 +46,12 @@ const UJI = adaUji ? readFileSync(BERKAS_UJI, 'utf8') : ''
  * argumen, blok ⟦rpc-console⟧, dan kepala uji SQL. Hapus namanya dari sini
  * sesudah migrasinya tergabung di cabang rilis CashFlow.
  */
-const MENDAHULUI_MIGRASI: readonly string[] = []
+const MENDAHULUI_MIGRASI: readonly string[] = [
+  // Sasaran pengumuman berbasis aturan (spek 13 Nov 2026, bagian S).
+  'admin_daftar_pengumuman_v4', 'admin_simpan_pengumuman_v4', 'admin_pratinjau_penerima_pengumuman',
+  'admin_daftar_segmen_pengumuman', 'admin_simpan_segmen_pengumuman', 'admin_hapus_segmen_pengumuman',
+  'admin_daftar_akun_internal', 'admin_simpan_akun_internal', 'admin_hapus_akun_internal',
+]
 const adaFungsi = (nama: string): boolean => { try { fungsiTerakhir(nama); return true } catch { return false } }
 /* Tanpa folder migrasi tidak ada yang bisa dipastikan: semuanya dianggap menunggu. */
 const menunggu: ReadonlySet<string> = new Set(adaMigrasi ? MENDAHULUI_MIGRASI.filter(n => !adaFungsi(n)) : MENDAHULUI_MIGRASI)

@@ -1,4 +1,5 @@
 import type { JenisPenerima } from './cashflowPengumuman'
+import { keAturan, type Aturan } from './cashflowPengumumanAturan'
 /**
  * Adapter modul CashFlow — DTO dari RPC Supabase → bentuk yang dibutuhkan UI.
  *
@@ -128,6 +129,9 @@ export interface PengumumanDTO {
   starts_at: string; ends_at: string | null; created_by: string | null; created_at: string
   audience_type?: JenisPenerima; user_ids?: string[]; group_ids?: string[]; group_names?: string[]; recipient_count?: number
   action_label?: string | null; action_url?: string | null; updated_at?: string
+  /* admin_daftar_pengumuman_v4 (sasaran berbasis aturan): kolom audience_rules
+     (null kecuali audience_type 'aturan') dan nama segmen yang dirujuk. */
+  audience_rules?: unknown; segmen_nama?: string | null
 }
 /* admin_kesehatan (M/0017:379-411). `tabel` adalah OBJEK jsonb_object_agg
    (nama tabel → {baris, ukuran}), bukan larik, dan kedua ukuran dalam BYTE
@@ -205,6 +209,10 @@ export interface Pengumuman {
   kelompok: string[]
   namaKelompok: string[]
   jumlahPenerima: number | null
+  /** Hanya untuk penerima 'aturan'; null bila tidak ada atau tidak terbaca. */
+  aturan: Aturan | null
+  /** Nama segmen yang dirujuk aturan (null = tanpa segmen, atau segmennya sudah tiada). */
+  namaSegmen: string | null
   id: string
   judul: string
   isi: string
@@ -541,6 +549,8 @@ export function kePengumuman(d: PengumumanDTO): Pengumuman {
   const tombol = tombolPengumuman(d.action_label, d.action_url)
   return {
     penerima: d.audience_type ?? 'all', pengguna: d.user_ids ?? [], kelompok: d.group_ids ?? [], namaKelompok: d.group_names ?? [], jumlahPenerima: d.recipient_count ?? null,
+    aturan: d.audience_type === 'aturan' ? keAturan(d.audience_rules) : null,
+    namaSegmen: typeof d.segmen_nama === 'string' && d.segmen_nama.trim() ? d.segmen_nama : null,
     id: d.id, judul: d.title ?? '', isi: d.body ?? '', level: d.level,
     mulai: d.starts_at, sampai: d.ends_at ?? null, dibuat: d.created_at,
     diubah: d.updated_at ?? d.created_at, tombol: tombol?.label ?? null, url: tombol?.url ?? null,
