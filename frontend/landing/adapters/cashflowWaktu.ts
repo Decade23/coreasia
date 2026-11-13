@@ -107,6 +107,17 @@ export function waktuPendekWib(nilai: string | Date | null | undefined, bahasa: 
   return `${Number(b.d)} ${namaBulan(b.m, bahasa)} ${jamMenit(b, bahasa)}`
 }
 
+const jamDetikWib = new Intl.DateTimeFormat('en-GB', {
+  timeZone: ZONA_WIB, hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23',
+})
+
+export function waktuDetikWib(nilai: string, bahasa: BahasaWaktu = 'id'): string {
+  const tanggal = keDate(nilai)
+  if (!tanggal) return '—'
+  const jam = jamDetikWib.format(tanggal)
+  return `${tanggalPendek(nilai, bahasa)} ${bahasa === 'id' ? jam.replaceAll(':', '.') : jam} WIB`
+}
+
 /** Nilai untuk <input type="datetime-local"> yang DIBACA sebagai WIB: 'YYYY-MM-DDTHH:mm'. */
 export function keDatetimeLokalWib(nilai: string | Date): string {
   const d = keDate(nilai)

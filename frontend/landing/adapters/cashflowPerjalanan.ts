@@ -1,6 +1,6 @@
 import { bacaObjekKursor, isoSah } from './cashflowBuku'
 import { terjemahPeristiwa } from './cashflowKamusPeristiwa'
-import { tanggalPendek, ZONA_WIB, type BahasaWaktu } from './cashflowWaktu'
+import { waktuDetikWib as waktuPerjalanan, type BahasaWaktu } from './cashflowWaktu'
 
 export interface KursorPerjalanan { p: string; i: string }
 
@@ -39,16 +39,7 @@ export function kursorPerjalananDariUrl(teks: string): KursorPerjalanan | null {
   return { p: k.p, i: k.i }
 }
 
-const jamDetik = new Intl.DateTimeFormat('en-GB', {
-  timeZone: ZONA_WIB, hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23',
-})
-
-export function waktuPerjalanan(pada: string, bahasa: BahasaWaktu): string {
-  const tanggal = new Date(pada)
-  if (!Number.isFinite(tanggal.getTime())) return '—'
-  const jam = jamDetik.format(tanggal)
-  return `${tanggalPendek(pada, bahasa)} ${bahasa === 'id' ? jam.replaceAll(':', '.') : jam} WIB`
-}
+export { waktuPerjalanan }
 
 export const TAMPIL_KATEGORI: Record<string, { ikon: string; kelas: string }> = {
   aplikasi: { ikon: 'lucide:smartphone', kelas: 'ca-pill-info' },

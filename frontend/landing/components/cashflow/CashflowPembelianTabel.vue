@@ -12,6 +12,7 @@
  */
 import { rupiah } from '~/adapters/cashflow'
 import { jedaKreditPlay, pillStatusPembelian, playBelumDikonsumsi, uangPlay, type Pembelian } from '~/adapters/cashflowPembelian'
+import { waktuDetikWib } from '~/adapters/cashflowWaktu'
 
 defineProps<{ daftar: readonly Pembelian[] }>()
 const { tcf, bahasa, formatTanggal, formatJam, formatWaktu } = useCashflowI18n()
@@ -132,7 +133,7 @@ function lamaKredit(waktu: NonNullable<NonNullable<Pembelian['play']>['waktu']>)
               <dl class="mt-2 space-y-1.5 whitespace-nowrap text-[var(--ca-muted)]">
                 <div v-for="kunci in WAKTU_PLAY" :key="kunci">
                   <dt>{{ tcf(`pembelian.jeda.${kunci}`) }}</dt>
-                  <dd>{{ p.play.waktu[kunci] ? formatWaktu(p.play.waktu[kunci]) : tcf('pembelian.tidakTersedia') }}</dd>
+                  <dd>{{ p.play.waktu[kunci] ? waktuDetikWib(p.play.waktu[kunci], bahasa) : tcf('pembelian.tidakTersedia') }}</dd>
                 </div>
               </dl>
             </details>
