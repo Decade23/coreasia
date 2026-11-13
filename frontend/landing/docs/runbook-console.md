@@ -819,9 +819,13 @@ Cara memakai:
    di `adapters/cashflowVersi.ts`), kode lain bisa diketik.
 3. **Kecualikan**: "Kecualikan akun internal" bawaannya nyala. Pengguna dan kelompok tertentu bisa
    ditambahkan dengan pemilih yang sama dengan penerima lama.
-4. Kotak **Siapa yang menerima** di samping pratinjau menulis jumlah penerima saat ini, berapa tak
-   terjangkau karena aplikasinya di bawah 1.3.8, berapa versinya tak diketahui, berapa dikecualikan,
-   dan contoh email tersamar. Kotak ini disegarkan dengan jeda setiap isian berubah.
+4. Kotak **Siapa yang menerima** di samping pratinjau menulis jumlah penerima saat ini. Jumlah itu
+   sudah mencakup yang belum bisa menerima karena aplikasinya di bawah 1.3.8 dan yang versinya belum
+   diketahui, jadi keduanya ditulis sebagai bagian ("Di antaranya 4 belum bisa menerima ..."). Akun
+   internal dan pengecualian lain tidak dihitung dan ditulis terpisah, lalu contoh email tersamar.
+   Kotak ini disegarkan dengan jeda setiap isian berubah. Batas di server memakai build pertama yang
+   membaca `pengumuman_aktif_v3` (1.3.7, tidak pernah di Play), teks console menyebut 1.3.8 karena itu
+   rilis Play pertamanya.
 5. **Simpan saringan sebagai segmen** menyimpan saringan yang sedang diisi dengan nama. Bila "Pakai
    segmen ini" dicentang, pengumuman merujuk segmennya. Segmen dibaca hidup: mengubah segmen ikut
    mengubah penerima pengumuman yang memakainya.

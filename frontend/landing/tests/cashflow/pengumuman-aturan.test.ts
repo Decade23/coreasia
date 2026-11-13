@@ -307,6 +307,18 @@ describe('kamus ID dan EN', () => {
     const hilang = jalur.flatMap(j => (['id', 'en'] as const).filter(b => ambil(b, j) === undefined).map(b => `${b}:${j}`))
     expect(hilang).toEqual([])
   })
+  it('pratinjau menulis versi lama dan versi tak diketahui sebagai bagian dari jumlah', () => {
+    const id = KAMUS_CASHFLOW.id.pengumuman.pratinjauPenerima
+    const en = KAMUS_CASHFLOW.en.pengumuman.pratinjauPenerima
+    expect(`120 ${id.satuan(120)}`).toBe('120 penerima')
+    expect(id.takTerjangkau('4', VERSI_SASARAN.versi)).toBe('Di antaranya 4 belum bisa menerima karena aplikasinya di bawah 1.3.8.')
+    expect(id.versiTakDiketahui('12')).toBe('Di antaranya 12 belum diketahui versi aplikasinya, jadi belum pasti menerima.')
+    expect(`1 ${en.satuan(1)}`).toBe('1 recipient')
+    expect(`120 ${en.satuan(120)}`).toBe('120 recipients')
+    expect(en.takTerjangkau('4', VERSI_SASARAN.versi)).toBe("Of these, 4 can't get it yet because their app is below 1.3.8.")
+    expect(en.versiTakDiketahui('12')).toBe('Of these, 12 have an unknown app version, so it may not reach them.')
+  })
+
   it('kalimat baru tanpa em-dash, titik koma, atau emoji', () => {
     const teks: string[] = []
     const kumpul = (x: unknown) => {
@@ -353,6 +365,14 @@ describe('kontrak RPC sasaran pengumuman ↔ migrasi bagian S', () => {
     const { badan } = fungsiTerakhir('admin_pratinjau_penerima_pengumuman')
     for (const k of Object.keys(PRATINJAU)) expect(kunciAda(badan, k), k).toBe(true)
     for (const k of ['email_tersamar', 'versi']) expect(kunciAda(badan, k), k).toBe(true)
+  })
+
+  it.skipIf(!adaFungsi('admin_pratinjau_penerima_pengumuman'))('jumlah mencakup tak terjangkau versi lama dan versi tak diketahui (dihitung dari himpunan yang sama)', () => {
+    const { badan } = fungsiTerakhir('admin_pratinjau_penerima_pengumuman')
+    const sumber = (kunci: string) => new RegExp(`'${kunci}',[\\s\\S]*?\\bfrom\\s+(\\w+)`, 'i').exec(badan)?.[1]
+    expect(sumber('jumlah')).toBeTruthy()
+    expect(sumber('tak_terjangkau_versi_lama')).toBe(sumber('jumlah'))
+    expect(sumber('versi_tak_diketahui')).toBe(sumber('jumlah'))
   })
 
   it.skipIf(!adaFungsi('admin_daftar_segmen_pengumuman'))('daftar segmen memulangkan kunci yang dibaca adapter, kolom tabel sesuai kontrak', () => {

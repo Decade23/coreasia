@@ -194,8 +194,8 @@ try {
   }
   const RINGKAS_ID = 'Semua pengguna, versi di bawah 1.4.1, kecuali akun internal'
   const RINGKAS_EN = 'All users, version below 1.4.1, except internal accounts'
-  const pratinjauAngka = () => page.locator('[data-uji="pratinjau-penerima"] .font-display').innerText()
-  const tungguPratinjau = async (angka) => { await page.locator('[data-uji="pratinjau-penerima"] .font-display', { hasText: angka }).waitFor({ timeout: 10000 }) }
+  const pratinjauAngka = () => page.locator('[data-uji="pratinjau-jumlah"]').innerText()
+  const tungguPratinjau = async (angka) => { await page.locator('[data-uji="pratinjau-jumlah"]', { hasText: angka }).waitFor({ timeout: 10000 }) }
   const bukaFormAturan = async () => {
     await page.getByRole('button', { name: 'Buat pengumuman', exact: true }).click()
     await page.locator('#cf-p-penerima').selectOption('aturan')
@@ -220,7 +220,10 @@ try {
   await page.getByLabel('Aktif dalam berapa hari terakhir', { exact: true }).fill('30')
   await tungguPratinjau('636')
   cek('pratinjau disegarkan sesudah saringan berubah', true)
-  cek('penjelasan versi lama tampil', await page.getByText('Aplikasi di bawah 1.3.8 tidak menerima pengumuman bersasaran.', { exact: true }).isVisible())
+  cek('jumlah ditulis dengan satuan', (await page.locator('[data-uji="pratinjau-penerima"] p', { has: page.locator('[data-uji="pratinjau-jumlah"]') }).innerText()).replace(/\s+/g, ' ') === '636 penerima')
+  cek('versi lama ditulis sebagai bagian dari jumlah', (await page.locator('[data-uji="pratinjau-tak-terjangkau"]').innerText()) === 'Di antaranya 37 belum bisa menerima karena aplikasinya di bawah 1.3.8.')
+  cek('versi tak diketahui ditulis sebagai bagian dari jumlah', (await page.locator('[data-uji="pratinjau-versi-tak-diketahui"]').innerText()) === 'Di antaranya 12 belum diketahui versi aplikasinya, jadi belum pasti menerima.')
+  await potretKartu('pratinjau-penerima-terang-1440', '[data-uji="pratinjau-penerima"]')
   cek('contoh email tersamar tampil', await page.getByText('pe***@co***.invalid', { exact: true }).isVisible())
   await page.locator('#cf-p-judul').fill('CashFlow 1.4.1 sudah tersedia')
   await page.locator('#cf-p-isi').fill('Perbarui aplikasi untuk memakai Domi yang lebih cepat.')
@@ -290,7 +293,10 @@ try {
     await bukaFormAturan()
     await page.getByLabel('Di bawah versi', { exact: true }).selectOption('26111301')
     await tungguPratinjau('1.180')
-    if (t === 'gelap') { await lebar(1440, 2300); await page.waitForTimeout(500); await potret('pengumuman-buat-aturan-gelap-1440') }
+    if (t === 'gelap') {
+      await potretKartu('pratinjau-penerima-gelap-1440', '[data-uji="pratinjau-penerima"]')
+      await lebar(1440, 2300); await page.waitForTimeout(500); await potret('pengumuman-buat-aturan-gelap-1440')
+    }
     await lebar(390)
     cek(`form aturan ${t} tidak meluber di 390`, !(await meluber()))
     await lebar(390, 3600)
@@ -312,7 +318,8 @@ try {
   await page.locator('#cf-p-penerima').selectOption('aturan')
   await page.getByLabel('Below version', { exact: true }).selectOption('26111301')
   await tungguPratinjau('1,180')
-  cek('pratinjau EN', await page.getByText('Apps below 1.3.8 do not receive targeted announcements.', { exact: true }).isVisible())
+  cek('pratinjau EN', (await page.locator('[data-uji="pratinjau-tak-terjangkau"]').innerText()) === "Of these, 37 can't get it yet because their app is below 1.3.8.")
+  await potretKartu('pratinjau-penerima-en-terang-1440', '[data-uji="pratinjau-penerima"]')
   await lebar(1440, 2300)
   await page.waitForTimeout(500)
   await potret('pengumuman-buat-aturan-en-terang-1440')

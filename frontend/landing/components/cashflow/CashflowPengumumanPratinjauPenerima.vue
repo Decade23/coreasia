@@ -3,6 +3,11 @@
  * Kotak "Siapa yang menerima" di samping pratinjau tampilan pengumuman.
  * Hanya menampilkan: datanya dari useCashflowPratinjauPenerima di halaman.
  * Angka null (server tidak mengirim) ditulis "—", bukan 0.
+ *
+ * `jumlah` mencakup yang belum bisa menerima karena aplikasinya di bawah
+ * 1.3.8 dan yang versinya belum diketahui. Keduanya ditulis sebagai bagian
+ * ("Di antaranya …"), hanya bila lebih dari nol. Yang dikecualikan (akun
+ * internal, lainnya) tidak termasuk jumlah dan ditulis terpisah.
  */
 import { VERSI_SASARAN, type PratinjauPenerima } from '~/adapters/cashflowPengumumanAturan'
 
@@ -24,20 +29,24 @@ const angka = (n: number | null) => (n === null ? '—' : n.toLocaleString(bahas
     <p v-else-if="!lengkap" class="mt-3 text-xs text-[var(--ca-muted)]">{{ tcf('pengumuman.pratinjauPenerima.lengkapi') }}</p>
     <template v-else>
       <p v-if="pesanGalat" class="mt-3 text-xs ca-tone-danger" role="alert">{{ pesanGalat }}</p>
-      <div class="mt-3 flex items-baseline justify-between gap-3">
-        <span class="text-xs text-[var(--ca-muted)]">{{ tcf('pengumuman.pratinjauPenerima.jumlah') }}</span>
-        <span class="font-display text-2xl font-bold tabular-nums text-[var(--ca-text)]" :class="memuat ? 'opacity-50' : ''">{{ data ? angka(data.jumlah) : '—' }}</span>
+      <!-- jumlah MENCAKUP yang tak terjangkau versi lama dan yang versinya tak diketahui (keputusan 13 Nov):
+           keduanya ditulis sebagai bagian dari jumlah, bukan angka terpisah. Yang dikecualikan tidak dihitung. -->
+      <p class="mt-3 flex items-baseline gap-2" :class="memuat ? 'opacity-50' : ''">
+        <span class="font-display text-2xl font-bold tabular-nums text-[var(--ca-text)]" data-uji="pratinjau-jumlah">{{ data ? angka(data.jumlah) : '—' }}</span>
+        <span class="text-sm text-[var(--ca-muted)]">{{ tcf('pengumuman.pratinjauPenerima.satuan')(data?.jumlah ?? 0) }}</span>
+      </p>
+      <p v-if="memuat" class="text-xs text-[var(--ca-subtle)]">{{ tcf('pengumuman.pratinjauPenerima.menghitung') }}</p>
+      <ul v-if="data && (data.takTerjangkau || data.versiTakDiketahui)" class="mt-2 space-y-1 text-xs">
+        <li v-if="data.takTerjangkau" class="ca-tone-gold" data-uji="pratinjau-tak-terjangkau">{{ tcf('pengumuman.pratinjauPenerima.takTerjangkau')(angka(data.takTerjangkau), VERSI_SASARAN.versi) }}</li>
+        <li v-if="data.versiTakDiketahui" class="text-[var(--ca-muted)]" data-uji="pratinjau-versi-tak-diketahui">{{ tcf('pengumuman.pratinjauPenerima.versiTakDiketahui')(angka(data.versiTakDiketahui)) }}</li>
+      </ul>
+      <div v-if="data" class="mt-3 space-y-2 border-t border-[color:var(--ca-border)] pt-3 text-xs">
+        <p class="font-semibold text-[var(--ca-muted)]">{{ tcf('pengumuman.pratinjauPenerima.dikecualikan') }}</p>
+        <dl class="space-y-2">
+          <div class="flex justify-between gap-3"><dt class="text-[var(--ca-muted)]">{{ tcf('pengumuman.pratinjauPenerima.dikecualikanInternal') }}</dt><dd class="tabular-nums text-[var(--ca-text)]">{{ angka(data.dikecualikanInternal) }}</dd></div>
+          <div class="flex justify-between gap-3"><dt class="text-[var(--ca-muted)]">{{ tcf('pengumuman.pratinjauPenerima.dikecualikanLain') }}</dt><dd class="tabular-nums text-[var(--ca-text)]">{{ angka(data.dikecualikanLain) }}</dd></div>
+        </dl>
       </div>
-      <p v-if="memuat" class="text-right text-xs text-[var(--ca-subtle)]">{{ tcf('pengumuman.pratinjauPenerima.menghitung') }}</p>
-      <dl v-if="data" class="mt-3 space-y-2 border-t border-[color:var(--ca-border)] pt-3 text-xs">
-        <div>
-          <div class="flex justify-between gap-3"><dt class="text-[var(--ca-muted)]">{{ tcf('pengumuman.pratinjauPenerima.takTerjangkau') }}</dt><dd class="tabular-nums" :class="data.takTerjangkau ? 'ca-tone-gold font-semibold' : 'text-[var(--ca-text)]'">{{ angka(data.takTerjangkau) }}</dd></div>
-          <p class="mt-0.5 text-[var(--ca-subtle)]">{{ tcf('pengumuman.pratinjauPenerima.takTerjangkauKet')(VERSI_SASARAN.versi) }}</p>
-        </div>
-        <div class="flex justify-between gap-3"><dt class="text-[var(--ca-muted)]">{{ tcf('pengumuman.pratinjauPenerima.versiTakDiketahui') }}</dt><dd class="tabular-nums text-[var(--ca-text)]">{{ angka(data.versiTakDiketahui) }}</dd></div>
-        <div class="flex justify-between gap-3"><dt class="text-[var(--ca-muted)]">{{ tcf('pengumuman.pratinjauPenerima.dikecualikanInternal') }}</dt><dd class="tabular-nums text-[var(--ca-text)]">{{ angka(data.dikecualikanInternal) }}</dd></div>
-        <div class="flex justify-between gap-3"><dt class="text-[var(--ca-muted)]">{{ tcf('pengumuman.pratinjauPenerima.dikecualikanLain') }}</dt><dd class="tabular-nums text-[var(--ca-text)]">{{ angka(data.dikecualikanLain) }}</dd></div>
-      </dl>
       <div v-if="data" class="mt-3 border-t border-[color:var(--ca-border)] pt-3">
         <p class="text-xs font-semibold text-[var(--ca-muted)]">{{ tcf('pengumuman.pratinjauPenerima.contoh') }}</p>
         <p v-if="!data.contoh.length" class="mt-2 text-xs text-[var(--ca-subtle)]">{{ tcf('pengumuman.pratinjauPenerima.contohKosong') }}</p>
