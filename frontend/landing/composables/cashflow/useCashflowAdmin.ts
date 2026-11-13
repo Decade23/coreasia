@@ -161,7 +161,7 @@ export const HINT_22023 = [
   'batas-2jam', 'kueri-tidak-didukung', 'kursor', 'ranah-ruang', 'nilai-tersamar', 'nilai-pribadi-publik',
   'bulan', 'hari', 'saringan',
   // Sasaran pengumuman berbasis aturan (spek 13 Nov 2026).
-  'saring', 'aturan', 'penerima', 'segmen',
+  'saring', 'aturan', 'penerima', 'segmen', 'akun-internal', 'alasan-pendek',
 ] as const
 
 /** 42883 menyebut RPC `nama` sendiri ("function public.<nama>(p_a => text) does not exist")? */

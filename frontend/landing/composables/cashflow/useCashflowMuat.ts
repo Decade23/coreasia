@@ -55,9 +55,14 @@ export const useCashflowMuat = (opsi: { awal?: boolean } = {}) => {
     if (g.jenis === 'argumen' && g.hint === 'hari') return tcf('galat.hari')
     if (g.jenis === 'argumen' && g.hint === 'saringan') return tcf('galat.saringan')
     if (g.hint === 'pengumuman-basi') return tcf('pengumuman.basi')
-    // Sasaran pengumuman berbasis aturan: 23503 segmen-dipakai, 22023 hint saring/aturan/penerima/segmen,
-    // nama segmen ganda (pelanggaran unik 23505, kalimat Postgres mentah jangan ditampilkan).
+    // Sasaran pengumuman berbasis aturan (hint dari migrasinya): 23503 segmen-dipakai, 40001 segmen-basi,
+    // 23505 segmen-nama (nama ganda), 23505 pengumuman-kunci/segmen-kunci (kunci permintaan dipakai isi lain),
+    // 22023 saring/aturan/penerima/segmen/akun-internal/alasan-pendek.
     if (g.hint === 'segmen-dipakai') return tcf('galat.segmenDipakai')
+    if (g.hint === 'segmen-basi') return tcf('pengumuman.segmen.basi')
+    if (g.hint === 'pengumuman-kunci' || g.hint === 'segmen-kunci') return tcf('galat.kunciDipakai')
+    if (g.jenis === 'argumen' && g.hint === 'alasan-pendek') return tcf('alasan.pendek')
+    if (g.jenis === 'argumen' && g.hint === 'akun-internal') return tcf('sakelar.internal.ditolak')
     if (g.jenis === 'argumen' && g.hint === 'saring') return tcf('galat.saringDitolak')
     if (g.jenis === 'argumen' && g.hint === 'aturan') return tcf('galat.aturanDitolak')
     if (g.jenis === 'argumen' && g.hint === 'penerima') return tcf('galat.penerimaDitolak')

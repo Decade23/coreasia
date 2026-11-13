@@ -407,9 +407,10 @@ export function keSegmen(d: SegmenDTO): Segmen {
 export const keDaftarSegmen = (raw: unknown): Segmen[] =>
   (Array.isArray(raw) ? raw : []).filter((x): x is SegmenDTO => !!objek(x) && uuidSah((x as SegmenDTO).id)).map(keSegmen)
 
-/** Nama segmen ganda dari server: pelanggaran unik kolom nama announcement_segments (23505). */
-export function segmenGandaDariGalat(g: { message?: string } | null | undefined): boolean {
-  return !!g && /unique constraint "[^"]*announcement_segments[^"]*"/i.test(g.message ?? '')
+/** Nama segmen ganda dari server (23505): hint segmen-nama, atau pelanggaran unik kolom nama
+ *  announcement_segments bila balapan lolos dari pemeriksaan fungsi. */
+export function segmenGandaDariGalat(g: { message?: string; hint?: string } | null | undefined): boolean {
+  return !!g && (g.hint === 'segmen-nama' || /unique constraint "[^"]*announcement_segments[^"]*"/i.test(g.message ?? ''))
 }
 /** Penolakan hapus karena segmen masih dirujuk pengumuman aktif atau terjadwal (23503). */
 export const segmenDipakaiDariGalat = (g: { hint?: string } | null | undefined): boolean => !!g && g.hint === 'segmen-dipakai'

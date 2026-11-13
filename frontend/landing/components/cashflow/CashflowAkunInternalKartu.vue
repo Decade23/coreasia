@@ -42,18 +42,22 @@ onMounted(() => { void muatDaftar() })
 onBeforeUnmount(batal)
 
 const sibuk = ref(false)
-const jalankan = async (kerja: () => Promise<unknown>, sukses: string) => {
+/** `tidakAda`: kalimat untuk P0002. Menambah lewat email = email tidak ada di CashFlow;
+ *  ubah dan hapus = barisnya sudah hilang dari daftar. */
+const jalankan = async (kerja: () => Promise<unknown>, sukses: string, tidakAda: string) => {
   if (sibuk.value) return false
   sibuk.value = true
+  let hilang = false
   try {
     const ok = await aksi(async () => {
       try { await kerja() } catch (e) {
-        // P0002 saat menambah: email tidak ada di auth.users CashFlow.
         const g = petakanGalat(e)
-        throw g.jenis === 'tidak-ada' ? new GalatAdmin('lain', tcf('sakelar.internal.emailBelumAda'), g.hint) : g
+        if (g.jenis !== 'tidak-ada') throw g
+        hilang = true
+        throw new GalatAdmin('lain', tidakAda, g.hint)
       }
     }, { sukses })
-    if (ok) await muatDaftar()
+    if (ok || hilang) await muatDaftar()
     return ok
   } finally { sibuk.value = false }
 }
@@ -69,7 +73,7 @@ const kirimTambah = async () => {
   if (daftar.value.some(a => a.email.toLowerCase() === email)) { tambah.galat = tcf('sakelar.internal.sudahAda'); return }
   if (!catatanInternalSah(tambah.catatan)) { tambah.galat = tcf('sakelar.internal.catatanPanjang'); return }
   if (tambah.alasan.trim().length < 8) { toast.error(tcf('alasan.pendek')); return }
-  const ok = await jalankan(() => api.simpanAkunInternal(null, email, tambah.jenis, teksCatatan(tambah.catatan), tambah.alasan.trim()), tcf('sakelar.internal.tersimpan'))
+  const ok = await jalankan(() => api.simpanAkunInternal(null, email, tambah.jenis, teksCatatan(tambah.catatan), tambah.alasan.trim()), tcf('sakelar.internal.tersimpan'), tcf('sakelar.internal.emailBelumAda'))
   if (ok) tambah.buka = false
 }
 
@@ -81,12 +85,12 @@ const mulaiHapus = (a: AkunInternal) => { ubah.id = null; Object.assign(hapus, {
 const kirimUbah = async (a: AkunInternal) => {
   if (!catatanInternalSah(ubah.catatan)) { toast.error(tcf('sakelar.internal.catatanPanjang')); return }
   if (ubah.alasan.trim().length < 8) { toast.error(tcf('alasan.pendek')); return }
-  const ok = await jalankan(() => api.simpanAkunInternal(a.userId, null, ubah.jenis, teksCatatan(ubah.catatan), ubah.alasan.trim()), tcf('sakelar.internal.tersimpan'))
+  const ok = await jalankan(() => api.simpanAkunInternal(a.userId, null, ubah.jenis, teksCatatan(ubah.catatan), ubah.alasan.trim()), tcf('sakelar.internal.tersimpan'), tcf('sakelar.internal.hilang'))
   if (ok) ubah.id = null
 }
 const kirimHapus = async (a: AkunInternal) => {
   if (hapus.alasan.trim().length < 8) { toast.error(tcf('alasan.pendek')); return }
-  const ok = await jalankan(() => api.hapusAkunInternal(a.userId, hapus.alasan.trim()), tcf('sakelar.internal.terhapus'))
+  const ok = await jalankan(() => api.hapusAkunInternal(a.userId, hapus.alasan.trim()), tcf('sakelar.internal.terhapus'), tcf('sakelar.internal.hilang'))
   if (ok) hapus.id = null
 }
 const labelJenis = (a: AkunInternal) => (a.jenis ? tcf(`sakelar.internal.jenisOpsi.${a.jenis}`) : tcf('sakelar.internal.jenisAsing')(a.jenisAsli))

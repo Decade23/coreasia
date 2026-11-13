@@ -387,6 +387,18 @@ describe('kontrak RPC sasaran pengumuman ↔ migrasi bagian S', () => {
     expect(badan).toMatch(new RegExp(`\\b${AKTIF_HARI_MAKS}\\b`))
   })
 
+  it.skipIf(!adaFungsi('admin_simpan_pengumuman_v4'))('setiap hint yang dilokalkan console memang dilempar server', () => {
+    const semua = [...Object.keys(KONTRAK_PARAMETER), 'pengumuman_saring_sah_inti', 'pengumuman_aturan_sah_inti']
+      .filter(adaFungsi).map(n => fungsiTerakhir(n).badan).join('\n')
+    const dilempar = new Set([...semua.matchAll(/hint\s*=\s*'([a-z-]+)'/g)].map(m => m[1]))
+    const muat = baca('composables/cashflow/useCashflowMuat.ts')
+    const dikenal = ['segmen-dipakai', 'segmen-basi', 'segmen-nama', 'pengumuman-kunci', 'segmen-kunci', 'alasan-pendek', 'akun-internal', 'saring', 'aturan', 'penerima', 'segmen']
+    for (const h of dikenal) {
+      expect(dilempar.has(h), h).toBe(true)
+      expect(muat.includes(`'${h}'`) || baca('adapters/cashflowPengumumanAturan.ts').includes(`'${h}'`), h).toBe(true)
+    }
+  })
+
   it.skipIf(!adaFungsi('admin_hapus_segmen_pengumuman'))('hapus segmen yang dipakai ditolak 23503 segmen-dipakai', () => {
     const { badan } = fungsiTerakhir('admin_hapus_segmen_pengumuman')
     expect(badan).toMatch(/23503/)
@@ -396,7 +408,7 @@ describe('kontrak RPC sasaran pengumuman ↔ migrasi bagian S', () => {
   it.skipIf(!adaFungsi('admin_simpan_pengumuman_v4'))('simpan v4 menerima kelima jenis penerima dan batas pengecualian sama dengan adapter', () => {
     const { badan } = fungsiTerakhir('admin_simpan_pengumuman_v4')
     for (const j of PILIHAN_PENERIMA.map(p => p.id)) expect(badan, j).toContain(`'${j}'`)
-    const semua = ['pengumuman_cocok_aturan_inti', 'pengumuman_saring_sah_inti', 'admin_simpan_pengumuman_v4']
+    const semua = ['pengumuman_cocok_aturan_inti', 'pengumuman_saring_sah_inti', 'pengumuman_aturan_sah_inti', 'admin_simpan_pengumuman_v4']
       .filter(adaFungsi).map(n => fungsiTerakhir(n).badan).join('\n')
     expect(semua).toMatch(new RegExp(`\\b${BATAS_KECUALI_PENGGUNA}\\b`))
     expect(semua).toMatch(new RegExp(`\\b${BATAS_KECUALI_KELOMPOK}\\b`))

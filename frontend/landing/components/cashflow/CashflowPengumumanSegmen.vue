@@ -45,7 +45,8 @@ const buatBaru = () => Object.assign(editor, {
 const sunting = (s: Segmen) => Object.assign(editor, {
   buka: true, id: s.id, versi: s.diubah, nama: s.nama, isian: isianDariSaring(s.saring), alasan: tcf('pengumuman.segmen.alasanSimpan'), asing: s.asing.length > 0,
 })
-const basi = (g: GalatAdmin) => g.hint.includes('basi')
+/** 40001 segmen-basi: segmen berubah sejak dimuat. Kalimatnya dari useCashflowMuat, di sini daftar dimuat ulang. */
+const basi = (g: GalatAdmin) => g.hint === 'segmen-basi'
 const simpan = async () => {
   const saring = periksa.value.saring
   if (!bolehSimpan.value || !saring) return
@@ -53,7 +54,7 @@ const simpan = async () => {
   try {
     const ok = await aksi(
       async () => { await api.simpanSegmenPengumuman(editor.id, editor.versi, editor.nama.trim(), saringKeDto(saring), editor.alasan.trim()) },
-      { sukses: tcf('pengumuman.segmen.tersimpan'), gagal: g => { if (basi(g)) { toast.error(tcf('pengumuman.segmen.basi')); editor.buka = false; void muatDaftar() } } },
+      { sukses: tcf('pengumuman.segmen.tersimpan'), gagal: g => { if (basi(g)) { editor.buka = false; void muatDaftar() } } },
     )
     if (ok) { editor.buka = false; await muatDaftar(); emit('berubah') }
   } finally { menyimpan.value = false }
