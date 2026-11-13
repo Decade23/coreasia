@@ -700,6 +700,44 @@ aplikasi. Menyegarkan tiap 60 detik. Pasang: SQL CashFlow dulu, baru landing. Se
 terpasang kartunya menulis status belum bisa dibaca, ubin lain tetap tampil.
 Mundur landing cukup; tab menjawab "belum aktif" bila RPC belum terpasang.
 
+### Cara terbalik (pengguna mengirim kode)
+
+Sesudah migrasi cara terbalik terpasang, `admin_wa_status` membawa kunci tambahan dan
+Kesehatan menampilkan dua kartu di bawah status:
+
+- **Cara verifikasi WhatsApp.** Mode dari Sakelar (kami kirim kode, pengguna kirim kode,
+  keduanya, mati), mode akun uji, nomor tujuan tersamar, balasan otomatis, cara mana yang
+  jalan, apa yang sedang menghalangi tiap cara, dan penerus pesan masuk di Sapa. Lapis cara
+  yang tidak dipakai mode sekarang tampil redup dan tidak dihitung sebagai sebab.
+- **Pesan masuk 24 jam.** Kode dibuat, pesan masuk, cocok, nomor beda, nomor tidak terbaca,
+  dan seterusnya, pemakaian batas harian, jendela gangguan 7 hari, dan hitungan pengguna
+  (terverifikasi lewat pesan masuk atau kode terkirim, lewat saat gangguan, kredit gratis
+  ditahan, nomor dipakai banyak akun).
+
+Keadaan di kartu status dihitung dari cara yang sehat: **Sebagian terganggu** bila satu cara
+sakit di mode keduanya (pengguna hanya ditawari cara yang jalan), **Ada gangguan** bila tidak
+ada cara sehat (pengguna baru masuk dengan email dan ditandai lewat saat gangguan).
+
+Daftar pengguna mendapat kolom **Status WhatsApp** (terverifikasi lewat pesan masuk atau kode
+terkirim, lewat saat gangguan dengan tanggal, belum) dengan tanda kecil nomor dipakai banyak
+akun dan kredit gratis ditahan, segmen **Belum WhatsApp** (`p_segmen = belum_wa`, tanpa izin
+pii), dan saringan kolom status (`p_filter.status_wa`). Tanpa kontak lengkap, tanggalnya
+dibulatkan server ke hari WIB.
+
+Server lama (sebelum migrasi): kartu tambahan tidak tampil, kolom Status WhatsApp kosong,
+segmen dan saringannya tidak ditawarkan. Tautan lama `?seg=belum_wa` dijawab server dengan
+22023 `saringan`, lalu console kembali ke Semua tanpa galat. Pasang: SQL CashFlow dulu, baru
+landing. Mundur landing cukup.
+
+```bash
+CASHFLOW_MIGRASI=<repo cashflow>/supabase/migrations CASHFLOW_TOKO=<repo cashflow>/toko \
+  npx vitest run tests/cashflow/otp-terbalik.test.ts tests/cashflow/wa-status.test.ts
+node scripts/cek-komponen-cashflow.mjs
+# Tampilan (data sintetis, Chrome headless, server dev tanpa .env di port 4399):
+PLAYWRIGHT_CORE_PATH=<playwright-core/index.mjs> CF_QA_ARTIFACTS=<folder> \
+  node scripts/uji-console-otp-terbalik-headless.mjs
+```
+
 ## Paket kredit Domi
 
 Halaman `/console/cashflow/paket` mengatur paket kredit Domi yang dilihat pengguna di aplikasi
