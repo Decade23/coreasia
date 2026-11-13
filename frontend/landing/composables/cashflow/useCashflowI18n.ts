@@ -216,6 +216,7 @@ const KAMUS = {
           judul: 'Cara verifikasi WhatsApp',
           ket: 'Pengguna membuktikan nomornya dengan mengirim kode ke nomor CashFlow, atau dengan mengetik kode yang kami kirim. Mode dipilih di Sakelar.',
           labelMode: 'Mode', labelUji: 'Mode akun uji', labelTujuan: 'Nomor tujuan', labelBalas: 'Balasan otomatis',
+          labelTahanKredit: 'Tahan kredit gratis saat gangguan',
           ikutUmum: 'Ikut mode umum', belumDiisi: 'Belum diisi', nyala: 'Nyala', mati: 'Mati',
           mode: { kirim: 'Kami kirim kode', terbalik: 'Pengguna kirim kode', keduanya: 'Keduanya', mati: 'Mati', lain: 'Tidak dikenal' },
           modeKet: {
@@ -1211,6 +1212,7 @@ const KAMUS = {
           judul: 'WhatsApp verification method',
           ket: 'Users prove their number by sending a code to the CashFlow number, or by typing the code we send. The mode is chosen in Switches.',
           labelMode: 'Mode', labelUji: 'Test account mode', labelTujuan: 'Destination number', labelBalas: 'Automatic reply',
+          labelTahanKredit: 'Hold free credit during an issue',
           ikutUmum: 'Same as general mode', belumDiisi: 'Not set', nyala: 'On', mati: 'Off',
           mode: { kirim: 'We send the code', terbalik: 'User sends the code', keduanya: 'Both', mati: 'Off', lain: 'Unknown' },
           modeKet: {

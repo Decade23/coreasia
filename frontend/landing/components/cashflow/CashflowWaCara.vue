@@ -24,7 +24,7 @@ const lama = (l: LamaWa | null) => (l ? tcf('kesehatan.wa.terbalik.lama')(l.n, l
     <h2 class="font-display text-base font-bold text-[var(--ca-text)]">{{ tcf('kesehatan.wa.terbalik.judul') }}</h2>
     <p class="mt-1 text-sm text-[var(--ca-muted)]">{{ tcf('kesehatan.wa.terbalik.ket') }}</p>
 
-    <dl v-if="cara.mode" class="mt-4 grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
+    <dl v-if="cara.mode" class="mt-4 grid gap-3 text-sm sm:grid-cols-2" :class="cara.mode.tahanKredit === null ? 'lg:grid-cols-4' : 'lg:grid-cols-5'">
       <div class="min-w-0">
         <dt class="text-xs text-[var(--ca-subtle)]">{{ tcf('kesehatan.wa.terbalik.labelMode') }}</dt>
         <dd class="font-semibold text-[var(--ca-text)]">{{ tcf(`kesehatan.wa.terbalik.mode.${cara.mode.mode}`) }}</dd>
@@ -41,6 +41,11 @@ const lama = (l: LamaWa | null) => (l ? tcf('kesehatan.wa.terbalik.lama')(l.n, l
       <div class="min-w-0">
         <dt class="text-xs text-[var(--ca-subtle)]">{{ tcf('kesehatan.wa.terbalik.labelBalas') }}</dt>
         <dd class="font-semibold text-[var(--ca-text)]">{{ cara.mode.balas ? tcf('kesehatan.wa.terbalik.nyala') : tcf('kesehatan.wa.terbalik.mati') }}</dd>
+      </div>
+      <!-- Sakelar tahan kredit: hanya bila server mengirimnya. -->
+      <div v-if="cara.mode.tahanKredit !== null" class="min-w-0">
+        <dt class="text-xs text-[var(--ca-subtle)]">{{ tcf('kesehatan.wa.terbalik.labelTahanKredit') }}</dt>
+        <dd class="font-semibold text-[var(--ca-text)]">{{ cara.mode.tahanKredit ? tcf('kesehatan.wa.terbalik.nyala') : tcf('kesehatan.wa.terbalik.mati') }}</dd>
       </div>
     </dl>
 

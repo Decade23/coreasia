@@ -55,6 +55,9 @@ export type AngkaPenggunaWa = typeof ANGKA_PENGGUNA_WA[number]
 export interface WaModeDTO {
   mode: string | null; uji_mode: string | null; tujuan_tersamar: string | null; balas: boolean | null
   ambang_tak_masuk: number | null; batas_harian_masuk: number | null
+  /** Sakelar tahan kredit gratis saat gangguan (bawaan false). Tidak ada di
+   *  versi migrasi yang lebih awal. */
+  tahan_kredit?: boolean | null
 }
 export interface WaLapisDTO { bersama: string[] | null; kirim: string[] | null; masuk: string[] | null }
 export interface WaMasukSapaDTO {
@@ -127,6 +130,9 @@ export interface CaraVerifikasiWa {
     ujiMode: ModeWa | null
     tujuanTersamar: string | null
     balas: boolean
+    /** Kredit gratis akun yang lewat saat gangguan ditahan. null = server
+     *  tidak mengirim sakelarnya (baris disembunyikan). */
+    tahanKredit: boolean | null
   } | null
   /** Keadaan tiap cara untuk klien penuh di mode umum, urutan server. */
   cara: Array<{ cara: CaraWa; keadaan: KeadaanCaraWa }> | null
@@ -209,6 +215,7 @@ function keCara(d: WaStatusDTO): CaraVerifikasiWa | null {
       ujiMode: m.uji_mode === null || m.uji_mode === undefined ? null : kodeMode(m.uji_mode),
       tujuanTersamar: typeof m.tujuan_tersamar === 'string' && m.tujuan_tersamar.trim() ? m.tujuan_tersamar : null,
       balas: m.balas === true,
+      tahanKredit: typeof m.tahan_kredit === 'boolean' ? m.tahan_kredit : null,
     } : null,
     cara: mode && caraSehat && dipakai
       ? CARA_WA.map(c => ({ cara: c, keadaan: (caraSehat.includes(c) ? 'sehat' : dipakai.includes(c) ? 'sakit' : 'diluarMode') as KeadaanCaraWa }))

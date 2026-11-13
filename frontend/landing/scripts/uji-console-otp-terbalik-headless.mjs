@@ -47,7 +47,7 @@ const waLama = () => ({
 })
 const waBaru = () => ({
   ...waLama(),
-  mode: { mode: 'keduanya', uji_mode: 'terbalik', tujuan_tersamar: '0811 •••• 0000', balas: false, ambang_tak_masuk: 8, batas_harian_masuk: 500 },
+  mode: { mode: 'keduanya', uji_mode: 'terbalik', tujuan_tersamar: '0811 •••• 0000', balas: false, ambang_tak_masuk: 8, batas_harian_masuk: 500, tahan_kredit: true },
   lapis: { bersama: [], kirim: ['kirim'], masuk: [] },
   cara_sehat: ['terbalik'],
   masuk_sapa: { ada: true, aktif: true, tertahan: 1, tertua_detik: 45, terakhir_ok: jam(0.02), dicek_pada: jam(0.03) },
@@ -154,7 +154,7 @@ try {
     await lebar(1440)
     await page.goto(`${APP}/console/cashflow/kesehatan`, { waitUntil: 'domcontentloaded' })
     await page.getByText('Cara verifikasi WhatsApp', { exact: true }).waitFor({ timeout: 60000 })
-    for (const teks of ['Sebagian terganggu', 'Pesan masuk 24 jam', 'Gangguan 7 hari terakhir', 'Penerus pesan masuk di Sapa', 'Lewat saat gangguan, 7 hari', 'Banyak kode gagal terkirim dalam 15 menit terakhir.']) {
+    for (const teks of ['Sebagian terganggu', 'Tahan kredit gratis saat gangguan', 'Pesan masuk 24 jam', 'Gangguan 7 hari terakhir', 'Penerus pesan masuk di Sapa', 'Lewat saat gangguan, 7 hari', 'Banyak kode gagal terkirim dalam 15 menit terakhir.']) {
       if (!(await page.getByText(teks, { exact: true }).first().isVisible())) gagal(`Kesehatan baru: "${teks}" tidak tampil`)
     }
     if (await page.getByText('tak_masuk', { exact: true }).count()) gagal('Kode lapis mentah tampil')

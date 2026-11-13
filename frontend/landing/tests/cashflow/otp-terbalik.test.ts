@@ -49,7 +49,7 @@ const lama = (ubah: Partial<WaStatusDTO> = {}): WaStatusDTO => ({
 })
 /** Bentuk lengkap sesudah migrasi cara terbalik: mode keduanya, semua sehat. */
 const lengkap = (ubah: Partial<WaStatusDTO> = {}): WaStatusDTO => lama({
-  mode: { mode: 'keduanya', uji_mode: null, tujuan_tersamar: '0811 •••• 0000', balas: false, ambang_tak_masuk: 8, batas_harian_masuk: 500 },
+  mode: { mode: 'keduanya', uji_mode: null, tujuan_tersamar: '0811 •••• 0000', balas: false, ambang_tak_masuk: 8, batas_harian_masuk: 500, tahan_kredit: false },
   lapis: { bersama: [], kirim: [], masuk: [] },
   cara_sehat: ['terbalik', 'kirim'],
   masuk_sapa: { ada: true, aktif: true, tertahan: 0, tertua_detik: 0, terakhir_ok: '2026-11-13T04:59:00Z', dicek_pada: '2026-11-13T04:58:00Z' },
@@ -71,6 +71,7 @@ describe.skipIf(!adaTerbalik)(`kontrak ${MIGRASI}: admin_wa_status`, () => {
     expect(urutPohon(pohonContoh(contoh))).toEqual(urutPohon(pohonJsonb(badan)))
     expect(badan).toMatch(/'lapis',\s*v_lapis/)
     expect(badan).toMatch(/v_lapis\s*:=\s*public\.nomor_wa_lapis_inti\(s\)/)
+    expect(badan).toMatch(/'tahan_kredit',\s*s -> 'tahan_kredit'/)
     expect(badan).toMatch(/'cara_sehat',\s*to_jsonb\(public\.nomor_wa_cara_inti\(s ->> 'mode', v_lapis, array\['kirim', 'terbalik'\]\)\)/)
   })
   it('lapis: tiga kelompok dengan kode yang sama dengan adapter', () => {
@@ -81,6 +82,10 @@ describe.skipIf(!adaTerbalik)(`kontrak ${MIGRASI}: admin_wa_status`, () => {
     const masuk = fungsiTerakhir('nomor_wa_lapis_masuk_inti').badan
     const kode = [...masuk.matchAll(/then '([a-z_]+)' end/g)].map(m => m[1])
     expect(kode).toEqual([...LAPIS_WA.masuk])
+  })
+  it('sakelar tahan_kredit selalu boolean, bawaan false', () => {
+    const sakelar = fungsiTerakhir('nomor_wa_sakelar_lengkap_inti').badan
+    expect(sakelar).toMatch(/'tahan_kredit',\s*coalesce\(v -> 'tahan_kredit' = 'true'::jsonb, false\)/)
   })
   it('mode, urutan cara, dan mode_mati di riwayat sama dengan adapter', () => {
     const sakelar = fungsiTerakhir('nomor_wa_sakelar_lengkap_inti').badan
@@ -144,7 +149,7 @@ describe.skipIf(!adaUjiToko)('kontrak uji SQL server (toko/uji-nomor-wa-terbalik
     expect(Object.keys(lengkap()).sort()).toEqual(server)
   })
   it('bentuk mode, lapis, cara_sehat, masuk_24j yang diuji server terbaca adapter', () => {
-    expect(sql).toMatch(/"mode": "keduanya", "uji_mode": null, "tujuan_tersamar": "[^"]+", "balas": false,\s*"ambang_tak_masuk": 8, "batas_harian_masuk": 500/)
+    expect(sql).toMatch(/"mode": "keduanya", "uji_mode": null, "tujuan_tersamar": "[^"]+", "balas": false,\s*"ambang_tak_masuk": 8, "batas_harian_masuk": 500, "tahan_kredit": (?:true|false)\}/)
     expect(sql).toMatch(/v -> 'lapis' = '\{"bersama": \[\], "kirim": \[\], "masuk": \[\]\}' and v -> 'cara_sehat' = '\["terbalik", "kirim"\]'/)
     const angka = /v -> 'masuk_24j' = '(\{[^']+\})'/.exec(sql)![1]!
     expect(Object.keys(JSON.parse(angka.replace(/\s+/g, ' '))).sort()).toEqual([...ANGKA_MASUK_WA].sort())
@@ -159,7 +164,7 @@ describe('keStatusWa bentuk lengkap', () => {
     expect(s.tingkat).toBe('sehat')
     expect(s.lewatOtp).toBe(false)
     expect(s.sebab).toEqual([])
-    expect(s.cara?.mode).toEqual({ mode: 'keduanya', ujiMode: null, tujuanTersamar: '0811 •••• 0000', balas: false })
+    expect(s.cara?.mode).toEqual({ mode: 'keduanya', ujiMode: null, tujuanTersamar: '0811 •••• 0000', balas: false, tahanKredit: false })
     expect(s.cara?.cara).toEqual([{ cara: 'terbalik', keadaan: 'sehat' }, { cara: 'kirim', keadaan: 'sehat' }])
     expect(s.cara?.lapis?.map(l => [l.kelompok, l.kode, l.berpengaruh])).toEqual([['bersama', [], true], ['kirim', [], true], ['masuk', [], true]])
     expect(s.cara?.sapa).toMatchObject({ ada: true, aktif: true, tertahan: 0, terakhirOk: '2026-11-13T04:59:00Z' })
@@ -208,6 +213,15 @@ describe('keStatusWa bentuk lengkap', () => {
     expect(s.tingkat).toBe('gangguan')
     expect(s.sebab).toEqual(['mode_mati', 'sesi'])
     expect(s.cara?.cara?.map(c => c.keadaan)).toEqual(['diluarMode', 'diluarMode'])
+  })
+  it('sakelar tahan kredit: nyala, mati, atau tidak dikirim (baris disembunyikan)', () => {
+    expect(keStatusWa(lengkap({ mode: { ...lengkap().mode!, tahan_kredit: true } })).cara?.mode?.tahanKredit).toBe(true)
+    expect(keStatusWa(lengkap()).cara?.mode?.tahanKredit).toBe(false)
+    const { tahan_kredit: _, ...tanpa } = lengkap().mode!
+    expect(keStatusWa(lengkap({ mode: tanpa })).cara?.mode?.tahanKredit).toBeNull()
+    expect(keStatusWa(lengkap({ mode: { ...lengkap().mode!, tahan_kredit: 'ya' as unknown as boolean } })).cara?.mode?.tahanKredit).toBeNull()
+    // Hitungan pengguna "Kredit gratis ditahan" tidak bergantung pada sakelar.
+    expect(keStatusWa(lengkap({ mode: tanpa })).cara?.pengguna?.kredit_ditahan).toBe(2)
   })
   it('OTP dimatikan tetap mengalahkan segalanya', () => {
     const s = keStatusWa(lengkap({ otp: { aktif: false, wajib: false, darurat: false }, cara_sehat: [] }))
@@ -364,6 +378,7 @@ describe('kamus cara terbalik', () => {
       ...CARA_WA.flatMap(c => [`${T}.cara.${c}`, `${T}.caraKet.${c}`]),
       ...['sehat', 'sakit', 'diluarMode'].map(k => `${T}.keadaan.${k}`),
       ...KELOMPOK_LAPIS_WA.map(k => `${T}.kelompok.${k}`),
+      `${T}.labelTahanKredit`, `${T}.nyala`, `${T}.mati`,
       ...ANGKA_MASUK_WA.map(k => `${T}.angka.${k}`),
       ...ANGKA_PENGGUNA_WA.map(k => `${T}.pengguna.${k}`),
       ...[...STATUS_WA_AKUN, 'lain', 'lewatTanpaNomor', 'judul', 'segmen', 'ramai', 'kredit'].map(k => `pengguna.statusWa.${k}`),
@@ -424,6 +439,8 @@ describe('penjaga komponen cara terbalik', () => {
   it('bagian yang kuncinya tidak ada disembunyikan', () => {
     const cara = baca(KOMPONEN[0]!)
     for (const k of ['cara.mode', 'cara.cara', 'cara.lapis', 'cara.sapa']) expect(cara).toContain(`v-if="${k}"`)
+    expect(cara).toMatch(/<div v-if="cara\.mode\.tahanKredit !== null" class="min-w-0">/)
+    expect(cara).toMatch(/tcf\('kesehatan\.wa\.terbalik\.labelTahanKredit'\)/)
     const masuk = baca(KOMPONEN[1]!)
     for (const k of ['cara.angka24j', 'cara.jendela', 'cara.pengguna']) expect(masuk).toContain(`v-if="${k}"`)
   })
