@@ -84,6 +84,8 @@ import type {
   KepalaPenggunaDTO, Pengguna360DTO, TransaksiCariDTO, TransaksiRinciDTO, TeksDTO, CariDTO,
   KursorTransaksi, SaringTransaksi, JenisTeks,
 } from '~/adapters/cashflowBuku'
+import type { KursorPerjalanan, PerjalananDTO, SaringPerjalanan } from '~/adapters/cashflowPerjalanan'
+import type { BukaKasusCorongWa, CorongAlurDTO, SaringCorongWa } from '~/adapters/cashflowCorongAlur'
 import type { JejakDTO, KursorJejak, SaringJejak } from '~/adapters/cashflowJejak'
 import type {
   KepalaRuangDTO, Ruang360DTO, DompetRuangDTO, MutasiDompetDTO, PeriksaRuangDTO, SampahRuangDTO, KursorSampah,
@@ -337,6 +339,13 @@ export const useCashflowAdmin = () => {
     // ── agregat, tanpa alasan ──────────────────────────────────────────
     stats: () => rpc<StatsDTO>('admin_stats'),
     kesehatan: () => rpc<KesehatanDTO>('admin_kesehatan'),
+    corongAlur: (s: SaringCorongWa) => rpc<CorongAlurDTO>('admin_corong_alur', {
+      p_alur: 'nomor_wa', p_dari: s.dari, p_sampai: s.sampai, p_batas_akhir: s.batasAkhir,
+    }),
+    corongBukaKasus: (s: BukaKasusCorongWa) => rpc<KasusBukaDTO>('admin_corong_buka_kasus', {
+      p_alur: 'nomor_wa', p_dari: s.dari, p_sampai: s.sampai, p_cara: s.cara, p_versi: s.versi,
+      p_langkah: s.langkah, p_posisi: s.posisi, p_alasan: s.alasan, p_batas_akhir: s.batasAkhir,
+    }, { tanpaPelaku: true }),
     waStatus: () => rpc<WaStatusDTO>('admin_wa_status'),
     corong: (hari = 90) => rpc<CorongDTO[]>('admin_corong_aktivasi', { p_hari: hari }),
     /** v2: angka yang sama dengan v1, tanpa daftar email — hanya jumlah_pengecualian. */
@@ -449,6 +458,11 @@ export const useCashflowAdmin = () => {
       rpc<JejakDTO>('admin_jejak', {
         p_kasus: kasus, p_ws: s.ruang, p_aktor: aktor, p_jenis: s.jenis,
         p_dari: s.dari, p_sampai: s.sampai, p_kursor: kursor, p_limit: limit,
+      }),
+    perjalanan: (kasus: string, user: string, s: SaringPerjalanan, kursor: KursorPerjalanan | null, limit = 100) =>
+      rpc<PerjalananDTO>('admin_perjalanan_pengguna', {
+        p_kasus: kasus, p_user: user, p_dari: s.dari, p_sampai: s.sampai, p_kategori: s.kategori,
+        p_hanya_galat: s.hanyaGalat, p_kursor: kursor, p_limit: limit,
       }),
     /** T3 (kasus ANAK): teks bebas untuk ≤ 100 id. Audit baca_teks {jenis, ids}. */
     teks: (kasusAnak: string, jenis: JenisTeks, ids: readonly string[]) =>

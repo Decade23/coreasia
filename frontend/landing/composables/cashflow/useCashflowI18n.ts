@@ -12,7 +12,7 @@ import { tanggalPendek, jamWib, waktuPendekWib, type BahasaWaktu } from '~/adapt
 
 const KAMUS = {
   id: {
-    nav: { ringkasan: 'Ringkasan', pengguna: 'Pengguna', aktivitas: 'Aktivitas', ruang: 'Ruang', kesehatan: 'Kesehatan', sakelar: 'Sakelar', pengumuman: 'Pengumuman', kasus: 'Kasus', hapusAkun: 'Hapus akun', audit: 'Audit', dukungan: 'Dukungan', paket: 'Paket kredit', pembelian: 'Pembelian kredit' },
+    nav: { ringkasan: 'Ringkasan', corongWa: 'Corong WhatsApp', pengguna: 'Pengguna', aktivitas: 'Aktivitas', ruang: 'Ruang', kesehatan: 'Kesehatan', sakelar: 'Sakelar', pengumuman: 'Pengumuman', kasus: 'Kasus', hapusAkun: 'Hapus akun', audit: 'Audit', dukungan: 'Dukungan', paket: 'Paket kredit', pembelian: 'Pembelian kredit' },
     umum: {
       memuat: 'Memuat…', gagal: 'Gagal memuat.', kosong: 'Belum ada data.', tutup: 'Tutup', batal: 'Batal', simpan: 'Simpan',
       cari: 'Cari…', semua: 'Semua', ya: 'Ya', tidak: 'Tidak', alasan: 'Alasan', keluar: 'Keluar dari CashFlow',
@@ -518,7 +518,36 @@ const KAMUS = {
       dilihat: (n: number) => `Dilihat ${n}× dalam 30 hari`,
       tidakAda: 'Pengguna ini tidak ditemukan — akunnya mungkin sudah dihapus.',
     },
-    tab: { label: 'Tab pengguna', ringkas: 'Ringkas', ruang: 'Ruang', transaksi: 'Transaksi', dompet: 'Dompet', jejak: 'Jejak', akses: 'Akses', perangkat: 'Perangkat', kabar: 'Kabar', domi: 'Domi AI', lainnya: 'Lainnya (0)' },
+    perjalanan: {
+      kategori: 'Kategori', dari: 'Dari (WIB)', sampai: 'Sampai (WIB)', hanyaGalat: 'Hanya galat',
+      salin: 'Salin jejak', tersalin: 'Jejak disalin.', internal: 'Akun internal', belumDikenal: 'Belum dikenal',
+      versiAsing: 'Versi belum diketahui', diLuarPeluncuran: 'Di luar peluncuran aplikasi',
+      peluncuran: (waktu: string, versi: string) => `Peluncuran ${waktu} · ${versi}`,
+      retensi: (tgl: string) => `Telemetri sebelum ${tgl} sudah melewati masa simpan 120 hari.`,
+      kosong: 'Tidak ada peristiwa dalam saringan ini.',
+      sumber: { aplikasi: 'Aplikasi', server: 'Server' },
+      tautan: { transaksi: 'Buka Transaksi', jejak: 'Buka Jejak', domi: 'Buka Domi AI', pembelian: 'Buka Pembelian kredit' },
+    },
+    corongWa: {
+      jamAkhir: 'Jam akhir (WIB, opsional)', pecahan: 'Cara dan versi aplikasi', semuaKelompok: 'Semua cara dan versi',
+      cakupan: 'Di luar akun internal',
+      tahap: 'Langkah', orang: 'Orang', lanjut: 'Lanjut', berhenti: 'Berhenti',
+      cara: { wa_sapa: 'Terima kode', wa_masuk: 'Kirim pesan', belum_diketahui: 'Cara belum diketahui' },
+      langkah: {
+        lihat: 'Melihat layar nomor WhatsApp', petunjuk: 'Membuka pilihan nomor dari Google', pilih: 'Memilih nomor dari Google',
+        kirim: 'Meminta kode', kode_terkirim: 'Kode terkirim', ketik: 'Mencoba memasukkan kode',
+        mulai_terbalik: 'Memulai cara kirim pesan', buka_wa: 'Membuka WhatsApp', berhasil: 'Nomor tersimpan',
+        lewat_email: 'Melanjutkan dengan email', hapus_akun: 'Mengetuk Hapus akun', hubungi: 'Mengetuk Hubungi kami',
+      },
+      peristiwaTercatat: 'Jumlah peristiwa dari aplikasi',
+      bukaKasus: 'Buka kasus', alasan: 'Alasan membuka kasus (minimal 8 karakter)',
+      bukaTahap: (n: number, tahap: string) => `Selidiki ${n} orang yang berhenti pada langkah ${tahap}`,
+      berhentiDi: (tahap: string, n: number) => `${n} orang berhenti pada langkah ${tahap}.`,
+      posisi: (n: number) => `Urutan orang yang berhenti (1–${n})`,
+      posisiKosong: 'Urutan ini sudah kosong. Muat ulang corong untuk melihat jumlah terbaru.',
+      rentangSalah: 'Pilih rentang tanggal yang berurutan, paling lama 120 hari.',
+    },
+    tab: { label: 'Tab pengguna', perjalanan: 'Perjalanan', ringkas: 'Ringkas', ruang: 'Ruang', transaksi: 'Transaksi', dompet: 'Dompet', jejak: 'Jejak', akses: 'Akses', perangkat: 'Perangkat', kabar: 'Kabar', domi: 'Domi AI', lainnya: 'Lainnya (0)' },
     domi: {
       ket: 'Percakapan pengguna dengan Domi. Setiap pembukaan masuk audit dan butuh login console ber-TOTP.',
       buka: 'Buka percakapan Domi', membuka: 'Membuka…',
@@ -1110,7 +1139,7 @@ const KAMUS = {
     },
   },
   en: {
-    nav: { ringkasan: 'Overview', pengguna: 'Users', aktivitas: 'Activity', ruang: 'Workspaces', kesehatan: 'Health', sakelar: 'Switches', pengumuman: 'Announcements', kasus: 'Cases', hapusAkun: 'Account deletion', audit: 'Audit', dukungan: 'Support', paket: 'Credit packs', pembelian: 'Credit purchases' },
+    nav: { ringkasan: 'Overview', corongWa: 'WhatsApp funnel', pengguna: 'Users', aktivitas: 'Activity', ruang: 'Workspaces', kesehatan: 'Health', sakelar: 'Switches', pengumuman: 'Announcements', kasus: 'Cases', hapusAkun: 'Account deletion', audit: 'Audit', dukungan: 'Support', paket: 'Credit packs', pembelian: 'Credit purchases' },
     umum: {
       memuat: 'Loading…', gagal: 'Failed to load.', kosong: 'No data yet.', tutup: 'Close', batal: 'Cancel', simpan: 'Save',
       cari: 'Search…', semua: 'All', ya: 'Yes', tidak: 'No', alasan: 'Reason', keluar: 'Sign out of CashFlow',
@@ -1619,7 +1648,36 @@ const KAMUS = {
       dilihat: (n: number) => `Viewed ${n}× in 30 days`,
       tidakAda: 'User not found — the account may have been deleted.',
     },
-    tab: { label: 'User tabs', ringkas: 'Summary', ruang: 'Workspaces', transaksi: 'Transactions', dompet: 'Wallets', jejak: 'Trail', akses: 'Access', perangkat: 'Devices', kabar: 'Notifications', domi: 'Domi AI', lainnya: 'Others (0)' },
+    perjalanan: {
+      kategori: 'Category', dari: 'From (WIB)', sampai: 'Through (WIB)', hanyaGalat: 'Errors only',
+      salin: 'Copy trail', tersalin: 'Trail copied.', internal: 'Internal account', belumDikenal: 'Unrecognized',
+      versiAsing: 'Unknown version', diLuarPeluncuran: 'Outside an app launch',
+      peluncuran: (waktu: string, versi: string) => `App launch ${waktu} · ${versi}`,
+      retensi: (tgl: string) => `Telemetry before ${tgl} is past the 120-day retention period.`,
+      kosong: 'No events match these filters.',
+      sumber: { aplikasi: 'App', server: 'Server' },
+      tautan: { transaksi: 'Open Transactions', jejak: 'Open Trail', domi: 'Open Domi AI', pembelian: 'Open Credit purchases' },
+    },
+    corongWa: {
+      jamAkhir: 'End time (WIB, optional)', pecahan: 'Method and app version', semuaKelompok: 'All methods and versions',
+      cakupan: 'Excludes internal accounts',
+      tahap: 'Step', orang: 'People', lanjut: 'Continued', berhenti: 'Stopped',
+      cara: { wa_sapa: 'Receive a code', wa_masuk: 'Send a message', belum_diketahui: 'Unknown method' },
+      langkah: {
+        lihat: 'Viewed the WhatsApp number screen', petunjuk: 'Opened the Google number picker', pilih: 'Picked a number from Google',
+        kirim: 'Requested a code', kode_terkirim: 'Code sent', ketik: 'Tried to enter a code',
+        mulai_terbalik: 'Started the send-a-message method', buka_wa: 'Opened WhatsApp', berhasil: 'Number saved',
+        lewat_email: 'Continued by email', hapus_akun: 'Tapped Delete account', hubungi: 'Tapped Contact us',
+      },
+      peristiwaTercatat: 'Events recorded by the app',
+      bukaKasus: 'Open case', alasan: 'Reason for opening the case (at least 8 characters)',
+      bukaTahap: (n: number, tahap: string) => `Investigate ${n} who stopped at ${tahap}`,
+      berhentiDi: (tahap: string, n: number) => `${n} stopped at ${tahap}.`,
+      posisi: (n: number) => `Person’s position (1–${n})`,
+      posisiKosong: 'This position is no longer available. Reload the funnel for the current count.',
+      rentangSalah: 'Choose a date range in order, up to 120 days.',
+    },
+    tab: { label: 'User tabs', perjalanan: 'Journey', ringkas: 'Summary', ruang: 'Workspaces', transaksi: 'Transactions', dompet: 'Wallets', jejak: 'Trail', akses: 'Access', perangkat: 'Devices', kabar: 'Notifications', domi: 'Domi AI', lainnya: 'Others (0)' },
     domi: {
       ket: 'The user\'s conversations with Domi. Every opening is audited and needs a console login with TOTP.',
       buka: 'Open Domi conversations', membuka: 'Opening…',

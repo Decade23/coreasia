@@ -23,6 +23,7 @@ const indeks = useCashflowIndeks()
 const item = computed(() => [
   { kunci: 'ringkasan', to: '/console/cashflow' },
   { kunci: 'pengguna', to: indeks.daftarTerakhir.value, jalur: '/console/cashflow/pengguna' },
+  { kunci: 'corongWa', to: '/console/cashflow/corong' },
   { kunci: 'aktivitas', to: '/console/cashflow/aktivitas' },
   { kunci: 'ruang', to: '/console/cashflow/ruang' },
   { kunci: 'kesehatan', to: '/console/cashflow/kesehatan' },

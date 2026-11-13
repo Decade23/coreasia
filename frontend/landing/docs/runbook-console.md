@@ -954,3 +954,22 @@ tetap mengikuti peran dan kesegaran MFA. Bila kunci ikatan khusus
 (`NUXT_KONSOL_IKAT_KUNCI`) belum dipasang, tiap instans di Vercel mencatat
 peringatan sekali; nilainya tidak dicetak dan turunan kunci layanan tetap
 dipakai.
+
+## Perjalanan pengguna dan corong WhatsApp
+
+Terapkan kedua migrasi CashFlow sebelum merilis landing. Perjalanan memakai ranah
+`jejak` pada kasus Pengguna 360. Audit `baca_perjalanan` mencatat setiap halaman
+yang dibaca dari server. Saringan dan jam memakai WIB. Periksa tonggak
+`nomor_wa.tersimpan` untuk konfirmasi resmi ketika aplikasi tidak sempat mencatat
+keberhasilan. Tombol Salin jejak membawa label, jam, dan rincian yang sedang terbuka.
+
+Corong WhatsApp menghitung satu orang per langkah dan menampilkan hitungan
+peristiwa aplikasi secara terpisah. Isi jam akhir WIB untuk mengulang potret pada
+jam tertentu. Pilih cara dan versi untuk memeriksa pecahannya.
+Angka berhenti dapat dibuka oleh pemegang izin baca pribadi. Pilih urutan orang dan
+isi alasan. Server menilai kembali hasilnya saat membuka kasus dan menulis audit
+`baca_corong`. Tautan membawa rentang yang sama ke Perjalanan.
+
+Untuk verifikasi lokal, gunakan `scripts/uji-console-peristiwa-headless.mjs`
+dengan Nuxt dev di loopback dan kredensial sintetis. Periksa kondisi 1440 dan 390,
+terang dan gelap, termasuk tab aktif di ponsel, kursor, salinan, dan akses agregat.

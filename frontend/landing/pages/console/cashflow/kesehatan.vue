@@ -7,6 +7,7 @@
  * menutup ubin dan tabel lain. Keduanya memakai rentang yang sama (hariVersi).
  */
 import { angka, keKesehatan, ukuranByte, type KesehatanDTO } from '~/adapters/cashflow'
+import { terjemahPeristiwa } from '~/adapters/cashflowKamusPeristiwa'
 import { HARI_BAWAAN } from '~/adapters/cashflowVersi'
 import type { FotoYatimDTO, OcrDTO, TelemetriDTO } from '~/composables/cashflow/useCashflowAdmin'
 definePageMeta({ layout: 'console', middleware: ['console', 'cashflow-admin'] })
@@ -18,6 +19,10 @@ const kesehatanMentah = shallowRef<KesehatanDTO | null>(null)
 const kesehatan = computed(() => (kesehatanMentah.value ? keKesehatan(kesehatanMentah.value) : null))
 const byte = (v: number | string | null | undefined) => ukuranByte(v, bahasa.value)
 const yatim = ref<FotoYatimDTO[]>([]); const ocr = ref<OcrDTO[]>([]); const telemetri = ref<TelemetriDTO[]>([])
+const telemetriTampil = computed(() => telemetri.value.map(t => ({
+  ...t,
+  label: terjemahPeristiwa({ jenis: t.jenis, langkah: null, layar: t.layar, rincian_aman: {} }, bahasa.value),
+})))
 const tersalin = ref(false)
 const hariVersi = ref<number>(HARI_BAWAAN)
 /* admin_foto_yatim tidak memulangkan total (M/0058), jadi diminta BATAS + 1:
@@ -89,7 +94,7 @@ const salinJalur = () => aksi(async () => {
         <CashflowKeadaanKosong v-if="!telemetri.length" class="mt-3" :pesan="tcf('kesehatan.telemetriKet')" icon="lucide:radio" />
         <table v-else class="mt-3 w-full text-sm">
           <thead><tr class="text-left text-xs uppercase tracking-wide text-[var(--ca-muted)]"><th class="py-2 pr-3">{{ tcf('kesehatan.kolom.jenis') }}</th><th class="py-2 px-3">{{ tcf('kesehatan.kolom.layar') }}</th><th class="py-2 px-3 text-right">{{ tcf('kesehatan.kolom.jumlah') }}</th><th class="py-2 pl-3 text-right">{{ tcf('kesehatan.kolom.pengguna') }}</th></tr></thead>
-          <tbody><tr v-for="(t, i) in telemetri" :key="i" class="border-t border-[color:var(--ca-border)] text-[var(--ca-text)]"><td class="py-1.5 pr-3 font-mono text-xs">{{ t.jenis }}</td><td class="py-1.5 px-3">{{ t.layar || '—' }}</td><td class="py-1.5 px-3 text-right tabular-nums">{{ angka(t.jumlah) }}</td><td class="py-1.5 pl-3 text-right tabular-nums">{{ angka(t.pengguna) }}</td></tr></tbody>
+          <tbody><tr v-for="(t, i) in telemetriTampil" :key="i" class="border-t border-[color:var(--ca-border)] text-[var(--ca-text)]"><td class="py-1.5 pr-3 text-xs">{{ t.label.judul }}</td><td class="py-1.5 px-3">{{ t.label.layar || '—' }}</td><td class="py-1.5 px-3 text-right tabular-nums">{{ angka(t.jumlah) }}</td><td class="py-1.5 pl-3 text-right tabular-nums">{{ angka(t.pengguna) }}</td></tr></tbody>
         </table>
       </section>
     </template>

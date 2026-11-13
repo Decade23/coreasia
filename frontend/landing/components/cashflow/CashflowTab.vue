@@ -33,13 +33,20 @@ const tampakkanAktif = async () => {
   const nav = baris.value
   const aktif = nav?.querySelector<HTMLElement>('[aria-current="page"]')
   if (!nav || !aktif || nav.scrollWidth <= nav.clientWidth) return
-  const kiri = aktif.offsetLeft // nav sticky = offsetParent tautannya
-  if (kiri < nav.scrollLeft || kiri + aktif.offsetWidth > nav.scrollLeft + nav.clientWidth) {
-    nav.scrollTo({ left: Math.max(0, kiri - 16) })
+  const batas = nav.getBoundingClientRect()
+  const tab = aktif.getBoundingClientRect()
+  const tepi = 12
+  if (tab.left < batas.left + tepi) {
+    nav.scrollLeft += tab.left - batas.left - tepi
+  } else if (tab.right > batas.right - tepi) {
+    nav.scrollLeft += tab.right - batas.right + tepi
   }
 }
 onMounted(tampakkanAktif)
-watch(() => route.path, () => { lainnyaBuka.value = false; tampakkanAktif() })
+watch(() => [route.path, props.items.find(i => i.aktif)?.label], () => {
+  lainnyaBuka.value = false
+  tampakkanAktif()
+}, { flush: 'post' })
 
 const kelas = (i: ItemTab) => ['inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition', i.aktif
   ? 'bg-[var(--ca-panel-bg-strong)] font-semibold text-[var(--ca-text)]'

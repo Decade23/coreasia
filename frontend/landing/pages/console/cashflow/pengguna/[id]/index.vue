@@ -30,6 +30,7 @@ const jeda = computed(() => (p360.value ? jedaDaftarKeCatatan(p360.value.akun.da
 const ikon: Record<Exclude<TabPengguna, ''>, string> = {
   ruang: 'lucide:layers', transaksi: 'lucide:receipt-text', jejak: 'lucide:history',
   akses: 'lucide:shield-check', dompet: 'lucide:wallet', perangkat: 'lucide:smartphone', kabar: 'lucide:bell',
+  domi: 'lucide:messages-square', perjalanan: 'lucide:route',
 }
 const hitungTab = computed(() => {
   const h = p360.value?.hitung
