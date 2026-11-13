@@ -28,6 +28,7 @@ import type { JenisPenerima } from './cashflowPengumuman'
  */
 import { tanggalPendek, hariIniWib, geserHari, type BahasaWaktu } from './cashflowWaktu'
 import { tombolPengumuman } from './cashflowPengumumanTautan'
+import { keStatusWaAkun, type StatusWaAkun, type StatusWaAkunDTO } from './cashflowWa'
 
 export {
   ZONA_WIB, BULAN, BULAN_EN, tanggalPendek, tanggalWib, hariIniWib, geserHari,
@@ -42,7 +43,9 @@ export interface StatsDTO {
   total_transaksi: number
   transaksi_per_hari: Array<{ tanggal: string; jumlah: number }>
 }
-export interface PenggunaDTO {
+/** Kolom status WhatsApp (status_wa, status_wa_pada, lewat_sebab, nomor_ramai,
+ *  kredit_ditahan) dari migrasi cara terbalik: lihat cashflowWa.ts. */
+export interface PenggunaDTO extends StatusWaAkunDTO {
   user_id: string
   /** Tersamar oleh server (ded***@gmail.com) kecuali daftar dibuka dengan alasan. */
   email: string
@@ -154,6 +157,10 @@ export interface Pengguna {
   versiAplikasi: string | null
   /** Platform untuk ikon kecil di sel versi; null = tidak ada. */
   platform: InfoPlatform | null
+  /** Status WhatsApp (terverifikasi lewat pesan masuk atau kode terkirim,
+   *  lewat, belum) beserta tanda nomor ramai dan kredit ditahan. null = server
+   *  belum mengirim kolomnya. */
+  statusWa: StatusWaAkun | null
   /** Kunci urut versi semantik (1.3.10 > 1.3.9; pra-rilis sebelum rilisnya),
    *  string digit berpanjang tetap; null = tidak terbaca. */
   kunciVersi: string | null
@@ -440,6 +447,7 @@ export function kePengguna(d: PenggunaDTO, bahasa: BahasaWaktu = 'id', menungguH
     labelVersi: labelVersi(d.versi_aplikasi, d.platform),
     versiAplikasi: (d.versi_aplikasi ?? '').trim() || null,
     platform: bacaPlatform(d.platform).info,
+    statusWa: keStatusWaAkun(d, bahasa),
     kunciVersi: kunciVersi(d.versi_aplikasi),
     kelompokVersi: bacaPlatform(d.platform).kunci,
     daftar: tanggalPendek(d.created_at, bahasa),

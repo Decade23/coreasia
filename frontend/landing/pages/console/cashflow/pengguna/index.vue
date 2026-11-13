@@ -6,6 +6,7 @@ import {
   type InfoPlatform, type Pengguna, type PenggunaDTO, type StatusPengguna,
 } from '~/adapters/cashflow'
 import { halamanAman, jumlahHalaman } from '~/adapters/cashflowDaftar'
+import { SEGMEN_BELUM_WA, STATUS_WA_AKUN, type StatusWaAkunKode } from '~/adapters/cashflowWa'
 import type { SkemaQuery } from '~/adapters/cashflowQuery'
 import { GalatAdmin } from '~/composables/cashflow/useCashflowAdmin'
 definePageMeta({ layout: 'console', middleware: ['console', 'cashflow-admin'] })
@@ -20,7 +21,7 @@ const sesi = useCashflowSesi()
 const { user } = useAdminAuth()
 
 const PER = 25
-const SEGMEN = ['semua', 'catat7', 'belum', 'ditangguhkan'] as const
+const SEGMEN = ['semua', 'catat7', 'belum', 'ditangguhkan', SEGMEN_BELUM_WA] as const
 const URUT = ['email', 'wa', 'versi', 'daftar', 'aktif', 'ruang', 'tx', 'nominal'] as const
 type KolomUrut = typeof URUT[number]
 const URUT_PRIBADI: readonly KolomUrut[] = ['ruang', 'tx', 'nominal']
@@ -54,6 +55,11 @@ const kontakDisamarkanOleh = useState<string | null>('cf_kontak_disamarkan_oleh'
 const samarkanKontak = computed(() => !!user.value?.id && kontakDisamarkanOleh.value === user.value.id)
 const ditolak = ref(false)
 const perluVerifikasi = ref(false)
+/* Server sudah memasang status WhatsApp (cara terbalik). Lengket selama sesi:
+   hasil saringan yang kosong tidak boleh menyembunyikan saringan yang sedang
+   dipakai. Server lama menolak segmen dan saringannya (22023 saringan). */
+const serverStatusWa = useState('cf_server_status_wa', () => false)
+const pakaiStatusWa = (v: string | undefined): v is typeof STATUS_WA_AKUN[number] => (STATUS_WA_AKUN as readonly unknown[]).includes(v)
 const izinPribadi = computed(() => sesi.boleh('cashflow:pii'))
 const tanpaHitungan = computed(() => !izinPribadi.value || ditolak.value)
 
@@ -83,6 +89,9 @@ const muatDaftar = () => muat(async (terbaru) => {
       if (nilai) filter[k] = nilai
     } else filter[k] = v
   }
+  // Saringan status WhatsApp hanya dikirim ke server yang mengenalnya.
+  const statusWa = filterDiterapkan.value.status_wa
+  if (serverStatusWa.value && pakaiStatusWa(statusWa)) filter.status_wa = statusWa
   const baca = (alasan: string | null) => api.daftarPenggunaHalaman({
     limit: PER, offset: (q.value.hal - 1) * PER, cari: cariDiterapkan.value.trim(),
     segmen: q.value.seg, urut: q.value.urut, arah: q.value.arah, filter,
@@ -94,6 +103,13 @@ const muatDaftar = () => muat(async (terbaru) => {
     hasil = await baca(alasan)
   } catch (e) {
     if (!terbaru()) return
+    if (e instanceof GalatAdmin && e.hint === 'saringan' && (q.value.seg === SEGMEN_BELUM_WA || 'status_wa' in filter)) {
+      // Server belum (atau tidak lagi) mengenal status WhatsApp: lepas
+      // saringannya. Pengamat query dan saringan memuat ulang daftar.
+      serverStatusWa.value = false
+      lepasSaringWa()
+      return
+    }
     if (!(e instanceof GalatAdmin && e.jenis === 'izin') || (!alasan && !URUT_PRIBADI.includes(q.value.urut) && !segmenButuhHitungan(q.value.seg))) throw e
     // Sesi bisa diturunkan oleh server sementara tab masih terbuka. Ambil
     // kembali daftar tersamar hanya setelah server memeriksa hak baca dasar.
@@ -105,6 +121,7 @@ const muatDaftar = () => muat(async (terbaru) => {
     hasil = await baca(null)
   }
   if (!terbaru()) return
+  if (hasil.baris.some(d => d.status_wa !== undefined) || q.value.seg === SEGMEN_BELUM_WA || 'status_wa' in filter) serverStatusWa.value = true
   const aman = halamanAman(q.value.hal, Number(hasil.total), PER)
   if (aman !== q.value.hal) { await setel({ hal: aman }); return }
   const bolehBuka = !!alasan && !tanpaHitungan.value && !samarkanKontak.value
@@ -126,6 +143,15 @@ watch(galat, (g) => {
   terbuka.value = false
   indeks.kosongkan()
 })
+function lepasSaringWa() {
+  if (filterKolom.value.status_wa || filterDiterapkan.value.status_wa) {
+    const { status_wa: _kolom, ...sisaKolom } = filterKolom.value
+    const { status_wa: _terap, ...sisaTerap } = filterDiterapkan.value
+    filterKolom.value = sisaKolom
+    filterDiterapkan.value = sisaTerap
+  }
+  if (q.value.seg === SEGMEN_BELUM_WA) void setel({ seg: 'semua', hal: 1 })
+}
 let aktif = false
 let dilepas = false
 onMounted(async () => {
@@ -194,13 +220,15 @@ watch(() => route.fullPath, p => indeks.ingatDaftar(p), { immediate: true })
 
 const labelStatus = (s: StatusPengguna): string =>
   s === 'menunggu_hapus' ? tcf('pengguna.menungguHapus') : s === 'ditangguhkan' ? tcf('pengguna.ditangguhkan') : tcf('pengguna.aktif')
+const labelStatusWa = (s: StatusWaAkunKode): string => tcf(`pengguna.statusWa.${s}`)
 
 /* Hitungan dan nominal null berarti hak baca tidak tersedia. */
-interface Baris { id: string; email: string; wa: string | null; versi: string | null; daftar: string; aktif: string; ruang: number | null; tx: number | null; nominal: number | null; status: string; p: Pengguna }
+interface Baris { id: string; email: string; wa: string | null; status_wa: string | null; versi: string | null; daftar: string; aktif: string; ruang: number | null; tx: number | null; nominal: number | null; status: string; p: Pengguna }
 const keBaris = (p: Pengguna): Baris => ({
   id: p.id,
   email: p.emailPenuh ?? p.emailTersamar,
   wa: p.nomorPenuh ?? p.nomorTersamar,
+  status_wa: p.statusWa?.status ?? null,
   versi: p.labelVersi,
   daftar: p.daftar,
   aktif: p.aktivitasTerakhir,
@@ -214,6 +242,12 @@ const keBaris = (p: Pengguna): Baris => ({
 const kolom = computed(() => [
   { key: 'email', label: tcf('pengguna.email'), type: 'text' as const, class: 'font-mono text-[var(--ca-text)]', sortable: true },
   { key: 'wa', label: tcf('pengguna.wa'), type: 'text' as const, sortable: true, class: 'whitespace-nowrap tabular-nums text-[var(--ca-text)]' },
+  // Tanpa kolom status_wa dari server, sel kosong dan saringannya tidak ditawarkan.
+  {
+    key: 'status_wa', label: tcf('pengguna.statusWa.judul'), type: 'status' as const, filterable: serverStatusWa.value,
+    options: STATUS_WA_AKUN.map(s => ({ label: labelStatusWa(s), value: s })),
+    class: 'min-w-[8.5rem] max-w-[10rem] whitespace-normal',
+  },
   { key: 'versi', label: tcf('pengguna.versi'), type: 'text' as const, sortable: true, class: 'whitespace-nowrap tabular-nums' },
   { key: 'daftar', label: tcf('pengguna.daftar'), type: 'text' as const, sortable: true, class: 'whitespace-nowrap text-[var(--ca-muted)]' },
   { key: 'aktif', label: tcf('pengguna.aktifTerakhir'), type: 'text' as const, sortable: true, class: 'whitespace-nowrap text-[var(--ca-muted)]' },
@@ -246,7 +280,7 @@ const kolomSaring = computed(() => kolom.value.filter(k => k.filterable !== fals
 const adaSaringan = computed(() => Object.values(filterKolom.value).some(Boolean))
 const tanpaBaris = computed(() => cariDiterapkan.value || Object.keys(filterDiterapkan.value).length || q.value.seg !== 'semua'
   ? tcf('umum.kosongSaring') : tcf('umum.kosong'))
-const kolomKartu = computed(() => kolom.value.filter(k => !['email', 'wa', 'status'].includes(k.key)))
+const kolomKartu = computed(() => kolom.value.filter(k => !['email', 'wa', 'status_wa', 'status'].includes(k.key)))
 const nilaiKartu = (row: Baris, k: string) => {
   if (k === 'versi') return row.versi ?? '—'
   if (k === 'daftar' || k === 'aktif') return row[k]
@@ -260,6 +294,8 @@ const segmenOpsi = computed(() => [
   { kunci: 'catat7' as const, label: tcf('pengguna.catat7') },
   { kunci: 'belum' as const, label: tcf('pengguna.belumCatat') },
   { kunci: 'ditangguhkan' as const, label: tcf('pengguna.ditangguhkan') },
+  // Segmen Belum WhatsApp hanya untuk server yang mengenalnya.
+  ...(serverStatusWa.value ? [{ kunci: SEGMEN_BELUM_WA, label: tcf('pengguna.statusWa.segmen') }] : []),
 ])
 /** Server sudah memasang migrasi nomor WA (kolomnya ada di jawaban). */
 const serverKirimWa = computed(() => mentah.value.some(d => d.nomor_wa !== undefined))
@@ -396,6 +432,12 @@ useCashflowPintasan([{ kunci: '/', aksi: () => kolomCari.value?.focus() }])
             {{ value }}<CashflowSalinKontak v-if="row.p.nomorPenuh" jenis="wa" :nilai="row.p.nomorPenuh" />
           </span>
         </template>
+        <!-- Status WhatsApp: cara nomor dibuktikan atau tanggal lewat, lalu tanda C4
+             dan K2. Kosong bila server belum mengirim kolomnya. -->
+        <template #cell-status_wa="{ row }">
+          <span v-if="!row.p.statusWa" class="text-[var(--ca-subtle)]">—<span class="sr-only"> ({{ tcf('pengguna.statusWa.kosong') }})</span></span>
+          <CashflowStatusWaAkun v-else :status="row.p.statusWa" />
+        </template>
         <!-- Versi ramping: ikon platform kecil (titik = varian uji seperti UAT) lalu
              nomor versinya. Di bawah versi tertinggi platform yang sama: redup. -->
         <template #cell-versi="{ row }">
@@ -457,6 +499,10 @@ useCashflowPintasan([{ kunci: '/', aksi: () => kolomCari.value?.focus() }])
                   <CashflowSalinKontak v-if="row.p.nomorPenuh" jenis="wa" :nilai="row.p.nomorPenuh" />
                 </dd>
               </div>
+              <div v-if="row.p.statusWa" class="col-span-2 min-w-0">
+                <dt class="text-xs text-[var(--ca-subtle)]">{{ tcf('pengguna.statusWa.judul') }}</dt>
+                <dd><CashflowStatusWaAkun :status="row.p.statusWa" baris /></dd>
+              </div>
               <div v-for="k in kolomKartu" :key="k.key" class="min-w-0">
                 <dt class="text-xs text-[var(--ca-subtle)]">{{ k.key === 'tx' ? tcf('pengguna.tx') : k.label }}</dt>
                 <dd class="break-words tabular-nums text-[var(--ca-text)]" :class="k.key === 'versi' && versiTertinggal(row.p, versiTerbaru) ? 'opacity-70' : ''">
@@ -483,6 +529,7 @@ useCashflowPintasan([{ kunci: '/', aksi: () => kolomCari.value?.focus() }])
     <p v-if="tanpaHitungan" class="text-xs text-[var(--ca-subtle)]">{{ tcf('umum.hitunganButuhTotp') }}</p>
     <p class="text-xs text-[var(--ca-subtle)]">{{ tcf('pengguna.aktifTerakhirKet') }}</p>
     <p v-if="serverKirimVersi" class="text-xs text-[var(--ca-subtle)]">{{ tcf('pengguna.versiKet') }}</p>
+    <p v-if="serverStatusWa" class="text-xs text-[var(--ca-subtle)]">{{ tcf('pengguna.statusWa.ket') }}</p>
     <CashflowPalet :show="paletBuka" @close="paletBuka = false" />
   </div>
 </template>
