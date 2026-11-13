@@ -45,6 +45,10 @@
  * yang dibaca aplikasi 1.3.2 ke atas, dengan pemeriksaan bentuk, penjaga
  * timpa, dan sibuknya sendiri. Ia memakai daftar config halaman ini.
  *
+ * AKUN INTERNAL (sasaran pengumuman). Kartu CashflowAkunInternalKartu memuat
+ * dan menulis daftarnya sendiri (admin_daftar/simpan/hapus_akun_internal),
+ * tidak lewat app_config. Server lama: kartunya menulis "belum aktif".
+ *
  * SIBUK. Setiap aksi di halaman ini menulis audit yang tidak bisa dihapus;
  * selama satu berjalan, semua pemicunya nonaktif dan panggilan ulang diabaikan.
  */
@@ -244,6 +248,9 @@ onBeforeUnmount(tutupSunting)
 
       <!-- Dukung lewat web (0118): dukung_web, tidak publik -->
       <CashflowSakelarDukung :config="config" :segarkan="segarkanDaftar" />
+
+      <!-- Akun internal (sasaran pengumuman, spek 13 Nov 2026): dikecualikan pengumuman beraturan -->
+      <CashflowAkunInternalKartu />
 
       <!-- Pengecualian ukuran keberhasilan -->
       <section class="ca-console-dialog p-5">
