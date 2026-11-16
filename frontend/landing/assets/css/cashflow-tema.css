@@ -1,0 +1,204 @@
+/*
+ * Tema area CashFlow di console: "Lembar Tenang" (terang) dan "Malam Domi"
+ * (gelap). Nilainya sama dengan tema aplikasi CashFlow.
+ *
+ * CAKUPAN. Hanya berlaku saat <body> membawa kelas `cf-area` (dipasang
+ * useCashflowTema), dan hanya pada dua tempat:
+ *   1. isi halaman (.ca-console-main);
+ *   2. lapisan yang dipindah ke <body> (modal, laci, palet, toast), yaitu
+ *      anak langsung <body> selain #__nuxt.
+ * Sidebar dan bilah atas console ada di luar keduanya, jadi tetap memakai
+ * warna console. Modul console lain tidak pernah mendapat kelas `cf-area`.
+ *
+ * CARA KERJA. Komponen CashFlow memakai var(--ca-*) dan kelas .ca-* bersama.
+ * Di dalam cakupan, nilai --ca-* ditimpa dari token --cf-* di bawah, jadi
+ * komponennya tidak diubah. Token --cf-* selalu warna padat (hex) supaya
+ * kontrasnya bisa dihitung: tests/cashflow/tema-kontras.test.ts membaca
+ * berkas ini. Penanda "@tema" dipakai uji itu, jangan dihapus.
+ *
+ * Berkas ini sengaja di luar @layer: aturan tanpa layer menang atas
+ * @layer components di main.css.
+ */
+
+/* @tema gelap */
+body.cf-area .ca-console-main,
+body.cf-area > :not(#__nuxt) {
+  --cf-layar: #0A0F1F;
+  --cf-kartu: #111932;
+  --cf-awan: #19233F;
+  --cf-awan2: #1F2A4A;
+  --cf-garis: #1E2946;
+  --cf-tinta: #EEF2FA;
+  --cf-tinta2: #B3BDD2;
+  --cf-tinta3: #8C97AE;
+  --cf-inti: #E9EEF8;
+  --cf-on-inti: #1A2445;
+  --cf-emas: #FFBE3D;
+  --cf-emas-tua: #E5A21F;
+  --cf-on-emas: #1A1204;
+  --cf-aksen: #FFBE3D;
+  --cf-fokus: #FFBE3D;
+  --cf-baik: #1BC49E;
+  --cf-baik-bg: #183D37;
+  --cf-awas: #FFBE3D;
+  --cf-awas-bg: #3D3318;
+  --cf-galat: #FF8FA6;
+  --cf-galat-bg: #40222F;
+  --cf-info: #4CC4F5;
+  --cf-info-bg: #17384B;
+  --cf-bayang: none;
+  --cf-bayang-lapis: 0 24px 60px rgba(0, 0, 0, 0.5);
+}
+
+/* @tema terang */
+html[data-theme="light"] body.cf-area .ca-console-main,
+html[data-theme="light"] body.cf-area > :not(#__nuxt) {
+  --cf-layar: #F4F6FA;
+  --cf-kartu: #FFFFFF;
+  --cf-awan: #F4F6FA;
+  --cf-awan2: #EEF1F6;
+  --cf-garis: #E7EBF2;
+  --cf-tinta: #0E1730;
+  --cf-tinta2: #45506A;
+  --cf-tinta3: #646E85;
+  --cf-inti: #1A2445;
+  --cf-on-inti: #FFFFFF;
+  --cf-emas: #FFBE3D;
+  --cf-emas-tua: #E5A21F;
+  --cf-on-emas: #1A1204;
+  --cf-aksen: #1A2445;
+  --cf-fokus: #1A2445;
+  --cf-baik: #0A7A5C;
+  --cf-baik-bg: #E6F2EF;
+  --cf-awas: #7A5500;
+  --cf-awas-bg: #FFF2D8;
+  --cf-galat: #C62348;
+  --cf-galat-bg: #FBEBEE;
+  --cf-info: #0A6F9E;
+  --cf-info-bg: #E6F0F5;
+  --cf-bayang: 0 1px 2px rgba(14, 23, 48, 0.04), 0 6px 20px rgba(14, 23, 48, 0.05);
+  --cf-bayang-lapis: 0 24px 60px rgba(14, 23, 48, 0.35);
+}
+
+/* @tema peta: token console (--ca-*) dibaca dari token CashFlow. Sama untuk kedua tema. */
+body.cf-area .ca-console-main,
+body.cf-area > :not(#__nuxt) {
+  --cf-r-kartu: 16px;
+  --cf-r-isian: 12px;
+
+  --ca-bg: var(--cf-layar);
+  --ca-bg-soft: var(--cf-awan2);
+  --ca-surface: var(--cf-kartu);
+  --ca-surface-soft: var(--cf-awan);
+  --ca-border: var(--cf-garis);
+  --ca-text: var(--cf-tinta);
+  --ca-muted: var(--cf-tinta2);
+  --ca-subtle: var(--cf-tinta3);
+  --ca-brand: var(--cf-emas);
+  --ca-brand-deep: var(--cf-awas);
+  --ca-accent: var(--cf-baik);
+  --ca-input-bg: var(--cf-kartu);
+  --ca-panel-bg: var(--cf-kartu);
+  --ca-panel-bg-strong: var(--cf-awan2);
+  --ca-dropdown-bg: var(--cf-kartu);
+  --ca-card-from: var(--cf-kartu);
+  --ca-card-to: var(--cf-kartu);
+  --ca-secondary-btn-bg: var(--cf-kartu);
+  --ca-secondary-btn-hover: var(--cf-awan2);
+  --ca-kicker-bg: var(--cf-awan);
+  --ca-chip-bg: var(--cf-awan2);
+  --ca-card-shadow: var(--cf-bayang);
+  --ca-card-soft-shadow: var(--cf-bayang);
+  --ca-toggle-track: var(--cf-awan2);
+  --ca-toggle-thumb: var(--cf-kartu);
+  --ca-toggle-thumb-shadow: 0 1px 3px rgba(14, 23, 48, 0.3);
+  --ca-gold-text: var(--cf-awas);
+  --ca-gold-bg: var(--cf-awas-bg);
+  --ca-gold-border: color-mix(in srgb, var(--cf-awas) 28%, var(--cf-awas-bg));
+  --ca-emerald-text: var(--cf-baik);
+  --ca-emerald-bg: var(--cf-baik-bg);
+  --ca-emerald-border: color-mix(in srgb, var(--cf-baik) 28%, var(--cf-baik-bg));
+  --ca-danger-text: var(--cf-galat);
+  --ca-danger-bg: var(--cf-galat-bg);
+  --ca-danger-border: color-mix(in srgb, var(--cf-galat) 28%, var(--cf-galat-bg));
+  --ca-info-text: var(--cf-info);
+  --ca-info-bg: var(--cf-info-bg);
+  --ca-info-border: color-mix(in srgb, var(--cf-info) 28%, var(--cf-info-bg));
+  --ca-toast-bg: var(--cf-kartu);
+
+  color: var(--cf-tinta);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Bidang halaman: menutup latar bergradasi console di belakang isi. */
+body.cf-area .ca-console-main {
+  background: var(--cf-layar);
+}
+
+/* Huruf: satu keluarga seperti aplikasi, judul tidak memakai huruf display console. */
+body.cf-area :is(.ca-console-main, body > :not(#__nuxt)) :is(h1, h2, h3, h4, h5, h6, .font-display) {
+  font-family: var(--font-sans);
+  letter-spacing: -0.01em;
+}
+
+/* Kartu: rata, garis tipis, bayangan lembut di terang dan tanpa bayangan di gelap. */
+body.cf-area :is(.ca-console-main, body > :not(#__nuxt)) :is(.ca-console-dialog, .ca-console-stat, .ca-console-table-wrap, .ca-card, .ca-card-soft) {
+  border: 1px solid var(--cf-garis);
+  border-radius: var(--cf-r-kartu);
+  background: var(--cf-kartu);
+  box-shadow: var(--cf-bayang);
+  backdrop-filter: none;
+}
+body.cf-area .ca-console-main .ca-console-stat::after {
+  display: none;
+}
+/* Lapisan di atas halaman (modal, laci) tetap butuh bayangan supaya terangkat. */
+body.cf-area > :not(#__nuxt) .ca-console-dialog[role="dialog"] {
+  box-shadow: var(--cf-bayang-lapis);
+}
+
+/* Tombol dan isian. Emas hanya untuk tombol utama. */
+body.cf-area :is(.ca-console-main, body > :not(#__nuxt)) .ca-btn-primary {
+  border-radius: var(--cf-r-isian);
+  background: var(--cf-emas);
+  color: var(--cf-on-emas) !important;
+  box-shadow: none;
+}
+body.cf-area :is(.ca-console-main, body > :not(#__nuxt)) .ca-btn-primary:hover {
+  background: var(--cf-emas-tua);
+  box-shadow: none;
+}
+body.cf-area :is(.ca-console-main, body > :not(#__nuxt)) .ca-btn-secondary {
+  border: 1px solid var(--cf-garis);
+  border-radius: var(--cf-r-isian);
+  background: var(--cf-kartu);
+  color: var(--cf-tinta);
+  box-shadow: none;
+}
+body.cf-area :is(.ca-console-main, body > :not(#__nuxt)) .ca-btn-secondary:hover {
+  background: var(--cf-awan2);
+}
+body.cf-area :is(.ca-console-main, body > :not(#__nuxt)) .ca-input {
+  border-radius: var(--cf-r-isian);
+}
+body.cf-area :is(.ca-console-main, body > :not(#__nuxt)) .ca-input:focus {
+  border-color: var(--cf-fokus);
+}
+body.cf-area :is(.ca-console-main, body > :not(#__nuxt)) :is(a, button, [tabindex]):focus-visible {
+  outline: 2px solid var(--cf-fokus);
+  outline-offset: 2px;
+}
+
+/* Pilihan aktif di deret pil (segmen, saringan): bidang inti, bukan emas. Tanpa
+   ini pilihan aktif hanya selisih tipis dari bidang halaman. */
+body.cf-area :is(.ca-console-main, body > :not(#__nuxt)) button.rounded-full[aria-pressed="true"] {
+  background: var(--cf-inti);
+  color: var(--cf-on-inti);
+}
+
+/* Kepala halaman ringkas (ConsolePageHeader ringkas). */
+body.cf-area .ca-console-main .ca-console-kepala-ringkas h1 {
+  font-size: 1.625rem;
+  line-height: 1.2;
+  font-weight: 800;
+}

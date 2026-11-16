@@ -99,7 +99,7 @@ export default defineNuxtConfig({
             { loc: '/artikel', changefreq: 'weekly', priority: 0.8 },
         ],
     },
-    css: ['~/assets/css/main.css'],
+    css: ['~/assets/css/main.css', '~/assets/css/cashflow-tema.css'],
     vite: {
         plugins: [
             // @ts-expect-error - Tailwind CSS v4 Vite plugin

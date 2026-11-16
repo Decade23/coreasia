@@ -9,6 +9,8 @@ definePageMeta({ layout: 'console', middleware: 'console' })
 const { tcf } = useCashflowI18n()
 const route = useRoute()
 const sesi = useCashflowSesi()
+// Halaman ini tanpa CashflowNav, jadi tema area dipasang di sini.
+useCashflowTema()
 
 const SEBAB_DIKENAL = ['konfigurasi', 'belum-konfigurasi', 'tanpa-cookie', 'cookie-ditolak', 'gateway-gagal', 'tanpa-izin', 'mint-gagal', 'lintas-situs', 'ikatan', 'dibatasi', 'jaringan', 'sesi', 'totp', 'sibuk']
 const sebab = ref(typeof route.query.sebab === 'string' ? route.query.sebab : '')
