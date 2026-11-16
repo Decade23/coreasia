@@ -177,7 +177,7 @@ const gantiHalaman = async (h: number) => {
                 <button v-if="r.kasus" type="button" class="ml-1 font-mono text-[0.7rem] text-[var(--ca-subtle)] underline-offset-2 hover:underline" :title="tcf('audit.saringKasus')" @click="pilihKasus(r.kasus)">#{{ r.kasus.slice(0, 8) }}</button>
               </td>
               <td class="hidden whitespace-nowrap font-mono !text-xs md:table-cell">{{ r.pelaku }}</td>
-              <td class="break-all font-mono !text-xs">
+              <td class="min-w-[11rem] break-all font-mono !text-xs">
                 <!-- Target pengguna menuju kepala T0 (datanya tetap di balik kasus); target_email
                      null pada target 'user' = akunnya sudah hilang. -->
                 <NuxtLink
@@ -191,7 +191,7 @@ const gantiHalaman = async (h: number) => {
               <td class="hidden lg:table-cell">
                 <span class="flex flex-wrap gap-1"><span v-for="x in r.ranah" :key="x" class="ca-pill-emerald text-[0.7rem]">{{ tcf(`ranah.${x}`) }}</span></span>
               </td>
-              <td class="hidden !text-xs text-[var(--ca-muted)] sm:table-cell">
+              <td class="hidden min-w-[12rem] !text-xs text-[var(--ca-muted)] sm:table-cell">
                 {{ r.alasan || '—' }}<span v-if="r.alasan && !r.alasanUtuh" class="text-[var(--ca-subtle)]"> ({{ tcf('kasus.alasanTerpotong') }})</span>
               </td>
             </tr>

@@ -8,6 +8,8 @@
  * Lebar batang relatif terhadap baris PERTAMA, bukan maksimum, supaya corong
  * yang menyusut terlihat menyusut.
  */
+import { angka } from '~/adapters/cashflow'
+
 const props = defineProps<{
   baris: Array<{ label: string; nilai: number; persen?: number | null; keterangan?: string }>
   warna?: string
@@ -23,7 +25,7 @@ const dasar = computed(() => Math.max(1, props.baris[0]?.nilai ?? 1))
       <div class="flex items-baseline justify-between gap-3">
         <span class="min-w-0 break-words font-semibold text-[var(--ca-text)]">{{ b.label }}</span>
         <span class="shrink-0 whitespace-nowrap text-right tabular-nums">
-          <span class="font-bold text-[var(--ca-text)]">{{ b.nilai }}</span>
+          <span class="font-bold text-[var(--ca-text)]">{{ angka(b.nilai) }}</span>
           <span v-if="b.persen != null" class="ml-1 text-xs text-[var(--ca-subtle)]">({{ b.persen }}%)</span>
         </span>
       </div>

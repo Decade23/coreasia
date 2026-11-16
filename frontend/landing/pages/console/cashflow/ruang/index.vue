@@ -116,7 +116,7 @@ const tanpaHitungan = computed(() => data.value.length > 0 && data.value.every(r
         <li v-for="r in data" :key="r.id" class="ca-console-dialog min-w-0 p-4">
           <div class="flex min-w-0 items-start justify-between gap-2">
             <p class="cf-kuat min-w-0 break-words text-[0.9375rem]">{{ r.nama }}</p>
-            <span class="cf-lencana shrink-0">{{ r.jenis }}</span>
+            <span v-if="r.jenis !== '—'" class="cf-lencana shrink-0">{{ r.jenis }}</span>
           </div>
           <p class="mt-1 break-all text-[0.8125rem] text-[var(--ca-muted)]">{{ tcf('ruang.pemilik') }} {{ r.pemilik }}</p>
           <dl class="mt-3 grid grid-cols-3 gap-x-3 border-t border-[color:var(--ca-border)] pt-3">

@@ -8,7 +8,7 @@
  * mencatat 30 hari". Menampilkannya tanpa tanda membuat kohort terakhir selalu
  * terlihat paling buruk, dan itu bohong.
  */
-import type { SelKohort } from '~/adapters/cashflow'
+import { angka, type SelKohort } from '~/adapters/cashflow'
 defineProps<{ baris: SelKohort[] }>()
 const { tcf } = useCashflowI18n()
 
@@ -40,9 +40,9 @@ const nada = (persen: number) => {
           {{ k.kohort }}
           <span v-if="k.berjalan" class="ml-1 rounded-full border border-[color:var(--ca-border)] px-1.5 text-[0.65rem] text-[var(--ca-subtle)]">{{ tcf('ringkasan.berjalan') }}</span>
         </td>
-        <td class="cf-ka">{{ k.mendaftar }}</td>
-        <td class="cf-ka">{{ k.pernahCatat }}</td>
-        <td class="cf-ka">{{ k.catat30 }}</td>
+        <td class="cf-ka">{{ angka(k.mendaftar) }}</td>
+        <td class="cf-ka">{{ angka(k.pernahCatat) }}</td>
+        <td class="cf-ka">{{ angka(k.catat30) }}</td>
         <td class="cf-ka">
           <span class="inline-block min-w-[3.5rem] rounded-md px-2 py-0.5 text-right tabular-nums text-[var(--ca-text)]" :class="nada(k.persen)">{{ k.persen }}%</span>
         </td>

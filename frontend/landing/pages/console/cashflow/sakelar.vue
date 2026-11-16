@@ -321,19 +321,19 @@ onBeforeUnmount(tutupSunting)
       <section class="ca-console-dialog overflow-x-auto p-5">
         <h2 class="font-display text-base font-bold text-[var(--ca-text)]">{{ tcf('sakelar.semua') }}</h2>
         <CashflowKeadaanKosong v-if="!config.length" class="mt-3" :pesan="tcf('umum.kosong')" icon="lucide:toggle-right" />
-        <table v-else class="mt-3 w-full text-sm">
+        <table v-else class="mt-3 w-full min-w-[52rem] text-sm">
           <thead><tr class="cf-kepala-polos text-left">
             <th class="py-2 pr-3">{{ tcf('sakelar.kunci') }}</th><th class="py-2 px-3">{{ tcf('sakelar.nilai') }}</th><th class="py-2 px-3">{{ tcf('sakelar.publik') }}</th><th class="py-2 px-3">{{ tcf('sakelar.catatan') }}</th><th class="py-2 pl-3">{{ tcf('sakelar.diperbarui') }}</th>
           </tr></thead>
           <tbody>
             <tr v-for="c in config" :key="c.kunci" class="border-t border-[color:var(--ca-border)] text-[var(--ca-text)]">
-              <td class="py-1.5 pr-3 font-mono text-xs">{{ c.kunci }}</td>
-              <td class="py-1.5 px-3 font-mono text-xs">
+              <td class="whitespace-nowrap py-1.5 pr-3 font-mono text-xs">{{ c.kunci }}</td>
+              <td class="max-w-[24rem] break-all py-1.5 px-3 font-mono text-xs">
                 {{ JSON.stringify(c.nilai) }}
                 <span v-if="c.tersamar" class="ca-pill-muted ml-1 font-sans">{{ tcf('sakelar.tersamar') }}</span>
               </td>
               <td class="py-1.5 px-3">{{ c.publik ? tcf('umum.ya') : tcf('umum.tidak') }}</td>
-              <td class="py-1.5 px-3 text-xs text-[var(--ca-muted)]">{{ c.catatan || '—' }}</td>
+              <td class="min-w-[14rem] py-1.5 px-3 text-xs text-[var(--ca-muted)]">{{ c.catatan || '—' }}</td>
               <td class="py-1.5 pl-3 text-xs text-[var(--ca-subtle)] whitespace-nowrap">{{ formatTanggal(c.diperbaruiIso) }}</td>
             </tr>
           </tbody>
