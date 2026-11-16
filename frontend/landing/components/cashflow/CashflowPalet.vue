@@ -52,6 +52,7 @@ const HALAMAN = [
   { kunci: 'hapusAkun', ke: '/console/cashflow/hapus-akun', ikon: 'lucide:user-x' },
   { kunci: 'audit', ke: '/console/cashflow/audit', ikon: 'lucide:scroll-text' },
   { kunci: 'dukungan', ke: '/console/cashflow/dukungan', ikon: 'lucide:heart-handshake' },
+  { kunci: 'domi', ke: '/console/cashflow/domi', ikon: 'lucide:life-buoy' },
   { kunci: 'paket', ke: '/console/cashflow/paket', ikon: 'lucide:tags' },
   { kunci: 'pembelian', ke: '/console/cashflow/pembelian', ikon: 'lucide:receipt' },
 ] as const

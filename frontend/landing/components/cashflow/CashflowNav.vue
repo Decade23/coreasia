@@ -33,6 +33,7 @@ const item = computed(() => [
   { kunci: 'hapusAkun', to: '/console/cashflow/hapus-akun' },
   { kunci: 'audit', to: '/console/cashflow/audit' },
   { kunci: 'dukungan', to: '/console/cashflow/dukungan' },
+  { kunci: 'domi', to: '/console/cashflow/domi' },
   { kunci: 'paket', to: '/console/cashflow/paket' },
   { kunci: 'pembelian', to: '/console/cashflow/pembelian' },
 ])
