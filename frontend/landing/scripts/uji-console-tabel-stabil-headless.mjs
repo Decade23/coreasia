@@ -4,7 +4,12 @@
  * NUXT_PUBLIC_CASHFLOW_SUPABASE_URL=http://127.0.0.1:4398
  * NUXT_PUBLIC_CASHFLOW_SUPABASE_ANON_KEY=anon-sintetis node .output/server/index.mjs
  * CF_QA_BASE dan CF_QA_SB boleh menunjuk aplikasi terpasang; seluruh API tetap
- * ditahan route browser. EXPECT_GLITCH=1 merekam reproduksi sebelum perbaikan. */
+ * ditahan route browser. EXPECT_GLITCH=1 merekam reproduksi sebelum perbaikan.
+ *
+ * Admin tiruan masuk dengan TOTP segar (`mfa`, `mfa_at`, `totp_enabled_at`),
+ * jadi sesinya memegang izin data pribadi dan daftar dibuka dengan kontak
+ * lengkap sejak muatan pertama, sama seperti admin sungguhan. Sakelar Kontak
+ * lengkap karena itu mulai dari keadaan menyala. */
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
@@ -18,7 +23,7 @@ const origin = new URL(base).origin, sb = process.env.CF_QA_SB || 'http://127.0.
 const output = process.env.CF_QA_ARTIFACTS || join(homedir(), 'Codex/artifact/coreasia/console-tabel-stabil');
 await mkdir(output, { recursive: true });
 const errors = [], checks = [], requests = [], pending = [];
-let held = false, failure = 0, latency = 20;
+let held = false, failure = 0, latency = 20, izinDicabut = false;
 const people = Array.from({ length: 97 }, (_, i) => ({
   user_id: `00000000-0000-4000-8000-${String(i + 1).padStart(12, '0')}`,
   email: `orang${String(i + 1).padStart(3, '0')}@contoh.invalid`, display_name: '',
@@ -39,21 +44,24 @@ try {
   browser = await chromium.connectOverCDP(`http://127.0.0.1:${port}`);
   const ctx = browser.contexts()[0]; page = ctx.pages()[0];
   await page.setViewportSize({ width: 1440, height: 900 }); page.on('pageerror', e => errors.push(e.message));
-  await ctx.addInitScript(() => {
+  const pasangSesi = () => ctx.addInitScript(() => {
     const exp = Math.floor(Date.now() / 1000) + 3600, id = '00000000-0000-4000-8000-000000000001';
     const jwt = ['eyJhbGciOiJub25lIn0', btoa(JSON.stringify({ sub: id, role: 'authenticated', exp })).replaceAll('=', ''), 'sintetis'].join('.');
     sessionStorage.setItem('cf-console-sesi', JSON.stringify({ access_token: jwt, refresh_token: 'sintetis', expires_at: exp, expires_in: 3600, token_type: 'bearer', user: { id, aud: 'authenticated', role: 'authenticated', email: 'admin@example.invalid' } }));
-    sessionStorage.setItem('cf_izin', JSON.stringify(['cashflow:view', 'cashflow:pii', 'cashflow:investigasi']));
+    // Hak baca data pribadi berlaku 30 menit sejak halaman dimuat, seperti catatan izin dari server.
+    const sampai = Date.now() + 30 * 60 * 1000;
+    sessionStorage.setItem('cf_izin', JSON.stringify({ izin: ['cashflow:view', 'cashflow:pii', 'cashflow:investigasi'], tepercaya: false, bacaSampai: sampai, mfaSampai: sampai }));
   });
+  await pasangSesi();
   await ctx.route('**/*', async r => {
     const req = r.request(), u = new URL(req.url());
-    if (u.origin === origin && u.pathname === '/api/gw/admin/auth/me') return r.fulfill({ json: { data: { id: 'admin-sintetis', email: 'admin@example.invalid', full_name: 'Admin Contoh', role: 'super_admin', is_active: true, mfa: true, mfa_at: new Date().toISOString() } } });
+    if (u.origin === origin && u.pathname === '/api/gw/admin/auth/me') return r.fulfill({ json: { data: { id: 'admin-sintetis', email: 'admin@example.invalid', full_name: 'Admin Contoh', role: 'super_admin', is_active: true, mfa: true, mfa_at: new Date().toISOString(), totp_enabled: true, totp_enabled_at: '2026-01-01T00:00:00Z' } } });
     if (u.origin === new URL(sb).origin) {
       const headers = { 'access-control-allow-origin': origin, 'access-control-allow-headers': '*', 'access-control-allow-methods': 'POST,GET,OPTIONS' };
       if (req.method() === 'OPTIONS') return r.fulfill({ status: 204, headers });
       // Server tiruan ini belum memasang daftar v4: jawab seperti PostgREST, halaman jatuh ke v3.
       if (u.pathname.endsWith('/admin_daftar_pengguna_v4')) return r.fulfill({ status: 404, json: { code: 'PGRST202', message: 'Could not find the function public.admin_daftar_pengguna_v4 in the schema cache' }, headers });
-      const name = u.pathname.split('/').pop(), p = req.postDataJSON() || {}, fail = failure; failure = 0;
+      const name = u.pathname.split('/').pop(), p = req.postDataJSON() || {}, fail = izinDicabut ? 42501 : failure; failure = 0;
       requests.push({ name, p });
       if (held) await new Promise(resolve => pending.push(resolve));
       else await new Promise(resolve => setTimeout(resolve, latency));
@@ -77,11 +85,16 @@ try {
     }
     return r.abort();
   });
+  // Jam tiruan dipasang sebelum halaman dimuat, supaya pengingat habisnya izin ikut maju saat waktu dilompatkan.
+  await page.clock.install();
   await page.goto(`${base}/console/cashflow/pengguna`, { waitUntil: 'domcontentloaded' });
   const table = () => page.locator('.ca-daftar-pengguna table');
   const rowCount = () => table().locator('tbody tr').count();
   // Kolom pertama kini berjudul Pengguna; kuncinya tetap `email`.
   const emailSort = () => table().getByRole('button', { name: 'Pengguna', exact: true });
+  const sakelar = () => page.getByRole('switch', { name: 'Kontak lengkap' });
+  /** Ada email utuh di tabel? Baris tersamar ditulis ora***@contoh.invalid. */
+  const adaUtuh = async () => /orang\d{3}@contoh\.invalid/.test(await table().innerText());
   const settled = () => page.waitForFunction(() => !!document.querySelector('.ca-daftar-pengguna table') && document.querySelector('.ca-daftar-pengguna [aria-busy="true"]') === null);
   const waitRequest = async (previous) => { for (let i = 0; i < 100 && requests.length <= previous; i++) await page.waitForTimeout(20); assert.ok(requests.length > previous, 'Permintaan baru terkirim'); };
   const trace = async () => page.evaluate(() => {
@@ -91,6 +104,8 @@ try {
   const endTrace = async () => { const f = await page.evaluate(() => { window.qaTrace = false; return window.qaFrames; }); frames.push(...f); return f; };
   await page.waitForFunction(() => document.querySelectorAll('.ca-daftar-pengguna tbody tr').length === 25);
   check('halaman awal 25 dari 97 pengguna', await page.getByText('97 pengguna', { exact: true }).isVisible());
+  await settled();
+  check('sesi ber-TOTP: kontak lengkap menyala sejak muatan pertama, dengan alasan tercatat', await sakelar().getAttribute('aria-checked') === 'true' && await adaUtuh() && !!requests.at(-1).p.p_alasan);
   // Tabel pengguna tampil utuh (tanpa gulir di dalam bingkainya), jadi yang dijaga posisi gulir halaman.
   await page.evaluate(() => scrollTo(0, 260));
   const scroll = await page.evaluate(() => scrollY);
@@ -122,20 +137,36 @@ try {
     n = requests.length; await page.getByRole('button', { name: 'Berikutnya', exact: true }).click(); await waitRequest(n);
     check('paginasi tetap berisi baris lama saat menunggu', await rowCount() === 25 && await page.getByText('Halaman 1 dari 4', { exact: true }).isVisible());
     release(); await settled(); check('halaman kedua benar', await page.getByText('Halaman 2 dari 4', { exact: true }).isVisible() && (await table().locator('tbody tr').first().getByRole('link').first().getAttribute('href')).endsWith('000000000026'));
-    n = requests.length; await page.getByRole('switch', { name: 'Kontak lengkap' }).click(); await waitRequest(n);
-    check('kontak tersamar tetap tampil saat pembukaan menunggu', await rowCount() === 25 && !(await table().innerText()).includes('orang026@contoh.invalid'));
+    // Menutup kontak: baris langsung tersamar, sebelum jawaban server tiba.
+    n = requests.length; await sakelar().click(); await waitRequest(n);
+    check('menutup kontak segera menyamarkan baris tanpa menghilangkan tabel', await rowCount() === 25 && !(await adaUtuh()));
+    check('permintaan sesudah ditutup tidak membawa alasan', requests.at(-1).p.p_alasan === null);
+    release(); await settled();
+    check('kontak tetap tersamar sesudah jawaban tiba', await rowCount() === 25 && !(await adaUtuh()) && await sakelar().getAttribute('aria-checked') === 'false');
+    // Membuka lagi: baris tersamar bertahan sampai jawaban berisi kontak tiba.
+    n = requests.length; await sakelar().click(); await waitRequest(n);
+    check('kontak tersamar tetap tampil saat pembukaan menunggu', await rowCount() === 25 && !(await adaUtuh()));
     release(); await settled(); check('kontak lengkap diperbarui tanpa menghilangkan tabel', await table().getByText('orang026@contoh.invalid', { exact: true }).isVisible());
     // Menutup kontak tetap tersedia meskipun sort berisi kontak utuh sedang berjalan.
     n = requests.length; await emailSort().click(); await waitRequest(n);
-    n = requests.length; await page.getByRole('switch', { name: 'Kontak lengkap' }).click(); await waitRequest(n);
-    check('menutup kontak segera menyamarkan baris', await rowCount() === 25 && !(await table().innerText()).includes('orang026@contoh.invalid'));
+    n = requests.length; await sakelar().click(); await waitRequest(n);
+    check('menutup kontak saat sort berjalan segera menyamarkan baris', await rowCount() === 25 && !(await adaUtuh()));
     release(); await page.waitForTimeout(100);
-    check('jawaban kontak lama tidak membuka data kembali', !(await table().innerText()).includes('orang026@contoh.invalid'));
+    check('jawaban kontak lama tidak membuka data kembali', !(await adaUtuh()));
     release(); await settled();
-    await page.clock.install();
-    n = requests.length; await page.getByRole('switch', { name: 'Kontak lengkap' }).click(); await waitRequest(n);
-    await page.clock.fastForward(31 * 60 * 1000); release(); await settled();
-    check('jawaban kontak setelah alasan kedaluwarsa tetap tersamar', await page.getByRole('switch', { name: 'Kontak lengkap' }).getAttribute('aria-checked') === 'false' && !(await table().innerText()).includes('orang026@contoh.invalid'));
+    check('sesudah semua jawaban tiba kontak tetap tersamar', !(await adaUtuh()));
+    // Hak baca habis selagi jawaban berisi kontak masih di jalan: jawabannya tidak boleh membuka kontak.
+    n = requests.length; await sakelar().click(); await waitRequest(n);
+    await page.clock.fastForward(31 * 60 * 1000); await page.waitForTimeout(200);
+    while (pending.length) { release(); await page.waitForTimeout(120); }
+    await settled();
+    check('jawaban kontak setelah hak baca habis tetap tersamar', await sakelar().getAttribute('aria-checked') === 'false' && !(await adaUtuh()) && await rowCount() === 25);
+    // Muatan halaman berikutnya memegang hak baca yang segar lagi. Jam tiruan sudah maju 31 menit,
+    // jadi tenggatnya dihitung ulang dengan jeda yang cukup.
+    await ctx.addInitScript(() => {
+      const sampai = Date.now() + 120 * 60 * 1000;
+      sessionStorage.setItem('cf_izin', JSON.stringify({ izin: ['cashflow:view', 'cashflow:pii', 'cashflow:investigasi'], tepercaya: false, bacaSampai: sampai, mfaSampai: sampai }));
+    });
     failure = 500; n = requests.length; await emailSort().click(); await waitRequest(n); release();
     await page.getByRole('button', { name: 'Coba lagi', exact: true }).waitFor();
     check('gangguan jaringan mempertahankan tabel dengan penjelasan hasil lama', await rowCount() === 25 && await page.getByText('Perubahan belum diterapkan. Menampilkan hasil sebelumnya.', { exact: true }).isVisible());
@@ -154,15 +185,22 @@ try {
     await page.waitForTimeout(700);
     await page.setViewportSize({ width: 390, height: 844 });
     check('tabel responsif tidak membuat halaman meluber', await page.evaluate(() => document.documentElement.scrollWidth <= 390));
+    check('di ponsel daftar ruang tampil sebagai kartu, satu per ruang', await page.locator('[data-uji="ruang-kartu"] li').count() === 8 && await page.locator('[data-uji="ruang-kartu"]').isVisible());
     await page.screenshot({ path: join(output, 'ponsel.png') });
+    // Kembali ke layar lebar: tabel pengguna hanya tampil di sana, di ponsel daftarnya berupa kartu.
+    await page.setViewportSize({ width: 1440, height: 900 });
     latency = 20;
     await page.goto(`${base}/console/cashflow/pengguna?hal=999`, { waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => document.querySelectorAll('.ca-daftar-pengguna tbody tr').length === 22);
     check('halaman di luar batas menunggu hasil halaman terakhir yang benar', await page.getByText('Halaman 4 dari 4', { exact: true }).isVisible() && new URL(page.url()).searchParams.get('hal') === '4');
     await page.goto(`${base}/console/cashflow/pengguna`, { waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => document.querySelectorAll('.ca-daftar-pengguna tbody tr').length === 25);
-    held = true; n = requests.length; await page.getByRole('switch', { name: 'Kontak lengkap' }).click(); await waitRequest(n); release(); await settled();
-    failure = 42501; n = requests.length; await emailSort().click(); await waitRequest(n); release();
+    await settled();
+    check('muatan baru kembali berisi kontak lengkap', await adaUtuh());
+    // Izin dicabut server selagi tab terbuka: semua permintaan berikutnya ditolak.
+    held = true; izinDicabut = true; n = requests.length; await emailSort().click(); await waitRequest(n); release();
+    for (let i = 0; i < 20 && pending.length === 0; i++) await page.waitForTimeout(20);
+    held = false; while (pending.length) release();
     await page.waitForFunction(() => document.querySelectorAll('.ca-daftar-pengguna tbody tr').length === 0);
     check('izin dicabut menghapus seluruh data lama', !(await page.locator('body').innerText()).includes('orang001@contoh.invalid') && await table().count() === 0);
     check('tanpa galat JavaScript', errors.length === 0);
