@@ -100,7 +100,7 @@ useConsoleRemah().pasang(() => [
 
 <template>
   <div class="space-y-6">
-    <ConsolePageHeader :title="tcf('pembelian.judul')" kicker="CashFlow">
+    <ConsolePageHeader :title="tcf('pembelian.judul')" kicker="CashFlow" ringkas>
       <template #meta><CashflowNav /></template>
       <template #actions>
         <button

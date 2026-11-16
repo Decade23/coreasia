@@ -212,7 +212,7 @@ onBeforeUnmount(tutupSunting)
 
 <template>
   <div class="space-y-6">
-    <ConsolePageHeader :title="tcf('sakelar.judul')" kicker="CashFlow"><template #meta><CashflowNav /></template></ConsolePageHeader>
+    <ConsolePageHeader :title="tcf('sakelar.judul')" kicker="CashFlow" ringkas><template #meta><CashflowNav /></template></ConsolePageHeader>
     <p class="text-sm text-[var(--ca-muted)]">{{ tcf('sakelar.ket') }}</p>
 
     <p v-if="pesanGalat" class="text-sm ca-tone-danger">{{ pesanGalat }}</p>

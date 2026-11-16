@@ -36,7 +36,7 @@ const kohort = computed(() => keKohort(retensi.value))
 
 <template>
   <div class="space-y-6">
-    <ConsolePageHeader :title="tcf('ringkasan.judul')" kicker="CashFlow">
+    <ConsolePageHeader :title="tcf('ringkasan.judul')" kicker="CashFlow" ringkas>
       <template #meta><CashflowNav /></template>
     </ConsolePageHeader>
 

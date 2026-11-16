@@ -45,7 +45,7 @@ const salinJalur = () => aksi(async () => {
 
 <template>
   <div class="space-y-6">
-    <ConsolePageHeader :title="tcf('kesehatan.judul')" kicker="CashFlow"><template #meta><CashflowNav /></template></ConsolePageHeader>
+    <ConsolePageHeader :title="tcf('kesehatan.judul')" kicker="CashFlow" ringkas><template #meta><CashflowNav /></template></ConsolePageHeader>
     <p class="text-sm text-[var(--ca-muted)]">{{ tcf('kesehatan.ket') }}</p>
     <CashflowStatusWa />
     <p v-if="pesanGalat" class="text-sm ca-tone-danger">{{ pesanGalat }}</p>

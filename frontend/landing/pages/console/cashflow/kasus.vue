@@ -80,7 +80,7 @@ useConsoleRemah().pasang(() => [
 
 <template>
   <div class="space-y-6">
-    <ConsolePageHeader :title="tcf('kasus.judul')" kicker="CashFlow"><template #meta><CashflowNav /></template></ConsolePageHeader>
+    <ConsolePageHeader :title="tcf('kasus.judul')" kicker="CashFlow" ringkas><template #meta><CashflowNav /></template></ConsolePageHeader>
     <p class="text-sm text-[var(--ca-muted)]">{{ tcf('kasus.ket') }}</p>
 
     <div class="flex flex-wrap items-center gap-2">

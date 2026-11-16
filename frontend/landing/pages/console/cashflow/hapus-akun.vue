@@ -135,7 +135,7 @@ useConsoleRemah().pasang(() => [
 
 <template>
   <div class="space-y-6">
-    <ConsolePageHeader :title="tcf('hapusAkun.judul')" kicker="CashFlow"><template #meta><CashflowNav /></template></ConsolePageHeader>
+    <ConsolePageHeader :title="tcf('hapusAkun.judul')" kicker="CashFlow" ringkas><template #meta><CashflowNav /></template></ConsolePageHeader>
     <p class="text-sm text-[var(--ca-muted)]">{{ tcf('hapusAkun.ket') }}</p>
 
     <div class="flex items-start gap-3 rounded-xl border border-[color:var(--ca-gold-border)] bg-[var(--ca-gold-bg)] px-4 py-3 text-sm text-[var(--ca-text)]">

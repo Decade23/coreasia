@@ -139,7 +139,7 @@ useCashflowPintasan([
 <template>
   <div class="space-y-4 sm:space-y-5">
     <ConsolePageHeader
-      :title="tcf('p360.judul')" kicker="CashFlow"
+      :title="tcf('p360.judul')" kicker="CashFlow" ringkas
       :back-to="kembali" :back-action="keDaftar" :back-label="tcf('pengguna.kembaliKeDaftar')"
     >
       <template #meta><CashflowNav :aksi-daftar="keDaftar" /></template>

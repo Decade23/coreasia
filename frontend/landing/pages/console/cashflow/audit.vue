@@ -104,7 +104,7 @@ const gantiHalaman = async (h: number) => {
 
 <template>
   <div class="space-y-6">
-    <ConsolePageHeader :title="tcf('audit.judul')" kicker="CashFlow"><template #meta><CashflowNav /></template></ConsolePageHeader>
+    <ConsolePageHeader :title="tcf('audit.judul')" kicker="CashFlow" ringkas><template #meta><CashflowNav /></template></ConsolePageHeader>
     <p class="text-sm text-[var(--ca-muted)]">{{ tcf('audit.ket') }}</p>
     <div class="flex flex-wrap items-center gap-2">
       <select :value="q.aksi" class="ca-input" :aria-label="tcf('audit.aksi')" @change="pilihAksi(($event.target as HTMLSelectElement).value)">

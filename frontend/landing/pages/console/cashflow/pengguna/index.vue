@@ -393,7 +393,7 @@ useCashflowPintasan([{ kunci: '/', aksi: () => kolomCari.value?.focus() }])
 
 <template>
   <div class="space-y-6">
-    <ConsolePageHeader :title="tcf('pengguna.judul')" kicker="CashFlow">
+    <ConsolePageHeader :title="tcf('pengguna.judul')" kicker="CashFlow" ringkas>
       <template #meta><CashflowNav /></template>
     </ConsolePageHeader>
     <p class="text-sm text-[var(--ca-muted)]">{{ tcf('pengguna.ket') }}</p>

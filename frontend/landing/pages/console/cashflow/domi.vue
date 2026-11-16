@@ -36,7 +36,7 @@ useConsoleRemah().pasang(() => [
 
 <template>
   <div class="space-y-6">
-    <ConsolePageHeader :title="tcf('cadangan.judul')" kicker="CashFlow">
+    <ConsolePageHeader :title="tcf('cadangan.judul')" kicker="CashFlow" ringkas>
       <template #meta><CashflowNav /></template>
       <template #actions>
         <button type="button" class="ca-btn-secondary inline-flex items-center gap-2" :disabled="memuat || !!sibuk" data-uji="cadangan-muat-ulang" @click="c.muatAwal">

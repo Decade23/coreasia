@@ -162,7 +162,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="space-y-6">
-    <ConsolePageHeader :title="tcf('pengumuman.judul')" kicker="CashFlow">
+    <ConsolePageHeader :title="tcf('pengumuman.judul')" kicker="CashFlow" ringkas>
       <template #meta><CashflowNav /></template>
       <template #actions><div class="flex flex-wrap gap-2"><button v-if="sasaranAktif" type="button" class="ca-btn-secondary" @click="bukaSegmen = true">{{ tcf('pengumuman.segmenTombol') }}</button><button type="button" class="ca-btn-primary" @click="bukaBaru">{{ tcf('pengumuman.buat') }}</button></div></template>
     </ConsolePageHeader>

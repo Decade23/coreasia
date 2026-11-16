@@ -39,7 +39,7 @@ const { sibuk, jalankan: selidiki } = useCashflowSekaliJalan((id: number) => aks
 
 <template>
   <div class="space-y-6">
-    <ConsolePageHeader :title="tcf('aktivitas.judul')" kicker="CashFlow"><template #meta><CashflowNav /></template></ConsolePageHeader>
+    <ConsolePageHeader :title="tcf('aktivitas.judul')" kicker="CashFlow" ringkas><template #meta><CashflowNav /></template></ConsolePageHeader>
     <p class="text-sm text-[var(--ca-muted)]">{{ tcf('aktivitas.ket') }} {{ tcf('selidiki.ket') }}</p>
     <!-- Langkah usaha (0110): memuat sendiri, galatnya tidak menutup tabel peristiwa. -->
     <CashflowLangkahUsaha />

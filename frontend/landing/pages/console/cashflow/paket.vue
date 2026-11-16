@@ -237,7 +237,7 @@ useConsoleRemah().pasang(() => [
 
 <template>
   <div class="space-y-6">
-    <ConsolePageHeader :title="tcf('paket.judul')" kicker="CashFlow">
+    <ConsolePageHeader :title="tcf('paket.judul')" kicker="CashFlow" ringkas>
       <template #meta><CashflowNav /></template>
       <template #actions>
         <button type="button" class="ca-btn-primary inline-flex items-center gap-2" :disabled="!bolehUbah || !!sibuk || belumAktif || !!pesanGalat" @click="bukaBaru">

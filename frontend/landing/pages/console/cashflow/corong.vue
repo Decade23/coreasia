@@ -5,7 +5,7 @@ const { tcf } = useCashflowI18n()
 
 <template>
   <div class="space-y-6">
-    <ConsolePageHeader :title="tcf('nav.corongWa')" kicker="CashFlow">
+    <ConsolePageHeader :title="tcf('nav.corongWa')" kicker="CashFlow" ringkas>
       <template #meta><CashflowNav /></template>
     </ConsolePageHeader>
     <CashflowCorongNomorWa />

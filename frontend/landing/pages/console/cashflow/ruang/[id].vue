@@ -96,7 +96,7 @@ useCashflowPintasan([
 <template>
   <div class="space-y-4 sm:space-y-5">
     <ConsolePageHeader
-      :title="tcf('r360.judul')" kicker="CashFlow"
+      :title="tcf('r360.judul')" kicker="CashFlow" ringkas
       :back-to="AKAR_RUANG" :back-label="tcf('r360.kembaliKeDaftar')"
     >
       <template #meta><CashflowNav /></template>
