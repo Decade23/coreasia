@@ -17,6 +17,8 @@
 interface ItemTab { kunci: string; label: string; to: string; jumlah: number | null; aktif: boolean; judul?: string }
 
 const props = defineProps<{ items: ItemTab[]; semuaTerlihat?: boolean }>()
+import { angka } from '~/adapters/cashflow'
+
 const { tcf } = useCashflowI18n()
 const aktivasi = useCashflowAktivasiTab()
 const tandai = (to: string, e: MouseEvent) => { aktivasi.catat(to, e) }
@@ -48,34 +50,26 @@ watch(() => [route.path, props.items.find(i => i.aktif)?.label], () => {
   tampakkanAktif()
 }, { flush: 'post' })
 
-const kelas = (i: ItemTab) => ['inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition', i.aktif
-  ? 'bg-[var(--ca-panel-bg-strong)] font-semibold text-[var(--ca-text)]'
-  : 'text-[var(--ca-muted)] hover:text-[var(--ca-text)]']
 </script>
 
 <template>
-  <nav
-    ref="baris"
-    class="cf-gulir sticky top-[4.5rem] z-20 -mx-4 flex items-center gap-1 overflow-x-auto border-y border-[color:var(--ca-border)] bg-[var(--ca-bg)] px-4 py-1.5 sm:static sm:mx-0 sm:flex-wrap sm:overflow-visible sm:rounded-full sm:border sm:bg-[var(--ca-panel-bg)] sm:p-1"
-    :aria-label="tcf('tab.label')"
-  >
-    <NuxtLink v-for="i in utama" :key="i.kunci || 'ringkas'" :to="i.to" :class="kelas(i)" :aria-current="i.aktif ? 'page' : undefined" @click="tandai(i.to, $event)">
+  <!-- Rupa sama dengan baris kedua navigasi CashFlow: garis bawah untuk tab aktif.
+       Di layar sempit baris ini menempel di atas dan digulir ke samping. -->
+  <nav ref="baris" class="cf-tab" :aria-label="tcf('tab.label')">
+    <NuxtLink v-for="i in utama" :key="i.kunci || 'ringkas'" :to="i.to" class="cf-tab-butir" :aria-current="i.aktif ? 'page' : undefined" @click="tandai(i.to, $event)">
       {{ i.label }}
-      <span v-if="i.jumlah !== null" class="rounded-full bg-[var(--ca-chip-bg)] px-1.5 text-[0.7rem] tabular-nums text-[var(--ca-muted)]" :title="i.judul" :aria-label="i.judul ? `${i.jumlah} ${i.judul}` : undefined">{{ i.jumlah }}</span>
+      <span v-if="i.jumlah !== null" class="cf-tab-jumlah" :title="i.judul" :aria-label="i.judul ? `${i.jumlah} ${i.judul}` : undefined">{{ angka(i.jumlah) }}</span>
     </NuxtLink>
     <!-- < 640 px: baris ini digulir ke samping (overflow), jadi menu tarik-turun
-         akan terpotong — tab kosong tampil sebaris, redup, di belakang pemisah. -->
+         akan terpotong. Tab kosong tampil sebaris, redup, di belakang pemisah. -->
     <template v-if="kosong.length">
-      <span class="mx-1 h-4 w-px shrink-0 bg-[var(--ca-border)] sm:hidden" aria-hidden="true" />
-      <NuxtLink v-for="i in kosong" :key="`m-${i.kunci}`" :to="i.to" class="inline-flex shrink-0 items-center gap-1 rounded-full px-3 py-1.5 text-sm text-[var(--ca-subtle)] sm:hidden" @click="tandai(i.to, $event)">
+      <span class="mx-1 h-4 w-px shrink-0 self-center bg-[var(--ca-border)] sm:hidden" aria-hidden="true" />
+      <NuxtLink v-for="i in kosong" :key="`m-${i.kunci}`" :to="i.to" class="cf-tab-butir cf-tab-redup sm:!hidden" @click="tandai(i.to, $event)">
         {{ i.label }} <span class="tabular-nums">0</span>
       </NuxtLink>
     </template>
     <div v-if="kosong.length" class="relative hidden shrink-0 sm:block">
-      <button
-        type="button" class="inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-sm text-[var(--ca-subtle)] hover:text-[var(--ca-text)]"
-        :aria-expanded="lainnyaBuka" @click="lainnyaBuka = !lainnyaBuka"
-      >
+      <button type="button" class="cf-tab-butir cf-tab-redup" :aria-expanded="lainnyaBuka" @click="lainnyaBuka = !lainnyaBuka">
         {{ tcf('tab.lainnya') }}<Icon name="lucide:chevron-down" class="h-3.5 w-3.5" aria-hidden="true" />
       </button>
       <div v-if="lainnyaBuka" class="absolute left-0 top-full z-30 mt-1 min-w-40 rounded-xl border border-[color:var(--ca-border)] bg-[var(--ca-dropdown-bg)] p-1 shadow-lg">
@@ -87,8 +81,39 @@ const kelas = (i: ItemTab) => ['inline-flex shrink-0 items-center gap-1.5 rounde
   </nav>
 </template>
 
-<style scoped>
-/* Pil tab di layar sempit digulir ke samping; bilah gulirnya tidak perlu tampil. */
-.cf-gulir { scrollbar-width: none; }
-.cf-gulir::-webkit-scrollbar { display: none; }
+<!-- Tidak scoped: NuxtLink dirender komponen lain. Semua aturan berawalan .cf-tab,
+     warnanya token console yang di area CashFlow dibaca dari --cf-*. -->
+<style>
+.cf-tab {
+  position: sticky; top: 4.5rem; z-index: 20;
+  display: flex; align-items: stretch; gap: 2px;
+  margin: 0 -1rem; padding: 0 0.75rem;
+  overflow-x: auto; scrollbar-width: none;
+  border-bottom: 1px solid var(--ca-border);
+  background: var(--ca-bg);
+  font-size: 0.84375rem;
+}
+.cf-tab::-webkit-scrollbar { display: none; }
+.cf-tab-butir {
+  display: inline-flex; flex: none; align-items: center; gap: 6px;
+  min-height: 40px; padding: 2px 10px 0;
+  border: 0; border-bottom: 2px solid transparent; margin-bottom: -1px;
+  background: none; font-weight: 600; color: var(--ca-muted); white-space: nowrap;
+  transition: color 0.15s, border-color 0.15s;
+}
+.cf-tab-butir:hover { color: var(--ca-text); }
+/* Tebal lewat bayangan teks, supaya lebar tab tidak berubah saat aktif. */
+.cf-tab-butir[aria-current] {
+  color: var(--ca-text); border-bottom-color: var(--cf-aksen, var(--ca-brand));
+  text-shadow: 0.02em 0 0 currentColor, -0.02em 0 0 currentColor;
+}
+.cf-tab-butir:focus-visible { outline-offset: -2px; border-radius: 8px; }
+.cf-tab-redup { color: var(--ca-subtle); }
+.cf-tab-jumlah {
+  padding: 1px 6px; border-radius: 999px; background: var(--ca-chip-bg);
+  font-size: 0.6875rem; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--ca-muted); text-shadow: none;
+}
+@media (min-width: 640px) {
+  .cf-tab { position: static; flex-wrap: wrap; margin: 0; padding: 0 4px; overflow: visible; background: none; }
+}
 </style>

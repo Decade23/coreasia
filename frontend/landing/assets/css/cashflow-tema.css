@@ -362,3 +362,86 @@ body.cf-area :is(.ca-console-main, body > :not(#__nuxt)) button.rounded-full[ari
   background: var(--cf-awas-bg);
   color: var(--cf-tinta);
 }
+
+/* ── Halaman rinci ────────────────────────────────────────────────────────
+   Kepala rincian (pengguna, ruang): nama besar, lencana status, aksi di kanan,
+   lalu deret fakta berlabel kecil. */
+body.cf-area .ca-console-main .cf-kepala-nama {
+  font-size: 1.25rem;
+  font-weight: 800;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+  color: var(--cf-tinta);
+}
+@media (min-width: 640px) {
+  body.cf-area .ca-console-main .cf-kepala-nama { font-size: 1.5rem; }
+}
+body.cf-area .ca-console-main .cf-kepala-fakta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem 1.25rem;
+  margin: 0;
+  padding: 0.875rem 1rem;
+  border-top: 1px solid var(--cf-garis);
+}
+@media (min-width: 640px) {
+  body.cf-area .ca-console-main .cf-kepala-fakta {
+    grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
+    padding: 0.875rem 1.25rem;
+  }
+}
+body.cf-area .ca-console-main .cf-kepala-fakta > div { min-width: 0; }
+body.cf-area .ca-console-main .cf-kepala-fakta dt {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--cf-tinta3);
+}
+body.cf-area .ca-console-main .cf-kepala-fakta dd {
+  margin-top: 2px;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--cf-tinta);
+}
+/* Lencana status: titik dan tulisan, warnanya dari nada. */
+body.cf-area :is(.ca-console-main, body > :not(#__nuxt)) .cf-lencana {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--cf-awan2);
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.4;
+  white-space: nowrap;
+  color: var(--cf-tinta2);
+}
+body.cf-area :is(.ca-console-main, body > :not(#__nuxt)) .cf-lencana::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+body.cf-area :is(.ca-console-main, body > :not(#__nuxt)) .cf-lencana-baik { background: var(--cf-baik-bg); color: var(--cf-baik); }
+body.cf-area :is(.ca-console-main, body > :not(#__nuxt)) .cf-lencana-awas { background: var(--cf-awas-bg); color: var(--cf-awas); }
+body.cf-area :is(.ca-console-main, body > :not(#__nuxt)) .cf-lencana-galat { background: var(--cf-galat-bg); color: var(--cf-galat); }
+
+/* Judul kecil di dalam kartu: kalimat biasa, tidak huruf besar semua. */
+body.cf-area :is(.ca-console-main, body > :not(#__nuxt)) .cf-subjudul {
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--cf-tinta2);
+}
+/* Kepala tabel kecil di dalam kartu (tabel tanpa bingkai .cf-tabel): kalimat
+   biasa, satu baris, sama dengan kepala tabel bersama. */
+body.cf-area :is(.ca-console-main, body > :not(#__nuxt)) tr.cf-kepala-polos th {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+  white-space: nowrap;
+  color: var(--cf-tinta3);
+}
