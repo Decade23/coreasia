@@ -151,7 +151,7 @@ describe('halaman daftar pengguna: kolom Versi', () => {
     const daftar = readFileSync(fileURLToPath(new URL('../../adapters/cashflowPenggunaDaftar.ts', import.meta.url)), 'utf8')
     expect(daftar).toMatch(/export const URUT_PENGGUNA = \[[^\]]*'versi'/)
   })
-  it('sel versi: nomor versinya saja, tanda "lama", lalu platform beserta varian ujinya', () => {
+  it('sel versi: nomor versinya saja, tanda "belum diperbarui", lalu platform beserta varian ujinya', () => {
     const sel = SRC.slice(SRC.indexOf('<template #cell-versi='), SRC.indexOf('<template #cell-aktif='))
     expect(sel).toMatch(/\{\{ row\.p\.versiAplikasi \?\? '—' \}\}/)
     expect(sel).toMatch(/<span v-if="versiTertinggal\(row\.p, versiTerbaru\)"[^>]*>\{\{ tcf\('pengguna\.versiLamaPendek'\) \}\}<\/span>/)
@@ -172,7 +172,9 @@ describe('halaman daftar pengguna: kolom Versi', () => {
     expect(tabel).toMatch(/<CaTooltip v-if="col\.filterable !== false"/)
   })
   it('versi terbaru dihitung atas SEMUA baris, bukan halaman yang tampil', () => {
-    expect(SRC).toMatch(/versiTerbaru\.value = new Map\(Object\.entries\(hasil\.versi_terbaru/)
+    expect(SRC).toMatch(/versiServer\.value = new Map\(Object\.entries\(hasil\.versi_terbaru/)
+    // Angka server disaring dulu (tanpa pra-rilis dan build akun tim): lihat versi-pembanding.test.ts.
+    expect(SRC).toMatch(/const versiTerbaru = computed\(\(\) => pembandingVersi\(versiServer\.value, semua\.value, RILIS_PLAY_TERAKHIR\.versi\)\)/)
   })
   it('label dan keterangan ada di ID dan EN', () => {
     for (const b of ['id', 'en'] as const) {

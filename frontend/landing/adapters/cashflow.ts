@@ -392,7 +392,44 @@ export function versiTerbaruPer(daftar: ReadonlyArray<Pick<Pengguna, 'kunciVersi
   return peta
 }
 
-/** Di bawah versi terbaru platformnya di daftar ini? Versi tak terbaca = tidak. */
+/** Kunci versi rilis (bukan pra-rilis seperti -internal, -uat, -rc)? */
+const kunciRilis = (kunci: string): boolean => kunci.endsWith('100000')
+
+/**
+ * Versi pembanding untuk tanda "belum diperbarui", per kelompok platform.
+ *
+ * Server mengirim versi tertinggi yang pernah dilaporkan perangkat mana pun,
+ * termasuk build uji milik akun tim (misalnya 1.4.2-internal.1). Kalau itu
+ * dipakai apa adanya, hampir semua orang di rilis publik terbaru tampak
+ * tertinggal. Jadi pembandingnya disaring di sini:
+ * - versi pra-rilis tidak pernah jadi pembanding;
+ * - versi yang di halaman ini hanya dilaporkan akun tim tidak dihitung;
+ * - Android (toko Play): pembandingnya rilis Play terakhir yang dikenal
+ *   console (`rilisPlay`), atau versi rilis lebih baru yang sudah dipakai akun
+ *   bukan tim di halaman ini. Angka dari server tidak dipakai, karena tidak
+ *   bisa dibedakan milik akun tim atau bukan;
+ * - platform lain: angka server bila bentuknya rilis, atau versi rilis
+ *   tertinggi akun bukan tim di halaman ini.
+ * Kelompok tanpa pembanding yang sah tidak diberi tanda sama sekali.
+ */
+export function pembandingVersi(
+  server: ReadonlyMap<string, string>,
+  daftar: ReadonlyArray<Pick<Pengguna, 'kunciVersi' | 'kelompokVersi' | 'tim'>>,
+  rilisPlay: string | null,
+): Map<string, string> {
+  const peta = new Map<string, string>()
+  const naik = (kelompok: string, kunci: string | null | undefined) => {
+    if (!kunci || !kunciRilis(kunci)) return
+    const ada = peta.get(kelompok)
+    if (ada === undefined || kunci > ada) peta.set(kelompok, kunci)
+  }
+  naik('android', kunciVersi(rilisPlay))
+  for (const [kelompok, kunci] of server) if (kelompok !== 'android') naik(kelompok, kunci)
+  for (const p of daftar) if (!p.tim) naik(p.kelompokVersi, p.kunciVersi)
+  return peta
+}
+
+/** Di bawah versi pembanding platformnya? Versi tak terbaca = tidak. */
 export function versiTertinggal(p: Pick<Pengguna, 'kunciVersi' | 'kelompokVersi'>, terbaru: ReadonlyMap<string, string>): boolean {
   const t = terbaru.get(p.kelompokVersi)
   return p.kunciVersi !== null && t !== undefined && p.kunciVersi < t

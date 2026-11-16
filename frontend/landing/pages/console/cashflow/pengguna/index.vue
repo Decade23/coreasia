@@ -2,10 +2,11 @@
 /** Pencarian, saringan, urutan, dan paginasi berlaku atas seluruh akun.
  * Server mengaudit setiap halaman yang diminta dengan kontak lengkap. */
 import {
-  angka, kePengguna, rupiah, tanpaKontakUtuh, versiTertinggal,
+  angka, kePengguna, pembandingVersi, rupiah, tanpaKontakUtuh, versiTertinggal,
   type Pengguna, type PenggunaDTO, type StatusPengguna,
 } from '~/adapters/cashflow'
 import { halamanAman, jumlahHalaman } from '~/adapters/cashflowDaftar'
+import { RILIS_PLAY_TERAKHIR } from '~/adapters/cashflowVersi'
 import { SEGMEN_BELUM_WA, STATUS_WA_AKUN, type StatusWaAkunKode } from '~/adapters/cashflowWa'
 import {
   FILTER_INTERNAL, NILAI_INTERNAL, SEGMEN_BELI_KREDIT, SEGMEN_PAKAI_DOMI,
@@ -56,7 +57,10 @@ const kolomCari = ref<HTMLInputElement | null>(null)
 const filterKolom = useState<Record<string, string>>('cf_saring_kolom_pengguna', () => ({}))
 const cariDiterapkan = useState('cf_cari_diterapkan_pengguna', () => cari.value)
 const filterDiterapkan = shallowRef<Record<string, string>>({ ...filterKolom.value })
-const versiTerbaru = shallowRef<Map<string, string>>(new Map())
+/* Versi tertinggi menurut server, lalu disaring jadi pembanding yang sah (tanpa
+   pra-rilis dan tanpa build akun tim): lihat pembandingVersi. */
+const versiServer = shallowRef<Map<string, string>>(new Map())
+const versiTerbaru = computed(() => pembandingVersi(versiServer.value, semua.value, RILIS_PLAY_TERAKHIR.versi))
 const hapusTersedia = ref(true)
 const paletBuka = ref(false)
 const saringBuka = ref(false)
@@ -156,7 +160,7 @@ const muatDaftar = () => muat(async (terbaru) => {
   mentah.value = tanpaHitungan.value ? bersihkanData(hasil.baris) : bolehBuka ? hasil.baris : tanpaKontakUtuh(hasil.baris)
   total.value = Number(hasil.total)
   halamanHasil.value = q.value.hal
-  versiTerbaru.value = new Map(Object.entries(hasil.versi_terbaru ?? {}))
+  versiServer.value = new Map(Object.entries(hasil.versi_terbaru ?? {}))
   hapusTersedia.value = hasil.hapus_tersedia
   jumlahDomi.value = tanpaHitungan.value ? null : jumlahPakaiDomi(hasil)
   // Pencarian palet tidak boleh menganggap hasil tersaring daftar lengkap.
@@ -295,7 +299,7 @@ const kolom = computed(() => {
   return [
     { key: 'email', label: tcf('nav.pengguna'), sortable: urut('email'), filterable: false, class: 'text-[var(--ca-text)]' },
     { key: 'wa', label: tcf('pengguna.wa'), sortable: urut('wa'), filterable: false, width: '160px', class: 'text-[var(--ca-text)]' },
-    { key: 'versi', label: tcf('pengguna.versi'), sortable: urut('versi'), filterable: false, width: '96px', class: 'text-[var(--ca-text)]' },
+    { key: 'versi', label: tcf('pengguna.versi'), sortable: urut('versi'), filterable: false, width: '108px', class: 'text-[var(--ca-text)]' },
     { key: 'aktif', label: tcf('pengguna.aktifTerakhir'), sortable: urut('aktif'), filterable: false, width: '140px', class: 'text-[var(--ca-text)]' },
     // Pemakaian Domi dan kredit: hanya bila server memasang v4. Di server lama kolomnya tidak ada sama sekali.
     ...(adaDomi.value ? [
@@ -529,13 +533,13 @@ useCashflowPintasan([{ kunci: '/', aksi: () => kolomCari.value?.focus() }])
                 <span v-if="row.p.statusWa.kreditDitahan" class="ca-pill-info !rounded-lg !px-2 !py-0.5 text-[0.65rem] leading-tight" :title="tcf('pengguna.statusWa.kreditKet')">{{ tcf('pengguna.statusWa.kredit') }}</span>
               </span>
             </template>
-            <!-- Versi: nomor versinya, tanda "lama" bila di bawah versi tertinggi platform yang sama, lalu platformnya. -->
+            <!-- Versi: nomor versinya, tanda "belum diperbarui" bila di bawah versi publik terbaru platform yang sama, lalu platformnya. -->
             <template #cell-versi="{ row }">
               <span v-if="row.versi === null" class="cf-redup">—</span>
               <template v-else>
                 <span class="whitespace-nowrap" :title="versiTertinggal(row.p, versiTerbaru) ? `${row.versi} · ${tcf('pengguna.versiLama')}` : row.versi">
                   {{ row.p.versiAplikasi ?? '—' }}
-                  <span v-if="versiTertinggal(row.p, versiTerbaru)" class="text-[0.78rem] font-bold text-[var(--ca-gold-text)]">{{ tcf('pengguna.versiLamaPendek') }}</span>
+                  <span v-if="versiTertinggal(row.p, versiTerbaru)" class="block whitespace-normal text-[0.7rem] font-bold leading-tight text-[var(--ca-gold-text)]" data-uji="versi-tertinggal">{{ tcf('pengguna.versiLamaPendek') }}</span>
                 </span>
                 <span v-if="row.p.platform" class="cf-dua">{{ row.p.platform.label }}</span>
               </template>
