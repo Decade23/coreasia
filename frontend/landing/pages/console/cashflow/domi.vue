@@ -39,7 +39,7 @@ useConsoleRemah().pasang(() => [
     <ConsolePageHeader :title="tcf('cadangan.judul')" kicker="CashFlow">
       <template #meta><CashflowNav /></template>
       <template #actions>
-        <button type="button" class="ca-btn-secondary inline-flex items-center gap-2" :disabled="memuat || !!sibuk || belumAktif" data-uji="cadangan-muat-ulang" @click="c.muatAwal">
+        <button type="button" class="ca-btn-secondary inline-flex items-center gap-2" :disabled="memuat || !!sibuk" data-uji="cadangan-muat-ulang" @click="c.muatAwal">
           <Icon name="lucide:refresh-cw" class="h-4 w-4" :class="memuat ? 'animate-spin' : ''" aria-hidden="true" />{{ tcf('cadangan.muatUlang') }}
         </button>
       </template>

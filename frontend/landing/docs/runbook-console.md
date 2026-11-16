@@ -771,6 +771,43 @@ CASHFLOW_MIGRASI=<repo cashflow>/supabase/migrations npx vitest run tests/cashfl
 node scripts/cek-komponen-cashflow.mjs
 ```
 
+## Domi: penyedia cadangan
+
+Halaman `/console/cashflow/domi` mengatur penyedia cadangan Domi. Domi dijawab penyedia utama. Bila
+penyedia utama bermasalah dan cadangan menyala, server pindah sendiri ke cadangan. Halaman ini
+tempat menyalakan cadangan, memilih modelnya, dan mengganti kunci API-nya.
+
+- RPC: `admin_ai_cadangan_baca()`, `admin_ai_cadangan_simpan(p_aktif, p_model)`,
+  `admin_ai_cadangan_kunci(p_kunci)`. Ketiganya memulangkan keadaan terbaru dalam bentuk yang sama.
+  `p_kunci` null menghapus kunci dan mematikan cadangan.
+- Izinnya sama dengan Paket kredit: membaca butuh `cashflow:view`, menulis butuh `cashflow:pii`
+  (login console ber-TOTP). Tanpa izin tulis keadaannya tetap terbaca dan semua tombol tulis mati.
+- Cadangan tidak bisa dinyalakan selama kunci belum ada. Sakelar dan tombol Simpan mati dengan
+  keterangan, dan server menolak dengan `kunci_belum_ada`.
+- Kunci API tidak pernah dipulangkan server. Halaman hanya menampilkan sidik dan waktu gantinya.
+  Kunci yang diketik hidup di memori halaman saja, dikosongkan sesudah tersimpan dan saat halaman
+  ditinggal, dan tidak ditulis ke URL, storage, log, atau pesan galat. Galat server dibersihkan
+  dari kunci itu sebelum ditampilkan.
+- Mengganti kunci yang sudah ada dan menghapus kunci meminta konfirmasi dulu.
+- Galat `model_tidak_dikenal`, `kunci_belum_ada`, dan `kunci_tidak_sah` ditulis dengan kalimat awam.
+  Dua yang pertama juga membaca ulang keadaan, karena layar sudah basi.
+- Catatan galat penyedia di kartu status dipotong, dan apa pun yang rupanya kunci disamarkan.
+
+Pasang: SQL CashFlow dulu, baru landing. Sebelum SQL terpasang halaman menulis "Belum tersedia di
+server", bukan galat. Mundur landing cukup.
+
+Uji kontrak terhadap migrasi belum ada, karena fungsinya belum ada di folder `CASHFLOW_MIGRASI`.
+`rpc-console.test.ts` melewati ketiganya lewat `MENDAHULUI_MIGRASI`. Sesudah migrasinya tergabung,
+hapus namanya dari daftar itu, pastikan `toko/uji-console-rpc.sql` di repo CashFlow memuatnya, dan
+cocokkan bentuk jawaban di `adapters/cashflowAiCadangan.ts` dengan migrasinya.
+
+```bash
+CASHFLOW_MIGRASI=<repo cashflow>/supabase/migrations npx vitest run tests/cashflow/ai-cadangan.test.ts tests/cashflow/rpc-console.test.ts
+node scripts/cek-komponen-cashflow.mjs
+# Tampilan dengan data sintetis (cara menjalankan ada di kepala skrip):
+node scripts/uji-console-domi-cadangan-headless.mjs
+```
+
 ## Pembelian kredit Domi
 
 Halaman `/console/cashflow/pembelian` menjawab siapa yang membeli kredit Domi, paket apa, lewat

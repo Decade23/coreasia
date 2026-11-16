@@ -11,12 +11,13 @@ const { tcf, formatTanggal, formatJam } = useCashflowI18n()
 
 /** '16 Nov 2026 10.05' (WIB). */
 const waktu = (v: string | null) => (v ? `${formatTanggal(v)} ${formatJam(v)}` : '')
+/* Dua bagian supaya waktu ganti tidak terpotong di tengah saat baris melipat. */
 const kunci = computed(() => {
   const k = props.keadaan
-  if (!k.kunciAda) return tcf('cadangan.status.kunciKosong') as string
-  const bagian = [k.kunciSidik ? tcf('cadangan.status.kunciSidik')(k.kunciSidik) : tcf('cadangan.status.kunciAda') as string]
-  if (k.kunciDiubahPada) bagian.push(tcf('cadangan.status.kunciDiganti')(waktu(k.kunciDiubahPada)))
-  return bagian.join(', ')
+  if (!k.kunciAda) return { utama: tcf('cadangan.status.kunciKosong') as string, diganti: '' }
+  const utama: string = k.kunciSidik ? tcf('cadangan.status.kunciSidik')(k.kunciSidik) : tcf('cadangan.status.kunciAda')
+  const diganti: string = k.kunciDiubahPada ? tcf('cadangan.status.kunciDiganti')(waktu(k.kunciDiubahPada)) : ''
+  return { utama: diganti ? `${utama},` : utama, diganti }
 })
 const sehari = computed(() => (props.keadaan.dipakai24Jam === null
   ? tcf('cadangan.status.takTerbaca') as string
@@ -50,7 +51,9 @@ const galat = computed<Array<{ kunci: string; label: string; catatan: CatatanGal
       </div>
       <div class="grid gap-1 py-3 sm:grid-cols-[12rem_minmax(0,1fr)] sm:gap-4">
         <dt class="text-[var(--ca-muted)]">{{ tcf('cadangan.status.kunci') }}</dt>
-        <dd class="min-w-0 break-words" :class="keadaan.kunciAda ? 'text-[var(--ca-text)]' : 'ca-tone-gold'" data-uji="cadangan-kunci-status">{{ kunci }}</dd>
+        <dd class="min-w-0 break-words" :class="keadaan.kunciAda ? 'text-[var(--ca-text)]' : 'ca-tone-gold'" data-uji="cadangan-kunci-status">
+          <span>{{ kunci.utama }}</span> <span v-if="kunci.diganti" class="whitespace-nowrap">{{ kunci.diganti }}</span>
+        </dd>
       </div>
       <div class="grid gap-1 py-3 sm:grid-cols-[12rem_minmax(0,1fr)] sm:gap-4">
         <dt class="text-[var(--ca-muted)]">{{ tcf('cadangan.status.dipakai') }}</dt>
