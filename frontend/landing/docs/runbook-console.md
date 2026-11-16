@@ -1073,3 +1073,40 @@ isi alasan. Server menilai kembali hasilnya saat membuka kasus dan menulis audit
 Untuk verifikasi lokal, gunakan `scripts/uji-console-peristiwa-headless.mjs`
 dengan Nuxt dev di loopback dan kredensial sintetis. Periksa kondisi 1440 dan 390,
 terang dan gelap, termasuk tab aktif di ponsel, kursor, salinan, dan akses agregat.
+
+## Tema dan navigasi area CashFlow
+
+Halaman CashFlow di console memakai tema aplikasi CashFlow (terang dan gelap).
+Bagian console lain, sidebar, dan bilah atas tetap memakai warna console.
+
+- **Cakupan.** `CashflowNav` (ada di setiap halaman modul) memanggil
+  `useCashflowTema`, yang memasang kelas `cf-area` di `<body>`. Aturan di
+  `assets/css/cashflow-tema.css` hanya berlaku di bawah kelas itu, pada isi
+  halaman (`.ca-console-main`) dan lapisan yang dipindah ke `<body>` (modal,
+  laci, palet, toast). Kelasnya lepas sendiri saat pindah ke modul lain.
+- **Token.** Komponen tetap memakai `var(--ca-*)` dan kelas `.ca-*` bersama.
+  Di dalam cakupan nilai `--ca-*` dibaca dari token `--cf-*`. Mengganti warna
+  cukup di berkas itu. Token `--cf-*` harus warna padat (hex), karena
+  `tests/cashflow/tema-kontras.test.ts` menghitung kontras tiap pasangan teks
+  dan latar dari berkas yang sama (minimal 4,5:1).
+- **Navigasi.** Lima pintu dan halaman di dalamnya ditulis sekali di
+  `utils/cashflow/navigasi.ts`, dipakai `CashflowNav` dan `CashflowPalet`.
+  Halaman baru di `pages/console/cashflow/` wajib didaftarkan di sana.
+  `tests/cashflow/navigasi.test.ts` gagal bila ada halaman tanpa tempat di
+  menu. Alamat halaman tidak berubah.
+- **Kepala halaman.** Halaman CashFlow memakai `ConsolePageHeader` dengan prop
+  `ringkas`: navigasi di atas, lalu judul dan aksi dalam satu baris. Tanpa prop
+  itu komponennya tampil seperti semula, jadi modul lain tidak terpengaruh.
+
+```bash
+npx vitest run tests/cashflow/navigasi.test.ts tests/cashflow/tema-kontras.test.ts
+node scripts/cek-komponen-cashflow.mjs
+# Tampilan dengan data sintetis (cara menjalankan ada di kepala skrip):
+node scripts/uji-console-kerangka-headless.mjs
+```
+
+Skrip itu juga memeriksa bahwa gaya sidebar dan bilah atas sama di dalam dan di
+luar CashFlow. Dengan `CF_QA_DASAR=1` di cabang pembanding, lalu tanpa variabel
+itu di cabang kerja ke folder yang sama, potret halaman console di luar
+CashFlow dibandingkan piksel demi piksel dengan potret dasarnya. Selisih
+sampai 2/255 per kanal dianggap derau render, lebih dari itu gagal.
