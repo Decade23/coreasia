@@ -128,7 +128,8 @@ const isiAda = (k: Kabar) => (k.isi ? ISI.filter(x => k.isi![x] != null).map(x =
       <li v-for="k in baris" :key="k.id" class="flex flex-wrap items-start gap-x-3 gap-y-1 px-4 py-2.5">
         <span class="mt-1.5 h-2 w-2 shrink-0 rounded-full" :class="k.dibaca ? 'bg-transparent' : 'bg-[var(--ca-gold-text)]'" :title="k.dibaca ? tcf('kabar.dibaca') : tcf('kabar.belum')" />
         <Icon :name="ikonJenis(k.jenis)" class="mt-0.5 h-4 w-4 shrink-0 text-[var(--ca-subtle)]" aria-hidden="true" />
-        <div class="min-w-0 flex-1">
+        <!-- Lebar dasar 13rem: di ponsel nominal dan tombolnya turun ke baris sendiri, isi tidak terjepit. -->
+        <div class="min-w-0 flex-1 basis-52">
           <div class="flex flex-wrap items-center gap-2">
             <span class="font-medium text-[var(--ca-text)]">{{ labelJenis(k.jenis) }}</span>
             <span v-if="k.kategori" class="text-[var(--ca-muted)]">{{ k.kategori }}</span>
@@ -158,7 +159,7 @@ const isiAda = (k: Kabar) => (k.isi ? ISI.filter(x => k.isi![x] != null).map(x =
             <template v-if="k.adaNamaAktor"> · {{ tcf('kabar.adaNama') }}</template>
           </p>
         </div>
-        <span v-if="k.nominal != null" class="font-semibold tabular-nums text-[var(--ca-text)]">{{ rupiah(k.nominal) }}</span>
+        <span v-if="k.nominal != null" class="ml-auto font-semibold tabular-nums text-[var(--ca-text)]">{{ rupiah(k.nominal) }}</span>
         <NuxtLink v-if="k.sasaranId && JENIS_TX.includes(k.jenis)" :to="keTx(k.sasaranId)" class="ca-btn-secondary !px-3 !py-1 text-xs">{{ tcf('kabar.bukaTx') }}</NuxtLink>
       </li>
     </ul>

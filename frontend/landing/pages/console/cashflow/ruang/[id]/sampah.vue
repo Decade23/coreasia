@@ -63,7 +63,7 @@ const ringkas = computed(() => ringkasSampah(r360.value?.hitung.sampah ?? null, 
       <div v-if="mentah" class="space-y-4" :class="{ 'opacity-60': memuat }">
         <ol class="ca-console-dialog divide-y divide-[color:var(--ca-border)] text-sm">
           <li v-for="s in baris" :key="s.id" class="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2.5">
-            <NuxtLink :to="keTx(s.txId)" class="min-w-0 flex-1 underline-offset-2 hover:underline">
+            <NuxtLink :to="keTx(s.txId)" class="min-w-0 flex-1 basis-52 underline-offset-2 hover:underline">
               <span class="flex flex-wrap items-center gap-2">
                 <span :class="s.dipulihkan ? 'ca-pill-emerald' : 'ca-pill-muted'" class="text-[0.7rem]">{{ s.dipulihkan ? tcf('sampah.dipulihkan') : tcf('sampah.dihapus') }}</span>
                 <span class="text-[var(--ca-text)]">{{ s.dompet }}</span>

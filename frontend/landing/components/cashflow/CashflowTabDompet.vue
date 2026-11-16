@@ -138,7 +138,7 @@ const labelPembuat = (uid: string | null) => (props.labelOrang ? props.labelOran
           </div>
           <ul v-if="g.dompet.length" class="ca-console-dialog divide-y divide-[color:var(--ca-border)] text-sm">
             <li v-for="d in g.dompet" :key="d.id" class="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2.5">
-              <div class="min-w-0 flex-1">
+              <div class="min-w-0 flex-1 basis-52">
                 <div class="flex flex-wrap items-center gap-2">
                   <span class="font-medium text-[var(--ca-text)]">{{ d.nama }}</span>
                   <span v-if="d.tipe" class="ca-pill-muted text-[0.7rem]">{{ d.tipe }}</span>

@@ -40,7 +40,7 @@ const hitungan = computed(() => props.kepala
         </div>
       </div>
       <dl class="cf-kepala-fakta">
-        <div><dt>{{ tcf('ruang.pemilik') }}</dt><dd class="break-all">{{ kepala.pemilikTersamar }}</dd></div>
+        <div class="col-span-2 sm:col-span-1"><dt>{{ tcf('ruang.pemilik') }}</dt><dd class="break-all">{{ kepala.pemilikTersamar }}</dd></div>
         <div><dt>{{ tcf('ruang.dibuat') }}</dt><dd>{{ formatTanggal(kepala.dibuatIso) }}</dd></div>
         <div v-for="h in hitungan" :key="h.label">
           <dt>{{ h.label }}</dt>

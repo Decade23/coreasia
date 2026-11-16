@@ -65,7 +65,7 @@ const q = (n: number | null) => kuantitas(n, bahasa.value)
     <CashflowKeadaanKosong v-if="!produk.length" :pesan="tcf('usaha.kosongSaring')" />
     <ul v-else class="ca-console-dialog divide-y divide-[color:var(--ca-border)] text-sm">
       <li v-for="p in produk" :key="p.id" class="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2.5" :class="{ 'opacity-70': p.arsip }">
-        <div class="min-w-0 flex-1">
+        <div class="min-w-0 flex-1 basis-52">
           <div class="flex flex-wrap items-center gap-2">
             <span class="font-medium text-[var(--ca-text)]">{{ p.nama }}</span>
             <span v-if="p.kategori" class="ca-pill-info text-[0.7rem]">{{ p.kategori }}</span>
