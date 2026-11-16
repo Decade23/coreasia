@@ -30,6 +30,7 @@ import { keAturan, type Aturan } from './cashflowPengumumanAturan'
 import { tanggalPendek, hariIniWib, geserHari, type BahasaWaktu } from './cashflowWaktu'
 import { tombolPengumuman } from './cashflowPengumumanTautan'
 import { keStatusWaAkun, type StatusWaAkun, type StatusWaAkunDTO } from './cashflowWa'
+import { akunTim, keDomiAkun, type DomiAkun, type DomiAkunDTO, type KepalaDomiDTO } from './cashflowPenggunaDomi'
 
 export {
   ZONA_WIB, BULAN, BULAN_EN, tanggalPendek, tanggalWib, hariIniWib, geserHari,
@@ -45,8 +46,9 @@ export interface StatsDTO {
   transaksi_per_hari: Array<{ tanggal: string; jumlah: number }>
 }
 /** Kolom status WhatsApp (status_wa, status_wa_pada, lewat_sebab, nomor_ramai,
- *  kredit_ditahan) dari migrasi cara terbalik: lihat cashflowWa.ts. */
-export interface PenggunaDTO extends StatusWaAkunDTO {
+ *  kredit_ditahan) dari migrasi cara terbalik: lihat cashflowWa.ts. Kolom
+ *  pemakaian Domi, kredit, dan akun tim (v4): lihat cashflowPenggunaDomi.ts. */
+export interface PenggunaDTO extends StatusWaAkunDTO, DomiAkunDTO {
   user_id: string
   /** Tersamar oleh server (ded***@gmail.com) kecuali daftar dibuka dengan alasan. */
   email: string
@@ -76,6 +78,13 @@ export interface PenggunaDTO extends StatusWaAkunDTO {
   total_semua: number
   /** null bila fitur permintaan hapus belum tersedia di server. */
   menunggu_hapus?: boolean | null
+}
+/** Jawaban admin_daftar_pengguna_v3 dan v4 (v4 menambah jumlah_pakai_domi). */
+export interface DaftarPenggunaDTO extends KepalaDomiDTO {
+  total: number
+  baris: PenggunaDTO[]
+  versi_terbaru: Record<string, string>
+  hapus_tersedia: boolean
 }
 export interface CorongDTO { urut: number; langkah: string; jumlah: number }
 /** Nilai jsonb apa adanya (app_config.value, admin_audit.detail, admin_config_buka). */
@@ -165,6 +174,10 @@ export interface Pengguna {
    *  lewat, belum) beserta tanda nomor ramai dan kredit ditahan. null = server
    *  belum mengirim kolomnya. */
   statusWa: StatusWaAkun | null
+  /** Pemakaian Domi dan kredit. null = server belum mengirim kolomnya (v3). */
+  domi: DomiAkun | null
+  /** Akun tim (internal). false juga bila server belum mengirim tandanya. */
+  tim: boolean
   /** Kunci urut versi semantik (1.3.10 > 1.3.9; pra-rilis sebelum rilisnya),
    *  string digit berpanjang tetap; null = tidak terbaca. */
   kunciVersi: string | null
@@ -456,6 +469,8 @@ export function kePengguna(d: PenggunaDTO, bahasa: BahasaWaktu = 'id', menungguH
     versiAplikasi: (d.versi_aplikasi ?? '').trim() || null,
     platform: bacaPlatform(d.platform).info,
     statusWa: keStatusWaAkun(d, bahasa),
+    domi: keDomiAkun(d, bahasa),
+    tim: akunTim(d),
     kunciVersi: kunciVersi(d.versi_aplikasi),
     kelompokVersi: bacaPlatform(d.platform).kunci,
     daftar: tanggalPendek(d.created_at, bahasa),

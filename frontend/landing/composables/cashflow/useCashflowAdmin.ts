@@ -72,7 +72,7 @@ import type { AkunPenerima, HalamanPenerima, KelompokPengumuman } from '~/adapte
  * tests/cashflow/rpc-console.test.ts — jadi argumen WAJIB objek literal.
  */
 import type {
-  StatsDTO, PenggunaDTO, CorongDTO, KeberhasilanDTO, RetensiDTO,
+  StatsDTO, PenggunaDTO, DaftarPenggunaDTO, CorongDTO, KeberhasilanDTO, RetensiDTO,
   RuangDTO, PengumumanDTO, KesehatanDTO, ConfigDTO, NilaiJson, JenisRuang,
 } from '~/adapters/cashflow'
 import type {
@@ -387,7 +387,15 @@ export const useCashflowAdmin = () => {
       rpc<PenggunaDTO[]>('admin_daftar_pengguna_v2', { p_limit: limit, p_offset: offset, p_cari: cari || null, p_alasan: alasan }),
     /** v3: saring, urut, dan potong dilakukan server atas seluruh pengguna. */
     daftarPenggunaHalaman: (p: OpsiDaftarPengguna) =>
-      rpc<{ total: number; baris: PenggunaDTO[]; versi_terbaru: Record<string, string>; hapus_tersedia: boolean }>('admin_daftar_pengguna_v3', {
+      rpc<DaftarPenggunaDTO>('admin_daftar_pengguna_v3', {
+        p_limit: p.limit, p_offset: p.offset, p_cari: p.cari || null, p_segmen: p.segmen,
+        p_urut: p.urut, p_arah: p.arah, p_filter: p.filter, p_bahasa: p.bahasa, p_alasan: p.alasan,
+      }),
+    /** v4: argumen sama dengan v3, ditambah pemakaian Domi, kredit, dan akun tim per baris
+     *  (adapters/cashflowPenggunaDomi). Server lama tidak punya RPC ini (PGRST202 jadi
+     *  'belum-aktif'): halaman jatuh ke v3 dan tidak menawarkan kolom Domi. */
+    daftarPenggunaHalamanV4: (p: OpsiDaftarPengguna) =>
+      rpc<DaftarPenggunaDTO>('admin_daftar_pengguna_v4', {
         p_limit: p.limit, p_offset: p.offset, p_cari: p.cari || null, p_segmen: p.segmen,
         p_urut: p.urut, p_arah: p.arah, p_filter: p.filter, p_bahasa: p.bahasa, p_alasan: p.alasan,
       }),
