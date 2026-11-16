@@ -289,7 +289,9 @@ describe('halaman daftar pengguna memakai satu jalur pembersih', () => {
   })
   it('pencarian nomor dikirim ke server bersama keadaan kontak', () => {
     expect(SRC).toMatch(/cari: cariDiterapkan\.value\.trim\(\)/)
-    expect(SRC).toMatch(/const baca = \(alasan: string \| null\) => api\.daftarPenggunaHalaman/)
+    // Daftar dibaca lewat v4 dan jatuh ke v3 di server lama. Keduanya memakai isian yang sama.
+    expect(SRC).toMatch(/const opsi = \(alasan: string \| null\) => \(\{/)
+    expect(SRC).toMatch(/v4: \(\) => api\.daftarPenggunaHalamanV4\(opsi\(alasan\)\),\s+v3: \(\) => api\.daftarPenggunaHalaman\(opsi\(alasan\)\),/)
     expect(SRC).toMatch(/let alasan = !tanpaHitungan\.value && !samarkanKontak\.value \? ALASAN_DAFTAR : null/)
   })
   it('alasan audit kontak otomatis cukup panjang untuk server (≥ 8 aksara) dan menyebut kontak', () => {
