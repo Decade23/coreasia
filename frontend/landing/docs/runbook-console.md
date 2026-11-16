@@ -848,8 +848,14 @@ terakhir bila angkanya berbeda), **Terakhir pakai Domi**, dan **Kredit** (sisa k
 belanja bila orang itu pernah membeli). Akun tim diberi lencana **Tim** di samping emailnya.
 
 - RPC: `admin_daftar_pengguna_v4`, argumennya sama persis dengan v3. Per baris bertambah `domi_tanya`,
-  `domi_tanya_30`, `domi_terakhir`, `kredit_sisa`, `kredit_beli`, dan `internal`. Kepala hasil membawa
-  `jumlah_pakai_domi`, yang tampil sebagai kalimat kecil di atas tabel.
+  `domi_tanya_30`, `domi_tanya_kira`, `domi_terakhir`, `kredit_sisa`, `kredit_beli`, dan `internal`.
+- Angka Domi bertanda **+** (misalnya "42+") bila `domi_tanya_kira` benar: orang itu pernah menghapus
+  sebagian riwayatnya, jadi angkanya paling sedikit segitu. Keterangannya muncul saat disorot.
+- Kredit bergaris, bukan 0, untuk akun yang belum punya catatan kredit sama sekali. Saat diurutkan
+  menurut Kredit atau Terakhir pakai Domi, yang kosong selalu di akhir untuk kedua arah.
+- Kepala hasil membawa `jumlah_pakai_domi`, yang tampil sebagai kalimat kecil di atas tabel. Angkanya
+  dihitung dari seluruh pengguna tanpa akun tim, dan tidak berubah saat mencari, memilih segmen, atau
+  menyaring.
 - Urutan baru: `p_urut` = `domi`, `domi_terakhir`, `kredit`. Segmen baru: **Pakai Domi**
   (`pakai_domi`) dan **Beli kredit** (`beli_kredit`). Saringan **Akun tim** mengirim
   `p_filter.internal` bernilai `ya` atau `tidak`. Di layar lebar pilihannya ada di samping deret
@@ -869,9 +875,11 @@ belanja bila orang itu pernah membeli). Akun tim diberi lencana **Tim** di sampi
 Pasang: SQL CashFlow dulu, baru landing. Landing boleh tayang lebih dulu karena jatuh ke v3. Mundur
 landing cukup.
 
-Uji kontrak terhadap migrasi belum ada, karena `admin_daftar_pengguna_v4` belum ada di folder
-`CASHFLOW_MIGRASI`. `rpc-console.test.ts` melewatinya lewat `MENDAHULUI_MIGRASI`. Sesudah migrasinya
-tergabung:
+Uji kontrak terhadap migrasi ada di `tests/cashflow/pengguna-domi.test.ts` dan berjalan begitu
+`admin_daftar_pengguna_v4` ada di folder `CASHFLOW_MIGRASI`. Sebelum itu bagiannya terlihat "skipped",
+dan `rpc-console.test.ts` melewati RPC ini lewat `MENDAHULUI_MIGRASI`. Namanya masih di daftar itu
+karena uji hanya membaca satu folder migrasi, dan cabang CashFlow yang lain belum memuatnya. Sesudah
+migrasinya tergabung di cabang rilis CashFlow:
 
 1. Hapus `admin_daftar_pengguna_v4` dari `MENDAHULUI_MIGRASI` di `tests/cashflow/rpc-console.test.ts`.
 2. Pastikan `toko/uji-console-rpc.sql` di repo CashFlow memuatnya (blok rpc-console dan baris kepala

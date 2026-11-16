@@ -20,6 +20,7 @@ import {
 } from '../../adapters/cashflowPenggunaDomi'
 import { kePengguna, tanpaKontakUtuh, type DaftarPenggunaDTO, type PenggunaDTO } from '../../adapters/cashflow'
 import { KAMUS_CASHFLOW } from '../../composables/cashflow/useCashflowI18n'
+import { adaMigrasi, fungsiTerakhir, parameterFungsi } from './migrasi'
 
 // ── Global tiruan (tanpa Nuxt, lihat vitest.config.ts) ───────────────────
 type Jawab = { data: unknown; error: unknown }
@@ -49,7 +50,7 @@ const V3: PenggunaDTO = {
 }
 /* Baris v4 persis kontrak. */
 const V4: PenggunaDTO = {
-  ...V3, domi_tanya: 42, domi_tanya_30: 9, domi_terakhir: '2026-11-13T18:30:00Z', kredit_sisa: 17, kredit_beli: 2, internal: false,
+  ...V3, domi_tanya: 42, domi_tanya_30: 9, domi_tanya_kira: false, domi_terakhir: '2026-11-13T18:30:00Z', kredit_sisa: 17, kredit_beli: 2, internal: false,
 }
 const BELUM_ADA = { code: 'PGRST202', message: 'Could not find the function public.admin_daftar_pengguna_v4 in the schema cache' }
 const HASIL = (baris: PenggunaDTO[], tambahan: Partial<DaftarPenggunaDTO> = {}): DaftarPenggunaDTO =>
@@ -60,7 +61,7 @@ const OPSI = { limit: 25, offset: 50, cari: '', segmen: 'pakai_domi', urut: 'dom
 describe('adapter: bentuk v4', () => {
   it('hitungan, 30 hari, tanggal WIB, sisa kredit, jumlah beli', () => {
     expect(keDomiAkun(V4)).toEqual({
-      tanya: 42, tanya30: 9, terakhir: '14 Nov 2026', terakhirIso: '2026-11-13T18:30:00Z', kreditSisa: 17, kreditBeli: 2,
+      tanya: 42, kira: false, tanya30: 9, terakhir: '14 Nov 2026', terakhirIso: '2026-11-13T18:30:00Z', kreditSisa: 17, kreditBeli: 2,
     })
     expect(keDomiAkun(V4, 'en')?.terakhir).toBe('14 Nov 2026')
     expect(keDomiAkun({ ...V4, domi_terakhir: '2026-08-03T01:00:00Z' }, 'id')?.terakhir).toBe('3 Agu 2026')
@@ -69,6 +70,17 @@ describe('adapter: bentuk v4', () => {
   it('belum pernah bertanya: 0 tetap 0, tanggalnya garis', () => {
     const d = keDomiAkun({ ...V4, domi_tanya: 0, domi_tanya_30: 0, domi_terakhir: null, kredit_beli: 0 })
     expect(d).toMatchObject({ tanya: 0, tanya30: 0, terakhir: '—', terakhirIso: null, kreditBeli: 0 })
+  })
+  it('batas bawah: hanya bila domi_tanya_kira benar-benar true', () => {
+    expect(keDomiAkun({ ...V4, domi_tanya_kira: true })).toMatchObject({ tanya: 42, kira: true })
+    for (const v of [false, null, undefined, 'true', 1]) expect(keDomiAkun({ ...V4, domi_tanya_kira: v as boolean })?.kira).toBe(false)
+    // Kolomnya tidak dikirim sama sekali (server v4 awal): tanpa tanda.
+    const { domi_tanya_kira: _buang, ...tanpa } = V4
+    expect(keDomiAkun(tanpa)?.kira).toBe(false)
+  })
+  it('akun tanpa catatan kredit: sisa null (garis), jumlah beli tetap 0', () => {
+    expect(keDomiAkun({ ...V4, kredit_sisa: null, kredit_beli: 0 })).toMatchObject({ tanya: 42, kreditSisa: null, kreditBeli: 0 })
+    expect(keDomiAkun({ ...V4, kredit_sisa: 0 })?.kreditSisa).toBe(0)
   })
   it('akun tim hanya bila internal benar-benar true', () => {
     expect(akunTim({ internal: true })).toBe(true)
@@ -112,7 +124,7 @@ describe('adapter: nilai aneh dan null', () => {
   })
   it('yang tak terbaca jadi null, bukan 0', () => {
     const d = keDomiAkun({ domi_tanya: 5, domi_tanya_30: 'abc', domi_terakhir: 'bukan tanggal', kredit_sisa: Number.NaN, kredit_beli: '' })
-    expect(d).toEqual({ tanya: 5, tanya30: null, terakhir: '—', terakhirIso: null, kreditSisa: null, kreditBeli: null })
+    expect(d).toEqual({ tanya: 5, kira: false, tanya30: null, terakhir: '—', terakhirIso: null, kreditSisa: null, kreditBeli: null })
     expect(keDomiAkun({ domi_tanya: true as unknown as number })?.tanya).toBeNull()
   })
   it('30 hari tidak pernah lebih dari totalnya', () => {
@@ -124,18 +136,19 @@ describe('adapter: nilai aneh dan null', () => {
 })
 
 describe('adapter: sesi tanpa izin data pribadi', () => {
-  const TANPA: PenggunaDTO = { ...V4, jumlah_ruang: null, jumlah_tx: null, jumlah_nominal: null, domi_tanya: null, domi_tanya_30: null, domi_terakhir: null, kredit_sisa: null, kredit_beli: null, internal: true }
+  const TANPA: PenggunaDTO = { ...V4, jumlah_ruang: null, jumlah_tx: null, jumlah_nominal: null, domi_tanya: null, domi_tanya_30: null, domi_tanya_kira: null, domi_terakhir: null, kredit_sisa: null, kredit_beli: null, internal: true }
   it('hitungan dan kredit null, tanggal garis, kolomnya tetap dikenali ada', () => {
     expect(adaKolomDomi(TANPA)).toBe(true)
-    expect(keDomiAkun(TANPA)).toEqual({ tanya: null, tanya30: null, terakhir: '—', terakhirIso: null, kreditSisa: null, kreditBeli: null })
+    expect(keDomiAkun(TANPA)).toEqual({ tanya: null, kira: false, tanya30: null, terakhir: '—', terakhirIso: null, kreditSisa: null, kreditBeli: null })
     expect(kePengguna(TANPA).tim).toBe(true)
   })
   it('tanggal tidak tampil bila hitungannya ditahan, apa pun yang dikirim server', () => {
     expect(keDomiAkun({ ...TANPA, domi_terakhir: '2026-11-13T00:00:00Z' })).toMatchObject({ terakhir: '—', terakhirIso: null })
   })
   it('izin hilang di tengah sesi: baris di layar dibersihkan, tanda tim dibiarkan', () => {
-    const bersih = tanpaHitunganDomi({ ...V4, internal: true })
-    expect(bersih).toMatchObject({ domi_tanya: null, domi_tanya_30: null, domi_terakhir: null, kredit_sisa: null, kredit_beli: null, internal: true })
+    const bersih = tanpaHitunganDomi({ ...V4, domi_tanya_kira: true, internal: true })
+    expect(keDomiAkun(bersih)?.kira).toBe(false)
+    expect(bersih).toMatchObject({ domi_tanya: null, domi_tanya_30: null, domi_tanya_kira: null, domi_terakhir: null, kredit_sisa: null, kredit_beli: null, internal: true })
     expect(keDomiAkun(bersih)?.tanya).toBeNull()
   })
 })
@@ -163,6 +176,33 @@ describe('urut, segmen, dan saringan Domi', () => {
     expect(butuhV4({ urut: 'domi', seg: 'semua' }, {})).toBe(true)
     expect(butuhV4({ urut: 'daftar', seg: 'beli_kredit' }, {})).toBe(true)
     expect(butuhV4({ urut: 'daftar', seg: 'semua' }, { internal: 'ya' })).toBe(true)
+  })
+})
+
+// ── Kontrak migrasi (hanya bila fungsinya ada di folder CASHFLOW_MIGRASI) ─
+const adaV4 = adaMigrasi && (() => { try { fungsiTerakhir('admin_daftar_pengguna_v4'); return true } catch { return false } })()
+describe.skipIf(!adaV4)('kontrak migrasi: admin_daftar_pengguna_v4', () => {
+  const { badan } = adaV4 ? fungsiTerakhir('admin_daftar_pengguna_v4') : { badan: '' }
+  it('argumen sama persis dengan v3', () => {
+    expect(parameterFungsi('admin_daftar_pengguna_v4')).toEqual(parameterFungsi('admin_daftar_pengguna_v3'))
+  })
+  it('kolom per baris dan kepala yang dibaca adapter memang dipulangkan', () => {
+    for (const k of ['domi_tanya', 'domi_tanya_30', 'domi_tanya_kira', 'domi_terakhir', 'kredit_sisa', 'kredit_beli', 'internal']) {
+      expect(badan, k).toMatch(new RegExp(`\\bas ${k}\\b`))
+    }
+    expect(badan).toContain("'jumlah_pakai_domi'")
+  })
+  it('urut, segmen, dan saringan console dikenal server', () => {
+    for (const u of URUT_DOMI) expect(badan, u).toMatch(new RegExp(`p_urut = '${u}' and p_arah = 'asc' then [^\\n]+ asc nulls last`))
+    for (const u of URUT_DOMI) expect(badan, u).toMatch(new RegExp(`p_urut = '${u}' and p_arah = 'desc' then [^\\n]+ desc nulls last`))
+    for (const s of SEGMEN_DOMI) expect(badan, s).toContain(`p_segmen = '${s}'`)
+    expect(badan).toContain(`v_filter ? '${FILTER_INTERNAL}'`)
+    expect(badan).toContain(`v_filter->>'${FILTER_INTERNAL}' not in ('ya','tidak')`)
+  })
+  it('tanpa pii: urut dan segmen Domi ditolak bersama ruang, tx, nominal, saringan akun tim tidak', () => {
+    expect(badan).toMatch(/p_urut in \('ruang','tx','nominal','domi','domi_terakhir','kredit'\)/)
+    expect(badan).toMatch(/errcode = '42501', hint = 'izin-kurang'/)
+    expect(badan).toMatch(/ai\.user_id is not null as internal/)
   })
 })
 
@@ -314,6 +354,19 @@ describe('penjaga daftar pengguna: pemakai Domi', () => {
     expect(hal).toMatch(/<template #cell-kredit="\{ row \}">/)
     expect(hal).toMatch(/v-if="row\.p\.domi\?\.kreditBeli"/)
   })
+  it('batas bawah ditulis "42+" dengan keterangan saat disorot, di tabel dan di kartu', () => {
+    expect(hal).toMatch(/:title="row\.p\.domi\?\.kira \? tcf\('pengguna\.domi\.kira'\) : undefined"/)
+    expect(hal).toMatch(/<template v-if="row\.p\.domi\?\.kira"><span [^>]*aria-hidden="true">\+<\/span><span class="sr-only"> \(\{\{ tcf\('pengguna\.domi\.kira'\) \}\}\)<\/span><\/template>/)
+    expect(hal).toMatch(/`\$\{angka\(row\.domi\)\}\$\{row\.p\.domi\?\.kira \? '\+' : ''\}`/)
+    expect(hal).toMatch(/<span v-if="k\.key === 'domi' && row\.p\.domi\?\.kira"/)
+  })
+  it('lencana Tim dan saringan akun tim tidak bergantung pada izin data pribadi', () => {
+    expect(hal).toMatch(/<label v-if="adaDomi" class="hidden items-center/)
+    expect(hal).not.toMatch(/v-if="adaDomi && !tanpaHitungan/)
+    expect(hal).toMatch(/<span v-if="row\.p\.tim" class="ca-pill-muted/)
+    // Saringan akun tim tidak termasuk yang memaksa kembali ke bawaan saat izin kurang.
+    expect(hal).toMatch(/if \(!tanpaHitungan\.value \|\| \(!segmenButuhHitungan\(q\.value\.seg\) && !URUT_PRIBADI\.includes\(q\.value\.urut\)\)\) return false/)
+  })
   it('sel kosong menyebut "akses terbatas" hanya bila izinnya memang kurang', () => {
     expect(hal).toMatch(/const ketKosong = computed\(\(\) => \(tanpaHitungan\.value \? tcf\('umum\.butuhTotp'\) : undefined\)\)/)
   })
@@ -321,7 +374,7 @@ describe('penjaga daftar pengguna: pemakai Domi', () => {
 
 // ── Kamus ────────────────────────────────────────────────────────────────
 describe('kamus ID dan EN', () => {
-  const KUNCI = ['judul', 'terakhir', 'kredit', 'tim', 'timKet', 'segmenPakai', 'segmenBeli', 'saringTim', 'timSemua', 'timTanpa', 'timHanya', 'ket'] as const
+  const KUNCI = ['judul', 'terakhir', 'kredit', 'kira', 'tim', 'timKet', 'segmenPakai', 'segmenBeli', 'saringTim', 'timSemua', 'timTanpa', 'timHanya', 'ket'] as const
   it('semua label ada di kedua bahasa, tanpa tanda pisah panjang, titik koma, atau emoji', () => {
     for (const b of ['id', 'en'] as const) {
       const d = KAMUS_CASHFLOW[b].pengguna.domi
@@ -337,10 +390,18 @@ describe('kamus ID dan EN', () => {
     const en = KAMUS_CASHFLOW.en.pengguna.domi
     expect([id.judul, id.terakhir, id.kredit, id.tim, id.segmenPakai, id.segmenBeli]).toEqual(['Domi', 'Terakhir pakai Domi', 'Kredit', 'Tim', 'Pakai Domi', 'Beli kredit'])
     expect(id.tigaPuluh('9')).toBe('9 dalam 30 hari')
-    expect(id.jumlahPakai('37')).toBe('37 akun sudah pernah bertanya ke Domi.')
+    // Angka seluruh daftar tanpa akun tim, bukan hitungan hasil saringan.
+    expect(id.jumlahPakai('37')).toBe('Dari semua pengguna, 37 akun sudah pernah bertanya ke Domi. Akun tim tidak dihitung.')
+    expect(id.kira).toBe('Paling sedikit segini. Sebagian riwayatnya sudah dihapus pengguna.')
+    expect(en.kira).toBe('At least this many. The user has deleted part of their history.')
+    expect(id.ket).toMatch(/Tanda \+ berarti paling sedikit segitu/)
+    expect(en.ket).toMatch(/A \+ means at least that many/)
     expect(en.tigaPuluh('9')).toBe('9 in 30 days')
     expect([en.beli(1), en.beli(2)]).toEqual(['Bought credit 1 time', 'Bought credit 2 times'])
-    expect([en.jumlahPakai('1'), en.jumlahPakai('37')]).toEqual(['1 account has asked Domi at least once.', '37 accounts have asked Domi at least once.'])
+    expect([en.jumlahPakai('1'), en.jumlahPakai('37')]).toEqual([
+      'Out of all users, 1 account has asked Domi at least once. Team accounts are not counted.',
+      'Out of all users, 37 accounts have asked Domi at least once. Team accounts are not counted.',
+    ])
   })
 })
 

@@ -348,7 +348,8 @@ const nilaiKartu = (row: Baris, k: string) => {
   if (k === 'versi') return row.versi ?? '—'
   if (k === 'daftar' || k === 'aktif') return row[k]
   if (k === 'nominal') return row.nominal === null ? '—' : rupiah(row.nominal)
-  if (k === 'ruang' || k === 'tx' || k === 'domi' || k === 'kredit') return row[k] === null ? '—' : angka(row[k])
+  if (k === 'domi') return row.domi === null ? '—' : `${angka(row.domi)}${row.p.domi?.kira ? '+' : ''}`
+  if (k === 'ruang' || k === 'tx' || k === 'kredit') return row[k] === null ? '—' : angka(row[k])
   if (k === 'domi_terakhir') return row.domi_terakhir
   return '—'
 }
@@ -572,7 +573,7 @@ useCashflowPintasan([{ kunci: '/', aksi: () => kolomCari.value?.focus() }])
         <template #cell-domi="{ row }">
           <span v-if="row.domi === null" :title="ketKosong">—<span v-if="ketKosong" class="sr-only"> ({{ ketKosong }})</span></span>
           <template v-else>
-            <span :class="row.domi ? 'font-semibold text-[var(--ca-text)]' : 'text-[var(--ca-subtle)]'">{{ angka(row.domi) }}</span>
+            <span :class="row.domi ? 'font-semibold text-[var(--ca-text)]' : 'text-[var(--ca-subtle)]'" :title="row.p.domi?.kira ? tcf('pengguna.domi.kira') : undefined">{{ angka(row.domi) }}<template v-if="row.p.domi?.kira"><span class="font-normal text-[var(--ca-muted)]" aria-hidden="true">+</span><span class="sr-only"> ({{ tcf('pengguna.domi.kira') }})</span></template></span>
             <span v-if="tigaPuluh(row.p) !== null" class="mt-0.5 block whitespace-nowrap text-xs text-[var(--ca-subtle)]">{{ tcf('pengguna.domi.tigaPuluh')(angka(tigaPuluh(row.p))) }}</span>
           </template>
         </template>
@@ -632,6 +633,7 @@ useCashflowPintasan([{ kunci: '/', aksi: () => kolomCari.value?.focus() }])
                 <dd class="break-words tabular-nums text-[var(--ca-text)]" :class="k.key === 'versi' && versiTertinggal(row.p, versiTerbaru) ? 'opacity-70' : ''">
                   {{ nilaiKartu(row, k.key) }}
                   <span v-if="k.key === 'aktif'" class="block text-xs text-[var(--ca-subtle)]">{{ tcf('pengguna.masuk') }} · {{ row.p.masukTerakhir }}</span>
+                  <span v-if="k.key === 'domi' && row.p.domi?.kira" class="block text-xs text-[var(--ca-subtle)]">{{ tcf('pengguna.domi.kira') }}</span>
                   <span v-if="k.key === 'domi' && tigaPuluh(row.p) !== null" class="block text-xs text-[var(--ca-subtle)]">{{ tcf('pengguna.domi.tigaPuluh')(angka(tigaPuluh(row.p))) }}</span>
                   <span v-if="k.key === 'kredit' && row.kredit !== null && row.p.domi?.kreditBeli" class="block text-xs text-[var(--ca-subtle)]">{{ tcf('pengguna.domi.beli')(row.p.domi.kreditBeli) }}</span>
                 </dd>

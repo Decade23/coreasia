@@ -2,14 +2,15 @@
  * Pemakaian Domi per akun di daftar pengguna (admin_daftar_pengguna_v4).
  *
  * v4 = v3 ditambah per baris: jumlah pertanyaan ke Domi (seumur akun dan 30
- * hari terakhir), kapan terakhir bertanya, sisa kredit, jumlah pembelian
- * kredit yang lunas, dan tanda akun tim. Kepala hasil membawa
- * jumlah_pakai_domi. Server yang belum memasang v4 dijawab lewat v3: kolom,
+ * hari terakhir, dengan tanda bila angkanya batas bawah), kapan terakhir
+ * bertanya, sisa kredit, jumlah pembelian kredit yang lunas, dan tanda akun
+ * tim. Kepala hasil membawa jumlah_pakai_domi: dihitung atas seluruh daftar
+ * tanpa akun tim, tidak ikut cari, segmen, atau saringan. Server yang belum memasang v4 dijawab lewat v3: kolom,
  * urutan, segmen, dan saringan di berkas ini tidak ditawarkan sama sekali.
  *
  * Tanpa izin cashflow:pii server memulangkan hitungan dan kredit sebagai
  * null, dan menolak urut atau segmen yang memakainya (sama dengan ruang, tx,
- * nominal). null di sini selalu berarti "tidak boleh tahu", bukan 0.
+ * nominal). Tanda akun tim dan saringannya tetap ada tanpa izin itu. null di sini selalu berarti "tidak boleh tahu", bukan 0.
  *
  * Fungsi murni semua: tanpa jaringan, tanpa state.
  */
@@ -40,6 +41,8 @@ export function butuhV4(q: { urut: string; seg: string }, filter: Readonly<Recor
 export interface DomiAkunDTO {
   domi_tanya?: number | string | null
   domi_tanya_30?: number | string | null
+  /** true = domi_tanya batas bawah: orang itu pernah menghapus sebagian riwayatnya. */
+  domi_tanya_kira?: boolean | null
   /** Dibulatkan server ke tanggal bila kontak tidak dibuka. */
   domi_terakhir?: string | null
   kredit_sisa?: number | string | null
@@ -52,11 +55,14 @@ export interface KepalaDomiDTO { jumlah_pakai_domi?: number | string | null }
 export interface DomiAkun {
   /** Pertanyaan ke Domi seumur akun. null = tidak boleh tahu. */
   tanya: number | null
+  /** Angka `tanya` paling sedikit segitu (ditulis "42+"). false bila hitungannya ditahan. */
+  kira: boolean
   /** 30 hari terakhir, tidak pernah lebih dari `tanya`. */
   tanya30: number | null
   /** '13 Nov 2026', '—' bila belum pernah atau tidak boleh tahu. */
   terakhir: string
   terakhirIso: string | null
+  /** null juga untuk akun yang belum punya catatan kredit sama sekali: garis, bukan 0. */
   kreditSisa: number | null
   /** Jumlah pembelian kredit yang lunas. */
   kreditBeli: number | null
@@ -81,6 +87,7 @@ export function keDomiAkun(d: DomiAkunDTO, bahasa: BahasaWaktu = 'id'): DomiAkun
   const iso = tanya === null || typeof d.domi_terakhir !== 'string' || Number.isNaN(Date.parse(d.domi_terakhir)) ? null : d.domi_terakhir
   return {
     tanya,
+    kira: tanya !== null && d.domi_tanya_kira === true,
     tanya30: tanya === null || tiga === null ? null : Math.min(tiga, tanya),
     terakhir: tanggalPendek(iso, bahasa),
     terakhirIso: iso,
@@ -102,7 +109,7 @@ export const jumlahPakaiDomi = (kepala: KepalaDomiDTO | null | undefined): numbe
  */
 export function tanpaHitunganDomi<T extends DomiAkunDTO>(d: T): T {
   if (!adaKolomDomi(d)) return d
-  return { ...d, domi_tanya: null, domi_tanya_30: null, domi_terakhir: null, kredit_sisa: null, kredit_beli: null }
+  return { ...d, domi_tanya: null, domi_tanya_30: null, domi_tanya_kira: null, domi_terakhir: null, kredit_sisa: null, kredit_beli: null }
 }
 
 /**

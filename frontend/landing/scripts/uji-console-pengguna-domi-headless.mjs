@@ -42,13 +42,13 @@ const jam = j => new Date(Date.now() - j * 3_600_000).toISOString()
 /* Sepuluh akun karangan: belum pernah, sedikit, banyak, akun tim, pernah beli. */
 const AKUN = [
   { nama: 'sari', tanya: 412, tiga: 96, terakhir: 2, sisa: 37, beli: 3, tim: false },
-  { nama: 'bima', tanya: 42, tiga: 9, terakhir: 30, sisa: 8, beli: 0, tim: false },
+  { nama: 'bima', tanya: 42, tiga: 9, terakhir: 30, sisa: 8, beli: 0, tim: false, kira: true },
   { nama: 'tim.uji', tanya: 1280, tiga: 310, terakhir: 1, sisa: 9999, beli: 0, tim: true },
   { nama: 'dewi', tanya: 0, tiga: 0, terakhir: null, sisa: 20, beli: 0, tim: false },
   { nama: 'raka', tanya: 3, tiga: 3, terakhir: 50, sisa: 17, beli: 0, tim: false },
   { nama: 'maya.kusumawardhani.toko', tanya: 67, tiga: 0, terakhir: 24 * 45, sisa: 0, beli: 1, tim: false },
   { nama: 'tim.dukungan', tanya: 15, tiga: 15, terakhir: 6, sisa: 500, beli: 0, tim: true },
-  { nama: 'yoga', tanya: 0, tiga: 0, terakhir: null, sisa: 20, beli: 0, tim: false },
+  { nama: 'yoga', tanya: 0, tiga: 0, terakhir: null, sisa: null, beli: 0, tim: false },
   { nama: 'lina', tanya: 9, tiga: 1, terakhir: 24 * 12, sisa: 61, beli: 2, tim: false },
   { nama: 'andi', tanya: 1, tiga: 1, terakhir: 80, sisa: 19, beli: 0, tim: false },
 ]
@@ -69,12 +69,14 @@ const baris = (a, i, { v4, alasan, pii }) => {
   if (!v4) return dasar
   return {
     ...dasar,
-    domi_tanya: pii ? a.tanya : null, domi_tanya_30: pii ? a.tiga : null,
+    domi_tanya: pii ? a.tanya : null, domi_tanya_30: pii ? a.tiga : null, domi_tanya_kira: pii ? !!a.kira : null,
     domi_terakhir: pii && a.terakhir !== null ? jam(a.terakhir) : null,
     kredit_sisa: pii ? a.sisa : null, kredit_beli: pii ? a.beli : null, internal: a.tim,
   }
 }
 const URUT_V4 = ['domi', 'domi_terakhir', 'kredit']
+const KALIMAT_JUMLAH = 'Dari semua pengguna, 6 akun sudah pernah bertanya ke Domi. Akun tim tidak dihitung.'
+const KET_KIRA = 'Paling sedikit segini. Sebagian riwayatnya sudah dihapus pengguna.'
 const SEGMEN_V4 = ['pakai_domi', 'beli_kredit']
 
 let browser
@@ -135,13 +137,14 @@ try {
     if (p.p_filter?.internal) rows = rows.filter(x => x.a.tim === (p.p_filter.internal === 'ya'))
     const arah = p.p_arah === 'asc' ? 1 : -1
     if (p.p_urut === 'domi') rows.sort((x, y) => arah * (x.a.tanya - y.a.tanya))
-    if (p.p_urut === 'kredit') rows.sort((x, y) => arah * (x.a.sisa - y.a.sisa))
+    if (p.p_urut === 'kredit') rows.sort((x, y) => (x.a.sisa === null) - (y.a.sisa === null) || arah * (x.a.sisa - y.a.sisa))
     // null selalu di akhir, apa pun arahnya.
     if (p.p_urut === 'domi_terakhir') rows.sort((x, y) => (x.a.terakhir === null) - (y.a.terakhir === null) || arah * (y.a.terakhir - x.a.terakhir))
     return r.fulfill({ headers: cors, json: {
       total: rows.length, baris: rows.map(x => ({ ...x.d, total_semua: rows.length })),
       versi_terbaru: { android: '0001000400010000100000' }, hapus_tersedia: true,
-      ...(baru ? { jumlah_pakai_domi: pii ? AKUN.filter(a => a.tanya > 0).length : null } : {}),
+      // Atas seluruh daftar, tanpa akun tim. Tidak ikut cari, segmen, atau saringan.
+      ...(baru ? { jumlah_pakai_domi: pii ? AKUN.filter(a => a.tanya > 0 && !a.tim).length : null } : {}),
     } })
   })
 
@@ -169,7 +172,7 @@ try {
   }
   const kepala = teks => page.locator('thead th').filter({ hasText: teks })
   const lebarKolom = () => page.locator('thead th').evaluateAll(th => th.map(x => Math.round(x.getBoundingClientRect().width)))
-  const selDomi = () => page.locator('tbody tr').evaluateAll((tr, n) => tr.map(r => r.children[n].innerText.split('\n')[0].trim()), 6)
+  const selDomi = () => page.locator('tbody tr').evaluateAll((tr, n) => tr.map(r => r.children[n].innerText.split('\n')[0].trim().split(/[+ ]/)[0]), 6)
 
   // 1. Server v4: kolom terisi beragam, terang dan gelap, 1440 dan 390.
   for (const t of ['terang', 'gelap']) {
@@ -186,7 +189,14 @@ try {
     if (await page.locator('table').getByText('Tim', { exact: true }).count() !== 2) gagal('Lencana Tim tidak tepat dua')
     if (await page.locator('table [aria-label="Pernah beli kredit 3 kali"]').count() !== 1) gagal('Tanda pernah beli tidak tampil')
     if (await page.locator('table [aria-label^="Pernah beli kredit"]').count() !== 3) gagal('Tanda pernah beli tidak tepat tiga')
-    if (!(await page.getByText('8 akun sudah pernah bertanya ke Domi.', { exact: true }).isVisible())) gagal('Jumlah pakai Domi tidak tampil')
+    if (!(await page.getByText(KALIMAT_JUMLAH, { exact: true }).isVisible())) gagal('Jumlah pakai Domi tidak tampil')
+    // Batas bawah: "42+" dengan keterangan saat disorot. Yang lain tanpa tanda.
+    const kira = page.locator(`tbody td span[title="${KET_KIRA}"]`)
+    const teksKira = await kira.allInnerTexts()
+    if (teksKira.length !== 1 || !teksKira[0].trim().startsWith('42+')) gagal(`Tanda batas bawah salah: ${JSON.stringify(teksKira)}`)
+    // Akun tanpa catatan kredit: garis, bukan 0, dan tanpa "akses terbatas".
+    const kreditKosong = await page.locator('tbody tr').filter({ hasText: 'yoga@' }).locator('td').nth(8).innerText()
+    if (kreditKosong.trim() !== '—') gagal(`Kredit kosong tampil sebagai "${kreditKosong}"`)
     for (const s of ['Pakai Domi', 'Beli kredit']) if (!(await page.getByRole('button', { name: s, exact: true }).isVisible())) gagal(`Segmen ${s} tidak tampil`)
     if (terakhir().name !== 'admin_daftar_pengguna_v4') gagal('Daftar tidak dibaca lewat v4')
     if (await meluber()) gagal(`v4 ${t} meluber di 1440`)
@@ -196,7 +206,7 @@ try {
     await lebar(390)
     if (await meluber()) gagal(`v4 ${t} meluber di 390`)
     await potret(`v4-${t}-390`)
-    for (const teks of ['Terakhir pakai Domi', '96 dalam 30 hari', 'Pernah beli kredit 3 kali']) {
+    for (const teks of ['Terakhir pakai Domi', '96 dalam 30 hari', 'Pernah beli kredit 3 kali', KET_KIRA]) {
       if (!(await page.locator('ul').getByText(teks, { exact: true }).first().isVisible())) gagal(`v4 ${t} 390: "${teks}" tidak tampil di kartu`)
     }
   }
@@ -219,6 +229,15 @@ try {
   await kepala('Kredit').getByRole('button').first().click()
   await page.waitForFunction(() => location.search.includes('urut=kredit'))
   if (!(await terkirim(p => p.p_urut === 'kredit'))) gagal('Urut Kredit tidak dikirim')
+  // Kredit kosong selalu di akhir, untuk kedua arah.
+  const selKredit = () => page.locator('tbody tr').evaluateAll(tr => tr.map(r => r.children[8].innerText.trim()))
+  await page.waitForFunction(() => document.querySelector('tbody tr td:nth-child(9)')?.textContent?.includes('9.999'))
+  if ((await selKredit()).at(-1) !== '—') gagal('Urut kredit turun: yang kosong tidak di akhir')
+  await potret('v4-urut-kredit-terang-1440')
+  await kepala('Kredit').getByRole('button').first().click()
+  if (!(await terkirim(p => p.p_urut === 'kredit' && p.p_arah === 'asc'))) gagal('Urut Kredit naik tidak dikirim')
+  await page.waitForFunction(() => document.querySelector('tbody tr td:nth-child(9)')?.textContent?.trim() === '0')
+  if ((await selKredit()).at(-1) !== '—') gagal('Urut kredit naik: yang kosong tidak di akhir')
   hasil.urut = 'lulus'
 
   // 3. Segmen Pakai Domi dan Beli kredit, lalu saringan akun tim.
@@ -228,6 +247,8 @@ try {
   await page.waitForFunction(() => location.search.includes('seg=pakai_domi'))
   await page.getByText('8 pengguna', { exact: true }).waitFor()
   if (terakhir().p.p_segmen !== 'pakai_domi') gagal('Segmen pakai_domi tidak dikirim')
+  // Kalimat jumlah tidak ikut segmen: tetap angka seluruh daftar.
+  if (!(await page.getByText(KALIMAT_JUMLAH, { exact: true }).isVisible())) gagal('Kalimat jumlah berubah mengikuti segmen')
   await potret('v4-segmen-pakai-domi-gelap-1440')
   await lebar(390)
   if (await meluber()) gagal('Segmen Pakai Domi meluber di 390')
@@ -307,6 +328,14 @@ try {
   if ((await selDomi()).some(x => !x.startsWith('—'))) gagal('Tanpa izin: hitungan Domi tampil')
   if (await page.locator('[data-uji="jumlah-pakai-domi"]').count()) gagal('Tanpa izin: jumlah pakai Domi tampil')
   if (await page.locator('table').getByText('Tim', { exact: true }).count() !== 2) gagal('Tanpa izin: lencana Tim hilang')
+  if (await page.locator('tbody td span[title="' + KET_KIRA + '"]').count()) gagal('Tanpa izin: tanda batas bawah tampil')
+  // Saringan akun tim tidak butuh izin data pribadi.
+  await page.locator('[data-uji="saring-tim"]').selectOption('ya')
+  await page.getByText('2 pengguna', { exact: true }).waitFor({ timeout: 10000 })
+  if (terakhir().p.p_filter?.internal !== 'ya') gagal('Tanpa izin: saringan akun tim tidak dikirim')
+  if (await page.getByRole('alert').count()) gagal('Tanpa izin: saringan akun tim berujung galat')
+  await page.locator('[data-uji="saring-tim"]').selectOption('')
+  await page.getByText('10 pengguna', { exact: true }).waitFor({ timeout: 10000 })
   await page.waitForTimeout(1500)
   await potret('v4-tanpa-izin-terang-1440')
   // Tautan berurut Domi tanpa izin kembali ke urutan bawaan, bukan galat.
