@@ -46,13 +46,9 @@ const UJI = adaUji ? readFileSync(BERKAS_UJI, 'utf8') : ''
  * argumen, blok ⟦rpc-console⟧, dan kepala uji SQL. Hapus namanya dari sini
  * sesudah migrasinya tergabung di cabang rilis CashFlow.
  */
-/* Penyedia cadangan Domi: halamannya tayang lebih dulu dari migrasinya. Hapus ketiganya sesudah migrasinya
-   tergabung. admin_daftar_pengguna_v4 (pemakai Domi di daftar pengguna): daftar jatuh ke v3 selama v4 belum
-   ada, hapus namanya sesudah migrasinya tergabung. Isi lagi hanya untuk RPC yang console panggil SEBELUM
-   migrasinya tergabung. */
-const MENDAHULUI_MIGRASI: readonly string[] = [
-  'admin_ai_cadangan_baca', 'admin_ai_cadangan_simpan', 'admin_ai_cadangan_kunci', 'admin_daftar_pengguna_v4',
-]
+/* Kosong: penyedia cadangan Domi (20261116100000) dan pemakai Domi di daftar pengguna (20261116110000)
+   sudah ada di migrasi CashFlow. Isi lagi hanya untuk RPC yang console panggil SEBELUM migrasinya tergabung. */
+const MENDAHULUI_MIGRASI: readonly string[] = []
 const adaFungsi = (nama: string): boolean => { try { fungsiTerakhir(nama); return true } catch { return false } }
 /* Tanpa folder migrasi tidak ada yang bisa dipastikan: semuanya dianggap menunggu. */
 const menunggu: ReadonlySet<string> = new Set(adaMigrasi ? MENDAHULUI_MIGRASI.filter(n => !adaFungsi(n)) : MENDAHULUI_MIGRASI)
