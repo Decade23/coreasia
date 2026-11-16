@@ -308,8 +308,9 @@ describe('penjaga halaman Dukungan', () => {
     expect(kartu).not.toMatch(/hapusConfig/)
   })
   it('entri nav dan palet menuju halaman ini', () => {
-    expect(baca('components/cashflow/CashflowNav.vue')).toMatch(/\{ kunci: 'dukungan', to: '\/console\/cashflow\/dukungan' \}/)
-    expect(baca('components/cashflow/CashflowPalet.vue')).toMatch(/\{ kunci: 'dukungan', ke: '\/console\/cashflow\/dukungan'/)
+    // Nav dan palet membaca satu peta: utils/cashflow/navigasi.ts.
+    expect(baca('utils/cashflow/navigasi.ts')).toMatch(/\{ kunci: 'dukungan', jalur: '\/console\/cashflow\/dukungan'/)
+    for (const f of ['components/cashflow/CashflowNav.vue', 'components/cashflow/CashflowPalet.vue']) expect(baca(f)).toMatch(/from '~\/utils\/cashflow\/navigasi'/)
   })
   it('repo publik: berkas baru tanpa jalur lokal atau email nyata', () => {
     for (const f of [HAL, KARTU, 'adapters/cashflowDukungan.ts', 'tests/cashflow/dukungan.test.ts']) {

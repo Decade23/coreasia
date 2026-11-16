@@ -514,8 +514,9 @@ describe('kamus dan halaman', () => {
 
   it('halaman memakai penjaga console + admin CashFlow, dan tertaut dari navigasi dan palet', () => {
     expect(baca('pages/console/cashflow/paket.vue')).toMatch(/definePageMeta\(\{ layout: 'console', middleware: \['console', 'cashflow-admin'\] \}\)/)
-    expect(baca('components/cashflow/CashflowNav.vue')).toMatch(/\{ kunci: 'paket', to: '\/console\/cashflow\/paket' \}/)
-    expect(baca('components/cashflow/CashflowPalet.vue')).toMatch(/\{ kunci: 'paket', ke: '\/console\/cashflow\/paket'/)
+    // Nav dan palet membaca satu peta: utils/cashflow/navigasi.ts.
+    expect(baca('utils/cashflow/navigasi.ts')).toMatch(/\{ kunci: 'paket', jalur: '\/console\/cashflow\/paket'/)
+    for (const f of ['components/cashflow/CashflowNav.vue', 'components/cashflow/CashflowPalet.vue']) expect(baca(f)).toMatch(/from '~\/utils\/cashflow\/navigasi'/)
   })
 
   it('server hanya dipanggil halaman lewat useCashflowAdmin; komponen tidak mengambil data', () => {

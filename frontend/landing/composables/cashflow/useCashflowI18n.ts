@@ -12,7 +12,8 @@ import { tanggalPendek, jamWib, waktuPendekWib, type BahasaWaktu } from '~/adapt
 
 const KAMUS = {
   id: {
-    nav: { ringkasan: 'Ringkasan', corongWa: 'Corong WhatsApp', pengguna: 'Pengguna', aktivitas: 'Aktivitas', ruang: 'Ruang', kesehatan: 'Kesehatan', sakelar: 'Sakelar', pengumuman: 'Pengumuman', kasus: 'Kasus', hapusAkun: 'Hapus akun', audit: 'Audit', dukungan: 'Dukungan', domi: 'Cadangan Domi', paket: 'Paket kredit', pembelian: 'Pembelian kredit' },
+    pintu: { ringkasan: 'Ringkasan', orang: 'Orang', domi: 'Domi dan kredit', kabar: 'Kabar dan bantuan', operasional: 'Operasional' },
+    nav: { menu: 'Menu CashFlow', ringkasan: 'Ringkasan', corongWa: 'Corong WhatsApp', pengguna: 'Pengguna', aktivitas: 'Aktivitas', ruang: 'Ruang', kesehatan: 'Kesehatan', sakelar: 'Sakelar', pengumuman: 'Pengumuman', kasus: 'Kasus', hapusAkun: 'Hapus akun', audit: 'Audit', dukungan: 'Dukungan', domi: 'Cadangan Domi', paket: 'Paket kredit', pembelian: 'Pembelian kredit' },
     umum: {
       memuat: 'Memuat…', gagal: 'Gagal memuat.', kosong: 'Belum ada data.', tutup: 'Tutup', batal: 'Batal', simpan: 'Simpan',
       cari: 'Cari…', semua: 'Semua', ya: 'Ya', tidak: 'Tidak', alasan: 'Alasan', keluar: 'Keluar dari CashFlow',
@@ -32,7 +33,7 @@ const KAMUS = {
       hari: (n: number) => `${n} hari`, rentangHari: 'Rentang hari',
     },
     palet: {
-      judul: 'Cari dan pindah', tombol: 'Cari', placeholder: 'Halaman, UUID pengguna, atau email tersamar (ded***)',
+      judul: 'Cari dan pindah', tombol: 'Cari atau lompat', placeholder: 'Halaman, UUID pengguna, atau email tersamar (ded***)',
       ket: 'Hanya bentuk tersamar yang bisa dicari; pencarian tidak menulis audit.',
       halaman: 'Halaman', orang: 'Pengguna (tersamar)', bukaPengguna: 'Buka pengguna', tidakDiDaftar: 'Tidak ada di daftar',
       memuat: 'Memuat daftar tersamar…', kosong: 'Tidak ada yang cocok.', petunjuk: '↑↓ pilih · Enter buka · Esc tutup',
@@ -1220,7 +1221,8 @@ const KAMUS = {
     },
   },
   en: {
-    nav: { ringkasan: 'Overview', corongWa: 'WhatsApp funnel', pengguna: 'Users', aktivitas: 'Activity', ruang: 'Workspaces', kesehatan: 'Health', sakelar: 'Switches', pengumuman: 'Announcements', kasus: 'Cases', hapusAkun: 'Account deletion', audit: 'Audit', dukungan: 'Support', domi: 'Domi fallback', paket: 'Credit packs', pembelian: 'Credit purchases' },
+    pintu: { ringkasan: 'Overview', orang: 'People', domi: 'Domi and credits', kabar: 'News and help', operasional: 'Operations' },
+    nav: { menu: 'CashFlow menu', ringkasan: 'Overview', corongWa: 'WhatsApp funnel', pengguna: 'Users', aktivitas: 'Activity', ruang: 'Workspaces', kesehatan: 'Health', sakelar: 'Switches', pengumuman: 'Announcements', kasus: 'Cases', hapusAkun: 'Account deletion', audit: 'Audit', dukungan: 'Support', domi: 'Domi fallback', paket: 'Credit packs', pembelian: 'Credit purchases' },
     umum: {
       memuat: 'Loading…', gagal: 'Failed to load.', kosong: 'No data yet.', tutup: 'Close', batal: 'Cancel', simpan: 'Save',
       cari: 'Search…', semua: 'All', ya: 'Yes', tidak: 'No', alasan: 'Reason', keluar: 'Sign out of CashFlow',
@@ -1240,7 +1242,7 @@ const KAMUS = {
       hari: (n: number) => `${n} days`, rentangHari: 'Day range',
     },
     palet: {
-      judul: 'Search and jump', tombol: 'Search', placeholder: 'Page, user UUID, or masked email (ded***)',
+      judul: 'Search and jump', tombol: 'Search or jump', placeholder: 'Page, user UUID, or masked email (ded***)',
       ket: 'Only masked forms are searchable; searching writes no audit row.',
       halaman: 'Pages', orang: 'Users (masked)', bukaPengguna: 'Open user', tidakDiDaftar: 'Not in the list',
       memuat: 'Loading masked list…', kosong: 'Nothing matches.', petunjuk: '↑↓ select · Enter open · Esc close',

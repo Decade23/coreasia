@@ -27,6 +27,7 @@
  * alih-alih navigateTo yang menambah entri; lihat RIWAYAT di pengguna/[id].vue.
  */
 import { POLA_UUID } from '~/adapters/cashflow'
+import { HALAMAN_CASHFLOW } from '~/utils/cashflow/navigasi'
 import { bisaCariServer, keHasilCari, type HasilCari } from '~/adapters/cashflowBuku'
 import { petakanGalat, type GalatAdmin } from '~/composables/cashflow/useCashflowAdmin'
 
@@ -40,22 +41,6 @@ const { pesanUntuk } = useCashflowMuat()
 
 interface Item { kunci: string; label: string; keterangan?: string; ikon: string; ke: string | null; grup: 'orang' | 'halaman' | 'server' | 'hasil' }
 
-const HALAMAN = [
-  { kunci: 'ringkasan', ke: '/console/cashflow', ikon: 'lucide:gauge' },
-  { kunci: 'pengguna', ke: '/console/cashflow/pengguna', ikon: 'lucide:users' },
-  { kunci: 'aktivitas', ke: '/console/cashflow/aktivitas', ikon: 'lucide:activity' },
-  { kunci: 'ruang', ke: '/console/cashflow/ruang', ikon: 'lucide:layers' },
-  { kunci: 'kesehatan', ke: '/console/cashflow/kesehatan', ikon: 'lucide:heart-pulse' },
-  { kunci: 'sakelar', ke: '/console/cashflow/sakelar', ikon: 'lucide:toggle-right' },
-  { kunci: 'pengumuman', ke: '/console/cashflow/pengumuman', ikon: 'lucide:megaphone' },
-  { kunci: 'kasus', ke: '/console/cashflow/kasus', ikon: 'lucide:folder-lock' },
-  { kunci: 'hapusAkun', ke: '/console/cashflow/hapus-akun', ikon: 'lucide:user-x' },
-  { kunci: 'audit', ke: '/console/cashflow/audit', ikon: 'lucide:scroll-text' },
-  { kunci: 'dukungan', ke: '/console/cashflow/dukungan', ikon: 'lucide:heart-handshake' },
-  { kunci: 'domi', ke: '/console/cashflow/domi', ikon: 'lucide:life-buoy' },
-  { kunci: 'paket', ke: '/console/cashflow/paket', ikon: 'lucide:tags' },
-  { kunci: 'pembelian', ke: '/console/cashflow/pembelian', ikon: 'lucide:receipt' },
-] as const
 
 const q = ref('')
 const sorot = ref(0)
@@ -94,11 +79,14 @@ const item = computed<Item[]>(() => {
       ke: `/console/cashflow/pengguna/${k}`,
     })
   }
-  for (const h of HALAMAN) {
+  /* Halaman dari peta navigasi yang sama dengan CashflowNav; nama pintunya di
+     kanan supaya letaknya ikut hafal. Nama pintu juga bisa dicari. */
+  for (const h of HALAMAN_CASHFLOW) {
     const label = tcf(`nav.${h.kunci}`) as string
-    if (!k || label.toLowerCase().includes(k) || h.kunci.includes(k)) {
-      const ke = h.kunci === 'pengguna' ? indeks.daftarTerakhir.value : h.ke
-      hasil.push({ kunci: `hal-${h.kunci}`, grup: 'halaman', ikon: h.ikon, label, ke })
+    const pintu = tcf(`pintu.${h.pintu}`) as string
+    if (!k || label.toLowerCase().includes(k) || h.kunci.toLowerCase().includes(k) || pintu.toLowerCase().includes(k)) {
+      const ke = h.kunci === 'pengguna' ? indeks.daftarTerakhir.value : h.jalur
+      hasil.push({ kunci: `hal-${h.kunci}`, grup: 'halaman', ikon: h.ikon, label, ke, keterangan: label === pintu ? undefined : pintu })
     }
   }
   if (k.length >= 2 && !POLA_UUID.test(teks)) {
@@ -201,22 +189,23 @@ const pilih = (i: Item | undefined) => {
     <p class="mt-2 text-xs text-[var(--ca-subtle)]">{{ bolehServer ? tcf('cari.ket') : tcf('palet.ket') }}</p>
 
     <ul id="cf-palet-daftar" role="listbox" class="mt-3 max-h-80 space-y-0.5 overflow-y-auto">
-      <!-- Sorotan wajib terlihat di atas latar dialog: panel-bg-strong sama
-           dengan card-from di tema gelap, jadi baris terpilih tak terbedakan
-           dan Enter membuka tujuan yang tak terlihat. -->
+      <!-- Sorotan wajib terlihat di atas latar dialog: bidang awan di atas kartu,
+           ditambah tanda Enter di kanan baris terpilih, supaya tujuan Enter
+           tidak pernah tak terlihat. -->
       <li
         v-for="(i, n) in item" :id="`cf-palet-${i.kunci}`" :key="i.kunci"
         role="option" :aria-selected="n === sorot"
-        class="flex cursor-pointer items-center gap-3 rounded-xl border px-3 py-2 text-sm transition"
+        class="flex min-h-11 cursor-pointer items-center gap-3 rounded-[10px] px-3 py-2 text-sm transition"
         :class="n === sorot
-          ? 'border-[color:var(--ca-gold-border)] bg-[var(--ca-gold-bg)] text-[var(--ca-text)]'
-          : 'border-transparent text-[var(--ca-muted)]'"
+          ? 'bg-[var(--ca-panel-bg-strong)] font-semibold text-[var(--ca-text)]'
+          : 'text-[var(--ca-muted)]'"
         @mouseenter="sorot = n"
         @click="pilih(i)"
       >
-        <Icon :name="i.ikon" class="h-4 w-4 shrink-0" :class="n === sorot ? 'text-[var(--ca-brand)]' : 'text-[var(--ca-subtle)]'" />
+        <Icon :name="i.ikon" class="h-4 w-4 shrink-0" :class="n === sorot ? 'text-[var(--ca-text)]' : 'text-[var(--ca-subtle)]'" aria-hidden="true" />
         <span class="truncate" :class="i.grup === 'orang' || i.grup === 'hasil' ? 'font-mono' : ''">{{ i.label }}</span>
-        <span v-if="i.keterangan" class="ml-auto truncate font-mono text-xs text-[var(--ca-subtle)]">{{ i.keterangan }}</span>
+        <span v-if="i.keterangan" class="ml-auto truncate text-xs font-normal text-[var(--ca-subtle)]" :class="i.grup === 'halaman' ? '' : 'font-mono'">{{ i.keterangan }}</span>
+        <kbd v-if="n === sorot" class="shrink-0 rounded-md border border-[color:var(--ca-border)] bg-[var(--ca-panel-bg)] px-1.5 py-0.5 font-mono text-[0.6875rem] font-semibold text-[var(--ca-muted)]" :class="i.keterangan ? '' : 'ml-auto'" aria-hidden="true">↵</kbd>
       </li>
     </ul>
     <p v-if="memuatServer" class="mt-3 text-sm text-[var(--ca-muted)]">{{ tcf('cari.memuat') }}</p>

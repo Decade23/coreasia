@@ -348,8 +348,9 @@ describe('penjaga halaman Pembelian kredit', () => {
   it('berkas ada; penjaga console + admin CashFlow; tertaut dari navigasi dan palet', () => {
     for (const f of [HAL, ...KOMPONEN, 'adapters/cashflowPembelian.ts']) expect(existsSync(join(AKAR, f)), f).toBe(true)
     expect(baca(HAL)).toMatch(/definePageMeta\(\{ layout: 'console', middleware: \['console', 'cashflow-admin'\] \}\)/)
-    expect(baca('components/cashflow/CashflowNav.vue')).toMatch(/\{ kunci: 'pembelian', to: '\/console\/cashflow\/pembelian' \}/)
-    expect(baca('components/cashflow/CashflowPalet.vue')).toMatch(/\{ kunci: 'pembelian', ke: '\/console\/cashflow\/pembelian'/)
+    // Nav dan palet membaca satu peta: utils/cashflow/navigasi.ts.
+    expect(baca('utils/cashflow/navigasi.ts')).toMatch(/\{ kunci: 'pembelian', jalur: '\/console\/cashflow\/pembelian'/)
+    for (const f of ['components/cashflow/CashflowNav.vue', 'components/cashflow/CashflowPalet.vue']) expect(baca(f)).toMatch(/from '~\/utils\/cashflow\/navigasi'/)
   })
 
   it('server hanya dipanggil halaman lewat useCashflowAdmin; komponen tidak mengambil data', () => {

@@ -453,8 +453,9 @@ describe('penjaga halaman (keputusan P3: satu konfirmasi, tanpa kolom alasan)', 
     expect(admin).toMatch(/'admin_hapus_akun_batalkan', \{ p_permintaan: permintaan, p_alasan: alasanBatalOtomatis\(permintaan\) \}/)
   })
   it('entri nav dan palet menuju halaman ini', () => {
-    expect(baca('components/cashflow/CashflowNav.vue')).toMatch(/\{ kunci: 'hapusAkun', to: '\/console\/cashflow\/hapus-akun' \}/)
-    expect(baca('components/cashflow/CashflowPalet.vue')).toMatch(/\{ kunci: 'hapusAkun', ke: '\/console\/cashflow\/hapus-akun'/)
+    // Nav dan palet membaca satu peta: utils/cashflow/navigasi.ts.
+    expect(baca('utils/cashflow/navigasi.ts')).toMatch(/\{ kunci: 'hapusAkun', jalur: '\/console\/cashflow\/hapus-akun'/)
+    for (const f of ['components/cashflow/CashflowNav.vue', 'components/cashflow/CashflowPalet.vue']) expect(baca(f)).toMatch(/from '~\/utils\/cashflow\/navigasi'/)
   })
   it('repo publik: berkas baru tanpa jalur lokal, email nyata, atau angka produksi', () => {
     for (const f of [HAL, KARTU, KONF, 'adapters/cashflowHapusAkun.ts', 'tests/cashflow/hapus-akun.test.ts', 'tests/cashflow/kontrak-0114.test.ts']) {
