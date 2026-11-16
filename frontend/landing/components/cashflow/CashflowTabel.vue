@@ -10,14 +10,15 @@
  *
  * `lebarMin`: lebar terkecil tabel sebelum bidangnya bergulir ke samping.
  * `polos`: tanpa bingkai kartu, untuk tabel di dalam kartu lain.
+ * `rapat`: jarak antarkolom lebih kecil, untuk tabel berkolom banyak di kartu sempit.
  */
-defineProps<{ lebarMin?: string; polos?: boolean; sibuk?: boolean }>()
+defineProps<{ lebarMin?: string; polos?: boolean; sibuk?: boolean; rapat?: boolean }>()
 </script>
 
 <template>
   <div class="cf-tabel-wadah" :class="{ 'cf-tabel-polos': polos }">
     <div class="cf-tabel-gulir ca-scrollbar" :aria-busy="sibuk ? 'true' : undefined">
-      <table class="cf-tabel" :style="lebarMin ? { minWidth: lebarMin } : undefined"><slot /></table>
+      <table class="cf-tabel" :class="{ 'cf-tabel-rapat': rapat }" :style="lebarMin ? { minWidth: lebarMin } : undefined"><slot /></table>
     </div>
     <div v-if="$slots.kaki" class="cf-tabel-kaki"><slot name="kaki" /></div>
   </div>

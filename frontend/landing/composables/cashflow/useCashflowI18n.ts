@@ -1237,7 +1237,7 @@ const KAMUS = {
       kolom: { waktu: 'Waktu (WIB)', pembeli: 'Pembeli', paket: 'Paket', harga: 'Total bayar', jalur: 'Jalur', status: 'Status', kode: 'Kode' },
       uang: { hargaPlay: 'Harga tercantum', hargaSaatBeli: 'Harga saat beli', hargaPaket: 'Harga paket', pajak: 'Pajak', diterimaPlay: 'Penerimaan menurut Google' },
       jeda: {
-        judul: 'Google lunas hingga kredit masuk',
+        judul: 'Google lunas hingga kredit masuk', judulPendek: 'Lama kredit masuk',
         googleLunas: 'Lunas di Google', rtdn: 'Kabar Google diterima', aplikasiLapor: 'Aplikasi melapor', kreditMasuk: 'Kredit masuk',
         durasi: (n: number) => n < 60 ? `${n} dtk` : `${Math.floor(n / 60)} mnt ${n % 60} dtk`,
       },
@@ -2492,7 +2492,7 @@ const KAMUS = {
       kolom: { waktu: 'Time (WIB)', pembeli: 'Buyer', paket: 'Pack', harga: 'Total paid', jalur: 'Channel', status: 'Status', kode: 'Code' },
       uang: { hargaPlay: 'Listed price', hargaSaatBeli: 'Price at purchase', hargaPaket: 'Pack price', pajak: 'Tax', diterimaPlay: 'Revenue reported by Google' },
       jeda: {
-        judul: 'Google payment to credit',
+        judul: 'Google payment to credit', judulPendek: 'Time to credit',
         googleLunas: 'Paid on Google', rtdn: 'Google notified us', aplikasiLapor: 'App reported', kreditMasuk: 'Credits added',
         durasi: (n: number) => n < 60 ? `${n} sec` : `${Math.floor(n / 60)} min ${n % 60} sec`,
       },

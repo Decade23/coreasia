@@ -299,7 +299,7 @@ const kolom = computed(() => {
   return [
     { key: 'email', label: tcf('nav.pengguna'), sortable: urut('email'), filterable: false, class: 'text-[var(--ca-text)]' },
     { key: 'wa', label: tcf('pengguna.wa'), sortable: urut('wa'), filterable: false, width: '160px', class: 'text-[var(--ca-text)]' },
-    { key: 'versi', label: tcf('pengguna.versi'), sortable: urut('versi'), filterable: false, width: '108px', class: 'text-[var(--ca-text)]' },
+    { key: 'versi', label: tcf('pengguna.versi'), sortable: urut('versi'), filterable: false, width: '96px', class: 'text-[var(--ca-text)]' },
     { key: 'aktif', label: tcf('pengguna.aktifTerakhir'), sortable: urut('aktif'), filterable: false, width: '140px', class: 'text-[var(--ca-text)]' },
     // Pemakaian Domi dan kredit: hanya bila server memasang v4. Di server lama kolomnya tidak ada sama sekali.
     ...(adaDomi.value ? [

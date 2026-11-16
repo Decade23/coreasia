@@ -445,3 +445,11 @@ body.cf-area :is(.ca-console-main, body > :not(#__nuxt)) tr.cf-kepala-polos th {
   white-space: nowrap;
   color: var(--cf-tinta3);
 }
+
+/* Tabel rapat: jarak antarkolom lebih kecil, tepi kiri dan kanan tetap. */
+body.cf-area .ca-console-main .cf-tabel.cf-tabel-rapat :is(th, td):not(:first-child) {
+  padding-left: 0.5rem;
+}
+body.cf-area .ca-console-main .cf-tabel.cf-tabel-rapat :is(th, td):not(:last-child) {
+  padding-right: 0.5rem;
+}

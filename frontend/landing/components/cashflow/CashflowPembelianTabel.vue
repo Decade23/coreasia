@@ -83,7 +83,7 @@ function lamaKredit(waktu: NonNullable<NonNullable<Pembelian['play']>['waktu']>)
     </li>
   </ul>
   <div class="cf-tabel-gulir ca-scrollbar hidden sm:block">
-    <table class="cf-tabel min-w-[68rem]" data-uji="pembelian-tabel">
+    <table class="cf-tabel cf-tabel-rapat min-w-[56rem]" data-uji="pembelian-tabel">
       <thead>
         <tr>
           <th scope="col">{{ tcf('pembelian.kolom.waktu') }}</th>
@@ -92,7 +92,7 @@ function lamaKredit(waktu: NonNullable<NonNullable<Pembelian['play']>['waktu']>)
           <th scope="col" class="cf-ka">{{ tcf('pembelian.kolom.harga') }}</th>
           <th scope="col">{{ tcf('pembelian.kolom.jalur') }}</th>
           <th scope="col">{{ tcf('pembelian.kolom.status') }}</th>
-          <th scope="col">{{ tcf('pembelian.jeda.judul') }}</th>
+          <th scope="col" :title="tcf('pembelian.jeda.judul')">{{ tcf('pembelian.jeda.judulPendek') }}</th>
           <th scope="col" :title="tcf('pembelian.kodeKet')">{{ tcf('pembelian.kolom.kode') }}</th>
         </tr>
       </thead>
@@ -108,7 +108,7 @@ function lamaKredit(waktu: NonNullable<NonNullable<Pembelian['play']>['waktu']>)
             </template>
             <span v-else class="text-xs text-[var(--ca-subtle)]">{{ tcf('pembelian.tidakTerbaca') }}</span>
           </td>
-          <td class="min-w-[15rem] max-w-[18rem]">
+          <td class="min-w-[12.5rem] max-w-[18rem]">
             <span v-if="p.pembeli.email" class="cf-kuat block break-all">{{ p.pembeli.email }}</span>
             <span v-else class="block text-xs text-[var(--ca-subtle)]">{{ tcf('pembelian.tanpaEmail') }}</span>
             <span v-if="p.pembeli.nama" class="cf-dua break-words">{{ p.pembeli.nama }}</span>
@@ -151,7 +151,7 @@ function lamaKredit(waktu: NonNullable<NonNullable<Pembelian['play']>['waktu']>)
               {{ p.jalur ? tcf(`pembelian.jalur.${p.jalur}`) : tcf('pembelian.tidakDikenal') }}
             </span>
             <span
-              v-if="p.play?.order" class="block max-w-[12rem] truncate font-mono text-xs text-[var(--ca-subtle)]"
+              v-if="p.play?.order" class="block max-w-[8.5rem] truncate font-mono text-xs text-[var(--ca-subtle)]"
               :title="`${tcf('pembelian.pesananPlay')}: ${p.play.order}`"
             >{{ p.play.order }}</span>
           </td>
@@ -165,12 +165,12 @@ function lamaKredit(waktu: NonNullable<NonNullable<Pembelian['play']>['waktu']>)
             <span v-if="playBelumDikonsumsi(p)" class="mt-1 block whitespace-nowrap text-xs ca-tone-gold" :title="tcf('pembelian.belumDikonsumsiKet')">
               {{ tcf('pembelian.belumDikonsumsi') }}
             </span>
-            <span v-if="p.play?.batalIso" class="mt-1 block whitespace-nowrap text-xs text-[var(--ca-muted)]">
+            <span v-if="p.play?.batalIso" class="mt-1 block max-w-[9rem] text-xs text-[var(--ca-muted)]">
               {{ tcf('pembelian.dibatalkanGoogle')(formatWaktu(p.play.batalIso)) }}
             </span>
           </td>
           <td class="!text-xs">
-            <details v-if="p.play?.waktu" class="min-w-[7rem]">
+            <details v-if="p.play?.waktu">
               <summary class="cursor-pointer whitespace-nowrap" data-uji="pembelian-jeda-play">{{ lamaKredit(p.play.waktu) }}</summary>
               <dl class="mt-2 space-y-1.5 whitespace-nowrap text-[var(--ca-muted)]">
                 <div v-for="kunci in WAKTU_PLAY" :key="kunci">

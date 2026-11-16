@@ -40,7 +40,7 @@ const mati = computed(() => !props.bolehUbah || props.terkunci)
           <th scope="col">{{ tcf('paket.kolom.tanda') }}</th>
           <th scope="col">{{ tcf('paket.kolom.play') }}</th>
           <th scope="col" class="cf-ka">{{ tcf('paket.kolom.terjual') }}</th>
-          <th scope="col" class="cf-ka min-w-[16rem]">{{ tcf('paket.kolom.aksi') }}</th>
+          <th scope="col" class="cf-ka min-w-[13rem]">{{ tcf('paket.kolom.aksi') }}</th>
         </tr>
       </thead>
       <tbody>

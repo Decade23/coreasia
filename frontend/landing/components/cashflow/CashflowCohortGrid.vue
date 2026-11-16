@@ -24,7 +24,7 @@ const nada = (persen: number) => {
 
 <template>
   <!-- Di ponsel lima kolom tidak muat: tabelnya bergulir di dalam kartu, kartunya tidak meluber. -->
-  <CashflowTabel polos lebar-min="27rem" class="-mx-5">
+  <CashflowTabel polos rapat lebar-min="24rem" class="-mx-5">
     <thead>
       <tr>
         <th scope="col">{{ tcf('ringkasan.kohortKolom.kohort') }}</th>
@@ -44,7 +44,7 @@ const nada = (persen: number) => {
         <td class="cf-ka">{{ angka(k.pernahCatat) }}</td>
         <td class="cf-ka">{{ angka(k.catat30) }}</td>
         <td class="cf-ka">
-          <span class="inline-block min-w-[3.5rem] rounded-md px-2 py-0.5 text-right tabular-nums text-[var(--ca-text)]" :class="nada(k.persen)">{{ k.persen }}%</span>
+          <span class="inline-block min-w-[3rem] rounded-md px-2 py-0.5 text-right tabular-nums text-[var(--ca-text)]" :class="nada(k.persen)">{{ k.persen }}%</span>
         </td>
       </tr>
     </tbody>

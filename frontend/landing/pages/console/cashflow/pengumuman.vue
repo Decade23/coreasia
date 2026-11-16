@@ -126,8 +126,8 @@ const labelLevel = (level: string) => (tcf('pengumuman.levelOpsi') as unknown as
 const aktif = computed(() => rows.value.filter(p => statusPengumuman(p, jam.value) === 'aktif').length)
 const kolom = computed(() => [
   // Judul dan isi butuh ruang baca: tanpa lebar terkecil kolomnya menyempit jadi satu kata per baris.
-  { key: 'judul', label: tcf('pengumuman.judulKolom'), filterable: false, class: 'min-w-[18rem]' },
-  { key: 'penerima', label: tcf('pengumuman.penerimaLabel'), filterable: false, class: 'min-w-[12rem]' },
+  { key: 'judul', label: tcf('pengumuman.judulKolom'), filterable: false, class: 'min-w-[14rem]' },
+  { key: 'penerima', label: tcf('pengumuman.penerimaLabel'), filterable: false },
   { key: 'level', label: tcf('pengumuman.level'), filterable: false },
   { key: 'status', label: tcf('pengumuman.statusLabel'), filterable: false },
   { key: 'mulai', label: tcf('pengumuman.mulaiWib'), filterable: false },

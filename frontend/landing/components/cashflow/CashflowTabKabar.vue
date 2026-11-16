@@ -84,7 +84,8 @@ const isiAda = (k: Kabar) => (k.isi ? ISI.filter(x => k.isi![x] != null).map(x =
       <div v-else class="overflow-x-auto">
         <table class="w-full text-left text-xs">
           <thead class="text-[var(--ca-muted)]">
-            <tr class="cf-kepala-polos">
+            <!-- Sebelas kolom: kepala boleh dua baris supaya semuanya muat tanpa gulir samping. -->
+            <tr class="align-bottom">
               <th class="py-1 pr-3 font-medium">{{ tcf('kabar.kolom.ruang') }}</th>
               <th v-for="k in SAKELAR" :key="k" class="py-1 pr-3 font-medium">{{ tcf(`kabar.kolom.${SETELAN[k]}`) }}</th>
               <th class="py-1 pr-3 font-medium">{{ tcf('kabar.kolom.tingkat') }}</th>
