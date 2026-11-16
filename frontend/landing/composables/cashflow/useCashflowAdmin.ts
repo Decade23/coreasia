@@ -660,7 +660,7 @@ export const useCashflowAdmin = () => {
     // ── Domi: penyedia cadangan (adapters/cashflowAiCadangan) ───────────
     /** Keadaan cadangan: nyala/mati, model, sidik kunci, pemakaian, galat terakhir. Izin view. */
     aiCadanganBaca: () => rpc<AiCadanganDTO>('admin_ai_cadangan_baca'),
-    /** Memulangkan keadaan terbaru. Butuh cashflow:pii. Galat: model_tidak_dikenal, kunci_belum_ada. */
+    /** Memulangkan keadaan terbaru. Butuh cashflow:pii. Galat: model_tidak_dikenal, kunci_belum_ada, setelan_tidak_sah. */
     aiCadanganSimpan: (aktif: boolean, model: string) =>
       rpc<AiCadanganDTO>('admin_ai_cadangan_simpan', { p_aktif: aktif, p_model: model }).catch(e => galatTulisCadangan(e)),
     /** Ganti kunci API cadangan. null = hapus kunci dan matikan cadangan. Memulangkan keadaan

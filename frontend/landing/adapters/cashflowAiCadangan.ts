@@ -9,9 +9,13 @@
  *   terakhir_galat, terakhir_galat_pada, utama_terakhir_galat,
  *   utama_terakhir_galat_pada}.
  * - admin_ai_cadangan_simpan(p_aktif boolean, p_model text). Galat:
- *   `model_tidak_dikenal`, `kunci_belum_ada`.
+ *   `model_tidak_dikenal` (hint model), `kunci_belum_ada` (hint aktif),
+ *   `setelan_tidak_sah` (hint aktif, p_aktif null).
  * - admin_ai_cadangan_kunci(p_kunci text). Kosong atau null = hapus kunci dan
- *   matikan cadangan. Galat: `kunci_tidak_sah`.
+ *   matikan cadangan. Galat: `kunci_tidak_sah` (hint kunci). Kunci yang sah:
+ *   awalan sk-ant- lalu huruf, angka, garis bawah, atau tanda hubung, panjang
+ *   seluruhnya 27 sampai 307.
+ * Galat isian memakai SQLSTATE 22023, pesan = kode di atas, hint = nama isian.
  * Izinnya sama dengan Paket kredit: membaca butuh cashflow:view, menulis
  * butuh cashflow:pii.
  *
@@ -25,9 +29,9 @@
 
 /** Awalan kunci API penyedia cadangan. */
 export const AWALAN_KUNCI = 'sk-ant-'
-/** Batas panjang kunci di klien. Server tetap penentu. */
-export const KUNCI_MIN = 20
-export const KUNCI_MAKS = 512
+/** Batas panjang kunci, sama dengan server (awalan ikut dihitung). Server tetap penentu. */
+export const KUNCI_MIN = 27
+export const KUNCI_MAKS = 307
 /** Catatan galat penyedia bisa panjang. Kartu status cukup memuat awalnya. */
 export const GALAT_MAKS = 280
 const PILIHAN_MAKS = 50
@@ -36,7 +40,7 @@ const POLA_SIDIK = /^[A-Za-z0-9:_-]{4,64}$/
 const POLA_RUPA_KUNCI = /sk-[A-Za-z0-9_-]{8,}/g
 export const KUNCI_DISAMARKAN = '[disamarkan]'
 
-export const KODE_GALAT_CADANGAN = ['model_tidak_dikenal', 'kunci_belum_ada', 'kunci_tidak_sah'] as const
+export const KODE_GALAT_CADANGAN = ['model_tidak_dikenal', 'kunci_belum_ada', 'kunci_tidak_sah', 'setelan_tidak_sah'] as const
 export type KodeGalatCadangan = typeof KODE_GALAT_CADANGAN[number]
 
 // ── DTO: persis seperti yang dipulangkan RPC ─────────────────────────────
@@ -147,7 +151,7 @@ export type AlasanTakSimpan = 'kunciBelumAda' | 'modelKosong' | 'modelAsing' | '
 /**
  * Kenapa setelan belum bisa disimpan, atau null bila bisa. Menyalakan tanpa
  * kunci ditolak di sini lebih dulu supaya tombolnya mati dengan keterangan.
- * Server tetap penentu (`kunci_belum_ada`, `model_tidak_dikenal`).
+ * Server tetap penentu (`kunci_belum_ada`, `model_tidak_dikenal`, `setelan_tidak_sah`).
  */
 export function alasanTakSimpan(k: AiCadangan, isian: IsianCadangan): AlasanTakSimpan | null {
   if (isian.aktif && !k.kunciAda) return 'kunciBelumAda'

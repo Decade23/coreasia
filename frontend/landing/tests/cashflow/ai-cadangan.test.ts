@@ -19,6 +19,7 @@ import {
   type AiCadangan, type AiCadanganDTO,
 } from '../../adapters/cashflowAiCadangan'
 import { KAMUS_CASHFLOW } from '../../composables/cashflow/useCashflowI18n'
+import { adaMigrasi, fungsiTerakhir, parameterFungsi, pohonJsonb } from './migrasi'
 
 // ── Global tiruan (tanpa Nuxt, lihat vitest.config.ts) ───────────────────
 type Jawab = { data: unknown; error: unknown }
@@ -209,6 +210,9 @@ describe('adapter: periksa kunci di klien', () => {
     expect(periksaKunci(`${AWALAN_KUNCI}abc def-ghijklmnop`)).toBe('spasi')
     expect(periksaKunci(`${AWALAN_KUNCI}abc`)).toBe('pendek')
     expect(periksaKunci(AWALAN_KUNCI + 'a'.repeat(KUNCI_MIN - AWALAN_KUNCI.length))).toBeNull()
+    expect(periksaKunci(AWALAN_KUNCI + 'a'.repeat(KUNCI_MIN - AWALAN_KUNCI.length - 1))).toBe('pendek')
+    expect(periksaKunci(AWALAN_KUNCI + 'a'.repeat(KUNCI_MAKS - AWALAN_KUNCI.length))).toBeNull()
+    expect(periksaKunci(AWALAN_KUNCI + 'a'.repeat(KUNCI_MAKS - AWALAN_KUNCI.length + 1))).toBe('panjang')
     expect(periksaKunci(AWALAN_KUNCI + 'a'.repeat(KUNCI_MAKS))).toBe('panjang')
   })
 })
@@ -228,6 +232,16 @@ describe('adapter: galat server', () => {
     expect(pesanUntuk(petakanGalat({ code: '22023', message: 'model_tidak_dikenal' }))).toBe('cadangan.galat.modelTidakDikenal')
     expect(pesanUntuk(petakanGalat({ code: 'P0001', message: 'kunci_belum_ada' }))).toBe('cadangan.galat.kunciBelumAda')
     expect(pesanUntuk(petakanGalat({ code: '22023', message: 'kunci_tidak_sah' }))).toBe('cadangan.galat.kunciTidakSah')
+    // Bentuk persis dari server: SQLSTATE 22023, pesan = kode, hint = nama isian.
+    for (const [kode, hint, kalimat] of [
+      ['model_tidak_dikenal', 'model', 'modelTidakDikenal'], ['kunci_belum_ada', 'aktif', 'kunciBelumAda'],
+      ['setelan_tidak_sah', 'aktif', 'setelanTidakSah'], ['kunci_tidak_sah', 'kunci', 'kunciTidakSah'],
+    ] as const) {
+      const g = petakanGalat({ code: '22023', message: kode, hint })
+      expect(g).toMatchObject({ jenis: 'argumen', message: kode, hint })
+      expect(kodeGalatCadangan(g), kode).toBe(kode)
+      expect(pesanUntuk(g), kode).toBe(`cadangan.galat.${kalimat}`)
+    }
     expect(pesanUntuk(petakanGalat(BELUM_ADA, 'admin_ai_cadangan_baca'))).toBe('galat.belumAktif')
   })
 
@@ -238,6 +252,63 @@ describe('adapter: galat server', () => {
     expect(tanpaKunci('kunci "rahasia-tanpa-awalan" ditolak', 'rahasia-tanpa-awalan')).toBe(`kunci "${KUNCI_DISAMARKAN}" ditolak`)
     expect(tanpaKunci('kunci_tidak_sah', KUNCI)).toBe('kunci_tidak_sah')
     expect(samarkanKunci('tanpa rahasia')).toBe('tanpa rahasia')
+  })
+})
+
+// ── Kontrak migrasi (hanya bila fungsinya ada di folder CASHFLOW_MIGRASI) ─
+const adaCadangan = adaMigrasi && (() => { try { fungsiTerakhir('admin_ai_cadangan_baca'); return true } catch { return false } })()
+describe.skipIf(!adaCadangan)('kontrak migrasi: admin_ai_cadangan_*', () => {
+  const badan = (nama: string) => fungsiTerakhir(nama).badan
+  /** Setiap galat isian di badan fungsi: [pesan, sqlstate, hint]. */
+  const galatIsian = (nama: string) =>
+    [...badan(nama).matchAll(/raise exception '([a-z_]+)' using errcode = '(\w+)', hint = '(\w+)'/g)].map(m => [m[1]!, m[2]!, m[3]!])
+
+  it('argumen yang dikirim console = parameter fungsi', () => {
+    expect(parameterFungsi('admin_ai_cadangan_baca')).toEqual([])
+    expect(parameterFungsi('admin_ai_cadangan_simpan')).toEqual([{ nama: 'p_aktif', bawaan: false }, { nama: 'p_model', bawaan: false }])
+    expect(parameterFungsi('admin_ai_cadangan_kunci')).toEqual([{ nama: 'p_kunci', bawaan: false }])
+  })
+
+  it('ketiganya memulangkan bentuk yang sama: dua belas kunci yang dibaca adapter', () => {
+    const kunci = Object.keys(pohonJsonb(badan('ai_cadangan_bangun'))).sort()
+    expect(kunci).toEqual(Object.keys(AKTIF).sort())
+    expect(kunci).toHaveLength(12)
+    for (const nama of ['admin_ai_cadangan_baca', 'admin_ai_cadangan_simpan', 'admin_ai_cadangan_kunci']) {
+      expect(badan(nama), nama).toMatch(/return public\.ai_cadangan_bangun\(\);/)
+    }
+    // Contoh di uji ini lolos adapter tanpa kunci yang terbuang.
+    expect(keAiCadangan(AKTIF)).not.toBeNull()
+  })
+
+  it('galat isian: SQLSTATE 22023, pesan = kode di kamus adapter, hint = nama isian', () => {
+    const simpan = galatIsian('admin_ai_cadangan_simpan')
+    const kunci = galatIsian('admin_ai_cadangan_kunci')
+    expect(simpan).toEqual([['setelan_tidak_sah', '22023', 'aktif'], ['model_tidak_dikenal', '22023', 'model'], ['kunci_belum_ada', '22023', 'aktif']])
+    expect(kunci).toEqual([['kunci_tidak_sah', '22023', 'kunci']])
+    expect([...simpan, ...kunci].map(g => g[0]).sort()).toEqual([...KODE_GALAT_CADANGAN].sort())
+  })
+
+  it('penolakan izin memakai 42501 dengan hint izin-kurang', () => {
+    for (const nama of ['admin_ai_cadangan_baca', 'admin_ai_cadangan_simpan', 'admin_ai_cadangan_kunci']) {
+      expect(badan(nama), nama).toMatch(/konsol_boleh\('cashflow:view'\)[\s\S]*?errcode = '42501', hint = 'izin-kurang'/)
+    }
+    for (const nama of ['admin_ai_cadangan_simpan', 'admin_ai_cadangan_kunci']) {
+      expect(badan(nama), nama).toMatch(/konsol_boleh\('cashflow:pii'\)[\s\S]*?errcode = '42501', hint = 'izin-kurang'/)
+    }
+  })
+
+  it('aturan kunci di klien sama dengan server: awalan dan batas panjang', () => {
+    const b = badan('admin_ai_cadangan_kunci')
+    expect(b).toContain(`'^${AWALAN_KUNCI}[A-Za-z0-9_-]+$'`)
+    const m = /char_length\(v_kunci\) not between (\d+) and (\d+)/.exec(b)
+    expect([Number(m?.[1]), Number(m?.[2])]).toEqual([KUNCI_MIN, KUNCI_MAKS])
+    // Kosong atau null menghapus kunci: console mengirim null.
+    expect(b).toMatch(/if v_kunci is null then\s+delete from vault\.secrets/)
+  })
+
+  it('sidik dari server lolos saringan adapter (10 huruf heksa)', () => {
+    expect(badan('ai_cadangan_sidik_inti')).toMatch(/left\(encode\(sha256\([^;]+'hex'\), 10\)/)
+    expect(keAiCadangan({ ...AKTIF, kunci_sidik: '0a1b2c3d4e' })?.kunciSidik).toBe('0a1b2c3d4e')
   })
 })
 
@@ -281,8 +352,12 @@ describe('lapisan RPC (Supabase tiruan)', () => {
       jawaban = { data: null, error: { code: '22023', message: k } }
       await expect(api.aiCadanganSimpan(true, 'model-a')).rejects.toMatchObject({ jenis: 'argumen', message: k })
     }
+    jawaban = { data: null, error: { code: '22023', message: 'setelan_tidak_sah', hint: 'aktif' } }
+    await expect(api.aiCadanganSimpan(true, 'model-a')).rejects.toMatchObject({ jenis: 'argumen', message: 'setelan_tidak_sah', hint: 'aktif' })
     jawaban = { data: null, error: { code: '22023', message: 'kunci_tidak_sah' } }
     await expect(api.aiCadanganKunci(KUNCI)).rejects.toMatchObject({ jenis: 'argumen', message: 'kunci_tidak_sah' })
+    jawaban = { data: null, error: { code: '22023', message: 'kunci_tidak_sah', hint: 'kunci' } }
+    await expect(api.aiCadanganKunci(KUNCI)).rejects.toMatchObject({ jenis: 'argumen', message: 'kunci_tidak_sah', hint: 'kunci' })
   })
 
   it('42501 tanpa hint di tulisan (izin pii kurang) jadi izin, bukan "bukan admin"', async () => {
@@ -408,8 +483,9 @@ describe('komposabel: sakelar, model, simpan', () => {
     expect(c.sibuk.value).toBeNull()
   })
 
-  it('model_tidak_dikenal dan kunci_belum_ada: kalimat awam, lalu keadaan dibaca ulang', async () => {
-    for (const [kode, kalimat] of [['model_tidak_dikenal', 'cadangan.galat.modelTidakDikenal'], ['kunci_belum_ada', 'cadangan.galat.kunciBelumAda']] as const) {
+  it('model_tidak_dikenal, kunci_belum_ada, dan setelan_tidak_sah: kalimat awam, lalu keadaan dibaca ulang', async () => {
+    for (const [kode, kalimat] of [['model_tidak_dikenal', 'cadangan.galat.modelTidakDikenal'], ['kunci_belum_ada', 'cadangan.galat.kunciBelumAda'],
+      ['setelan_tidak_sah', 'cadangan.galat.setelanTidakSah']] as const) {
       const c = await siap(AKTIF)
       toast.error.mockClear()
       c.isianModel.value = 'model-a'
@@ -634,7 +710,7 @@ describe('kamus dan halaman', () => {
       ...['kosong', 'awalan', 'spasi', 'pendek', 'panjang', 'server'].map(k => `cadangan.kunci.galat.${k}`),
       ...['ganti', 'hapus'].flatMap(k => [`cadangan.konfirmasi.${k}Judul`, `cadangan.konfirmasi.${k}Ket`]),
       ...['nyala', 'mati', 'kunciDisimpan', 'kunciDiganti', 'kunciDihapus'].map(k => `cadangan.hasil.${k}`),
-      ...['modelTidakDikenal', 'kunciBelumAda', 'kunciTidakSah'].map(k => `cadangan.galat.${k}`),
+      ...['modelTidakDikenal', 'kunciBelumAda', 'kunciTidakSah', 'setelanTidakSah'].map(k => `cadangan.galat.${k}`),
     ]
     const hilang = jalur.flatMap(j => (['id', 'en'] as const).filter(b => typeof ambil(b, j) !== 'string').map(b => `${b}:${j}`))
     expect(hilang).toEqual([])

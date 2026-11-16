@@ -1169,6 +1169,7 @@ const KAMUS = {
         modelTidakDikenal: 'Model itu tidak ada di daftar server. Daftarnya sudah dimuat ulang, pilih lagi.',
         kunciBelumAda: 'Belum ada kunci di server, jadi cadangan belum bisa dinyalakan. Simpan kuncinya dulu.',
         kunciTidakSah: 'Server menolak kunci ini. Pastikan kuncinya utuh dan masih berlaku.',
+        setelanTidakSah: 'Server menolak setelan ini. Keadaannya sudah dimuat ulang, coba simpan lagi.',
       },
     },
     pembelian: {
@@ -2383,6 +2384,7 @@ const KAMUS = {
         modelTidakDikenal: 'That model is not on the server list. The list has been reloaded, so pick again.',
         kunciBelumAda: 'The server has no key yet, so the fallback cannot be turned on. Save the key first.',
         kunciTidakSah: 'The server rejected this key. Make sure it is complete and still valid.',
+        setelanTidakSah: 'The server rejected this setting. The state has been reloaded, so try saving again.',
       },
     },
     pembelian: {

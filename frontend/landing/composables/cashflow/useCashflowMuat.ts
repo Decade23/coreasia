@@ -78,6 +78,7 @@ export const useCashflowMuat = (opsi: { awal?: boolean } = {}) => {
     if (cadangan === 'model_tidak_dikenal') return tcf('cadangan.galat.modelTidakDikenal')
     if (cadangan === 'kunci_belum_ada') return tcf('cadangan.galat.kunciBelumAda')
     if (cadangan === 'kunci_tidak_sah') return tcf('cadangan.galat.kunciTidakSah')
+    if (cadangan === 'setelan_tidak_sah') return tcf('cadangan.galat.setelanTidakSah')
     // Pembelian kredit: saringan status/jalur yang tidak dikenal server (22023).
     if (g.message === 'masukan_tidak_sah') return tcf('pembelian.galat.masukan')
     // Pelanggaran unik produk Play (23505): kalimat Postgres mentah, jangan ditampilkan.
