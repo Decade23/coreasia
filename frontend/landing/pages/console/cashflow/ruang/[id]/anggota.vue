@@ -32,7 +32,7 @@ const kelasStatus = (s: StatusUndangan | null) => (s === 'aktif' ? 'ca-pill-emer
   >
     <div v-if="r360" class="space-y-5">
       <section v-if="r360.anggota.length">
-        <h3 class="text-xs font-semibold uppercase tracking-wide text-[var(--ca-muted)]">{{ tcf('r360.anggotaJudul')(r360.anggota.length) }}</h3>
+        <h3 class="cf-subjudul">{{ tcf('r360.anggotaJudul')(r360.anggota.length) }}</h3>
         <ul class="ca-console-dialog mt-2 divide-y divide-[color:var(--ca-border)] text-sm">
           <li v-for="a in r360.anggota" :key="a.id" class="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5">
             <NuxtLink :to="keOrang(a.id)" class="font-mono text-[var(--ca-text)] underline-offset-2 hover:underline">{{ a.emailTersamar }}</NuxtLink>
@@ -47,7 +47,7 @@ const kelasStatus = (s: StatusUndangan | null) => (s === 'aktif' ? 'ca-pill-emer
       </section>
 
       <section v-if="r360.bekas.length">
-        <h3 class="text-xs font-semibold uppercase tracking-wide text-[var(--ca-muted)]">{{ tcf('r360.bekasJudul')(r360.bekas.length) }}</h3>
+        <h3 class="cf-subjudul">{{ tcf('r360.bekasJudul')(r360.bekas.length) }}</h3>
         <ul class="ca-console-dialog mt-2 divide-y divide-[color:var(--ca-border)] text-sm">
           <li v-for="b in r360.bekas" :key="b.id" class="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5">
             <NuxtLink v-if="b.akunAda" :to="keOrang(b.id)" class="font-mono text-[var(--ca-text)] underline-offset-2 hover:underline">{{ b.emailTersamar }}</NuxtLink>
@@ -59,7 +59,7 @@ const kelasStatus = (s: StatusUndangan | null) => (s === 'aktif' ? 'ca-pill-emer
       </section>
 
       <section v-if="r360.undangan.length">
-        <h3 class="text-xs font-semibold uppercase tracking-wide text-[var(--ca-muted)]">{{ tcf('r360.undanganJudul')(r360.undangan.length) }}</h3>
+        <h3 class="cf-subjudul">{{ tcf('r360.undanganJudul')(r360.undangan.length) }}</h3>
         <ul class="ca-console-dialog mt-2 divide-y divide-[color:var(--ca-border)] text-sm">
           <li v-for="u in r360.undangan" :key="u.id" class="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5">
             <span :class="kelasStatus(u.status)" class="text-[0.7rem]">{{ u.status ? tcf(`r360.statusUndangan.${u.status}`) : '—' }}</span>

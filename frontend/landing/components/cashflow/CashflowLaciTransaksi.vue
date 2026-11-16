@@ -82,7 +82,7 @@ const teksJeda = (d: number | null) => {
 
       <!-- Catatan (T3) -->
       <section v-if="r.adaCatatan">
-        <h4 class="text-xs font-semibold uppercase tracking-wide text-[var(--ca-muted)]">{{ tcf('teks.label.transaksi') }}</h4>
+        <h4 class="cf-subjudul">{{ tcf('teks.label.transaksi') }}</h4>
         <div class="mt-1">
           <CashflowTeksTerkunci v-if="r.sumber === 'sampah' && r.sampahId" :key="`sampah:${r.sampahId}`" jenis="sampah" :id="r.sampahId" otomatis />
           <CashflowTeksTerkunci v-else :key="`transaksi:${r.id}`" jenis="transaksi" :id="r.id" otomatis />
@@ -91,7 +91,7 @@ const teksJeda = (d: number | null) => {
 
       <!-- Pasangan transfer -->
       <section v-if="r.pasangan.length">
-        <h4 class="text-xs font-semibold uppercase tracking-wide text-[var(--ca-muted)]">{{ tcf('laci.pasangan') }}</h4>
+        <h4 class="cf-subjudul">{{ tcf('laci.pasangan') }}</h4>
         <ul class="mt-1 space-y-1">
           <li v-for="p in r.pasangan" :key="p.id">
             <button type="button" class="flex w-full items-center justify-between gap-3 rounded-lg border border-[color:var(--ca-border)] px-3 py-2 text-left hover:bg-[var(--ca-panel-bg-strong)]" @click="emit('pindah', p.id)">
@@ -104,7 +104,7 @@ const teksJeda = (d: number | null) => {
 
       <!-- Konteks ranah lain -->
       <section v-if="r.grup || r.jadwal || r.produk || r.lampiran.adaBukti || r.lampiran.jumlah">
-        <h4 class="text-xs font-semibold uppercase tracking-wide text-[var(--ca-muted)]">{{ tcf('laci.konteks') }}</h4>
+        <h4 class="cf-subjudul">{{ tcf('laci.konteks') }}</h4>
         <ul class="mt-1 space-y-1 text-[var(--ca-text)]">
           <li v-if="r.grup" class="flex flex-wrap items-center gap-x-1.5 gap-y-1">
             {{ tcf('laci.struk') }}
@@ -130,7 +130,7 @@ const teksJeda = (d: number | null) => {
 
       <!-- Riwayat perubahan -->
       <section>
-        <h4 class="text-xs font-semibold uppercase tracking-wide text-[var(--ca-muted)]">{{ tcf('laci.riwayat') }}</h4>
+        <h4 class="cf-subjudul">{{ tcf('laci.riwayat') }}</h4>
         <p v-if="!r.riwayat.length" class="mt-1 text-xs text-[var(--ca-subtle)]">{{ tcf('laci.riwayatKosong') }}</p>
         <ol v-else class="mt-1 space-y-2 border-l border-[color:var(--ca-border)] pl-3">
           <li v-for="h in r.riwayat" :key="h.id" class="text-xs">

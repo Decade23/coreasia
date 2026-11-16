@@ -104,7 +104,7 @@ const ubah = async () => {
       </button>
     </div>
     <label v-if="sakelar.ada" class="mt-4 block max-w-xl">
-      <span class="text-xs font-semibold uppercase tracking-wide text-[var(--ca-muted)]">{{ tcf('sakelar.alasanUbah') }}</span>
+      <span class="cf-subjudul">{{ tcf('sakelar.alasanUbah') }}</span>
       <input v-model="alasan" type="text" class="ca-input mt-1 w-full" :disabled="sibuk" :placeholder="tcf('alasan.lengkapi')" >
     </label>
   </section>

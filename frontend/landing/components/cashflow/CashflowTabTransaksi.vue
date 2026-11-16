@@ -250,7 +250,7 @@ const pilihBaris = (t: TransaksiBaris, i: number) => { sorot.value = i; bukaLaci
         <div v-if="baris.length" class="ca-console-dialog hidden overflow-x-auto sm:block">
           <table class="w-full text-sm">
             <thead>
-              <tr class="text-left text-xs uppercase tracking-wide text-[var(--ca-muted)]">
+              <tr class="cf-kepala-polos text-left">
                 <th class="px-4 py-2">{{ tcf('transaksi.tanggal') }}</th>
                 <th class="hidden px-3 py-2 md:table-cell">{{ modeRuang ? tcf('r360.pencatat') : tcf('transaksi.ruang') }}</th>
                 <th class="px-3 py-2">{{ tcf('transaksi.dompet') }}</th>
@@ -307,7 +307,7 @@ const pilihBaris = (t: TransaksiBaris, i: number) => { sorot.value = i; bukaLaci
 
         <!-- Kecocokan di sampah (halaman pertama, ?sampah=1) -->
         <section v-if="sampah.length" class="ca-console-dialog p-4">
-          <h3 class="text-xs font-semibold uppercase tracking-wide text-[var(--ca-muted)]">{{ tcf('transaksi.diSampah')(labelJumlahSampah(sampah.length, sampahLebih)) }}</h3>
+          <h3 class="cf-subjudul">{{ tcf('transaksi.diSampah')(labelJumlahSampah(sampah.length, sampahLebih)) }}</h3>
           <p v-if="sampahLebih" class="mt-1 text-xs text-[var(--ca-subtle)]">{{ tcf('transaksi.sampahLebih') }}</p>
           <ul class="mt-2 divide-y divide-[color:var(--ca-border)] text-sm">
             <li v-for="s in sampah" :key="s.id" class="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">

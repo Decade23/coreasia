@@ -45,7 +45,7 @@ const batasHabis = computed(() => {
     </template>
 
     <template v-if="cara.jendela">
-      <h3 class="text-xs font-semibold uppercase tracking-wide text-[var(--ca-muted)]" :class="cara.angka24j ? 'mt-5' : ''">{{ tcf('kesehatan.wa.terbalik.jendelaJudul') }}</h3>
+      <h3 class="cf-subjudul" :class="cara.angka24j ? 'mt-5' : ''">{{ tcf('kesehatan.wa.terbalik.jendelaJudul') }}</h3>
       <CashflowKeadaanKosong v-if="!cara.jendela.length" class="mt-2" :pesan="tcf('kesehatan.wa.terbalik.jendelaKosong')" icon="lucide:circle-check" />
       <ul v-else class="mt-2 space-y-2">
         <li
@@ -69,7 +69,7 @@ const batasHabis = computed(() => {
 
     <template v-if="cara.pengguna">
       <div class="flex flex-wrap items-baseline justify-between gap-2" :class="cara.angka24j || cara.jendela ? 'mt-5' : ''">
-        <h3 class="text-xs font-semibold uppercase tracking-wide text-[var(--ca-muted)]">{{ tcf('kesehatan.wa.terbalik.penggunaJudul') }}</h3>
+        <h3 class="cf-subjudul">{{ tcf('kesehatan.wa.terbalik.penggunaJudul') }}</h3>
         <NuxtLink :to="{ path: '/console/cashflow/pengguna', query: { seg: SEGMEN_BELUM_WA } }" class="text-xs font-semibold text-[var(--ca-text)] underline">{{ tcf('kesehatan.wa.terbalik.lihatBelum') }}</NuxtLink>
       </div>
       <dl class="mt-2 grid grid-cols-2 gap-3 text-sm sm:grid-cols-5">

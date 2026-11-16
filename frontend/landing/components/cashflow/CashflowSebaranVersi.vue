@@ -60,7 +60,7 @@ const tanggal = (iso: string) => (iso ? formatTanggal(iso) : '-')
       <CashflowKeadaanKosong v-if="!data.aktif" class="mt-4" :pesan="tcf('kesehatan.versi.kosong')" icon="lucide:smartphone" />
       <div v-else class="mt-4 overflow-x-auto">
         <table class="w-full min-w-[34rem] text-sm">
-          <thead><tr class="text-left text-xs uppercase tracking-wide text-[var(--ca-muted)]">
+          <thead><tr class="cf-kepala-polos text-left">
             <th class="py-2 pr-3">{{ tcf('kesehatan.versi.kolom.versi') }}</th>
             <th class="py-2 px-3">{{ tcf('kesehatan.versi.kolom.kode') }}</th>
             <th class="py-2 px-3">{{ tcf('kesehatan.versi.kolom.build') }}</th>

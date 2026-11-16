@@ -61,7 +61,7 @@ const lama = (l: LamaWa | null) => (l ? tcf('kesehatan.wa.terbalik.lama')(l.n, l
     </ul>
 
     <template v-if="cara.lapis">
-      <h3 class="mt-5 text-xs font-semibold uppercase tracking-wide text-[var(--ca-muted)]">{{ tcf('kesehatan.wa.terbalik.lapisJudul') }}</h3>
+      <h3 class="mt-5 cf-subjudul">{{ tcf('kesehatan.wa.terbalik.lapisJudul') }}</h3>
       <div class="mt-2 grid gap-3 lg:grid-cols-3">
         <div v-for="g in cara.lapis" :key="g.kelompok" class="min-w-0 rounded-xl bg-[var(--ca-panel-bg-strong)] p-3">
           <p class="text-sm font-semibold text-[var(--ca-text)]">{{ tcf(`kesehatan.wa.terbalik.kelompok.${g.kelompok}`) }}</p>
@@ -78,7 +78,7 @@ const lama = (l: LamaWa | null) => (l ? tcf('kesehatan.wa.terbalik.lama')(l.n, l
     </template>
 
     <template v-if="cara.sapa">
-      <h3 class="mt-5 text-xs font-semibold uppercase tracking-wide text-[var(--ca-muted)]">{{ tcf('kesehatan.wa.terbalik.sapaJudul') }}</h3>
+      <h3 class="mt-5 cf-subjudul">{{ tcf('kesehatan.wa.terbalik.sapaJudul') }}</h3>
       <p v-if="!cara.sapa.ada" class="mt-2 text-sm text-[var(--ca-muted)]">{{ tcf('kesehatan.wa.terbalik.sapaBelum') }}</p>
       <dl v-else class="mt-2 grid grid-cols-2 gap-3 text-sm lg:grid-cols-5">
         <div class="flex min-w-0 flex-col">

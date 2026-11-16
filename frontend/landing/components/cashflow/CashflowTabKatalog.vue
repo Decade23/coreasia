@@ -89,7 +89,7 @@ const persen = (r: number | null) => (r == null ? '' : `${Math.round(r * 100)}%`
       <p v-if="katalog.terpotong.kategori" class="text-xs text-[var(--ca-gold-text)]">{{ tcf('katalog.potongKategori') }}</p>
       <CashflowKeadaanKosong v-if="!kelompok.length" :pesan="tcf('katalog.kategoriKosong')" />
       <div v-for="g in kelompok" :key="g.arah" class="space-y-2">
-        <h4 class="text-xs font-semibold uppercase tracking-wide text-[var(--ca-muted)]">{{ tcf(`katalog.kelompok.${g.arah}`) }} · {{ g.kategori.length }}</h4>
+        <h4 class="cf-subjudul">{{ tcf(`katalog.kelompok.${g.arah}`) }} · {{ g.kategori.length }}</h4>
         <ul class="ca-console-dialog divide-y divide-[color:var(--ca-border)] text-sm">
           <li v-for="c in g.kategori" :key="c.id" class="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5" :class="{ 'opacity-70': c.arsip }">
             <span

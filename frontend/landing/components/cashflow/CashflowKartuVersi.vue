@@ -219,7 +219,7 @@ const hapusMinimum = () => { if (!sibuk.value) isian.minimum = '' }
     <!-- Isian -->
     <div class="mt-4 grid gap-4 sm:grid-cols-2">
       <div>
-        <label for="cf-versi-terbaru" class="text-xs font-semibold uppercase tracking-wide text-[var(--ca-muted)]">{{ tcf('versi.terbaru') }}</label>
+        <label for="cf-versi-terbaru" class="cf-subjudul">{{ tcf('versi.terbaru') }}</label>
         <input
           id="cf-versi-terbaru" v-model="isian.terbaru" type="text" inputmode="numeric" autocomplete="off" spellcheck="false"
           class="ca-input mt-1 w-full font-mono" placeholder="26101412" :disabled="!!sibuk"
@@ -231,7 +231,7 @@ const hapusMinimum = () => { if (!sibuk.value) isian.minimum = '' }
         <p v-if="periksa.galat.terbaru" class="mt-1 text-xs ca-tone-danger" role="alert">{{ tcf(`versi.galat.${periksa.galat.terbaru}`) }}</p>
       </div>
       <div>
-        <label for="cf-versi-minimum" class="text-xs font-semibold uppercase tracking-wide text-[var(--ca-muted)]">{{ tcf('versi.minimum') }}</label>
+        <label for="cf-versi-minimum" class="cf-subjudul">{{ tcf('versi.minimum') }}</label>
         <div class="mt-1 flex gap-2">
           <input
             id="cf-versi-minimum" v-model="isian.minimum" type="text" inputmode="numeric" autocomplete="off" spellcheck="false"
@@ -246,7 +246,7 @@ const hapusMinimum = () => { if (!sibuk.value) isian.minimum = '' }
         <p v-if="periksa.galat.minimum" class="mt-1 text-xs ca-tone-danger" role="alert">{{ tcf(`versi.galat.${periksa.galat.minimum}`) }}</p>
       </div>
       <div>
-        <label for="cf-versi-catatan" class="text-xs font-semibold uppercase tracking-wide text-[var(--ca-muted)]">{{ tcf('versi.catatan') }}</label>
+        <label for="cf-versi-catatan" class="cf-subjudul">{{ tcf('versi.catatan') }}</label>
         <input
 id="cf-versi-catatan" v-model="isian.catatan" type="text" autocomplete="off" class="ca-input mt-1 w-full" :disabled="!!sibuk"
           :aria-invalid="periksa.galat.catatan ? 'true' : undefined" aria-describedby="cf-versi-catatan-ket" >
@@ -254,7 +254,7 @@ id="cf-versi-catatan" v-model="isian.catatan" type="text" autocomplete="off" cla
         <p v-if="periksa.galat.catatan" class="mt-1 text-xs ca-tone-danger" role="alert">{{ tcf(`versi.galat.${periksa.galat.catatan}`) }}</p>
       </div>
       <div>
-        <label for="cf-versi-catatan-en" class="text-xs font-semibold uppercase tracking-wide text-[var(--ca-muted)]">{{ tcf('versi.catatanEn') }}</label>
+        <label for="cf-versi-catatan-en" class="cf-subjudul">{{ tcf('versi.catatanEn') }}</label>
         <input
 id="cf-versi-catatan-en" v-model="isian.catatanEn" type="text" autocomplete="off" class="ca-input mt-1 w-full" :disabled="!!sibuk"
           :aria-invalid="periksa.galat.catatanEn ? 'true' : undefined" >
@@ -282,7 +282,7 @@ id="cf-versi-catatan-en" v-model="isian.catatanEn" type="text" autocomplete="off
     </div>
 
     <label class="mt-4 block max-w-xl">
-      <span class="text-xs font-semibold uppercase tracking-wide text-[var(--ca-muted)]">{{ tcf('versi.alasan') }}</span>
+      <span class="cf-subjudul">{{ tcf('versi.alasan') }}</span>
       <input v-model="alasan" type="text" class="ca-input mt-1 w-full" :disabled="!!sibuk" :placeholder="tcf('alasan.lengkapi')" aria-describedby="cf-versi-alasan-ket" >
       <span id="cf-versi-alasan-ket" class="mt-1 block text-xs text-[var(--ca-subtle)]">{{ tcf('versi.alasanKet') }}</span>
     </label>

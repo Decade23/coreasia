@@ -61,7 +61,7 @@ const kodeBaru = (b: BarisLangkah) => !b.kunciLangkah || !b.kenalIsi
         <template v-else>
           <div v-if="data.kelompok.length" class="mt-3 overflow-x-auto" :class="memuat ? 'opacity-60' : ''">
             <table class="w-full min-w-[30rem] text-sm">
-              <thead><tr class="text-left text-xs uppercase tracking-wide text-[var(--ca-muted)]">
+              <thead><tr class="cf-kepala-polos text-left">
                 <th class="py-2 pr-3">{{ tcf('aktivitas.usaha.kolom.langkah') }}</th>
                 <th class="py-2 px-3 text-right">{{ tcf('aktivitas.usaha.kolom.orang') }}</th>
                 <th class="py-2 px-3 text-right">{{ tcf('aktivitas.usaha.kolom.kejadian') }}</th>
@@ -84,11 +84,11 @@ const kodeBaru = (b: BarisLangkah) => !b.kunciLangkah || !b.kenalIsi
             </table>
           </div>
 
-          <h3 class="mt-5 text-xs font-semibold uppercase tracking-wide text-[var(--ca-muted)]">{{ tcf('aktivitas.usaha.mingguan') }}</h3>
+          <h3 class="mt-5 cf-subjudul">{{ tcf('aktivitas.usaha.mingguan') }}</h3>
           <p v-if="!data.mingguan.length" class="mt-2 text-xs text-[var(--ca-subtle)]">{{ tcf('aktivitas.usaha.mingguKosong') }}</p>
           <div v-else class="mt-2 overflow-x-auto">
             <table class="w-full max-w-md text-sm" data-uji="usaha-mingguan">
-              <thead><tr class="text-left text-xs uppercase tracking-wide text-[var(--ca-muted)]">
+              <thead><tr class="cf-kepala-polos text-left">
                 <th class="py-1.5 pr-3">{{ tcf('aktivitas.usaha.kolom.minggu') }}</th>
                 <th class="py-1.5 px-3 text-right">{{ tcf('aktivitas.usaha.kolom.ruang') }}</th>
                 <th class="py-1.5 pl-3 text-right">{{ tcf('aktivitas.usaha.kolom.luar') }}</th>

@@ -143,7 +143,7 @@ const keTx = (tx: string) => `${props.dasar}/transaksi?tx=${tx}`
         </dl>
 
         <div v-if="data.jeda.perHari.length" class="space-y-1">
-          <h4 class="text-xs font-semibold uppercase tracking-wide text-[var(--ca-muted)]">{{ tcf('perangkat.perHari') }}</h4>
+          <h4 class="cf-subjudul">{{ tcf('perangkat.perHari') }}</h4>
           <div class="overflow-x-auto">
             <table class="w-full text-left text-xs tabular-nums">
               <thead class="text-[var(--ca-muted)]">
@@ -167,7 +167,7 @@ const keTx = (tx: string) => `${props.dasar}/transaksi?tx=${tx}`
         </div>
 
         <div v-if="data.jeda.terbesar.length" class="space-y-1">
-          <h4 class="text-xs font-semibold uppercase tracking-wide text-[var(--ca-muted)]">{{ tcf('perangkat.terbesar') }}</h4>
+          <h4 class="cf-subjudul">{{ tcf('perangkat.terbesar') }}</h4>
           <p v-if="!data.jeda.rinci" class="text-xs text-[var(--ca-subtle)]">{{ tcf('perangkat.terbesarRingkasKet') }}</p>
           <ul class="ca-console-dialog divide-y divide-[color:var(--ca-border)] text-sm">
             <li v-for="(t, i) in data.jeda.terbesar" :key="t.peristiwaId ?? `${t.padaIso}-${i}`" class="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2">

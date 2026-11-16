@@ -240,7 +240,7 @@ onBeforeUnmount(tutupSunting)
           </div>
         </div>
         <label class="mt-4 block max-w-xl">
-          <span class="text-xs font-semibold uppercase tracking-wide text-[var(--ca-muted)]">{{ tcf('sakelar.alasanUbah') }}</span>
+          <span class="cf-subjudul">{{ tcf('sakelar.alasanUbah') }}</span>
           <input v-model="alasanOtp" type="text" class="ca-input mt-1 w-full" :placeholder="tcf('alasan.lengkapi')" />
         </label>
       </section>
@@ -303,7 +303,7 @@ onBeforeUnmount(tutupSunting)
           </form>
           <p v-if="galatEmail" id="cf-email-galat" class="mt-2 text-xs ca-tone-danger" role="alert">{{ galatEmail }}</p>
           <label class="mt-4 block max-w-xl">
-            <span class="text-xs font-semibold uppercase tracking-wide text-[var(--ca-muted)]">{{ tcf('sakelar.alasanDaftar') }}</span>
+            <span class="cf-subjudul">{{ tcf('sakelar.alasanDaftar') }}</span>
             <input v-model="alasanDaftar" type="text" class="ca-input mt-1 w-full" :disabled="!!sibuk" :placeholder="tcf('alasan.lengkapi')" aria-describedby="cf-alasan-daftar-ket" />
             <span id="cf-alasan-daftar-ket" class="mt-1 block text-xs text-[var(--ca-subtle)]">{{ tcf('sakelar.alasanDaftarKet') }}</span>
           </label>
@@ -322,7 +322,7 @@ onBeforeUnmount(tutupSunting)
         <h2 class="font-display text-base font-bold text-[var(--ca-text)]">{{ tcf('sakelar.semua') }}</h2>
         <CashflowKeadaanKosong v-if="!config.length" class="mt-3" :pesan="tcf('umum.kosong')" icon="lucide:toggle-right" />
         <table v-else class="mt-3 w-full text-sm">
-          <thead><tr class="text-left text-xs uppercase tracking-wide text-[var(--ca-muted)]">
+          <thead><tr class="cf-kepala-polos text-left">
             <th class="py-2 pr-3">{{ tcf('sakelar.kunci') }}</th><th class="py-2 px-3">{{ tcf('sakelar.nilai') }}</th><th class="py-2 px-3">{{ tcf('sakelar.publik') }}</th><th class="py-2 px-3">{{ tcf('sakelar.catatan') }}</th><th class="py-2 pl-3">{{ tcf('sakelar.diperbarui') }}</th>
           </tr></thead>
           <tbody>

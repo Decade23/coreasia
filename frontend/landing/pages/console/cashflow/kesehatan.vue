@@ -64,23 +64,23 @@ const salinJalur = () => aksi(async () => {
     <CashflowAjakanPembaruan :hari="hariVersi" />
 
     <template v-if="kesehatan">
-      <div class="grid gap-6 lg:grid-cols-2">
-        <section class="ca-console-dialog overflow-x-auto p-5">
+      <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <section class="ca-console-dialog min-w-0 overflow-x-auto p-5">
           <h2 class="font-display text-base font-bold text-[var(--ca-text)]">{{ tcf('kesehatan.tabel') }}</h2>
           <table class="mt-3 w-full text-sm">
-            <thead><tr class="text-left text-xs uppercase tracking-wide text-[var(--ca-muted)]"><th class="py-2 pr-3">{{ tcf('kesehatan.tabel') }}</th><th class="py-2 px-3 text-right">{{ tcf('kesehatan.baris') }}</th><th class="py-2 pl-3 text-right">{{ tcf('kesehatan.ukuran') }}</th></tr></thead>
+            <thead><tr class="cf-kepala-polos text-left"><th class="py-2 pr-3">{{ tcf('kesehatan.tabel') }}</th><th class="py-2 px-3 text-right">{{ tcf('kesehatan.baris') }}</th><th class="py-2 pl-3 text-right">{{ tcf('kesehatan.ukuran') }}</th></tr></thead>
             <tbody><tr v-for="t in kesehatan.tabel" :key="t.tabel" class="border-t border-[color:var(--ca-border)] text-[var(--ca-text)]"><td class="py-1.5 pr-3 font-mono text-xs">{{ t.tabel }}</td><td class="py-1.5 px-3 text-right tabular-nums">{{ angka(t.baris) }}</td><td class="py-1.5 pl-3 text-right tabular-nums">{{ byte(t.ukuran) }}</td></tr></tbody>
           </table>
         </section>
 
-        <section class="ca-console-dialog p-5">
+        <section class="ca-console-dialog min-w-0 p-5">
           <div class="flex items-start justify-between gap-3">
-            <div>
+            <div class="min-w-0">
               <h2 class="font-display text-base font-bold text-[var(--ca-text)]">{{ tcf('kesehatan.yatim') }}</h2>
               <p class="mt-1 text-xs text-[var(--ca-subtle)]">{{ tcf('kesehatan.yatimKet') }}</p>
               <p v-if="yatimTerpotong" class="mt-1 text-xs ca-tone-gold">{{ tcf('kesehatan.yatimPotong')(BATAS_YATIM) }}</p>
             </div>
-            <button v-if="yatim.length" type="button" class="ca-btn-secondary text-xs" @click="salinJalur">{{ tersalin ? '✓' : tcf('kesehatan.salin') }}</button>
+            <button v-if="yatim.length" type="button" class="ca-btn-secondary shrink-0 whitespace-nowrap text-xs" @click="salinJalur">{{ tersalin ? '✓' : tcf('kesehatan.salin') }}</button>
           </div>
           <CashflowKeadaanKosong v-if="!yatim.length" class="mt-3" :pesan="tcf('umum.kosong')" icon="lucide:image" />
           <ul v-else class="mt-3 max-h-64 space-y-1 overflow-auto font-mono text-xs text-[var(--ca-muted)]">
@@ -89,11 +89,11 @@ const salinJalur = () => aksi(async () => {
         </section>
       </div>
 
-      <section class="ca-console-dialog p-5">
+      <section class="ca-console-dialog min-w-0 overflow-x-auto p-5">
         <h2 class="font-display text-base font-bold text-[var(--ca-text)]">{{ tcf('kesehatan.telemetri') }}</h2>
         <CashflowKeadaanKosong v-if="!telemetri.length" class="mt-3" :pesan="tcf('kesehatan.telemetriKet')" icon="lucide:radio" />
         <table v-else class="mt-3 w-full text-sm">
-          <thead><tr class="text-left text-xs uppercase tracking-wide text-[var(--ca-muted)]"><th class="py-2 pr-3">{{ tcf('kesehatan.kolom.jenis') }}</th><th class="py-2 px-3">{{ tcf('kesehatan.kolom.layar') }}</th><th class="py-2 px-3 text-right">{{ tcf('kesehatan.kolom.jumlah') }}</th><th class="py-2 pl-3 text-right">{{ tcf('kesehatan.kolom.pengguna') }}</th></tr></thead>
+          <thead><tr class="cf-kepala-polos text-left"><th class="py-2 pr-3">{{ tcf('kesehatan.kolom.jenis') }}</th><th class="py-2 px-3">{{ tcf('kesehatan.kolom.layar') }}</th><th class="py-2 px-3 text-right">{{ tcf('kesehatan.kolom.jumlah') }}</th><th class="py-2 pl-3 text-right">{{ tcf('kesehatan.kolom.pengguna') }}</th></tr></thead>
           <tbody><tr v-for="(t, i) in telemetriTampil" :key="i" class="border-t border-[color:var(--ca-border)] text-[var(--ca-text)]"><td class="py-1.5 pr-3 text-xs">{{ t.label.judul }}</td><td class="py-1.5 px-3">{{ t.label.layar || '—' }}</td><td class="py-1.5 px-3 text-right tabular-nums">{{ angka(t.jumlah) }}</td><td class="py-1.5 pl-3 text-right tabular-nums">{{ angka(t.pengguna) }}</td></tr></tbody>
         </table>
       </section>

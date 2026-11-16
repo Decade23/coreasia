@@ -85,7 +85,7 @@ const keTx = (id: string) => `${props.dasar}/transaksi?tx=${id}`
       </section>
 
       <section class="space-y-2">
-        <h3 class="text-xs font-semibold uppercase tracking-wide text-[var(--ca-muted)]">{{ tcf('jadwal.rinci.pembayaran') }} · {{ d.jadwal.pembayaran }}</h3>
+        <h3 class="cf-subjudul">{{ tcf('jadwal.rinci.pembayaran') }} · {{ d.jadwal.pembayaran }}</h3>
         <p v-if="!d.rinci.pembayaran" class="text-xs text-[var(--ca-subtle)]">{{ tcf('jadwal.rinci.pembayaranRingkasKet') }}</p>
         <CashflowKeadaanKosong v-if="!d.pembayaran.length" :pesan="tcf('jadwal.rinci.pembayaranKosong')" />
         <ol v-else class="divide-y divide-[color:var(--ca-border)]">
@@ -107,7 +107,7 @@ const keTx = (id: string) => `${props.dasar}/transaksi?tx=${id}`
       </section>
 
       <section class="space-y-2">
-        <h3 class="text-xs font-semibold uppercase tracking-wide text-[var(--ca-muted)]">{{ tcf('jadwal.rinci.lewati') }} · {{ d.lewati.length }}</h3>
+        <h3 class="cf-subjudul">{{ tcf('jadwal.rinci.lewati') }} · {{ d.lewati.length }}</h3>
         <p v-if="!d.lewati.length" class="text-xs text-[var(--ca-muted)]">{{ tcf('jadwal.rinci.lewatiKosong') }}</p>
         <ul v-else class="divide-y divide-[color:var(--ca-border)]">
           <li v-for="x in d.lewati" :key="x.id" class="flex flex-wrap items-center gap-x-3 gap-y-0.5 py-2">
@@ -123,7 +123,7 @@ const keTx = (id: string) => `${props.dasar}/transaksi?tx=${id}`
       </section>
 
       <section class="space-y-2">
-        <h3 class="text-xs font-semibold uppercase tracking-wide text-[var(--ca-muted)]">{{ tcf('jadwal.rinci.penyesuaian') }} · {{ d.jadwal.penyesuaian }}</h3>
+        <h3 class="cf-subjudul">{{ tcf('jadwal.rinci.penyesuaian') }} · {{ d.jadwal.penyesuaian }}</h3>
         <p v-if="!d.penyesuaian.length" class="text-xs text-[var(--ca-muted)]">{{ tcf('jadwal.rinci.penyesuaianKosong') }}</p>
         <ul v-else class="divide-y divide-[color:var(--ca-border)]">
           <li v-for="x in d.penyesuaian" :key="x.id" class="flex flex-wrap items-center gap-x-3 gap-y-0.5 py-2">
@@ -142,7 +142,7 @@ const keTx = (id: string) => `${props.dasar}/transaksi?tx=${id}`
       </section>
 
       <section v-if="d.rinci.diSampah || d.jadwal.pembayaranDiSampah" class="space-y-2">
-        <h3 class="text-xs font-semibold uppercase tracking-wide text-[var(--ca-muted)]">{{ tcf('jadwal.rinci.sampah') }}</h3>
+        <h3 class="cf-subjudul">{{ tcf('jadwal.rinci.sampah') }}</h3>
         <template v-if="d.rinci.diSampah">
           <p v-if="!d.diSampah.length" class="text-xs text-[var(--ca-muted)]">{{ tcf('jadwal.rinci.sampahKosong') }}</p>
           <ul v-else class="divide-y divide-[color:var(--ca-border)]">

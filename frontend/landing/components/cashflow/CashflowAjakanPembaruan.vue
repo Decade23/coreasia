@@ -45,7 +45,7 @@ const KOLOM: ReadonlyArray<{ langkah: LangkahPembaruan; label: string }> = [
       <template v-else>
         <div class="mt-3 overflow-x-auto" :class="memuat ? 'opacity-60' : ''">
           <table class="w-full min-w-[40rem] text-sm">
-            <thead><tr class="text-left text-xs uppercase tracking-wide text-[var(--ca-muted)]">
+            <thead><tr class="cf-kepala-polos text-left">
               <th class="py-2 pr-3">{{ tcf('kesehatan.ajakan.kolom.ke') }}</th>
               <th v-for="k in KOLOM" :key="k.langkah" class="py-2 px-3 text-right">{{ tcf(`kesehatan.ajakan.kolom.${k.label}`) }}</th>
               <th class="py-2 pl-3 text-right">{{ tcf('kesehatan.ajakan.kolom.sampai') }}</th>

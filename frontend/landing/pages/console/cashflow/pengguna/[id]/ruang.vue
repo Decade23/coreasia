@@ -63,7 +63,7 @@ const peran = (r: RuangSubjek) => (r.pemilik ? tcf('pengguna.pemilik') : r.peran
     >
       <div class="space-y-5">
         <section v-if="dalam.length">
-          <h3 class="text-xs font-semibold uppercase tracking-wide text-[var(--ca-muted)]">{{ tcf('ruangTab.dalam')(dalam.length) }}</h3>
+          <h3 class="cf-subjudul">{{ tcf('ruangTab.dalam')(dalam.length) }}</h3>
           <ul class="mt-2 grid gap-3 lg:grid-cols-2">
             <li v-for="r in dalam" :key="r.id" class="ca-console-dialog p-4 text-sm">
               <div class="flex flex-wrap items-center gap-2">
@@ -96,7 +96,7 @@ const peran = (r: RuangSubjek) => (r.pemilik ? tcf('pengguna.pemilik') : r.peran
         </section>
 
         <section v-if="luar.length">
-          <h3 class="text-xs font-semibold uppercase tracking-wide text-[var(--ca-muted)]">{{ tcf('ruangTab.luar')(luar.length) }}</h3>
+          <h3 class="cf-subjudul">{{ tcf('ruangTab.luar')(luar.length) }}</h3>
           <ul class="mt-2 space-y-2">
             <li v-for="r in luar" :key="r.id" class="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-[color:var(--ca-border)] px-4 py-3 text-sm">
               <span class="font-mono text-[var(--ca-text)]">{{ r.nama }}</span>

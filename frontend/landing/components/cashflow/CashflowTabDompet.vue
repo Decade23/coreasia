@@ -165,7 +165,7 @@ const labelPembuat = (uid: string | null) => (props.labelOrang ? props.labelOran
     </CashflowPanelTab>
 
     <section v-if="mode === 'ruang' && kunci" class="ca-console-dialog p-4">
-      <h3 class="text-xs font-semibold uppercase tracking-wide text-[var(--ca-muted)]">{{ tcf('periksa.judul') }}</h3>
+      <h3 class="cf-subjudul">{{ tcf('periksa.judul') }}</h3>
       <p class="mt-1 text-xs text-[var(--ca-subtle)]">{{ tcf('periksa.ket') }}</p>
       <p v-if="periksaMuat.pesanGalat.value" class="mt-2 text-sm text-[var(--ca-danger-text)]" role="alert">{{ periksaMuat.pesanGalat.value }}</p>
       <p v-else-if="!periksa" class="mt-2 text-sm text-[var(--ca-muted)]">{{ tcf('umum.memuat') }}</p>
