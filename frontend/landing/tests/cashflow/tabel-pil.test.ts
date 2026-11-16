@@ -175,10 +175,12 @@ describe('keadaan daftar', () => {
     expect(html).not.toMatch(/role="alert"/)
     expect(html).toContain('Sambung ulang')
   })
-  it('kosong: ikon, satu kalimat sebab, dan jalan keluar di slot', async () => {
+  it('kosong: Domi atau ikon, satu kalimat sebab, dan jalan keluar di slot', async () => {
     const html = await render(CashflowKeadaan, { jenis: 'kosong', icon: 'lucide:users', judul: 'Belum ada yang cocok', pesan: 'Tidak ada yang cocok dengan saringan.' }, { default: () => h('button', 'Lepas saringan') })
     expect(html).toMatch(/data-keadaan="kosong"/)
-    expect(html).toMatch(/data-ikon="lucide:users"/)
+    // Bawaannya Domi diam (lihat domi-maskot.test.ts). Ikon hanya bila maskot dimatikan.
+    expect(html).not.toMatch(/data-ikon=/)
+    expect(await render(CashflowKeadaan, { jenis: 'kosong', maskot: false, icon: 'lucide:users', pesan: 'Kosong' })).toMatch(/data-ikon="lucide:users"/)
     expect(html).toContain('Belum ada yang cocok')
     expect(html).toContain('Lepas saringan')
     expect(await render(CashflowKeadaan, { jenis: 'kosong', polos: true, pesan: 'Kosong' })).toMatch(/cf-tabel-polos/)

@@ -75,6 +75,19 @@ const KAMUS = {
       berjalan: 'berjalan',
       langkah: { daftar: 'Daftar', masuk_lagi: 'Buka lagi', menyiapkan: 'Menyiapkan dompet/ruang', tx_pertama: 'Transaksi pertama', sepuluh_tx: 'Sepuluh transaksi' },
       sedikit: (n: number, batas: number) => `Baru ${n} data. Grafik muncul begitu ada ${batas}.`,
+      sapaan: { pagi: 'Selamat pagi', siang: 'Selamat siang', sore: 'Selamat sore', malam: 'Selamat malam', netral: 'Halo' },
+      keadaan: {
+        memuat: 'Sebentar, datanya sedang diambil.',
+        sehat: (n: string) => `Kode WhatsApp jalan seperti biasa. Sekarang ada ${n} pengguna terdaftar.`,
+        angka: (n: string) => `Sekarang ada ${n} pengguna terdaftar.`,
+        sebagian: (n: string) => `Kode WhatsApp sebagian terganggu, lihat sebabnya di bawah. Pengguna terdaftar ${n}.`,
+        gangguan: (n: string) => `Kode WhatsApp sedang bermasalah, lihat sebabnya di bawah. Pengguna terdaftar ${n}.`,
+        nonaktif: (n: string) => `Kode WhatsApp sedang dimatikan dari Sakelar. Pengguna terdaftar ${n}.`,
+      },
+      keadaanTanpaAngka: {
+        sehat: 'Kode WhatsApp jalan seperti biasa.', sebagian: 'Kode WhatsApp sebagian terganggu, lihat sebabnya di bawah.',
+        gangguan: 'Kode WhatsApp sedang bermasalah, lihat sebabnya di bawah.', nonaktif: 'Kode WhatsApp sedang dimatikan dari Sakelar.',
+      },
     },
     pengguna: {
       judul: 'Pengguna', ket: 'Email dan WhatsApp',
@@ -1309,6 +1322,19 @@ const KAMUS = {
       berjalan: 'in progress',
       langkah: { daftar: 'Signed up', masuk_lagi: 'Opened again', menyiapkan: 'Set up wallet/workspace', tx_pertama: 'First transaction', sepuluh_tx: 'Ten transactions' },
       sedikit: (n: number, batas: number) => `Only ${n} data points. The chart appears at ${batas}.`,
+      sapaan: { pagi: 'Good morning', siang: 'Good afternoon', sore: 'Good afternoon', malam: 'Good evening', netral: 'Hello' },
+      keadaan: {
+        memuat: 'One moment, the data is on its way.',
+        sehat: (n: string) => `WhatsApp codes are running as usual. There are ${n} registered users right now.`,
+        angka: (n: string) => `There are ${n} registered users right now.`,
+        sebagian: (n: string) => `WhatsApp codes are partly disrupted, see the cause below. Registered users: ${n}.`,
+        gangguan: (n: string) => `WhatsApp codes are having trouble, see the cause below. Registered users: ${n}.`,
+        nonaktif: (n: string) => `WhatsApp codes are switched off in Switches. Registered users: ${n}.`,
+      },
+      keadaanTanpaAngka: {
+        sehat: 'WhatsApp codes are running as usual.', sebagian: 'WhatsApp codes are partly disrupted, see the cause below.',
+        gangguan: 'WhatsApp codes are having trouble, see the cause below.', nonaktif: 'WhatsApp codes are switched off in Switches.',
+      },
     },
     pengguna: {
       judul: 'Users', ket: 'Email and WhatsApp',

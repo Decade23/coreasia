@@ -12,6 +12,7 @@
 definePageMeta({ layout: 'console', middleware: ['console', 'cashflow-admin'] })
 import { keCorong, keKohort, keSeri30Hari, keKeberhasilan, angka } from '~/adapters/cashflow'
 import type { StatsDTO, Keberhasilan, RetensiDTO, CorongDTO } from '~/adapters/cashflow'
+import { kunciKeadaan, namaPanggilan, waktuSapaan, type TingkatWa, type WaktuSapaan } from '~/utils/cashflow/sapaan'
 const { tcf } = useCashflowI18n()
 const api = useCashflowAdmin()
 const { memuat, galat, pesanGalat, muat } = useCashflowMuat({ awal: true })
@@ -27,6 +28,23 @@ const muatRingkasan = () => muat(async () => {
 })
 onMounted(muatRingkasan)
 
+/* Sapaan. Jamnya dibaca sesudah terpasang supaya render server dan peramban sama. */
+const { user } = useAdminAuth()
+const tingkatWa = ref<TingkatWa | null>(null)
+const waktu = ref<WaktuSapaan | null>(null)
+onMounted(() => { waktu.value = waktuSapaan(new Date()) })
+const sapaan = computed(() => {
+  const salam = tcf(`ringkasan.sapaan.${waktu.value ?? 'netral'}`)
+  const nama = namaPanggilan(user.value?.full_name)
+  return nama ? `${salam}, ${nama}` : salam
+})
+const keadaan = computed(() => {
+  const k = kunciKeadaan({ wa: tingkatWa.value, pengguna: stats.value?.total_pengguna ?? null })
+  if (k === 'memuat') return tcf('ringkasan.keadaan.memuat')
+  const n = angka(stats.value?.total_pengguna ?? 0)
+  return stats.value ? tcf(`ringkasan.keadaan.${k}`)(n) : tcf(`ringkasan.keadaanTanpaAngka.${k === 'angka' ? 'sehat' : k}`)
+})
+
 const seri = computed(() => stats.value ? keSeri30Hari(stats.value.transaksi_per_hari) : [])
 const titikIsi = computed(() => seri.value.filter(v => v > 0).length)
 const langkahCorong = computed(() => keCorong(corong.value).map(l => ({
@@ -37,11 +55,13 @@ const kohort = computed(() => keKohort(retensi.value))
 
 <template>
   <div class="space-y-6">
-    <ConsolePageHeader :title="tcf('ringkasan.judul')" kicker="CashFlow" ringkas>
+    <!-- Sapaan: satu kalimat menurut jam dan satu kalimat keadaan dari data yang sudah dimuat halaman ini. -->
+    <ConsolePageHeader :title="sapaan" :description="keadaan" kicker="CashFlow" ringkas>
       <template #meta><CashflowNav /></template>
+      <template #awal><CashflowDomiMaskot :ukuran="72" napas /></template>
     </ConsolePageHeader>
 
-    <CashflowStatusWa ringkas />
+    <CashflowStatusWa ringkas @tingkat="(t) => { tingkatWa = t }" />
 
     <CashflowKeadaan v-if="memuat" jenis="memuat" :pesan="tcf('umum.memuat')" :baris="4" :kolom="3" />
 

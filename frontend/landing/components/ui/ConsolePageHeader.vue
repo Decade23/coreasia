@@ -20,8 +20,18 @@
             <Icon name="lucide:arrow-left" class="h-4 w-4" />
           </NuxtLink>
         </template>
-        <h1 class="min-w-0 text-2xl font-bold tracking-tight text-[var(--ca-text)]">{{ title }}</h1>
-        <p v-if="description" class="text-sm text-[var(--ca-muted)]">{{ description }}</p>
+        <!-- Slot `awal` (OPT-IN): gambar kecil di kiri judul. Judul dan keterangannya lalu ditumpuk. -->
+        <template v-if="$slots.awal">
+          <slot name="awal" />
+          <div class="min-w-0 flex-1 basis-56">
+            <h1 class="min-w-0 text-2xl font-bold tracking-tight text-[var(--ca-text)]">{{ title }}</h1>
+            <p v-if="description" class="mt-0.5 max-w-3xl text-sm text-[var(--ca-muted)]">{{ description }}</p>
+          </div>
+        </template>
+        <template v-else>
+          <h1 class="min-w-0 text-2xl font-bold tracking-tight text-[var(--ca-text)]">{{ title }}</h1>
+          <p v-if="description" class="text-sm text-[var(--ca-muted)]">{{ description }}</p>
+        </template>
       </div>
       <div v-if="$slots.actions" class="shrink-0">
         <slot name="actions" />

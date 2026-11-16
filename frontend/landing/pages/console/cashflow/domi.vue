@@ -36,15 +36,15 @@ useConsoleRemah().pasang(() => [
 
 <template>
   <div class="space-y-6">
-    <ConsolePageHeader :title="tcf('cadangan.judul')" kicker="CashFlow" ringkas>
+    <ConsolePageHeader :title="tcf('cadangan.judul')" :description="tcf('cadangan.ket')" kicker="CashFlow" ringkas>
       <template #meta><CashflowNav /></template>
+      <template #awal><CashflowDomiMaskot :ukuran="64" /></template>
       <template #actions>
         <button type="button" class="ca-btn-secondary inline-flex items-center gap-2" :disabled="memuat || !!sibuk" data-uji="cadangan-muat-ulang" @click="c.muatAwal">
           <Icon name="lucide:refresh-cw" class="h-4 w-4" :class="memuat ? 'animate-spin' : ''" aria-hidden="true" />{{ tcf('cadangan.muatUlang') }}
         </button>
       </template>
     </ConsolePageHeader>
-    <p class="max-w-3xl text-sm text-[var(--ca-muted)]">{{ tcf('cadangan.ket') }}</p>
 
     <div v-if="belumAktif" class="flex items-start gap-3 rounded-xl border border-dashed border-[color:var(--ca-border)] px-4 py-5 text-sm text-[var(--ca-muted)]" role="status" data-uji="cadangan-belum-aktif">
       <Icon name="lucide:hourglass" class="mt-0.5 h-5 w-5 shrink-0 text-[var(--ca-subtle)]" aria-hidden="true" />

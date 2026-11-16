@@ -13,6 +13,8 @@
 import { angkaSebabWa, keStatusWa, type KodeGangguanWa, type StatusWa } from '~/adapters/cashflowWa'
 
 defineProps<{ ringkas?: boolean }>()
+/* Tingkat terbaru dikabarkan ke halaman (sapaan Ringkasan), supaya tidak ada panggilan kedua. */
+const emit = defineEmits<{ tingkat: [tingkat: StatusWa['tingkat'] | null] }>()
 const { tcf, formatWaktu } = useCashflowI18n()
 const api = useCashflowAdmin()
 
@@ -25,6 +27,7 @@ async function muat() {
   try {
     status.value = keStatusWa(await api.waStatus())
     gagal.value = false
+    emit('tingkat', status.value.tingkat)
   } catch {
     gagal.value = true
   }
@@ -102,7 +105,7 @@ const adaSesi = computed(() => status.value?.sebab.includes('sesi') ?? false)
             <div><dt class="text-xs text-[var(--ca-subtle)]">{{ tcf('kesehatan.wa.labelBatas') }}</dt><dd class="font-semibold tabular-nums text-[var(--ca-text)]">{{ status.batas.terpakai }} / {{ status.batas.harian }}</dd></div>
             <div><dt class="text-xs text-[var(--ca-subtle)]">{{ tcf('kesehatan.wa.labelTerkirim') }}</dt><dd class="font-semibold text-[var(--ca-text)]">{{ waktu(status.terkirimTerakhir) }}</dd></div>
           </dl>
-          <h3 class="mt-4 text-xs font-semibold uppercase tracking-wide text-[var(--ca-muted)]">{{ tcf('kesehatan.wa.kiriman') }}</h3>
+          <h3 class="mt-4 cf-subjudul">{{ tcf('kesehatan.wa.kiriman') }}</h3>
           <dl class="mt-2 grid grid-cols-2 gap-3 text-sm sm:grid-cols-5">
             <div><dt class="text-xs text-[var(--ca-subtle)]">{{ tcf('kesehatan.wa.diminta') }}</dt><dd class="font-bold tabular-nums text-[var(--ca-text)]">{{ status.kiriman.diminta }}</dd></div>
             <div><dt class="text-xs text-[var(--ca-subtle)]">{{ tcf('kesehatan.wa.terkirim') }}</dt><dd class="font-bold tabular-nums text-[var(--ca-text)]">{{ status.kiriman.terkirim }}</dd></div>
@@ -111,7 +114,7 @@ const adaSesi = computed(() => status.value?.sebab.includes('sesi') ?? false)
             <div><dt class="text-xs text-[var(--ca-subtle)]">{{ tcf('kesehatan.wa.diketik') }}</dt><dd class="font-bold tabular-nums text-[var(--ca-text)]">{{ status.kiriman.diketik }}</dd></div>
           </dl>
           <template v-if="status.sebabGagal.length">
-            <h3 class="mt-4 text-xs font-semibold uppercase tracking-wide text-[var(--ca-muted)]">{{ tcf('kesehatan.wa.sebabGagal') }}</h3>
+            <h3 class="mt-4 cf-subjudul">{{ tcf('kesehatan.wa.sebabGagal') }}</h3>
             <ul class="mt-2 space-y-1 text-sm text-[var(--ca-text)]">
               <li v-for="s in status.sebabGagal" :key="s.sebab" class="flex justify-between gap-3"><span class="font-mono text-xs">{{ s.sebab }}</span><span class="tabular-nums">{{ s.jumlah }}</span></li>
             </ul>

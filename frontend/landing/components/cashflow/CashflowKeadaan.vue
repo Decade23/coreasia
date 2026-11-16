@@ -3,8 +3,8 @@
  * Keadaan daftar dan tabel console CashFlow: kosong, memuat, galat, dan akses
  * terbatas. Hanya tampilan, semua tulisan datang dari pemanggil.
  *
- * - kosong: satu kalimat sebab, dan jalan keluarnya di slot (misalnya tombol
- *   lepas saringan).
+ * - kosong: Domi diam (atau ikon bila `maskot` dimatikan), satu kalimat sebab,
+ *   dan jalan keluarnya di slot (misalnya tombol lepas saringan).
  * - memuat: kerangka baris, jadi bentuk daftar sudah kelihatan dan layar
  *   tidak melompat saat datanya tiba.
  * - galat: apa yang terjadi, lalu tombol coba lagi bila `labelUlang` diisi.
@@ -27,7 +27,8 @@ withDefaults(defineProps<{
   baris?: number
   kolom?: number
   polos?: boolean
-}>(), { judul: '', pesan: '', icon: 'lucide:inbox', rincian: '', labelUlang: '', sibuk: false, baris: 4, kolom: 4, polos: false })
+  maskot?: boolean
+}>(), { judul: '', pesan: '', icon: 'lucide:inbox', rincian: '', labelUlang: '', sibuk: false, baris: 4, kolom: 4, polos: false, maskot: true })
 const emit = defineEmits<{ ulang: [] }>()
 </script>
 
@@ -82,7 +83,9 @@ const emit = defineEmits<{ ulang: [] }>()
 
   <!-- Kosong -->
   <div v-else class="cf-tabel-wadah flex flex-col items-center px-6 py-10 text-center" :class="{ 'cf-tabel-polos': polos }" data-keadaan="kosong">
-    <span class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-[var(--ca-panel-bg-strong)] text-[var(--ca-subtle)]" aria-hidden="true">
+    <!-- Daftar yang memang kosong: Domi diam di tengah. Satu-satunya keadaan yang memakai maskot. -->
+    <CashflowDomiMaskot v-if="maskot" :ukuran="polos ? 72 : 96" />
+    <span v-else class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-[var(--ca-panel-bg-strong)] text-[var(--ca-subtle)]" aria-hidden="true">
       <Icon :name="icon" class="h-6 w-6" />
     </span>
     <p v-if="judul" class="mt-4 text-base font-bold text-[var(--ca-text)]">{{ judul }}</p>
