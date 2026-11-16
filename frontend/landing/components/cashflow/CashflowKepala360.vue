@@ -8,11 +8,18 @@
  */
 import type { KepalaPengguna } from '~/adapters/cashflowBuku'
 import { angka, formatNomorWa, samarkanNomorWa } from '~/adapters/cashflow'
+import type { BawaanRinci } from '~/adapters/cashflowPenggunaDaftar'
 
-const props = defineProps<{ kepala: KepalaPengguna | null; memuat?: boolean; aksesKe: string; emailUtuh: string | null; izinPribadi: boolean }>()
+/* `bawaan`: cara nomor dibuktikan dan terakhir pakai Domi, dibawa dari baris
+   daftar pengguna (useCashflowBawaanRinci). null = halaman dibuka langsung. */
+const props = defineProps<{ kepala: KepalaPengguna | null; memuat?: boolean; aksesKe: string; emailUtuh: string | null; izinPribadi: boolean; bawaan?: BawaanRinci | null }>()
 const { tcf, formatTanggal } = useCashflowI18n()
 const nomorUtuh = computed(() => props.izinPribadi ? formatNomorWa(props.kepala?.nomorWa) : null)
 const nomorTampil = computed(() => nomorUtuh.value ?? samarkanNomorWa(props.kepala?.nomorWa))
+const domiTerakhir = computed(() => {
+  if (!props.izinPribadi || !props.bawaan) return null
+  return props.bawaan.domiTerakhir ?? (props.bawaan.domiBelumPernah ? tcf('pengguna.domiBelum') : null)
+})
 const hitungan = computed(() => props.kepala
   ? [
       { label: tcf('pengguna.ruang'), n: props.izinPribadi ? props.kepala.jumlahRuang : null },
@@ -54,6 +61,23 @@ const hitungan = computed(() => props.kepala
         <div>
           <NuxtLink :to="aksesKe" class="underline-offset-2 hover:underline">{{ tcf('p360.dilihat')(kepala.akses30) }}</NuxtLink>
         </div>
+      </dl>
+      <!-- Yang dulu kolom di daftar pengguna: cara nomor dibuktikan, terakhir pakai Domi, dan ID. -->
+      <dl class="mt-3 grid gap-x-6 gap-y-1.5 border-t border-[color:var(--ca-border)] pt-3 text-sm sm:grid-cols-[auto_minmax(0,1fr)]" data-uji="rinci-dari-daftar">
+        <dt class="text-[var(--ca-muted)]">{{ tcf('pengguna.rinci.caraBukti') }}</dt>
+        <dd class="text-[var(--ca-text)]" data-uji="rinci-cara-bukti">
+          <!-- Kalimat panjangnya (lewat pesan masuk, lewat kode terkirim, lewat saat gangguan) beserta tanggal dan tandanya. -->
+          <CashflowStatusWaAkun v-if="bawaan?.statusWa" :status="bawaan.statusWa" baris />
+          <span v-else class="text-[var(--ca-subtle)]">— <span class="text-xs">{{ tcf('pengguna.rinci.dariDaftar') }}</span></span>
+        </dd>
+        <dt class="text-[var(--ca-muted)]">{{ tcf('pengguna.rinci.domiTerakhir') }}</dt>
+        <dd class="text-[var(--ca-text)]" data-uji="rinci-domi-terakhir">
+          <template v-if="domiTerakhir">{{ domiTerakhir }}</template>
+          <span v-else-if="!izinPribadi" class="text-[var(--ca-subtle)]" :title="tcf('umum.butuhTotp')">— <span class="text-xs">({{ tcf('umum.butuhTotp') }})</span></span>
+          <span v-else class="text-[var(--ca-subtle)]">— <span class="text-xs">{{ tcf('pengguna.rinci.dariDaftar') }}</span></span>
+        </dd>
+        <dt class="text-[var(--ca-muted)]">{{ tcf('pengguna.rinci.id') }}</dt>
+        <dd class="break-all font-mono text-xs leading-5 text-[var(--ca-text)]" data-uji="rinci-id">{{ kepala.id }}</dd>
       </dl>
     </template>
   </section>

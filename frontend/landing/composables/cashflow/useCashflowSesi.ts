@@ -178,6 +178,7 @@ export const useCashflowSesi = () => {
     simpanIzin(null)
     jadwalkanIzin()
     useCashflowIndeks().kosongkan()
+    useCashflowBawaanRinci().kosongkan()
     useState<string>('cf_cari_pengguna', () => '').value = ''
     useState<string>('cf_cari_diterapkan_pengguna', () => '').value = ''
     useState<Record<string, string>>('cf_saring_kolom_pengguna', () => ({})).value = {}

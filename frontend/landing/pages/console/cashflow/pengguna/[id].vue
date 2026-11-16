@@ -38,9 +38,12 @@ const toast = useToast()
 const indeks = useCashflowIndeks()
 const kasus = useCashflowKasus()
 const sesi = useCashflowSesi()
+const useBawaan = useCashflowBawaanRinci()
 const { id, dasar, kepala, kunci360, p360, muat360, muatKepala } = useCashflowPengguna()
 const { galat, pesanGalat, muat, batal, keMasukBilaSesi } = useCashflowMuat({ awal: true })
 const muat360Diam = useCashflowMuat()
+/* Cara nomor dibuktikan dan terakhir pakai Domi: dibawa dari baris daftar, tanpa panggilan tambahan. */
+const bawaanRinci = computed(() => useBawaan.untuk(id.value))
 
 /* Kepala + kasus aktif bersamaan, lalu kasus dibuka/diselaraskan OTOMATIS
    (tanpa ditunggu: keadaannya dibaca tab dari kasus.keadaan.tahap). P0002 =
@@ -153,7 +156,7 @@ useCashflowPintasan([
     <p v-else-if="pesanGalat" class="text-sm text-[var(--ca-danger-text)]" role="alert">{{ pesanGalat }}</p>
 
     <template v-else>
-      <CashflowKepala360 :kepala="kepala" :akses-ke="keTab('akses')" :email-utuh="emailUtuh" :izin-pribadi="izinPribadi" />
+      <CashflowKepala360 :kepala="kepala" :akses-ke="keTab('akses')" :email-utuh="emailUtuh" :izin-pribadi="izinPribadi" :bawaan="bawaanRinci" />
 
       <CashflowKasusBilah />
 
