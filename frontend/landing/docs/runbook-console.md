@@ -1155,5 +1155,50 @@ node scripts/uji-console-tabel-daftar-headless.mjs
 Skrip itu menuntut gulir samping tabel pengguna 0 di 1440 px, email 38 huruf utuh, dan tidak ada
 halaman yang meluber di 390 px. `tests/cashflow/pengguna-daftar.test.ts` membandingkan parameter yang
 dikirim pilihan Urut dan panel Saring dengan yang dikirim kepala kolom sebelumnya, untuk semua
-kombinasi. Uji komponen (`tabel-pil.test.ts`) merender berkas `.vue` lewat plugin Vue di
+kombinasi. Uji komponen (`tabel-pil.test.ts`) merender berkas `.vue` lewat `sfcUntukUji` di
 `vitest.config.ts`, tanpa memuat Nuxt.
+
+## Halaman rinci, Domi, dan kartu ponsel
+
+- **Tab rincian.** `CashflowTab` (Pengguna 360 dan Ruang 360) memakai rupa yang sama dengan baris kedua
+  navigasi: garis bawah untuk tab aktif, hitungan di lencana kecil. Di ponsel barisnya menempel di atas
+  dan digeser ke samping. Alamat tab, pintasan angka, dan penandaan aktivasi tidak berubah.
+- **Kepala rincian.** `CashflowKepala360` dan `CashflowKepalaRuang`: nama besar (email dipotong di depan
+  `@` supaya di ponsel tidak pecah di tengah kata), lencana status, tombol salin di kanan, lalu deret
+  fakta berlabel kecil. Gayanya di `assets/css/cashflow-tema.css` (`cf-kepala-nama`, `cf-kepala-fakta`,
+  `cf-lencana`).
+- **Judul kecil dan kepala tabel.** Tidak ada lagi huruf besar semua di area CashFlow. Judul kecil di
+  dalam kartu memakai `cf-subjudul`, kepala tabel kecil di dalam kartu memakai `cf-kepala-polos` di
+  barisnya. Satu-satunya pengecualian jawaban Domi (`CashflowDomi*`), yang sengaja meniru tampilan
+  aplikasi.
+- **Kartu ponsel.** Di bawah 640 px daftar Ruang, Audit, dan Pembelian tampil sebagai kartu, satu per
+  baris, dengan isi yang sama. Tabelnya tetap dipakai di layar yang lebih lebar. Rincian uang dan waktu
+  Google Play pada pembelian hanya ada di tabel.
+- **Domi.** `CashflowDomiMaskot` adalah gambar diam Domi. Ia hanya dipakai di tiga tempat: sapaan
+  Ringkasan, kepala halaman Cadangan Domi, dan keadaan kosong sebuah daftar (`CashflowKeadaan` jenis
+  kosong). Tidak di tabel, galat, konfirmasi, atau saat memuat. Hanya Domi di sapaan yang bergerak
+  pelan, dan gerak itu mati bila perangkat meminta gerak dikurangi. `tests/cashflow/domi-maskot.test.ts`
+  menjaga daftar pemakainya.
+- **Sapaan Ringkasan.** Judul Ringkasan menyapa menurut jam WIB, lalu satu kalimat keadaan dari data
+  yang sudah dimuat halaman itu (status kode WhatsApp dan jumlah pengguna). Tidak ada panggilan server
+  tambahan: `CashflowStatusWa` mengabarkan tingkatnya lewat peristiwa `tingkat`. Aturannya di
+  `utils/cashflow/sapaan.ts`.
+- **Tanda versi di daftar pengguna.** Tanda "belum diperbarui" hanya untuk versi di bawah rilis publik
+  terbaru. Pembandingnya `pembandingVersi` di `adapters/cashflow.ts`: versi pra-rilis (`-internal`,
+  `-uat`, `-rc`) dan build yang hanya dilaporkan akun tim tidak dihitung. Untuk Android pembandingnya
+  `RILIS_PLAY_TERAKHIR` di `adapters/cashflowVersi.ts`, jadi tetapan itu tetap wajib dinaikkan di
+  setiap rilis Play.
+
+```bash
+npx vitest run tests/cashflow/domi-maskot.test.ts tests/cashflow/versi-pembanding.test.ts
+# Potret semua halaman CashFlow dengan data sintetis, terang dan gelap, 1440 dan 390:
+node scripts/uji-console-halaman-headless.mjs
+# Tabel tetap tampil saat sort, cari, pindah halaman, dan ganti sakelar kontak:
+node scripts/uji-console-tabel-stabil-headless.mjs
+```
+
+`uji-console-halaman-headless.mjs` memotret semua halaman dan tab rincian (juga keadaan kosong dan
+tanpa izin data pribadi), lalu mencatat halaman yang meluber, kepala kolom yang pecah atau huruf besar
+semua, kartu yang melewati tepi di 390 px, dan tabel yang bergulir ke samping di 1440 px. Datanya di
+`scripts/data-sintetis-console.mjs`. `CF_QA_HANYA='<regex nama>'` memotret sebagian halaman saja,
+`CF_QA_LUNAK=1` mencetak temuan tanpa menggagalkan.
