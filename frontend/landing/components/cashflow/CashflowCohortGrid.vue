@@ -23,31 +23,30 @@ const nada = (persen: number) => {
 </script>
 
 <template>
-  <div class="overflow-x-auto">
-    <table class="w-full text-sm">
-      <thead>
-        <tr class="text-left text-xs uppercase tracking-wide text-[var(--ca-muted)]">
-          <th class="py-2 pr-3 font-semibold">{{ tcf('ringkasan.kohortKolom.kohort') }}</th>
-          <th class="py-2 px-3 text-right font-semibold">{{ tcf('ringkasan.kohortKolom.daftar') }}</th>
-          <th class="py-2 px-3 text-right font-semibold">{{ tcf('ringkasan.kohortKolom.pernah') }}</th>
-          <th class="py-2 px-3 text-right font-semibold">{{ tcf('ringkasan.kohortKolom.masih') }}</th>
-          <th class="py-2 pl-3 text-right font-semibold">{{ tcf('ringkasan.kohortKolom.retensi') }}</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-for="k in baris" :key="k.kohort" class="border-t border-[color:var(--ca-border)]">
-          <td class="py-2 pr-3 text-[var(--ca-text)]">
-            {{ k.kohort }}
-            <span v-if="k.berjalan" class="ml-1 rounded-full border border-[color:var(--ca-border)] px-1.5 text-[0.65rem] text-[var(--ca-subtle)]">{{ tcf('ringkasan.berjalan') }}</span>
-          </td>
-          <td class="py-2 px-3 text-right tabular-nums text-[var(--ca-text)]">{{ k.mendaftar }}</td>
-          <td class="py-2 px-3 text-right tabular-nums text-[var(--ca-text)]">{{ k.pernahCatat }}</td>
-          <td class="py-2 px-3 text-right tabular-nums text-[var(--ca-text)]">{{ k.catat30 }}</td>
-          <td class="py-2 pl-3 text-right">
-            <span class="inline-block min-w-[3.5rem] rounded-md px-2 py-0.5 text-right tabular-nums text-[var(--ca-text)]" :class="nada(k.persen)">{{ k.persen }}%</span>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+  <!-- Di ponsel lima kolom tidak muat: tabelnya bergulir di dalam kartu, kartunya tidak meluber. -->
+  <CashflowTabel polos lebar-min="27rem" class="-mx-5">
+    <thead>
+      <tr>
+        <th scope="col">{{ tcf('ringkasan.kohortKolom.kohort') }}</th>
+        <th scope="col" class="cf-ka">{{ tcf('ringkasan.kohortKolom.daftar') }}</th>
+        <th scope="col" class="cf-ka">{{ tcf('ringkasan.kohortKolom.pernah') }}</th>
+        <th scope="col" class="cf-ka">{{ tcf('ringkasan.kohortKolom.masih') }}</th>
+        <th scope="col" class="cf-ka">{{ tcf('ringkasan.kohortKolom.retensi') }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr v-for="k in baris" :key="k.kohort">
+        <td class="whitespace-nowrap">
+          {{ k.kohort }}
+          <span v-if="k.berjalan" class="ml-1 rounded-full border border-[color:var(--ca-border)] px-1.5 text-[0.65rem] text-[var(--ca-subtle)]">{{ tcf('ringkasan.berjalan') }}</span>
+        </td>
+        <td class="cf-ka">{{ k.mendaftar }}</td>
+        <td class="cf-ka">{{ k.pernahCatat }}</td>
+        <td class="cf-ka">{{ k.catat30 }}</td>
+        <td class="cf-ka">
+          <span class="inline-block min-w-[3.5rem] rounded-md px-2 py-0.5 text-right tabular-nums text-[var(--ca-text)]" :class="nada(k.persen)">{{ k.persen }}%</span>
+        </td>
+      </tr>
+    </tbody>
+  </CashflowTabel>
 </template>

@@ -2,7 +2,7 @@
 /**
  * Batang mendatar berurut — untuk corong dan "kategori teratas".
  *
- * Tiap baris: label kiri, batang proporsional, angka kanan, dan (opsional)
+ * Tiap baris: label dan angka di atas, batang proporsional di bawahnya, dan (opsional)
  * persen dari baris sebelumnya — itu yang membuat corong terbaca sebagai
  * corong: "8 dari 16 (50%)", bukan sekadar dua angka bersebelahan.
  * Lebar batang relatif terhadap baris PERTAMA, bukan maksimum, supaya corong
@@ -16,20 +16,24 @@ const dasar = computed(() => Math.max(1, props.baris[0]?.nilai ?? 1))
 </script>
 
 <template>
-  <ol class="space-y-2">
-    <li v-for="(b, i) in baris" :key="i" class="grid grid-cols-[minmax(7rem,1fr)_3fr_auto] items-center gap-3 text-sm">
-      <span class="truncate text-[var(--ca-text)]">{{ b.label }}</span>
-      <span class="h-2.5 overflow-hidden rounded-full bg-[var(--ca-panel-bg-strong)]">
+  <!-- Label dan angka di baris atas, batang di bawahnya: label panjang tidak pernah terpotong,
+       di ponsel maupun di kartu sempit. -->
+  <ol class="space-y-3">
+    <li v-for="(b, i) in baris" :key="i" class="min-w-0 text-sm">
+      <div class="flex items-baseline justify-between gap-3">
+        <span class="min-w-0 break-words font-semibold text-[var(--ca-text)]">{{ b.label }}</span>
+        <span class="shrink-0 whitespace-nowrap text-right tabular-nums">
+          <span class="font-bold text-[var(--ca-text)]">{{ b.nilai }}</span>
+          <span v-if="b.persen != null" class="ml-1 text-xs text-[var(--ca-subtle)]">({{ b.persen }}%)</span>
+        </span>
+      </div>
+      <span class="mt-1.5 block h-2 overflow-hidden rounded-full bg-[var(--ca-panel-bg-strong)]">
         <span
           class="block h-full rounded-full transition-[width]"
           :style="{ width: `${Math.max(2, Math.round((b.nilai / dasar) * 100))}%`, background: warna || 'var(--ca-accent)' }"
         />
       </span>
-      <span class="whitespace-nowrap text-right tabular-nums">
-        <span class="font-semibold text-[var(--ca-text)]">{{ b.nilai }}</span>
-        <span v-if="b.persen != null" class="ml-1 text-xs text-[var(--ca-subtle)]">({{ b.persen }}%)</span>
-      </span>
-      <span v-if="b.keterangan" class="col-span-3 -mt-1 text-xs text-[var(--ca-subtle)]">{{ b.keterangan }}</span>
+      <span v-if="b.keterangan" class="mt-1 block text-xs text-[var(--ca-subtle)]">{{ b.keterangan }}</span>
     </li>
   </ol>
 </template>

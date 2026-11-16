@@ -21,10 +21,11 @@ const keberhasilan = ref<Keberhasilan | null>(null)
 const corong = ref<CorongDTO[]>([])
 const retensi = ref<RetensiDTO[]>([])
 
-onMounted(() => muat(async () => {
+const muatRingkasan = () => muat(async () => {
   const [s, k, c, r] = await Promise.all([api.stats(), api.ukuranKeberhasilan(), api.corong(90), api.retensi(6)])
   stats.value = s; keberhasilan.value = keKeberhasilan(k); corong.value = c; retensi.value = r
-}))
+})
+onMounted(muatRingkasan)
 
 const seri = computed(() => stats.value ? keSeri30Hari(stats.value.transaksi_per_hari) : [])
 const titikIsi = computed(() => seri.value.filter(v => v > 0).length)
@@ -42,12 +43,13 @@ const kohort = computed(() => keKohort(retensi.value))
 
     <CashflowStatusWa ringkas />
 
-    <p v-if="memuat" class="text-sm text-[var(--ca-muted)]">{{ tcf('umum.memuat') }}</p>
+    <CashflowKeadaan v-if="memuat" jenis="memuat" :pesan="tcf('umum.memuat')" :baris="4" :kolom="3" />
 
-    <div v-else-if="galat" class="ca-console-dialog p-6 text-sm">
-      <p class="font-semibold ca-tone-danger">{{ pesanGalat }}</p>
-      <p v-if="galat.message && galat.message !== pesanGalat" class="mt-1 text-[var(--ca-subtle)]">{{ galat.message }}</p>
-    </div>
+    <CashflowKeadaan
+      v-else-if="galat" jenis="galat" :judul="tcf('umum.galatJudul')" :pesan="pesanGalat ?? ''"
+      :rincian="galat.message && galat.message !== pesanGalat ? galat.message : ''"
+      :label-ulang="tcf('umum.cobaLagi')" @ulang="muatRingkasan()"
+    />
 
     <template v-else-if="stats && keberhasilan">
       <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -61,15 +63,15 @@ const kohort = computed(() => keKohort(retensi.value))
         <CashflowStatTile icon="lucide:layers" warna="sky" :label="tcf('ringkasan.ruang')" :nilai="angka(stats.total_ruang)" />
       </div>
 
-      <div class="grid gap-6 lg:grid-cols-[2fr_1fr]">
-        <section class="ca-console-dialog p-5">
+      <div class="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <section class="ca-console-dialog min-w-0 p-5">
           <h2 class="font-display text-base font-bold text-[var(--ca-text)]">{{ tcf('ringkasan.perHari') }}</h2>
           <div class="mt-4">
             <CashflowSparkline v-if="titikIsi >= 3" :data="seri" :label="tcf('ringkasan.perHari')" />
             <CashflowKeadaanKosong v-else :pesan="tcf('ringkasan.sedikit')(titikIsi, 3)" icon="lucide:activity" />
           </div>
         </section>
-        <section class="ca-console-dialog p-5">
+        <section class="ca-console-dialog min-w-0 p-5">
           <h2 class="font-display text-base font-bold text-[var(--ca-text)]">{{ tcf('ringkasan.aksesCepat') }}</h2>
           <p class="mt-1 text-xs text-[var(--ca-subtle)]">{{ tcf('ringkasan.aksesCepatKet') }}</p>
           <div class="mt-4 divide-y divide-[color:var(--ca-border)]">
@@ -83,8 +85,8 @@ const kohort = computed(() => keKohort(retensi.value))
         </section>
       </div>
 
-      <div class="grid gap-6 lg:grid-cols-2">
-        <section class="ca-console-dialog p-5">
+      <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <section class="ca-console-dialog min-w-0 p-5">
           <h2 class="font-display text-base font-bold text-[var(--ca-text)]">{{ tcf('ringkasan.corong') }}</h2>
           <p class="mt-1 text-xs text-[var(--ca-subtle)]">{{ tcf('ringkasan.corongKet') }}</p>
           <div class="mt-4">
@@ -92,7 +94,7 @@ const kohort = computed(() => keKohort(retensi.value))
             <CashflowKeadaanKosong v-else :pesan="tcf('umum.kosong')" />
           </div>
         </section>
-        <section class="ca-console-dialog p-5">
+        <section class="ca-console-dialog min-w-0 p-5">
           <h2 class="font-display text-base font-bold text-[var(--ca-text)]">{{ tcf('ringkasan.kohort') }}</h2>
           <div class="mt-4">
             <CashflowCohortGrid v-if="kohort.some(k => k.mendaftar > 0)" :baris="kohort" />

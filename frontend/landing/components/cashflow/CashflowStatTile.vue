@@ -47,7 +47,7 @@ const warnaKotak: Record<string, string> = {
         <Icon :name="icon" class="h-5 w-5" />
       </span>
       <div class="min-w-0 flex-1">
-        <p class="text-xs font-semibold uppercase tracking-wide text-[var(--ca-muted)]">{{ label }}</p>
+        <p class="text-[0.8125rem] font-bold leading-snug text-[var(--ca-subtle)]">{{ label }}</p>
         <p class="mt-1 font-bold text-[var(--ca-text)] tabular-nums" :class="utama ? 'text-4xl' : 'text-2xl'">{{ nilai }}</p>
         <p v-if="delta != null" class="mt-1 text-xs tabular-nums" :class="delta > 0 ? 'ca-tone-emerald' : delta < 0 ? 'ca-tone-danger' : 'text-[var(--ca-subtle)]'">
           {{ delta > 0 ? '+' : '' }}{{ delta }} <span class="text-[var(--ca-subtle)]">{{ tcf('umum.vsSebelumnya') }} ({{ pembanding }})</span>
