@@ -80,7 +80,8 @@ try {
   await page.goto(`${base}/console/cashflow/pengguna`, { waitUntil: 'domcontentloaded' });
   const table = () => page.locator('.ca-daftar-pengguna table');
   const rowCount = () => table().locator('tbody tr').count();
-  const emailSort = () => table().getByRole('button', { name: 'Email', exact: true });
+  // Kolom pertama kini berjudul Pengguna; kuncinya tetap `email`.
+  const emailSort = () => table().getByRole('button', { name: 'Pengguna', exact: true });
   const settled = () => page.waitForFunction(() => !!document.querySelector('.ca-daftar-pengguna table') && document.querySelector('.ca-daftar-pengguna [aria-busy="true"]') === null);
   const waitRequest = async (previous) => { for (let i = 0; i < 100 && requests.length <= previous; i++) await page.waitForTimeout(20); assert.ok(requests.length > previous, 'Permintaan baru terkirim'); };
   const trace = async () => page.evaluate(() => {
@@ -90,8 +91,10 @@ try {
   const endTrace = async () => { const f = await page.evaluate(() => { window.qaTrace = false; return window.qaFrames; }); frames.push(...f); return f; };
   await page.waitForFunction(() => document.querySelectorAll('.ca-daftar-pengguna tbody tr').length === 25);
   check('halaman awal 25 dari 97 pengguna', await page.getByText('97 pengguna', { exact: true }).isVisible());
-  await table().locator('..').evaluate(el => { el.scrollTop = 180; });
-  const scroll = await table().locator('..').evaluate(el => el.scrollTop);
+  // Tabel pengguna tampil utuh (tanpa gulir di dalam bingkainya), jadi yang dijaga posisi gulir halaman.
+  await page.evaluate(() => scrollTo(0, 260));
+  const scroll = await page.evaluate(() => scrollY);
+  assert.ok(scroll > 0, 'Halaman bisa digulir');
   held = true; await trace(); let n = requests.length; await emailSort().click(); await waitRequest(n); await page.waitForTimeout(150);
   if (process.env.EXPECT_GLITCH === '1') {
     const gone = await table().count() === 0;
@@ -106,19 +109,19 @@ try {
     check('baris lama tidak menerima aksi selama pembaruan', await table().locator('tbody').evaluate(el => el.inert));
     await page.screenshot({ path: join(output, 'sesudah-sort-memuat.png') });
     release(); await settled();
-    check('hasil sort diterapkan', await table().locator('tbody tr').first().getByRole('link').getAttribute('href') === '/console/cashflow/pengguna/00000000-0000-4000-8000-000000000001');
+    check('hasil sort diterapkan', await table().locator('tbody tr').first().getByRole('link').first().getAttribute('href') === '/console/cashflow/pengguna/00000000-0000-4000-8000-000000000001');
     const stable = await endTrace();
     check('tidak ada bingkai tabel kosong atau berganti elemen', stable.every(f => f.connected && f.same && f.rows === 25));
     check('tinggi tabel tidak runtuh', Math.max(...stable.map(f => f.height)) - Math.min(...stable.map(f => f.height)) < 1);
-    check('posisi gulir tabel bertahan saat sort', await table().locator('..').evaluate(el => el.scrollTop) === scroll);
+    check('posisi gulir bertahan saat sort', await page.evaluate(() => scrollY) === scroll);
     // Dua sort bersamaan, jawaban lama sengaja datang paling akhir.
     n = requests.length; await emailSort().click(); await waitRequest(n);
     n = requests.length; await emailSort().click(); await waitRequest(n);
     release(1); await settled(); release(0); await page.waitForTimeout(150);
-    check('jawaban sort lama tidak menimpa hasil terbaru', (await table().locator('tbody tr').first().getByRole('link').getAttribute('href')).endsWith('000000000001'));
+    check('jawaban sort lama tidak menimpa hasil terbaru', (await table().locator('tbody tr').first().getByRole('link').first().getAttribute('href')).endsWith('000000000001'));
     n = requests.length; await page.getByRole('button', { name: 'Berikutnya', exact: true }).click(); await waitRequest(n);
     check('paginasi tetap berisi baris lama saat menunggu', await rowCount() === 25 && await page.getByText('Halaman 1 dari 4', { exact: true }).isVisible());
-    release(); await settled(); check('halaman kedua benar', await page.getByText('Halaman 2 dari 4', { exact: true }).isVisible() && (await table().locator('tbody tr').first().getByRole('link').getAttribute('href')).endsWith('000000000026'));
+    release(); await settled(); check('halaman kedua benar', await page.getByText('Halaman 2 dari 4', { exact: true }).isVisible() && (await table().locator('tbody tr').first().getByRole('link').first().getAttribute('href')).endsWith('000000000026'));
     n = requests.length; await page.getByRole('switch', { name: 'Kontak lengkap' }).click(); await waitRequest(n);
     check('kontak tersamar tetap tampil saat pembukaan menunggu', await rowCount() === 25 && !(await table().innerText()).includes('orang026@contoh.invalid'));
     release(); await settled(); check('kontak lengkap diperbarui tanpa menghilangkan tabel', await table().getByText('orang026@contoh.invalid', { exact: true }).isVisible());

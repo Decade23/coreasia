@@ -851,10 +851,12 @@ node scripts/cek-komponen-cashflow.mjs
 
 ## Pemakai Domi di daftar pengguna
 
-Daftar pengguna (`/console/cashflow/pengguna`) menjawab siapa yang sudah memakai Domi. Ada tiga kolom
-baru yang bisa diurutkan: **Domi** (jumlah pertanyaan sejak akun dibuat, dengan baris kecil 30 hari
-terakhir bila angkanya berbeda), **Terakhir pakai Domi**, dan **Kredit** (sisa kredit, bertanda tas
-belanja bila orang itu pernah membeli). Akun tim diberi lencana **Tim** di samping emailnya.
+Daftar pengguna (`/console/cashflow/pengguna`) menjawab siapa yang sudah memakai Domi. Ada dua kolom
+untuk itu: **Tanya Domi** (jumlah pertanyaan sejak akun dibuat, dengan baris kecil 30 hari terakhir
+atau "Belum pernah") dan **Kredit** (sisa kredit, dengan baris kecil "Pernah beli" atau "Gratis").
+Kapan terakhir memakai Domi tidak punya kolom: ia bisa dipakai mengurutkan lewat pilihan **Urut**, dan
+tanggalnya ada di rincian pengguna. Akun tim diberi lencana **Tim** di bawah emailnya. Susunan tabelnya
+dijelaskan di "Tabel dan daftar area CashFlow".
 
 - RPC: `admin_daftar_pengguna_v4`, argumennya sama persis dengan v3. Per baris bertambah `domi_tanya`,
   `domi_tanya_30`, `domi_tanya_kira`, `domi_terakhir`, `kredit_sisa`, `kredit_beli`, dan `internal`.
@@ -867,8 +869,7 @@ belanja bila orang itu pernah membeli). Akun tim diberi lencana **Tim** di sampi
   menyaring.
 - Urutan baru: `p_urut` = `domi`, `domi_terakhir`, `kredit`. Segmen baru: **Pakai Domi**
   (`pakai_domi`) dan **Beli kredit** (`beli_kredit`). Saringan **Akun tim** mengirim
-  `p_filter.internal` bernilai `ya` atau `tidak`. Di layar lebar pilihannya ada di samping deret
-  segmen, di ponsel ada di dalam Saringan kolom.
+  `p_filter.internal` bernilai `ya` atau `tidak`. Pilihannya ada di panel **Saring**.
 - Tanpa izin `cashflow:pii` hitungan Domi dan kredit pulang kosong dan tampil sebagai garis. Urutan
   dan kedua segmen itu mati, sama seperti Ruang, Tx, dan Total nominal. Tautan lama yang membawanya
   kembali ke urutan bawaan. Lencana Tim dan saringan akun tim tetap ada.
@@ -877,9 +878,7 @@ belanja bila orang itu pernah membeli). Akun tim diberi lencana **Tim** di sampi
   sama sekali. Tautan yang membawa `?urut=domi` atau `?seg=pakai_domi` kembali ke bawaan tanpa galat,
   dan v3 tidak pernah menerima nilai itu. Selama tab yang sama, v4 hanya ditanyai sekali. Sesudah
   migrasinya terpasang, muat ulang halaman supaya kolomnya muncul.
-- Dengan tiga kolom tambahan tabel lebih lebar dari bingkainya di jendela 1440 px. Kolom paling kanan
-  (Tx, Total nominal, Status) dicapai dengan menggulir tabel ke samping di dalam bingkainya. Kolom
-  email mendapat lebar terkecil supaya tidak terjepit. Di bawah 1024 px daftar tetap berupa kartu.
+- Tabelnya tidak bergulir ke samping di jendela 1280 px ke atas. Di bawah 1024 px daftar berupa kartu.
 
 Pasang: SQL CashFlow dulu, baru landing. Landing boleh tayang lebih dulu karena jatuh ke v3. Mundur
 landing cukup.
@@ -1110,3 +1109,51 @@ luar CashFlow. Dengan `CF_QA_DASAR=1` di cabang pembanding, lalu tanpa variabel
 itu di cabang kerja ke folder yang sama, potret halaman console di luar
 CashFlow dibandingkan piksel demi piksel dengan potret dasarnya. Selisih
 sampai 2/255 per kanal dianggap derau render, lebih dari itu gagal.
+
+## Tabel dan daftar area CashFlow
+
+Semua tabel dan daftar di halaman CashFlow memakai rupa dan komponen yang sama.
+
+- **Rupa tabel.** Diatur sekali di `assets/css/cashflow-tema.css`: kepala kolom satu baris dan tidak
+  huruf besar semua, sorot baris, dan angka tabular. Berlaku untuk `DataTable` console di dalam area
+  CashFlow (Pengguna, Ruang, Pengumuman) dan untuk tabel berkelas `cf-tabel`. Tabel baru memakai
+  `CashflowTabel` (bingkai, gulir samping, kaki). Di dalam sel: `cf-dua` untuk baris kedua yang lebih
+  kecil, `cf-ka` untuk angka rata kanan, `cf-kuat` untuk nilai utama. `DataTable` di luar CashFlow
+  tidak berubah.
+- **Keadaan.** `CashflowKeadaan` menulis empat keadaan: memuat (kerangka baris), kosong (sebab dan jalan
+  keluarnya), galat (dengan Coba lagi), dan akses terbatas. Urutannya ada di
+  `utils/cashflow/keadaan.ts`: baris yang sudah tampil bertahan saat memuat ulang, dan muatan yang
+  gagal tidak pernah ditulis sebagai "belum ada data". `CashflowIzinKurang` memakai rupa akses terbatas.
+- **Pil segmen.** Hanya `CashflowSegmen`. Hitungan di samping label ditulis bila angkanya memang sudah
+  ada (`jumlah`). Di daftar pengguna itu berarti hanya segmen yang sedang tampil, tanpa kata cari dan
+  saringan, karena server tidak mengirim hitungan per segmen.
+- **Daftar pengguna.** Tujuh kolom dan panah ke rincian: Pengguna, WhatsApp, Versi, Aktif terakhir,
+  Tanya Domi, Kredit, Ruang. Lebar kolomnya tetap dan kolom Pengguna mengambil sisanya, jadi email 38
+  huruf muat utuh di jendela 1440 px tanpa gulir samping.
+  - **Urut.** Satu pilihan di atas tabel memuat semua nilai `p_urut`, termasuk yang tidak punya kolom
+    (tanggal daftar, jumlah transaksi, total nominal, terakhir pakai Domi). Saat salah satunya dipakai,
+    nilainya ditulis kecil di baris kedua kolom terdekat. Kepala kolom tetap bisa diklik.
+  - **Saring.** Saringan kolom pindah ke satu panel. Kunci dan nilai `p_filter` tidak berubah.
+  - Parameter URL tidak berubah (`?seg`, `?urut`, `?arah`, `?hal`), jadi tautan lama tetap bekerja.
+    Pemetaannya ada di `adapters/cashflowPenggunaDaftar.ts`.
+  - Sakelar **Kontak lengkap** pindah ke baris judul. Perilaku dan pencatatan auditnya tidak berubah.
+  - Keterangan kolom pindah ke tautan **Arti tiap kolom** di samping paginasi.
+- **Yang pindah ke rincian pengguna.** Terakhir pakai Domi, cara nomor dibuktikan (kalimat panjangnya),
+  ID akun, dan masuk terakhir tampil di kepala Pengguna 360. Dua yang pertama tidak diambil halaman
+  rincian dari server: nilainya dibawa dari baris daftar di tab yang sama
+  (`useCashflowBawaanRinci`, tanpa email, nama, atau nomor). Bila rincian dibuka lewat tautan
+  langsung, kedua baris itu kosong dan halaman berkata begitu. Supaya selalu terisi, server perlu
+  mengirim keduanya di `admin_pengguna_kepala`.
+
+```bash
+npx vitest run tests/cashflow/tabel-pil.test.ts tests/cashflow/pengguna-daftar.test.ts
+node scripts/cek-komponen-cashflow.mjs
+# Tampilan dengan data sintetis (cara menjalankan ada di kepala skrip):
+node scripts/uji-console-tabel-daftar-headless.mjs
+```
+
+Skrip itu menuntut gulir samping tabel pengguna 0 di 1440 px, email 38 huruf utuh, dan tidak ada
+halaman yang meluber di 390 px. `tests/cashflow/pengguna-daftar.test.ts` membandingkan parameter yang
+dikirim pilihan Urut dan panel Saring dengan yang dikirim kepala kolom sebelumnya, untuk semua
+kombinasi. Uji komponen (`tabel-pil.test.ts`) merender berkas `.vue` lewat plugin Vue di
+`vitest.config.ts`, tanpa memuat Nuxt.

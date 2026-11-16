@@ -91,8 +91,9 @@ try {
   await page.getByLabel('Ke halaman').fill('2');
   await page.getByRole('button',{name:'Buka',exact:true}).click();
   await page.waitForFunction(()=>[...document.querySelectorAll('a')].some(a=>a.getAttribute('href')?.includes('000000000026')));
-  await page.getByRole('switch',{name:'Kontak lengkap'}).click();
-  await page.getByText('orang26@contoh.invalid',{exact:true}).waitFor();
+  // Kontak lengkap menyala sejak halaman dibuka (tercatat di audit), jadi email utuh sudah tampil.
+  if(await page.getByRole('switch',{name:'Kontak lengkap'}).getAttribute('aria-checked')!=='true')throw Error('Kontak lengkap tidak menyala sejak awal');
+  await page.getByText('orang26@contoh.invalid',{exact:true}).first().waitFor();
   await page.getByRole('searchbox',{name:'Cari email atau WhatsApp'}).fill('orang579@contoh.invalid');
   await page.getByRole('button',{name:'Cari',exact:true}).click();
   await page.getByText('1 pengguna',{exact:true}).waitFor();

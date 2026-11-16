@@ -185,13 +185,16 @@ try {
     await lebar(1440)
     await page.goto(`${APP}/console/cashflow/pengguna`, { waitUntil: 'domcontentloaded' })
     await page.getByText('8 pengguna', { exact: true }).waitFor({ timeout: 60000 })
-    await page.locator('th', { hasText: 'Status WhatsApp' }).waitFor()
-    for (const teks of ['Terverifikasi lewat pesan masuk', 'Terverifikasi lewat kode terkirim', 'Lewat saat gangguan', 'Lewat, nomor tidak terbaca', 'Nomor dipakai banyak akun', 'Kredit gratis ditahan']) {
-      if (!(await page.locator('table').getByText(teks, { exact: true }).first().isVisible())) gagal(`Daftar baru: "${teks}" tidak tampil`)
+    // Status WhatsApp kini baris kedua kolom WhatsApp, versi singkat. Kalimat panjangnya ada di rincian pengguna.
+    await page.locator('.ca-daftar-pengguna th', { hasText: 'WhatsApp' }).waitFor()
+    if (await page.locator('.ca-daftar-pengguna th', { hasText: 'Status WhatsApp' }).count()) gagal('Kolom Status WhatsApp masih ada')
+    for (const teks of [/^Terbukti \d/, 'Lolos saat gangguan', 'Lolos, nomornya tidak terbaca', 'Nomor dipakai banyak akun', 'Kredit gratis ditahan']) {
+      if (!(await page.locator('.ca-daftar-pengguna table').getByText(teks, { exact: true }).first().isVisible())) gagal(`Daftar baru: "${teks}" tidak tampil`)
     }
     await potret(`pengguna-baru-${t}-1440`)
-    // Di 1440 sepuluh kolom muat tanpa gulir samping di dalam bingkai tabel.
-    if (await page.locator('.ca-console-table-wrap').evaluate(w => w.scrollWidth > w.clientWidth)) gagal(`Tabel ${t} bergulir samping di 1440`)
+    // Di 1440 tabel tidak boleh bergulir ke samping sama sekali.
+    const gulir = await page.locator('.ca-console-table-wrap').evaluate(w => w.scrollWidth - w.clientWidth)
+    if (gulir !== 0) gagal(`Tabel ${t} bergulir samping ${gulir}px di 1440`)
     // Di 1280 tabel boleh bergulir di dalam bingkainya (sudah begitu sebelum
     // kolom ini), tapi kolom email tidak boleh lebih sempit dari sebelumnya (97 px).
     await lebar(1280)
@@ -212,8 +215,9 @@ try {
   await potret('pengguna-baru-belum-wa-gelap-1440')
   await page.getByRole('button', { name: 'Semua', exact: true }).click()
   await page.getByText('8 pengguna', { exact: true }).waitFor()
-  await page.getByRole('button', { name: 'Filter Status WhatsApp', exact: true }).click()
-  await page.locator('th').getByRole('button', { name: 'Terverifikasi lewat pesan masuk', exact: true }).click()
+  // Saringan status WhatsApp pindah dari kepala kolom ke panel Saring. Parameternya sama.
+  await page.locator('[data-uji="saring-buka"]').click()
+  await page.locator('[data-uji="saring-status_wa"]').selectOption('masuk')
   await page.getByText('2 pengguna', { exact: true }).waitFor({ timeout: 10000 })
   const saring = seen.filter(x => x.name === 'admin_daftar_pengguna_v3').at(-1)?.p
   if (saring?.p_filter?.status_wa !== 'masuk') gagal(`Saringan status_wa tidak dikirim: ${JSON.stringify(saring?.p_filter)}`)
@@ -225,8 +229,11 @@ try {
   await page.goto(`${APP}/console/cashflow/pengguna`, { waitUntil: 'domcontentloaded' })
   await page.getByText('8 pengguna', { exact: true }).waitFor({ timeout: 60000 })
   if (await page.getByRole('button', { name: 'Belum WhatsApp', exact: true }).count()) gagal('Server lama: segmen Belum WhatsApp tampil')
-  if (await page.getByRole('button', { name: 'Filter Status WhatsApp', exact: true }).count()) gagal('Server lama: saringan Status WhatsApp tampil')
-  if (await page.locator('table').getByText('Terverifikasi lewat pesan masuk', { exact: true }).count()) gagal('Server lama: status tampil tanpa data')
+  await page.locator('[data-uji="saring-buka"]').click()
+  await page.locator('[data-uji="saring-panel"]').waitFor()
+  if (await page.locator('[data-uji="saring-status_wa"]').count()) gagal('Server lama: saringan Status WhatsApp tampil')
+  await page.locator('[data-uji="saring-selesai"]').click()
+  if (await page.locator('.ca-daftar-pengguna table').getByText(/^Terbukti|^Lolos|Belum dibuktikan/).count()) gagal('Server lama: status tampil tanpa data')
   await potret('pengguna-lama-terang-1440')
   // URL lama berisi seg=belum_wa: server menolak, console kembali ke Semua.
   const sebelum = seen.length
