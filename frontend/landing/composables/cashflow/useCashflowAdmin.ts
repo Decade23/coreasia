@@ -115,6 +115,8 @@ import type {
 import type { DaftarPaketDTO, MuatanPaket, MuatanSebagian } from '~/adapters/cashflowPaket'
 import type { DaftarPembelianDTO, JalurPembelian, StatusPembelian } from '~/adapters/cashflowPembelian'
 import { BATAS_DAFTAR_PEMBELIAN } from '~/adapters/cashflowPembelian'
+import type { AiCadanganDTO } from '~/adapters/cashflowAiCadangan'
+import { tanpaKunci } from '~/adapters/cashflowAiCadangan'
 
 interface OpsiDaftarPengguna {
   limit: number; offset: number; cari: string; segmen: string; urut: string; arah: string
@@ -242,6 +244,18 @@ export async function ambilBerkas(url: string, supabaseUrl: string, ambil: typeo
 export function galatTulisPaket(e: unknown): never {
   const g = petakanGalat(e)
   throw g.jenis === 'bukan-admin' ? new GalatAdmin('izin', g.message, g.hint || 'izin-kurang') : g
+}
+
+/**
+ * Tulisan penyedia cadangan Domi. Izinnya sama dengan paket kredit, jadi
+ * 42501 tanpa hint dibaca sebagai izin kurang (galatTulisPaket). `rahasia` =
+ * kunci API yang baru dikirim: pesan dan hint galat dibersihkan darinya (dan
+ * dari apa pun yang rupanya kunci) sebelum sampai ke halaman, toast, atau log.
+ */
+export function galatTulisCadangan(e: unknown, rahasia: string | null = null): never {
+  const g = petakanGalat(e)
+  const jenis = g.jenis === 'bukan-admin' ? 'izin' : g.jenis
+  throw new GalatAdmin(jenis, tanpaKunci(g.message, rahasia), tanpaKunci(g.hint, rahasia) || (jenis === 'izin' ? 'izin-kurang' : ''))
 }
 
 /** p_alasan RPC 0b yang dikirim: "[pelaku] alasan". Syarat 8 aksara diukur
@@ -634,6 +648,18 @@ export const useCashflowAdmin = () => {
     /** Memulangkan daftar terbaru. Pernah dibeli: 23503 paket_sudah_dibeli;
      *  tidak ada: P0002 paket_tidak_ada. Butuh cashflow:pii. */
     aiPaketHapus: (kode: string) => rpc<DaftarPaketDTO>('admin_ai_paket_hapus', { p_kode: kode }).catch(galatTulisPaket),
+
+    // ── Domi: penyedia cadangan (adapters/cashflowAiCadangan) ───────────
+    /** Keadaan cadangan: nyala/mati, model, sidik kunci, pemakaian, galat terakhir. Izin view. */
+    aiCadanganBaca: () => rpc<AiCadanganDTO>('admin_ai_cadangan_baca'),
+    /** Memulangkan keadaan terbaru. Butuh cashflow:pii. Galat: model_tidak_dikenal, kunci_belum_ada. */
+    aiCadanganSimpan: (aktif: boolean, model: string) =>
+      rpc<AiCadanganDTO>('admin_ai_cadangan_simpan', { p_aktif: aktif, p_model: model }).catch(e => galatTulisCadangan(e)),
+    /** Ganti kunci API cadangan. null = hapus kunci dan matikan cadangan. Memulangkan keadaan
+     *  terbaru (sidik saja, bukan kuncinya). Butuh cashflow:pii. Galat: kunci_tidak_sah.
+     *  Kunci hanya lewat badan permintaan, dan galatnya dibersihkan darinya. */
+    aiCadanganKunci: (kunci: string | null) =>
+      rpc<AiCadanganDTO>('admin_ai_cadangan_kunci', { p_kunci: kunci }).catch(e => galatTulisCadangan(e, kunci)),
 
     // ── pembelian kredit Domi (adapters/cashflowPembelian) ──────────────
     /** Terbaru dulu. `sebelum` = `lanjut` dari jawaban sebelumnya (null = halaman

@@ -29,6 +29,7 @@
 import { GalatAdmin, petakanGalat } from './useCashflowAdmin'
 import { playTerpakaiDariGalat } from '~/adapters/cashflowPaket'
 import { segmenGandaDariGalat } from '~/adapters/cashflowPengumumanAturan'
+import { kodeGalatCadangan } from '~/adapters/cashflowAiCadangan'
 
 export const useCashflowMuat = (opsi: { awal?: boolean } = {}) => {
   const { tcf } = useCashflowI18n()
@@ -72,6 +73,11 @@ export const useCashflowMuat = (opsi: { awal?: boolean } = {}) => {
     if (g.message === 'paket_tidak_sah') return tcf('paket.galat.tidakSah')
     if (g.message === 'paket_sudah_dibeli') return tcf('paket.galat.sudahDibeli')
     if (g.message === 'paket_tidak_ada') return tcf('paket.galat.hilang')
+    // Domi, penyedia cadangan: pesan server berupa kode (adapters/cashflowAiCadangan).
+    const cadangan = kodeGalatCadangan(g)
+    if (cadangan === 'model_tidak_dikenal') return tcf('cadangan.galat.modelTidakDikenal')
+    if (cadangan === 'kunci_belum_ada') return tcf('cadangan.galat.kunciBelumAda')
+    if (cadangan === 'kunci_tidak_sah') return tcf('cadangan.galat.kunciTidakSah')
     // Pembelian kredit: saringan status/jalur yang tidak dikenal server (22023).
     if (g.message === 'masukan_tidak_sah') return tcf('pembelian.galat.masukan')
     // Pelanggaran unik produk Play (23505): kalimat Postgres mentah, jangan ditampilkan.
