@@ -102,7 +102,37 @@ const tanpaHitungan = computed(() => data.value.length > 0 && data.value.every(r
       v-if="pesanGalat && !mentah.length" jenis="galat" :judul="tcf('umum.galatJudul')" :pesan="pesanGalat"
       :label-ulang="tcf('umum.cobaLagi')" :sibuk="memuat" @ulang="muatRuang()"
     />
-    <div v-else class="cf-tabel-wadah">
+    <!-- Ponsel: satu kartu per ruang, isinya sama dengan baris tabel. -->
+    <div v-if="!(pesanGalat && !mentah.length)" class="min-w-0 sm:hidden" data-uji="ruang-kartu">
+      <CashflowKeadaan v-if="memuat && !data.length" jenis="memuat" :pesan="tcf('umum.memuat')" :baris="5" :kolom="1" />
+      <CashflowKeadaan
+        v-else-if="!data.length" jenis="kosong"
+        :judul="tersaring ? tcf('umum.kosongSaringJudul') : tcf('umum.kosongJudul')"
+        :pesan="tersaring ? tcf('umum.kosongSaring') : tcf('umum.kosong')"
+      >
+        <button v-if="tersaring" type="button" class="ca-btn-secondary !px-4 !py-2 text-sm" @click="lepasSaringan">{{ tcf('umum.lepasSaringan') }}</button>
+      </CashflowKeadaan>
+      <ul v-else class="space-y-3" :aria-busy="memuat">
+        <li v-for="r in data" :key="r.id" class="ca-console-dialog min-w-0 p-4">
+          <div class="flex min-w-0 items-start justify-between gap-2">
+            <p class="cf-kuat min-w-0 break-words text-[0.9375rem]">{{ r.nama }}</p>
+            <span class="cf-lencana shrink-0">{{ r.jenis }}</span>
+          </div>
+          <p class="mt-1 break-all text-[0.8125rem] text-[var(--ca-muted)]">{{ tcf('ruang.pemilik') }} {{ r.pemilik }}</p>
+          <dl class="mt-3 grid grid-cols-3 gap-x-3 border-t border-[color:var(--ca-border)] pt-3">
+            <div v-for="k in (['anggota', 'tx', 'undangan'] as const)" :key="k" class="min-w-0">
+              <dt class="text-xs font-semibold text-[var(--ca-subtle)]">{{ tcf(`ruang.${k}`) }}</dt>
+              <dd class="cf-kuat mt-0.5 text-sm tabular-nums">
+                <span v-if="r[k] === null" :title="tcf('umum.butuhTotp')">—<span class="sr-only"> ({{ tcf('umum.butuhTotp') }})</span></span>
+                <template v-else>{{ angka(r[k]) }}</template>
+              </dd>
+            </div>
+          </dl>
+          <p class="mt-2 text-xs text-[var(--ca-subtle)]">{{ tcf('ruang.dibuat') }} {{ r.dibuat }}</p>
+        </li>
+      </ul>
+    </div>
+    <div v-if="!(pesanGalat && !mentah.length)" class="cf-tabel-wadah hidden sm:block">
       <DataTable :columns="columns" :data="data" :loading="memuat">
         <template #loading><CashflowKeadaan jenis="memuat" polos :pesan="tcf('umum.memuat')" :baris="6" :kolom="5" /></template>
         <template #empty>

@@ -39,7 +39,50 @@ function lamaKredit(waktu: NonNullable<NonNullable<Pembelian['play']>['waktu']>)
 </script>
 
 <template>
-  <div class="cf-tabel-gulir ca-scrollbar">
+  <!-- Ponsel: satu kartu per pembelian. Rincian uang dan waktu Google Play tetap di tabel layar lebar. -->
+  <ul class="min-w-0 divide-y divide-[color:var(--ca-border)] sm:hidden" data-uji="pembelian-kartu">
+    <li v-for="p in daftar" :key="p.id" class="min-w-0 p-4" :class="p.uji ? 'text-[var(--ca-muted)]' : 'text-[var(--ca-text)]'">
+      <div class="flex min-w-0 items-start justify-between gap-2">
+        <p class="min-w-0">
+          <span v-if="p.pembeli.email" class="cf-kuat block break-all text-[0.9375rem]">{{ p.pembeli.email }}</span>
+          <span v-else class="block text-sm text-[var(--ca-subtle)]">{{ tcf('pembelian.tanpaEmail') }}</span>
+          <span v-if="p.pembeli.nama" class="cf-dua break-words">{{ p.pembeli.nama }}</span>
+        </p>
+        <span class="flex shrink-0 flex-col items-end gap-1">
+          <span :class="pillStatusPembelian(p.status)" class="whitespace-nowrap text-xs">{{ p.status ? tcf(`pembelian.status.${p.status}`) : tcf('pembelian.tidakDikenal') }}</span>
+          <span v-if="p.uji" class="ca-pill-blue whitespace-nowrap text-xs" :title="tcf('pembelian.ujiKet')">{{ tcf('pembelian.uji') }}</span>
+        </span>
+      </div>
+      <p v-if="playBelumDikonsumsi(p)" class="mt-1 text-xs ca-tone-gold">{{ tcf('pembelian.belumDikonsumsi') }}</p>
+      <p v-if="p.play?.batalIso" class="mt-1 text-xs text-[var(--ca-muted)]">{{ tcf('pembelian.dibatalkanGoogle')(formatWaktu(p.play.batalIso)) }}</p>
+      <dl class="mt-3 grid grid-cols-3 gap-x-3 border-t border-[color:var(--ca-border)] pt-3">
+        <div class="min-w-0">
+          <dt class="text-xs font-semibold text-[var(--ca-subtle)]">{{ tcf('pembelian.kolom.paket') }}</dt>
+          <dd class="cf-kuat mt-0.5 text-sm tabular-nums">
+            <template v-if="p.kredit !== null">{{ tcf('pembelian.kredit')(p.kredit) }}</template>
+            <template v-else>{{ tcf('pembelian.tidakTerbaca') }}</template>
+          </dd>
+        </div>
+        <div class="min-w-0">
+          <dt class="text-xs font-semibold text-[var(--ca-subtle)]">{{ tcf('pembelian.kolom.harga') }}</dt>
+          <dd class="cf-kuat mt-0.5 break-words text-sm tabular-nums">
+            <template v-if="p.jalur === 'play' && p.play?.uang && p.play.uang.total !== null">{{ nilaiPlay(p.play.uang, p.play.uang.total) }}</template>
+            <template v-else-if="p.nominal !== null">{{ rupiah(p.nominal) }}</template>
+            <template v-else>{{ tcf('pembelian.tidakTersedia') }}</template>
+          </dd>
+        </div>
+        <div class="min-w-0">
+          <dt class="text-xs font-semibold text-[var(--ca-subtle)]">{{ tcf('pembelian.kolom.jalur') }}</dt>
+          <dd class="cf-kuat mt-0.5 text-sm">{{ p.jalur ? tcf(`pembelian.jalur.${p.jalur}`) : tcf('pembelian.tidakDikenal') }}</dd>
+        </div>
+      </dl>
+      <p class="mt-2 flex flex-wrap justify-between gap-x-3 text-xs tabular-nums text-[var(--ca-subtle)]">
+        <span>{{ p.waktuIso ? formatWaktu(p.waktuIso) : tcf('pembelian.tidakTerbaca') }}</span>
+        <span class="font-mono" :title="tcf('pembelian.kodeKet')">{{ p.kode || p.id.slice(-8) }}</span>
+      </p>
+    </li>
+  </ul>
+  <div class="cf-tabel-gulir ca-scrollbar hidden sm:block">
     <table class="cf-tabel min-w-[68rem]" data-uji="pembelian-tabel">
       <thead>
         <tr>

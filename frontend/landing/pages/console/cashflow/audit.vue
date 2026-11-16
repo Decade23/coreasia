@@ -133,7 +133,34 @@ const gantiHalaman = async (h: number) => {
           :judul="rows.length ? tcf('umum.kosongSaringJudul') : tcf('umum.kosongJudul')"
           :pesan="rows.length ? tcf('umum.kosongSaring') : tcf('umum.kosong')"
         />
-        <CashflowTabel v-else>
+        <!-- Ponsel: satu kartu per catatan, isinya sama dengan baris tabel. -->
+        <ul v-if="barisHalaman.length" class="min-w-0 space-y-3 sm:hidden" data-uji="audit-kartu">
+          <li v-for="r in barisHalaman" :key="r.id" class="ca-console-dialog min-w-0 p-4">
+            <div class="flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-1">
+              <span class="max-w-full break-all rounded-full bg-[var(--ca-panel-bg-strong)] px-2 py-0.5 font-mono text-xs font-semibold text-[var(--ca-text)]">{{ r.aksi }}</span>
+              <span class="whitespace-nowrap text-xs tabular-nums text-[var(--ca-subtle)]">{{ formatWaktu(r.waktuIso) }}</span>
+            </div>
+            <p class="mt-2 break-all text-[0.8125rem] text-[var(--ca-muted)]">{{ r.pelaku }}</p>
+            <p class="mt-1 break-all text-sm text-[var(--ca-text)]">
+              <span class="text-[var(--ca-subtle)]">{{ tcf('audit.target') }}</span>&nbsp;
+              <NuxtLink
+                v-if="r.targetTipe === 'user' && r.targetId && r.targetLabel"
+                :to="`/console/cashflow/pengguna/${r.targetId}`" class="cf-kuat underline underline-offset-2"
+              >{{ r.targetLabel }}</NuxtLink>
+              <span v-else-if="r.targetTipe === 'user' && r.targetId" class="text-[var(--ca-subtle)]">{{ tcf('audit.akunHilang') }} · {{ r.targetId.slice(0, 8) }}</span>
+              <span v-else class="cf-kuat">{{ r.targetLabel || r.targetId?.slice(0, 8) || '—' }}</span>
+              <span v-if="r.terdampak" class="block text-xs text-[var(--ca-subtle)]">{{ tcf('kasus.terdampak')(r.terdampak) }}</span>
+            </p>
+            <p v-if="r.alasan" class="mt-2 break-words border-t border-[color:var(--ca-border)] pt-2 text-[0.8125rem] text-[var(--ca-muted)]">
+              {{ r.alasan }}<span v-if="!r.alasanUtuh" class="text-[var(--ca-subtle)]"> ({{ tcf('kasus.alasanTerpotong') }})</span>
+            </p>
+            <div v-if="r.ranah.length || r.kasus" class="mt-2 flex flex-wrap items-center gap-1">
+              <span v-for="x in r.ranah" :key="x" class="ca-pill-emerald text-[0.7rem]">{{ tcf(`ranah.${x}`) }}</span>
+              <button v-if="r.kasus" type="button" class="font-mono text-xs text-[var(--ca-subtle)] underline underline-offset-2" :title="tcf('audit.saringKasus')" @click="pilihKasus(r.kasus)">#{{ r.kasus.slice(0, 8) }}</button>
+            </div>
+          </li>
+        </ul>
+        <CashflowTabel v-if="barisHalaman.length" class="hidden sm:block">
           <thead><tr>
             <th scope="col">{{ tcf('audit.waktu') }}</th>
             <th scope="col">{{ tcf('audit.aksi') }}</th>
