@@ -122,8 +122,9 @@ describe.skipIf(!adaTerbalik)(`kontrak ${MIGRASI}: admin_daftar_pengguna_v3`, ()
   })
   it('segmen console dikenal server, termasuk belum_wa (tanpa izin pii)', () => {
     const segmen = /coalesce\(p_segmen, ''\) not in \(([^)]+)\)/.exec(badan)?.[1]?.match(/'(\w+)'/g)?.map(x => x.slice(1, -1)) ?? []
-    const hal = baca('pages/console/cashflow/pengguna/index.vue')
-    const konsol = /const SEGMEN = \[([^\]]+)\]/.exec(hal)![1]!
+    // Daftar segmen console kini di adapter daftar pengguna, dan halaman memakainya apa adanya.
+    const konsol = /export const SEGMEN_PENGGUNA = \[([^\]]+)\]/.exec(baca('adapters/cashflowPenggunaDaftar.ts'))![1]!
+    expect(baca('pages/console/cashflow/pengguna/index.vue')).toMatch(/const SEGMEN = SEGMEN_PENGGUNA\n/)
     for (const s of konsol.match(/'(\w+)'/g)!.map(x => x.slice(1, -1))) expect(segmen, s).toContain(s)
     expect(konsol).toContain('SEGMEN_BELUM_WA')
     expect(segmen).toContain(SEGMEN_BELUM_WA)
@@ -458,20 +459,26 @@ describe('penjaga komponen cara terbalik', () => {
 
 describe('penjaga daftar pengguna: Status WhatsApp', () => {
   const hal = baca(HAL_PENGGUNA)
-  it('kolom ada di tabel desktop dan kartu ponsel; kosong bila server belum mengirimnya', () => {
-    expect(hal.indexOf("key: 'status_wa'")).toBeGreaterThan(hal.indexOf("key: 'wa'"))
-    expect(hal.indexOf("key: 'status_wa'")).toBeLessThan(hal.indexOf("key: 'versi'"))
-    expect(hal).toMatch(/<template #cell-status_wa="\{ row \}">\s*<span v-if="!row\.p\.statusWa"/)
-    expect(hal).toMatch(/<CashflowStatusWaAkun v-else :status="row\.p\.statusWa" \/>/)
-    expect(hal).toMatch(/<div v-if="row\.p\.statusWa" class="col-span-2 min-w-0">/)
-    expect(hal).toMatch(/\['email', 'wa', 'status_wa', 'status'\]\.includes\(k\.key\)/)
+  it('status ada di tabel desktop dan kartu ponsel; kosong bila server belum mengirimnya', () => {
+    // Status WhatsApp kini baris kedua kolom WhatsApp (versi singkat). Kalimat panjangnya ada di rincian pengguna.
+    const selWa = hal.slice(hal.indexOf('<template #cell-wa='), hal.indexOf('<template #cell-versi='))
+    expect(selWa).toMatch(/<span v-if="teksWa\(row\.p\)" class="cf-dua"><span class="cf-titik" :class="titikWa\(row\.p\)" aria-hidden="true" \/>\{\{ teksWa\(row\.p\) \}\}<\/span>/)
+    const kartu = hal.slice(hal.indexOf('<li v-for="row in barisHalaman"'))
+    expect(kartu).toMatch(/\{\{ teksWa\(row\.p\) \}\}/)
+    // Tanpa status dari server, barisnya tidak ditulis (barisWa memulangkan null).
+    expect(hal).toMatch(/const b = barisWa\(p\)\s+if \(!b\) return null/)
+    // Tanda nomor ramai dan kredit ditahan tetap ada di keduanya.
+    expect(hal.match(/tcf\('pengguna\.statusWa\.ramai'\)/g)).toHaveLength(2)
+    expect(hal.match(/tcf\('pengguna\.statusWa\.kredit'\)/g)).toHaveLength(2)
+    expect(baca('components/cashflow/CashflowKepala360.vue')).toMatch(/<CashflowStatusWaAkun v-if="bawaan\?\.statusWa" :status="bawaan\.statusWa" baris \/>/)
   })
   it('saringan baru hanya untuk server yang mengenalnya', () => {
-    expect(hal).toMatch(/key: 'status_wa', label: tcf\('pengguna\.statusWa\.judul'\), type: 'status' as const, filterable: serverStatusWa\.value/)
+    const daftar = baca('adapters/cashflowPenggunaDaftar.ts')
+    expect(hal).toMatch(/\.\.\.\(serverStatusWa\.value \? \[\{ kunci: 'status_wa', label: tcf\('pengguna\.statusWa\.judul'\)/)
     expect(hal).toMatch(/\.\.\.\(serverStatusWa\.value \? \[\{ kunci: SEGMEN_BELUM_WA/)
-    expect(hal).toMatch(/if \(serverStatusWa\.value && pakaiStatusWa\(statusWa\)\) filter\.status_wa = statusWa/)
+    expect(daftar).toMatch(/if \(o\.serverStatusWa && \(STATUS_WA_AKUN as readonly unknown\[\]\)\.includes\(statusWa\)\) filter\.status_wa = statusWa!/)
     // Daftar saringan dasar tetap; status_wa ditambahkan terpisah.
-    expect(hal).toMatch(/const FILTER = \['email', 'wa', 'versi', 'daftar', 'aktif', 'status'\]/)
+    expect(daftar).toMatch(/export const FILTER_KOLOM = \['email', 'wa', 'versi', 'daftar', 'aktif', 'status'\] as const/)
   })
   it('server lama menolak saringan (22023 saringan): saringan dilepas, bukan galat', () => {
     expect(hal).toMatch(/e instanceof GalatAdmin && e\.hint === 'saringan' && \(q\.value\.seg === SEGMEN_BELUM_WA \|\| 'status_wa' in filter\)/)
@@ -483,7 +490,7 @@ describe('penjaga daftar pengguna: Status WhatsApp', () => {
     expect(hal).toMatch(/if \(hasil\.baris\.some\(d => d\.status_wa !== undefined\) \|\| q\.value\.seg === SEGMEN_BELUM_WA \|\| 'status_wa' in filter\) serverStatusWa\.value = true/)
   })
   it('segmen Belum WhatsApp tidak butuh izin pii', () => {
-    expect(hal).toMatch(/const segmenButuhHitungan = \(k: string\) => k === 'belum' \|\| k === 'catat7'/)
+    expect(baca('adapters/cashflowPenggunaDaftar.ts')).toMatch(/export const segmenButuhHitungan = \(k: string\): boolean => k === 'belum' \|\| k === 'catat7' \|\| segmenDomi\(k\)/)
   })
 })
 

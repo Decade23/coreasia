@@ -304,10 +304,14 @@ describe('halaman daftar pengguna memakai satu jalur pembersih', () => {
     expect(SRC).toMatch(/samarkanBaris\(true\)[\s\S]*?hasil = await baca\(null\)/)
   })
   it('ponsel dan desktop memakai halaman yang sama dan hanya menyalin kontak utuh', () => {
-    expect(SRC).toMatch(/<DataTable\s+class="hidden lg:block"/)
+    expect(SRC).toMatch(/<div class="cf-tabel-wadah cf-tabel-tetap hidden lg:block">\s*<DataTable/)
     expect(SRC).toMatch(/<li v-for="row in barisHalaman"/)
-    expect(SRC.match(/<CashflowSalinKontak v-if="row\.p\.emailPenuh"/g)).toHaveLength(2)
-    expect(SRC.match(/<CashflowSalinKontak v-if="row\.p\.nomorPenuh"/g)).toHaveLength(2)
+    // Tombol salin hanya ada bila server mengirim kontak utuh: sekali di tabel, sekali di kartu.
+    expect(SRC.match(/<span v-if="row\.p\.emailPenuh"[^>]*><CashflowSalinKontak jenis="email"/g)).toHaveLength(2)
+    expect(SRC.match(/<span v-if="row\.p\.nomorPenuh"[^>]*><CashflowSalinKontak jenis="wa"/g)).toHaveLength(2)
+    const salin = [...SRC.matchAll(/<CashflowSalinKontak [^>]*>/g)].map(m => m[0])
+    expect(salin).toHaveLength(4)
+    for (const t of salin) expect(t).toMatch(/jenis="email" :nilai="row\.p\.emailPenuh"|jenis="wa" :nilai="row\.p\.nomorPenuh"/)
   })
   it('label sakelar dan kolom tersedia ID dan EN', () => {
     expect(KAMUS_CASHFLOW.id.pengguna.kontakPenuh).toBe('Kontak lengkap')

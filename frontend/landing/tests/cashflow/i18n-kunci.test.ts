@@ -65,6 +65,9 @@ describe('kamus CashFlow lengkap untuk setiap kunci yang dipakai', () => {
       ...JENIS_TEKS.map(j => `teks.label.${j}`),
       ...['pengguna', 'ruang', 'transaksi', 'sampah'].map(j => `cari.jenis.${j}`),
       'nav.kasus',
+      // Daftar pengguna tujuh kolom: pilihan Urut dan status WhatsApp singkat.
+      ...['email', 'wa', 'versi', 'daftar', 'aktif', 'ruang', 'tx', 'nominal', 'domi', 'domi_terakhir', 'kredit'].map(k => `pengguna.urutOpsi.${k}`),
+      ...['waLolos', 'waLolosTanpaNomor', 'waBelumBukti'].map(k => `pengguna.${k}`),
       // Fase 2 (0094)
       `skenario.${SKENARIO_RUANG}`, `skenario.${SKENARIO_SELIDIKI}`,
       ...TAB_RUANG.map(t => `tabRuang.${t || 'ringkas'}`),

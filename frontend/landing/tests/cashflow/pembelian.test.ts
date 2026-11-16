@@ -369,7 +369,9 @@ describe('penjaga halaman Pembelian kredit', () => {
     expect(hal).toMatch(/galat\.value\?\.jenis === 'belum-aktif'/)
     expect(hal).toMatch(/tcf\('pembelian\.belumAktif'\)/)
     expect(hal).toMatch(/<CashflowIzinKurang v-else-if="galat\?\.jenis === 'izin'" baca \/>/)
-    expect(hal).toMatch(/role="alert">\{\{ pesanGalat \}\}<\/p>\s*<button[^>]*@click="muatAwal">\{\{ tcf\('pembelian\.cobaLagi'\) \}\}/)
+    // Galat lewat komponen keadaan bersama (role alert di dalamnya), dengan tombol coba lagi yang sama.
+    expect(hal).toMatch(/<CashflowKeadaan\s+v-else-if="pesanGalat" jenis="galat"[^>]*:pesan="pesanGalat"\s+:label-ulang="tcf\('pembelian\.cobaLagi'\)"[^>]*@ulang="muatAwal"/)
+    expect(baca('components/cashflow/CashflowKeadaan.vue')).toMatch(/role="alert"/)
     expect(hal).toMatch(/tcf\('pembelian\.kosong'\)/)
     expect(hal).toMatch(/api\.aiPembelianDaftar\(a\.status, a\.jalur, sebelum\)/)
     expect(hal).toMatch(/lanjut\.value = kursorSesudah\(sebelum, h\)/)
