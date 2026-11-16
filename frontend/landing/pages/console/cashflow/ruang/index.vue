@@ -25,7 +25,7 @@
  * (M/0089 §15 (d)); selain itu null → tabel menulis "—" (butuh TOTP), bukan 0.
  */
 definePageMeta({ layout: 'console', middleware: ['console', 'cashflow-admin'] })
-import { keRuang, JENIS_RUANG, type RuangDTO, type JenisRuang } from '~/adapters/cashflow'
+import { angka, keRuang, JENIS_RUANG, type RuangDTO, type JenisRuang } from '~/adapters/cashflow'
 import type { SkemaQuery } from '~/adapters/cashflowQuery'
 const { tcf, formatTanggal } = useCashflowI18n()
 const api = useCashflowAdmin()
@@ -56,15 +56,15 @@ let jeda: ReturnType<typeof setTimeout> | undefined
 watch(cari, () => { clearTimeout(jeda); jeda = setTimeout(muatRuang, 300) })
 onBeforeUnmount(() => clearTimeout(jeda))
 
-const jenisOpsi = computed(() => JENIS.map(j => ({ kunci: j, label: j === 'semua' ? tcf('umum.semua') : tcf(`ruang.jenisOpsi.${j}`) })))
+const jenisOpsi = computed(() => JENIS.map(j => ({ nilai: j, label: (j === 'semua' ? tcf('umum.semua') : tcf(`ruang.jenisOpsi.${j}`)) as string })))
 const columns = computed(() => [
-  { key: 'nama', label: tcf('ruang.nama'), type: 'text' as const, class: 'font-mono text-[var(--ca-text)]' },
-  { key: 'pemilik', label: tcf('ruang.pemilik'), type: 'text' as const, class: 'font-mono' },
-  { key: 'jenis', label: tcf('ruang.jenis'), type: 'text' as const, width: '100px', class: 'hidden text-[var(--ca-muted)] sm:table-cell', headerClass: 'hidden sm:table-cell' },
-  { key: 'anggota', label: tcf('ruang.anggota'), type: 'text' as const, width: '90px', class: 'tabular-nums text-right' },
-  { key: 'tx', label: tcf('ruang.tx'), type: 'text' as const, width: '110px', class: 'tabular-nums text-right' },
-  { key: 'undangan', label: tcf('ruang.undangan'), type: 'text' as const, width: '120px', class: 'hidden tabular-nums text-right md:table-cell', headerClass: 'hidden md:table-cell' },
-  { key: 'dibuat', label: tcf('ruang.dibuat'), type: 'text' as const, width: '120px' },
+  { key: 'nama', label: tcf('ruang.nama'), type: 'text' as const, class: 'cf-kuat break-words' },
+  { key: 'pemilik', label: tcf('ruang.pemilik'), type: 'text' as const, class: 'break-all text-[var(--ca-muted)]' },
+  { key: 'jenis', label: tcf('ruang.jenis'), type: 'text' as const, width: '110px', class: 'hidden text-[var(--ca-muted)] sm:table-cell', headerClass: 'hidden sm:table-cell' },
+  { key: 'anggota', label: tcf('ruang.anggota'), type: 'text' as const, width: '110px', class: 'cf-ka', headerClass: 'cf-ka' },
+  { key: 'tx', label: tcf('ruang.tx'), type: 'text' as const, width: '130px', class: 'cf-ka', headerClass: 'cf-ka' },
+  { key: 'undangan', label: tcf('ruang.undangan'), type: 'text' as const, width: '150px', class: 'cf-ka hidden md:table-cell', headerClass: 'cf-ka hidden md:table-cell' },
+  { key: 'dibuat', label: tcf('ruang.dibuat'), type: 'text' as const, width: '130px', class: 'whitespace-nowrap text-[var(--ca-muted)]' },
 ])
 const data = computed(() => mentah.value.map(keRuang).map(r => ({
   id: r.id, nama: r.nama, pemilik: r.pemilik,
@@ -72,6 +72,8 @@ const data = computed(() => mentah.value.map(keRuang).map(r => ({
   anggota: r.anggota, tx: r.tx, undangan: r.undangan, dibuat: formatTanggal(r.dibuatIso),
 })))
 const terpotong = computed(() => total.value > mentah.value.length)
+const tersaring = computed(() => !!cari.value.trim() || q.value.jenis !== 'semua')
+const lepasSaringan = () => { cari.value = ''; void setel({ jenis: 'semua' }) }
 /** Server menahan hitungan per ruang (sesi tanpa pii). */
 const tanpaHitungan = computed(() => data.value.length > 0 && data.value.every(r => r.anggota === null && r.tx === null))
 </script>
@@ -86,32 +88,35 @@ const tanpaHitungan = computed(() => data.value.length > 0 && data.value.every(r
         v-model="cari" type="search" class="ca-input w-full sm:w-80"
         :placeholder="tcf('ruang.cari')" :aria-label="tcf('ruang.cari')" aria-describedby="cf-ruang-cari-ket"
       />
-      <div class="flex flex-wrap gap-1 rounded-full border border-[color:var(--ca-border)] p-1 text-sm">
-        <button
-          v-for="j in jenisOpsi" :key="j.kunci" type="button"
-          class="rounded-full px-3 py-1 transition"
-          :class="q.jenis === j.kunci ? 'bg-[var(--ca-panel-bg-strong)] font-semibold text-[var(--ca-text)]' : 'text-[var(--ca-muted)]'"
-          :aria-pressed="q.jenis === j.kunci"
-          @click="setel({ jenis: j.kunci })"
-        >{{ j.label }}</button>
-      </div>
+      <CashflowSegmen :opsi="jenisOpsi" :nilai="q.jenis" :label="tcf('ruang.jenis')" gulir @pilih="(j) => setel({ jenis: j })" />
       <span class="text-xs text-[var(--ca-subtle)] tabular-nums">{{ mentah.length }} / {{ total }}</span>
     </div>
     <p id="cf-ruang-cari-ket" class="-mt-3 text-xs text-[var(--ca-subtle)]">{{ tcf('ruang.cariKet') }}</p>
 
-    <p v-if="pesanGalat" class="text-sm ca-tone-danger">{{ pesanGalat }}</p>
+    <p v-if="pesanGalat && mentah.length" class="rounded-xl bg-[var(--ca-danger-bg)] px-4 py-3 text-sm font-semibold text-[var(--ca-danger-text)]" role="alert">{{ pesanGalat }}</p>
     <p v-if="terpotong" class="text-xs ca-tone-gold">{{ tcf('umum.potong')(mentah.length, total) }}</p>
     <p v-if="tanpaHitungan" class="text-xs text-[var(--ca-subtle)]">{{ tcf('umum.hitunganButuhTotp') }}</p>
     <!-- Muat gagal tanpa baris = galat saja; "Belum ada data." di bawahnya terbaca
          seolah produk tidak punya ruang. -->
-    <div v-if="!pesanGalat || mentah.length" class="ca-console-dialog overflow-hidden">
-      <DataTable
-        :columns="columns" :data="data" :loading="memuat" empty-icon="lucide:layers"
-        :empty-text="cari.trim() || q.jenis !== 'semua' ? tcf('umum.kosongSaring') : tcf('umum.kosong')"
-      >
+    <CashflowKeadaan
+      v-if="pesanGalat && !mentah.length" jenis="galat" :judul="tcf('umum.galatJudul')" :pesan="pesanGalat"
+      :label-ulang="tcf('umum.cobaLagi')" :sibuk="memuat" @ulang="muatRuang()"
+    />
+    <div v-else class="cf-tabel-wadah">
+      <DataTable :columns="columns" :data="data" :loading="memuat">
+        <template #loading><CashflowKeadaan jenis="memuat" polos :pesan="tcf('umum.memuat')" :baris="6" :kolom="5" /></template>
+        <template #empty>
+          <CashflowKeadaan
+            jenis="kosong" polos icon="lucide:layers"
+            :judul="tersaring ? tcf('umum.kosongSaringJudul') : tcf('umum.kosongJudul')"
+            :pesan="tersaring ? tcf('umum.kosongSaring') : tcf('umum.kosong')"
+          >
+            <button v-if="tersaring" type="button" class="ca-btn-secondary !px-4 !py-2 text-sm" @click="lepasSaringan">{{ tcf('umum.lepasSaringan') }}</button>
+          </CashflowKeadaan>
+        </template>
         <template v-for="k in (['anggota', 'tx', 'undangan'] as const)" :key="k" #[`cell-${k}`]="{ value }">
           <span v-if="value === null" :title="tcf('umum.butuhTotp')">—<span class="sr-only"> ({{ tcf('umum.butuhTotp') }})</span></span>
-          <template v-else>{{ value }}</template>
+          <template v-else>{{ angka(value) }}</template>
         </template>
       </DataTable>
     </div>

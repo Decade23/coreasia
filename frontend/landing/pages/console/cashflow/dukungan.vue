@@ -125,8 +125,11 @@ useConsoleRemah().pasang(() => [
       <Icon name="lucide:hourglass" class="mt-0.5 h-5 w-5 shrink-0 text-[var(--ca-subtle)]" />
       <span>{{ tcf('dukungan.belumAktif') }}</span>
     </div>
-    <p v-else-if="pesanGalat" class="text-sm ca-tone-danger" role="alert">{{ pesanGalat }}</p>
-    <p v-else-if="memuat && !ringkas" class="text-sm text-[var(--ca-muted)]">{{ tcf('umum.memuat') }}</p>
+    <CashflowKeadaan
+      v-else-if="pesanGalat" jenis="galat" :judul="tcf('umum.galatJudul')" :pesan="pesanGalat"
+      :label-ulang="tcf('umum.cobaLagi')" :sibuk="memuat" @ulang="muatSemua()"
+    />
+    <CashflowKeadaan v-else-if="memuat && !ringkas" jenis="memuat" :pesan="tcf('umum.memuat')" :baris="5" :kolom="5" />
 
     <template v-if="ringkas && !belumAktif && !pesanGalat">
       <p v-if="!ringkas.buka" class="rounded-xl border border-[color:var(--ca-gold-border)] bg-[var(--ca-gold-bg)] px-4 py-2 text-xs text-[var(--ca-text)]" data-uji="dukungan-tutup">
@@ -169,42 +172,45 @@ useConsoleRemah().pasang(() => [
             </div>
           </div>
 
-          <div v-if="!daftar.length" class="p-4">
-            <CashflowKeadaanKosong :pesan="memuat ? tcf('umum.memuat') : tersaring ? tcf('umum.kosongSaring') : tcf('dukungan.kosong')" icon="lucide:heart-handshake" />
-          </div>
-          <div v-else class="overflow-x-auto">
-            <table class="w-full text-sm" data-uji="dukungan-tabel">
+          <CashflowKeadaan v-if="!daftar.length && memuat" jenis="memuat" polos :pesan="tcf('umum.memuat')" :baris="5" :kolom="5" />
+          <CashflowKeadaan
+            v-else-if="!daftar.length" jenis="kosong" polos icon="lucide:heart-handshake"
+            :judul="tersaring ? tcf('umum.kosongSaringJudul') : tcf('umum.kosongJudul')"
+            :pesan="tersaring ? tcf('umum.kosongSaring') : tcf('dukungan.kosong')"
+          />
+          <div v-else class="cf-tabel-gulir ca-scrollbar">
+            <table class="cf-tabel" data-uji="dukungan-tabel">
               <thead>
-                <tr class="text-left text-xs uppercase tracking-wide text-[var(--ca-muted)]">
-                  <th class="px-4 py-2.5 font-semibold">{{ tcf('dukungan.kolom.waktu') }}</th>
-                  <th class="px-3 py-2.5 font-semibold">{{ tcf('dukungan.kolom.kode') }}</th>
-                  <th class="px-3 py-2.5 font-semibold">{{ tcf('dukungan.kolom.sumber') }}</th>
-                  <th class="px-3 py-2.5 text-right font-semibold">{{ tcf('dukungan.kolom.nominal') }}</th>
-                  <th class="px-3 py-2.5 font-semibold">{{ tcf('dukungan.kolom.status') }}</th>
-                  <th class="px-3 py-2.5 font-semibold">{{ tcf('dukungan.kolom.nama') }}</th>
-                  <th class="px-4 py-2.5 font-semibold">{{ tcf('dukungan.kolom.pesan') }}</th>
+                <tr>
+                  <th scope="col">{{ tcf('dukungan.kolom.waktu') }}</th>
+                  <th scope="col">{{ tcf('dukungan.kolom.kode') }}</th>
+                  <th scope="col">{{ tcf('dukungan.kolom.sumber') }}</th>
+                  <th scope="col" class="cf-ka">{{ tcf('dukungan.kolom.nominal') }}</th>
+                  <th scope="col">{{ tcf('dukungan.kolom.status') }}</th>
+                  <th scope="col">{{ tcf('dukungan.kolom.nama') }}</th>
+                  <th scope="col">{{ tcf('dukungan.kolom.pesan') }}</th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="d in daftar" :key="d.kode" class="border-t border-[color:var(--ca-border)] align-top text-[var(--ca-text)]" :class="d.uji ? 'opacity-70' : ''">
-                  <td class="whitespace-nowrap px-4 py-2.5 tabular-nums text-[var(--ca-muted)]">{{ formatWaktu(d.dibuatIso) }}</td>
-                  <td class="whitespace-nowrap px-3 py-2.5">
+                <tr v-for="d in daftar" :key="d.kode" :class="d.uji ? 'opacity-70' : ''">
+                  <td class="whitespace-nowrap text-[var(--ca-muted)]">{{ formatWaktu(d.dibuatIso) }}</td>
+                  <td class="whitespace-nowrap">
                     <span class="font-mono text-xs">{{ d.kode }}</span>
                     <span v-if="d.uji" class="ca-pill-muted ml-1.5 !px-2 !py-0.5" :title="tcf('dukungan.ujiKet')">{{ tcf('dukungan.uji') }}</span>
                   </td>
-                  <td class="whitespace-nowrap px-3 py-2.5">
+                  <td class="whitespace-nowrap">
                     {{ d.sumber ? tcf(`dukungan.sumber.${d.sumber}`) : '—' }}
-                    <span v-if="d.penerbit" class="block text-xs text-[var(--ca-subtle)]">{{ d.penerbit }}</span>
+                    <span v-if="d.penerbit" class="cf-dua">{{ d.penerbit }}</span>
                   </td>
-                  <td class="whitespace-nowrap px-3 py-2.5 text-right font-semibold tabular-nums">
+                  <td class="cf-ka cf-kuat whitespace-nowrap">
                     {{ rupiah(d.jumlah) }}
                     <span v-if="d.jumlahDibayarBeda != null" class="block text-xs font-normal ca-tone-gold">{{ tcf('dukungan.dibayar')(rupiah(d.jumlahDibayarBeda)) }}</span>
                   </td>
-                  <td class="whitespace-nowrap px-3 py-2.5">
+                  <td class="whitespace-nowrap">
                     <span :class="pillStatus(d.status)">{{ d.status ? tcf(`dukungan.status.${d.status}`) : '—' }}</span>
                   </td>
-                  <td class="max-w-[10rem] break-words px-3 py-2.5">{{ d.nama ?? '—' }}</td>
-                  <td class="min-w-[14rem] max-w-[28rem] whitespace-pre-wrap break-words px-4 py-2.5 text-[var(--ca-muted)]">{{ d.pesan ?? '—' }}</td>
+                  <td class="max-w-[10rem] break-words">{{ d.nama ?? '—' }}</td>
+                  <td class="min-w-[14rem] max-w-[28rem] whitespace-pre-wrap break-words text-[var(--ca-muted)]">{{ d.pesan ?? '—' }}</td>
                 </tr>
               </tbody>
             </table>

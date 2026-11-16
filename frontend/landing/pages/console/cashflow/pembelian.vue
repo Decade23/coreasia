@@ -118,13 +118,12 @@ useConsoleRemah().pasang(() => [
       <span>{{ tcf('pembelian.belumAktif') }}</span>
     </div>
     <CashflowIzinKurang v-else-if="galat?.jenis === 'izin'" baca />
-    <div v-else-if="pesanGalat" class="flex flex-wrap items-center gap-3" data-uji="pembelian-galat">
-      <p class="text-sm ca-tone-danger" role="alert">{{ pesanGalat }}</p>
-      <button type="button" class="ca-btn-secondary !px-3 !py-1.5 text-xs" :disabled="memuat" @click="muatAwal">{{ tcf('pembelian.cobaLagi') }}</button>
-    </div>
+    <CashflowKeadaan
+      v-else-if="pesanGalat" jenis="galat" :judul="tcf('umum.galatJudul')" :pesan="pesanGalat"
+      :label-ulang="tcf('pembelian.cobaLagi')" :sibuk="memuat" data-uji="pembelian-galat" @ulang="muatAwal"
+    />
 
     <template v-else>
-      <p v-if="memuat && !ringkas" class="text-sm text-[var(--ca-muted)]" role="status">{{ tcf('umum.memuat') }}</p>
       <CashflowPembelianRingkas v-if="ringkas" :ringkas="ringkas" />
 
       <section class="ca-console-dialog min-w-0 overflow-hidden" aria-labelledby="cf-pembelian-daftar">
@@ -136,15 +135,15 @@ useConsoleRemah().pasang(() => [
           </div>
         </div>
 
-        <div v-if="!daftar.length" class="p-4" :aria-busy="memuat ? 'true' : undefined">
-          <CashflowKeadaanKosong
-            :pesan="memuat ? tcf('umum.memuat') : tersaring ? tcf('umum.kosongSaring') : tcf('pembelian.kosong')"
-            icon="lucide:receipt"
-          />
-        </div>
+        <CashflowKeadaan v-if="!daftar.length && memuat" jenis="memuat" polos :pesan="tcf('umum.memuat')" :baris="5" :kolom="6" />
+        <CashflowKeadaan
+          v-else-if="!daftar.length" jenis="kosong" polos icon="lucide:receipt"
+          :judul="tersaring ? tcf('umum.kosongSaringJudul') : tcf('umum.kosongJudul')"
+          :pesan="tersaring ? tcf('umum.kosongSaring') : tcf('pembelian.kosong')"
+        />
         <CashflowPembelianTabel v-else :daftar="daftar" />
 
-        <div v-if="daftar.length" class="flex flex-wrap items-center justify-between gap-3 border-t border-[color:var(--ca-border)] px-4 py-3 text-xs text-[var(--ca-muted)]">
+        <div v-if="daftar.length" class="cf-tabel-kaki">
           <span class="tabular-nums">{{ tcf('pembelian.ditampilkan')(daftar.length) }}</span>
           <button v-if="lanjut" type="button" class="ca-btn-secondary text-sm" :disabled="memuatLagi" data-uji="pembelian-muat-lagi" @click="muatLagi">
             {{ memuatLagi ? tcf('pembelian.memuatLagi') : tcf('pembelian.muatLagi') }}

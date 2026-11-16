@@ -30,28 +30,26 @@ const mati = computed(() => !props.bolehUbah || props.terkunci)
 </script>
 
 <template>
-  <div class="ca-console-dialog overflow-x-auto p-0">
-    <table class="w-full min-w-[62rem] text-sm">
+  <CashflowTabel lebar-min="62rem">
       <thead>
-        <tr class="text-left text-xs uppercase tracking-wide text-[var(--ca-muted)]">
-          <th scope="col" class="px-4 py-3">{{ tcf('paket.kolom.urutan') }}</th>
-          <th scope="col" class="px-3 py-3">{{ tcf('paket.kolom.paket') }}</th>
-          <th scope="col" class="px-3 py-3 text-right">{{ tcf('paket.kolom.harga') }}</th>
-          <th scope="col" class="px-3 py-3">{{ tcf('paket.kolom.promo') }}</th>
-          <th scope="col" class="px-3 py-3">{{ tcf('paket.kolom.tanda') }}</th>
-          <th scope="col" class="px-3 py-3">{{ tcf('paket.kolom.play') }}</th>
-          <th scope="col" class="px-3 py-3 text-right">{{ tcf('paket.kolom.terjual') }}</th>
-          <th scope="col" class="min-w-[16rem] px-4 py-3 text-right">{{ tcf('paket.kolom.aksi') }}</th>
+        <tr>
+          <th scope="col">{{ tcf('paket.kolom.urutan') }}</th>
+          <th scope="col">{{ tcf('paket.kolom.paket') }}</th>
+          <th scope="col" class="cf-ka">{{ tcf('paket.kolom.harga') }}</th>
+          <th scope="col">{{ tcf('paket.kolom.promo') }}</th>
+          <th scope="col">{{ tcf('paket.kolom.tanda') }}</th>
+          <th scope="col">{{ tcf('paket.kolom.play') }}</th>
+          <th scope="col" class="cf-ka">{{ tcf('paket.kolom.terjual') }}</th>
+          <th scope="col" class="cf-ka min-w-[16rem]">{{ tcf('paket.kolom.aksi') }}</th>
         </tr>
       </thead>
       <tbody>
         <tr
           v-for="(p, i) in daftar" :key="p.kode"
-          class="border-t border-[color:var(--ca-border)] align-top"
           :class="p.aktif ? 'text-[var(--ca-text)]' : 'text-[var(--ca-muted)]'"
           :aria-busy="sibuk === p.kode ? 'true' : undefined"
         >
-          <td class="px-4 py-3">
+          <td>
             <div class="flex items-center gap-1">
               <span class="w-8 tabular-nums text-xs text-[var(--ca-subtle)]">{{ p.urutan }}</span>
               <button
@@ -64,16 +62,16 @@ const mati = computed(() => !props.bolehUbah || props.terkunci)
               ><Icon name="lucide:arrow-down" class="h-4 w-4" aria-hidden="true" /></button>
             </div>
           </td>
-          <td class="px-3 py-3">
+          <td>
             <span class="flex flex-wrap items-center gap-x-2 gap-y-1">
               <strong class="whitespace-nowrap">{{ tcf('paket.kredit')(p.kredit) }}</strong>
               <span v-if="p.label" class="ca-pill-gold whitespace-nowrap text-xs" :title="tcf('paket.kolom.label')">{{ p.label }}</span>
             </span>
-            <span class="font-mono text-xs text-[var(--ca-muted)]">{{ p.kode }}</span>
+            <span class="cf-dua font-mono">{{ p.kode }}</span>
             <span v-if="p.diubah" class="block whitespace-nowrap text-xs text-[var(--ca-subtle)]">{{ tcf('paket.diubah')(formatWaktu(p.diubah)) }}</span>
           </td>
-          <td class="px-3 py-3 text-right tabular-nums whitespace-nowrap">{{ rupiah(p.harga) }}</td>
-          <td class="px-3 py-3">
+          <td class="cf-ka whitespace-nowrap">{{ rupiah(p.harga) }}</td>
+          <td>
             <template v-if="status(p) !== 'tanpa' && p.hargaPromo !== null">
               <span class="whitespace-nowrap tabular-nums font-semibold">{{ rupiah(p.hargaPromo) }}</span>
               <span class="ml-1 whitespace-nowrap text-xs text-[var(--ca-muted)]">{{ tcf('paket.pratinjau.hemat')(hematPersen(p.harga, p.hargaPromo)) }}</span>
@@ -82,22 +80,22 @@ const mati = computed(() => !props.bolehUbah || props.terkunci)
             </template>
             <span v-else class="text-xs text-[var(--ca-subtle)]">{{ tcf('paket.status.tanpa') }}</span>
           </td>
-          <td class="px-3 py-3">
+          <td>
             <div class="flex flex-wrap gap-1">
               <span v-if="p.bawaan" class="ca-pill-gold whitespace-nowrap text-xs">{{ tcf('paket.tanda.bawaan') }}</span>
               <span :class="p.aktif ? 'ca-pill-emerald' : 'ca-pill-danger'" class="whitespace-nowrap text-xs">{{ p.aktif ? tcf('paket.tanda.aktif') : tcf('paket.tanda.nonaktif') }}</span>
               <span v-if="p.khususUji" class="ca-pill-blue whitespace-nowrap text-xs">{{ tcf('paket.tanda.khususUji') }}</span>
             </div>
           </td>
-          <td class="max-w-[12rem] px-3 py-3">
+          <td class="max-w-[12rem]">
             <span v-if="p.playProdukId" class="break-all font-mono text-xs" :title="tcf('paket.kolom.play')">{{ p.playProdukId }}</span>
             <span v-else class="whitespace-nowrap text-xs text-[var(--ca-subtle)]">{{ tcf('paket.belumPlay') }}</span>
           </td>
-          <td class="px-3 py-3 text-right tabular-nums">
+          <td class="cf-ka">
             <template v-if="p.terjual !== null">{{ angka(p.terjual) }}</template>
             <span v-else class="text-xs text-[var(--ca-subtle)]">{{ tcf('paket.terjualKosong') }}</span>
           </td>
-          <td class="px-4 py-3">
+          <td>
             <div class="flex flex-wrap items-center justify-end gap-1.5" role="group" :aria-label="tcf('paket.aksiUntuk')(p.kode)">
               <Icon v-if="sibuk === p.kode" name="lucide:loader-2" class="h-4 w-4 animate-spin text-[var(--ca-muted)]" :aria-label="tcf('paket.menyimpan')" />
               <button type="button" class="ca-btn-secondary !min-h-9 !px-3 !py-1.5 text-xs" :disabled="mati" @click="emit('ubah', p)">{{ tcf('paket.ubah') }}</button>
@@ -109,6 +107,5 @@ const mati = computed(() => !props.bolehUbah || props.terkunci)
           </td>
         </tr>
       </tbody>
-    </table>
-  </div>
+  </CashflowTabel>
 </template>

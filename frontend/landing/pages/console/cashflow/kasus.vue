@@ -69,6 +69,7 @@ const labelSkenario = (s: string) => {
   return typeof l === 'string' && l !== `skenario.${s}` ? l : s
 }
 
+const opsiLingkup = computed(() => (['saya', 'semua'] as const).map(l => ({ nilai: l, label: tcf(`kasus.lingkupOpsi.${l}`) as string })))
 const nadaStatus = (s: BarisKasus['status']) =>
   s === 'aktif' ? 'ca-pill-emerald' : s === 'dicabut' ? 'ca-pill-danger' : 'ca-pill-muted'
 
@@ -84,13 +85,7 @@ useConsoleRemah().pasang(() => [
     <p class="text-sm text-[var(--ca-muted)]">{{ tcf('kasus.ket') }}</p>
 
     <div class="flex flex-wrap items-center gap-2">
-      <div class="flex gap-1 rounded-full border border-[color:var(--ca-border)] p-1 text-sm">
-        <button
-          v-for="l in (['saya', 'semua'] as const)" :key="l" type="button" class="rounded-full px-3 py-1 transition"
-          :class="q.lingkup === l ? 'bg-[var(--ca-panel-bg-strong)] font-semibold text-[var(--ca-text)]' : 'text-[var(--ca-muted)]'"
-          :aria-pressed="q.lingkup === l" @click="setel({ lingkup: l, hal: 1 })"
-        >{{ tcf(`kasus.lingkupOpsi.${l}`) }}</button>
-      </div>
+      <CashflowSegmen :opsi="opsiLingkup" :nilai="q.lingkup" :label="tcf('kasus.judul')" @pilih="(l) => setel({ lingkup: l, hal: 1 })" />
       <button v-if="q.subjek" type="button" class="ca-pill-info text-xs" @click="setel({ subjek: '', hal: 1 })">
         {{ tcf('kasus.subjekSaring') }}: {{ q.subjek.slice(0, 8) }} ×
       </button>
@@ -102,12 +97,15 @@ useConsoleRemah().pasang(() => [
     </p>
 
     <CashflowIzinKurang v-if="galat?.jenis === 'izin'" />
-    <p v-else-if="pesanGalat" class="text-sm text-[var(--ca-danger-text)]" role="alert">{{ pesanGalat }}</p>
-    <p v-else-if="memuat && !baris.length" class="text-sm text-[var(--ca-muted)]">{{ tcf('umum.memuat') }}</p>
+    <CashflowKeadaan
+      v-else-if="pesanGalat" jenis="galat" :judul="tcf('umum.galatJudul')" :pesan="pesanGalat"
+      :label-ulang="tcf('umum.cobaLagi')" :sibuk="memuat" @ulang="muatKasus()"
+    />
+    <CashflowKeadaan v-else-if="memuat && !baris.length" jenis="memuat" :pesan="tcf('umum.memuat')" :baris="4" :kolom="3" />
     <template v-else>
       <p v-if="terpotong" class="text-xs ca-tone-gold">{{ tcf('umum.potong')(baris.length, total) }}</p>
       <div ref="wadah" class="scroll-mt-24">
-        <CashflowKeadaanKosong v-if="!barisHalaman.length" :pesan="tcf('kasus.kosong')" icon="lucide:folder-lock" />
+        <CashflowKeadaan v-if="!barisHalaman.length" jenis="kosong" icon="lucide:folder-lock" :judul="tcf('umum.kosongJudul')" :pesan="tcf('kasus.kosong')" />
         <ul v-else class="space-y-2">
           <li v-for="k in barisHalaman" :key="k.id" class="ca-console-dialog p-4 text-sm">
             <div class="flex flex-wrap items-center gap-2">

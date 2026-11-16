@@ -39,43 +39,42 @@ function lamaKredit(waktu: NonNullable<NonNullable<Pembelian['play']>['waktu']>)
 </script>
 
 <template>
-  <div class="overflow-x-auto">
-    <table class="w-full min-w-[68rem] text-sm" data-uji="pembelian-tabel">
+  <div class="cf-tabel-gulir ca-scrollbar">
+    <table class="cf-tabel min-w-[68rem]" data-uji="pembelian-tabel">
       <thead>
-        <tr class="text-left text-xs uppercase tracking-wide text-[var(--ca-muted)]">
-          <th scope="col" class="px-4 py-2.5 font-semibold">{{ tcf('pembelian.kolom.waktu') }}</th>
-          <th scope="col" class="px-3 py-2.5 font-semibold">{{ tcf('pembelian.kolom.pembeli') }}</th>
-          <th scope="col" class="px-3 py-2.5 font-semibold">{{ tcf('pembelian.kolom.paket') }}</th>
-          <th scope="col" class="px-3 py-2.5 text-right font-semibold">{{ tcf('pembelian.kolom.harga') }}</th>
-          <th scope="col" class="px-3 py-2.5 font-semibold">{{ tcf('pembelian.kolom.jalur') }}</th>
-          <th scope="col" class="px-3 py-2.5 font-semibold">{{ tcf('pembelian.kolom.status') }}</th>
-          <th scope="col" class="max-w-[10rem] px-3 py-2.5 font-semibold">{{ tcf('pembelian.jeda.judul') }}</th>
-          <th scope="col" class="px-4 py-2.5 font-semibold" :title="tcf('pembelian.kodeKet')">{{ tcf('pembelian.kolom.kode') }}</th>
+        <tr>
+          <th scope="col">{{ tcf('pembelian.kolom.waktu') }}</th>
+          <th scope="col">{{ tcf('pembelian.kolom.pembeli') }}</th>
+          <th scope="col">{{ tcf('pembelian.kolom.paket') }}</th>
+          <th scope="col" class="cf-ka">{{ tcf('pembelian.kolom.harga') }}</th>
+          <th scope="col">{{ tcf('pembelian.kolom.jalur') }}</th>
+          <th scope="col">{{ tcf('pembelian.kolom.status') }}</th>
+          <th scope="col">{{ tcf('pembelian.jeda.judul') }}</th>
+          <th scope="col" :title="tcf('pembelian.kodeKet')">{{ tcf('pembelian.kolom.kode') }}</th>
         </tr>
       </thead>
       <tbody>
         <tr
           v-for="p in daftar" :key="p.id"
-          class="border-t border-[color:var(--ca-border)] align-top"
           :class="p.uji ? 'text-[var(--ca-muted)]' : 'text-[var(--ca-text)]'"
         >
-          <td class="whitespace-nowrap px-4 py-2.5 tabular-nums">
+          <td class="whitespace-nowrap">
             <template v-if="p.waktuIso">
               <span class="block">{{ formatTanggal(p.waktuIso) }}</span>
-              <span class="block text-xs text-[var(--ca-muted)]">{{ formatJam(p.waktuIso) }}</span>
+              <span class="cf-dua">{{ formatJam(p.waktuIso) }}</span>
             </template>
             <span v-else class="text-xs text-[var(--ca-subtle)]">{{ tcf('pembelian.tidakTerbaca') }}</span>
           </td>
-          <td class="max-w-[18rem] px-3 py-2.5">
-            <span v-if="p.pembeli.email" class="block break-all">{{ p.pembeli.email }}</span>
+          <td class="min-w-[15rem] max-w-[18rem]">
+            <span v-if="p.pembeli.email" class="cf-kuat block break-all">{{ p.pembeli.email }}</span>
             <span v-else class="block text-xs text-[var(--ca-subtle)]">{{ tcf('pembelian.tanpaEmail') }}</span>
-            <span v-if="p.pembeli.nama" class="block break-words text-xs text-[var(--ca-muted)]">{{ p.pembeli.nama }}</span>
+            <span v-if="p.pembeli.nama" class="cf-dua break-words">{{ p.pembeli.nama }}</span>
           </td>
-          <td class="px-3 py-2.5">
+          <td>
             <strong v-if="p.kredit !== null" class="block whitespace-nowrap font-semibold">{{ tcf('pembelian.kredit')(p.kredit) }}</strong>
             <span class="block font-mono text-xs text-[var(--ca-muted)]">{{ p.paket ?? tcf('pembelian.tidakTerbaca') }}</span>
           </td>
-          <td class="whitespace-nowrap px-3 py-2.5 text-right tabular-nums">
+          <td class="cf-ka whitespace-nowrap">
             <template v-if="p.jalur === 'play'">
               <strong v-if="p.play?.uang && p.play.uang.total !== null" data-uji="pembelian-total-play">
                 {{ nilaiPlay(p.play.uang, p.play.uang.total) }}
@@ -103,7 +102,7 @@ function lamaKredit(waktu: NonNullable<NonNullable<Pembelian['play']>['waktu']>)
             <strong v-else-if="p.nominal !== null">{{ rupiah(p.nominal) }}</strong>
             <span v-else class="text-xs text-[var(--ca-subtle)]">{{ tcf('pembelian.tidakTerbaca') }}</span>
           </td>
-          <td class="px-3 py-2.5">
+          <td>
             <span class="inline-flex items-center gap-1.5 whitespace-nowrap">
               <Icon v-if="p.jalur" :name="IKON_JALUR[p.jalur]" class="h-3.5 w-3.5 text-[var(--ca-subtle)]" aria-hidden="true" />
               {{ p.jalur ? tcf(`pembelian.jalur.${p.jalur}`) : tcf('pembelian.tidakDikenal') }}
@@ -113,7 +112,7 @@ function lamaKredit(waktu: NonNullable<NonNullable<Pembelian['play']>['waktu']>)
               :title="`${tcf('pembelian.pesananPlay')}: ${p.play.order}`"
             >{{ p.play.order }}</span>
           </td>
-          <td class="px-3 py-2.5">
+          <td>
             <div class="flex flex-wrap items-center gap-1">
               <span :class="pillStatusPembelian(p.status)" class="whitespace-nowrap text-xs">
                 {{ p.status ? tcf(`pembelian.status.${p.status}`) : tcf('pembelian.tidakDikenal') }}
@@ -127,7 +126,7 @@ function lamaKredit(waktu: NonNullable<NonNullable<Pembelian['play']>['waktu']>)
               {{ tcf('pembelian.dibatalkanGoogle')(formatWaktu(p.play.batalIso)) }}
             </span>
           </td>
-          <td class="px-3 py-2.5 text-xs tabular-nums">
+          <td class="!text-xs">
             <details v-if="p.play?.waktu" class="min-w-[7rem]">
               <summary class="cursor-pointer whitespace-nowrap" data-uji="pembelian-jeda-play">{{ lamaKredit(p.play.waktu) }}</summary>
               <dl class="mt-2 space-y-1.5 whitespace-nowrap text-[var(--ca-muted)]">
@@ -140,7 +139,7 @@ function lamaKredit(waktu: NonNullable<NonNullable<Pembelian['play']>['waktu']>)
             <span v-else-if="p.jalur === 'play'" class="text-[var(--ca-subtle)]">{{ tcf('pembelian.tidakTersedia') }}</span>
             <span v-else aria-hidden="true">·</span>
           </td>
-          <td class="whitespace-nowrap px-4 py-2.5 font-mono text-xs" :title="tcf('pembelian.kodeKet')">{{ p.kode || p.id.slice(-8) }}</td>
+          <td class="whitespace-nowrap font-mono !text-xs" :title="tcf('pembelian.kodeKet')">{{ p.kode || p.id.slice(-8) }}</td>
         </tr>
       </tbody>
     </table>

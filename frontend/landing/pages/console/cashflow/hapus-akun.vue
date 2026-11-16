@@ -82,6 +82,8 @@ const bolehTindak = computed(() => sesi.boleh('cashflow:tindak'))
 /** Server menolak aksi karena izin, walau petunjuknya bilang boleh (sesi basi). */
 const izinDitolak = ref(false)
 const tindakAktif = computed(() => bolehTindak.value && !izinDitolak.value)
+/** Hitungan per status ditulis di pil hanya bila server sudah mengirimnya. */
+const opsiStatus = computed(() => STATUS_HAPUS.map(s => ({ nilai: s, label: tcf(`hapusAkun.status.${s}`) as string, jumlah: jumlah.value ? jumlah.value[s] : null })))
 const tampilIzin = computed(() => q.value.status === 'menunggu' && daftar.value.length > 0 && !tindakAktif.value)
 const belumAktif = computed(() => galat.value?.jenis === 'belum-aktif')
 
@@ -144,15 +146,7 @@ useConsoleRemah().pasang(() => [
     </div>
 
     <div class="flex flex-wrap items-center gap-2">
-      <div class="flex flex-wrap gap-1 rounded-full border border-[color:var(--ca-border)] p-1 text-sm" role="group" :aria-label="tcf('hapusAkun.saring')">
-        <button
-          v-for="s in STATUS_HAPUS" :key="s" type="button" class="rounded-full px-3 py-1 transition"
-          :class="q.status === s ? 'bg-[var(--ca-panel-bg-strong)] font-semibold text-[var(--ca-text)]' : 'text-[var(--ca-muted)]'"
-          :aria-pressed="q.status === s" @click="setel({ status: s })"
-        >
-          {{ tcf(`hapusAkun.status.${s}`) }} <span v-if="jumlah" class="ml-0.5 tabular-nums text-xs text-[var(--ca-subtle)]">{{ jumlah[s] }}</span>
-        </button>
-      </div>
+      <CashflowSegmen :opsi="opsiStatus" :nilai="q.status" :label="tcf('hapusAkun.saring')" gulir @pilih="(s) => setel({ status: s })" />
     </div>
 
     <div v-if="belumAktif" class="flex items-start gap-3 rounded-xl border border-dashed border-[color:var(--ca-border)] px-4 py-5 text-sm text-[var(--ca-muted)]" role="status">
@@ -160,11 +154,14 @@ useConsoleRemah().pasang(() => [
       <span>{{ tcf('hapusAkun.belumAktif') }}</span>
     </div>
     <CashflowIzinKurang v-else-if="galat?.jenis === 'izin'" />
-    <p v-else-if="pesanGalat" class="text-sm ca-tone-danger" role="alert">{{ pesanGalat }}</p>
-    <p v-else-if="memuat && !daftar.length" class="text-sm text-[var(--ca-muted)]">{{ tcf('umum.memuat') }}</p>
+    <CashflowKeadaan
+      v-else-if="pesanGalat" jenis="galat" :judul="tcf('umum.galatJudul')" :pesan="pesanGalat"
+      :label-ulang="tcf('umum.cobaLagi')" :sibuk="memuat" @ulang="muatDaftar()"
+    />
+    <CashflowKeadaan v-else-if="memuat && !daftar.length" jenis="memuat" :pesan="tcf('umum.memuat')" :baris="3" :kolom="3" />
     <template v-else>
       <CashflowIzinKurang v-if="tampilIzin" :pesan="tcf('hapusAkun.izinTindak')" />
-      <CashflowKeadaanKosong v-if="!daftar.length" :pesan="tcf(`hapusAkun.kosong.${q.status}`)" icon="lucide:user-x" />
+      <CashflowKeadaan v-if="!daftar.length" jenis="kosong" icon="lucide:user-x" :judul="tcf('umum.kosongJudul')" :pesan="tcf(`hapusAkun.kosong.${q.status}`)" />
       <ul v-else class="space-y-3">
         <li v-for="p in daftar" :key="p.id">
           <CashflowHapusAkunKartu

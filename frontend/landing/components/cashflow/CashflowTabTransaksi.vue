@@ -205,14 +205,7 @@ const pilihBaris = (t: TransaksiBaris, i: number) => { sorot.value = i; bukaLaci
       </label>
       <div class="col-span-2 flex flex-col gap-1 text-xs text-[var(--ca-muted)] sm:col-span-1">
         {{ tcf('transaksi.jenis') }}
-        <div class="flex flex-wrap gap-1 rounded-full border border-[color:var(--ca-border)] p-1 text-sm">
-          <button
-            v-for="o in opsiJenis" :key="o.nilai || 'semua'" type="button"
-            class="rounded-full px-3 py-1 transition"
-            :class="q.jenis === o.nilai ? 'bg-[var(--ca-panel-bg-strong)] font-semibold text-[var(--ca-text)]' : 'text-[var(--ca-muted)]'"
-            :aria-pressed="q.jenis === o.nilai" @click="saringUlang({ jenis: o.nilai })"
-          >{{ o.label }}</button>
-        </div>
+        <CashflowSegmen class="self-start" :opsi="opsiJenis" :nilai="q.jenis" :label="tcf('transaksi.jenis')" @pilih="(j) => saringUlang({ jenis: j })" />
       </div>
       <label class="flex flex-col gap-1 text-xs text-[var(--ca-muted)]">
         {{ tcf('saring.dari') }}

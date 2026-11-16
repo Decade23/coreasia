@@ -252,12 +252,15 @@ useConsoleRemah().pasang(() => [
       <span>{{ tcf('paket.belumAktif') }}</span>
     </div>
     <CashflowIzinKurang v-else-if="galat?.jenis === 'izin'" />
-    <p v-else-if="pesanGalat" class="text-sm ca-tone-danger" role="alert">{{ pesanGalat }}</p>
-    <p v-else-if="memuat && !daftar.length" class="text-sm text-[var(--ca-muted)]">{{ tcf('umum.memuat') }}</p>
+    <CashflowKeadaan
+      v-else-if="pesanGalat" jenis="galat" :judul="tcf('umum.galatJudul')" :pesan="pesanGalat"
+      :label-ulang="tcf('umum.cobaLagi')" :sibuk="memuat" @ulang="muatDaftar()"
+    />
+    <CashflowKeadaan v-else-if="memuat && !daftar.length" jenis="memuat" :pesan="tcf('umum.memuat')" :baris="4" :kolom="6" />
     <template v-else>
       <CashflowIzinKurang v-if="!bolehUbah" :pesan="tcf('paket.izinUbah')" />
       <p class="text-xs text-[var(--ca-muted)]">{{ tcf('paket.ringkas')(ringkas.total, ringkas.aktif, ringkas.promo) }}</p>
-      <CashflowKeadaanKosong v-if="!daftar.length" :pesan="tcf('paket.kosong')" icon="lucide:tags" />
+      <CashflowKeadaan v-if="!daftar.length" jenis="kosong" icon="lucide:tags" :judul="tcf('umum.kosongJudul')" :pesan="tcf('paket.kosong')" />
       <CashflowPaketTabel
         v-else :daftar="daftar" :kini="jam" :boleh-ubah="bolehUbah" :sibuk="sibuk?.kode ?? null" :terkunci="!!sibuk"
         @ubah="bukaUbah" @aktifkan="aktifkan" @nonaktifkan="mintaNonaktif" @bawaan="jadikanBawaan"

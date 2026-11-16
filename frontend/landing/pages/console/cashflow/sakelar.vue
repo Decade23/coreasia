@@ -90,6 +90,11 @@ const segarkanDaftar = async () => {
 
 const nilai = (key: string) => config.value.find(c => c.kunci === key)?.nilai
 const otpLonggar = computed(() => nilai('auth.verifikasi_email') === 'longgar')
+/** Wajib berwarna aman, longgar berwarna awas: pilihan ini mengubah siapa yang boleh mendaftar. */
+const opsiOtp = computed(() => [
+  { nilai: 'wajib' as const, label: tcf('sakelar.otpWajib') as string, nada: 'baik' as const },
+  { nilai: 'longgar' as const, label: tcf('sakelar.otpLonggar') as string, nada: 'awas' as const },
+])
 const barisPengecualian = computed(() => config.value.find(c => c.kunci === KUNCI_PENGECUALIAN) ?? null)
 const keadaan = computed(() => keadaanPengecualian(barisPengecualian.value))
 /** Bentuk tersamar dari server — hanya untuk dilihat, tidak pernah dikirim balik. */
@@ -231,10 +236,7 @@ onBeforeUnmount(tutupSunting)
           </div>
           <div class="flex items-center gap-2">
             <Icon v-if="sibuk === 'otp'" name="lucide:loader-2" class="h-4 w-4 animate-spin text-[var(--ca-muted)]" :aria-label="tcf('sakelar.menyimpan')" />
-            <div class="flex rounded-full border border-[color:var(--ca-border)] p-1 text-sm">
-              <button type="button" class="rounded-full px-4 py-1.5 transition disabled:opacity-60" :disabled="!!sibuk" :class="!otpLonggar ? 'bg-[var(--ca-emerald-bg)] font-semibold text-[var(--ca-text)]' : 'text-[var(--ca-muted)]'" @click="setOtp(false)">{{ tcf('sakelar.otpWajib') }}</button>
-              <button type="button" class="rounded-full px-4 py-1.5 transition disabled:opacity-60" :disabled="!!sibuk" :class="otpLonggar ? 'bg-[var(--ca-gold-bg)] font-semibold text-[var(--ca-text)]' : 'text-[var(--ca-muted)]'" @click="setOtp(true)">{{ tcf('sakelar.otpLonggar') }}</button>
-            </div>
+            <CashflowSegmen :opsi="opsiOtp" :nilai="otpLonggar ? 'longgar' : 'wajib'" :label="tcf('sakelar.otpJudul')" :mati="!!sibuk" @pilih="(v) => setOtp(v === 'longgar')" />
           </div>
         </div>
         <label class="mt-4 block max-w-xl">

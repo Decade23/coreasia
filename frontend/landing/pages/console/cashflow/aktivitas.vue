@@ -22,7 +22,8 @@ const api = useCashflowAdmin()
 const toast = useToast()
 const { memuat, pesanGalat, muat, aksi } = useCashflowMuat({ awal: true })
 const rows = ref<AktivitasV2DTO[]>([])
-onMounted(() => muat(async () => { rows.value = await api.aktivitasTerbaru(150) }))
+const muatAktivitas = () => muat(async () => { rows.value = await api.aktivitasTerbaru(150) })
+onMounted(muatAktivitas)
 
 /** Satu Selidiki berjalan pada satu waktu: klik ganda tidak membuka dua kasus. */
 const { sibuk, jalankan: selidiki } = useCashflowSekaliJalan((id: number) => aksi(async () => {
@@ -43,22 +44,26 @@ const { sibuk, jalankan: selidiki } = useCashflowSekaliJalan((id: number) => aks
     <p class="text-sm text-[var(--ca-muted)]">{{ tcf('aktivitas.ket') }} {{ tcf('selidiki.ket') }}</p>
     <!-- Langkah usaha (0110): memuat sendiri, galatnya tidak menutup tabel peristiwa. -->
     <CashflowLangkahUsaha />
-    <p v-if="pesanGalat" class="text-sm ca-tone-danger">{{ pesanGalat }}</p>
-    <p v-else-if="memuat" class="text-sm text-[var(--ca-muted)]">{{ tcf('umum.memuat') }}</p>
-    <div v-else class="ca-console-dialog overflow-x-auto">
-      <CashflowKeadaanKosong v-if="!rows.length" class="m-5" :pesan="tcf('umum.kosong')" icon="lucide:activity" />
-      <table v-else class="w-full text-sm">
-        <thead><tr class="text-left text-xs uppercase tracking-wide text-[var(--ca-muted)]">
-          <th class="px-4 py-2">{{ tcf('aktivitas.tanggal') }}</th>
-          <th class="px-4 py-2">{{ tcf('aktivitas.jenis') }}</th><th class="px-4 py-2">{{ tcf('aktivitas.nominal') }}</th>
-          <th class="px-4 py-2"><span class="sr-only">{{ tcf('selidiki.tombol') }}</span></th>
+    <CashflowKeadaan
+      v-if="pesanGalat && !rows.length" jenis="galat" :judul="tcf('umum.galatJudul')" :pesan="pesanGalat"
+      :label-ulang="tcf('umum.cobaLagi')" @ulang="muatAktivitas()"
+    />
+    <CashflowKeadaan v-else-if="memuat && !rows.length" jenis="memuat" :pesan="tcf('umum.memuat')" :baris="6" :kolom="4" />
+    <template v-else>
+      <p v-if="pesanGalat" class="rounded-xl bg-[var(--ca-danger-bg)] px-4 py-3 text-sm font-semibold text-[var(--ca-danger-text)]" role="alert">{{ pesanGalat }}</p>
+      <CashflowKeadaan v-if="!rows.length" jenis="kosong" icon="lucide:activity" :judul="tcf('umum.kosongJudul')" :pesan="tcf('umum.kosong')" />
+      <CashflowTabel v-else>
+        <thead><tr>
+          <th scope="col">{{ tcf('aktivitas.tanggal') }}</th>
+          <th scope="col">{{ tcf('aktivitas.jenis') }}</th><th scope="col" class="cf-ka">{{ tcf('aktivitas.nominal') }}</th>
+          <th scope="col"><span class="sr-only">{{ tcf('selidiki.tombol') }}</span></th>
         </tr></thead>
         <tbody>
-          <tr v-for="r in rows" :key="r.id" class="border-t border-[color:var(--ca-border)] text-[var(--ca-text)]">
-            <td class="px-4 py-1.5 whitespace-nowrap">{{ formatTanggal(r.tanggal) }}</td>
-            <td class="px-4 py-1.5"><span class="rounded-full bg-[var(--ca-panel-bg-strong)] px-2 text-xs">{{ r.jenis }}</span></td>
-            <td class="px-4 py-1.5 tabular-nums">{{ r.rentang_nominal }}</td>
-            <td class="px-4 py-1.5 text-right">
+          <tr v-for="r in rows" :key="r.id">
+            <td class="whitespace-nowrap">{{ formatTanggal(r.tanggal) }}</td>
+            <td><span class="rounded-full bg-[var(--ca-panel-bg-strong)] px-2 py-0.5 text-xs font-semibold">{{ r.jenis }}</span></td>
+            <td class="cf-ka whitespace-nowrap">{{ r.rentang_nominal }}</td>
+            <td class="cf-ka">
               <button
                 type="button" class="ca-btn-secondary !px-3 !py-1 text-xs" :disabled="sibuk !== null"
                 :aria-busy="sibuk === r.id" @click="selidiki(r.id)"
@@ -66,7 +71,7 @@ const { sibuk, jalankan: selidiki } = useCashflowSekaliJalan((id: number) => aks
             </td>
           </tr>
         </tbody>
-      </table>
-    </div>
+      </CashflowTabel>
+    </template>
   </div>
 </template>
