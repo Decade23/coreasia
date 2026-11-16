@@ -51,6 +51,8 @@ try {
     if (u.origin === new URL(sb).origin) {
       const headers = { 'access-control-allow-origin': origin, 'access-control-allow-headers': '*', 'access-control-allow-methods': 'POST,GET,OPTIONS' };
       if (req.method() === 'OPTIONS') return r.fulfill({ status: 204, headers });
+      // Server tiruan ini belum memasang daftar v4: jawab seperti PostgREST, halaman jatuh ke v3.
+      if (u.pathname.endsWith('/admin_daftar_pengguna_v4')) return r.fulfill({ status: 404, json: { code: 'PGRST202', message: 'Could not find the function public.admin_daftar_pengguna_v4 in the schema cache' }, headers });
       const name = u.pathname.split('/').pop(), p = req.postDataJSON() || {}, fail = failure; failure = 0;
       requests.push({ name, p });
       if (held) await new Promise(resolve => pending.push(resolve));

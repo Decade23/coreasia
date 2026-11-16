@@ -44,7 +44,10 @@ try {
   await page.route('**/api/gw/admin/auth/me',r=>r.fulfill({json:{data:{id:'admin-test',email:'admin@example.invalid',full_name:'Admin Contoh',role:'super_admin',is_active:true,mfa:true,mfa_at:new Date().toISOString(),totp_enabled_at:'2026-01-01T00:00:00Z'}}}));
   await page.route('http://127.0.0.1:4398/**',async r=>{
     const req=r.request(); if(req.method()==='OPTIONS')return r.fulfill({status:204,headers:{'access-control-allow-origin':'*','access-control-allow-headers':'*','access-control-allow-methods':'GET,POST,OPTIONS'}});
-    const name=new URL(req.url()).pathname.split('/').pop();const p=req.postDataJSON()||{};seen.push({name,p});
+    const name=new URL(req.url()).pathname.split('/').pop();const p=req.postDataJSON()||{};
+    // Server tiruan ini belum memasang daftar v4: jawab seperti PostgREST, halaman jatuh ke v3.
+    if(name==='admin_daftar_pengguna_v4')return r.fulfill({status:404,json:{code:'PGRST202',message:`Could not find the function public.${name} in the schema cache`},headers:{'access-control-allow-origin':'*'}});
+    seen.push({name,p});
     let data={};
     if(name==='admin_daftar_pengguna_v3'){
       if(p.p_offset===50 && !gagalSekali){gagalSekali=true;return r.fulfill({status:500,json:{code:'XX000',message:'Gangguan sintetis'},headers:{'access-control-allow-origin':'*'}})}

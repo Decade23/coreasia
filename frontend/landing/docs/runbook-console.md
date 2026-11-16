@@ -840,6 +840,55 @@ CASHFLOW_MIGRASI=<repo cashflow>/supabase/migrations npx vitest run tests/cashfl
 node scripts/cek-komponen-cashflow.mjs
 ```
 
+## Pemakai Domi di daftar pengguna
+
+Daftar pengguna (`/console/cashflow/pengguna`) menjawab siapa yang sudah memakai Domi. Ada tiga kolom
+baru yang bisa diurutkan: **Domi** (jumlah pertanyaan sejak akun dibuat, dengan baris kecil 30 hari
+terakhir bila angkanya berbeda), **Terakhir pakai Domi**, dan **Kredit** (sisa kredit, bertanda tas
+belanja bila orang itu pernah membeli). Akun tim diberi lencana **Tim** di samping emailnya.
+
+- RPC: `admin_daftar_pengguna_v4`, argumennya sama persis dengan v3. Per baris bertambah `domi_tanya`,
+  `domi_tanya_30`, `domi_terakhir`, `kredit_sisa`, `kredit_beli`, dan `internal`. Kepala hasil membawa
+  `jumlah_pakai_domi`, yang tampil sebagai kalimat kecil di atas tabel.
+- Urutan baru: `p_urut` = `domi`, `domi_terakhir`, `kredit`. Segmen baru: **Pakai Domi**
+  (`pakai_domi`) dan **Beli kredit** (`beli_kredit`). Saringan **Akun tim** mengirim
+  `p_filter.internal` bernilai `ya` atau `tidak`. Di layar lebar pilihannya ada di samping deret
+  segmen, di ponsel ada di dalam Saringan kolom.
+- Tanpa izin `cashflow:pii` hitungan Domi dan kredit pulang kosong dan tampil sebagai garis. Urutan
+  dan kedua segmen itu mati, sama seperti Ruang, Tx, dan Total nominal. Tautan lama yang membawanya
+  kembali ke urutan bawaan. Lencana Tim dan saringan akun tim tetap ada.
+- Server lama (v4 belum terpasang): PostgREST menjawab `PGRST202`, lalu halaman membaca daftar lewat v3
+  seperti sebelumnya. Kolom, urutan, segmen, saringan akun tim, dan kalimat jumlahnya tidak tampil
+  sama sekali. Tautan yang membawa `?urut=domi` atau `?seg=pakai_domi` kembali ke bawaan tanpa galat,
+  dan v3 tidak pernah menerima nilai itu. Selama tab yang sama, v4 hanya ditanyai sekali. Sesudah
+  migrasinya terpasang, muat ulang halaman supaya kolomnya muncul.
+- Dengan tiga kolom tambahan tabel lebih lebar dari bingkainya di jendela 1440 px. Kolom paling kanan
+  (Tx, Total nominal, Status) dicapai dengan menggulir tabel ke samping di dalam bingkainya. Kolom
+  email mendapat lebar terkecil supaya tidak terjepit. Di bawah 1024 px daftar tetap berupa kartu.
+
+Pasang: SQL CashFlow dulu, baru landing. Landing boleh tayang lebih dulu karena jatuh ke v3. Mundur
+landing cukup.
+
+Uji kontrak terhadap migrasi belum ada, karena `admin_daftar_pengguna_v4` belum ada di folder
+`CASHFLOW_MIGRASI`. `rpc-console.test.ts` melewatinya lewat `MENDAHULUI_MIGRASI`. Sesudah migrasinya
+tergabung:
+
+1. Hapus `admin_daftar_pengguna_v4` dari `MENDAHULUI_MIGRASI` di `tests/cashflow/rpc-console.test.ts`.
+2. Pastikan `toko/uji-console-rpc.sql` di repo CashFlow memuatnya (blok rpc-console dan baris kepala
+   `admin_daftar_pengguna_v4 ← daftarPenggunaHalamanV4`).
+3. Cocokkan nama kolom, nilai `p_urut`, `p_segmen`, dan kunci `p_filter` di
+   `adapters/cashflowPenggunaDomi.ts` dengan migrasinya. Bila server menolak pilihan Domi tanpa izin
+   dengan hint selain `izin-kurang`, sesuaikan penanganannya di halaman.
+4. Sesudah v4 terpasang di produksi dan tidak akan dimundurkan, jatuh-mundur ke v3
+   (`bacaDaftarBerjenjang`, `daftarPenggunaHalaman`, `serverDomi`) boleh dicabut.
+
+```bash
+CASHFLOW_MIGRASI=<repo cashflow>/supabase/migrations npx vitest run tests/cashflow/pengguna-domi.test.ts tests/cashflow/rpc-console.test.ts
+node scripts/cek-komponen-cashflow.mjs
+# Tampilan dengan data sintetis (cara menjalankan ada di kepala skrip):
+node scripts/uji-console-pengguna-domi-headless.mjs
+```
+
 ## Sasaran pengumuman berbasis aturan
 
 Pengumuman bisa dikirim ke penerima **Otomatis dengan aturan**, jadi tidak perlu memilih akun satu per
