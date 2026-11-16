@@ -452,6 +452,9 @@ curl -s -o /dev/null -D - -X OPTIONS https://api.coreasia.id/api/admin/auth/logi
   -H 'Access-Control-Request-Headers: content-type' | grep -i 'access-control-allow-origin'
 ```
 
+Sesudah setiap deploy landing, jalankan juga pemeriksaan berkas build di bagian
+"Sesudah deploy: berkas build dan tembolok" di akhir dokumen ini.
+
 Di Vercel, header routeRules dipasang di tepi. Rute `/console/**` sengaja
 tidak memuat CSP statis. Kalau `curl -I` di atas menunjukkan CSP
 `'unsafe-inline'` milik `/**`, berarti CSP ber-hash dari fungsi tertimpa.
@@ -1202,3 +1205,136 @@ tanpa izin data pribadi), lalu mencatat halaman yang meluber, kepala kolom yang 
 semua, kartu yang melewati tepi di 390 px, dan tabel yang bergulir ke samping di 1440 px. Datanya di
 `scripts/data-sintetis-console.mjs`. `CF_QA_HANYA='<regex nama>'` memotret sebagian halaman saja,
 `CF_QA_LUNAK=1` mencetak temuan tanpa menggagalkan.
+
+## Sesudah deploy: berkas build dan tembolok
+
+### Yang pernah terjadi
+
+Beberapa menit sesudah sebuah push ke master, berkas `/_nuxt/<hash>.js` milik build baru sempat
+dijawab 404, dan 404 itu membawa `cache-control: public, max-age=31536000, immutable`. Peramban
+yang membuka console pada saat itu menyimpan 404-nya, jadi console tampil tanpa menu sampai
+tembolok dihapus. CDN di depan ikut menyimpannya (`cf-cache-status: HIT`).
+
+Yang terbukti dari konfigurasi:
+
+- `routeRules['/_nuxt/**']` di `nuxt.config.ts` memberi header itu. Preset Vercel milik Nitro
+  menuliskannya ke `.vercel/output/config.json` sebagai rute sebelum `handle: filesystem`, dan
+  rute di fase itu menempel pada jawaban apa pun untuk jalur yang cocok, tanpa melihat status.
+  Preset menulis aturan serupa sendiri untuk semua folder aset publik.
+- Landing dirilis oleh integrasi Git Vercel dari push ke master. Repo ini tidak memakai
+  `vercel deploy --skip-domain`, `promote`, atau perlindungan beda versi (skew protection).
+- Untuk 404 yang dijawab fungsi, header dari fungsi yang menang, bukan header rute. Sebelum
+  perbaikan fungsi tidak mengirim cache-control yang tegas untuk permintaan dari peramban, lalu
+  CDN menggantinya dengan umur tembolok peramban bawaannya (terukur `max-age=14400` pada 404
+  berakhiran `.js`). Jadi 404 tersimpan berjam-jam di peramban walau tanpa `immutable`.
+
+Yang masih dugaan:
+
+- Kenapa HTML build baru sempat merujuk berkas yang belum terjawab 200. Pergantian deployment
+  di Vercel mestinya serentak. Dugaan terkuat: selama pergantian, permintaan HTML dan
+  permintaan berkas dilayani keadaan yang berbeda di tepi, dan jawaban 404 saat itu tidak datang
+  dari fungsi (404 dari fungsi tidak membawa `immutable`, lihat butir di atas). Ini tidak bisa
+  diulang dari luar.
+- Sekali satu 404 ber-`immutable` lewat, CDN menyimpannya sesuai header itu. Itu yang
+  memperpanjang gangguan dari hitungan detik menjadi menit, dan menjelaskan `HIT`.
+
+### Yang diubah
+
+- `nuxt.config.ts`: aturan `'/_nuxt/**'` dicabut dari `routeRules`. Kait `nitro:init` menulis
+  ulang `config.json` Vercel lewat `server/lib/aset/rute-vercel.ts`: tembolok setahun hanya di
+  fase `hit` (berkas ditemukan), `no-store` di fase `miss`, dan tidak ada lagi cache-control
+  untuk `/_nuxt` di fase awal. Kalau susunan rute preset berubah, build gagal dengan pesan jelas.
+- `server/middleware/aset-hilang.ts`: berkas build yang tidak ada dijawab 404 polos dengan
+  `cache-control: no-store`.
+- `utils/pulih-chunk.ts`: skrip kecil di `<head>` semua halaman. Bila berkas build gagal dimuat,
+  ia meminta ulang berkas itu dengan melewati tembolok peramban, lalu memuat ulang halaman satu
+  kali. Dokumen hasil muat ulang itu tidak pernah memuat ulang dirinya lagi. Kesempatan kedua
+  hanya diberikan bila permintaan ulang membuktikan berkasnya sudah 200, dan tidak ada yang
+  ketiga dalam sepuluh menit.
+
+Batasnya, supaya tidak salah harap:
+
+- Fase `hit` dan `miss` hanya bisa dibuktikan di Vercel. Build lokal membuktikan isi
+  `config.json` dan jawaban fungsi, bukan perilaku tepi.
+- Di server Node (Docker, `nuxi preview`) berkas yang tidak ada dijawab penangan aset Nitro:
+  404 dengan `no-cache` atau `max-age=0, must-revalidate`, bukan `no-store`. Tetap tidak awet.
+- Pengaman klien tidak bisa menembus 404 yang disimpan CDN. Untuk itu lihat usulan di bawah.
+- Folder `/_fonts` masih memakai aturan lama. Nama berkasnya tidak berganti di tiap rilis, jadi
+  tidak ikut masalah ini.
+
+### Pemeriksaan sesudah deploy
+
+Tunggu sampai deployment di Vercel berstatus Ready, lalu dua menit lagi. Sesudah itu:
+
+```bash
+# 1. Berkas yang tidak ada: 404, no-store, dan CDN tidak menyimpannya.
+u="https://coreasia.id/_nuxt/periksa-$(date +%s).js"
+curl -sI "$u" | grep -iE '^HTTP|^cache-control|^cf-cache-status'
+curl -sI -A 'Mozilla/5.0' "$u" | grep -iE '^HTTP|^cache-control|^cf-cache-status'
+# Harapan, dua-duanya: HTTP/2 404, cache-control: no-store,
+# cf-cache-status: BYPASS atau DYNAMIC. Yang salah: HIT, atau cache-control berisi max-age.
+
+# 2. Semua berkas build yang dirujuk halaman login console: 200 dan immutable.
+for f in $(curl -s https://coreasia.id/console/login | grep -oE '/_nuxt/[A-Za-z0-9_.-]+\.(js|css)' | sort -u); do
+  printf '%s  ' "$f"
+  curl -sI "https://coreasia.id$f" | grep -iE '^HTTP|^cache-control' | tr -d '\r' | tr '\n' ' '
+  echo
+done
+# Harapan tiap baris: HTTP/2 200  cache-control: public, max-age=31536000, immutable
+
+# 3. Manifest build tetap berumur pendek.
+curl -sI https://coreasia.id/_nuxt/builds/latest.json | grep -iE '^HTTP|^cache-control'
+# Harapan: HTTP/2 200, cache-control: public, max-age=1, immutable
+
+# 4. Skrip pengaman ada di HTML dan CSP console tetap ber-hash.
+curl -s https://coreasia.id/console/login | grep -c '__caPulihChunk'          # 1
+curl -sI https://coreasia.id/console/login | grep -io "script-src[^;]*"       # berisi 'sha256-…', tanpa 'unsafe-inline'
+```
+
+Ulangi langkah 2 sepuluh menit kemudian. Rilis pertama yang membawa perubahan ini sebaiknya
+diperiksa dulu di deployment pratinjau cabangnya (alamat `*.vercel.app`, tanpa CDN di depan)
+dengan langkah 1 dan 2, sebelum digabung ke master.
+
+Membaca hasilnya:
+
+- Langkah 2 menunjukkan 404 untuk berkas yang dirujuk HTML: itu kejadian yang sama. Minta ulang
+  setelah satu menit. Kalau `cf-cache-status: HIT`, 404-nya tersimpan di CDN: hapus alamat itu
+  dari tembolok CDN (Purge by URL), lalu periksa lagi.
+- Langkah 2 menunjukkan 200 tetapi cache-control bukan `immutable`: fase `hit` tidak bekerja
+  seperti yang diharapkan. Situs tetap benar, hanya lebih lambat karena berkas divalidasi ulang
+  di tiap kunjungan. Tidak perlu mundur, catat dan perbaiki.
+- Langkah 1 menunjukkan `max-age=14400` atau angka lain: CDN masih mengganti header 404.
+  Terapkan usulan di bawah.
+
+### Pengguna melihat console tanpa menu
+
+1. Minta ia membuka ulang halamannya sekali. Pengaman klien meminta ulang berkas yang gagal dan
+   memuat ulang sendiri bila berkasnya sudah benar di server.
+2. Belum pulih: muat ulang paksa, Ctrl+Shift+R (Windows/Linux) atau Cmd+Shift+R (Mac).
+3. Masih belum: jalankan langkah 2 di atas. Kalau ada berkas yang 404 atau `HIT` berisi 404,
+   masalahnya di server atau CDN, bukan di peramban pengguna. Hapus alamat itu dari tembolok
+   CDN, lalu ulangi dari nomor 1.
+4. Jalan terakhir di peramban: hapus data situs untuk coreasia.id (ikon gembok di bilah alamat,
+   Setelan situs, Hapus data). Ia perlu login lagi.
+
+### Usulan untuk CDN (belum diterapkan)
+
+Perubahan di repo ini tidak menyentuh setelan CDN. Tiga hal yang layak dipasang di sana:
+
+1. Aturan tembolok untuk jalur yang diawali `/_nuxt/`: umur tembolok tepi mengikuti header asal,
+   dengan pengecualian per status, yaitu status 400 sampai 599 tidak disimpan sama sekali.
+2. Untuk jalur yang sama, umur tembolok peramban mengikuti header asal (Respect Existing
+   Headers), supaya `no-store` pada 404 tidak diganti umur bawaan.
+3. Dalam daftar periksa rilis: bila langkah 2 pernah menunjukkan 404, hapus alamat itu dari
+   tembolok CDN sebelum memberi tahu pengguna.
+
+### Uji lokal
+
+```bash
+npx vitest run tests/public/tembolok-aset.test.ts tests/public/pulih-chunk.test.ts tests/cashflow/muat-ulang-bersih.test.ts
+# Isi config.json Vercel: fase miss dan hit ada, fase awal tanpa cache-control untuk /_nuxt.
+NITRO_PRESET=vercel npx nuxi build
+node -e 'const r=require("./.vercel/output/config.json").routes;let f="awal";for(const x of r){if(x.handle){f=x.handle;continue}if(/_nuxt/.test(x.src))console.log(f,x.src,JSON.stringify(x.headers))}'
+# Pengaman klien di Chrome headless (cara menjalankan ada di kepala skrip):
+node scripts/uji-pulih-chunk-headless.mjs
+```

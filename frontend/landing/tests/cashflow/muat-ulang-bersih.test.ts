@@ -24,10 +24,13 @@ let router: {
   beforeEach: ReturnType<typeof vi.fn>
   beforeResolve: ReturnType<typeof vi.fn>
   onError: ReturnType<typeof vi.fn>
+  replace?: ReturnType<typeof vi.fn>
+  currentRoute?: { value: { path: string, query: Record<string, string>, hash: string } }
 }
 let kait: Map<string, (x: { error: unknown }) => void>
 let storage: { removeItem: ReturnType<typeof vi.fn> }
 let storageDiblokir = false
+let pulihChunk: ((url: string | null, tujuan: string) => boolean) | undefined
 
 beforeAll(() => {
   vi.stubGlobal('defineNuxtPlugin', (p: unknown) => p)
@@ -39,6 +42,9 @@ beforeAll(() => {
       if (storageDiblokir) throw new Error('SecurityError')
       return storage
     },
+    get __caPulihChunk() {
+      return pulihChunk
+    },
   })
 })
 afterAll(() => vi.unstubAllGlobals())
@@ -49,6 +55,7 @@ beforeEach(() => {
   kait = new Map()
   storage = { removeItem: vi.fn() }
   storageDiblokir = false
+  pulihChunk = undefined
 })
 
 async function pasangPlugin() {
@@ -93,6 +100,44 @@ describe('plugin muat-ulang-bersih', () => {
     ;(router.beforeEach.mock.calls[0]![0] as () => void)()
     onError(galatChunk, { fullPath: '/y' })
     expect(reloadNuxtApp).toHaveBeenCalledTimes(1)
+  })
+
+  it('pengaman sebaris ada → ia yang memulihkan di jalur tujuan; menolak di muatan pertama → berhenti; selain itu muat ulang biasa', async () => {
+    await pasangPlugin()
+    const galatChunk = new Error('Failed to fetch dynamically imported module')
+    const onError = router.onError.mock.calls[0]![0] as (e: unknown, to: { fullPath: string }, from?: { matched: unknown[] }) => void
+    const panggilan: Array<[string | null, string]> = []
+
+    pulihChunk = (url, tujuan) => { panggilan.push([url, tujuan]); return true }
+    kait.get('app:chunkError')!({ error: galatChunk })
+    onError(galatChunk, { fullPath: '/console/cashflow/audit?hal=2' })
+    expect(panggilan).toEqual([[null, '/console/cashflow/audit?hal=2']])
+    expect(reloadNuxtApp).not.toHaveBeenCalled()
+
+    // Pengaman menolak pada muatan pertama dokumen (belum ada halaman asal): berhenti, tidak berputar.
+    pulihChunk = () => false
+    onError(galatChunk, { fullPath: '/console/cashflow/audit' }, { matched: [] })
+    expect(reloadNuxtApp).not.toHaveBeenCalled()
+    // Pengaman menolak saat pengguna berpindah halaman: muat ulang biasa di tujuan.
+    onError(galatChunk, { fullPath: '/console/cashflow/audit' }, { matched: [{}] })
+    expect(reloadNuxtApp).toHaveBeenCalledTimes(1)
+
+    pulihChunk = () => { throw new Error('rusak') }
+    onError(galatChunk, { fullPath: '/console/cashflow/audit' })
+    expect(reloadNuxtApp).toHaveBeenCalledTimes(2)
+    expect(reloadNuxtApp.mock.calls[1]![0]).toEqual({ path: '/console/cashflow/audit', persistState: false })
+  })
+
+  it('parameter pembeda pemulihan dibuang dari rute sesudah aplikasi terpasang, isi lain utuh', async () => {
+    await pasangPlugin()
+    const terpasang = kait.get('app:mounted') as unknown as () => void
+    router.replace = vi.fn()
+    router.currentRoute = { value: { path: '/about', query: { lang: 'en' }, hash: '' } }
+    terpasang()
+    expect(router.replace).not.toHaveBeenCalled()
+    router.currentRoute = { value: { path: '/about', query: { lang: 'en', _mc: 'abc' }, hash: '#tim' } }
+    terpasang()
+    expect(router.replace).toHaveBeenCalledWith({ path: '/about', query: { lang: 'en' }, hash: '#tim' })
   })
 
   it('pembantu murni: jalur = joinURL(baseURL, fullPath); penghapus menelan galat storage', () => {

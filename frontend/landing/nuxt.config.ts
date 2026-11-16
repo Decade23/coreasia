@@ -3,6 +3,11 @@
    same-origin, noindex). Alasannya ada di berkas itu; diuji di
    tests/konsol/csp.test.ts. */
 import { HEADER_KEAMANAN_DASAR, HEADER_KONSOL } from './server/lib/konsol/header'
+/* Tembolok /_nuxt di Vercel: lihat kait 'nitro:init' di bawah. */
+import { readFile, writeFile } from 'node:fs/promises'
+import { resolve } from 'node:path'
+import { amankanTembolokAset } from './server/lib/aset/rute-vercel'
+import { skripPulihChunk } from './utils/pulih-chunk'
 
 import { websiteChatOrigin } from './utils/website-chat'
 const CHAT_ORIGIN = websiteChatOrigin(process.env.NUXT_PUBLIC_CHATWOOT_BASE_URL || '', process.env.NUXT_PUBLIC_CHATWOOT_ALLOW_LOCAL === 'true')
@@ -135,6 +140,9 @@ export default defineNuxtConfig({
     app: {
         head: {
             title: 'CoreAsia Teknologi',
+            /* Pengaman berkas build gagal dimuat: sebaris di <head> supaya
+               sudah terpasang sebelum berkas utama diminta (utils/pulih-chunk.ts). */
+            script: [{ key: 'pulih-chunk', innerHTML: skripPulihChunk(), tagPosition: 'head' }],
             link: [
                 {
                     rel: 'icon',
@@ -310,6 +318,24 @@ export default defineNuxtConfig({
             concurrency: 1,
         },
     },
+    hooks: {
+        /* Preset Vercel menulis .vercel/output/config.json di kait `compiled`
+           miliknya. Kait ini terdaftar sesudahnya, jadi berjalan sesudah
+           berkas itu ada, lalu memindahkan tembolok /_nuxt ke fase hit/miss
+           (alasan dan bentuknya di server/lib/aset/rute-vercel.ts). Kalau
+           susunan rute preset berubah, build GAGAL dengan pesan jelas:
+           lebih baik rilis tertahan daripada 404 kembali bisa disimpan. */
+        'nitro:init'(nitro) {
+            nitro.hooks.hook('compiled', async () => {
+                if (!nitro.options.preset.startsWith('vercel')) return
+                const berkas = resolve(nitro.options.output.dir, 'config.json')
+                const konfig = JSON.parse(await readFile(berkas, 'utf8'))
+                const { baseURL, buildAssetsDir } = nitro.options.runtimeConfig.app
+                const dirAset = `${baseURL.replace(/\/+$/, '')}/${buildAssetsDir.replace(/^\/+|\/+$/g, '')}`
+                await writeFile(berkas, JSON.stringify(amankanTembolokAset(konfig, dirAset), null, 2))
+            })
+        },
+    },
     routeRules: {
         /* Catatan untuk /api/cashflow/**: aturan '/api/**' { cors: true } di
            bawah ikut memasang Access-Control-Allow-Origin: * pada rute pencetak
@@ -405,10 +431,16 @@ export default defineNuxtConfig({
                 'Content-Security-Policy': `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data:; font-src 'self' https://fonts.gstatic.com; connect-src 'none'; frame-ancestors 'self'`,
             },
         },
-        // Immutable cache for built assets
-        '/_nuxt/**': {
-            headers: { 'Cache-Control': 'public, max-age=31536000, immutable' },
-        },
+        /* JANGAN pasang Cache-Control untuk '/_nuxt/**' di sini. Header
+           routeRules menempel pada jawaban apa pun untuk jalur yang cocok,
+           termasuk 404: berkas ber-hash yang sesaat belum ada ketika rilis
+           ikut dijawab `immutable` setahun, lalu peramban dan CDN menyimpan
+           404 itu dan console tampil tanpa menu. Tembolok lama untuk berkas
+           yang memang ada dipasang di tempat yang melihat hasilnya: fase
+           `hit` di Vercel (kait 'nitro:init' di atas) dan penangan aset
+           statis Nitro di server Node (maxAge aset publik milik Nuxt). Yang
+           tidak ada dijawab `no-store` (server/middleware/aset-hilang.ts).
+           Dijaga tests/public/tembolok-aset.test.ts. */
         '/favicon.ico': {
             headers: { 'Cache-Control': 'public, max-age=86400, must-revalidate' },
         },
