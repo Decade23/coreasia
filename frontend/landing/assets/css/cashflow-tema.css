@@ -202,3 +202,163 @@ body.cf-area .ca-console-main .ca-console-kepala-ringkas h1 {
   line-height: 1.2;
   font-weight: 800;
 }
+
+/* ── Tabel dan daftar ─────────────────────────────────────────────────────
+   Satu rupa untuk semua tabel area CashFlow: DataTable console
+   (.ca-console-table) dan tabel CashflowTabel (.cf-tabel). Kepala satu baris
+   tanpa huruf besar semua, baris dua tingkat (.cf-dua), angka rata kanan
+   (.cf-ka) dengan angka tabular, dan sorot baris. */
+body.cf-area .ca-console-main .cf-tabel-wadah {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--cf-garis);
+  border-radius: var(--cf-r-kartu);
+  background: var(--cf-kartu);
+  box-shadow: var(--cf-bayang);
+}
+body.cf-area .ca-console-main .cf-tabel-wadah.cf-tabel-polos {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+body.cf-area .ca-console-main .cf-tabel-gulir {
+  overflow-x: auto;
+}
+/* DataTable di dalam kartu tabel: bingkainya milik kartu. */
+body.cf-area .ca-console-main .cf-tabel-wadah .ca-console-table-wrap {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+body.cf-area .ca-console-main .cf-tabel-kaki {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 0.75rem;
+  padding: 0.75rem 1.25rem;
+  border-top: 1px solid var(--cf-garis);
+  font-size: 0.78rem;
+  color: var(--cf-tinta2);
+}
+body.cf-area .ca-console-main :is(.cf-tabel, .ca-console-table) {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--cf-tinta);
+}
+body.cf-area .ca-console-main .ca-console-table thead {
+  background: var(--cf-awan);
+  backdrop-filter: none;
+}
+body.cf-area .ca-console-main :is(.cf-tabel, .ca-console-table) thead th {
+  padding: 0.75rem;
+  border-bottom: 1px solid var(--cf-garis);
+  background: var(--cf-awan);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-align: left;
+  text-transform: none;
+  white-space: nowrap;
+  color: var(--cf-tinta3);
+}
+body.cf-area .ca-console-main .ca-console-table thead th button {
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+}
+body.cf-area .ca-console-main :is(.cf-tabel, .ca-console-table) thead th[aria-sort]:not([aria-sort="none"]),
+body.cf-area .ca-console-main .ca-console-table thead th button:hover {
+  color: var(--cf-tinta);
+}
+body.cf-area .ca-console-main :is(.cf-tabel, .ca-console-table) tbody td {
+  padding: 0.75rem;
+  vertical-align: top;
+  font-size: 0.875rem;
+}
+body.cf-area .ca-console-main :is(.cf-tabel, .ca-console-table) tbody tr {
+  border-top: 1px solid var(--cf-garis);
+  transition: background-color 120ms ease;
+}
+body.cf-area .ca-console-main :is(.cf-tabel, .ca-console-table) tbody tr:first-child {
+  border-top: 0;
+}
+body.cf-area .ca-console-main :is(.cf-tabel, .ca-console-table) tbody tr:hover {
+  background: var(--cf-awan);
+}
+body.cf-area .ca-console-main :is(.cf-tabel, .ca-console-table) :is(th, td):first-child {
+  padding-left: 1.25rem;
+}
+body.cf-area .ca-console-main :is(.cf-tabel, .ca-console-table) :is(th, td):last-child {
+  padding-right: 1.25rem;
+}
+body.cf-area .ca-console-main :is(.cf-tabel, .ca-console-table) :is(th, td).cf-ka {
+  text-align: right;
+}
+body.cf-area .ca-console-main .ca-console-table th.cf-ka > div {
+  justify-content: flex-end;
+}
+/* Kepala kolom tanpa tulisan (panah buka): labelnya tetap terbaca pembaca layar. */
+body.cf-area .ca-console-main .ca-console-table th.cf-kepala-sr > div > span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+/* Tabel berlebar tetap: lebar kolom dari kepalanya, kolom tanpa lebar mengisi sisanya. */
+body.cf-area .ca-console-main .cf-tabel-tetap .ca-console-table {
+  table-layout: fixed;
+}
+body.cf-area :is(.ca-console-main, body > :not(#__nuxt)) .cf-dua {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--cf-tinta3);
+}
+body.cf-area :is(.ca-console-main, body > :not(#__nuxt)) .cf-dua.flex {
+  display: flex;
+}
+body.cf-area :is(.ca-console-main, body > :not(#__nuxt)) .cf-kuat {
+  font-weight: 700;
+  color: var(--cf-tinta);
+}
+body.cf-area :is(.ca-console-main, body > :not(#__nuxt)) .cf-redup {
+  color: var(--cf-tinta3);
+}
+body.cf-area :is(.ca-console-main, body > :not(#__nuxt)) .cf-titik {
+  display: inline-block;
+  flex: none;
+  width: 8px;
+  height: 8px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: var(--cf-tinta3);
+}
+body.cf-area :is(.ca-console-main, body > :not(#__nuxt)) .cf-titik-baik { background: var(--cf-baik); }
+body.cf-area :is(.ca-console-main, body > :not(#__nuxt)) .cf-titik-awas { background: var(--cf-awas); }
+body.cf-area :is(.ca-console-main, body > :not(#__nuxt)) .cf-titik-galat { background: var(--cf-galat); }
+
+/* Deret pil di ponsel: satu baris yang bisa digeser, tanpa batang gulir. */
+body.cf-area :is(.ca-console-main, body > :not(#__nuxt)) .cf-seg-gulir {
+  scrollbar-width: none;
+}
+body.cf-area :is(.ca-console-main, body > :not(#__nuxt)) .cf-seg-gulir::-webkit-scrollbar {
+  display: none;
+}
+/* Pil bernada (misalnya wajib atau longgar): pilihan aktif memakai nadanya, bukan bidang inti. */
+body.cf-area :is(.ca-console-main, body > :not(#__nuxt)) button.rounded-full[aria-pressed="true"].cf-seg-baik {
+  background: var(--cf-baik-bg);
+  color: var(--cf-tinta);
+}
+body.cf-area :is(.ca-console-main, body > :not(#__nuxt)) button.rounded-full[aria-pressed="true"].cf-seg-awas {
+  background: var(--cf-awas-bg);
+  color: var(--cf-tinta);
+}

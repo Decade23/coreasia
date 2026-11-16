@@ -5,6 +5,7 @@
  * Hanya tampilan: halaman yang benar (sudah dijepit) dan jumlahnya dihitung
  * pemanggil dari SELURUH baris yang sudah disaring dan diurut. Pager ini tidak
  * tahu apa-apa soal data, jadi tidak bisa menghitung dari halaman yang tampil.
+ * Slot `ket`: tautan kecil sesudah rentang (misalnya "Arti tiap kolom").
  */
 const props = defineProps<{ hal: number; jumlahHalaman: number; total: number; per: number; lompat?: boolean; memuat?: boolean }>()
 const emit = defineEmits<{ ganti: [hal: number] }>()
@@ -27,7 +28,7 @@ const lompatKe = () => {
 
 <template>
   <div class="flex flex-wrap items-center justify-between gap-3 text-xs text-[var(--ca-muted)]">
-    <span class="tabular-nums">{{ tcf('umum.rentang')(dari, sampai, total) }}</span>
+    <span class="tabular-nums">{{ tcf('umum.rentang')(dari, sampai, total) }}<template v-if="$slots.ket">. <slot name="ket" /></template></span>
     <div v-if="jumlahHalaman > 1" class="flex items-center gap-2">
       <button type="button" class="ca-btn-secondary !px-3 !py-1.5 text-xs" :disabled="memuat || hal <= 1" @click="emit('ganti', hal - 1)">
         {{ tcf('umum.sebelumnya') }}

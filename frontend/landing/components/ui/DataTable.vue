@@ -168,16 +168,24 @@ const formatDate = (d: string) => formatDateTime(d)
       </button>
     </div>
 
-    <!-- Loading -->
-    <div v-if="loading && !filteredData.length" class="ca-card p-10 text-center" aria-busy="true">
-      <Icon name="lucide:loader-2" class="mx-auto h-8 w-8 animate-spin text-[var(--ca-subtle)]" />
-    </div>
+    <!-- Loading. Slot `loading` dan `empty` OPT-IN: tanpa slot tampil seperti semula. -->
+    <template v-if="loading && !filteredData.length">
+      <slot name="loading">
+        <div class="ca-card p-10 text-center" aria-busy="true">
+          <Icon name="lucide:loader-2" class="mx-auto h-8 w-8 animate-spin text-[var(--ca-subtle)]" />
+        </div>
+      </slot>
+    </template>
 
     <!-- Empty -->
-    <div v-else-if="!filteredData.length" class="ca-card p-10 text-center">
-      <Icon :name="emptyIcon" class="mx-auto h-12 w-12 text-[var(--ca-subtle)]" />
-      <p class="mt-3 text-sm text-[var(--ca-muted)]">{{ emptyText }}</p>
-    </div>
+    <template v-else-if="!filteredData.length">
+      <slot name="empty">
+        <div class="ca-card p-10 text-center">
+          <Icon :name="emptyIcon" class="mx-auto h-12 w-12 text-[var(--ca-subtle)]" />
+          <p class="mt-3 text-sm text-[var(--ca-muted)]">{{ emptyText }}</p>
+        </div>
+      </slot>
+    </template>
 
     <!-- Table -->
     <div v-else class="ca-console-table-wrap ca-scrollbar" :aria-busy="loading">

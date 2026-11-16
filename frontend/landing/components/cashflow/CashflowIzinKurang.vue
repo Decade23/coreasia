@@ -59,9 +59,8 @@ const masukUlang = async () => {
 </script>
 
 <template>
-  <div class="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-[color:var(--ca-gold-border)] bg-[var(--ca-gold-bg)] px-4 py-3 text-sm text-[var(--ca-text)]" role="status">
-    <Icon name="lucide:shield-alert" class="h-4 w-4 shrink-0 text-[var(--ca-gold-text)]" aria-hidden="true" />
-    <span class="min-w-0 flex-1">{{ pesan || tcf('izin.kurang') }}</span>
+  <!-- Rupa "akses terbatas": isinya tetap terbaca, yang terkunci hanya sebagian. Jalan keluarnya di kanan. -->
+  <CashflowKeadaan jenis="terbatas" :judul="tcf('umum.terbatasJudul')" :pesan="pesan || tcf('izin.kurang')">
     <span class="flex flex-wrap gap-2">
       <button v-if="user?.mfa || perangkatBaca" type="button" class="ca-btn-primary !px-3 !py-1.5 text-xs" :disabled="sibuk" @click="sambungUlang">
         {{ sibuk ? tcf('izin.menyambung') : tcf('izin.sambungUlang') }}
@@ -73,6 +72,6 @@ const masukUlang = async () => {
       </button>
       <NuxtLink v-else to="/console/keamanan" class="ca-btn-primary !px-3 !py-1.5 text-xs">{{ tcf('izin.keKeamanan') }}</NuxtLink>
     </span>
-    <div v-if="tampilKode" class="w-full"><ConsoleTotpSesi @verified="sambungUlang" /></div>
-  </div>
+    <template v-if="tampilKode" #bawah><div class="mt-3 w-full text-[var(--ca-text)]"><ConsoleTotpSesi @verified="sambungUlang" /></div></template>
+  </CashflowKeadaan>
 </template>
