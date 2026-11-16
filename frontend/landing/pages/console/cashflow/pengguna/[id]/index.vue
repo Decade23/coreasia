@@ -47,11 +47,10 @@ const bagian = computed(() => TAB_PENGGUNA.filter((t): t is Exclude<TabPengguna,
     <div v-if="p360 && akun" class="space-y-4">
       <div class="grid items-start gap-4 xl:grid-cols-2">
       <section class="ca-console-dialog p-4 sm:p-5">
+        <!-- Email, salin, dan ID sudah ada di kepala halaman: kartu ini cukup berjudul. -->
         <div class="flex flex-wrap items-center gap-2">
-          <h3 class="break-all font-mono text-base font-bold text-[var(--ca-text)] sm:text-lg">{{ akun.email }}</h3>
-          <CashflowSalinKontak v-if="akun.email !== '—'" jenis="email" :nilai="akun.email" />
-          <CashflowSalinId :id="akun.id" />
-          <span v-if="akun.ditangguhkan" class="ca-pill-danger">{{ tcf('pengguna.ditangguhkan') }}</span>
+          <h3 class="font-display text-base font-bold text-[var(--ca-text)]">{{ tcf('ringkas.kartuAkun') }}</h3>
+          <span v-if="akun.ditangguhkan" class="cf-lencana cf-lencana-galat">{{ tcf('pengguna.ditangguhkan') }}</span>
         </div>
         <dl class="mt-3 grid grid-cols-1 gap-x-6 gap-y-1.5 text-sm sm:grid-cols-[auto_1fr]">
           <dt class="text-[var(--ca-muted)]">{{ tcf('ringkas.nama') }}</dt>

@@ -31,6 +31,8 @@ const delta = computed(() => {
   if (props.pembanding == null || props.nilaiMentah == null) return null
   return props.nilaiMentah - props.pembanding
 })
+/* Nilai panjang (rupiah miliaran) memakai huruf sedikit lebih kecil supaya tetap satu baris di ubin sempit. */
+const panjang = computed(() => String(props.nilai).length > 14)
 const warnaKotak: Record<string, string> = {
   amber: 'bg-[var(--ca-gold-bg)] ca-tone-gold',
   emerald: 'bg-[var(--ca-emerald-bg)] ca-tone-emerald',
@@ -41,19 +43,19 @@ const warnaKotak: Record<string, string> = {
 </script>
 
 <template>
-  <div class="ca-console-stat" :class="utama ? 'sm:col-span-2' : ''">
-    <div class="flex items-start gap-4">
-      <span class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl" :class="warnaKotak[warna]">
-        <Icon :name="icon" class="h-5 w-5" />
+  <!-- Ikon dan label sebaris, lalu angkanya memakai lebar ubin penuh supaya
+       nilai panjang (rupiah miliaran) tidak turun jadi dua baris. -->
+  <div class="ca-console-stat min-w-0" :class="utama ? 'sm:col-span-2' : ''">
+    <div class="flex items-center gap-3">
+      <span class="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl" :class="warnaKotak[warna]">
+        <Icon :name="icon" class="h-[1.125rem] w-[1.125rem]" />
       </span>
-      <div class="min-w-0 flex-1">
-        <p class="text-[0.8125rem] font-bold leading-snug text-[var(--ca-subtle)]">{{ label }}</p>
-        <p class="mt-1 font-bold text-[var(--ca-text)] tabular-nums" :class="utama ? 'text-4xl' : 'text-2xl'">{{ nilai }}</p>
-        <p v-if="delta != null" class="mt-1 text-xs tabular-nums" :class="delta > 0 ? 'ca-tone-emerald' : delta < 0 ? 'ca-tone-danger' : 'text-[var(--ca-subtle)]'">
-          {{ delta > 0 ? '+' : '' }}{{ delta }} <span class="text-[var(--ca-subtle)]">{{ tcf('umum.vsSebelumnya') }} ({{ pembanding }})</span>
-        </p>
-        <p v-if="keterangan" class="mt-1 text-xs text-[var(--ca-subtle)]">{{ keterangan }}</p>
-      </div>
+      <p class="min-w-0 text-[0.8125rem] font-bold leading-snug text-[var(--ca-subtle)]">{{ label }}</p>
     </div>
+    <p class="mt-2 break-words font-bold text-[var(--ca-text)] tabular-nums" :class="utama ? 'text-4xl' : panjang ? 'text-xl' : 'text-2xl'">{{ nilai }}</p>
+    <p v-if="delta != null" class="mt-1 text-xs tabular-nums" :class="delta > 0 ? 'ca-tone-emerald' : delta < 0 ? 'ca-tone-danger' : 'text-[var(--ca-subtle)]'">
+      {{ delta > 0 ? '+' : '' }}{{ delta }} <span class="text-[var(--ca-subtle)]">{{ tcf('umum.vsSebelumnya') }} ({{ pembanding }})</span>
+    </p>
+    <p v-if="keterangan" class="mt-1 text-xs text-[var(--ca-subtle)]">{{ keterangan }}</p>
   </div>
 </template>

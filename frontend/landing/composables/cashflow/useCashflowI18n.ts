@@ -774,6 +774,7 @@ const KAMUS = {
       pertama: 'Halaman pertama',
     },
     ringkas: {
+      kartuAkun: 'Akun', kartuRuang: 'Tentang ruang ini',
       isiPengguna: 'Isi data pengguna', isiRuang: 'Isi data ruang', isiKet: 'Pilih bagian untuk melihat rincian dan riwayat.',
       nama: 'Nama', konfirmasi: 'Email dikonfirmasi', belumKonfirmasi: 'Belum', provider: 'Masuk lewat', sesi: 'Sesi',
       sesiNilai: (n: number, w: string) => `${n} sesi · terakhir ${w}`, mfa: 'MFA', tangguhSampai: 'Ditangguhkan sampai',
@@ -2027,6 +2028,7 @@ const KAMUS = {
       pertama: 'First page',
     },
     ringkas: {
+      kartuAkun: 'Account', kartuRuang: 'About this workspace',
       isiPengguna: 'User data', isiRuang: 'Workspace data', isiKet: 'Choose a section to see its details and history.',
       nama: 'Name', konfirmasi: 'Email confirmed', belumKonfirmasi: 'Not yet', provider: 'Signs in with', sesi: 'Sessions',
       sesiNilai: (n: number, w: string) => `${n} ${n === 1 ? 'session' : 'sessions'} · last ${w}`, mfa: 'MFA', tangguhSampai: 'Suspended until',

@@ -65,13 +65,13 @@ watch(() => domi.panel.value, (p) => { if (!p) pilihan.value = null })
         </button>
       </div>
 
-      <div v-else class="grid gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
+      <div v-else class="grid grid-cols-1 gap-4 lg:grid-cols-[320px_minmax(0,1fr)]">
         <CashflowDomiDaftar
           :class="{ 'hidden lg:block': pilihan }"
           :baris="domi.daftar.value" :total="domi.totalDaftar.value" :ada-lagi="!!domi.kursorBerikut.value"
           :aktif="pilihan" :format-waktu="formatWaktu" @pilih="pilihPercakapan" @lagi="muatDaftarLagi"
         />
-        <div :class="{ 'hidden lg:block': !pilihan }">
+        <div class="min-w-0" :class="{ 'hidden lg:block': !pilihan }">
           <CashflowDomiChat
             :panel="domi.panel.value" :foto="domi.foto.value" :memuat="memuatPesan"
             :kosong-daftar="!adaDaftar" @lebih-lama="lebihLama" @foto="domi.bukaFoto" @kembali="tutupPanel"

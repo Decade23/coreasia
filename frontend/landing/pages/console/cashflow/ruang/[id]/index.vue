@@ -39,9 +39,8 @@ const bagian = computed(() => TAB_RUANG.filter((t): t is Exclude<TabRuang, ''> =
       <div class="grid items-start gap-4 xl:grid-cols-2">
       <section class="ca-console-dialog p-4 sm:p-5">
         <div class="flex flex-wrap items-center gap-2">
-          <h3 class="break-all text-base font-bold text-[var(--ca-text)] sm:text-lg">{{ ruang.nama }}</h3>
-          <CashflowSalinId :id="ruang.id" />
-          <span v-if="ruang.jenis" class="ca-pill-muted text-[0.7rem]">{{ tcf(`ruang.jenisOpsi.${ruang.jenis}`) }}</span>
+          <!-- Nama, jenis, dan ID sudah ada di kepala halaman: kartu ini cukup berjudul. -->
+          <h3 class="font-display text-base font-bold text-[var(--ca-text)]">{{ tcf('ringkas.kartuRuang') }}</h3>
         </div>
         <dl class="mt-3 grid grid-cols-1 gap-x-6 gap-y-1.5 text-sm sm:grid-cols-[auto_1fr]">
           <dt class="text-[var(--ca-muted)]">{{ tcf('ruang.pemilik') }}</dt>

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { angka } from '~/adapters/cashflow'
+
 /** Pintasan ke setiap bagian tanpa memuat isi sebelum dipilih. */
 interface Bagian { kunci: string; label: string; to: string; ikon: string; jumlah: number | null }
 defineProps<{ judul: string; keterangan: string; bagian: Bagian[] }>()
@@ -17,7 +19,7 @@ const aktivasi = useCashflowAktivasiTab()
       >
         <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--ca-chip-bg)] text-[var(--ca-brand-deep)]"><Icon :name="i.ikon" class="h-4 w-4" aria-hidden="true" /></span>
         <span class="min-w-0 flex-1 font-semibold">{{ i.label }}</span>
-        <span v-if="i.jumlah !== null" class="tabular-nums text-[var(--ca-muted)]">{{ i.jumlah }}</span>
+        <span v-if="i.jumlah !== null" class="tabular-nums text-[var(--ca-muted)]">{{ angka(i.jumlah) }}</span>
         <Icon name="lucide:chevron-right" class="h-4 w-4 shrink-0 text-[var(--ca-subtle)]" aria-hidden="true" />
       </NuxtLink>
     </div>
