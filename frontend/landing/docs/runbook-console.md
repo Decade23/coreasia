@@ -796,13 +796,22 @@ tempat menyalakan cadangan, memilih modelnya, dan mengganti kunci API-nya.
 Pasang: SQL CashFlow dulu, baru landing. Sebelum SQL terpasang halaman menulis "Belum tersedia di
 server", bukan galat. Mundur landing cukup.
 
-Uji kontrak terhadap migrasi belum ada, karena fungsinya belum ada di folder `CASHFLOW_MIGRASI`.
-`rpc-console.test.ts` melewati ketiganya lewat `MENDAHULUI_MIGRASI`. Sesudah migrasinya tergabung,
-hapus namanya dari daftar itu, pastikan `toko/uji-console-rpc.sql` di repo CashFlow memuatnya, dan
-cocokkan bentuk jawaban di `adapters/cashflowAiCadangan.ts` dengan migrasinya.
+Migrasinya sudah tergabung di CashFlow, jadi ketiga RPC tidak lagi ada di `MENDAHULUI_MIGRASI` dan
+`rpc-console.test.ts` memeriksanya penuh: nama argumen, blok rpc-console, dan baris kepala di
+`toko/uji-console-rpc.sql`. Uji kontrak terhadap migrasi ada di `tests/cashflow/ai-cadangan.test.ts`
+(bagian "kontrak migrasi") dan berjalan bila folder `CASHFLOW_MIGRASI` memuat fungsinya. Tanpa folder
+itu bagiannya terlihat "skipped". Yang dijaga:
+
+- Ketiga RPC memulangkan dua belas kunci yang sama dengan yang dibaca `adapters/cashflowAiCadangan.ts`.
+- Galat isian memakai SQLSTATE 22023, pesannya kode (`model_tidak_dikenal`, `kunci_belum_ada`,
+  `kunci_tidak_sah`, `setelan_tidak_sah`), dan hint-nya nama isian (`model`, `aktif`, `kunci`).
+  `setelan_tidak_sah` muncul bila nyala/mati dikirim kosong. Halaman tidak pernah mengirimnya, tetapi
+  kalimatnya tetap ada supaya admin tidak melihat kode mentah.
+- Batas panjang kunci di halaman sama dengan server: awalan `sk-ant-`, seluruhnya 27 sampai 307 aksara.
 
 ```bash
-CASHFLOW_MIGRASI=<repo cashflow>/supabase/migrations npx vitest run tests/cashflow/ai-cadangan.test.ts tests/cashflow/rpc-console.test.ts
+CASHFLOW_MIGRASI=<repo cashflow>/supabase/migrations CASHFLOW_TOKO=<repo cashflow>/toko \
+  npx vitest run tests/cashflow/ai-cadangan.test.ts tests/cashflow/rpc-console.test.ts
 node scripts/cek-komponen-cashflow.mjs
 # Tampilan dengan data sintetis (cara menjalankan ada di kepala skrip):
 node scripts/uji-console-domi-cadangan-headless.mjs
@@ -875,23 +884,20 @@ belanja bila orang itu pernah membeli). Akun tim diberi lencana **Tim** di sampi
 Pasang: SQL CashFlow dulu, baru landing. Landing boleh tayang lebih dulu karena jatuh ke v3. Mundur
 landing cukup.
 
-Uji kontrak terhadap migrasi ada di `tests/cashflow/pengguna-domi.test.ts` dan berjalan begitu
-`admin_daftar_pengguna_v4` ada di folder `CASHFLOW_MIGRASI`. Sebelum itu bagiannya terlihat "skipped",
-dan `rpc-console.test.ts` melewati RPC ini lewat `MENDAHULUI_MIGRASI`. Namanya masih di daftar itu
-karena uji hanya membaca satu folder migrasi, dan cabang CashFlow yang lain belum memuatnya. Sesudah
-migrasinya tergabung di cabang rilis CashFlow:
+Migrasinya sudah tergabung di CashFlow, jadi `admin_daftar_pengguna_v4` tidak lagi ada di
+`MENDAHULUI_MIGRASI` dan `rpc-console.test.ts` memeriksanya penuh. `toko/uji-console-rpc.sql` di repo
+CashFlow memuatnya di blok rpc-console dan di baris kepala
+`admin_daftar_pengguna_v4 ← daftarPenggunaHalamanV4`. Uji kontrak terhadap migrasi ada di
+`tests/cashflow/pengguna-domi.test.ts`: nama kolom, nilai `p_urut`, `p_segmen`, kunci `p_filter`, dan
+penolakan tanpa izin (hint `izin-kurang`) dicocokkan dengan `adapters/cashflowPenggunaDomi.ts`. Tanpa
+folder `CASHFLOW_MIGRASI` bagiannya terlihat "skipped".
 
-1. Hapus `admin_daftar_pengguna_v4` dari `MENDAHULUI_MIGRASI` di `tests/cashflow/rpc-console.test.ts`.
-2. Pastikan `toko/uji-console-rpc.sql` di repo CashFlow memuatnya (blok rpc-console dan baris kepala
-   `admin_daftar_pengguna_v4 ← daftarPenggunaHalamanV4`).
-3. Cocokkan nama kolom, nilai `p_urut`, `p_segmen`, dan kunci `p_filter` di
-   `adapters/cashflowPenggunaDomi.ts` dengan migrasinya. Bila server menolak pilihan Domi tanpa izin
-   dengan hint selain `izin-kurang`, sesuaikan penanganannya di halaman.
-4. Sesudah v4 terpasang di produksi dan tidak akan dimundurkan, jatuh-mundur ke v3
-   (`bacaDaftarBerjenjang`, `daftarPenggunaHalaman`, `serverDomi`) boleh dicabut.
+Yang tersisa: sesudah v4 terpasang di produksi dan tidak akan dimundurkan, jatuh-mundur ke v3
+(`bacaDaftarBerjenjang`, `daftarPenggunaHalaman`, `serverDomi`) boleh dicabut.
 
 ```bash
-CASHFLOW_MIGRASI=<repo cashflow>/supabase/migrations npx vitest run tests/cashflow/pengguna-domi.test.ts tests/cashflow/rpc-console.test.ts
+CASHFLOW_MIGRASI=<repo cashflow>/supabase/migrations CASHFLOW_TOKO=<repo cashflow>/toko \
+  npx vitest run tests/cashflow/pengguna-domi.test.ts tests/cashflow/rpc-console.test.ts
 node scripts/cek-komponen-cashflow.mjs
 # Tampilan dengan data sintetis (cara menjalankan ada di kepala skrip):
 node scripts/uji-console-pengguna-domi-headless.mjs
