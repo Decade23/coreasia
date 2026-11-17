@@ -21,7 +21,8 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "test": "vitest run",
-    "cek:komponen": "node scripts/cek-komponen-cashflow.mjs"
+    "cek:komponen": "node scripts/cek-komponen-cashflow.mjs",
+    "cek:tipe": "node scripts/cek-tipe-console.mjs"
   },
   "dependencies": {
     "@pinia/nuxt": "^0.11.3",

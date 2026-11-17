@@ -1,0 +1,124 @@
+{
+  "catatan": "Galat tipe lama, dicatat supaya galat baru kelihatan. Ditulis scripts/cek-tipe-console.mjs --tulis. Jangan disunting tangan.",
+  "alat": {
+    "vue-tsc": "3.3.14",
+    "typescript": "6.0.3"
+  },
+  "jumlah": {
+    "console": 14,
+    "lain": 1775
+  },
+  "console": {
+    "adapters/cashflowDomi.ts": [
+      "TS2322: Type '{ jenis: \"kartu\"; ikon: string; warna: \"iris\"; judul: string; sub: string; tanggal: null; baris: { label: string; nilai: string; }[]; }' is not assignable to type 'TampilDraf | null'."
+    ],
+    "components/cashflow/CashflowPengumumanKelompok.vue": [
+      "TS2322: Type 'Promise<string>' is not assignable to type 'Promise<void>'."
+    ],
+    "composables/cashflow/useCashflowI18n.ts": [
+      "TS1117: An object literal cannot have multiple properties with the same name.",
+      "TS1117: An object literal cannot have multiple properties with the same name."
+    ],
+    "pages/console/articles/[id].vue": [
+      "TS2322: Type 'string' is not assignable to type 'number'.",
+      "TS2322: Type 'string' is not assignable to type 'number'."
+    ],
+    "pages/console/articles/create.vue": [
+      "TS2322: Type 'string' is not assignable to type 'number'.",
+      "TS2322: Type 'string' is not assignable to type 'number'."
+    ],
+    "pages/console/keywords.vue": [
+      "TS18048: 's' is possibly 'undefined'.",
+      "TS18048: 's' is possibly 'undefined'.",
+      "TS18048: 's' is possibly 'undefined'.",
+      "TS18048: 's' is possibly 'undefined'."
+    ],
+    "server/api/cashflow/sesi.post.ts": [
+      "TS2339: Property 'catch' does not exist on type 'PromiseLike<void>'."
+    ],
+    "server/lib/konsol/proxy.ts": [
+      "TS2322: Type 'Uint8Array<ArrayBufferLike> | undefined' is not assignable to type 'BodyInit | null | undefined'."
+    ]
+  },
+  "lain": {
+    "components/HomeEcosystem.vue": {
+      "TS2532": 4
+    },
+    "components/LanguageSwitcher.vue": {
+      "TS2345": 1,
+      "TS2532": 1
+    },
+    "components/SolutionsGrid.vue": {
+      "TS2532": 2
+    },
+    "components/ThemeToggle.vue": {
+      "TS2322": 1
+    },
+    "components/ui/BaseInput.vue": {
+      "TS2532": 1
+    },
+    "components/ui/DataTable.vue": {
+      "TS2322": 1
+    },
+    "components/ui/SearchSelect.vue": {
+      "TS2345": 1
+    },
+    "components/ui/StoryLottie.vue": {
+      "TS18048": 2
+    },
+    "components/ui/ToastContainer.vue": {
+      "TS2322": 1,
+      "TS2532": 4
+    },
+    "composables/useCoreSeo.ts": {
+      "TS2322": 1
+    },
+    "error.vue": {
+      "TS2322": 1
+    },
+    "pages/index.vue": {
+      "TS2339": 1,
+      "TS2532": 2
+    },
+    "pages/layanan/jasa-pembuatan-aplikasi-web.vue": {
+      "TS2322": 1
+    },
+    "pages/layanan/jasa-pembuatan-website.vue": {
+      "TS2322": 2
+    },
+    "pages/layanan/web-monitoring-dashboard.vue": {
+      "TS2322": 2
+    },
+    "pages/products/build.vue": {
+      "TS2322": 2
+    },
+    "pages/products/downloader.vue": {
+      "TS2322": 3
+    },
+    "pages/products/leadku.vue": {
+      "TS2322": 2
+    },
+    "pages/products/lms.vue": {
+      "TS2322": 1
+    },
+    "pages/products/mounter.vue": {
+      "TS2322": 2
+    },
+    "pages/products/pantau.vue": {
+      "TS2322": 2
+    },
+    "pages/register.vue": {
+      "TS18048": 3
+    },
+    "plugins/gtag.client.ts": {
+      "TS2322": 1
+    },
+    "utils/content.en.ts": {
+      "TS2322": 1728,
+      "TS2352": 1
+    },
+    "utils/navigation.ts": {
+      "TS2322": 1
+    }
+  }
+}
