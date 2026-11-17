@@ -853,6 +853,53 @@ CASHFLOW_MIGRASI=<repo cashflow>/supabase/migrations npx vitest run tests/cashfl
 node scripts/cek-komponen-cashflow.mjs
 ```
 
+### Pembelian Google Play yang sedang diproses atau ditolak
+
+Dua saringan status tambahan, **Sedang diproses** dan **Ditolak**, menjawab pembelian Google Play mana
+yang belum menjadi kredit. Datanya dari migrasi CashFlow `20261117140000_play_proses`: RPC yang sama
+menerima `p_status` = `diproses` atau `ditolak`, dan barisnya diambil dari catatan proses, bukan dari
+pembelian yang sudah tercatat.
+
+- **Baris.** Kode kosong, jalur selalu Google Play, harga yang tertulis harga paket. Kunci tambahan
+  `proses` membawa keadaan (`tertunda`, `gagal_sementara`, `ditolak`), sebab penolakan (`rinci`), siapa
+  yang terakhir melapor (`sumber`), sejak kapan, kapan terakhir dilaporkan, kapan dan berapa kali server
+  mencobanya lagi, dan apakah server masih bisa mencoba sendiri. Halaman tidak pernah menulis kode itu
+  mentah: kalimatnya dipilih `kunciKeadaanProses` dan `kunciSebabProses` di
+  `adapters/cashflowPembelian.ts`. Nilai yang belum dikenal console jatuh ke kalimat umum, dan baris tanpa
+  kunci `proses` tetap tampil dengan status saringannya.
+- **Ringkasan.** Empat ubin lunas, total, diterima, dan batal tidak dipakai di dua saringan ini (server
+  mengirimnya berisi nol). Gantinya `CashflowPembelianProsesRingkas` dari kunci `proses` jawaban: sedang
+  diproses, menunggu pembayaran, belum bisa diperiksa, ditolak, dan sejak kapan yang paling lama menunggu.
+  Hitungan ini tanpa akun uji dan tidak mengikuti saringan jalur. Angka yang tidak dikirim tertulis
+  "Tidak tersedia", bukan 0.
+- **Lebih dari 1 jam** (`AMBANG_GANTUNG_MENIT`). Kalimat yang paling lama naik jadi panel emas lembut, dan
+  baris yang menunggu selama itu diberi tanda jam emas. Tidak ada merah. Di saringan Ditolak panel itu
+  membawa tombol ke Sedang diproses. Lamanya dihitung dari saat jawaban diterima, jadi angkanya diam sampai
+  admin memuat ulang. Tidak ada muat berkala, karena setiap panggilan tercatat di audit.
+- **QRIS.** Keadaan ini hanya ada di Google Play. Pilihan QRIS mati di dua saringan itu, dan pindah ke
+  saringan proses dari jalur QRIS mengembalikan jalurnya ke Semua. Tautan lama `?status=ditolak&jalur=qris`
+  menulis kalimat kosong yang tepat.
+- **Server lama.** Sebelum migrasi itu terpasang, server menolak kedua nilai dengan 22023
+  `masukan_tidak_sah` hint `status`. Halaman menulis "Saringan ini belum dikenal server" dengan tombol
+  **Kembali ke semua status**, bukan galat merah (`prosesBelumDikenalServer`). Urutan rilis bebas.
+- **Ringkasan dan Kesehatan belum menautkan ke saringan ini.** Kedua halaman itu hanya memanggil RPC
+  agregat tanpa data pribadi. Hitungan proses hanya ada di jawaban `admin_ai_pembelian_daftar`, yang butuh
+  izin data pribadi dan menulis audit di setiap panggilan, jadi memanggilnya dari Ringkasan akan menulis
+  audit setiap kali Ringkasan dibuka. Tautan itu menunggu hitungan proses masuk ke RPC agregat (misalnya
+  `admin_kesehatan`).
+
+```bash
+CASHFLOW_MIGRASI=<repo cashflow>/supabase/migrations npx vitest run tests/cashflow/pembelian-proses.test.ts tests/cashflow/pembelian.test.ts
+# Tiga keadaan server (menggantung, kosong, server lama), terang dan gelap, 1440 dan 390
+# (cara menjalankan ada di kepala skrip):
+node scripts/uji-console-pembelian-proses-headless.mjs
+```
+
+`tests/cashflow/pembelian-proses.test.ts` membandingkan kunci baris dan hitungan dengan badan
+`admin_ai_pembelian_daftar`, dan nilai keadaan, sebab, serta sumber dengan cek tabel
+`ai_pembelian_play_proses` di folder migrasi. Tanpa migrasi itu bagiannya terlihat "skipped". Tabel dan
+ringkasannya juga dirender untuk setiap keadaan dan sebab, termasuk yang belum dikenal, di dua bahasa.
+
 ## Pemakai Domi di daftar pengguna
 
 Daftar pengguna (`/console/cashflow/pengguna`) menjawab siapa yang sudah memakai Domi. Ada dua kolom
