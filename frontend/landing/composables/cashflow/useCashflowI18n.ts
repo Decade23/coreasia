@@ -99,7 +99,7 @@ const KAMUS = {
       hapusBelumTersedia: 'Status permintaan hapus akun belum tersedia di server.',
       versi: 'Versi', versiLama: 'Masih di bawah versi publik terbaru untuk platform yang sama.',
       versiKet: 'Versi = versi aplikasi terakhir yang dilaporkan HP orang itu. Warna redup berarti masih di bawah versi terbaru di daftar ini untuk platform yang sama.', daftar: 'Daftar', masuk: 'Masuk terakhir', aktifTerakhir: 'Aktif terakhir', ruang: 'Ruang', tx: 'Transaksi', status: 'Status',
-      aktif: 'Aktif', ditangguhkan: 'Ditangguhkan', menungguHapus: 'Menunggu dihapus', buka: 'Buka', belumCatat: 'Tidak pernah mencatat', catat7: 'Mencatat 7 hari',
+      aktif: 'Aktif', ditangguhkan: 'Ditangguhkan', sampaiTanggal: (t: string) => `sampai ${t}`, menungguHapus: 'Menunggu dihapus', buka: 'Buka', belumCatat: 'Tidak pernah mencatat', catat7: 'Mencatat 7 hari',
       kontakPenuh: 'Kontak lengkap', emailSamar: 'Tersamar',
       statusWa: {
         judul: 'Status WhatsApp', segmen: 'Belum WhatsApp',
@@ -179,6 +179,7 @@ const KAMUS = {
     },
     aktivitas: {
       judul: 'Aktivitas', ket: 'Denyut produk lintas ruang — tanpa nama, tanpa catatan, nominal hanya rentang.', jenis: 'Jenis', nominal: 'Nominal', tanggal: 'Tanggal', ruang: 'Ruang', waktu: 'Waktu',
+      izinSelidiki: 'Daftarnya bisa dibaca. Tombol Selidiki baru menyala sesudah masuk dengan verifikasi dua langkah.',
       usaha: {
         judul: 'Langkah usaha', ket: 'Jalan orang menuju ruang usaha, dari telemetri aplikasi 1.3.1 ke atas.',
         kelompok: { ruang: 'Pintu ruang baru', kartu: 'Kartu Beranda', tonggak: 'Sesudah ruang usaha lahir', meja: 'Meja usaha di Beranda' },
@@ -1022,7 +1023,9 @@ const KAMUS = {
         lain: 'Selesai.',
       },
       izinTindak: 'Hapus permanen dan pembatalan khusus super admin yang masuk dengan TOTP.',
-      belumAktif: 'Fitur ini belum aktif di server. Daftarnya muncul sendiri begitu pembaruan server terpasang.',
+      belumAktifJudul: 'Fitur ini belum diaktifkan di server',
+      belumAktif: 'Tidak ada yang rusak. Pembaruan servernya belum dipasang, jadi daftar permintaan belum bisa ditampilkan. Begitu terpasang, daftarnya muncul di sini.',
+      periksaLagi: 'Periksa lagi',
       kosong: { menunggu: 'Tidak ada permintaan yang menunggu.', selesai: 'Belum ada akun yang dihapus permanen.', dibatalkan: 'Belum ada permintaan yang dibatalkan.' },
       terpotong: (n: number, total: number) => `Menampilkan ${n} dari ${total} permintaan.`,
     },
@@ -1254,7 +1257,7 @@ const KAMUS = {
       galat: { masukan: 'Server tidak mengenali saringan ini. Kembalikan saringan ke Semua, lalu coba lagi.' },
     },
     izin: {
-      kurang: 'Membuka data pengguna butuh login console ber-TOTP.', keKeamanan: 'Pasang TOTP',
+      kurang: 'Membuka data pengguna butuh login console ber-TOTP.', keKeamanan: 'Pasang verifikasi dua langkah',
       masukUlang: 'Masuk ulang dengan TOTP', keluarMasuk: 'Keluar…', gagalKeluar: 'Gagal keluar dari console. Coba lagi.',
       sambungUlang: 'Sambung ulang CashFlow', menyambung: 'Menyambung…', tersambung: 'Sesi CashFlow dicetak ulang.', gagalSambung: 'Gagal menyambung ulang.',
     },
@@ -1347,7 +1350,7 @@ const KAMUS = {
       hapusBelumTersedia: 'Account deletion request status is not available on the server yet.',
       versi: 'Version', versiLama: 'Still below the latest public version for the same platform.',
       versiKet: 'Version = the last app version this person\'s phone reported. Dimmed means it is still below the newest version in this list for the same platform.', daftar: 'Signed up', masuk: 'Last sign-in', aktifTerakhir: 'Last active', ruang: 'Workspaces', tx: 'Transactions', status: 'Status',
-      aktif: 'Active', ditangguhkan: 'Suspended', menungguHapus: 'Pending deletion', buka: 'Open', belumCatat: 'Never recorded', catat7: 'Recorded in 7 days',
+      aktif: 'Active', ditangguhkan: 'Suspended', sampaiTanggal: (t: string) => `until ${t}`, menungguHapus: 'Pending deletion', buka: 'Open', belumCatat: 'Never recorded', catat7: 'Recorded in 7 days',
       kontakPenuh: 'Full contact', emailSamar: 'Masked',
       statusWa: {
         judul: 'WhatsApp status', segmen: 'No WhatsApp yet',
@@ -1428,6 +1431,7 @@ const KAMUS = {
     },
     aktivitas: {
       judul: 'Activity', ket: 'Product pulse across workspaces — no names, no notes, amounts as ranges only.', jenis: 'Type', nominal: 'Amount', tanggal: 'Date', ruang: 'Workspace', waktu: 'Time',
+      izinSelidiki: 'You can read the list. The Investigate button turns on after signing in with two-step verification.',
       usaha: {
         judul: 'Business steps', ket: 'How people reach a business workspace, from app telemetry 1.3.1 and newer.',
         kelompok: { ruang: 'New workspace doors', kartu: 'Home card', tonggak: 'After a business workspace is made', meja: 'Business desk on Home' },
@@ -2276,7 +2280,9 @@ const KAMUS = {
         lain: 'Done.',
       },
       izinTindak: 'Permanent deletion and cancelling are for super admins signed in with TOTP.',
-      belumAktif: 'This feature is not active on the server yet. The list appears on its own once the server update is in.',
+      belumAktifJudul: 'This feature is not switched on at the server yet',
+      belumAktif: 'Nothing is broken. The server update is not installed yet, so the request list cannot be shown. Once it is in, the list appears here.',
+      periksaLagi: 'Check again',
       kosong: { menunggu: 'No pending requests.', selesai: 'No account has been deleted permanently yet.', dibatalkan: 'No cancelled requests yet.' },
       terpotong: (n: number, total: number) => `Showing ${n} of ${total} requests.`,
     },
@@ -2509,7 +2515,7 @@ const KAMUS = {
       galat: { masukan: 'The server does not recognise this filter. Set the filters back to All, then try again.' },
     },
     izin: {
-      kurang: 'Opening user data requires a console sign-in with TOTP.', keKeamanan: 'Set up TOTP',
+      kurang: 'Opening user data requires a console sign-in with TOTP.', keKeamanan: 'Set up two-step verification',
       masukUlang: 'Sign in again with TOTP', keluarMasuk: 'Signing out…', gagalKeluar: 'Could not sign out of the console. Try again.',
       sambungUlang: 'Reconnect CashFlow', menyambung: 'Reconnecting…', tersambung: 'CashFlow session renewed.', gagalSambung: 'Reconnect failed.',
     },

@@ -444,8 +444,21 @@ describe('penjaga halaman (keputusan P3: satu konfirmasi, tanpa kolom alasan)', 
     const hal = baca(HAL)
     expect(hal).toMatch(/sesi\.boleh\('cashflow:tindak'\)/)
     expect(hal).toMatch(/<CashflowIzinKurang v-if="tampilIzin" :pesan="tcf\('hapusAkun\.izinTindak'\)" \/>/)
-    expect(hal).toMatch(/galat\.value\?\.jenis === 'belum-aktif'/)
+    expect(hal).toMatch(/belumAktif\.value = galat\.value\.jenis === 'belum-aktif'/)
     expect(hal).toMatch(/tcf\('hapusAkun\.belumAktif'\)/)
+  })
+  it('belum aktif di server: keadaan tenang dengan Periksa lagi, tanpa saringan, tanpa galat merah', () => {
+    const hal = baca(HAL)
+    // Rupa bersama, bukan kotak buatan halaman dan bukan keadaan galat.
+    expect(hal).toMatch(/<CashflowKeadaan\s+v-if="belumAktif" jenis="belum-aktif" :judul="tcf\('hapusAkun\.belumAktifJudul'\)" :pesan="tcf\('hapusAkun\.belumAktif'\)"\s+:label-ulang="tcf\('hapusAkun\.periksaLagi'\)"[^>]*@ulang="muatDaftar\(\)"/)
+    // Saringan status dan catatan data hanya ada bila fiturnya aktif.
+    expect(hal).toMatch(/<template v-if="!belumAktif">[\s\S]*?hapusAkun\.dataTetap[\s\S]*?<CashflowSegmen[\s\S]*?<\/template>\s+<CashflowKeadaan\s+v-if="belumAktif"/)
+    // Bertahan selama periksa lagi: baru dilepas oleh jawaban server berikutnya.
+    expect(hal).toMatch(/if \(ok\) belumAktif\.value = false\s+else if \(galat\.value\) belumAktif\.value = /)
+    for (const b of ['id', 'en'] as const) {
+      const k = KAMUS_CASHFLOW[b].hapusAkun
+      for (const t of [k.belumAktifJudul, k.belumAktif, k.periksaLagi]) expect(t.length, b).toBeGreaterThan(5)
+    }
   })
   it('alasan otomatis di useCashflowAdmin, bukan masukan orang', () => {
     const admin = baca('composables/cashflow/useCashflowAdmin.ts')

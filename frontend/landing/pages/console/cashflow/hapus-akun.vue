@@ -22,8 +22,11 @@
  * - P0001 akun-admin (akunnya masih terdaftar sebagai admin console) cukup
  *   jadi toast bahasa awam; daftar tidak dimuat ulang.
  * - RPC-nya belum ada karena console tayang lebih dulu dari 0114 (PGRST202,
- *   atau 42883 yang menyebut RPC itu sendiri): halaman menulis "fitur belum
- *   aktif", bukan galat. 42883 fungsi lain di dalamnya tetap galat biasa.
+ *   atau 42883 yang menyebut RPC itu sendiri): halaman menulis "belum
+ *   diaktifkan di server" (CashflowKeadaan belum-aktif), bukan galat. Saringan
+ *   status dan catatan data tidak ditampilkan, karena belum ada daftar yang
+ *   bisa disaring. Keadaan itu bertahan selama "Periksa lagi" berjalan, supaya
+ *   layar tidak berkedip. 42883 fungsi lain di dalamnya tetap galat biasa.
  *
  * SIBUK. Setiap aksi menulis audit yang tidak bisa dihapus; selama satu
  * berjalan, semua tombol menunggu dan panggilan ulang diabaikan. Jawaban
@@ -62,12 +65,19 @@ const totalStatus = computed(() => jumlah.value?.[q.value.status] ?? 0)
 /** Id permintaan yang baru ditolak hapus permanen (P0001 alihkan-kepemilikan). */
 const tertahan = ref<ReadonlySet<string>>(new Set())
 
-const muatDaftar = () => muat(async (terbaru) => {
-  const rows = await api.hapusAkunDaftar(q.value.status, batasDaftarHapus(q.value.status))
-  if (!terbaru()) return
-  mentah.value = rows
-  jumlah.value = jumlahPerStatus(rows)
-})
+/** RPC daftar belum ada di server. Bertahan selama muat ulang, sampai server menjawab lain. */
+const belumAktif = ref(false)
+const muatDaftar = async () => {
+  const ok = await muat(async (terbaru) => {
+    const rows = await api.hapusAkunDaftar(q.value.status, batasDaftarHapus(q.value.status))
+    if (!terbaru()) return
+    mentah.value = rows
+    jumlah.value = jumlahPerStatus(rows)
+  })
+  // Panggilan yang sudah digantikan tidak membawa galat: keadaannya dibiarkan.
+  if (ok) belumAktif.value = false
+  else if (galat.value) belumAktif.value = galat.value.jenis === 'belum-aktif'
+}
 /* Ganti saringan: baris status lama dibuang dulu, jangan tampil di bawah judul status baru. */
 watch(() => q.value.status, () => {
   mentah.value = null
@@ -85,7 +95,6 @@ const tindakAktif = computed(() => bolehTindak.value && !izinDitolak.value)
 /** Hitungan per status ditulis di pil hanya bila server sudah mengirimnya. */
 const opsiStatus = computed(() => STATUS_HAPUS.map(s => ({ nilai: s, label: tcf(`hapusAkun.status.${s}`) as string, jumlah: jumlah.value ? jumlah.value[s] : null })))
 const tampilIzin = computed(() => q.value.status === 'menunggu' && daftar.value.length > 0 && !tindakAktif.value)
-const belumAktif = computed(() => galat.value?.jenis === 'belum-aktif')
 
 const sibuk = ref<{ id: string; jenis: 'hapus' | 'batal' } | null>(null)
 const dikonfirmasi = ref<PermintaanHapus | null>(null)
@@ -140,19 +149,21 @@ useConsoleRemah().pasang(() => [
     <ConsolePageHeader :title="tcf('hapusAkun.judul')" kicker="CashFlow" ringkas><template #meta><CashflowNav /></template></ConsolePageHeader>
     <p class="text-sm text-[var(--ca-muted)]">{{ tcf('hapusAkun.ket') }}</p>
 
-    <div class="flex items-start gap-3 rounded-xl border border-[color:var(--ca-gold-border)] bg-[var(--ca-gold-bg)] px-4 py-3 text-sm text-[var(--ca-text)]">
-      <Icon name="lucide:shield-check" class="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
-      <span>{{ tcf('hapusAkun.dataTetap') }}</span>
-    </div>
+    <template v-if="!belumAktif">
+      <div class="flex items-start gap-3 rounded-xl border border-[color:var(--ca-gold-border)] bg-[var(--ca-gold-bg)] px-4 py-3 text-sm text-[var(--ca-text)]">
+        <Icon name="lucide:shield-check" class="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
+        <span>{{ tcf('hapusAkun.dataTetap') }}</span>
+      </div>
 
-    <div class="flex flex-wrap items-center gap-2">
-      <CashflowSegmen :opsi="opsiStatus" :nilai="q.status" :label="tcf('hapusAkun.saring')" gulir @pilih="(s) => setel({ status: s })" />
-    </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <CashflowSegmen :opsi="opsiStatus" :nilai="q.status" :label="tcf('hapusAkun.saring')" gulir @pilih="(s) => setel({ status: s })" />
+      </div>
+    </template>
 
-    <div v-if="belumAktif" class="flex items-start gap-3 rounded-xl border border-dashed border-[color:var(--ca-border)] px-4 py-5 text-sm text-[var(--ca-muted)]" role="status">
-      <Icon name="lucide:hourglass" class="mt-0.5 h-5 w-5 shrink-0 text-[var(--ca-subtle)]" />
-      <span>{{ tcf('hapusAkun.belumAktif') }}</span>
-    </div>
+    <CashflowKeadaan
+      v-if="belumAktif" jenis="belum-aktif" :judul="tcf('hapusAkun.belumAktifJudul')" :pesan="tcf('hapusAkun.belumAktif')"
+      :label-ulang="tcf('hapusAkun.periksaLagi')" :sibuk="memuat" data-uji="hapus-akun-belum-aktif" @ulang="muatDaftar()"
+    />
     <CashflowIzinKurang v-else-if="galat?.jenis === 'izin'" />
     <CashflowKeadaan
       v-else-if="pesanGalat" jenis="galat" :judul="tcf('umum.galatJudul')" :pesan="pesanGalat"

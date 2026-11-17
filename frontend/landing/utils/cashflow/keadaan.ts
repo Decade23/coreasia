@@ -1,12 +1,13 @@
 /**
- * Empat keadaan daftar console CashFlow: memuat, galat, akses terbatas, dan
- * kosong. Satu urutan untuk semua halaman, supaya tidak ada halaman yang
- * menulis "Belum ada data" padahal muatannya gagal.
+ * Keadaan daftar console CashFlow: memuat, galat, akses terbatas, kosong, dan
+ * belum aktif di server. Satu urutan untuk semua halaman, supaya tidak ada
+ * halaman yang menulis "Belum ada data" padahal muatannya gagal, dan tidak
+ * ada yang menulis galat padahal fiturnya memang belum dipasang di server.
  *
  * Fungsi murni tanpa Nuxt supaya bisa diuji.
  */
 
-export type JenisKeadaan = 'memuat' | 'galat' | 'terbatas' | 'kosong'
+export type JenisKeadaan = 'memuat' | 'galat' | 'terbatas' | 'kosong' | 'belum-aktif'
 
 export interface MasukanKeadaan {
   memuat: boolean
@@ -14,6 +15,8 @@ export interface MasukanKeadaan {
   galat: boolean
   /** Server menolak karena izin sesi ini kurang. */
   izin?: boolean
+  /** RPC halaman ini belum ada di server (console tayang lebih dulu dari migrasinya). */
+  belumAktif?: boolean
   /** Banyaknya baris yang sudah ada di layar. */
   jumlah: number
 }
@@ -24,9 +27,12 @@ export interface MasukanKeadaan {
  * Baris yang sudah tampil bertahan selama memuat ulang dan saat muatan
  * berikutnya gagal (galatnya ditulis pemanggil di atas daftar). Izin kurang
  * selalu menang: baris lama tidak boleh tetap terbaca sesudah akses dicabut.
+ * Belum aktif di server bukan galat: tidak ada yang rusak dan tidak ada yang
+ * perlu dicoba lagi sekarang, jadi ia punya rupanya sendiri.
  */
 export function keadaanDaftar(m: MasukanKeadaan): JenisKeadaan | null {
   if (m.izin) return 'terbatas'
+  if (m.belumAktif) return 'belum-aktif'
   if (m.jumlah > 0) return null
   if (m.galat) return 'galat'
   if (m.memuat) return 'memuat'

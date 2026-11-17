@@ -76,8 +76,8 @@ describe('keadaan daftar dan maskot', () => {
     expect(maskot(html)).toBe(0)
     expect(html).toMatch(/data-ikon="lucide:tags"/)
   })
-  it('memuat, galat, dan akses terbatas tidak pernah memakai maskot', async () => {
-    for (const jenis of ['memuat', 'galat', 'terbatas']) {
+  it('memuat, galat, akses terbatas, dan belum aktif tidak pernah memakai maskot', async () => {
+    for (const jenis of ['memuat', 'galat', 'terbatas', 'belum-aktif']) {
       expect(maskot(await render(CashflowKeadaan, { jenis, judul: 'Judul', pesan: 'Pesan', labelUlang: 'Coba lagi' }))).toBe(0)
     }
   })

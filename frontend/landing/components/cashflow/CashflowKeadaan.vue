@@ -1,7 +1,8 @@
 <script setup lang="ts">
 /**
- * Keadaan daftar dan tabel console CashFlow: kosong, memuat, galat, dan akses
- * terbatas. Hanya tampilan, semua tulisan datang dari pemanggil.
+ * Keadaan daftar dan tabel console CashFlow: kosong, memuat, galat, akses
+ * terbatas, dan belum aktif di server. Hanya tampilan, semua tulisan datang
+ * dari pemanggil.
  *
  * - kosong: Domi diam (atau ikon bila `maskot` dimatikan), satu kalimat sebab,
  *   dan jalan keluarnya di slot (misalnya tombol lepas saringan).
@@ -11,6 +12,9 @@
  *   `rincian` untuk dikutip saat melapor (kode, bukan pesan mentah server).
  * - terbatas: isinya tetap terbaca, yang terkunci hanya sebagian. Tombol
  *   jalan keluarnya di slot.
+ * - belum-aktif: fiturnya belum dipasang di server. Bukan galat (tidak merah,
+ *   bukan role alert) dan bukan daftar kosong (tanpa Domi): ikon netral, apa
+ *   artinya, dan tombol periksa lagi bila `labelUlang` diisi.
  *
  * `polos`: tanpa bingkai kartu, untuk dipakai di dalam kartu lain.
  */
@@ -72,13 +76,30 @@ const emit = defineEmits<{ ulang: [] }>()
   <div v-else-if="jenis === 'terbatas'" class="rounded-xl bg-[var(--ca-info-bg)] px-4 py-3.5 text-sm text-[var(--ca-info-text)]" role="status" data-keadaan="terbatas">
     <div class="flex flex-wrap items-start gap-x-3 gap-y-2">
       <span class="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-current" aria-hidden="true" />
-      <div class="min-w-0 flex-1">
+      <!-- Lebar dasar teks: di layar sempit tombolnya turun ke bawah, bukan menjepit kalimat jadi kolom tipis. -->
+      <div class="min-w-0 flex-1 basis-56">
         <p v-if="judul" class="font-bold">{{ judul }}</p>
         <p v-if="pesan" class="font-semibold" :class="judul ? 'mt-0.5 text-[0.8125rem]' : ''">{{ pesan }}</p>
       </div>
       <div v-if="$slots.default" class="flex flex-wrap items-center gap-2"><slot /></div>
     </div>
     <slot name="bawah" />
+  </div>
+
+  <!-- Belum aktif di server -->
+  <div
+    v-else-if="jenis === 'belum-aktif'" class="cf-tabel-wadah flex flex-col items-center px-6 py-10 text-center" :class="{ 'cf-tabel-polos': polos }"
+    role="status" data-keadaan="belum-aktif"
+  >
+    <span class="inline-flex h-12 w-12 items-center justify-center rounded-full bg-[var(--ca-panel-bg-strong)] text-[var(--ca-subtle)]" aria-hidden="true">
+      <Icon :name="icon === 'lucide:inbox' ? 'lucide:hourglass' : icon" class="h-6 w-6" />
+    </span>
+    <p v-if="judul" class="mt-4 text-base font-bold text-[var(--ca-text)]">{{ judul }}</p>
+    <p v-if="pesan" class="max-w-md text-sm text-[var(--ca-muted)]" :class="judul ? 'mt-1.5' : 'mt-4'">{{ pesan }}</p>
+    <div v-if="labelUlang || $slots.default" class="mt-4 flex flex-wrap items-center justify-center gap-2">
+      <slot />
+      <button v-if="labelUlang" type="button" class="ca-btn-secondary !px-4 !py-2 text-sm" :disabled="sibuk" data-uji="keadaan-ulang" @click="emit('ulang')">{{ labelUlang }}</button>
+    </div>
   </div>
 
   <!-- Kosong -->
