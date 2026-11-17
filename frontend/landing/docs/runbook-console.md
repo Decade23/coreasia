@@ -1152,24 +1152,30 @@ Semua tabel dan daftar di halaman CashFlow memakai rupa dan komponen yang sama.
   - Sakelar **Kontak lengkap** pindah ke baris judul. Perilaku dan pencatatan auditnya tidak berubah.
   - Keterangan kolom pindah ke tautan **Arti tiap kolom** di samping paginasi.
 - **Yang pindah ke rincian pengguna.** Terakhir pakai Domi, cara nomor dibuktikan (kalimat panjangnya),
-  ID akun, dan masuk terakhir tampil di kepala Pengguna 360. Dua yang pertama tidak diambil halaman
-  rincian dari server: nilainya dibawa dari baris daftar di tab yang sama
-  (`useCashflowBawaanRinci`, tanpa email, nama, atau nomor). Bila rincian dibuka lewat tautan
-  langsung, kedua baris itu kosong dan halaman berkata begitu. Supaya selalu terisi, server perlu
-  mengirim keduanya di `admin_pengguna_kepala`.
-  - Yang kurang ada di sisi SQL, bukan di console. `admin_pengguna_kepala` (terakhir diubah 0123)
-    memulangkan sepuluh kunci: `user_id`, `email`, `daftar`, `masuk_terakhir`, `banned_until`,
-    `jumlah_ruang`, `jumlah_transaksi`, `akses_30hari`, `ruang`, dan `nomor_wa`. Semuanya sudah dipakai
-    kepala. Tidak ada `status_wa` dan `status_wa_pada` (cara nomor dibuktikan dan tanggalnya), dan tidak
-    ada `domi_terakhir` dan `domi_tanya`. Keempatnya sekarang hanya dikirim per baris oleh
-    `admin_daftar_pengguna_v4`. Uji kontrak menuntut DTO kepala sama persis dengan kunci server, jadi
-    console baru boleh membacanya sesudah migrasinya ada.
+  ID akun, dan masuk terakhir tampil di kepala Pengguna 360.
+  - **Dari kepala sendiri, bila server mengirimnya.** Migrasi CashFlow `20261117130000` menambah empat
+    kunci ke `admin_pengguna_kepala`: `status_wa`, `status_wa_pada`, `domi_tanya`, `domi_terakhir`.
+    Rumusnya sama dengan baris `admin_daftar_pengguna_v4`, dan kedua waktunya dibulatkan server ke awal
+    hari WIB. Dengan kunci itu kepala selalu terisi, juga saat rincian dibuka lewat tautan langsung, dan
+    ada satu baris tambahan **Tanya Domi** berisi jumlah pertanyaan. Tanpa izin data pribadi server
+    mengirim dua kunci Domi sebagai null, dan barisnya menulis garis (butuh TOTP).
+  - **Server lama tetap jalan.** Keempat kunci dibaca sebagai opsional (`keKepala`). Selama migrasinya
+    belum terpasang, kuncinya tidak ada dan halaman tampil seperti sebelumnya: dua baris itu memakai
+    nilai yang dibawa dari baris daftar di tab yang sama (`useCashflowBawaanRinci`, tanpa email, nama,
+    atau nomor), kosong dengan keterangan bila dibuka langsung, dan baris Tanya Domi tidak ditulis.
+    Aturan memilih sumbernya ada di `rinciKepala` (`adapters/cashflowPenggunaDaftar.ts`).
+  - Tanda nomor dipakai banyak akun, kredit gratis ditahan, dan sebab lewat tidak dikirim kepala.
+    Ketiganya tetap dipinjam dari baris daftar, hanya bila statusnya sama dengan yang dikirim kepala.
+  - Urutan rilis bebas. Console ini boleh tayang sebelum atau sesudah migrasinya, dan migrasinya boleh
+    dimundurkan tanpa menyentuh console.
 
 ```bash
 npx vitest run tests/cashflow/tabel-pil.test.ts tests/cashflow/pengguna-daftar.test.ts
 node scripts/cek-komponen-cashflow.mjs
 # Tampilan dengan data sintetis (cara menjalankan ada di kepala skrip):
 node scripts/uji-console-tabel-daftar-headless.mjs
+# Kepala Pengguna 360 di server baru (empat kunci) dan server lama (tanpa kunci):
+node scripts/uji-console-kepala-rinci-headless.mjs
 ```
 
 Skrip itu menuntut gulir samping tabel pengguna 0 di 1440 px, email 38 huruf utuh, dan tidak ada
