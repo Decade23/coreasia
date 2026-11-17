@@ -271,6 +271,16 @@ describe('kontrak KepalaPenggunaDTO ↔ admin_pengguna_kepala', () => {
     expect(keKepala({ ...(JSON.parse(KEPALA) as KepalaPenggunaDTO), ruang: null }).ruang).toBeNull()
     expect(k.nomorWa).toBe(ADA_0121 ? '0812 •••• 7890' : null)
   })
+  it('keKepala: banned_until jadi "ditangguhkan sampai", kecuali sudah lewat atau terlalu jauh', () => {
+    const kini = Date.parse('2026-11-16T00:00:00Z')
+    const dengan = (banned_until: string | null) => keKepala({ ...(JSON.parse(KEPALA) as KepalaPenggunaDTO), banned_until }, kini)
+    expect(dengan(null)).toMatchObject({ ditangguhkan: false, ditangguhkanSampaiIso: null })
+    expect(dengan('2026-11-01T00:00:00Z')).toMatchObject({ ditangguhkan: false, ditangguhkanSampaiIso: null })
+    expect(dengan('2026-12-07T00:00:00Z')).toMatchObject({ ditangguhkan: true, ditangguhkanSampaiIso: '2026-12-07T00:00:00Z' })
+    // Penangguhan tanpa batas disimpan sebagai tanggal sangat jauh: lencananya tampil, tanggalnya tidak.
+    expect(dengan('2126-11-16T00:00:00Z')).toMatchObject({ ditangguhkan: true, ditangguhkanSampaiIso: null })
+    expect(dengan('bukan tanggal')).toMatchObject({ ditangguhkan: false, ditangguhkanSampaiIso: null })
+  })
 })
 
 const P360 = `{"kasus": "9a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d",

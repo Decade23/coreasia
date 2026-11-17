@@ -54,6 +54,13 @@ export interface KepalaPengguna {
   daftarIso: string
   masukTerakhirIso: string | null
   ditangguhkan: boolean
+  /**
+   * Sampai kapan ditangguhkan (banned_until dari server). null = tidak
+   * ditangguhkan, atau tanggalnya lebih dari lima tahun lagi: penangguhan
+   * tanpa batas disimpan sebagai tanggal yang sangat jauh, dan tanggal seperti
+   * itu tidak berarti apa-apa bila ditulis.
+   */
+  ditangguhkanSampaiIso: string | null
   /** null = sesi tanpa pii: server tidak mengirim hitungan per orang (M/0089 §15 (d)). */
   jumlahRuang: number | null
   jumlahTransaksi: number | null
@@ -71,13 +78,18 @@ export interface KepalaPengguna {
   nomorWa: string | null
 }
 
+const LIMA_TAHUN_MS = 5 * 365 * 86_400_000
+
 export function keKepala(d: KepalaPenggunaDTO, sekarang: number = Date.now()): KepalaPengguna {
+  const sampai = d.banned_until ? Date.parse(d.banned_until) : Number.NaN
+  const ditangguhkan = Number.isFinite(sampai) && sampai > sekarang
   return {
     id: d.user_id,
     emailTersamar: samarkanEmail(d.email),
     daftarIso: d.daftar,
     masukTerakhirIso: d.masuk_terakhir ?? null,
-    ditangguhkan: !!d.banned_until && Date.parse(d.banned_until) > sekarang,
+    ditangguhkan,
+    ditangguhkanSampaiIso: ditangguhkan && sampai - sekarang <= LIMA_TAHUN_MS ? d.banned_until : null,
     jumlahRuang: angkaAtauNull(d.jumlah_ruang),
     jumlahTransaksi: angkaAtauNull(d.jumlah_transaksi),
     akses30: angka(d.akses_30hari),

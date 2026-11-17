@@ -4,7 +4,8 @@
  * membuka isinya. Email utuh berasal dari data akun yang sudah dibaca
  * melalui kasus aktif. Nomor WhatsApp berasal dari kepala dan mengikuti
  * izin pribadi sesi. Setiap kunjungan kepala tercatat
- * (lihat_kepala), jadi "dilihat n× dalam 30 hari" jujur.
+ * (lihat_kepala), jadi "dilihat n× dalam 30 hari" jujur. Akun yang
+ * ditangguhkan menulis sampai kapan, bila server mengirim tanggal yang wajar.
  */
 import type { KepalaPengguna } from '~/adapters/cashflowBuku'
 import { angka, formatNomorWa, samarkanNomorWa } from '~/adapters/cashflow'
@@ -46,7 +47,9 @@ const hitungan = computed(() => props.kepala
         <div class="min-w-0 flex-1 basis-64">
           <h2 class="cf-kepala-nama" data-uji="rinci-nama">{{ emailPotong[0] }}<wbr>{{ emailPotong[1] }}</h2>
           <div class="mt-2 flex flex-wrap items-center gap-2">
-            <span v-if="kepala.ditangguhkan" class="cf-lencana cf-lencana-galat">{{ tcf('pengguna.ditangguhkan') }}</span>
+            <span v-if="kepala.ditangguhkan" class="cf-lencana cf-lencana-galat" data-uji="rinci-ditangguhkan">
+              {{ tcf('pengguna.ditangguhkan') }}<template v-if="kepala.ditangguhkanSampaiIso"> {{ tcf('pengguna.sampaiTanggal')(formatTanggal(kepala.ditangguhkanSampaiIso)) }}</template>
+            </span>
             <span v-else class="cf-lencana cf-lencana-baik">{{ tcf('pengguna.aktif') }}</span>
             <NuxtLink :to="aksesKe" class="text-xs font-semibold text-[var(--ca-subtle)] underline-offset-2 hover:text-[var(--ca-text)] hover:underline">{{ tcf('p360.dilihat')(kepala.akses30) }}</NuxtLink>
           </div>
