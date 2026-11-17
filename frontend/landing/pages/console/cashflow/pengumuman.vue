@@ -172,7 +172,47 @@ onBeforeUnmount(() => {
       <span class="inline-flex items-center gap-2"><span class="h-1.5 w-1.5 rounded-full" :class="hubungan === 'tersambung' ? 'bg-emerald-600' : 'bg-[var(--ca-subtle)]'" />{{ tcf(`pengumuman.koneksi.${hubungan}`) }}</span>
     </div>
     <p v-if="pesanGalat" class="text-sm ca-tone-danger" role="alert">{{ pesanGalat }}</p>
-    <div class="ca-console-dialog overflow-hidden [&_tbody_tr]:!cursor-default">
+    <!-- Ponsel: satu kartu per pengumuman, isi dan aksinya sama dengan tabel. -->
+    <div class="min-w-0 sm:hidden" data-uji="pengumuman-kartu">
+      <CashflowKeadaan v-if="memuat && !rows.length" jenis="memuat" :pesan="tcf('umum.memuat')" :baris="3" :kolom="2" />
+      <CashflowKeadaan v-else-if="!rows.length && !pesanGalat" jenis="kosong" :judul="tcf('umum.kosongJudul')" :pesan="tcf('pengumuman.kosong')" />
+      <ul v-else class="min-w-0 space-y-3">
+        <li v-for="row in rows" :key="row.id" class="cf-tabel-wadah min-w-0 p-4">
+          <div class="flex min-w-0 items-start justify-between gap-3">
+            <strong class="min-w-0 break-words text-[0.9375rem] text-[var(--ca-text)]">{{ row.judul }}</strong>
+            <span class="ca-pill-muted shrink-0 whitespace-nowrap text-xs">{{ tcf(`pengumuman.status.${statusPengumuman(row, jam)}`) }}</span>
+          </div>
+          <p class="mt-1 whitespace-pre-wrap break-words text-sm text-[var(--ca-muted)]">{{ row.isi }}</p>
+          <p v-if="row.tombol" class="mt-1 break-all text-xs text-[var(--ca-subtle)]">{{ row.tombol }} · {{ domain(row.url) }}</p>
+          <dl class="mt-3 grid grid-cols-2 gap-x-3 gap-y-3 border-t border-[color:var(--ca-border)] pt-3 text-sm">
+            <div class="col-span-2 min-w-0">
+              <dt class="text-xs font-semibold text-[var(--ca-subtle)]">{{ tcf('pengumuman.penerimaLabel') }}</dt>
+              <dd class="mt-0.5 break-words text-[var(--ca-text)]">
+                {{ labelPenerima(row) }}
+                <span class="block text-xs text-[var(--ca-muted)]">{{ row.jumlahPenerima === null ? '—' : tcf('pengumuman.jumlahPengguna')(row.jumlahPenerima) }}<template v-if="row.namaKelompok.length"> · {{ row.namaKelompok.join(', ') }}</template></span>
+              </dd>
+            </div>
+            <div class="min-w-0">
+              <dt class="text-xs font-semibold text-[var(--ca-subtle)]">{{ tcf('pengumuman.mulaiWib') }}</dt>
+              <dd class="mt-0.5 text-xs tabular-nums text-[var(--ca-text)]">{{ waktu(row.mulai) }}</dd>
+            </div>
+            <div class="min-w-0">
+              <dt class="text-xs font-semibold text-[var(--ca-subtle)]">{{ tcf('pengumuman.sampai') }}</dt>
+              <dd class="mt-0.5 text-xs tabular-nums text-[var(--ca-text)]">{{ waktu(row.sampai) }}</dd>
+            </div>
+            <div class="min-w-0">
+              <dt class="text-xs font-semibold text-[var(--ca-subtle)]">{{ tcf('pengumuman.level') }}</dt>
+              <dd class="mt-0.5 text-[var(--ca-text)]">{{ labelLevel(row.level) }}</dd>
+            </div>
+          </dl>
+          <div class="mt-3 flex flex-wrap items-center gap-2">
+            <button type="button" class="ca-btn-secondary !min-h-11 !px-3 !py-1.5 text-xs" @click="sunting(row)">{{ tcf('pengumuman.sunting') }}</button>
+            <button v-if="pengumumanBelumBerakhir(row, jam)" type="button" class="ca-btn-ghost !min-h-11 !px-3 !py-1.5 text-xs" @click="mintaHentikan(row)">{{ tcf('pengumuman.hentikan') }}</button>
+          </div>
+        </li>
+      </ul>
+    </div>
+    <div class="ca-console-dialog hidden overflow-hidden sm:block [&_tbody_tr]:!cursor-default">
       <DataTable :columns="kolom" :data="rows" :loading="memuat" :show-count="false" :empty-text="tcf('pengumuman.kosong')" empty-icon="lucide:megaphone">
         <template #cell-judul="{ row }"><div class="max-w-md"><strong>{{ row.judul }}</strong><p class="mt-1 whitespace-pre-wrap text-xs text-[var(--ca-muted)]">{{ row.isi }}</p><span v-if="row.tombol" class="mt-1 block text-xs text-[var(--ca-subtle)]">{{ row.tombol }} · {{ domain(row.url) }}</span></div></template>
         <template #cell-penerima="{ row }"><span class="block min-w-44 max-w-64 text-xs" :data-uji="row.penerima === 'aturan' ? 'ringkas-aturan' : undefined">{{ labelPenerima(row) }}</span><span class="block text-xs text-[var(--ca-muted)]">{{ row.jumlahPenerima === null ? '—' : tcf('pengumuman.jumlahPengguna')(row.jumlahPenerima) }}</span><span v-if="row.namaKelompok.length" class="block max-w-48 text-xs text-[var(--ca-muted)]">{{ row.namaKelompok.join(', ') }}</span></template>

@@ -185,6 +185,60 @@ describe('keadaan daftar', () => {
     expect(html).toContain('Lepas saringan')
     expect(await render(CashflowKeadaan, { jenis: 'kosong', polos: true, pesan: 'Kosong' })).toMatch(/cf-tabel-polos/)
   })
+  it('belum aktif di server: tenang, bukan galat dan bukan daftar kosong', async () => {
+    const html = await render(CashflowKeadaan, { jenis: 'belum-aktif', judul: 'Fitur ini belum diaktifkan di server', pesan: 'Tidak ada yang rusak.', labelUlang: 'Periksa lagi' })
+    expect(html).toMatch(/role="status" data-keadaan="belum-aktif"/)
+    expect(html).not.toMatch(/role="alert"|ca-danger|data-keadaan="(galat|kosong)"/)
+    expect(html).toMatch(/data-ikon="lucide:hourglass"/)
+    expect(html).toContain('Fitur ini belum diaktifkan di server')
+    expect(html).toContain('Tidak ada yang rusak.')
+    expect(tombol(html)).toHaveLength(1)
+    expect(tombol(html)[0]).toContain('Periksa lagi')
+    expect(tombol(await render(CashflowKeadaan, { jenis: 'belum-aktif', pesan: 'x', labelUlang: 'Periksa lagi', sibuk: true }))[0]).toMatch(MATI)
+    expect(tombol(await render(CashflowKeadaan, { jenis: 'belum-aktif', pesan: 'x' }))).toHaveLength(0)
+    // Belum aktif menang atas galat dan kosong; izin tetap paling atas.
+    expect(keadaanDaftar({ memuat: false, galat: true, belumAktif: true, jumlah: 0 })).toBe('belum-aktif')
+    expect(keadaanDaftar({ memuat: true, galat: false, belumAktif: true, jumlah: 0 })).toBe('belum-aktif')
+    expect(keadaanDaftar({ memuat: false, galat: true, izin: true, belumAktif: true, jumlah: 0 })).toBe('terbatas')
+  })
+  it('akses terbatas: teks punya lebar dasar, jadi tombol panjang turun ke bawah di layar sempit', async () => {
+    const html = await render(CashflowKeadaan, { jenis: 'terbatas', judul: 'Judul', pesan: 'Pesan' }, { default: () => h('button', 'Pasang verifikasi dua langkah') })
+    expect(html).toMatch(/class="min-w-0 flex-1 basis-56"/)
+  })
+  it('kartu ponsel: Aktivitas, Dukungan, Paket, dan Pengumuman punya daftar di bawah 640 px dan tabelnya disembunyikan di sana', () => {
+    const PASANGAN: Record<string, [RegExp, RegExp]> = {
+      'pages/console/cashflow/aktivitas.vue': [/<ul v-if="rows\.length" class="[^"]*sm:hidden" data-uji="aktivitas-kartu">/, /<CashflowTabel v-if="rows\.length" class="hidden sm:block">/],
+      'pages/console/cashflow/dukungan.vue': [/<ul v-if="daftar\.length" class="[^"]*sm:hidden" data-uji="dukungan-kartu">/, /class="cf-tabel-gulir ca-scrollbar hidden sm:block">\s*<table class="cf-tabel" data-uji="dukungan-tabel">/],
+      'components/cashflow/CashflowPaketTabel.vue': [/<ul class="[^"]*sm:hidden" data-uji="paket-kartu">/, /<CashflowTabel lebar-min="62rem" class="hidden sm:block">/],
+      'pages/console/cashflow/pengumuman.vue': [/<div class="[^"]*sm:hidden" data-uji="pengumuman-kartu">/, /<div class="ca-console-dialog hidden overflow-hidden sm:block/],
+    }
+    for (const [f, [kartu, tabel]] of Object.entries(PASANGAN)) {
+      const s = readFileSync(join(AKAR, f), 'utf8')
+      expect(s, f).toMatch(kartu)
+      expect(s, f).toMatch(tabel)
+    }
+    // Aksi paket di kartu sama lengkapnya dengan di tabel.
+    const paket = readFileSync(join(AKAR, 'components/cashflow/CashflowPaketTabel.vue'), 'utf8')
+    for (const aksi of ['ubah', 'aktifkan', 'nonaktifkan', 'bawaan', 'naik', 'turun', 'hapus']) {
+      expect(paket.match(new RegExp(`emit\\('${aksi}', p\\)`, 'g')), aksi).toHaveLength(2)
+    }
+    const pengumuman = readFileSync(join(AKAR, 'pages/console/cashflow/pengumuman.vue'), 'utf8')
+    expect(pengumuman.match(/sunting\(row\)/g)).toHaveLength(2)
+    expect(pengumuman.match(/mintaHentikan\(row\)/g)).toHaveLength(2)
+  })
+  it('Aktivitas tanpa izin data pribadi: Selidiki mati dan jalan keluarnya ditulis', () => {
+    const s = readFileSync(join(AKAR, 'pages/console/cashflow/aktivitas.vue'), 'utf8')
+    expect(s).toMatch(/const bolehSelidiki = computed\(\(\) => sesi\.boleh\('cashflow:pii'\)\)/)
+    expect(s).toMatch(/<CashflowIzinKurang v-if="rows\.length && !bolehSelidiki" :pesan="tcf\('aktivitas\.izinSelidiki'\)" \/>/)
+    expect(s.match(/:disabled="sibuk !== null \|\| !bolehSelidiki"/g)).toHaveLength(2)
+  })
+  it('setelan kabar per ruang: daftar, bukan tabel sebelas kolom', () => {
+    const s = readFileSync(join(AKAR, 'components/cashflow/CashflowTabKabar.vue'), 'utf8')
+    expect(s).not.toMatch(/<table\b/)
+    expect(s).toMatch(/<ul v-else class="[^"]*" data-uji="kabar-setelan">/)
+    expect(s).toMatch(/sakelarMenurut\(s, true\)/)
+    expect(s).toMatch(/sakelarMenurut\(s, false\)/)
+  })
   it('urutan keadaan: izin menang, baris lama bertahan, galat tidak pernah terbaca kosong', () => {
     expect(keadaanDaftar({ memuat: true, galat: false, jumlah: 0 })).toBe('memuat')
     expect(keadaanDaftar({ memuat: false, galat: false, jumlah: 0 })).toBe('kosong')

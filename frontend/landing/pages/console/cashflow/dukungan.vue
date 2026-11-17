@@ -178,7 +178,31 @@ useConsoleRemah().pasang(() => [
             :judul="tersaring ? tcf('umum.kosongSaringJudul') : tcf('umum.kosongJudul')"
             :pesan="tersaring ? tcf('umum.kosongSaring') : tcf('dukungan.kosong')"
           />
-          <div v-else class="cf-tabel-gulir ca-scrollbar">
+          <!-- Ponsel: satu kartu per dukungan, isinya sama dengan tabel. -->
+          <ul v-if="daftar.length" class="min-w-0 divide-y divide-[color:var(--ca-border)] sm:hidden" data-uji="dukungan-kartu">
+            <li v-for="d in daftar" :key="d.kode" class="min-w-0 p-4" :class="d.uji ? 'opacity-70' : ''">
+              <div class="flex min-w-0 items-start justify-between gap-3">
+                <p class="min-w-0">
+                  <span class="cf-kuat block text-[0.9375rem] tabular-nums text-[var(--ca-text)]">{{ rupiah(d.jumlah) }}</span>
+                  <span v-if="d.jumlahDibayarBeda != null" class="block text-xs ca-tone-gold">{{ tcf('dukungan.dibayar')(rupiah(d.jumlahDibayarBeda)) }}</span>
+                  <span class="cf-dua">{{ d.sumber ? tcf(`dukungan.sumber.${d.sumber}`) : '—' }}<template v-if="d.penerbit"> · {{ d.penerbit }}</template></span>
+                </p>
+                <span class="flex shrink-0 flex-col items-end gap-1">
+                  <span :class="pillStatus(d.status)">{{ d.status ? tcf(`dukungan.status.${d.status}`) : '—' }}</span>
+                  <span v-if="d.uji" class="ca-pill-muted !px-2 !py-0.5" :title="tcf('dukungan.ujiKet')">{{ tcf('dukungan.uji') }}</span>
+                </span>
+              </div>
+              <p v-if="d.nama || d.pesan" class="mt-2 min-w-0 text-sm text-[var(--ca-text)]">
+                <span v-if="d.nama" class="block break-words font-semibold">{{ d.nama }}</span>
+                <span v-if="d.pesan" class="block whitespace-pre-wrap break-words text-[var(--ca-muted)]">{{ d.pesan }}</span>
+              </p>
+              <p class="mt-2 flex flex-wrap justify-between gap-x-3 text-xs tabular-nums text-[var(--ca-subtle)]">
+                <span>{{ formatWaktu(d.dibuatIso) }}</span>
+                <span class="font-mono">{{ d.kode }}</span>
+              </p>
+            </li>
+          </ul>
+          <div v-if="daftar.length" class="cf-tabel-gulir ca-scrollbar hidden sm:block">
             <table class="cf-tabel" data-uji="dukungan-tabel">
               <thead>
                 <tr>

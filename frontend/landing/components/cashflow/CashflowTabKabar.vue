@@ -57,6 +57,8 @@ const nilaiIsi = (k: typeof ISI[number], n: number) => (k === 'masuk' || k === '
 const SETELAN = { hapus: 'hapus', masuk: 'masuk', peran: 'peran', ubah: 'ubah', keluar: 'keluar', ruang: 'ruangUbah' } as const
 const SAKELAR = Object.keys(SETELAN) as Array<keyof typeof SETELAN>
 const JENIS_RINGKAS = [...JENIS_KABAR, 'lain'] as const
+/** Nama sakelar yang nyala (atau mati) di satu ruang, dipisah koma. */
+const sakelarMenurut = (s: SetelanKabar, nyala: boolean) => SAKELAR.filter(k => !!s[k] === nyala).map(k => tcf(`kabar.kolom.${SETELAN[k]}`) as string).join(', ')
 const isiAda = (k: Kabar) => (k.isi ? ISI.filter(x => k.isi![x] != null).map(x => ({ kunci: x, nilai: nilaiIsi(x, k.isi![x]!) })) : [])
 </script>
 
@@ -81,34 +83,39 @@ const isiAda = (k: Kabar) => (k.isi ? ISI.filter(x => k.isi![x] != null).map(x =
         <p class="text-xs text-[var(--ca-subtle)]">{{ tcf('kabar.setelanKet') }}</p>
       </div>
       <CashflowKeadaanKosong v-if="!setelan.length" icon="lucide:settings" :pesan="tcf('kabar.setelanKosong')" />
-      <div v-else class="overflow-x-auto">
-        <table class="w-full text-left text-xs">
-          <thead class="text-[var(--ca-muted)]">
-            <!-- Sebelas kolom: kepala boleh dua baris supaya semuanya muat tanpa gulir samping. -->
-            <tr class="align-bottom">
-              <th class="py-1 pr-3 font-medium">{{ tcf('kabar.kolom.ruang') }}</th>
-              <th v-for="k in SAKELAR" :key="k" class="py-1 pr-3 font-medium">{{ tcf(`kabar.kolom.${SETELAN[k]}`) }}</th>
-              <th class="py-1 pr-3 font-medium">{{ tcf('kabar.kolom.tingkat') }}</th>
-              <th class="py-1 pr-3 font-medium">{{ tcf('kabar.kolom.jendela') }}</th>
-              <th class="py-1 pr-3 font-medium">{{ tcf('kabar.kolom.ambang') }}</th>
-              <th class="py-1 font-medium">{{ tcf('kabar.kolom.rangkuman') }}</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-[color:var(--ca-border)] text-[var(--ca-text)]">
-            <tr v-for="s in setelan" :key="s.ruangId">
-              <td class="py-1.5 pr-3">
-                {{ namaRuang(s.ruangId) }}
-                <span v-if="!s.tersimpan" class="ca-pill-muted ml-1 text-[0.65rem]">{{ tcf('kabar.bawaan') }}</span>
-              </td>
-              <td v-for="k in SAKELAR" :key="k" class="py-1.5 pr-3" :class="s[k] ? '' : 'text-[var(--ca-muted)]'">{{ s[k] ? tcf('kabar.nyala') : tcf('kabar.mati') }}</td>
-              <td class="py-1.5 pr-3" :class="s.tingkat ? '' : 'text-[var(--ca-muted)]'">{{ s.tingkat ? tcf(`kode.tingkatKabar.${s.tingkat}`) : tcf('kabar.tingkatBawaan') }}</td>
-              <td class="py-1.5 pr-3 tabular-nums">{{ s.jendelaMenit ? tcf('kabar.menit')(s.jendelaMenit) : tcf('kabar.mati') }}</td>
-              <td class="py-1.5 pr-3 tabular-nums">{{ s.ambang == null ? tcf('kabar.tanpaAmbang') : rupiah(s.ambang) }}</td>
-              <td class="py-1.5 tabular-nums">{{ s.rangkumanJam == null ? '—' : tcf('kabar.jam')(s.rangkumanJam, s.zona ?? 'WIB') }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
+      <!-- Satu baris per ruang. Dulu tabel sebelas kolom: kepalanya pecah jadi dua baris dan di ponsel bergulir ke samping. -->
+      <ul v-else class="divide-y divide-[color:var(--ca-border)] text-xs" data-uji="kabar-setelan">
+        <li v-for="s in setelan" :key="s.ruangId" class="min-w-0 py-2.5 first:pt-0 last:pb-0">
+          <p class="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-sm font-semibold text-[var(--ca-text)]">
+            <span class="min-w-0 break-words">{{ namaRuang(s.ruangId) }}</span>
+            <span v-if="!s.tersimpan" class="ca-pill-muted text-[0.65rem] font-normal">{{ tcf('kabar.bawaan') }}</span>
+          </p>
+          <dl class="mt-1.5 grid gap-x-6 gap-y-1 sm:grid-cols-[auto_minmax(0,1fr)]">
+            <dt class="text-[var(--ca-muted)]">{{ tcf('kabar.nyala') }}</dt>
+            <dd class="min-w-0 break-words text-[var(--ca-text)]">{{ sakelarMenurut(s, true) || '—' }}</dd>
+            <dt class="text-[var(--ca-muted)]">{{ tcf('kabar.mati') }}</dt>
+            <dd class="min-w-0 break-words text-[var(--ca-muted)]">{{ sakelarMenurut(s, false) || '—' }}</dd>
+          </dl>
+          <dl class="mt-1.5 flex flex-wrap gap-x-5 gap-y-1">
+            <div class="flex items-baseline gap-1.5">
+              <dt class="text-[var(--ca-muted)]">{{ tcf('kabar.kolom.tingkat') }}</dt>
+              <dd :class="s.tingkat ? 'text-[var(--ca-text)]' : 'text-[var(--ca-muted)]'">{{ s.tingkat ? tcf(`kode.tingkatKabar.${s.tingkat}`) : tcf('kabar.tingkatBawaan') }}</dd>
+            </div>
+            <div class="flex items-baseline gap-1.5">
+              <dt class="text-[var(--ca-muted)]">{{ tcf('kabar.kolom.jendela') }}</dt>
+              <dd class="tabular-nums text-[var(--ca-text)]">{{ s.jendelaMenit ? tcf('kabar.menit')(s.jendelaMenit) : tcf('kabar.mati') }}</dd>
+            </div>
+            <div class="flex items-baseline gap-1.5">
+              <dt class="text-[var(--ca-muted)]">{{ tcf('kabar.kolom.ambang') }}</dt>
+              <dd class="tabular-nums text-[var(--ca-text)]">{{ s.ambang == null ? tcf('kabar.tanpaAmbang') : rupiah(s.ambang) }}</dd>
+            </div>
+            <div class="flex items-baseline gap-1.5">
+              <dt class="text-[var(--ca-muted)]">{{ tcf('kabar.kolom.rangkuman') }}</dt>
+              <dd class="tabular-nums text-[var(--ca-text)]">{{ s.rangkumanJam == null ? '—' : tcf('kabar.jam')(s.rangkumanJam, s.zona ?? 'WIB') }}</dd>
+            </div>
+          </dl>
+        </li>
+      </ul>
     </section>
 
     <div class="flex flex-wrap items-center gap-2">

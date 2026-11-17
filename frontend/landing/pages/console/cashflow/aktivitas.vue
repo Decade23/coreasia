@@ -12,6 +12,13 @@
  * (kasus lama atas ruang itu ditutup, tercatat di lanjutan_dari).
  *
  * Langkah usaha (0110) di atas tabel: agregat T0 dengan rentangnya sendiri.
+ *
+ * Sesi tanpa cashflow:pii tetap membaca daftarnya. Selidiki dimatikan dan
+ * CashflowIzinKurang menjelaskan jalan keluarnya, supaya tombolnya tidak baru
+ * menolak sesudah diklik. Penegaknya tetap server.
+ *
+ * Di ponsel (di bawah 640 px) tiap peristiwa jadi satu baris kartu dengan isi
+ * yang sama, karena tabelnya terpotong di tepi.
  */
 definePageMeta({ layout: 'console', middleware: ['console', 'cashflow-admin'] })
 import { alasanSelidiki, tujuanSelidiki, type AktivitasV2DTO } from '~/adapters/cashflowRuang'
@@ -19,7 +26,10 @@ import { adalahBatasAkses } from '~/adapters/cashflowKasus'
 
 const { tcf, formatTanggal } = useCashflowI18n()
 const api = useCashflowAdmin()
+const sesi = useCashflowSesi()
 const toast = useToast()
+/** Petunjuk tampilan; penegaknya server (42501 izin-kurang). */
+const bolehSelidiki = computed(() => sesi.boleh('cashflow:pii'))
 const { memuat, pesanGalat, muat, aksi } = useCashflowMuat({ awal: true })
 const rows = ref<AktivitasV2DTO[]>([])
 const muatAktivitas = () => muat(async () => { rows.value = await api.aktivitasTerbaru(150) })
@@ -52,7 +62,22 @@ const { sibuk, jalankan: selidiki } = useCashflowSekaliJalan((id: number) => aks
     <template v-else>
       <p v-if="pesanGalat" class="rounded-xl bg-[var(--ca-danger-bg)] px-4 py-3 text-sm font-semibold text-[var(--ca-danger-text)]" role="alert">{{ pesanGalat }}</p>
       <CashflowKeadaan v-if="!rows.length" jenis="kosong" icon="lucide:activity" :judul="tcf('umum.kosongJudul')" :pesan="tcf('umum.kosong')" />
-      <CashflowTabel v-else>
+      <CashflowIzinKurang v-if="rows.length && !bolehSelidiki" :pesan="tcf('aktivitas.izinSelidiki')" />
+      <ul v-if="rows.length" class="cf-tabel-wadah min-w-0 divide-y divide-[color:var(--ca-border)] sm:hidden" data-uji="aktivitas-kartu">
+        <li v-for="r in rows" :key="r.id" class="flex min-w-0 items-center justify-between gap-3 px-4 py-3">
+          <div class="min-w-0">
+            <span class="inline-block max-w-full break-all rounded-full bg-[var(--ca-panel-bg-strong)] px-2 py-0.5 text-xs font-semibold text-[var(--ca-text)]">{{ r.jenis }}</span>
+            <p class="mt-1 text-xs tabular-nums text-[var(--ca-muted)]">
+              {{ formatTanggal(r.tanggal) }}<template v-if="r.rentang_nominal"> · {{ r.rentang_nominal }}</template>
+            </p>
+          </div>
+          <button
+            type="button" class="ca-btn-secondary shrink-0 !px-3 !py-1 text-xs" :disabled="sibuk !== null || !bolehSelidiki"
+            :aria-busy="sibuk === r.id" @click="selidiki(r.id)"
+          >{{ sibuk === r.id ? tcf('selidiki.membuka') : tcf('selidiki.tombol') }}</button>
+        </li>
+      </ul>
+      <CashflowTabel v-if="rows.length" class="hidden sm:block">
         <thead><tr>
           <th scope="col">{{ tcf('aktivitas.tanggal') }}</th>
           <th scope="col">{{ tcf('aktivitas.jenis') }}</th><th scope="col" class="cf-ka">{{ tcf('aktivitas.nominal') }}</th>
@@ -65,7 +90,7 @@ const { sibuk, jalankan: selidiki } = useCashflowSekaliJalan((id: number) => aks
             <td class="cf-ka whitespace-nowrap">{{ r.rentang_nominal }}</td>
             <td class="cf-ka">
               <button
-                type="button" class="ca-btn-secondary !px-3 !py-1 text-xs" :disabled="sibuk !== null"
+                type="button" class="ca-btn-secondary !px-3 !py-1 text-xs" :disabled="sibuk !== null || !bolehSelidiki"
                 :aria-busy="sibuk === r.id" @click="selidiki(r.id)"
               >{{ sibuk === r.id ? tcf('selidiki.membuka') : tcf('selidiki.tombol') }}</button>
             </td>
