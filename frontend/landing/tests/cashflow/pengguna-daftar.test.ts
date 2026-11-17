@@ -12,10 +12,10 @@ import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import {
   FILTER_KOLOM, SEGMEN_PENGGUNA, URUT_BERKOLOM, URUT_PENGGUNA, URUT_PRIBADI,
-  arahBawaan, barisWa, filterServer, gantiUrut, jumlahSaringan, keBawaanRinci, opsiUrut, rupiahRingkas,
+  arahBawaan, barisWa, filterServer, gantiUrut, jumlahSaringan, keBawaanRinci, opsiUrut, rinciKepala, rupiahRingkas,
   segmenButuhHitungan, tambahanUrut, tanpaTahunIni, urutBoleh, type ArahUrut,
 } from '../../adapters/cashflowPenggunaDaftar'
-import { kePengguna, type PenggunaDTO } from '../../adapters/cashflow'
+import { kePengguna, tanggalPendek, type PenggunaDTO } from '../../adapters/cashflow'
 import { bacaQuery, tulisQuery, type SkemaQuery } from '../../adapters/cashflowQuery'
 import { KAMUS_CASHFLOW } from '../../composables/cashflow/useCashflowI18n'
 
@@ -182,13 +182,15 @@ describe('panel "Saring" mengirim p_filter yang sama dengan saringan kolom lama'
   })
 })
 
+/** Satu baris daftar sintetis. */
+const dto = (ubah: Partial<PenggunaDTO> & Record<string, unknown> = {}): PenggunaDTO => ({
+  user_id: '00000000-0000-0000-0000-000000000001', email: 'sar***@contoh.invalid', display_name: '',
+  created_at: '2026-10-20T03:00:00Z', last_sign_in: '2026-11-15T03:00:00Z', aktivitas_terakhir: '2026-11-16T02:40:00Z', banned_until: null,
+  jumlah_ruang: 3, jumlah_tx: 120, jumlah_nominal: 12_500_000, terbuka: false, total_semua: 1,
+  ...ubah,
+} as PenggunaDTO)
+
 describe('isi baris dua tingkat', () => {
-  const dto = (ubah: Partial<PenggunaDTO> & Record<string, unknown> = {}): PenggunaDTO => ({
-    user_id: '00000000-0000-0000-0000-000000000001', email: 'sar***@contoh.invalid', display_name: '',
-    created_at: '2026-10-20T03:00:00Z', last_sign_in: '2026-11-15T03:00:00Z', aktivitas_terakhir: '2026-11-16T02:40:00Z', banned_until: null,
-    jumlah_ruang: 3, jumlah_tx: 120, jumlah_nominal: 12_500_000, terbuka: false, total_semua: 1,
-    ...ubah,
-  } as PenggunaDTO)
   it('status WhatsApp singkat: terbukti dengan tanggal, lolos, atau belum. Kalimat panjangnya untuk rincian', () => {
     const p = (ubah: Record<string, unknown>) => kePengguna(dto(ubah), 'id')
     expect(barisWa(p({ status_wa: 'masuk', status_wa_pada: '2026-11-14T00:00:00Z' }))).toEqual({ nada: 'baik', kunci: 'waTerbukti', pada: '14 Nov 2026' })
@@ -238,6 +240,60 @@ describe('isi baris dua tingkat', () => {
   })
 })
 
+describe('rincian di kepala: kepala didahulukan, daftar jadi cadangan server lama', () => {
+  const tanggal = (iso: string | null) => tanggalPendek(iso, 'id')
+  const bawaan = keBawaanRinci(kePengguna(dto({
+    status_wa: 'lewat', status_wa_pada: '2026-11-10T17:00:00Z', lewat_sebab: 'tanpa_nomor', nomor_ramai: true, kredit_ditahan: true,
+    domi_tanya: 5, domi_tanya_30: 2, domi_terakhir: '2026-11-11T17:00:00Z',
+  }), 'id'))
+  const LAMA = { statusWa: null, domi: null }
+  it('server lama dibuka dari daftar: persis yang dibawa dari daftar, tanpa baris jumlah pertanyaan', () => {
+    const r = rinciKepala(LAMA, bawaan, { izinPribadi: true, tanggal })
+    expect(r.statusWa).toBe(bawaan.statusWa)
+    expect(r).toMatchObject({ domiTerakhir: '12 Nov 2026', domiBelumPernah: false, domiTanya: null, domiDariServer: false })
+  })
+  it('server lama dibuka langsung: keduanya kosong, tanpa nilai karangan', () => {
+    for (const b of [null, undefined]) {
+      const r = rinciKepala(LAMA, b, { izinPribadi: true, tanggal })
+      expect(r).toEqual({ statusWa: null, domiTerakhir: null, domiBelumPernah: false, domiTanya: null, domiDariServer: false })
+    }
+    expect(rinciKepala(null, null, { izinPribadi: true, tanggal }).domiDariServer).toBe(false)
+  })
+  it('server lama tanpa izin data pribadi: Domi tidak ditulis walau dibawa dari daftar', () => {
+    expect(rinciKepala(LAMA, bawaan, { izinPribadi: false, tanggal })).toMatchObject({ domiTerakhir: null, domiBelumPernah: false, domiTanya: null })
+  })
+  it('server baru dibuka langsung: status, tanggal, terakhir, dan jumlah dari kepala', () => {
+    const r = rinciKepala({ statusWa: { status: 'masuk', padaIso: '2026-11-13T17:00:00Z' }, domi: { tanya: 12, terakhirIso: '2026-11-15T17:00:00Z' } }, null, { izinPribadi: true, tanggal })
+    expect(r.statusWa).toEqual({ status: 'masuk', pada: '14 Nov 2026', padaIso: '2026-11-13T17:00:00Z', sebabLewat: null, nomorRamai: false, kreditDitahan: false })
+    expect(r).toMatchObject({ domiTerakhir: '16 Nov 2026', domiBelumPernah: false, domiTanya: 12, domiDariServer: true })
+  })
+  it('server baru menang atas daftar. Tanda tambahan dipinjam dari daftar hanya bila statusnya sama', () => {
+    const sama = rinciKepala({ statusWa: { status: 'lewat', padaIso: '2026-11-09T17:00:00Z' }, domi: { tanya: 9, terakhirIso: '2026-11-14T17:00:00Z' } }, bawaan, { izinPribadi: true, tanggal })
+    expect(sama.statusWa).toEqual({ status: 'lewat', pada: '10 Nov 2026', padaIso: '2026-11-09T17:00:00Z', sebabLewat: 'tanpa_nomor', nomorRamai: true, kreditDitahan: true })
+    expect(sama).toMatchObject({ domiTerakhir: '15 Nov 2026', domiTanya: 9 })
+    const beda = rinciKepala({ statusWa: { status: 'masuk', padaIso: '2026-11-16T17:00:00Z' }, domi: { tanya: 9, terakhirIso: null } }, bawaan, { izinPribadi: true, tanggal })
+    expect(beda.statusWa).toEqual({ status: 'masuk', pada: '17 Nov 2026', padaIso: '2026-11-16T17:00:00Z', sebabLewat: null, nomorRamai: false, kreditDitahan: false })
+    // Ada pertanyaan tetapi tanpa tanggal: garis, bukan tanggal dari daftar.
+    expect(beda).toMatchObject({ domiTerakhir: null, domiBelumPernah: false, domiTanya: 9 })
+  })
+  it('server baru: belum pernah bertanya dibedakan dari tidak boleh tahu', () => {
+    const belum = rinciKepala({ statusWa: { status: 'belum', padaIso: null }, domi: { tanya: 0, terakhirIso: null } }, bawaan, { izinPribadi: true, tanggal })
+    expect(belum).toMatchObject({ domiTerakhir: null, domiBelumPernah: true, domiTanya: 0, domiDariServer: true })
+    expect(belum.statusWa).toMatchObject({ status: 'belum', pada: '—', padaIso: null })
+    const tanpaPii = rinciKepala({ statusWa: { status: 'kirim', padaIso: null }, domi: { tanya: null, terakhirIso: null } }, null, { izinPribadi: true, tanggal })
+    expect(tanpaPii).toMatchObject({ domiTerakhir: null, domiBelumPernah: false, domiTanya: null, domiDariServer: true })
+    // Izin hilang di tengah sesi: hitungan yang masih di memori tidak ditulis.
+    const hilang = rinciKepala({ statusWa: { status: 'kirim', padaIso: null }, domi: { tanya: 12, terakhirIso: '2026-11-15T17:00:00Z' } }, bawaan, { izinPribadi: false, tanggal })
+    expect(hilang).toMatchObject({ domiTerakhir: null, domiBelumPernah: false, domiTanya: null, domiDariServer: true })
+    expect(hilang.statusWa?.status).toBe('kirim')
+  })
+  it('kamus punya label jumlah pertanyaan di dua bahasa', () => {
+    expect(KAMUS_CASHFLOW.id.pengguna.rinci.kali(12, '12')).toBe('12 kali')
+    expect(KAMUS_CASHFLOW.en.pengguna.rinci.kali(1, '1')).toBe('1 time')
+    expect(KAMUS_CASHFLOW.en.pengguna.rinci.kali(12, '12')).toBe('12 times')
+  })
+})
+
 describe('halaman daftar: tujuh kolom, dan empat hal pindah ke rincian', () => {
   it('kolom: Pengguna, WhatsApp, Versi, Aktif terakhir, Tanya Domi, Kredit, Ruang, lalu panah', () => {
     const kunci = [...HAL.matchAll(/\{ key: '(\w+)', label:/g)].map(m => m[1])
@@ -256,12 +312,14 @@ describe('halaman daftar: tujuh kolom, dan empat hal pindah ke rincian', () => {
   })
   it('rincian pengguna menampilkan keempatnya: cara nomor dibuktikan, terakhir pakai Domi, ID, dan masuk terakhir', () => {
     const kepala = baca('components/cashflow/CashflowKepala360.vue')
-    expect(kepala).toMatch(/tcf\('pengguna\.rinci\.caraBukti'\)[\s\S]*?<CashflowStatusWaAkun v-if="bawaan\?\.statusWa" :status="bawaan\.statusWa" baris \/>/)
+    expect(kepala).toMatch(/tcf\('pengguna\.rinci\.caraBukti'\)[\s\S]*?<CashflowStatusWaAkun v-if="rinci\.statusWa" :status="rinci\.statusWa" baris \/>/)
     expect(kepala).toMatch(/tcf\('pengguna\.rinci\.domiTerakhir'\)/)
     expect(kepala).toMatch(/data-uji="rinci-id">\{\{ kepala\.id \}\}/)
     expect(kepala).toMatch(/tcf\('pengguna\.masuk'\)[\s\S]*?formatTanggal\(kepala\.masukTerakhirIso\)/)
-    // Terakhir pakai Domi hanya untuk sesi berizin data pribadi.
-    expect(kepala).toMatch(/if \(!props\.izinPribadi \|\| !props\.bawaan\) return null/)
+    // Terakhir pakai Domi hanya untuk sesi berizin data pribadi: aturannya di rinciKepala.
+    expect(kepala).toMatch(/rinciKepala\(props\.kepala, props\.bawaan, \{ izinPribadi: props\.izinPribadi, tanggal: formatTanggal \}\)/)
+    // Baris jumlah pertanyaan hanya ditulis bila kepala sendiri yang mengirimnya.
+    expect(kepala).toMatch(/<template v-if="rinci\.domiDariServer">[\s\S]*?data-uji="rinci-domi-tanya"/)
     expect(baca('pages/console/cashflow/pengguna/[id].vue')).toMatch(/:bawaan="bawaanRinci"/)
   })
   it('bawaan diisi dari baris yang tampil dan dibuang saat hak baca hilang atau keluar. Tidak ada RPC baru', () => {

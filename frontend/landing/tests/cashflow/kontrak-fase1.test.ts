@@ -237,10 +237,16 @@ const ADA_0121 = !adaMigrasi || adaMigrasiNomor('0121')
 /* 0123: kepala membawa nomor UTUH untuk pemanggil ber-pii (tersamar untuk yang
    tidak). Tanpa 0123 di folder migrasi, aturan 0121 (selalu tersamar) berlaku. */
 const ADA_0123 = adaMigrasi && adaMigrasiNomor('0123')
+/* 20261117130000: kepala juga membawa cara nomor dibuktikan dan pemakaian Domi
+   (empat kunci). Folder migrasi tanpa migrasi itu menguji bentuk sebelumnya;
+   tanpa folder migrasi sama sekali, contohnya bentuk terbaru. */
+const ADA_KEPALA_RINCI = !adaMigrasi || adaMigrasiNomor('20261117130000')
+const KUNCI_KEPALA_RINCI = ['status_wa', 'status_wa_pada', 'domi_tanya', 'domi_terakhir'] as const
 const KEPALA = `{"user_id": "${SUBJEK}", "email": "ded***@gmail.com", "daftar": "2026-09-01T16:30:00+00:00",
   "masuk_terakhir": "2026-09-17T18:45:10.5+00:00", "banned_until": null, "jumlah_ruang": 2, "jumlah_transaksi": 42,
   "akses_30hari": 3, "ruang": [{"workspace_id": "${RUANG}", "nama": "Bi······", "jenis": "usaha", "peran": "owner",
-  "pemilik": true, "bekas_anggota": false, "jumlah_anggota": 1, "tx_oleh_dia": 40}]${ADA_0121 ? ', "nomor_wa": "0812 •••• 7890"' : ''}}`
+  "pemilik": true, "bekas_anggota": false, "jumlah_anggota": 1, "tx_oleh_dia": 40}]${ADA_0121 ? ', "nomor_wa": "0812 •••• 7890"' : ''}${ADA_KEPALA_RINCI
+  ? ', "status_wa": "masuk", "status_wa_pada": "2026-11-13T17:00:00+00:00", "domi_tanya": 12, "domi_terakhir": "2026-11-15T17:00:00+00:00"' : ''}}`
 
 describe('kontrak KepalaPenggunaDTO ↔ admin_pengguna_kepala', () => {
   it.skipIf(!adaMigrasi)('contoh = kunci server; ruang[] hanya untuk pii', () => {
@@ -263,6 +269,31 @@ describe('kontrak KepalaPenggunaDTO ↔ admin_pengguna_kepala', () => {
     } else {
       expect(badan).not.toMatch(/'nomor_wa'/)
     }
+    if (ADA_KEPALA_RINCI) {
+      // Hitungan Domi hanya dihitung di cabang pii, dan kedua waktu dibulatkan ke hari WIB.
+      expect(badan).toMatch(/if\s+v_pii\s+then\s+select[\s\S]*?into v_domi_tanya, v_domi_terakhir[\s\S]*?end if;/)
+      expect(badan.match(/at time zone 'Asia\/Jakarta'\)::date\)::timestamp at time zone 'Asia\/Jakarta'\s+into v_(status_wa|domi_tanya)/g)).toHaveLength(2)
+      expect(badan).toMatch(/'status_wa',\s*v_status_wa,\s*'status_wa_pada',\s*v_status_wa_pada,\s*'domi_tanya',\s*v_domi_tanya,\s*'domi_terakhir',\s*v_domi_terakhir\)/)
+    } else {
+      for (const k of KUNCI_KEPALA_RINCI) expect(badan).not.toMatch(new RegExp(`'${k}'`))
+    }
+  })
+  it.skipIf(!adaMigrasi || !ADA_KEPALA_RINCI)('empat kunci rincian memakai rumus baris daftar v4', () => {
+    const { badan } = fungsiTerakhir('admin_pengguna_kepala')
+    const v4 = fungsiTerakhir('admin_daftar_pengguna_v4').badan
+    const rapat = (s: string) => s.replace(/\s+/g, ' ')
+    const rumus = [
+      "case when n.cara = 'wa_masuk' then 'masuk' when n.cara is not null then 'kirim' when lw.pada is not null then 'lewat' else 'belum' end",
+      "((coalesce(n.terverifikasi_pada, lw.pada) at time zone 'Asia/Jakarta')::date)::timestamp at time zone 'Asia/Jakarta'",
+      'greatest(coalesce(dp.jumlah, 0), (coalesce(dk.jumlah, 0) + 1) / 2)::integer',
+      "((greatest(dp.terakhir, dk.terakhir) at time zone 'Asia/Jakarta')::date)::timestamp at time zone 'Asia/Jakarta'",
+      "select l.pada, l.sebab from public.nomor_wa_lewat_inti(u.id) l where n.user_id is null",
+      "where r.jenis = 'kembali' and r.referensi = k.referensi",
+    ]
+    for (const r of rumus) {
+      expect(rapat(v4), r).toContain(r)
+      expect(rapat(badan), r).toContain(r)
+    }
   })
   it('keKepala: ruang calon lingkup; null = tanpa pii', () => {
     const k = keKepala(JSON.parse(KEPALA) as KepalaPenggunaDTO)
@@ -270,6 +301,34 @@ describe('kontrak KepalaPenggunaDTO ↔ admin_pengguna_kepala', () => {
     expect(k.ruang).toEqual([{ id: RUANG, nama: 'Bi······', jenis: 'usaha', peran: 'owner', pemilik: true, bekas: false, anggota: 1, tx: 40 }])
     expect(keKepala({ ...(JSON.parse(KEPALA) as KepalaPenggunaDTO), ruang: null }).ruang).toBeNull()
     expect(k.nomorWa).toBe(ADA_0121 ? '0812 •••• 7890' : null)
+    if (ADA_KEPALA_RINCI) {
+      expect(k.statusWa).toEqual({ status: 'masuk', padaIso: '2026-11-13T17:00:00+00:00' })
+      expect(k.domi).toEqual({ tanya: 12, terakhirIso: '2026-11-15T17:00:00+00:00' })
+    } else {
+      expect(k).toMatchObject({ statusWa: null, domi: null })
+    }
+  })
+  it('keKepala: server lama tanpa empat kunci rincian tidak menghasilkan nilai karangan', () => {
+    const lama = Object.fromEntries(Object.entries(JSON.parse(KEPALA) as Record<string, unknown>)
+      .filter(([kunci]) => !(KUNCI_KEPALA_RINCI as readonly string[]).includes(kunci)))
+    const k = keKepala(lama as unknown as KepalaPenggunaDTO)
+    expect(k.statusWa).toBeNull()
+    expect(k.domi).toBeNull()
+    expect(JSON.stringify(k)).not.toMatch(/undefined|NaN/)
+    // Kunci lama dibaca sama, dengan atau tanpa kunci baru.
+    const baru = keKepala({ ...(lama as unknown as KepalaPenggunaDTO), status_wa: 'kirim', status_wa_pada: null, domi_tanya: 0, domi_terakhir: null })
+    expect({ ...baru, statusWa: null, domi: null }).toEqual(k)
+  })
+  it('keKepala: nilai rincian yang ganjil tidak sampai ke layar', () => {
+    const dengan = (x: Partial<KepalaPenggunaDTO>) => keKepala({ ...(JSON.parse(KEPALA) as KepalaPenggunaDTO), ...x })
+    // Tanpa pii server mengirim null: tidak boleh tahu, bukan nol.
+    expect(dengan({ domi_tanya: null, domi_terakhir: null }).domi).toEqual({ tanya: null, terakhirIso: null })
+    expect(dengan({ domi_tanya: 0, domi_terakhir: null }).domi).toEqual({ tanya: 0, terakhirIso: null })
+    expect(dengan({ domi_tanya: '7', domi_terakhir: 'bukan tanggal' }).domi).toEqual({ tanya: 7, terakhirIso: null })
+    expect(dengan({ status_wa: 'belum', status_wa_pada: '2026-11-13T17:00:00+00:00' }).statusWa).toEqual({ status: 'belum', padaIso: null })
+    expect(dengan({ status_wa: 'lewat', status_wa_pada: 'bukan tanggal' }).statusWa).toEqual({ status: 'lewat', padaIso: null })
+    expect(dengan({ status_wa: 'aneh', status_wa_pada: null }).statusWa).toEqual({ status: 'lain', padaIso: null })
+    expect(dengan({ status_wa: null, status_wa_pada: null }).statusWa).toEqual({ status: 'lain', padaIso: null })
   })
   it('keKepala: banned_until jadi "ditangguhkan sampai", kecuali sudah lewat atau terlalu jauh', () => {
     const kini = Date.parse('2026-11-16T00:00:00Z')

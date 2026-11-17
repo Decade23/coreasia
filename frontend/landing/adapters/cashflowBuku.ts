@@ -18,6 +18,8 @@
 import { POLA_UUID, samarkanEmail, samarkanNomorWa, formatNomorWa, keArahUang, type ArahUang } from './cashflow'
 import { tanggalPendek, type BahasaWaktu } from './cashflowWaktu'
 import type { RuangCalon } from './cashflowKasus'
+import { keStatusWaAkun, type StatusWaAkunKode } from './cashflowWa'
+import { keDomiAkun } from './cashflowPenggunaDomi'
 
 const angka = (v: number | string | null | undefined): number => {
   const x = Number(v ?? 0)
@@ -47,6 +49,20 @@ export interface KepalaPenggunaDTO {
    *  tersamar untuk yang tidak. Kunci ini hanya ada di server yang sudah
    *  memasang 0121. */
   nomor_wa?: string | null
+  /**
+   * Empat kunci berikut hanya ada di server yang kepalanya sudah mengirim cara
+   * nomor dibuktikan dan pemakaian Domi. Arti dan rumusnya sama dengan baris
+   * daftar pengguna (StatusWaAkunDTO, DomiAkunDTO). Kunci yang tidak ada
+   * berarti server lama, bukan "belum" atau nol.
+   */
+  /** masuk | kirim | lewat | belum. */
+  status_wa?: string | null
+  /** Kapan nomor terbukti atau akun lewat tanpa nomor, dibulatkan server ke awal hari WIB. */
+  status_wa_pada?: string | null
+  /** Jumlah pertanyaan ke Domi seumur akun. null = pemanggil tanpa pii. */
+  domi_tanya?: number | string | null
+  /** Terakhir memakai Domi, dibulatkan server ke awal hari WIB. null = belum pernah, atau tanpa pii. */
+  domi_terakhir?: string | null
 }
 export interface KepalaPengguna {
   id: string
@@ -76,13 +92,26 @@ export interface KepalaPengguna {
    * tanpa `ruang` yang membawa nomor utuh tetap disamarkan di sini.
    */
   nomorWa: string | null
+  /**
+   * Cara nomor dibuktikan menurut kepala. null = server belum mengirim
+   * kuncinya, jadi halaman memakai yang dibawa dari daftar seperti sebelumnya.
+   */
+  statusWa: { status: StatusWaAkunKode; padaIso: string | null } | null
+  /**
+   * Pemakaian Domi menurut kepala. null = server belum mengirim kuncinya.
+   * `tanya` null = sesi tanpa pii (tidak boleh tahu), bukan nol.
+   */
+  domi: { tanya: number | null; terakhirIso: string | null } | null
 }
 
 const LIMA_TAHUN_MS = 5 * 365 * 86_400_000
+const tanggalSah = (v: string | null): string | null => (typeof v === 'string' && !Number.isNaN(Date.parse(v)) ? v : null)
 
 export function keKepala(d: KepalaPenggunaDTO, sekarang: number = Date.now()): KepalaPengguna {
   const sampai = d.banned_until ? Date.parse(d.banned_until) : Number.NaN
   const ditangguhkan = Number.isFinite(sampai) && sampai > sekarang
+  const wa = keStatusWaAkun({ status_wa: d.status_wa, status_wa_pada: d.status_wa_pada })
+  const domi = keDomiAkun({ domi_tanya: d.domi_tanya, domi_terakhir: d.domi_terakhir })
   return {
     id: d.user_id,
     emailTersamar: samarkanEmail(d.email),
@@ -94,6 +123,8 @@ export function keKepala(d: KepalaPenggunaDTO, sekarang: number = Date.now()): K
     jumlahTransaksi: angkaAtauNull(d.jumlah_transaksi),
     akses30: angka(d.akses_30hari),
     nomorWa: (Array.isArray(d.ruang) ? formatNomorWa(d.nomor_wa) : null) ?? samarkanNomorWa(d.nomor_wa),
+    statusWa: wa ? { status: wa.status, padaIso: tanggalSah(wa.padaIso) } : null,
+    domi: domi ? { tanya: domi.tanya, terakhirIso: domi.terakhirIso } : null,
     ruang: Array.isArray(d.ruang)
       ? d.ruang.map(r => ({
           id: r.workspace_id,

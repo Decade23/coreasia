@@ -470,7 +470,7 @@ describe('penjaga daftar pengguna: Status WhatsApp', () => {
     // Tanda nomor ramai dan kredit ditahan tetap ada di keduanya.
     expect(hal.match(/tcf\('pengguna\.statusWa\.ramai'\)/g)).toHaveLength(2)
     expect(hal.match(/tcf\('pengguna\.statusWa\.kredit'\)/g)).toHaveLength(2)
-    expect(baca('components/cashflow/CashflowKepala360.vue')).toMatch(/<CashflowStatusWaAkun v-if="bawaan\?\.statusWa" :status="bawaan\.statusWa" baris \/>/)
+    expect(baca('components/cashflow/CashflowKepala360.vue')).toMatch(/<CashflowStatusWaAkun v-if="rinci\.statusWa" :status="rinci\.statusWa" baris \/>/)
   })
   it('saringan baru hanya untuk server yang mengenalnya', () => {
     const daftar = baca('adapters/cashflowPenggunaDaftar.ts')

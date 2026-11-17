@@ -143,6 +143,7 @@ const KAMUS = {
       artiRuang: 'Ruang = banyaknya ruang yang diikuti orang itu. Saat daftar diurutkan menurut jumlah transaksi atau total nominal, angkanya ditulis kecil di bawah jumlah ruang.',
       rinci: {
         id: 'ID akun', caraBukti: 'Cara nomor dibuktikan', domiTerakhir: 'Terakhir pakai Domi',
+        domiTanya: 'Tanya Domi', kali: (_n: number, teks: string) => `${teks} kali`,
         dariDaftar: 'Baru terisi kalau halaman ini dibuka dari daftar pengguna.',
       },
       kontakButuhTotp: 'Verifikasi akses untuk membuka kontak lengkap.',
@@ -1394,6 +1395,7 @@ const KAMUS = {
       artiRuang: 'Workspaces = how many workspaces this person is in. When the list is sorted by transaction count or total amount, that figure is written small under the workspace count.',
       rinci: {
         id: 'Account ID', caraBukti: 'How the number was verified', domiTerakhir: 'Last used Domi',
+        domiTanya: 'Domi questions', kali: (n: number, teks: string) => `${teks} ${n === 1 ? 'time' : 'times'}`,
         dariDaftar: 'Only filled in when this page is opened from the user list.',
       },
       kontakButuhTotp: 'Verify access to view full contact details.',

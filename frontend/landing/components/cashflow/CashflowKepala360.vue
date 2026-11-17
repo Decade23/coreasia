@@ -6,21 +6,24 @@
  * izin pribadi sesi. Setiap kunjungan kepala tercatat
  * (lihat_kepala), jadi "dilihat n× dalam 30 hari" jujur. Akun yang
  * ditangguhkan menulis sampai kapan, bila server mengirim tanggal yang wajar.
+ *
+ * Cara nomor dibuktikan dan pemakaian Domi dibaca dari kepala bila server
+ * mengirimnya. Server lama tidak mengirim kuncinya: saat itu keduanya memakai
+ * yang dibawa dari baris daftar, persis seperti sebelumnya (rinciKepala).
  */
 import type { KepalaPengguna } from '~/adapters/cashflowBuku'
 import { angka, formatNomorWa, samarkanNomorWa } from '~/adapters/cashflow'
-import type { BawaanRinci } from '~/adapters/cashflowPenggunaDaftar'
+import { rinciKepala, type BawaanRinci } from '~/adapters/cashflowPenggunaDaftar'
 
 /* `bawaan`: cara nomor dibuktikan dan terakhir pakai Domi, dibawa dari baris
-   daftar pengguna (useCashflowBawaanRinci). null = halaman dibuka langsung. */
+   daftar pengguna (useCashflowBawaanRinci). null = halaman dibuka langsung.
+   Dipakai hanya bila kepala tidak mengirimnya sendiri. */
 const props = defineProps<{ kepala: KepalaPengguna | null; memuat?: boolean; aksesKe: string; emailUtuh: string | null; izinPribadi: boolean; bawaan?: BawaanRinci | null }>()
 const { tcf, formatTanggal } = useCashflowI18n()
 const nomorUtuh = computed(() => props.izinPribadi ? formatNomorWa(props.kepala?.nomorWa) : null)
 const nomorTampil = computed(() => nomorUtuh.value ?? samarkanNomorWa(props.kepala?.nomorWa))
-const domiTerakhir = computed(() => {
-  if (!props.izinPribadi || !props.bawaan) return null
-  return props.bawaan.domiTerakhir ?? (props.bawaan.domiBelumPernah ? tcf('pengguna.domiBelum') : null)
-})
+const rinci = computed(() => rinciKepala(props.kepala, props.bawaan, { izinPribadi: props.izinPribadi, tanggal: formatTanggal }))
+const domiTerakhir = computed(() => rinci.value.domiTerakhir ?? (rinci.value.domiBelumPernah ? tcf('pengguna.domiBelum') : null))
 const labelDitangguhkan = computed(() => {
   const sampai = props.kepala?.ditangguhkanSampaiIso
   return sampai ? `${tcf('pengguna.ditangguhkan')} ${tcf('pengguna.sampaiTanggal')(formatTanggal(sampai))}` : tcf('pengguna.ditangguhkan')
@@ -80,20 +83,30 @@ const hitungan = computed(() => props.kepala
           <dd v-else :title="tcf('umum.butuhTotp')">— <span class="text-xs font-medium text-[var(--ca-subtle)]">({{ tcf('umum.butuhTotp') }})</span></dd>
         </div>
       </dl>
-      <!-- Yang dulu kolom di daftar pengguna: cara nomor dibuktikan, terakhir pakai Domi, dan ID. -->
+      <!-- Cara nomor dibuktikan, pemakaian Domi, dan ID. Dua yang pertama dari kepala bila server
+           mengirimnya, selain itu dari baris daftar pengguna yang dibawa ke sini. -->
       <dl class="grid gap-x-6 gap-y-1.5 border-t border-[color:var(--ca-border)] px-4 py-3 text-sm sm:grid-cols-[auto_minmax(0,1fr)] sm:px-5" data-uji="rinci-dari-daftar">
         <dt class="text-[var(--ca-muted)]">{{ tcf('pengguna.rinci.caraBukti') }}</dt>
         <dd class="text-[var(--ca-text)]" data-uji="rinci-cara-bukti">
           <!-- Kalimat panjangnya (lewat pesan masuk, lewat kode terkirim, lewat saat gangguan) beserta tanggal dan tandanya. -->
-          <CashflowStatusWaAkun v-if="bawaan?.statusWa" :status="bawaan.statusWa" baris />
+          <CashflowStatusWaAkun v-if="rinci.statusWa" :status="rinci.statusWa" baris />
           <span v-else class="text-[var(--ca-subtle)]">— <span class="text-xs">{{ tcf('pengguna.rinci.dariDaftar') }}</span></span>
         </dd>
         <dt class="text-[var(--ca-muted)]">{{ tcf('pengguna.rinci.domiTerakhir') }}</dt>
         <dd class="text-[var(--ca-text)]" data-uji="rinci-domi-terakhir">
           <template v-if="domiTerakhir">{{ domiTerakhir }}</template>
           <span v-else-if="!izinPribadi" class="text-[var(--ca-subtle)]" :title="tcf('umum.butuhTotp')">— <span class="text-xs">({{ tcf('umum.butuhTotp') }})</span></span>
+          <span v-else-if="rinci.domiDariServer" class="text-[var(--ca-subtle)]">—</span>
           <span v-else class="text-[var(--ca-subtle)]">— <span class="text-xs">{{ tcf('pengguna.rinci.dariDaftar') }}</span></span>
         </dd>
+        <!-- Jumlah pertanyaan hanya ada di kepala. Di server lama barisnya tidak ditulis. -->
+        <template v-if="rinci.domiDariServer">
+          <dt class="text-[var(--ca-muted)]">{{ tcf('pengguna.rinci.domiTanya') }}</dt>
+          <dd class="tabular-nums text-[var(--ca-text)]" data-uji="rinci-domi-tanya">
+            <template v-if="rinci.domiTanya !== null">{{ tcf('pengguna.rinci.kali')(rinci.domiTanya, angka(rinci.domiTanya)) }}</template>
+            <span v-else class="text-[var(--ca-subtle)]" :title="tcf('umum.butuhTotp')">— <span class="text-xs">({{ tcf('umum.butuhTotp') }})</span></span>
+          </dd>
+        </template>
         <dt class="text-[var(--ca-muted)]">{{ tcf('pengguna.rinci.id') }}</dt>
         <dd class="break-all font-mono text-xs leading-5 text-[var(--ca-text)]" data-uji="rinci-id">{{ kepala.id }}</dd>
       </dl>

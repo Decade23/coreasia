@@ -12,7 +12,8 @@
  */
 import type { Pengguna, StatusPengguna } from './cashflow'
 import { FILTER_INTERNAL, SEGMEN_BELI_KREDIT, SEGMEN_PAKAI_DOMI, URUT_DOMI, nilaiInternal, segmenDomi, urutDomi } from './cashflowPenggunaDomi'
-import { SEGMEN_BELUM_WA, STATUS_WA_AKUN } from './cashflowWa'
+import { SEGMEN_BELUM_WA, STATUS_WA_AKUN, type StatusWaAkun } from './cashflowWa'
+import type { KepalaPengguna } from './cashflowBuku'
 
 // ── Nilai yang dikenal server dan URL ────────────────────────────────────
 export const SEGMEN_PENGGUNA = ['semua', 'catat7', 'belum', 'ditangguhkan', SEGMEN_BELUM_WA, SEGMEN_PAKAI_DOMI, SEGMEN_BELI_KREDIT] as const
@@ -166,5 +167,68 @@ export function keBawaanRinci(p: Pengguna): BawaanRinci {
     statusWa: p.statusWa,
     domiTerakhir: p.domi?.terakhirIso ? p.domi.terakhir : null,
     domiBelumPernah: p.domi?.tanya === 0,
+  }
+}
+
+// ── Rincian di kepala Pengguna 360 ───────────────────────────────────────
+/**
+ * Dua baris rincian di kepala: cara nomor dibuktikan dan pemakaian Domi.
+ * `dariServer` = kepala sendiri yang mengirimnya. Bila tidak (server lama),
+ * isinya yang dibawa dari daftar, atau kosong bila halaman dibuka langsung.
+ */
+export interface RinciKepala {
+  /** Siap untuk CashflowStatusWaAkun. null = tidak diketahui. */
+  statusWa: StatusWaAkun | null
+  /** Tanggal terakhir pakai Domi siap tampil. null = tidak ada yang bisa ditulis. */
+  domiTerakhir: string | null
+  /** Hitungannya boleh dibaca dan orang itu memang belum pernah bertanya. */
+  domiBelumPernah: boolean
+  /** Jumlah pertanyaan. Hanya dari kepala, null = tidak dikirim atau tidak boleh tahu. */
+  domiTanya: number | null
+  /** Kepala mengirim kunci Domi: baris jumlah pertanyaan ditampilkan. */
+  domiDariServer: boolean
+}
+
+/**
+ * Kepala didahulukan. Tanda nomor ramai, kredit ditahan, dan sebab lewat tidak
+ * dikirim kepala: ketiganya dipinjam dari baris daftar selama statusnya sama.
+ * Hitungan Domi hanya untuk sesi berizin data pribadi, dari sumber mana pun.
+ */
+export function rinciKepala(
+  kepala: Pick<KepalaPengguna, 'statusWa' | 'domi'> | null,
+  bawaan: BawaanRinci | null | undefined,
+  o: { izinPribadi: boolean; tanggal: (iso: string | null) => string },
+): RinciKepala {
+  const k = kepala?.statusWa ?? null
+  const b = bawaan?.statusWa ?? null
+  const sama = k && b && b.status === k.status ? b : null
+  const statusWa: StatusWaAkun | null = k
+    ? {
+        status: k.status,
+        pada: o.tanggal(k.padaIso),
+        padaIso: k.padaIso,
+        sebabLewat: sama?.sebabLewat ?? null,
+        nomorRamai: sama?.nomorRamai ?? false,
+        kreditDitahan: sama?.kreditDitahan ?? false,
+      }
+    : b
+  const d = kepala?.domi ?? null
+  const domiDariServer = d !== null
+  if (!o.izinPribadi) return { statusWa, domiTerakhir: null, domiBelumPernah: false, domiTanya: null, domiDariServer }
+  if (d) {
+    return {
+      statusWa,
+      domiTerakhir: d.tanya !== null && d.tanya > 0 && d.terakhirIso ? o.tanggal(d.terakhirIso) : null,
+      domiBelumPernah: d.tanya === 0,
+      domiTanya: d.tanya,
+      domiDariServer,
+    }
+  }
+  return {
+    statusWa,
+    domiTerakhir: bawaan?.domiTerakhir ?? null,
+    domiBelumPernah: bawaan?.domiBelumPernah === true,
+    domiTanya: null,
+    domiDariServer,
   }
 }
