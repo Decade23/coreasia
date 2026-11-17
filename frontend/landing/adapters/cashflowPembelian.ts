@@ -47,6 +47,16 @@
  * Semua kunci baru dibaca sebagai opsional, dan nilai keadaan atau rinci yang
  * belum dikenal console jatuh ke kalimat umum, tidak pernah tampil mentah.
  *
+ * KESEHATAN (migrasi CashFlow 20261117170000_kesehatan_play_proses).
+ * admin_kesehatan, RPC agregat tanpa data orang dan tanpa audit, membawa
+ * kunci tambahan
+ *   play_proses: {diproses, tertunda, gagal_sementara, ditolak, tertua_menit}
+ * dengan baris yang sama dengan hitungan `proses` di atas (tanpa akun uji,
+ * tanpa catatan yang kreditnya sudah masuk). `tertua_menit` = umur yang paling
+ * lama menunggu dalam menit penuh saat server menjawab, null bila tidak ada.
+ * Server lama tidak mengirim kuncinya: kePlayProsesKesehatan memulangkan null
+ * dan halaman Kesehatan tidak menampilkan apa pun.
+ *
  * Fungsi MURNI semua: tanpa jaringan, tanpa state.
  */
 
@@ -144,6 +154,14 @@ export interface HitunganProsesDTO {
   ditolak: Angka
   tertua: string | null
 }
+/** Kunci `play_proses` admin_kesehatan (20261117170000). */
+export interface PlayProsesKesehatanDTO {
+  diproses: Angka
+  tertunda: Angka
+  gagal_sementara: Angka
+  ditolak: Angka
+  tertua_menit: Angka
+}
 export interface DaftarPembelianDTO {
   baris: PembelianDTO[] | null
   ringkas: RingkasPembelianDTO | null
@@ -211,6 +229,18 @@ export interface HitunganProses {
   ditolak: number | null
   tertuaIso: string | null
 }
+/** Pembelian Google Play yang menggantung, untuk halaman Kesehatan. */
+export interface PlayProsesKesehatan {
+  diproses: number
+  /** null = tidak dikirim atau tidak terbaca. */
+  tertunda: number | null
+  gagalSementara: number | null
+  ditolak: number | null
+  /** Menit penuh sejak yang paling lama menunggu. null = tidak ada atau tidak terbaca. */
+  tertuaMenit: number | null
+}
+/** kosong = tidak ada yang menunggu, lama = yang paling lama lewat AMBANG_GANTUNG_MENIT. */
+export type KeadaanGantung = 'kosong' | 'menunggu' | 'lama'
 export interface RingkasPembelian {
   lunas: number
   nominalLunas: number
@@ -345,6 +375,31 @@ export function keHitunganProses(dto: HitunganProsesDTO | null | undefined | unk
     tertuaIso: waktuIso(h.tertua),
   }
 }
+
+/** Kunci play_proses admin_kesehatan. null bila tidak ada (server lama) atau
+ *  `diproses` tidak terbaca, supaya halaman tidak menulis angka karangan. */
+export function kePlayProsesKesehatan(dto: PlayProsesKesehatanDTO | null | undefined | unknown): PlayProsesKesehatan | null {
+  const p = objek(dto)
+  const diproses = p ? positifAtauNol(p.diproses) : null
+  if (!p || diproses === null) return null
+  return {
+    diproses,
+    tertunda: positifAtauNol(p.tertunda),
+    gagalSementara: positifAtauNol(p.gagal_sementara),
+    ditolak: positifAtauNol(p.ditolak),
+    tertuaMenit: diproses > 0 ? positifAtauNol(p.tertua_menit) : null,
+  }
+}
+
+/** Nada baris Kesehatan. null = jangan tampil (server lama). */
+export function keadaanGantung(p: PlayProsesKesehatan | null): KeadaanGantung | null {
+  if (!p) return null
+  if (p.diproses === 0) return 'kosong'
+  return p.tertuaMenit !== null && p.tertuaMenit > AMBANG_GANTUNG_MENIT ? 'lama' : 'menunggu'
+}
+
+/** Tautan ke halaman Pembelian, saringan Sedang diproses. */
+export const TAUTAN_PEMBELIAN_DIPROSES = '/console/cashflow/pembelian?status=diproses'
 
 export function keRingkasPembelian(dto: RingkasPembelianDTO | null | undefined): RingkasPembelian | null {
   const r = objek(dto)

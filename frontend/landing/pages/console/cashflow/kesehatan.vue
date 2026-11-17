@@ -2,11 +2,19 @@
 /**
  * Kesehatan — yang dilihat saat ada keluhan. Semua agregat.
  *
+ * Pembelian Google Play yang menggantung (kunci play_proses admin_kesehatan,
+ * migrasi CashFlow 20261117170000) tampil satu baris paling atas, sebelum
+ * status WhatsApp yang panjang, dengan tautan ke Pembelian saringan Sedang
+ * diproses. Server lama tidak mengirim kuncinya, dan barisnya tidak tampil.
+ * Daftar pembelian tidak dipanggil dari sini karena setiap panggilannya
+ * tercatat di audit.
+ *
  * Versi aplikasi dan Ajakan pembaruan (0110) dimuat TERPISAH dari Promise.all
  * lama, masing-masing dengan galatnya sendiri: satu RPC yang gagal tidak
  * menutup ubin dan tabel lain. Keduanya memakai rentang yang sama (hariVersi).
  */
 import { angka, keKesehatan, ukuranByte, type KesehatanDTO } from '~/adapters/cashflow'
+import { kePlayProsesKesehatan } from '~/adapters/cashflowPembelian'
 import { terjemahPeristiwa } from '~/adapters/cashflowKamusPeristiwa'
 import { HARI_BAWAAN } from '~/adapters/cashflowVersi'
 import type { FotoYatimDTO, OcrDTO, TelemetriDTO } from '~/composables/cashflow/useCashflowAdmin'
@@ -17,6 +25,7 @@ const { memuat, pesanGalat, muat, aksi } = useCashflowMuat({ awal: true })
 /* DTO mentah disimpan; bentuk tampilnya dari adapter (tabel per nama → larik, byte). */
 const kesehatanMentah = shallowRef<KesehatanDTO | null>(null)
 const kesehatan = computed(() => (kesehatanMentah.value ? keKesehatan(kesehatanMentah.value) : null))
+const playProses = computed(() => kePlayProsesKesehatan(kesehatanMentah.value?.play_proses))
 const byte = (v: number | string | null | undefined) => ukuranByte(v, bahasa.value)
 const yatim = ref<FotoYatimDTO[]>([]); const ocr = ref<OcrDTO[]>([]); const telemetri = ref<TelemetriDTO[]>([])
 const telemetriTampil = computed(() => telemetri.value.map(t => ({
@@ -47,6 +56,7 @@ const salinJalur = () => aksi(async () => {
   <div class="space-y-6">
     <ConsolePageHeader :title="tcf('kesehatan.judul')" kicker="CashFlow" ringkas><template #meta><CashflowNav /></template></ConsolePageHeader>
     <p class="text-sm text-[var(--ca-muted)]">{{ tcf('kesehatan.ket') }}</p>
+    <CashflowKesehatanPlayGantung v-if="kesehatan && playProses" :ringkas="playProses" />
     <CashflowStatusWa />
     <p v-if="pesanGalat" class="text-sm ca-tone-danger">{{ pesanGalat }}</p>
     <p v-else-if="memuat" class="text-sm text-[var(--ca-muted)]">{{ tcf('umum.memuat') }}</p>

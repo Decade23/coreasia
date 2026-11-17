@@ -212,6 +212,17 @@ const KAMUS = {
       cariKet: 'Pencarian hanya atas bentuk tersamar yang tampil di tabel; nama asli tidak bisa ditebak lewat kotak ini.',
     },
     kesehatan: { judul: 'Kesehatan', ket: 'Yang dilihat saat ada keluhan.',
+      /* Pembelian Google Play yang menggantung (admin_kesehatan play_proses).
+         `lama` sudah berupa kalimat dari pembelian.proses.lama, atau null. */
+      play: {
+        label: 'Pembelian Google Play yang menggantung',
+        menunggu: (n: number, lama: string | null) => (lama === null
+          ? `${n} pembelian Google Play sedang diproses.`
+          : n === 1 ? `1 pembelian Google Play sedang diproses, sudah ${lama}.`
+            : `${n} pembelian Google Play sedang diproses, yang paling lama ${lama}.`),
+        kosong: 'Tidak ada pembelian Google Play yang menggantung.',
+        lihat: 'Lihat di Pembelian',
+      },
       wa: {
         judul: 'Status WhatsApp OTP',
         memuat: 'Memeriksa status WhatsApp...',
@@ -1523,6 +1534,15 @@ const KAMUS = {
       cariKet: 'Search matches only the masked forms shown in the table; real names cannot be guessed through this box.',
     },
     kesehatan: { judul: 'Health', ket: 'What you look at when something is reported.',
+      play: {
+        label: 'Google Play purchases still pending',
+        menunggu: (n: number, lama: string | null) => (lama === null
+          ? (n === 1 ? '1 Google Play purchase is being processed.' : `${n} Google Play purchases are being processed.`)
+          : n === 1 ? `1 Google Play purchase is being processed, ${lama} so far.`
+            : `${n} Google Play purchases are being processed, the oldest for ${lama}.`),
+        kosong: 'No Google Play purchase is stuck.',
+        lihat: 'View in Purchases',
+      },
       wa: {
         judul: 'WhatsApp OTP status',
         memuat: 'Checking WhatsApp status...',

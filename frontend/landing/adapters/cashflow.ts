@@ -31,6 +31,7 @@ import { tanggalPendek, hariIniWib, geserHari, type BahasaWaktu } from './cashfl
 import { tombolPengumuman } from './cashflowPengumumanTautan'
 import { keStatusWaAkun, type StatusWaAkun, type StatusWaAkunDTO } from './cashflowWa'
 import { akunTim, keDomiAkun, type DomiAkun, type DomiAkunDTO, type KepalaDomiDTO } from './cashflowPenggunaDomi'
+import type { PlayProsesKesehatanDTO } from './cashflowPembelian'
 
 export {
   ZONA_WIB, BULAN, BULAN_EN, tanggalPendek, tanggalWib, hariIniWib, geserHari,
@@ -150,6 +151,9 @@ export interface PengumumanDTO {
 export interface KesehatanDTO {
   ukuran_db: number | string
   tabel: Record<string, { baris: number | string; ukuran: number | string }> | null
+  /** Migrasi CashFlow 20261117170000. Tidak ada di server lama; dibaca
+   *  kePlayProsesKesehatan (adapters/cashflowPembelian.ts). */
+  play_proses?: PlayProsesKesehatanDTO | null
 }
 
 // ── Domain: yang dibutuhkan UI ───────────────────────────────────────────
