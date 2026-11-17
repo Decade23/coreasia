@@ -882,11 +882,10 @@ pembelian yang sudah tercatat.
 - **Server lama.** Sebelum migrasi itu terpasang, server menolak kedua nilai dengan 22023
   `masukan_tidak_sah` hint `status`. Halaman menulis "Saringan ini belum dikenal server" dengan tombol
   **Kembali ke semua status**, bukan galat merah (`prosesBelumDikenalServer`). Urutan rilis bebas.
-- **Ringkasan dan Kesehatan belum menautkan ke saringan ini.** Kedua halaman itu hanya memanggil RPC
-  agregat tanpa data pribadi. Hitungan proses hanya ada di jawaban `admin_ai_pembelian_daftar`, yang butuh
-  izin data pribadi dan menulis audit di setiap panggilan, jadi memanggilnya dari Ringkasan akan menulis
-  audit setiap kali Ringkasan dibuka. Tautan itu menunggu hitungan proses masuk ke RPC agregat (misalnya
-  `admin_kesehatan`).
+- **Kesehatan menautkan ke saringan Sedang diproses** sejak migrasi CashFlow
+  `20261117170000_kesehatan_play_proses` (bagian di bawah). Ringkasan tidak, karena halaman itu tidak
+  memanggil `admin_kesehatan`. Daftar pembelian tetap tidak dipanggil dari Ringkasan maupun Kesehatan,
+  karena setiap panggilannya tercatat di audit.
 
 ```bash
 CASHFLOW_MIGRASI=<repo cashflow>/supabase/migrations npx vitest run tests/cashflow/pembelian-proses.test.ts tests/cashflow/pembelian.test.ts
@@ -899,6 +898,41 @@ node scripts/uji-console-pembelian-proses-headless.mjs
 `admin_ai_pembelian_daftar`, dan nilai keadaan, sebab, serta sumber dengan cek tabel
 `ai_pembelian_play_proses` di folder migrasi. Tanpa migrasi itu bagiannya terlihat "skipped". Tabel dan
 ringkasannya juga dirender untuk setiap keadaan dan sebab, termasuk yang belum dikenal, di dua bahasa.
+
+### Pembelian Google Play yang menggantung di Kesehatan
+
+Halaman `/console/cashflow/kesehatan` menulis satu baris paling atas, sebelum status WhatsApp: "N
+pembelian Google Play sedang diproses, yang paling lama X", dengan tautan **Lihat di Pembelian** ke
+`/console/cashflow/pembelian?status=diproses`.
+
+- **Sumber.** Kunci `play_proses` di `admin_kesehatan` (migrasi CashFlow
+  `20261117170000_kesehatan_play_proses`): `{diproses, tertunda, gagal_sementara, ditolak, tertua_menit}`.
+  Barisnya sama dengan hitungan `proses` di `admin_ai_pembelian_daftar`: tanpa akun uji dan tanpa catatan
+  yang kreditnya sudah masuk. Hanya hitungan dan umur dalam menit, tanpa data orang. RPC itu tetap agregat
+  dengan gerbang admin yang sama dan tetap tanpa audit, jadi membuka Kesehatan tidak menulis apa pun.
+- **Nada.** Menunggu: baris tenang. Yang paling lama lewat `AMBANG_GANTUNG_MENIT` (60 menit, sama dengan
+  halaman Pembelian): bidang emas lembut. Tidak ada merah. Nol: kalimat kecil "Tidak ada pembelian Google
+  Play yang menggantung", tanpa tautan.
+- **Umur** dihitung server saat menjawab, dalam menit penuh, jadi tidak bergantung pada jam peramban.
+  Angkanya diam sampai halaman dimuat ulang, sama dengan bagian Kesehatan yang lain.
+- **Server lama.** Sebelum migrasi itu terpasang, kuncinya tidak ada dan barisnya tidak tampil, tanpa
+  galat. `diproses` yang tidak terbaca (bukan bilangan bulat, atau negatif) juga membuat barisnya tidak
+  tampil, bukan 0. Urutan rilis bebas, mundur landing atau SQL saja sama-sama aman.
+- Adapter `kePlayProsesKesehatan` dan `keadaanGantung` di `adapters/cashflowPembelian.ts`, komponen
+  `CashflowKesehatanPlayGantung`.
+
+```bash
+CASHFLOW_MIGRASI=<repo cashflow>/supabase/migrations npx vitest run tests/cashflow/kesehatan-play.test.ts tests/cashflow/kesehatan.test.ts
+node scripts/cek-komponen-cashflow.mjs
+# Empat keadaan server (menunggu, lebih dari 1 jam, nol, server lama), terang dan gelap, 1440 dan 390,
+# plus tautan ke Pembelian (cara menjalankan ada di kepala skrip):
+node scripts/uji-console-kesehatan-play-headless.mjs
+```
+
+`tests/cashflow/kesehatan-play.test.ts` membandingkan kunci `play_proses` dengan badan `admin_kesehatan`,
+memastikan saringan barisnya sama persis dengan hitungan proses `admin_ai_pembelian_daftar`, dan bahwa
+badannya tidak mencatat audit. Tanpa migrasi itu bagiannya terlihat "skipped", dan
+`tests/cashflow/kesehatan.test.ts` membandingkan contoh tanpa kunci baru.
 
 ## Pemakai Domi di daftar pengguna
 
