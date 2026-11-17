@@ -60,7 +60,7 @@ const perhatian = computed(() => menit.value !== null && menit.value > AMBANG_GA
       role="status" data-uji="pembelian-proses-perhatian"
     >
       <Icon name="lucide:clock-alert" class="mt-0.5 h-4 w-4 shrink-0 ca-tone-gold" aria-hidden="true" />
-      <div class="min-w-0 flex-1">
+      <div class="min-w-[14rem] flex-1" data-uji="teks-panel">
         <p class="font-semibold text-[var(--ca-text)]">{{ tcf('pembelian.proses.perhatianJudul') }}</p>
         <p class="mt-0.5 text-[var(--ca-muted)]">{{ tcf('pembelian.proses.perhatian')(formatWaktu(hitungan.tertuaIso), lama) }}</p>
       </div>

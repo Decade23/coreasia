@@ -72,7 +72,7 @@ function dicoba(p: Pembelian): string {
       <dl class="mt-3 grid grid-cols-3 gap-x-3 border-t border-[color:var(--ca-border)] pt-3">
         <div class="min-w-0">
           <dt class="text-xs font-semibold text-[var(--ca-subtle)]">{{ tcf('pembelian.proses.kolom.paket') }}</dt>
-          <dd class="cf-kuat mt-0.5 text-sm tabular-nums">
+          <dd class="cf-kuat mt-0.5 break-all text-sm tabular-nums">
             <template v-if="p.kredit !== null">{{ tcf('pembelian.kredit')(p.kredit) }}</template>
             <template v-else>{{ namaPaket(p) ?? tcf('pembelian.tidakTerbaca') }}</template>
           </dd>
@@ -127,7 +127,7 @@ function dicoba(p: Pembelian): string {
             </template>
             <span v-else class="text-xs text-[var(--ca-subtle)]">{{ tcf('pembelian.tidakTerbaca') }}</span>
           </td>
-          <td class="min-w-[12.5rem] max-w-[17rem]">
+          <td class="min-w-[15rem] max-w-[18rem]">
             <span v-if="p.pembeli.email" class="cf-kuat block break-all">{{ p.pembeli.email }}</span>
             <span v-else class="block text-xs text-[var(--ca-subtle)]">{{ tcf('pembelian.tanpaEmail') }}</span>
             <span v-if="p.pembeli.nama" class="cf-dua break-words">{{ p.pembeli.nama }}</span>
@@ -141,7 +141,7 @@ function dicoba(p: Pembelian): string {
             <strong v-if="p.nominal !== null">{{ rupiah(p.nominal) }}</strong>
             <span v-else class="text-xs text-[var(--ca-subtle)]">{{ tcf('pembelian.tidakTersedia') }}</span>
           </td>
-          <td class="min-w-[15rem] max-w-[22rem]">
+          <td class="min-w-[14rem] max-w-[21rem]">
             <span :class="lencanaProses(p)" data-uji="pembelian-proses-keadaan">{{ tcf(kunciKeadaanProses(p)) }}</span>
             <span class="mt-1 block text-xs text-[var(--ca-muted)]">{{ tcf(kunciSebabProses(p)) }}</span>
             <span v-if="teksCoba(p)" class="mt-1 block text-xs text-[var(--ca-subtle)]">{{ teksCoba(p) }}</span>

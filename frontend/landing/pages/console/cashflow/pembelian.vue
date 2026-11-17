@@ -159,7 +159,7 @@ useConsoleRemah().pasang(() => [
       role="status" data-uji="pembelian-proses-server-lama"
     >
       <Icon name="lucide:hourglass" class="mt-0.5 h-5 w-5 shrink-0 text-[var(--ca-subtle)]" aria-hidden="true" />
-      <div class="min-w-0 flex-1">
+      <div class="min-w-[14rem] flex-1" data-uji="teks-panel">
         <p class="font-semibold text-[var(--ca-text)]">{{ tcf('pembelian.proses.serverLama.judul') }}</p>
         <p class="mt-0.5">{{ tcf('pembelian.proses.serverLama.pesan') }}</p>
       </div>
@@ -187,7 +187,7 @@ useConsoleRemah().pasang(() => [
             <p v-if="statusProses" class="mt-1 max-w-2xl text-xs text-[var(--ca-muted)]" data-uji="pembelian-proses-ket">{{ tcf(`pembelian.proses.ket.${statusProses}`) }}</p>
           </div>
           <div class="flex min-w-0 flex-wrap items-center gap-2">
-            <CashflowSegmen :opsi="opsiStatus" :nilai="q.status" :label="tcf('pembelian.saringStatus')" gulir @pilih="pilihStatus" />
+            <CashflowSegmen :opsi="opsiStatus" :nilai="q.status" :label="tcf('pembelian.saringStatus')" @pilih="pilihStatus" />
             <CashflowSegmen :opsi="opsiJalur" :nilai="q.jalur" :label="tcf('pembelian.saringJalur')" @pilih="(v) => setel({ jalur: v })" />
           </div>
         </div>
