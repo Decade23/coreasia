@@ -33,6 +33,8 @@ const idAkun = i => uuid(i + 1)
 
 /** Subjek rincian pengguna: akun beremail 38 huruf dan bernama panjang. */
 export const U = idAkun(1)
+/** Akun yang sedang ditangguhkan, untuk potret kepala rincian. */
+export const U_TANGGUH = idAkun(3)
 /** Subjek rincian ruang: ruang usaha bernama panjang. */
 export const W = uuid(101)
 const W_KELUARGA = uuid(100)
@@ -77,11 +79,12 @@ const daftarPengguna = (p, mode, v4) => {
 }
 
 // ── Daftar ruang, pembelian, paket, audit, kasus ─────────────────────────
+// Jenis ruang hanya 'pribadi' dan 'usaha', sama dengan yang diterima server.
 const RUANG = [
-  ['Kel***', 'sar***@contoh.invalid', 'keluarga', 4, 1240, 1], ['Tok*** *** *** *** *** *** *** *** *** *** ***', 'rah***@contoh.invalid', 'usaha', 12, 48_213, 3],
-  ['Pri***', 'rah***@contoh.invalid', 'pribadi', 1, 86, 0], ['Aru*** *** *** *** ***', 'agu***@contoh.invalid', 'komunitas', 38, 7_902, 5],
+  ['Kel***', 'sar***@contoh.invalid', 'pribadi', 4, 1240, 1], ['Tok*** *** *** *** *** *** *** *** *** *** ***', 'rah***@contoh.invalid', 'usaha', 12, 48_213, 3],
+  ['Pri***', 'rah***@contoh.invalid', 'pribadi', 1, 86, 0], ['Aru*** *** *** *** ***', 'agu***@contoh.invalid', 'pribadi', 38, 7_902, 5],
   ['War*** *** ***', 'nin***@contoh.invalid', 'usaha', 3, 512, 0], ['Tab***', 'dew***@contoh.invalid', 'pribadi', 1, 0, 0],
-  ['Kop*** *** *** ***', 'tok***@contoh.invalid', 'usaha', 126, 1_204_877, 14], ['Pan*** ***', 'lin***@contoh.invalid', 'keluarga', 6, 2_310, 2],
+  ['Kop*** *** *** ***', 'tok***@contoh.invalid', 'usaha', 126, 1_204_877, 14], ['Pan*** ***', 'lin***@contoh.invalid', 'pribadi', 6, 2_310, 2],
 ].map((r, i) => ({ workspace_id: uuid(100 + i), nama: r[0], pemilik_email: r[1], jenis: r[2], jumlah_anggota: r[3], jumlah_tx: r[4], undangan_aktif: r[5], created_at: jam(24 * (i + 1) * 17), total_semua: 8 }))
 const PEMBELIAN = [
   { status: 'lunas', jalur: 'play', paket: 'kredit_123', kredit: 123, nominal: 99_000, siapa: 1, play: true },
@@ -239,10 +242,10 @@ const sampahRuang = (p, mode) => {
 
 // ── Pengguna 360 ─────────────────────────────────────────────────────────
 const RUANG_SUBJEK = [
-  [W, NAMA_RUANG, 'usaha', 'owner', true, 12, 31_204], [W_KELUARGA, 'Keluarga Besar Wiryaatmadja Sastrowardoyo', 'keluarga', 'admin', false, 4, 16_923], [W_PRIBADI, 'Pribadi', 'pribadi', 'owner', true, 1, 86],
+  [W, NAMA_RUANG, 'usaha', 'owner', true, 12, 31_204], [W_KELUARGA, 'Keluarga Besar Wiryaatmadja Sastrowardoyo', 'pribadi', 'admin', false, 4, 16_923], [W_PRIBADI, 'Pribadi', 'pribadi', 'owner', true, 1, 86],
 ]
 const kepalaPengguna = (p, mode) => ({
-  user_id: p.p_user, email: samar(EMAIL_PANJANG), daftar: jam(24 * 412), masuk_terakhir: jam(5), banned_until: null,
+  user_id: p.p_user, email: samar(EMAIL_PANJANG), daftar: jam(24 * 412), masuk_terakhir: jam(5), banned_until: p.p_user === U_TANGGUH ? jam(-24 * 21) : null,
   jumlah_ruang: mode.izin ? 4 : null, jumlah_transaksi: mode.izin ? 48_213 : null, akses_30hari: 14,
   ruang: mode.izin ? RUANG_SUBJEK.map(r => ({ workspace_id: r[0], nama: r[1], jenis: r[2], peran: r[3], pemilik: r[4], bekas_anggota: false, jumlah_anggota: r[5], tx_oleh_dia: r[6] })) : null,
   nomor_wa: mode.izin ? '6281100001001' : '0811 •••• 1001',
@@ -265,7 +268,7 @@ const pengguna360 = (p, mode) => ({
       jumlah_anggota: r[5], tx_oleh_dia: r[6], masuk_bersih_dia: [6_204_100_000, 1_208_805_500, 0][i], keluar_bersih_dia: [5_911_200_250, 1_069_340_000, 800_000][i],
       terakhir_catat_dia: jam(i * 30 + 2), agregat: i === 2 ? null : { transaksi: [1_204_877, 16_923][i], masuk_bersih: [48_213_905_000, 1_208_805_500][i], keluar_bersih: [41_100_000_000, 1_069_340_000][i], terakhir_catat: jam(1), dompet: [6, 2][i] },
     })),
-    { workspace_id: W_LUAR, dalam_lingkup: false, nama: 'Aru*** *** *** *** ***', jenis: 'komunitas', peran: 'member', pemilik: false, bekas_anggota: true, jumlah_anggota: 38, tx_oleh_dia: 17 },
+    { workspace_id: W_LUAR, dalam_lingkup: false, nama: 'Aru*** *** *** *** ***', jenis: 'pribadi', peran: 'member', pemilik: false, bekas_anggota: true, jumlah_anggota: 38, tx_oleh_dia: 17 },
   ],
 })
 const perangkatPengguna = (p, mode) => ({
@@ -765,6 +768,11 @@ export function buatServer() {
   const terpanggil = new Set()
   /** @returns {{ status?: number, json: unknown }} */
   const jawab = (nama, p, mode) => {
+    // Server yang belum memasang migrasinya: PostgREST tidak menemukan fungsinya.
+    if (mode.belumAda?.includes(nama)) {
+      terpanggil.add(nama)
+      return { status: 404, json: { code: 'PGRST202', details: null, hint: null, message: `Could not find the function public.${nama} in the schema cache` } }
+    }
     if (!mode.izin && BUTUH_PII.has(nama)) { terpanggil.add(nama); return IZIN_KURANG }
     const f = RPC[nama]
     if (!f) {

@@ -599,7 +599,8 @@ Jalankan di 1280 px dan 375 px, tema terang dan gelap, bahasa ID dan EN.
     `/pengguna/U/perangkat`: "butuh login console ber-TOTP", tidak ada RPC
     tab dan tidak ada tombol "Muat data".
 12. **Tampilan.** Di 375 px tidak ada gulir samping selain tabel per hari
-    Perangkat dan tabel setelan Kabar (bergulir di dalam kotaknya). Pil,
+    Perangkat (bergulir di dalam kotaknya). Setelan Kabar tampil sebagai
+    daftar per ruang, tanpa tabel. Pil,
     tanda belum dibaca, dan warna saldo (hijau/merah) terbaca di tema
     gelap. Semua kode (OCR, jenis kabar, peran, platform) tampil sebagai
     kata, bukan kode mentah.
@@ -1045,8 +1046,16 @@ Hapus akun bertahap memakai migrasi **0114** di repo CashFlow. Nomor 0112
 dipakai retensi telemetri dan 0113 aturan ubah. Saat menguji, arahkan
 `CASHFLOW_MIGRASI` ke folder migrasi yang sudah memuat 0114 supaya semua
 kontrak 0114 ikut dijalankan. Console boleh tayang lebih dulu dari
-migrasinya: selama 0114 belum terpasang, halaman Hapus akun menulis "fitur
-belum aktif" dan daftar pengguna tetap bisa dimuat.
+migrasinya: selama 0114 belum terpasang, daftar pengguna tetap bisa dimuat dan
+halaman Hapus akun menulis "Fitur ini belum diaktifkan di server".
+
+Itu keadaan tersendiri (`CashflowKeadaan` jenis `belum-aktif`), bukan galat:
+tanpa warna merah, tanpa saringan status, dengan tombol **Periksa lagi**.
+Halaman mengenalinya dari jawaban PostgREST `PGRST202` (fungsi tidak ada di
+cache skema), atau `42883` yang menyebut RPC itu sendiri. Di tab Jaringan
+peramban permintaannya tetap tampak 404. Itu jawaban wajar PostgREST untuk
+fungsi yang belum ada, bukan halaman yang rusak. Begitu 0114 terpasang,
+**Periksa lagi** atau muat ulang menampilkan daftarnya.
 
 Pembatas cetak sesi (30 per 15 menit per IP) hidup di memori tiap instans.
 Jatahnya terpisah dari serah terima login dan bukan kuota terpusat lintas
@@ -1123,8 +1132,9 @@ Semua tabel dan daftar di halaman CashFlow memakai rupa dan komponen yang sama.
   `CashflowTabel` (bingkai, gulir samping, kaki). Di dalam sel: `cf-dua` untuk baris kedua yang lebih
   kecil, `cf-ka` untuk angka rata kanan, `cf-kuat` untuk nilai utama. `DataTable` di luar CashFlow
   tidak berubah.
-- **Keadaan.** `CashflowKeadaan` menulis empat keadaan: memuat (kerangka baris), kosong (sebab dan jalan
-  keluarnya), galat (dengan Coba lagi), dan akses terbatas. Urutannya ada di
+- **Keadaan.** `CashflowKeadaan` menulis lima keadaan: memuat (kerangka baris), kosong (sebab dan jalan
+  keluarnya), galat (dengan Coba lagi), akses terbatas, dan belum aktif di server (fiturnya belum
+  dipasang, lihat "Hapus akun bertahap"). Urutannya ada di
   `utils/cashflow/keadaan.ts`: baris yang sudah tampil bertahan saat memuat ulang, dan muatan yang
   gagal tidak pernah ditulis sebagai "belum ada data". `CashflowIzinKurang` memakai rupa akses terbatas.
 - **Pil segmen.** Hanya `CashflowSegmen`. Hitungan di samping label ditulis bila angkanya memang sudah
@@ -1147,6 +1157,13 @@ Semua tabel dan daftar di halaman CashFlow memakai rupa dan komponen yang sama.
   (`useCashflowBawaanRinci`, tanpa email, nama, atau nomor). Bila rincian dibuka lewat tautan
   langsung, kedua baris itu kosong dan halaman berkata begitu. Supaya selalu terisi, server perlu
   mengirim keduanya di `admin_pengguna_kepala`.
+  - Yang kurang ada di sisi SQL, bukan di console. `admin_pengguna_kepala` (terakhir diubah 0123)
+    memulangkan sepuluh kunci: `user_id`, `email`, `daftar`, `masuk_terakhir`, `banned_until`,
+    `jumlah_ruang`, `jumlah_transaksi`, `akses_30hari`, `ruang`, dan `nomor_wa`. Semuanya sudah dipakai
+    kepala. Tidak ada `status_wa` dan `status_wa_pada` (cara nomor dibuktikan dan tanggalnya), dan tidak
+    ada `domi_terakhir` dan `domi_tanya`. Keempatnya sekarang hanya dikirim per baris oleh
+    `admin_daftar_pengguna_v4`. Uji kontrak menuntut DTO kepala sama persis dengan kunci server, jadi
+    console baru boleh membacanya sesudah migrasinya ada.
 
 ```bash
 npx vitest run tests/cashflow/tabel-pil.test.ts tests/cashflow/pengguna-daftar.test.ts
@@ -1174,9 +1191,18 @@ kombinasi. Uji komponen (`tabel-pil.test.ts`) merender berkas `.vue` lewat `sfcU
   dalam kartu memakai `cf-subjudul`, kepala tabel kecil di dalam kartu memakai `cf-kepala-polos` di
   barisnya. Satu-satunya pengecualian jawaban Domi (`CashflowDomi*`), yang sengaja meniru tampilan
   aplikasi.
-- **Kartu ponsel.** Di bawah 640 px daftar Ruang, Audit, dan Pembelian tampil sebagai kartu, satu per
-  baris, dengan isi yang sama. Tabelnya tetap dipakai di layar yang lebih lebar. Rincian uang dan waktu
-  Google Play pada pembelian hanya ada di tabel.
+- **Kartu ponsel.** Di bawah 640 px daftar Ruang, Audit, Pembelian, Aktivitas, Dukungan, Paket kredit,
+  dan Pengumuman tampil sebagai kartu, satu per baris, dengan isi dan aksi yang sama. Tabelnya tetap
+  dipakai di layar yang lebih lebar. Rincian uang dan waktu Google Play pada pembelian hanya ada di
+  tabel.
+- **Setelan kabar per ruang** (Pengguna 360, tab Kabar) berupa daftar: nama ruang, kabar yang nyala,
+  kabar yang mati, lalu tingkat, jendela gabung, ambang, dan jam rangkuman. Tidak ada lagi tabel
+  sebelas kolom.
+- **Aktivitas tanpa izin data pribadi.** Daftarnya tetap terbaca, tombol Selidiki mati, dan
+  `CashflowIzinKurang` menulis jalan keluarnya. Dukungan hanya butuh izin lihat, jadi tidak punya
+  bagian terkunci.
+- **Ditangguhkan sampai kapan.** Lencana di kepala Pengguna 360 menulis tanggalnya dari `banned_until`.
+  Tanggal yang lebih dari lima tahun lagi tidak ditulis (penangguhan tanpa batas).
 - **Domi.** `CashflowDomiMaskot` adalah gambar diam Domi. Ia hanya dipakai di tiga tempat: sapaan
   Ringkasan, kepala halaman Cadangan Domi, dan keadaan kosong sebuah daftar (`CashflowKeadaan` jenis
   kosong). Tidak di tabel, galat, konfirmasi, atau saat memuat. Hanya Domi di sapaan yang bergerak
@@ -1200,11 +1226,32 @@ node scripts/uji-console-halaman-headless.mjs
 node scripts/uji-console-tabel-stabil-headless.mjs
 ```
 
-`uji-console-halaman-headless.mjs` memotret semua halaman dan tab rincian (juga keadaan kosong dan
-tanpa izin data pribadi), lalu mencatat halaman yang meluber, kepala kolom yang pecah atau huruf besar
+`uji-console-halaman-headless.mjs` memotret semua halaman dan tab rincian (juga keadaan kosong, tanpa
+izin data pribadi, dan Hapus akun saat RPC-nya belum ada di server), lalu mencatat halaman yang meluber,
+kepala kolom yang pecah atau huruf besar
 semua, kartu yang melewati tepi di 390 px, dan tabel yang bergulir ke samping di 1440 px. Datanya di
 `scripts/data-sintetis-console.mjs`. `CF_QA_HANYA='<regex nama>'` memotret sebagian halaman saja,
 `CF_QA_LUNAK=1` mencetak temuan tanpa menggagalkan.
+
+## Pemeriksaan tipe
+
+`vue-tsc --noEmit` di folder landing selalu keluar 0 tanpa memeriksa apa pun. `tsconfig.json` di akar
+berisi `"files": []` dan hanya menunjuk `.nuxt/tsconfig*.json` lewat `references`, yang baru diikuti
+dengan `-b`. Pakai skrip ini, yang menunjuk proyeknya langsung:
+
+```bash
+npx nuxi prepare
+node scripts/cek-tipe-console.mjs          # atau: npm run cek:tipe
+node scripts/cek-tipe-console.mjs --rinci  # cetak juga galat lama di berkas console
+```
+
+- Skrip menolak jalan bila berkas console tidak ikut diperiksa (pemeriksaan hampa).
+- Galat lama dicatat di `scripts/tipe-console-dasar.json` dan tidak menggagalkan. Galat baru
+  menggagalkan (kode keluar 1). Sidiknya tanpa nomor baris, jadi menyisipkan baris tidak terbaca sebagai
+  galat baru.
+- Sesudah memperbaiki galat lama, tulis ulang catatannya dengan `--tulis` dan commit berkasnya.
+- `vue-tsc` tidak tercantum di `package.json`. Skrip mencarinya di `VUE_TSC`, lalu
+  `node_modules/.bin`, lalu `npx` dengan versi yang dikunci di kepala skrip.
 
 ## Sesudah deploy: berkas build dan tembolok
 

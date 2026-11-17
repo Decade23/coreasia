@@ -188,7 +188,8 @@ try {
   // Muat pertama server dev memudar masuk: tunggu jaringan tenang dan sedikit jeda sebelum memotret.
   const buka = async (jalur, tunggu) => {
     await page.goto(`${APP}${jalur}`, { waitUntil: 'domcontentloaded' })
-    await page.getByText(tunggu, { exact: true }).first().waitFor({ timeout: 60000 })
+    // Daftar pengumuman punya kartu ponsel di samping tabelnya: yang ditunggu adalah teks yang tampak.
+    await page.getByText(tunggu, { exact: true }).locator('visible=true').first().waitFor({ timeout: 60000 })
     await page.waitForLoadState('networkidle').catch(() => {})
     await page.waitForTimeout(700)
   }
@@ -208,7 +209,7 @@ try {
   await lebar(1440)
   await buka('/console/cashflow/pengumuman', RINGKAS_ID)
   cek('tabel menulis aturan dalam kalimat awam', true)
-  cek('ringkasan segmen menyebut nama segmen', await page.getByText('Segmen Pengguna aktif 30 hari, kecuali akun internal dan 1 pengguna', { exact: true }).isVisible())
+  cek('ringkasan segmen menyebut nama segmen', await page.getByText('Segmen Pengguna aktif 30 hari, kecuali akun internal dan 1 pengguna', { exact: true }).locator('visible=true').first().isVisible())
   cek('jenis lama tetap berlabel', await page.locator('td', { hasText: 'Kelompok' }).first().isVisible())
   cek('tombol Segmen tampil di server baru', await page.getByRole('button', { name: 'Segmen', exact: true }).isVisible())
   await potret('pengumuman-daftar-terang-1440')

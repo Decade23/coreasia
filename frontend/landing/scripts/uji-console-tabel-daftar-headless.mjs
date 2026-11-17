@@ -276,12 +276,12 @@ try {
   }
 
   // 1. Halaman daftar: Pengguna, Ruang, Pembelian, Paket, Audit, Kasus, Ringkasan. Terang dan gelap, 1440 dan 390.
-  // Ruang, Audit, dan Pembelian punya kartu ponsel di samping tabelnya: yang ditunggu di 1440 adalah tabelnya.
+  // Ruang, Audit, Pembelian, dan Paket punya kartu ponsel di samping tabelnya: yang ditunggu di 1440 adalah tabelnya.
   const HALAMAN = [
     { nama: 'pengguna', jalur: '/console/cashflow/pengguna', tunggu: () => page.getByText('10 pengguna', { exact: true }).waitFor({ timeout: 60000 }) },
     { nama: 'ruang', jalur: '/console/cashflow/ruang', tunggu: () => page.locator('.ca-console-main table').getByText('Tok***', { exact: false }).first().waitFor() },
     { nama: 'pembelian', jalur: '/console/cashflow/pembelian', tunggu: () => page.locator('[data-uji="pembelian-tabel"]').waitFor() },
-    { nama: 'paket', jalur: '/console/cashflow/paket', tunggu: () => page.getByText('kredit_1000_promo', { exact: true }).waitFor() },
+    { nama: 'paket', jalur: '/console/cashflow/paket', tunggu: () => page.locator('.ca-console-main table').getByText('kredit_1000_promo', { exact: true }).first().waitFor() },
     { nama: 'audit', jalur: '/console/cashflow/audit', tunggu: () => page.locator('.ca-console-main table').getByText('hapus_akun_permanen', { exact: true }).first().waitFor() },
     { nama: 'kasus', jalur: '/console/cashflow/kasus?lingkup=semua', tunggu: () => page.getByText('Tiket 4821', { exact: false }).first().waitFor() },
     { nama: 'ringkasan', jalur: '/console/cashflow', tunggu: () => page.getByText('Menyiapkan dompet/ruang', { exact: true }).waitFor() },

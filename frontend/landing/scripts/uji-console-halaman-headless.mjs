@@ -27,6 +27,7 @@
 //
 // Hasil di folder CF_QA_ARTIFACTS: <nama>-<terang|gelap>-<1440|390>.png,
 // <nama>-kosong-terang-<lebar>.png, <nama>-tanpa-izin-terang-<lebar>.png,
+// <nama>-belum-aktif-<terang|gelap>-<lebar>.png (RPC halaman belum ada di server),
 // _lembar-<nama>.png (empat potret berdampingan), dan _temuan.json.
 import { spawn } from 'node:child_process'
 import { mkdtemp, mkdir, rm, readFile, writeFile, access } from 'node:fs/promises'
@@ -34,7 +35,7 @@ import { pathToFileURL } from 'node:url'
 import { createServer } from 'node:net'
 import { tmpdir, homedir } from 'node:os'
 import { join } from 'node:path'
-import { SAAT, U, W, uuid, buatServer } from './data-sintetis-console.mjs'
+import { SAAT, U, U_TANGGUH, W, uuid, buatServer } from './data-sintetis-console.mjs'
 
 const pwPath = process.env.PLAYWRIGHT_CORE_PATH
 const { chromium } = await (pwPath ? import(pathToFileURL(pwPath).href) : import('playwright-core'))
@@ -76,8 +77,9 @@ const DAFTAR = [
   { nama: 'corong', jalur: `${C}/corong` },
   { nama: 'kesehatan', jalur: `${C}/kesehatan`, harus: 'activity_events' },
   { nama: 'sakelar', jalur: `${C}/sakelar`, harus: 'otp_wa.batas_harian' },
-  { nama: 'dukungan', jalur: `${C}/dukungan`, harus: 'DK-2611-048213', tanpaIzin: true },
-  { nama: 'hapus-akun', jalur: `${C}/hapus-akun`, harus: 'yog***@contoh.invalid', tanpaIzin: true },
+  // Dukungan hanya butuh izin lihat dan tidak memuat data akun, jadi tidak punya varian tanpa izin.
+  { nama: 'dukungan', jalur: `${C}/dukungan`, harus: 'DK-2611-048213' },
+  { nama: 'hapus-akun', jalur: `${C}/hapus-akun`, harus: 'yog***@contoh.invalid', tanpaIzin: true, belumAda: ['admin_hapus_akun_daftar'] },
   { nama: 'pengumuman', jalur: `${C}/pengumuman`, harus: 'Tips Domi minggu ini' },
   { nama: 'kasus', jalur: `${C}/kasus?lingkup=semua`, harus: 'Tiket 4821' },
   { nama: 'audit', jalur: `${C}/audit`, harus: 'hapus_akun_permanen' },
@@ -87,6 +89,7 @@ const DAFTAR = [
 ]
 const TAB_PENGGUNA = [
   { nama: 'pengguna-rinci', jalur: P, harus: 'Rahmawati Kusumaningsih', tanpaIzin: true },
+  { nama: 'pengguna-rinci-ditangguhkan', jalur: `${C}/pengguna/${U_TANGGUH}`, harus: 'Ditangguhkan sampai' },
   { nama: 'pengguna-rinci-transaksi', jalur: `${P}/transaksi`, harus: 'Kas Toko Cabang Pasar Baru' },
   { nama: 'pengguna-rinci-dompet', jalur: `${P}/dompet`, harus: 'Bank Tabungan Usaha' },
   { nama: 'pengguna-rinci-domi', jalur: `${P}/domi`, harus: 'Belanja stok November', aksi: bukaDomi },
@@ -117,6 +120,8 @@ const SEMUA = [...DAFTAR, ...TAB_PENGGUNA, ...TAB_RUANG].filter(cocok)
 /* Varian kosong: semua halaman daftar dan semua tab rincian. */
 const KOSONG = SEMUA
 const TANPA_IZIN = SEMUA.filter(h => h.tanpaIzin)
+/* Varian server lama: RPC halaman itu belum ada di server (console tayang lebih dulu dari migrasinya). */
+const BELUM_AKTIF = SEMUA.filter(h => h.belumAda)
 
 const server = buatServer()
 /** Temuan otomatis, satu baris per masalah. */
@@ -160,7 +165,7 @@ try {
   }, { session, saat: SAAT })
   const IZIN_PENUH = ['cashflow:view', 'cashflow:pii', 'cashflow:investigasi', 'cashflow:tindak', 'cashflow:ekspor']
   /** Keadaan server tiruan: `kosong` = semua daftar kosong, `izin` = sesi memegang izin data pribadi. */
-  const mode = { kosong: false, izin: true }
+  const mode = { kosong: false, izin: true, belumAda: null }
   const pasangIzin = izin => ctx.addInitScript((izin) => { if (location.protocol === 'http:') sessionStorage.setItem('cf_izin', JSON.stringify(izin)) }, izin)
   await pasangIzin(IZIN_PENUH)
   // Tidak ada akses ke layanan luar atau gateway sungguhan.
@@ -290,6 +295,7 @@ try {
         galat: [...(utama?.querySelectorAll('[data-keadaan="galat"], [role="alert"]') ?? [])].filter(tampak).map(e => ringkas(e.innerText)).filter(Boolean).slice(0, 3),
         memuat: !!utama?.querySelector('[aria-busy="true"]'),
         kosong: utama?.querySelectorAll('[data-keadaan="kosong"]').length ?? 0,
+        belumAktif: [...(utama?.querySelectorAll('[data-keadaan="belum-aktif"]') ?? [])].some(tampak),
         muatData: tombol('Muat data'),
         bukaDomi: tombol('Buka percakapan Domi'),
       },
@@ -363,6 +369,26 @@ try {
   mode.izin = true
   await pasangIzin(IZIN_PENUH)
 
+  // 6. Varian server lama: RPC halaman belum ada (PGRST202). Halaman harus berkata
+  // "belum aktif" dengan tenang, bukan galat. Terang dan gelap.
+  log('Varian belum aktif di server')
+  const belumAktif = {}
+  for (const t of ['terang', 'gelap']) {
+    await tema(t)
+    for (const h of BELUM_AKTIF) {
+      mode.belumAda = h.belumAda
+      await jalankan(h, `belum-aktif-${t}`, 'belum-aktif')
+      mode.belumAda = null
+      for (const w of [1440, 390]) {
+        const berkas = `${h.nama}-belum-aktif-${t}-${w}`
+        const tampil = !!catatan[berkas]?.belumAktif
+        belumAktif[berkas] = tampil
+        if (!tampil) catat(h.nama, berkas, 'isi-tidak-tampil', { sebab: 'keadaan belum aktif tidak tampil' })
+      }
+    }
+  }
+  await tema('terang')
+
   // Lembar gabungan: empat potret berdampingan per halaman, dipotong di 2400 px.
   const lembar = []
   if (!process.env.CF_QA_TANPA_LEMBAR) {
@@ -400,6 +426,7 @@ try {
       await buatLembar(h.nama, h.nama, empat(h.nama))
       await buatLembar(`${h.nama}-kosong`, `${h.nama} kosong`, empat(`${h.nama}-kosong`, ['terang']))
       if (h.tanpaIzin) await buatLembar(`${h.nama}-tanpa-izin`, `${h.nama} tanpa izin`, empat(`${h.nama}-tanpa-izin`, ['terang']))
+      if (h.belumAda) await buatLembar(`${h.nama}-belum-aktif`, `${h.nama} belum aktif`, empat(`${h.nama}-belum-aktif`))
     }
     galatHalaman.splice(0)
   }
@@ -414,7 +441,7 @@ try {
     folder: output, jumlahPotret: potretDibuat.length, jumlahLembar: lembar.length, jumlahTemuan: temuan.length,
     rpcDitiru: server.ditiru, rpcTerpanggil: [...server.terpanggil].sort(), rpcTidakDikenal: [...server.takDikenal].sort(),
     rpcDitiruTidakTerpanggil: server.ditiru.filter(n => !server.terpanggil.has(n)),
-    jaringanLuarDitolak: [...ditolak].sort(), tanpaIzin, temuanPerHalaman: perHalaman, temuan,
+    jaringanLuarDitolak: [...ditolak].sort(), tanpaIzin, belumAktif, temuanPerHalaman: perHalaman, temuan,
   }
   await writeFile(join(output, '_temuan.json'), JSON.stringify({ ...hasil, catatan }, null, 2))
   console.log(JSON.stringify(hasil, null, 1))
