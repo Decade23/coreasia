@@ -140,6 +140,16 @@ export function keKepala(d: KepalaPenggunaDTO, sekarang: number = Date.now()): K
   }
 }
 
+/**
+ * Tanda Kasir (20261117180000): Anggota yang boleh menjual dan menerima
+ * bayaran kasbon tanpa melihat harga modal. Server mengirim kolom `kasir`
+ * apa adanya. Yang dihitung Kasir hanya bila perannya 'member', sama dengan
+ * adalah_kasir() di server. Kunci yang tidak ada (server sebelum migrasi itu)
+ * berarti bukan Kasir, jadi tampilannya sama seperti sebelumnya.
+ */
+export const tandaKasir = (kasir: unknown, peran: string | null | undefined): boolean =>
+  kasir === true && peran === 'member'
+
 // ── Pengguna 360 (T1 ranah akun) ─────────────────────────────────────────
 export interface AkunDTO {
   user_id: string; email: string; display_name: string; nama_meta: string | null
@@ -157,6 +167,10 @@ export interface RuangDalamDTO {
   pemilik: boolean; bekas_anggota: boolean; joined_at: string | null; jumlah_anggota: number
   tx_oleh_dia: number; masuk_bersih_dia: number | string; keluar_bersih_dia: number | string
   terakhir_catat_dia: string | null; agregat: AgregatRuangDTO | null
+  /** Subjek bertanda Kasir di ruang ini (20261117180000). Tidak ada di
+   *  server lama. Ruang luar lingkup tidak pernah membawanya: objek itu
+   *  sengaja hanya berisi kunci kepala. */
+  kasir?: boolean | null
 }
 export interface RuangLuarDTO {
   workspace_id: string; dalam_lingkup: false; nama: string | null; jenis: string | null; peran: string | null
@@ -203,6 +217,8 @@ export interface RuangSubjek {
   gabungIso: string | null
   anggota: number
   txOlehDia: number
+  /** Kasir di ruang ini (lihat tandaKasir). Selalu false di luar lingkup. */
+  kasir: boolean
   /** Hanya di dalam lingkup; null di luar (server tidak mengirim). */
   masukBersihDia: number | null
   keluarBersihDia: number | null
@@ -253,7 +269,7 @@ export function ke360(d: Pengguna360DTO, sekarang: number = Date.now()): Penggun
       ? {
           id: r.workspace_id, dalamLingkup: true, nama: r.nama || '—', jenis: r.jenis ?? null, peran: r.peran ?? null,
           pemilik: r.pemilik === true, bekas: r.bekas_anggota === true, gabungIso: r.joined_at ?? null,
-          anggota: angka(r.jumlah_anggota), txOlehDia: angka(r.tx_oleh_dia),
+          anggota: angka(r.jumlah_anggota), txOlehDia: angka(r.tx_oleh_dia), kasir: tandaKasir(r.kasir, r.peran),
           masukBersihDia: angka(r.masuk_bersih_dia), keluarBersihDia: angka(r.keluar_bersih_dia),
           terakhirCatatDiaIso: r.terakhir_catat_dia ?? null,
           agregat: r.agregat
@@ -267,7 +283,7 @@ export function ke360(d: Pengguna360DTO, sekarang: number = Date.now()): Penggun
       : {
           id: r.workspace_id, dalamLingkup: false, nama: r.nama || '—', jenis: r.jenis ?? null, peran: r.peran ?? null,
           pemilik: r.pemilik === true, bekas: r.bekas_anggota === true, gabungIso: null,
-          anggota: angka(r.jumlah_anggota), txOlehDia: angka(r.tx_oleh_dia),
+          anggota: angka(r.jumlah_anggota), txOlehDia: angka(r.tx_oleh_dia), kasir: false,
           masukBersihDia: null, keluarBersihDia: null, terakhirCatatDiaIso: null, agregat: null,
         }),
   }

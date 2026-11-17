@@ -76,11 +76,13 @@ describe('kontrak Ruang360DTO ↔ admin_ruang_360', () => {
       : d.hitung
     sama(hitung, pohonDengan(badan, 'bekas_anggota', 'undangan_aktif'))
     sama(d.agregat, pohonDengan(badan, 'masuk_bersih', 'terakhir_catat'))
-    sama(d.anggota[0], pohonDengan(badan, 'terakhir_catat_dia'))
+    // 20261117180000 menambah tanda Kasir di ujung anggota dan undangan (kunci hanya bertambah).
+    const kasir = adaMigrasiNomor('20261117180000')
+    sama(kasir ? { ...d.anggota[0], kasir: false } : d.anggota[0], pohonDengan(badan, 'terakhir_catat_dia'))
     const bekas = semuaPohonJsonb(badan).find(p => 'user_id' in p && 'tx_oleh_dia' in p && !('peran' in p))
     expect(bekas).toBeDefined()
     sama(d.bekas[0], bekas!)
-    sama(d.undangan[0], pohonDengan(badan, 'ada_label'))
+    sama(kasir ? { ...d.undangan[0], kasir: true } : d.undangan[0], pohonDengan(badan, 'ada_label'))
     for (const k of ["'code'", "'label'", "'cara_bayar'", "'qris_path'"]) expect(badan).not.toContain(k)
   })
   it.skipIf(!ADA)('status undangan = himpunan server; ≤ 100 undangan', () => {

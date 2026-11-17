@@ -372,11 +372,14 @@ describe('kontrak Pengguna360DTO ↔ admin_pengguna_360', () => {
     expect(urutPohon(pohonContoh(d.akun))).toEqual(urutPohon(pohonDengan(badan, 'email_confirmed_at')))
     const [dalam, luar] = d.ruang
     const pDalam = pohonDengan(badan, 'dalam_lingkup', 'agregat')
-    expect(urut(Object.keys(dalam!))).toEqual(urut(Object.keys(pDalam)))
+    // 20261117180000: tanda Kasir hanya di ruang DALAM lingkup; ruang luar tetap kunci kepala.
+    const kasir = adaMigrasiNomor('20261117180000')
+    expect(urut(Object.keys(kasir ? { ...dalam!, kasir: false } : dalam!))).toEqual(urut(Object.keys(pDalam)))
     expect(urutPohon(pohonContoh((dalam as { agregat: unknown }).agregat))).toEqual(urutPohon(pohonDengan(badan, 'masuk_bersih', 'dompet')))
     const pLuar = semuaPohonJsonb(badan).find(p => 'dalam_lingkup' in p && !('agregat' in p))
     expect(pLuar).toBeDefined()
     expect(urut(Object.keys(luar!))).toEqual(urut(Object.keys(pLuar!)))
+    expect(pLuar).not.toHaveProperty('kasir')
   })
   it.skipIf(!adaMigrasi)('bersih = uang berpindah (tanpa transfer, piutang/kasbon, dompet arsip); ruang luar lingkup tanpa agregat', () => {
     const { badan } = fungsiTerakhir('admin_pengguna_360')

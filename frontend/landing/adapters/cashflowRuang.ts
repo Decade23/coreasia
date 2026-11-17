@@ -19,7 +19,7 @@
  */
 import { samarkanEmail } from './cashflow'
 import type { JenisPeristiwa, SaringJejak } from './cashflowJejak'
-import { bacaObjekKursor, isoSah, keTransaksiBaris, jenisUang, type KursorTransaksi, type TransaksiBarisDTO, type TransaksiBaris, type JenisUang, type CekTransaksi, CEK_TRANSAKSI } from './cashflowBuku'
+import { bacaObjekKursor, isoSah, keTransaksiBaris, jenisUang, tandaKasir, type KursorTransaksi, type TransaksiBarisDTO, type TransaksiBaris, type JenisUang, type CekTransaksi, CEK_TRANSAKSI } from './cashflowBuku'
 import { capWaktuWib, type BatasAksesDTO, type KasusDTO } from './cashflowKasus'
 
 // ── Kasus ruang: isian otomatis ──────────────────────────────────────────
@@ -203,6 +203,8 @@ export interface AgregatRuang360DTO { transaksi: number; masuk_bersih: number | 
 export interface AnggotaRuangDTO {
   user_id: string; email: string | null; peran: string | null; joined_at: string | null; pemilik: boolean
   tx_oleh_dia: number; terakhir_catat_dia: string | null
+  /** workspace_members.kasir (20261117180000). Tidak ada di server lama. */
+  kasir?: boolean | null
 }
 export interface BekasRuangDTO { user_id: string; email: string | null; tx_oleh_dia: number }
 export const STATUS_UNDANGAN = ['aktif', 'diterima', 'dicabut', 'ditolak', 'kedaluwarsa'] as const
@@ -211,6 +213,8 @@ export interface UndanganRuangDTO {
   id: string; peran: string | null; status: string; ada_label: boolean; target_email: string | null
   diundang_oleh: string | null; diterima_oleh: string | null; dibuat: string; kedaluwarsa: string | null
   diterima_pada: string | null; dicabut_pada: string | null; ditolak_pada: string | null
+  /** workspace_invites.kasir (20261117180000). Tidak ada di server lama. */
+  kasir?: boolean | null
 }
 export interface Ruang360DTO {
   kasus: string
@@ -226,12 +230,16 @@ export interface Ruang360DTO {
 export interface AnggotaRuang {
   id: string; emailTersamar: string; peran: string | null; gabungIso: string | null; pemilik: boolean
   tx: number; terakhirCatatIso: string | null
+  /** Anggota bertanda Kasir (lihat tandaKasir). */
+  kasir: boolean
 }
 export interface BekasRuang { id: string; emailTersamar: string; akunAda: boolean; tx: number }
 export interface UndanganRuang {
   id: string; peran: string | null; status: StatusUndangan | null; adaLabel: boolean; targetTersamar: string
   diundangOleh: string | null; diterimaOleh: string | null; dibuatIso: string; kedaluwarsaIso: string | null
   selesaiIso: string | null
+  /** Undangan Kasir: penerimanya langsung jadi Kasir saat bergabung. */
+  kasir: boolean
 }
 export interface Ruang360 {
   kasus: string
@@ -287,6 +295,7 @@ export function keRuang360(d: Ruang360DTO): Ruang360 {
       pemilik: a.pemilik === true,
       tx: angka0(a.tx_oleh_dia),
       terakhirCatatIso: a.terakhir_catat_dia ?? null,
+      kasir: tandaKasir(a.kasir, a.peran),
     })),
     bekas: (d.bekas ?? []).map(b => ({
       id: b.user_id,
@@ -305,6 +314,7 @@ export function keRuang360(d: Ruang360DTO): Ruang360 {
       dibuatIso: u.dibuat,
       kedaluwarsaIso: u.kedaluwarsa ?? null,
       selesaiIso: u.diterima_pada ?? u.dicabut_pada ?? u.ditolak_pada ?? null,
+      kasir: tandaKasir(u.kasir, u.peran),
     })),
   }
 }
