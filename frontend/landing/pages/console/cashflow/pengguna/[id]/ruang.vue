@@ -13,6 +13,14 @@
  *   baru) = "Masukkan ke lingkup" satu klik, tanpa dialog (admin_kasus_tambah
  *   p_ruang; alasan diwarisi; tercatat).
  *
+ * Lencana Kasir di samping peran, hanya untuk ruang DALAM lingkup (kunci
+ * `kasir`, migrasi 20261117180000). Ruang di luar lingkup sengaja hanya
+ * membawa kunci kepala, jadi tandanya baru tampil sesudah ruang dimasukkan
+ * ke lingkup. Server lama tidak mengirimnya, dan kartunya tampil persis
+ * seperti sebelumnya. Baris peran ditulis dua kali (v-if/v-else), bukan
+ * v-if di tengah teks: penanda v-if memecah simpul teks dan menggeser
+ * huruf, jadi baris tanpa Kasir tidak lagi sama piksel demi piksel.
+ *
  * Nama ruang DALAM lingkup bertaut ke Ruang 360 (/ruang/<id>, Fase 2). Di
  * sana kasus yang sama dipakai lagi (admin_kasus_aktif_ruang: lingkupnya
  * memuat ruang itu), jadi pindah pengguna → ruang tidak membuka kasus baru,
@@ -72,7 +80,10 @@ const peran = (r: RuangSubjek) => (r.pemilik ? tcf('pengguna.pemilik') : r.peran
                 <span v-if="r.jenis" class="ca-pill-muted text-[0.7rem]">{{ tcf(`ruang.jenisOpsi.${r.jenis}`) }}</span>
                 <span v-if="r.bekas" class="ca-pill-gold text-[0.7rem]">{{ tcf('ruangTab.bekas') }}</span>
               </div>
-              <p class="mt-1 text-xs text-[var(--ca-muted)]">
+              <p v-if="r.kasir" class="mt-1 text-xs text-[var(--ca-muted)]">
+                {{ peran(r) }}<span class="ca-pill-info ml-1.5 !px-2 !py-0 align-[1px] text-[0.65rem]" :title="tcf('r360.kasirKet')" data-uji="ruang-kasir"><Icon name="lucide:store" class="h-3 w-3" aria-hidden="true" />{{ tcf('r360.kasir') }}</span> · {{ tcf('ruangTab.anggota')(r.anggota) }}<template v-if="r.gabungIso"> · {{ tcf('ruangTab.gabung') }} {{ formatTanggal(r.gabungIso) }}</template>
+              </p>
+              <p v-else class="mt-1 text-xs text-[var(--ca-muted)]">
                 {{ peran(r) }} · {{ tcf('ruangTab.anggota')(r.anggota) }}<template v-if="r.gabungIso"> · {{ tcf('ruangTab.gabung') }} {{ formatTanggal(r.gabungIso) }}</template>
               </p>
               <dl class="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-xs">

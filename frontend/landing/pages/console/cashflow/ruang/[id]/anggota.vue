@@ -6,6 +6,10 @@
  * sampah), dan ≤ 100 undangan terbaru (kode dan label tidak pernah dikirim;
  * ada_label saja). Setiap orang bertaut ke kepala T0-nya di Pengguna 360 —
  * kasusnya sendiri dibuka otomatis di sana.
+ *
+ * Lencana Kasir di samping peran: anggota bertanda Kasir dan undangan Kasir
+ * (kunci `kasir`, migrasi 20261117180000). Server lama tidak mengirimnya, dan
+ * daftarnya tampil persis seperti sebelumnya.
  */
 definePageMeta({
   layout: 'console',
@@ -39,6 +43,7 @@ const kelasStatus = (s: StatusUndangan | null) => (s === 'aktif' ? 'ca-pill-emer
             <CashflowSalinId :id="a.id" />
             <span v-if="a.pemilik" class="ca-pill-gold text-[0.7rem]">{{ tcf('pengguna.pemilik') }}</span>
             <span v-else-if="a.peran" class="ca-pill-muted text-[0.7rem]">{{ a.peran }}</span>
+            <span v-if="a.kasir" class="ca-pill-info text-[0.7rem]" :title="tcf('r360.kasirKet')" data-uji="anggota-kasir"><Icon name="lucide:store" class="h-3 w-3" aria-hidden="true" />{{ tcf('r360.kasir') }}</span>
             <span class="text-xs text-[var(--ca-muted)]">
               <template v-if="a.gabungIso">{{ tcf('ruangTab.gabung') }} {{ formatTanggal(a.gabungIso) }} · </template>{{ tcf('ruangTab.txDiaJumlah')(a.tx) }}<template v-if="a.terakhirCatatIso"> · {{ tcf('ruangTab.terakhir') }} {{ formatTanggal(a.terakhirCatatIso) }}</template>
             </span>
@@ -65,6 +70,7 @@ const kelasStatus = (s: StatusUndangan | null) => (s === 'aktif' ? 'ca-pill-emer
             <span :class="kelasStatus(u.status)" class="text-[0.7rem]">{{ u.status ? tcf(`r360.statusUndangan.${u.status}`) : '—' }}</span>
             <span class="font-mono text-[var(--ca-text)]">{{ u.targetTersamar }}</span>
             <span v-if="u.peran" class="ca-pill-muted text-[0.7rem]">{{ u.peran }}</span>
+            <span v-if="u.kasir" class="ca-pill-info text-[0.7rem]" :title="tcf('r360.kasirUndanganKet')" data-uji="undangan-kasir"><Icon name="lucide:store" class="h-3 w-3" aria-hidden="true" />{{ tcf('r360.kasir') }}</span>
             <span v-if="u.adaLabel" class="ca-pill-muted text-[0.7rem]" :title="tcf('r360.labelKet')">{{ tcf('r360.berlabel') }}</span>
             <span class="text-xs text-[var(--ca-muted)]">
               {{ tcf('r360.diundang') }} {{ formatTanggal(u.dibuatIso) }}
