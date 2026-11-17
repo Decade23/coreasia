@@ -7,7 +7,7 @@
  */
 import { describe, expect, it } from 'vitest'
 import { keKesehatan, ukuranByte, type KesehatanDTO } from '../../adapters/cashflow'
-import { adaMigrasi, fungsiTerakhir, pohonContoh, pohonJsonb, urutPohon } from './migrasi'
+import { adaMigrasi, adaMigrasiNomor, fungsiTerakhir, pohonContoh, pohonJsonb, urutPohon } from './migrasi'
 
 // Jawaban PostgREST: bigint dari pg_database_size/count/pg_total_relation_size jadi angka JSON.
 const JAWABAN_SERVER = `{
@@ -17,9 +17,13 @@ const JAWABAN_SERVER = `{
     "transactions": {"baris": 4210, "ukuran": 1638400},
     "admin_audit": {"baris": 87, "ukuran": 98304},
     "budgets": {"baris": 0, "ukuran": 24576}
-  }
+  },
+  "play_proses": {"diproses": 2, "tertunda": 1, "gagal_sementara": 1, "ditolak": 0, "tertua_menit": 75}
 }`
 const contoh = (): KesehatanDTO => JSON.parse(JAWABAN_SERVER) as KesehatanDTO
+/* play_proses ada sejak migrasi CashFlow 20261117170000 (rinciannya di
+   kesehatan-play.test.ts). Sebelum itu server tidak mengirimnya. */
+const ADA_PLAY = adaMigrasiNomor('20261117170000')
 
 describe('kontrak KesehatanDTO ↔ admin_kesehatan', () => {
   it.skipIf(!adaMigrasi)('tabel = objek jsonb_object_agg per nama tabel, bukan larik', () => {
@@ -32,6 +36,7 @@ describe('kontrak KesehatanDTO ↔ admin_kesehatan', () => {
     const { badan } = fungsiTerakhir('admin_kesehatan')
     const c = JSON.parse(JAWABAN_SERVER)
     const bentuk = { ...c, tabel: Object.values(c.tabel)[0] }
+    if (!ADA_PLAY) delete bentuk.play_proses
     expect(urutPohon(pohonContoh(bentuk))).toEqual(urutPohon(pohonJsonb(badan)))
   })
 
