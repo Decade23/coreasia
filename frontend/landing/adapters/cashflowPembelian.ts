@@ -27,17 +27,51 @@
  * Email dan nama pembeli ditampilkan sebagai TEKS POLOS (interpolasi biasa,
  * tidak pernah dirender sebagai HTML).
  *
+ * PEMBELIAN GOOGLE PLAY YANG BELUM MENJADI KREDIT (migrasi CashFlow
+ * 20261117140000_play_proses). p_status juga menerima `diproses` (Google
+ * masih menunggu pembayarannya, atau pemeriksaannya belum berhasil) dan
+ * `ditolak` (tidak akan menjadi kredit). Hanya untuk dua saringan itu:
+ *   - baris berasal dari catatan proses, bukan dari pembelian: kode null,
+ *     jalur 'play', play null, status = saringannya, nominal = harga paket,
+ *     dan kunci tambahan
+ *       proses: {keadaan, rinci, produk, sumber, sejak, terakhir,
+ *                dicoba_pada, percobaan, bisa_dicoba}
+ *   - jawaban membawa kunci tambahan
+ *       proses: {diproses, tertunda, gagal_sementara, ditolak, tertua}
+ *     dihitung atas SEMUA catatan proses (tanpa akun uji), tidak mengikuti
+ *     saringan jalur atau halaman. `ringkas` tetap ada tetapi isinya nol,
+ *     jadi halaman tidak menampilkannya di dua saringan ini.
+ *   - p_jalur 'qris' memulangkan daftar kosong (keadaan ini hanya ada di Play).
+ * Server lama (sebelum migrasi itu) menolak kedua nilai dengan 22023
+ * masukan_tidak_sah, hint status. Halaman menulisnya sebagai keadaan tenang.
+ * Semua kunci baru dibaca sebagai opsional, dan nilai keadaan atau rinci yang
+ * belum dikenal console jatuh ke kalimat umum, tidak pernah tampil mentah.
+ *
  * Fungsi MURNI semua: tanpa jaringan, tanpa state.
  */
 
-/** Nilai `status` dari server. */
+/** Nilai `status` dari server untuk pembelian yang tercatat. */
 export const STATUS_PEMBELIAN = ['menunggu', 'lunas', 'kedaluwarsa', 'batal'] as const
 export type StatusPembelian = typeof STATUS_PEMBELIAN[number]
+/** Nilai `status` (dan p_status) untuk pembelian Play yang belum atau tidak jadi menjadi kredit. */
+export const STATUS_PROSES_PEMBELIAN = ['diproses', 'ditolak'] as const
+export type StatusProsesPembelian = typeof STATUS_PROSES_PEMBELIAN[number]
 /** Nilai `jalur` dari server. */
 export const JALUR_PEMBELIAN = ['play', 'qris'] as const
 export type JalurPembelian = typeof JALUR_PEMBELIAN[number]
+/** Nilai `proses.keadaan` (cek tabel ai_pembelian_play_proses). */
+export const KEADAAN_PROSES = ['tertunda', 'gagal_sementara', 'ditolak'] as const
+export type KeadaanProses = typeof KEADAAN_PROSES[number]
+/** Nilai `proses.rinci`, hanya untuk keadaan ditolak. */
+export const RINCI_PROSES = ['batal_google', 'akun_lain', 'sudah_batal', 'tidak_dikenal'] as const
+export type RinciProses = typeof RINCI_PROSES[number]
+/** Nilai `proses.sumber`: siapa yang terakhir melaporkan pembelian itu. */
+export const SUMBER_PROSES = ['aplikasi', 'rtdn', 'sapu'] as const
+export type SumberProses = typeof SUMBER_PROSES[number]
+/** Pembelian yang menggantung lebih lama dari ini diberi nada perhatian. */
+export const AMBANG_GANTUNG_MENIT = 60
 /** Saringan di URL: 'semua' = tanpa saringan (null ke server). Lunas lebih dulu karena paling sering dicari. */
-export const SARING_STATUS_PEMBELIAN = ['semua', 'lunas', 'menunggu', 'kedaluwarsa', 'batal'] as const
+export const SARING_STATUS_PEMBELIAN = ['semua', 'lunas', 'menunggu', 'kedaluwarsa', 'batal', ...STATUS_PROSES_PEMBELIAN] as const
 export const SARING_JALUR_PEMBELIAN = ['semua', ...JALUR_PEMBELIAN] as const
 export type SaringStatusPembelian = typeof SARING_STATUS_PEMBELIAN[number]
 export type SaringJalurPembelian = typeof SARING_JALUR_PEMBELIAN[number]
@@ -67,6 +101,18 @@ export interface PlayPembelianDTO {
   aplikasi_lapor_pada?: string | null
   kredit_masuk_pada?: string | null
 }
+/** Hanya di baris saringan diproses dan ditolak (20261117140000). */
+export interface ProsesPembelianDTO {
+  keadaan: string | null
+  rinci: string | null
+  produk: string | null
+  sumber: string | null
+  sejak: string | null
+  terakhir: string | null
+  dicoba_pada: string | null
+  percobaan: Angka
+  bisa_dicoba: boolean | null
+}
 export interface PembelianDTO {
   id: string
   kode: string | null
@@ -79,6 +125,7 @@ export interface PembelianDTO {
   uji: boolean | null
   pembeli: PembeliDTO | null
   play: PlayPembelianDTO | null
+  proses?: ProsesPembelianDTO | null
 }
 export interface RingkasPembelianDTO {
   lunas: Angka
@@ -89,10 +136,19 @@ export interface RingkasPembelianDTO {
   diterima_tidak_tersedia?: Angka
   diterima_perkiraan?: Angka
 }
+/** Hitungan catatan proses, hanya di saringan diproses dan ditolak. */
+export interface HitunganProsesDTO {
+  diproses: Angka
+  tertunda: Angka
+  gagal_sementara: Angka
+  ditolak: Angka
+  tertua: string | null
+}
 export interface DaftarPembelianDTO {
   baris: PembelianDTO[] | null
   ringkas: RingkasPembelianDTO | null
   lanjut: string | null
+  proses?: HitunganProsesDTO | null
 }
 
 // ── Domain: bentuk yang dipakai tabel dan ubin ───────────────────────────
@@ -102,7 +158,7 @@ export interface Pembelian {
   kode: string
   waktuIso: string | null
   /** null = nilai yang tidak dikenal console (tampil apa adanya tidak aman). */
-  status: StatusPembelian | null
+  status: StatusPembelian | StatusProsesPembelian | null
   jalur: JalurPembelian | null
   paket: string | null
   kredit: number | null
@@ -130,6 +186,30 @@ export interface Pembelian {
       kreditMasuk: string | null
     }
   } | null
+  /** Hanya baris saringan diproses dan ditolak. null = server tidak mengirimnya. */
+  proses: ProsesPembelian | null
+}
+export interface ProsesPembelian {
+  /** null = tidak dikirim, atau nilai yang belum dikenal console. */
+  keadaan: KeadaanProses | null
+  rinci: RinciProses | null
+  /** Id produk Play, dipakai bila paketnya tidak ada lagi di tabel paket. */
+  produk: string | null
+  sumber: SumberProses | null
+  sejakIso: string | null
+  terakhirIso: string | null
+  dicobaIso: string | null
+  percobaan: number | null
+  /** null = tidak dikirim. true = server masih menyimpan bahan untuk mencoba lagi sendiri. */
+  bisaDicoba: boolean | null
+}
+export interface HitunganProses {
+  /** null = tidak dikirim atau tidak terbaca (tampil "Tidak tersedia", bukan 0). */
+  diproses: number | null
+  tertunda: number | null
+  gagalSementara: number | null
+  ditolak: number | null
+  tertuaIso: string | null
 }
 export interface RingkasPembelian {
   lunas: number
@@ -145,6 +225,8 @@ export interface HalamanPembelian {
   /** null bila jawaban tidak membawa ringkasan. */
   ringkas: RingkasPembelian | null
   lanjut: string | null
+  /** Hanya di saringan diproses dan ditolak; null bila server tidak mengirimnya. */
+  proses: HitunganProses | null
 }
 
 /** Bilangan bulat dari angka atau teks angka; selain itu null. */
@@ -211,14 +293,31 @@ export function jedaKreditPlay(waktu: NonNullable<NonNullable<Pembelian['play']>
   return Number.isFinite(ms) && ms >= 0 ? Math.round(ms / 1000) : null
 }
 
+function keProses(p: Record<string, unknown>): ProsesPembelian {
+  const keadaan = dari(KEADAAN_PROSES, p.keadaan)
+  return {
+    keadaan,
+    // Rinci hanya berarti untuk keadaan ditolak (cek tabel). Selain itu dibuang.
+    rinci: keadaan === 'ditolak' || keadaan === null ? dari(RINCI_PROSES, p.rinci) : null,
+    produk: teks(p.produk),
+    sumber: dari(SUMBER_PROSES, p.sumber),
+    sejakIso: waktuIso(p.sejak),
+    terakhirIso: waktuIso(p.terakhir),
+    dicobaIso: waktuIso(p.dicoba_pada),
+    percobaan: positifAtauNol(p.percobaan),
+    bisaDicoba: typeof p.bisa_dicoba === 'boolean' ? p.bisa_dicoba : null,
+  }
+}
+
 export function kePembelian(dto: PembelianDTO): Pembelian {
   const pembeli = objek(dto.pembeli)
   const play = objek(dto.play)
+  const proses = objek(dto.proses)
   return {
     id: typeof dto.id === 'string' ? dto.id : '',
     kode: teks(dto.kode) ?? '',
     waktuIso: teks(dto.waktu),
-    status: dari(STATUS_PEMBELIAN, dto.status),
+    status: dari(STATUS_PEMBELIAN, dto.status) ?? dari(STATUS_PROSES_PEMBELIAN, dto.status),
     jalur: dari(JALUR_PEMBELIAN, dto.jalur),
     paket: teks(dto.paket),
     kredit: bulat(dto.kredit),
@@ -230,6 +329,20 @@ export function kePembelian(dto: PembelianDTO): Pembelian {
       nama: teks(pembeli?.nama),
     },
     play: play ? kePlay(play) : null,
+    proses: proses ? keProses(proses) : null,
+  }
+}
+
+/** Hitungan catatan proses. null bila jawaban tidak membawanya (saringan lain, atau server lama). */
+export function keHitunganProses(dto: HitunganProsesDTO | null | undefined | unknown): HitunganProses | null {
+  const h = objek(dto)
+  if (!h) return null
+  return {
+    diproses: positifAtauNol(h.diproses),
+    tertunda: positifAtauNol(h.tertunda),
+    gagalSementara: positifAtauNol(h.gagal_sementara),
+    ditolak: positifAtauNol(h.ditolak),
+    tertuaIso: waktuIso(h.tertua),
   }
 }
 
@@ -262,6 +375,7 @@ export function halamanPembelian(dto: DaftarPembelianDTO | null | undefined | un
     baris: barisPembelian(dto).map(kePembelian),
     ringkas: keRingkasPembelian(o?.ringkas as RingkasPembelianDTO | null | undefined),
     lanjut: teks(o?.lanjut),
+    proses: keHitunganProses(o?.proses),
   }
 }
 
@@ -284,13 +398,72 @@ export function kursorSesudah(sebelum: string | null, halaman: Pick<HalamanPembe
 export const saringPembelianKeServer = <T extends string>(v: T | 'semua'): T | null => (v === 'semua' ? null : v)
 
 /** Lencana status: kelas pill yang ada di main.css. */
-export function pillStatusPembelian(s: StatusPembelian | null): string {
+export function pillStatusPembelian(s: StatusPembelian | StatusProsesPembelian | null): string {
   switch (s) {
     case 'lunas': return 'ca-pill-emerald'
-    case 'menunggu': return 'ca-pill-info'
+    case 'menunggu':
+    case 'diproses': return 'ca-pill-info'
     case 'batal': return 'ca-pill-danger'
     default: return 'ca-pill-muted'
   }
+}
+
+// ── Pembelian Play yang belum menjadi kredit ─────────────────────────────
+/** Saringan yang memanggil daftar catatan proses, bukan daftar pembelian. */
+export const saringProses = (s: string): s is StatusProsesPembelian =>
+  (STATUS_PROSES_PEMBELIAN as readonly string[]).includes(s)
+
+type BarisProses = Pick<Pembelian, 'status' | 'proses'>
+
+/** Keadaan yang ditampilkan. Tanpa keadaan yang dikenal, status saringannya yang bicara. */
+export function keadaanTampil(p: BarisProses): KeadaanProses | 'diproses' {
+  if (p.proses?.keadaan) return p.proses.keadaan
+  return p.status === 'ditolak' ? 'ditolak' : 'diproses'
+}
+
+/** Kunci kamus label keadaan (pembelian.proses.keadaan.*). Selalu ada di ID dan EN. */
+export const kunciKeadaanProses = (p: BarisProses): string => `pembelian.proses.keadaan.${keadaanTampil(p)}`
+
+/**
+ * Kunci kamus kalimat sebab (pembelian.proses.sebab.*). Selalu ada di ID dan
+ * EN, juga untuk nilai yang belum dikenal console: kode server tidak pernah
+ * tampil mentah.
+ */
+export function kunciSebabProses(p: BarisProses): string {
+  if (!p.proses) return 'pembelian.proses.sebab.tanpaRincian'
+  const k = keadaanTampil(p)
+  if (k === 'ditolak') return `pembelian.proses.sebab.${p.proses.rinci ?? 'ditolakLain'}`
+  if (k === 'diproses') return 'pembelian.proses.sebab.lain'
+  return `pembelian.proses.sebab.${k}`
+}
+
+/** Lencana keadaan (cashflow-tema.css). Hanya yang belum bisa diperiksa yang diberi nada awas. */
+export function lencanaProses(p: BarisProses): string {
+  switch (keadaanTampil(p)) {
+    case 'gagal_sementara': return 'cf-lencana cf-lencana-awas'
+    case 'ditolak': return 'cf-lencana cf-lencana-galat'
+    default: return 'cf-lencana'
+  }
+}
+
+/** Menit sejak `iso` sampai `kiniMs`. Waktu di depan jam peramban dihitung 0. null bila tidak terbaca. */
+export function menitSejak(iso: string | null | undefined, kiniMs: number): number | null {
+  if (!iso || !Number.isFinite(kiniMs)) return null
+  const t = Date.parse(iso)
+  return Number.isFinite(t) ? Math.max(0, Math.floor((kiniMs - t) / 60_000)) : null
+}
+
+/** Menggantung lebih lama dari ambang. Yang sudah ditolak tidak menggantung. */
+export function menggantungLama(p: BarisProses & { waktuIso?: string | null }, kiniMs: number): boolean {
+  if (keadaanTampil(p) === 'ditolak') return false
+  const m = menitSejak(p.proses?.sejakIso ?? p.waktuIso ?? null, kiniMs)
+  return m !== null && m > AMBANG_GANTUNG_MENIT
+}
+
+/** Pecah menit untuk kalimat lama (kamus pembelian.proses.lama). */
+export function bagianLama(menit: number): { hari: number; jam: number; menit: number } {
+  const m = Math.max(0, Math.floor(menit))
+  return { hari: Math.floor(m / 1440), jam: Math.floor((m % 1440) / 60), menit: m % 60 }
 }
 
 /** Pembelian Play yang lunas dan belum selesai dikonsumsi di Google. */
@@ -300,3 +473,10 @@ export const playBelumDikonsumsi = (p: Pick<Pembelian, 'status' | 'jalur' | 'pla
 /** Galat 22023 masukan_tidak_sah: nilai saringan yang tidak dikenal server. */
 export const masukanTidakSah = (g: { message?: string } | null | undefined): boolean =>
   !!g && g.message === 'masukan_tidak_sah'
+
+/** Server sebelum 20261117140000 belum mengenal saringan diproses dan ditolak:
+ *  22023 masukan_tidak_sah dengan hint status (atau tanpa hint). Halaman
+ *  menulisnya sebagai keadaan tenang, bukan galat. */
+export const prosesBelumDikenalServer = (
+  g: { message?: string; hint?: string } | null | undefined, status: string,
+): boolean => saringProses(status) && masukanTidakSah(g) && (!g?.hint || g.hint === 'status')

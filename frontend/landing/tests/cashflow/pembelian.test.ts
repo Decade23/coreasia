@@ -18,7 +18,7 @@ import { fileURLToPath } from 'node:url'
 import { computed, ref } from 'vue'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
-  BATAS_DAFTAR_PEMBELIAN, JALUR_PEMBELIAN, SARING_JALUR_PEMBELIAN, SARING_STATUS_PEMBELIAN, STATUS_PEMBELIAN,
+  BATAS_DAFTAR_PEMBELIAN, JALUR_PEMBELIAN, SARING_JALUR_PEMBELIAN, SARING_STATUS_PEMBELIAN, STATUS_PEMBELIAN, STATUS_PROSES_PEMBELIAN,
   barisPembelian, gabungPembelian, halamanPembelian, kePembelian, keRingkasPembelian, kursorSesudah, masukanTidakSah,
   jedaKreditPlay, pillStatusPembelian, playBelumDikonsumsi, saringPembelianKeServer, uangPlay,
   type DaftarPembelianDTO, type PembelianDTO, type Pembelian,
@@ -67,8 +67,9 @@ const KONTRAK: PohonKunci = {
   lanjut: null,
 }
 
-/* Satu baris Play dengan setiap kunci, seperti yang dipulangkan server. */
-const BARIS_PLAY: Required<PembelianDTO> = {
+/* Satu baris Play dengan setiap kunci, seperti yang dipulangkan server. Kunci
+   proses hanya ada di saringan diproses dan ditolak (pembelian-proses.test.ts). */
+const BARIS_PLAY: Required<Omit<PembelianDTO, 'proses'>> = {
   id: '00000000-0000-4000-8000-0000000000a1', kode: '7Q2M9KXA', waktu: W1, status: 'lunas', jalur: 'play',
   paket: 'hemat', kredit: 50, nominal: 40000, uji: false,
   pembeli: { user_id: '00000000-0000-4000-8000-000000000001', email: 'budi@contoh.id', nama: 'Budi Contoh' },
@@ -80,12 +81,12 @@ const BARIS_QRIS: PembelianDTO = {
   pembeli: { user_id: '00000000-0000-4000-8000-000000000002', email: 'sari@contoh.id', nama: null },
   play: null,
 }
-const DAFTAR: Required<DaftarPembelianDTO> = {
+const DAFTAR: Required<Omit<DaftarPembelianDTO, 'proses'>> = {
   baris: [BARIS_PLAY, BARIS_QRIS],
   ringkas: { lunas: 3, nominal_lunas: '115000', perkiraan_diterima: 97750, batal: 1 },
   lanjut: W2,
 }
-const DAFTAR_ORDERS: Required<DaftarPembelianDTO> = {
+const DAFTAR_ORDERS: Required<Omit<DaftarPembelianDTO, 'proses'>> = {
   ...DAFTAR,
   baris: [{
     ...BARIS_PLAY,
@@ -128,6 +129,7 @@ describe('adapter: baris pembelian', () => {
       uji: false,
       pembeli: { userId: '00000000-0000-4000-8000-000000000001', email: 'budi@contoh.id', nama: 'Budi Contoh' },
       play: { order: 'GPA.0000-1111-2222-33333', dikonsumsi: true, batalIso: null },
+      proses: null,
     })
     const q = kePembelian(BARIS_QRIS)
     expect([q.kredit, q.nominal, q.uji, q.play, q.pembeli.nama]).toEqual([10, 12000, true, null, null])
@@ -160,8 +162,10 @@ describe('adapter: baris pembelian', () => {
       totalTidakTersedia: null, diterimaTidakTersedia: null, diterimaPerkiraan: null,
     })
     expect(h.lanjut).toBe(W2)
-    expect(halamanPembelian(null)).toEqual({ baris: [], ringkas: null, lanjut: null })
-    expect(halamanPembelian({ baris: null, ringkas: null, lanjut: null })).toEqual({ baris: [], ringkas: null, lanjut: null })
+    // Saringan lama tidak membawa kunci proses: hitungannya null, bukan nol.
+    expect(h.proses).toBeNull()
+    expect(halamanPembelian(null)).toEqual({ baris: [], ringkas: null, lanjut: null, proses: null })
+    expect(halamanPembelian({ baris: null, ringkas: null, lanjut: null })).toEqual({ baris: [], ringkas: null, lanjut: null, proses: null })
     expect(barisPembelian([BARIS_PLAY])).toEqual([])
   })
 
@@ -224,7 +228,7 @@ describe('adapter: halaman berikutnya', () => {
   it('saringan semua = null ke server; nilai lain diteruskan', () => {
     expect(saringPembelianKeServer('semua')).toBeNull()
     expect(saringPembelianKeServer('lunas')).toBe('lunas')
-    expect(SARING_STATUS_PEMBELIAN.filter(s => s !== 'semua').sort()).toEqual([...STATUS_PEMBELIAN].sort())
+    expect(SARING_STATUS_PEMBELIAN.filter(s => s !== 'semua').sort()).toEqual([...STATUS_PEMBELIAN, ...STATUS_PROSES_PEMBELIAN].sort())
     expect(SARING_JALUR_PEMBELIAN.filter(s => s !== 'semua')).toEqual([...JALUR_PEMBELIAN])
   })
 

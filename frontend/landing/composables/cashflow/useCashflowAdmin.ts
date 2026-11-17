@@ -113,7 +113,7 @@ import type {
   AturanDTO, SaringDTO, PratinjauPenerimaDTO, SegmenDTO, AkunInternalDTO, JenisAkunInternal,
 } from '~/adapters/cashflowPengumumanAturan'
 import type { DaftarPaketDTO, MuatanPaket, MuatanSebagian } from '~/adapters/cashflowPaket'
-import type { DaftarPembelianDTO, JalurPembelian, StatusPembelian } from '~/adapters/cashflowPembelian'
+import type { DaftarPembelianDTO, JalurPembelian, StatusPembelian, StatusProsesPembelian } from '~/adapters/cashflowPembelian'
 import { BATAS_DAFTAR_PEMBELIAN } from '~/adapters/cashflowPembelian'
 import type { AiCadanganDTO } from '~/adapters/cashflowAiCadangan'
 import { tanpaKunci } from '~/adapters/cashflowAiCadangan'
@@ -673,8 +673,10 @@ export const useCashflowAdmin = () => {
     /** Terbaru dulu. `sebelum` = `lanjut` dari jawaban sebelumnya (null = halaman
      *  pertama). Status dan jalur null = semua. Ringkasan atas SEMUA yang cocok
      *  saringan, tanpa pembelian uji. Membuka email pembeli: setiap panggilan
-     *  dicatat server di audit. Saringan tak dikenal: 22023 masukan_tidak_sah. */
-    aiPembelianDaftar: (status: StatusPembelian | null, jalur: JalurPembelian | null, sebelum: string | null) =>
+     *  dicatat server di audit. Saringan tak dikenal: 22023 masukan_tidak_sah.
+     *  Status diproses dan ditolak (20261117140000) memulangkan pembelian Play
+     *  yang belum menjadi kredit, dengan kunci tambahan `proses`. */
+    aiPembelianDaftar: (status: StatusPembelian | StatusProsesPembelian | null, jalur: JalurPembelian | null, sebelum: string | null) =>
       rpc<DaftarPembelianDTO>('admin_ai_pembelian_daftar', {
         p_batas: BATAS_DAFTAR_PEMBELIAN, p_sebelum: sebelum, p_status: status, p_jalur: jalur,
       }),
