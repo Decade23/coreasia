@@ -232,6 +232,11 @@ describe('keadaan daftar', () => {
     expect(s).toMatch(/<CashflowIzinKurang v-if="rows\.length && !bolehSelidiki" :pesan="tcf\('aktivitas\.izinSelidiki'\)" \/>/)
     expect(s.match(/:disabled="sibuk !== null \|\| !bolehSelidiki"/g)).toHaveLength(2)
   })
+  it('lencana ditangguhkan ditulis sebagai satu teks, supaya spasi sebelum tanggalnya tidak hilang', () => {
+    const s = readFileSync(join(AKAR, 'components/cashflow/CashflowKepala360.vue'), 'utf8')
+    expect(s).toMatch(/data-uji="rinci-ditangguhkan">\{\{ labelDitangguhkan \}\}<\/span>/)
+    expect(s).toMatch(/`\$\{tcf\('pengguna\.ditangguhkan'\)\} \$\{tcf\('pengguna\.sampaiTanggal'\)\(formatTanggal\(sampai\)\)\}`/)
+  })
   it('setelan kabar per ruang: daftar, bukan tabel sebelas kolom', () => {
     const s = readFileSync(join(AKAR, 'components/cashflow/CashflowTabKabar.vue'), 'utf8')
     expect(s).not.toMatch(/<table\b/)

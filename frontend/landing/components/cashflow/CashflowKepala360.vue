@@ -21,6 +21,10 @@ const domiTerakhir = computed(() => {
   if (!props.izinPribadi || !props.bawaan) return null
   return props.bawaan.domiTerakhir ?? (props.bawaan.domiBelumPernah ? tcf('pengguna.domiBelum') : null)
 })
+const labelDitangguhkan = computed(() => {
+  const sampai = props.kepala?.ditangguhkanSampaiIso
+  return sampai ? `${tcf('pengguna.ditangguhkan')} ${tcf('pengguna.sampaiTanggal')(formatTanggal(sampai))}` : tcf('pengguna.ditangguhkan')
+})
 /* Email dipotong di depan @ supaya di layar sempit pecahnya di sana, bukan di tengah kata. */
 const emailPotong = computed(() => {
   const e = props.emailUtuh ?? props.kepala?.emailTersamar ?? ''
@@ -47,9 +51,8 @@ const hitungan = computed(() => props.kepala
         <div class="min-w-0 flex-1 basis-64">
           <h2 class="cf-kepala-nama" data-uji="rinci-nama">{{ emailPotong[0] }}<wbr>{{ emailPotong[1] }}</h2>
           <div class="mt-2 flex flex-wrap items-center gap-2">
-            <span v-if="kepala.ditangguhkan" class="cf-lencana cf-lencana-galat" data-uji="rinci-ditangguhkan">
-              {{ tcf('pengguna.ditangguhkan') }}<template v-if="kepala.ditangguhkanSampaiIso"> {{ tcf('pengguna.sampaiTanggal')(formatTanggal(kepala.ditangguhkanSampaiIso)) }}</template>
-            </span>
+            <!-- Satu teks utuh: lencananya flex, jadi spasi di antara dua potongan teks akan hilang. -->
+            <span v-if="kepala.ditangguhkan" class="cf-lencana cf-lencana-galat" data-uji="rinci-ditangguhkan">{{ labelDitangguhkan }}</span>
             <span v-else class="cf-lencana cf-lencana-baik">{{ tcf('pengguna.aktif') }}</span>
             <NuxtLink :to="aksesKe" class="text-xs font-semibold text-[var(--ca-subtle)] underline-offset-2 hover:text-[var(--ca-text)] hover:underline">{{ tcf('p360.dilihat')(kepala.akses30) }}</NuxtLink>
           </div>
