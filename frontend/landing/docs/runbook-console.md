@@ -524,6 +524,37 @@ terang dan gelap.
 Sesudah lolos, cabut v1 lewat jalur SQL (`admin_aktivitas_terbaru`,
 `admin_cari`).
 
+### Lencana Kasir di anggota, undangan, dan ruang pengguna
+
+Kasir adalah Anggota yang diberi tanda: boleh menjual dan menerima bayaran kasbon, tanpa melihat harga
+modal. Console menulis lencana **Kasir** (ikon toko, nada info) di samping peran, di tiga tempat:
+
+- `/ruang/<W>/anggota`, daftar anggota: di samping pil peran `member`.
+- `/ruang/<W>/anggota`, daftar undangan: undangan Kasir, apa pun statusnya (menunggu, diterima,
+  dicabut). Penerimanya langsung jadi Kasir begitu bergabung.
+- `/pengguna/<U>/ruang`, kartu ruang DALAM lingkup kasus: di samping peran pada baris "member · n anggota".
+  Ruang di luar lingkup tidak pernah membawa tanda ini, karena objeknya sengaja hanya berisi kunci kepala.
+  Masukkan ruang itu ke lingkup untuk melihatnya.
+
+Detailnya:
+
+- **Sumber.** Kunci `kasir` di `admin_ruang_360` (anggota dan undangan) dan `admin_pengguna_360` (ruang
+  dalam lingkup), dari migrasi CashFlow `20261117180000_console_anggota_kasir`. Kunci lain, audit
+  `baca_ruang`/`baca_akun`, dan izin tidak berubah.
+- **Aturan tampil.** Lencana hanya bila `kasir` benar DAN perannya `member` (`tandaKasir` di
+  `adapters/cashflowBuku.ts`), sama dengan `adalah_kasir` di server.
+- **Server lama.** Tanpa kunci `kasir`, halaman tampil sama piksel demi piksel dengan sebelum fitur ini.
+  Uji tampilan di bawah memastikan keadaan tanpa kunci dan keadaan semua false sama persis. Untuk
+  membandingkan dengan cabang lain, jalankan skripnya dengan `CF_QA_HANYA=lama` ke server dev cabang itu
+  lalu bandingkan potretnya. Urutan rilis bebas.
+
+```bash
+CASHFLOW_MIGRASI=<repo cashflow>/supabase/migrations npx vitest run tests/cashflow/kasir-tanda.test.ts tests/cashflow/kontrak-fase1.test.ts tests/cashflow/kontrak-fase2.test.ts
+# Tiga keadaan server (ada Kasir, semua false, kunci belum dikirim), terang dan gelap, 1440 dan 390,
+# plus bahasa Inggris (cara menjalankan ada di kepala skrip):
+node scripts/uji-console-kasir-headless.mjs
+```
+
 ## Fase 3 (0095): ranah buku
 
 **Urutan rilis: SQL 0095 dulu, landing sesudahnya.** Landing Fase 3 memanggil
