@@ -68,6 +68,11 @@ export const useCashflowMuat = (opsi: { awal?: boolean } = {}) => {
     if (g.jenis === 'argumen' && g.hint === 'aturan') return tcf('galat.aturanDitolak')
     if (g.jenis === 'argumen' && g.hint === 'penerima') return tcf('galat.penerimaDitolak')
     if (g.jenis === 'argumen' && g.hint === 'segmen') return tcf('galat.segmenDitolak')
+    // Form pengumuman dan pengumuman rutin (spek console 19 Nov 2026).
+    if (g.hint === 'gaya-belum-ada') return tcf('pengumuman.form.galat.gayaBelumAda')
+    if (g.hint === 'rutin-basi') return tcf('pengumuman.rutin.basi')
+    if (g.hint === 'rutin-kunci') return tcf('galat.kunciDipakai')
+    if (g.jenis === 'tidak-ada' && g.hint === 'rutin') return tcf('pengumuman.rutin.hilang')
     if (segmenGandaDariGalat(g)) return tcf('galat.namaSegmenGanda')
     // Paket kredit: pesan server berupa kode, hint = nama kolom (adapters/cashflowPaket).
     if (g.message === 'paket_tidak_sah') return tcf('paket.galat.tidakSah')

@@ -1090,6 +1090,49 @@ PLAYWRIGHT_CORE_PATH=<playwright-core/index.mjs> CF_QA_ARTIFACTS=<folder> \
   node scripts/uji-console-pengumuman-sasaran-headless.mjs
 ```
 
+## Form pengumuman, pengecualian, gaya kartu, dan pengumuman rutin
+
+Form Buat dan Sunting pengumuman memakai pola form Paket kredit: galat ditulis di bawah kolomnya
+(dengan `aria-invalid`), sisa huruf untuk judul, isi, dan tombol, galat dari server menempel di
+kolomnya sampai kolom itu diubah. Simpan memakai RPC terbaru yang ada di server (v5, lalu v4, lalu v3).
+
+- **Cari penerima.** Sesi ber-izin pii mencari dengan email, nama, nomor WhatsApp, atau ID, dan melihat
+  email serta nama utuh. Setiap pencarian terbuka dicatat di audit (`cari_penerima_terbuka`). Sesi
+  tanpa pii, atau Kontak lengkap yang dimatikan di daftar Pengguna, tetap tersamar.
+- **Kecualikan** ada di semua mode penerima. Semua pengguna, beberapa pengguna, atau kelompok yang
+  memakai pengecualian disimpan sebagai aturan, jadi hanya sampai ke aplikasi 1.3.7 ke atas. Saat
+  disunting, modenya kembali seperti semula.
+- **Tampil sebagai** Popup atau Kartu di Beranda. Kartu bisa dipilih sesudah kolom gaya dari pembaruan
+  aplikasi 1.4.4 terpasang di server. Aplikasi sebelum 1.4.4 menampilkannya sebagai popup.
+- **Tombol** boleh ke alamat web HTTPS atau ke layar aplikasi (`cashflow://ai` untuk Domi,
+  `cashflow://dukung` untuk Dukung CashFlow). Aplikasi sebelum 1.4.4 tidak menggambar tombol ke layar
+  aplikasi.
+
+Bagian **Pengumuman rutin** di bawah tabel mengelola templat per topik (Dukung CashFlow, Domi, Lain).
+Jadwal server berjalan setiap hari 05.00 WIB dan menerbitkan paling banyak satu kartu, bergiliran antar
+topik, hanya bila sakelar `pengumuman_rutin` di Sakelar menyala, jeda sejak pengumuman rutin terakhir
+sudah lewat (bawaan 3 hari), dan tidak ada pengumuman lain yang tayang di jam tayangnya. Setiap terbit,
+akun internal dan akun yang umurnya kurang dari 3 hari tidak menerima, dan hanya aplikasi 1.4.4 ke atas
+yang menerima. Templat baru tersimpan sebagai draf. Menulis templat butuh login ber-TOTP dan beraudit.
+Sakelar bawaannya mati. Isi templat ditunjukkan ke Master sebelum sakelar dinyalakan.
+
+RPC: `admin_pengumuman_pengguna_v2`, `admin_simpan_pengumuman_v5`, `admin_daftar_pengumuman_rutin`,
+`admin_simpan_pengumuman_rutin`, `admin_hapus_pengumuman_rutin`. Server yang belum memasangnya
+(PGRST202) membuat halaman menyembunyikan bagian rutin, pilihan gaya, dan pengecualian di mode lama,
+lalu cari penerima kembali ke v1.
+
+Urutan rilis: SQL CashFlow T3 (20261119120000 sampai 20261119123000), SQL T4 (kolom gaya dan tautan
+dalam aplikasi), lalu landing. Isi templat draf (`toko/pengumuman-rutin-isi.sql`) dan sakelar menyusul
+atas izin Master.
+
+```bash
+CASHFLOW_MIGRASI=<repo cashflow>/supabase/migrations CASHFLOW_TOKO=<repo cashflow>/toko \
+  npx vitest run tests/cashflow/pengumuman-rutin.test.ts tests/cashflow/pengumuman-aturan.test.ts tests/cashflow/pengumuman.test.ts
+# Tampilan (data sintetis, Chrome headless, server dev tanpa .env di port 4419):
+PLAYWRIGHT_CORE_PATH=<playwright-core/index.mjs> CF_QA_ARTIFACTS=<folder> \
+  node scripts/uji-console-pengumuman-rutin-headless.mjs
+```
+
 ## Batas yang diketahui
 
 - **Console dan halaman publik satu origin (risiko sisa yang disadari, K6).**

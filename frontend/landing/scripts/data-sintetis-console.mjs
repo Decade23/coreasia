@@ -889,6 +889,9 @@ const PENGUMUMAN = [
   ['Uji fitur kelompok', 'info', { audience_type: 'groups', group_ids: [uuid(801)], group_names: ['Penguji internal dan mitra toko percontohan'], recipient_count: 3, audience_rules: null }],
   ['Gangguan pembayaran QRIS sudah pulih', 'critical', { audience_type: 'all', audience_rules: null, recipient_count: 128_412, ends_at: jam(20) }],
   ['Untuk tiga akun yang melapor', 'info', { audience_type: 'users', user_ids: [idAkun(0), idAkun(4), idAkun(6)], recipient_count: 3, audience_rules: null }],
+  // Pengumuman rutin bergaya kartu (20261119123000) dan "beberapa pengguna kecuali" (saring pengguna).
+  ['Malas mengetik satu per satu?', 'info', { audience_type: 'aturan', audience_rules: aturan({ saring: { domi_pakai: false, daftar_lebih_dari_hari: 3, versi_min: 26111900, versi_tak_diketahui: 'tidak' } }), recipient_count: 41_077, gaya: 'kartu', rutin_id: uuid(1301), created_by: null, starts_at: jam(14), ends_at: jam(3) }],
+  ['Uji kartu untuk mitra toko', 'info', { audience_type: 'aturan', audience_rules: aturan({ saring: { pengguna: [idAkun(0), idAkun(2), idAkun(5)] }, kecuali_pengguna: [idAkun(5)] }), recipient_count: 1, gaya: 'kartu' }],
 ].map(([title, level, ubah], n) => ({
   id: uuid(1200 + n), title, body: 'Perbarui aplikasi untuk memakai fitur terbaru. Catatan lama tetap aman, dan kamu tidak perlu masuk ulang sesudah memperbarui. Kalau ada kendala, balas pesan ini lewat menu Bantuan.',
   level, starts_at: jam(24 * n - 2), ends_at: null, created_by: null, created_at: jam(24 * n + 1), updated_at: jam(24 * n), action_label: null, action_url: null,
@@ -898,6 +901,35 @@ const SEGMEN = [
   { id: S1, nama: 'Pengguna aktif 30 hari yang punya ruang usaha', saring: { aktif_dalam_hari: 30, ruang: 'usaha' }, jumlah: 64_012, dipakai: 1, diubah: jam(48) },
   { id: uuid(902), nama: 'Belum pernah pakai Domi', saring: { domi_pakai: false }, jumlah: 41_077, dipakai: 0, diubah: jam(72) },
 ]
+// Pengumuman rutin (20261119123000): tiga templat draf dan satu aktif, sakelar mati.
+const TEMPLAT_RUTIN = [
+  [uuid(1301), 'domi', 'Malas mengetik satu per satu?', 'Ketik saja ke Domi, misalnya bensin 20rb, makan siang 35rb, parkir 5rb. Domi memecahnya jadi tiga catatan, lalu kamu simpan semuanya dengan satu tombol. Domi ada di tombol bulat di atas tombol tambah.', null, null, { domi_pakai: false }, true, 2],
+  [uuid(1302), 'dukung', 'Suka mencatat pakai CashFlow?', 'Kalau CashFlow membantu kamu tahu ke mana uangmu pergi, kamu bisa ikut menjaganya tetap jalan. Dukungannya sukarela, mulai dari Rp25.000. Bayarnya lewat QRIS dari aplikasi bank atau dompet digital yang biasa kamu pakai.', 'Dukung CashFlow', 'https://contoh.invalid/dukung', {}, false, 0],
+  [uuid(1303), 'dukung', 'Terima kasih sudah pakai CashFlow', 'Catatan kecil setiap hari itu yang bikin laporanmu masuk akal. Kalau kamu merasa terbantu, kirim dukungan sukarela lewat QRIS dari halaman Dukung CashFlow.', 'Dukung CashFlow', 'https://contoh.invalid/dukung', { aktif_dalam_hari: 14 }, false, 0],
+  [uuid(1304), 'lain', 'Mencatat bareng keluarga', 'Uang rumah sering dipegang lebih dari satu orang. Di Pengaturan, buka Anggota lalu undang pasangan atau keluargamu lewat email.', null, null, {}, false, 0],
+].map(([id, topik, judul, isi, tombol, url, saring, aktif, terbit], i) => ({
+  id, topik, judul, isi, tombol, url, aturan: aturan({ saring }), jeda_hari: 3, jam_mulai: 9, jam_akhir: 20, bobot: i === 0 ? 2 : 1, aktif,
+  dibuat: jam(72 - i), versi: jam(30 - i), terbit, terakhir_terbit: terbit ? jam(14) : null,
+}))
+const daftarRutin = (p, mode) => ({
+  sakelar: false, versi_min: 26111900, umur_min_hari: 3, gaya_ada: !mode.tanpaGaya,
+  templat: mode.kosong ? [] : TEMPLAT_RUTIN,
+  terakhir: mode.kosong ? null : { id: uuid(1206), rutin_id: uuid(1301), topik: 'domi', judul: TEMPLAT_RUTIN[0].judul, mulai: jam(14), sampai: jam(3) },
+  rencana: mode.kosong
+    ? { templat_id: null, topik: null, mulai: null, sampai: null, sebab: 'tanpa_templat', paling_cepat: null }
+    : { templat_id: uuid(1301), topik: 'domi', mulai: jam(-28), sampai: jam(-39), sebab: 'jeda', paling_cepat: tanggal(-2) },
+})
+/** Cari penerima v2: utuh hanya bila dibuka (alasan) dan sesi ber-pii. */
+const penggunaV2 = (p, mode) => {
+  const buka = !!p.p_alasan && mode.izin
+  const q = String(p.p_cari ?? '').trim().toLowerCase()
+  const baris = AKUN.map((a, i) => ({ id: idAkun(i), a }))
+    .filter(({ id, a }) => (!p.p_ids || p.p_ids.includes(id)) && (!q || id === q || a.email === q
+      || (buka && (a.email.includes(q) || a.nama.toLowerCase().includes(q)))))
+    .map(({ id, a }, i) => ({ id, email: buka ? a.email : samar(a.email), nama: buka ? (a.nama || null) : null, versi: a.ios ? null : i % 3 ? '1.4.3' : '1.4.4',
+      internal: !!a.tim, jenis_internal: a.tim ? 'uji' : null }))
+  return { total: mode.kosong ? 0 : baris.length, terbuka: buka, baris: mode.kosong ? [] : baris }
+}
 const AKUN_INTERNAL = [
   { user_id: uuid(501), email: 'pemilik@contoh.invalid', jenis: 'pemilik', catatan: 'Akun pemilik', diubah: jam(5) },
   { user_id: uuid(502), email: 'uji.anggota.ruang.usaha@contoh.invalid', jenis: 'uji', catatan: 'Uji anggota ruang usaha, dipakai skrip uji penerimaan tiap rilis', diubah: jam(5) },
@@ -925,6 +957,7 @@ const BUTUH_PII = new Set([
   'admin_dompet_ruang', 'admin_laporan_saldo', 'admin_mutasi_dompet', 'admin_periksa_ruang', 'admin_sampah_ruang', 'admin_katalog_ruang', 'admin_jadwal_ruang', 'admin_jadwal_rinci',
   'admin_usaha_ruang', 'admin_stok_ruang', 'admin_struk_ruang', 'admin_patungan_ruang', 'admin_patungan_riwayat', 'admin_perangkat_pengguna', 'admin_kabar_pengguna',
   'admin_ai_percakapan_daftar', 'admin_ai_pesan_daftar', 'admin_ai_pembelian_daftar', 'admin_config_buka',
+  'admin_hapus_pengumuman_rutin', 'admin_simpan_pengumuman_rutin',
 ])
 
 const RPC = {
@@ -972,6 +1005,11 @@ const RPC = {
   admin_daftar_kelompok_pengumuman: (p, m) => (m.kosong ? { total: 0, baris: [] } : { total: 1, baris: [{ id: uuid(801), name: 'Penguji internal dan mitra toko percontohan', updated_at: jam(10), members: 3 }] }),
   admin_detail_kelompok_pengumuman: () => ({ id: uuid(801), name: 'Penguji internal dan mitra toko percontohan', updated_at: jam(10), members: 3, user_ids: [idAkun(0), idAkun(1), idAkun(2)] }),
   admin_pengumuman_pengguna: (p, m) => (m.kosong ? { total: 0, baris: [] } : { total: AKUN.length, baris: AKUN.map((a, i) => ({ id: idAkun(i), email: a.email })) }),
+  admin_pengumuman_pengguna_v2: penggunaV2,
+  admin_daftar_pengumuman_rutin: daftarRutin,
+  admin_simpan_pengumuman_rutin: p => p.p_id,
+  admin_hapus_pengumuman_rutin: () => null,
+  admin_simpan_pengumuman_v5: p => p.p_id,
   admin_jumlah_penerima_pengumuman: (p, m) => (m.kosong ? 0 : 128_412),
   admin_pratinjau_penerima_pengumuman: (p, m) => ({ jumlah: m.kosong ? 0 : 118_204, tak_terjangkau_versi_lama: m.kosong ? 0 : 3_704, versi_tak_diketahui: m.kosong ? 0 : 1_336, dikecualikan_internal: 4, dikecualikan_lain: 0, contoh: m.kosong ? [] : AKUN.slice(0, 5).map((a, i) => ({ email_tersamar: samar(a.email), versi: i === 2 ? null : 26110702 })) }),
   admin_daftar_kasus: (p, m) => (m.kosong ? [] : KASUS_DAFTAR.map(k => (m.izin ? k : { ...k, ruang: null, jumlah_terdampak: null }))),

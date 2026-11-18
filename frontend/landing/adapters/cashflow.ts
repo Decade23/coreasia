@@ -148,6 +148,9 @@ export interface PengumumanDTO {
   /* admin_daftar_pengumuman_v4 (sasaran berbasis aturan): kolom audience_rules
      (null kecuali audience_type 'aturan') dan nama segmen yang dirujuk. */
   audience_rules?: unknown; segmen_nama?: string | null
+  /* Kolom gaya (T4, 'modal' | 'kartu') dan rutin_id (20261119123000): ikut
+     to_jsonb(a) di daftar v4 begitu kolomnya ada. Tidak ada di server lama. */
+  gaya?: string | null; rutin_id?: string | null
 }
 /* admin_kesehatan (M/0017:379-411). `tabel` adalah OBJEK jsonb_object_agg
    (nama tabel → {baris, ukuran}), bukan larik, dan kedua ukuran dalam BYTE
@@ -250,6 +253,10 @@ export interface Pengumuman {
   diubah: string
   tombol: string | null
   url: string | null
+  /** 'modal' (popup) atau 'kartu' (Beranda, 1.4.4). null = server belum mengenal gaya. */
+  gaya: 'modal' | 'kartu' | null
+  /** Templat asal bila diterbitkan jadwal pengumuman rutin. */
+  rutinId: string | null
 }
 
 export interface Keberhasilan { jumlah: number; pembanding: number; pengecualian: number }
@@ -627,6 +634,8 @@ export function kePengumuman(d: PengumumanDTO): Pengumuman {
     id: d.id, judul: d.title ?? '', isi: d.body ?? '', level: d.level,
     mulai: d.starts_at, sampai: d.ends_at ?? null, dibuat: d.created_at,
     diubah: d.updated_at ?? d.created_at, tombol: tombol?.label ?? null, url: tombol?.url ?? null,
+    gaya: d.gaya === 'modal' || d.gaya === 'kartu' ? d.gaya : null,
+    rutinId: typeof d.rutin_id === 'string' && d.rutin_id ? d.rutin_id : null,
   }
 }
 

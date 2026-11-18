@@ -1,7 +1,27 @@
 <script setup lang="ts">
-import { keDatetimeLokalWib, dariDatetimeLokalWib, kePengumuman, pengumumanBelumBerakhir, LEVEL_PENGUMUMAN, type Pengumuman, type LevelPengumuman, type PengumumanDTO } from '~/adapters/cashflow'
-import { statusPengumuman, penerimaSah, PILIHAN_PENERIMA, type JenisPenerima, type SimpanPengumuman } from '~/adapters/cashflowPengumuman'
-import { aturanKeDto, kalimatAturan, type Aturan, type AturanDTO, type KamusRingkas } from '~/adapters/cashflowPengumumanAturan'
+/**
+ * Pengumuman CashFlow: daftar, buat, sunting, hentikan, segmen, dan
+ * pengumuman rutin.
+ *
+ * Form (spek console 19 Nov 2026, K8): CashflowPengumumanForm dengan pola
+ * CashflowPaketForm. Galat server per kolom datang dari hint RPC
+ * (galatServerPengumuman). Simpan memakai RPC terbaru yang ada di server:
+ * v5 (gaya, T3) lalu v4 (aturan) lalu v3. Server lama tidak menawarkan apa
+ * yang belum ia kenal, tanpa galat:
+ *   sasaranAktif  RPC v4 ada: pilihan aturan, segmen, pratinjau penerima
+ *   fiturT3       admin_daftar_pengumuman_rutin ada (keempat migrasi T3):
+ *                 pengecualian di semua mode, pilihan gaya, bagian rutin
+ *   gayaAda       kolom announcements.gaya (T4) ada: kartu bisa dipilih
+ */
+import { kePengumuman, pengumumanBelumBerakhir, type Pengumuman, type PengumumanDTO } from '~/adapters/cashflow'
+import { statusPengumuman, PILIHAN_PENERIMA, type SimpanPengumuman } from '~/adapters/cashflowPengumuman'
+import { kalimatAturan, type KamusRingkas } from '~/adapters/cashflowPengumumanAturan'
+import {
+  KECUALI_KOSONG, galatServerPengumuman, isianBaru, isianDari, penerimaDari,
+  type GalatPengumuman, type IsianPengumuman, type MuatanPengumuman, type PenerimaIsian, type PenerimaKirim,
+} from '~/adapters/cashflowPengumumanForm'
+import { keDaftarRutin, type DaftarRutin } from '~/adapters/cashflowPengumumanRutin'
+import type { Aturan } from '~/adapters/cashflowPengumumanAturan'
 import { petakanGalat } from '~/composables/cashflow/useCashflowAdmin'
 import { tombolPengumuman } from '~/adapters/cashflowPengumumanTautan'
 import { ikutiPengumuman } from '~/utils/cashflow/pengumumanLangsung'
@@ -9,18 +29,10 @@ definePageMeta({ layout: 'console', middleware: ['console', 'cashflow-admin'] })
 
 const { tcf, kamus, bahasa, formatTanggal, formatJam } = useCashflowI18n()
 const api = useCashflowAdmin()
-const toast = useToast()
 const { memuat, pesanGalat, muat, aksi, batal } = useCashflowMuat({ awal: true })
 const rows = shallowRef<Pengumuman[]>([])
 const jam = ref(Date.now())
-const bukaForm = ref(false)
-const menyunting = ref(false)
-const menyimpan = ref(false)
-const penerimaSibuk = ref(false)
 const hubungan = ref<'menyambung' | 'tersambung' | 'terputus'>('menyambung')
-const f = reactive({ penerima: 'all' as JenisPenerima, pengguna: [] as string[], kelompok: [] as string[], id: '', versi: null as string | null, judul: '', isi: '', level: 'info' as LevelPengumuman,
-  mulai: '', sampai: '', tombol: '', url: '', alasan: '', awalMulai: '', awalSampai: null as string | null,
-  aturan: null as AturanDTO | null, aturanAwal: null as Aturan | null })
 /* Sasaran berbasis aturan (spek 13 Nov 2026). null = belum diketahui, false =
    server lama (RPC v4 belum ada): halaman memakai v3 dan pilihan aturan,
    segmen, serta pratinjau penerima disembunyikan, tanpa galat. */
@@ -42,68 +54,81 @@ const muatDaftar = () => muat(async terbaru => {
   const hasil = (await ambilDaftar()).map(kePengumuman)
   if (terbaru()) { rows.value = hasil; jam.value = Date.now() }
 })
+
+/* Pengumuman rutin dan fitur T3 (spek console 19 Nov 2026). Server tanpa
+   RPC-nya = fiturT3 false, bagian rutin dan pilihan baru disembunyikan. */
+const fiturT3 = ref(false)
+const rutin = shallowRef<DaftarRutin | null>(null)
+const rutinMuat = useCashflowMuat()
+const muatRutin = () => rutinMuat.muat(async terbaru => {
+  try {
+    const d = keDaftarRutin(await api.daftarPengumumanRutin())
+    if (!terbaru()) return
+    rutin.value = d; fiturT3.value = true
+  } catch (e) {
+    if (petakanGalat(e, 'admin_daftar_pengumuman_rutin').jenis !== 'belum-aktif') throw e
+    if (terbaru()) { rutin.value = null; fiturT3.value = false }
+  }
+})
+const gayaAda = computed(() => rutin.value?.gayaAda === true)
+
+// ── Form buat dan sunting ───────────────────────────────────────────────
+const PENERIMA_BARU = (): PenerimaIsian & { aturanAwal: Aturan | null } => ({
+  jenis: 'all', pengguna: [], kelompok: [], aturan: null, kecuali: { ...KECUALI_KOSONG, pengguna: [], kelompok: [] }, aturanAwal: null,
+})
+const form = reactive({
+  buka: false, kunci: 0, id: '', versi: null as string | null,
+  isian: isianBaru() as IsianPengumuman, penerima: PENERIMA_BARU(),
+})
+const menyunting = ref(false)
+const menyimpan = ref(false)
+const galatServer = ref<GalatPengumuman>({})
 const bukaBaru = () => {
   menyunting.value = false
-  Object.assign(f, { penerima: 'all', pengguna: [], kelompok: [], id: crypto.randomUUID(), versi: null, judul: '', isi: '', level: 'info',
-    mulai: keDatetimeLokalWib(new Date()), sampai: '', tombol: '', url: '', alasan: '', awalMulai: '', awalSampai: null, aturan: null, aturanAwal: null })
-  bukaForm.value = true
+  Object.assign(form, { buka: true, kunci: form.kunci + 1, id: crypto.randomUUID(), versi: null, isian: isianBaru(new Date()), penerima: PENERIMA_BARU() })
+  galatServer.value = {}
 }
 const sunting = (p: Pengumuman) => {
   menyunting.value = true
-  Object.assign(f, { penerima: p.penerima, pengguna: [...p.pengguna], kelompok: [...p.kelompok], id: p.id, versi: p.diubah, judul: p.judul, isi: p.isi,
-    aturan: p.penerima === 'aturan' && p.aturan ? aturanKeDto(p.aturan) : null, aturanAwal: p.penerima === 'aturan' ? p.aturan : null,
-    level: LEVEL_PENGUMUMAN.includes(p.level as LevelPengumuman) ? p.level : 'info',
-    mulai: keDatetimeLokalWib(new Date(p.mulai)), sampai: p.sampai ? keDatetimeLokalWib(new Date(p.sampai)) : '',
-    tombol: p.tombol ?? '', url: p.url ?? '', alasan: '', awalMulai: p.mulai, awalSampai: p.sampai })
-  bukaForm.value = true
+  Object.assign(form, { buka: true, kunci: form.kunci + 1, id: p.id, versi: p.diubah, isian: isianDari(p), penerima: penerimaDari(p) })
+  galatServer.value = {}
 }
-const versiTerbaru = computed(() => rows.value.find(p => p.id === f.id))
-const basi = computed(() => bukaForm.value && menyunting.value && !menyimpan.value && !!versiTerbaru.value && versiTerbaru.value.diubah !== f.versi)
-const tutupForm = () => { if (!menyimpan.value) bukaForm.value = false }
-const simpan = async () => {
-  if (menyimpan.value || basi.value || penerimaSibuk.value) return
-  if (!penerimaSah(f.penerima, f.pengguna, f.kelompok, f.aturan)) { toast.error(tcf('pengumuman.pilihPenerima')); return }
-  if (!f.judul.trim() || !f.isi.trim()) { toast.error(tcf('pengumuman.wajibIsi')); return }
-  if (f.alasan.trim().length < 8) { toast.error(tcf('alasan.pendek')); return }
-  const mulai = f.awalMulai && keDatetimeLokalWib(new Date(f.awalMulai)) === f.mulai ? f.awalMulai : dariDatetimeLokalWib(f.mulai)
-  const sampai = f.awalSampai && keDatetimeLokalWib(new Date(f.awalSampai)) === f.sampai ? f.awalSampai : f.sampai ? dariDatetimeLokalWib(f.sampai) : null
-  if (!mulai || (f.sampai && !sampai)) { toast.error(tcf('pengumuman.tanggalRusak')); return }
-  if (sampai && Date.parse(sampai) <= Date.parse(mulai)) { toast.error(tcf('pengumuman.sampaiSebelumMulai')); return }
-  const tombol = tombolPengumuman(f.tombol, f.url)
-  if ((f.tombol.trim() || f.url.trim()) && !tombol) { toast.error(tcf('pengumuman.tautanTidakSah')); return }
-  const p: SimpanPengumuman = { penerima: f.penerima, pengguna: f.pengguna, kelompok: f.kelompok, id: f.id, versi: f.versi, judul: f.judul.trim(), isi: f.isi.trim(),
-    level: f.level, mulai, sampai, tombol: tombol?.label ?? null, url: tombol?.url ?? null, alasan: f.alasan.trim(), aturan: f.penerima === 'aturan' ? f.aturan : null }
+const versiTerbaru = computed(() => rows.value.find(p => p.id === form.id))
+const basi = computed(() => form.buka && menyunting.value && !menyimpan.value && !!versiTerbaru.value && versiTerbaru.value.diubah !== form.versi)
+const tutupForm = () => { if (!menyimpan.value) form.buka = false }
+const muatVersi = () => { if (versiTerbaru.value) sunting(versiTerbaru.value) }
+const simpan = async (m: MuatanPengumuman, pk: PenerimaKirim) => {
+  if (menyimpan.value || basi.value) return
+  galatServer.value = {}
+  const p: SimpanPengumuman = {
+    penerima: pk.penerima, pengguna: pk.pengguna, kelompok: pk.kelompok, aturan: pk.aturan, id: form.id, versi: form.versi,
+    judul: m.judul, isi: m.isi, level: m.level, mulai: m.mulai, sampai: m.sampai, tombol: m.tombol, url: m.url, alasan: m.alasan, gaya: m.gaya,
+  }
   menyimpan.value = true
   try {
     const ok = await aksi(async () => {
-      // Server baru: v4 untuk semua jenis (pindah dari atau ke `aturan` butuh v4).
-      if (sasaranAktif.value) await api.simpanPengumumanV4(menyunting.value ? p : { ...p, versi: null })
+      // Server baru: RPC terbaru untuk semua jenis (pindah dari atau ke `aturan` butuh v4).
+      if (fiturT3.value) await api.simpanPengumumanV5(menyunting.value ? p : { ...p, versi: null })
+      else if (sasaranAktif.value) await api.simpanPengumumanV4(menyunting.value ? p : { ...p, versi: null })
       else if (menyunting.value) await api.ubahPengumuman(p)
       else await api.buatPengumumanV2(p)
-    }, { sukses: tcf(menyunting.value ? 'pengumuman.disimpan' : 'pengumuman.dibuat'), gagal: () => { void muatDaftar() } })
-    if (ok) { bukaForm.value = false; await muatDaftar() }
+    }, {
+      sukses: tcf(menyunting.value ? 'pengumuman.disimpan' : 'pengumuman.dibuat'),
+      gagal: (g) => {
+        const k = galatServerPengumuman(g)
+        if (k) galatServer.value = { [k.kolom]: k.kode }
+        void muatDaftar()
+      },
+    })
+    if (ok) { form.buka = false; await Promise.all([muatDaftar(), muatRutin()]) }
   } finally { menyimpan.value = false }
 }
 
-const gantiPenerima = (jenis: JenisPenerima) => {
-  f.penerima = jenis
-  if (jenis === 'single') f.pengguna = f.pengguna.slice(0, 1)
-  if (jenis === 'all' || jenis === 'groups' || jenis === 'aturan') f.pengguna = []
-  if (jenis !== 'groups') f.kelompok = []
-  if (jenis !== 'aturan') f.aturan = null
-}
 const ringkas = computed(() => kamus.value.pengumuman.ringkas as unknown as KamusRingkas)
 const labelPenerima = (p: Pengumuman) => (p.penerima === 'aturan'
   ? kalimatAturan(p.aturan, ringkas.value, { bahasa: bahasa.value, segmenNama: p.namaSegmen })
   : PILIHAN_PENERIMA.some(x => x.id === p.penerima) ? tcf(`pengumuman.penerimaOpsi.${p.penerima}`) : '—')
 const bukaSegmen = ref(false)
-
-/* Pratinjau penerima: hanya di server baru, hanya selagi formulir terbuka. */
-const sumberPratinjau = () => {
-  if (!penerimaSah(f.penerima, f.pengguna, f.kelompok, f.aturan)) return null
-  return { jenis: f.penerima, pengguna: [...f.pengguna], kelompok: [...f.kelompok], aturan: f.penerima === 'aturan' ? f.aturan : null }
-}
-const pratinjau = useCashflowPratinjauPenerima(sumberPratinjau, () => bukaForm.value && sasaranAktif.value === true)
 
 const dihentikan = ref<Pengumuman | null>(null)
 const alasanHenti = ref('')
@@ -111,8 +136,7 @@ const menghentikan = ref(false)
 const mintaHentikan = (p: Pengumuman) => { dihentikan.value = p; alasanHenti.value = '' }
 const hentikan = async () => {
   const p = dihentikan.value
-  if (!p || menghentikan.value) return
-  if (alasanHenti.value.trim().length < 8) { toast.error(tcf('alasan.pendek')); return }
+  if (!p || menghentikan.value || alasanHenti.value.trim().length < 8) return
   menghentikan.value = true
   try {
     if (await aksi(() => api.hentikanPengumuman(p.id, alasanHenti.value.trim()), { sukses: tcf('pengumuman.dihentikan') })) {
@@ -121,7 +145,8 @@ const hentikan = async () => {
   } finally { menghentikan.value = false }
 }
 const waktu = (iso: string | null) => iso ? `${formatTanggal(iso)} ${formatJam(iso)}` : '—'
-const domain = (url: string | null) => url ? new URL(url).hostname : ''
+/** Domain web, atau nama layar untuk tautan dalam aplikasi (cashflow://). */
+const domain = (row: Pengumuman) => tombolPengumuman(row.tombol, row.url)?.host ?? ''
 const labelLevel = (level: string) => (tcf('pengumuman.levelOpsi') as unknown as Record<string, string>)[level] ?? level
 const aktif = computed(() => rows.value.filter(p => statusPengumuman(p, jam.value) === 'aktif').length)
 const kolom = computed(() => [
@@ -140,6 +165,7 @@ let lepas: (() => void) | null = null
 let ubahVisibilitas: (() => void) | null = null
 onMounted(() => {
   void muatDaftar()
+  void muatRutin()
   void (async () => {
     const klien = await useCashflowSupabase().ambil()
     if (!klien || !halamanHidup) return
@@ -156,7 +182,7 @@ onMounted(() => {
   })()
 })
 onBeforeUnmount(() => {
-  halamanHidup = false; batal(); lepas?.()
+  halamanHidup = false; batal(); rutinMuat.batal(); lepas?.()
   if (ubahVisibilitas) document.removeEventListener('visibilitychange', ubahVisibilitas)
 })
 </script>
@@ -183,7 +209,8 @@ onBeforeUnmount(() => {
             <span class="ca-pill-muted shrink-0 whitespace-nowrap text-xs">{{ tcf(`pengumuman.status.${statusPengumuman(row, jam)}`) }}</span>
           </div>
           <p class="mt-1 whitespace-pre-wrap break-words text-sm text-[var(--ca-muted)]">{{ row.isi }}</p>
-          <p v-if="row.tombol" class="mt-1 break-all text-xs text-[var(--ca-subtle)]">{{ row.tombol }} · {{ domain(row.url) }}</p>
+          <p v-if="row.tombol" class="mt-1 break-all text-xs text-[var(--ca-subtle)]">{{ row.tombol }} · {{ domain(row) }}</p>
+          <p v-if="row.rutinId || row.gaya" class="mt-2 flex flex-wrap gap-1.5 text-[11px]"><span v-if="row.rutinId" class="ca-pill-muted">{{ tcf('pengumuman.rutin.labelBaris') }}</span><span v-if="row.gaya" class="ca-pill-muted">{{ tcf(`pengumuman.form.gayaOpsi.${row.gaya}`) }}</span></p>
           <dl class="mt-3 grid grid-cols-2 gap-x-3 gap-y-3 border-t border-[color:var(--ca-border)] pt-3 text-sm">
             <div class="col-span-2 min-w-0">
               <dt class="text-xs font-semibold text-[var(--ca-subtle)]">{{ tcf('pengumuman.penerimaLabel') }}</dt>
@@ -214,7 +241,7 @@ onBeforeUnmount(() => {
     </div>
     <div class="ca-console-dialog hidden overflow-hidden sm:block [&_tbody_tr]:!cursor-default">
       <DataTable :columns="kolom" :data="rows" :loading="memuat" :show-count="false" :empty-text="tcf('pengumuman.kosong')" empty-icon="lucide:megaphone">
-        <template #cell-judul="{ row }"><div class="max-w-md"><strong>{{ row.judul }}</strong><p class="mt-1 whitespace-pre-wrap text-xs text-[var(--ca-muted)]">{{ row.isi }}</p><span v-if="row.tombol" class="mt-1 block text-xs text-[var(--ca-subtle)]">{{ row.tombol }} · {{ domain(row.url) }}</span></div></template>
+        <template #cell-judul="{ row }"><div class="max-w-md"><strong>{{ row.judul }}</strong><p class="mt-1 whitespace-pre-wrap text-xs text-[var(--ca-muted)]">{{ row.isi }}</p><span v-if="row.tombol" class="mt-1 block text-xs text-[var(--ca-subtle)]">{{ row.tombol }} · {{ domain(row) }}</span><span v-if="row.rutinId || row.gaya" class="mt-2 flex flex-wrap gap-1.5 text-[11px]"><span v-if="row.rutinId" class="ca-pill-muted" data-uji="label-rutin">{{ tcf('pengumuman.rutin.labelBaris') }}</span><span v-if="row.gaya" class="ca-pill-muted">{{ tcf(`pengumuman.form.gayaOpsi.${row.gaya}`) }}</span></span></div></template>
         <template #cell-penerima="{ row }"><span class="block min-w-44 max-w-64 text-xs" :data-uji="row.penerima === 'aturan' ? 'ringkas-aturan' : undefined">{{ labelPenerima(row) }}</span><span class="block text-xs text-[var(--ca-muted)]">{{ row.jumlahPenerima === null ? '—' : tcf('pengumuman.jumlahPengguna')(row.jumlahPenerima) }}</span><span v-if="row.namaKelompok.length" class="block max-w-48 text-xs text-[var(--ca-muted)]">{{ row.namaKelompok.join(', ') }}</span></template>
         <template #cell-level="{ row }">{{ labelLevel(row.level) }}</template>
         <template #cell-status="{ row }"><span class="ca-pill-muted whitespace-nowrap text-xs">{{ tcf(`pengumuman.status.${statusPengumuman(row, jam)}`) }}</span></template>
@@ -224,34 +251,14 @@ onBeforeUnmount(() => {
       </DataTable>
     </div>
 
-    <ConsoleModal :show="bukaForm" :title="tcf(menyunting ? 'pengumuman.suntingJudul' : 'pengumuman.buat')" size="xl" @close="tutupForm">
-      <form @submit.prevent="simpan">
-        <fieldset :disabled="menyimpan" class="grid min-w-0 gap-6 md:grid-cols-[1.2fr_1fr]">
-          <div class="min-w-0 space-y-4">
-            <CashflowPengumumanPenerima v-if="bukaForm" :key="`${f.id}|${f.versi ?? ''}`" :jenis="f.penerima" v-model:pengguna="f.pengguna" v-model:kelompok="f.kelompok" :disabled="menyimpan" :aturan-aktif="sasaranAktif === true" :aturan-awal="f.aturanAwal" @update:jenis="gantiPenerima" @update:aturan="f.aturan = $event" @sibuk="penerimaSibuk = $event" />
-            <label for="cf-p-judul" class="block text-xs font-semibold text-[var(--ca-muted)]">{{ tcf('pengumuman.judulKolom') }}<input id="cf-p-judul" v-model="f.judul" class="ca-input mt-2 w-full" maxlength="80" required></label>
-            <label for="cf-p-isi" class="block text-xs font-semibold text-[var(--ca-muted)]">{{ tcf('pengumuman.isi') }}<textarea id="cf-p-isi" v-model="f.isi" rows="4" class="ca-input mt-2 w-full" maxlength="500" required /></label>
-            <div class="grid gap-3 sm:grid-cols-2">
-              <label for="cf-p-level" class="block text-xs font-semibold text-[var(--ca-muted)]">{{ tcf('pengumuman.level') }}<select id="cf-p-level" v-model="f.level" class="ca-input mt-2 w-full"><option v-for="l in LEVEL_PENGUMUMAN" :key="l" :value="l">{{ labelLevel(l) }}</option></select></label>
-              <label for="cf-p-mulai" class="block text-xs font-semibold text-[var(--ca-muted)]">{{ tcf('pengumuman.mulaiWib') }}<input id="cf-p-mulai" v-model="f.mulai" type="datetime-local" class="ca-input mt-2 w-full" required></label>
-            </div>
-            <label for="cf-p-sampai" class="block text-xs font-semibold text-[var(--ca-muted)]">{{ tcf('pengumuman.sampaiWib') }}<input id="cf-p-sampai" v-model="f.sampai" type="datetime-local" class="ca-input mt-2 w-full"></label>
-            <fieldset class="space-y-3 rounded-xl border border-[color:var(--ca-border)] p-3">
-              <legend class="px-1 text-xs font-semibold text-[var(--ca-muted)]">{{ tcf('pengumuman.tombolOpsional') }}</legend>
-              <label for="cf-p-tombol" class="block text-xs font-semibold text-[var(--ca-muted)]">{{ tcf('pengumuman.tombolLabel') }}<input id="cf-p-tombol" v-model="f.tombol" class="ca-input mt-2 w-full" maxlength="40"></label>
-              <label for="cf-p-url" class="block text-xs font-semibold text-[var(--ca-muted)]">{{ tcf('pengumuman.urlLabel') }}<input id="cf-p-url" v-model="f.url" type="url" class="ca-input mt-2 w-full" maxlength="2048" placeholder="https://"></label>
-            </fieldset>
-            <label for="cf-p-alasan" class="block text-xs font-semibold text-[var(--ca-muted)]">{{ tcf('pengumuman.alasan') }}<input id="cf-p-alasan" v-model="f.alasan" class="ca-input mt-2 w-full" minlength="8" required></label>
-          </div>
-          <div class="min-w-0 space-y-4">
-            <div><h4 class="mb-3 text-xs font-semibold text-[var(--ca-muted)]">{{ tcf('pengumuman.pratinjau') }}</h4><CashflowPengumumanPratinjau :judul="f.judul" :isi="f.isi" :level="f.level" :tombol="f.tombol" :url="f.url" /></div>
-            <CashflowPengumumanPratinjauPenerima v-if="sasaranAktif" :data="pratinjau.data.value" :memuat="pratinjau.memuat.value" :pesan-galat="pratinjau.pesanGalat.value" :belum-aktif="pratinjau.belumAktif.value" :lengkap="pratinjau.lengkap.value" />
-          </div>
-        </fieldset>
-        <div v-if="basi" class="mt-4 flex flex-wrap items-center gap-2 text-sm ca-tone-warning" role="alert"><span>{{ tcf('pengumuman.basi') }}</span><button v-if="versiTerbaru" type="button" class="ca-btn-secondary text-xs" @click="sunting(versiTerbaru)">{{ tcf('pengumuman.muatVersi') }}</button></div>
-        <div class="mt-6 flex justify-end gap-2 border-t border-[color:var(--ca-border)] pt-4"><button type="button" class="ca-btn-secondary" :disabled="menyimpan" @click="tutupForm">{{ tcf('umum.batal') }}</button><button type="submit" class="ca-btn-primary" :disabled="menyimpan || basi || penerimaSibuk || !penerimaSah(f.penerima, f.pengguna, f.kelompok, f.aturan)">{{ tcf(menyimpan ? 'pengumuman.menyimpan' : menyunting ? 'pengumuman.simpanPerubahan' : 'umum.simpan') }}</button></div>
-      </form>
-    </ConsoleModal>
+    <CashflowPengumumanRutin v-if="fiturT3 && rutin" :daftar="rutin" :memuat="rutinMuat.memuat.value" @berubah="muatRutin(); muatDaftar()" />
+
+    <CashflowPengumumanForm
+      v-if="form.buka" :key="`${form.id}|${form.kunci}`" :show="form.buka" :mode="menyunting ? 'ubah' : 'baru'" :isian-awal="form.isian"
+      :penerima-awal="form.penerima" :galat-server="galatServer" :sibuk="menyimpan" :basi="basi" :sasaran-aktif="sasaranAktif === true"
+      :kecuali-aktif="sasaranAktif === true && fiturT3" :gaya-aktif="fiturT3" :gaya-ada="gayaAda"
+      @simpan="simpan" @tutup="tutupForm" @muat-versi="muatVersi"
+    />
     <ConsoleModal :show="bukaSegmen" :title="tcf('pengumuman.segmen.judul')" size="xl" @close="bukaSegmen = false">
       <CashflowPengumumanSegmen v-if="bukaSegmen" @berubah="muatDaftar" />
     </ConsoleModal>

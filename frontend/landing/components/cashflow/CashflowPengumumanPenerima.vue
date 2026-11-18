@@ -14,6 +14,8 @@ const props = defineProps<{
   aturanAktif?: boolean
   /** Aturan tersimpan saat menyunting (dibaca sekali oleh editor aturan). */
   aturanAwal?: Aturan | null
+  /** Ada pengecualian di mode lama (CashflowPengumumanKecuali): hitungan di sini = sebelum pengecualian. */
+  adaKecuali?: boolean
 }>()
 const emit = defineEmits<{
   'update:jenis': [JenisPenerima]; 'update:pengguna': [string[]]; 'update:kelompok': [string[]]; 'update:aturan': [AturanDTO | null]; sibuk: [boolean]
@@ -40,7 +42,7 @@ onBeforeUnmount(() => { ringkasan.batal(); emit('sibuk', false) })
     <legend class="px-1 text-xs font-semibold text-[var(--ca-muted)]">{{ tcf('pengumuman.penerimaLabel') }}</legend>
     <select id="cf-p-penerima" :value="jenis" :aria-label="tcf('pengumuman.penerimaLabel')" class="ca-input w-full" @change="emit('update:jenis', ($event.target as HTMLSelectElement).value as JenisPenerima)"><option v-for="p in pilihan" :key="p.id" :value="p.id">{{ tcf(`pengumuman.penerimaOpsi.${p.id}`) }}</option></select>
     <template v-if="jenis !== 'aturan'">
-      <p class="text-xs text-[var(--ca-muted)]" aria-live="polite">{{ jumlah === null ? ringkasan.memuat.value ? tcf('pengumuman.menghitung') : tcf('pengumuman.jumlahBelum') : tcf('pengumuman.jumlahPengguna')(jumlah) }}</p>
+      <p class="text-xs text-[var(--ca-muted)]" aria-live="polite">{{ jumlah === null ? ringkasan.memuat.value ? tcf('pengumuman.menghitung') : tcf('pengumuman.jumlahBelum') : adaKecuali ? tcf('pengumuman.form.jumlahSebelumKecuali')(jumlah) : tcf('pengumuman.jumlahPengguna')(jumlah) }}</p>
       <p v-if="ringkasan.pesanGalat.value" class="text-xs ca-tone-danger" role="alert">{{ ringkasan.pesanGalat.value }}</p>
     </template>
     <CashflowPengumumanPengguna v-if="jenis === 'single' || jenis === 'users'" :key="jenis" :model-value="pengguna" :tunggal="jenis === 'single'" :disabled="disabled" @update:model-value="emit('update:pengguna', $event)" />

@@ -14,6 +14,12 @@
  *   ruang                         'usaha' | 'pribadi_saja'
  *   domi_pakai, domi_beli, kredit_habis   boolean
  *   nomor_wa                      'ada' | 'belum'
+ *   daftar_lebih_dari_hari        1..365, umur akun paling sedikit N hari (20261119121000)
+ *   pengguna                      uuid[] 1..1000, hanya orang ini (20261119121000)
+ *   kelompok                      uuid[] 1..100, hanya anggota kelompok ini (20261119121000)
+ *   pengguna dan kelompok dipakai console untuk "beberapa pengguna kecuali"
+ *   dan "kelompok kecuali" (pengecualian di semua mode, K8), bukan di panel
+ *   saringan.
  *
  * audience_rules (jsonb):
  *   {v: 1, segmen_id: uuid|null, saring: saring|null, kecuali_internal,
@@ -44,6 +50,9 @@ export const AKTIF_HARI_MAKS = 365
 export const NAMA_SEGMEN_MAKS = 60
 export const CATATAN_INTERNAL_MAKS = 120
 export const CONTOH_MAKS = 10
+/** Batas kunci saring pengguna dan kelompok (20261119121000). */
+export const PENGGUNA_SARING_MAKS = 1000
+export const KELOMPOK_SARING_MAKS = 100
 /** Aplikasi di bawah versi ini (pengumuman_aktif_v2) hanya menerima pengumuman `all`. */
 export const VERSI_SASARAN = { kode: 26110702, versi: '1.3.8' } as const
 
@@ -51,6 +60,7 @@ export const VERSI_SASARAN = { kode: 26110702, versi: '1.3.8' } as const
 export const KUNCI_SARING = [
   'versi_min', 'versi_di_bawah', 'versi_tak_diketahui', 'daftar_sejak', 'daftar_sampai',
   'aktif_dalam_hari', 'ruang', 'domi_pakai', 'domi_beli', 'kredit_habis', 'nomor_wa',
+  'daftar_lebih_dari_hari', 'pengguna', 'kelompok',
 ] as const
 export type KunciSaring = typeof KUNCI_SARING[number]
 export const KUNCI_ATURAN = ['v', 'segmen_id', 'saring', 'kecuali_internal', 'kecuali_pengguna', 'kecuali_kelompok'] as const
@@ -78,6 +88,9 @@ export interface SaringDTO {
   domi_beli?: boolean
   kredit_habis?: boolean
   nomor_wa?: NomorWaSaring
+  daftar_lebih_dari_hari?: number
+  pengguna?: string[]
+  kelompok?: string[]
 }
 export interface AturanDTO {
   v: 1
@@ -112,10 +125,16 @@ export interface Saring {
   domiBeli: boolean | null
   kreditHabis: boolean | null
   nomorWa: NomorWaSaring | null
+  /** Umur akun paling sedikit N hari (daftar_lebih_dari_hari). */
+  umurMinHari: number | null
+  /** Hanya orang ini / anggota kelompok ini (dipakai mode beberapa pengguna dan kelompok). */
+  pengguna: string[] | null
+  kelompok: string[] | null
 }
 export const SARING_KOSONG: Saring = Object.freeze({
   versiMin: null, versiDiBawah: null, versiTakDiketahui: 'ikut', daftarSejak: null, daftarSampai: null,
   aktifHari: null, ruang: null, domiPakai: null, domiBeli: null, kreditHabis: null, nomorWa: null,
+  umurMinHari: null, pengguna: null, kelompok: null,
 })
 export interface Aturan {
   segmenId: string | null
@@ -198,6 +217,8 @@ export function keSaring(raw: unknown): { saring: Saring; asing: string[] } {
   }
   const pilihan = <T extends string>(daftar: readonly T[]) => (x: unknown): x is T => typeof x === 'string' && (daftar as readonly string[]).includes(x)
   const boolean = (x: unknown): x is boolean => typeof x === 'boolean'
+  const larik = (maks: number) => (x: unknown): x is string[] =>
+    Array.isArray(x) && x.length >= 1 && x.length <= maks && x.every(uuidSah)
   return {
     saring: {
       versiMin: ambil('versi_min', kodeVersiSah),
@@ -211,6 +232,9 @@ export function keSaring(raw: unknown): { saring: Saring; asing: string[] } {
       domiBeli: ambil('domi_beli', boolean),
       kreditHabis: ambil('kredit_habis', boolean),
       nomorWa: ambil('nomor_wa', pilihan(NOMOR_WA_SARING)),
+      umurMinHari: ambil('daftar_lebih_dari_hari', hariSah),
+      pengguna: ambil('pengguna', larik(PENGGUNA_SARING_MAKS)),
+      kelompok: ambil('kelompok', larik(KELOMPOK_SARING_MAKS)),
     },
     asing,
   }
@@ -233,6 +257,9 @@ export function saringKeDto(s: Saring): SaringDTO {
   if (s.domiBeli !== null) d.domi_beli = s.domiBeli
   if (s.kreditHabis !== null) d.kredit_habis = s.kreditHabis
   if (s.nomorWa !== null) d.nomor_wa = s.nomorWa
+  if (s.umurMinHari !== null) d.daftar_lebih_dari_hari = s.umurMinHari
+  if (s.pengguna?.length) d.pengguna = [...new Set(s.pengguna)]
+  if (s.kelompok?.length) d.kelompok = [...new Set(s.kelompok)]
   return d
 }
 
@@ -252,10 +279,12 @@ export interface IsianSaring {
   domiBeli: TigaPilihan
   kreditHabis: TigaPilihan
   nomorWa: '' | NomorWaSaring
+  /** '' = tanpa batas umur akun. */
+  umurMinHari: string
 }
 export const ISIAN_SARING_KOSONG: IsianSaring = Object.freeze({
   versiMin: '', versiDiBawah: '', versiTakDiketahui: 'ikut', daftarSejak: '', daftarSampai: '', aktifHari: '',
-  ruang: '', domiPakai: '', domiBeli: '', kreditHabis: '', nomorWa: '',
+  ruang: '', domiPakai: '', domiBeli: '', kreditHabis: '', nomorWa: '', umurMinHari: '',
 })
 const keTiga = (b: boolean | null): TigaPilihan => (b === null ? '' : b ? 'ya' : 'tidak')
 const dariTiga = (t: TigaPilihan): boolean | null => (t === '' ? null : t === 'ya')
@@ -273,10 +302,11 @@ export function isianDariSaring(s: Saring): IsianSaring {
     domiBeli: keTiga(s.domiBeli),
     kreditHabis: keTiga(s.kreditHabis),
     nomorWa: s.nomorWa ?? '',
+    umurMinHari: s.umurMinHari === null ? '' : String(s.umurMinHari),
   }
 }
 
-export const KODE_GALAT_SARING = ['versiMin', 'versiDiBawah', 'versiTerbalik', 'daftarSejak', 'daftarSampai', 'daftarTerbalik', 'aktifHari'] as const
+export const KODE_GALAT_SARING = ['versiMin', 'versiDiBawah', 'versiTerbalik', 'daftarSejak', 'daftarSampai', 'daftarTerbalik', 'aktifHari', 'umurMinHari'] as const
 export type KodeGalatSaring = typeof KODE_GALAT_SARING[number]
 
 /** Teks bilangan bulat murni ('26111301', bukan '2.6e7' atau '12abc'). */
@@ -307,6 +337,11 @@ export function periksaIsianSaring(i: IsianSaring): { saring: Saring | null; gal
     aktifHari = bulat(i.aktifHari)
     if (aktifHari === null || !hariSah(aktifHari)) { galat.push('aktifHari'); aktifHari = null }
   }
+  let umurMinHari: number | null = null
+  if ((i.umurMinHari ?? '').trim()) {
+    umurMinHari = bulat(i.umurMinHari)
+    if (umurMinHari === null || !hariSah(umurMinHari)) { galat.push('umurMinHari'); umurMinHari = null }
+  }
   if (galat.length) return { saring: null, galat }
   return {
     saring: {
@@ -315,6 +350,8 @@ export function periksaIsianSaring(i: IsianSaring): { saring: Saring | null; gal
       ruang: i.ruang || null,
       domiPakai: dariTiga(i.domiPakai), domiBeli: dariTiga(i.domiBeli), kreditHabis: dariTiga(i.kreditHabis),
       nomorWa: i.nomorWa || null,
+      // Panel saringan tidak mengisi daftar orang atau kelompok (lihat kepala berkas).
+      umurMinHari, pengguna: null, kelompok: null,
     },
     galat,
   }
@@ -456,6 +493,9 @@ export interface KamusRingkas {
   domiBeli: Readonly<Record<'ya' | 'tidak', string>>
   kreditHabis: Readonly<Record<'ya' | 'tidak', string>>
   nomorWa: Readonly<Record<NomorWaSaring, string>>
+  umur: (n: number) => string
+  hanyaPengguna: (n: number) => string
+  anggotaKelompok: (n: number) => string
   saringLain: string
   kecuali: (daftar: string) => string
   internal: string
@@ -486,12 +526,21 @@ export function bagianSaring(s: Saring, k: KamusRingkas, bahasa: BahasaWaktu): s
   else if (s.daftarSejak) b.push(k.daftarSejak(tgl(s.daftarSejak)))
   else if (s.daftarSampai) b.push(k.daftarSampai(tgl(s.daftarSampai)))
   if (s.aktifHari !== null) b.push(k.aktif(s.aktifHari))
+  if (s.umurMinHari !== null) b.push(k.umur(s.umurMinHari))
   if (s.ruang) b.push(k.ruang[s.ruang])
   if (s.domiPakai !== null) b.push(k.domiPakai[ya(s.domiPakai)])
   if (s.domiBeli !== null) b.push(k.domiBeli[ya(s.domiBeli)])
   if (s.kreditHabis !== null) b.push(k.kreditHabis[ya(s.kreditHabis)])
   if (s.nomorWa) b.push(k.nomorWa[s.nomorWa])
   return b
+}
+
+/** Dasar kalimat: daftar orang, anggota kelompok (keduanya kunci 20261119121000), atau semua pengguna. */
+export function dasarSaring(s: Saring, k: KamusRingkas): string[] {
+  const b: string[] = []
+  if (s.pengguna?.length) b.push(k.hanyaPengguna(s.pengguna.length))
+  if (s.kelompok?.length) b.push(k.anggotaKelompok(s.kelompok.length))
+  return b.length ? b : [k.semua]
 }
 
 /** "Semua pengguna, versi di bawah 1.4.1, kecuali akun internal". */
@@ -502,7 +551,7 @@ export function kalimatAturan(
   if (!a) return k.tidakTerbaca
   const bagian: string[] = []
   if (a.segmenId) bagian.push(opsi.segmenNama ? k.segmen(opsi.segmenNama) : k.segmenHilang)
-  else bagian.push(k.semua, ...bagianSaring(a.saring ?? SARING_KOSONG, k, opsi.bahasa))
+  else bagian.push(...dasarSaring(a.saring ?? SARING_KOSONG, k), ...bagianSaring(a.saring ?? SARING_KOSONG, k, opsi.bahasa))
   if (a.asing.some(x => x.startsWith('saring.'))) bagian.push(k.saringLain)
   const kecuali: string[] = []
   if (a.kecualiInternal) kecuali.push(k.internal)
@@ -515,5 +564,5 @@ export function kalimatAturan(
 
 /** Ringkasan saringan saja (daftar segmen): "Semua pengguna, aktif dalam 30 hari terakhir". */
 export function kalimatSaring(s: Saring, k: KamusRingkas, bahasa: BahasaWaktu): string {
-  return [k.semua, ...bagianSaring(s, k, bahasa)].join(', ')
+  return [...dasarSaring(s, k), ...bagianSaring(s, k, bahasa)].join(', ')
 }
