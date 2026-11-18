@@ -125,6 +125,73 @@ export function kePesanDaftar(d: unknown): HalamanPesan {
   }
 }
 
+// ── Daftar dan isi di layar ──────────────────────────────────────────────
+const lipat = (s: string): string => s.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
+
+/**
+ * Saring percakapan yang SUDAH dimuat menurut judul: setiap kata kueri harus
+ * ada, huruf besar dan tanda aksen tidak dibedakan. Judul kosong dicocokkan
+ * dengan label penggantinya ("Percakapan tanpa judul"). Kueri kosong = semua.
+ * Di peramban saja: RPC daftar tidak punya saringan judul, dan setiap
+ * panggilannya menulis satu audit.
+ */
+export function saringPercakapan(baris: readonly Percakapan[], kueri: string, labelTanpaJudul = ''): Percakapan[] {
+  const kata = lipat(kueri).split(/\s+/).filter(Boolean)
+  if (!kata.length) return [...baris]
+  return baris.filter((p) => {
+    const judul = lipat(p.judul || labelTanpaJudul)
+    return kata.every(k => judul.includes(k))
+  })
+}
+
+/**
+ * Halaman pertama daftar yang dimuat ulang (tombol Segarkan atau jendela
+ * kembali dilihat), digabung dengan baris yang sudah termuat dari halaman
+ * berikutnya. Server mengurutkan menurut waktu diperbarui, terbaru dulu:
+ * - halaman baru tanpa kursor berarti seluruh daftar, baris lama dibuang;
+ * - baris lama yang lebih tua dari batas halaman baru tetap di bawahnya,
+ *   dengan kursor lama, jadi "Muat percakapan lain" melanjutkan dari sana;
+ * - baris lama di rentang halaman baru yang tidak ikut lagi (dihapus
+ *   pengguna) hilang, dan percakapan yang baru diperbarui naik ke atas.
+ */
+export function gabungDaftarSegar(
+  lama: { baris: readonly Percakapan[]; kursorBerikut: KursorPercakapan | null },
+  baru: DaftarPercakapan,
+): { baris: Percakapan[]; kursorBerikut: KursorPercakapan | null } {
+  if (!baru.kursorBerikut) return { baris: [...baru.baris], kursorBerikut: null }
+  const ada = new Set(baru.baris.map(p => p.id))
+  const batas = Date.parse(baru.kursorBerikut.d)
+  const ekor = lama.baris.filter(p => !ada.has(p.id) && Date.parse(p.diperbaruiIso) <= batas)
+  return ekor.length
+    ? { baris: [...baru.baris, ...ekor], kursorBerikut: lama.kursorBerikut }
+    : { baris: [...baru.baris], kursorBerikut: baru.kursorBerikut }
+}
+
+/**
+ * Halaman pesan terbaru yang dimuat ulang, digabung dengan pesan lebih lama
+ * yang sudah termuat lewat "Muat pesan lebih lama" (id pesan naik menurut
+ * waktu). Kursor ke belakang tetap milik halaman tertua yang sudah ada.
+ */
+export function gabungPesanSegar(
+  lama: { pesan: readonly PesanDomi[]; kursorSebelum: number | null; adaLagi: boolean },
+  baru: HalamanPesan,
+): { pesan: PesanDomi[]; kursorSebelum: number | null; adaLagi: boolean } {
+  if (!baru.pesan.length) return { pesan: [], kursorSebelum: baru.kursorSebelum, adaLagi: baru.adaLagi }
+  const awalBaru = Math.min(...baru.pesan.map(p => p.id))
+  const lebihLama = lama.pesan.filter(p => p.id < awalBaru)
+  if (!lebihLama.length) return { pesan: [...baru.pesan], kursorSebelum: baru.kursorSebelum, adaLagi: baru.adaLagi }
+  return { pesan: [...lebihLama, ...baru.pesan], kursorSebelum: lama.kursorSebelum, adaLagi: lama.adaLagi }
+}
+
+/** Baris daftar menyebut percakapan yang sedang dibuka sudah bertambah sejak isinya dimuat. */
+export function adaPesanBaru(baris: Percakapan | undefined, dibuka: Percakapan): boolean {
+  if (!baris) return false
+  if (baris.jumlahPesan > dibuka.jumlahPesan) return true
+  const a = Date.parse(baris.diperbaruiIso)
+  const b = Date.parse(dibuka.diperbaruiIso)
+  return Number.isFinite(a) && Number.isFinite(b) && a > b
+}
+
 function kePesan(b: Obj): PesanDomi | null {
   const id = angkaAtauNull(b.id)
   if (id === null) return null

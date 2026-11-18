@@ -5,7 +5,9 @@
 //
 // Yang diekspor: buatServer() memulangkan jawab(nama, argumen, mode). `mode.kosong`
 // membuat semua daftar menjawab kosong, `mode.izin = false` meniru sesi tanpa izin
-// data pribadi (hanya cashflow:view). RPC yang belum dikarang dicatat di `takDikenal`.
+// data pribadi (hanya cashflow:view). `mode.domiPanjang` mengganti daftar percakapan Domi
+// dengan 48 percakapan berhalaman, satu di antaranya 60 pesan (uji tata letak tab Domi).
+// RPC yang belum dikarang dicatat di `takDikenal`.
 
 export const SAAT = Date.parse('2026-11-16T05:00:00Z')
 export const jam = j => new Date(SAAT - j * 3_600_000).toISOString()
@@ -476,16 +478,84 @@ const patunganRiwayat = (p, mode) => (p.p_jenis === 'lunas'
 // ── Domi ─────────────────────────────────────────────────────────────────
 const PERCAKAPAN = ['Berapa total pengeluaran belanja stok bulan ini dibanding bulan lalu, dan kategori mana yang paling naik', 'Catat belanja beras', 'Buat jadwal cicilan mesin kasir', 'Ringkasan laba kotor minggu ini', 'Kenapa saldo kas toko tidak cocok', 'Struk dari pemasok', 'Anggaran November']
 const percakapanBaris = (judul, i) => ({ id: uuid(8000 + i), judul, jumlah_pesan: [14, 2, 6, 4, 22, 3, 8][i], dibuat: jam(i * 30 + 4), diperbarui: jam(i * 30 + 1) })
+// Varian panjang (mode.domiPanjang, uji tata letak tab Domi): 48 percakapan
+// dibagi per p_limit dengan kursor, total hanya di halaman pertama, seperti
+// server. Percakapan pertama berisi 60 pesan, dibagi per p_limit dari yang
+// terbaru lewat p_sebelum. mode.domiBaru menambah dua pesan baru di sana
+// (uji Segarkan). Bawaan tetap tujuh percakapan pendek di atas.
+const TOPIK_DOMI = [
+  'Catat belanja beras', 'Ringkasan laba kotor minggu ini', 'Kenapa saldo kas toko tidak cocok', 'Struk dari pemasok',
+  'Anggaran November', 'Buat jadwal cicilan mesin kasir', 'Pengeluaran listrik dan air', 'Bandingkan omzet dua cabang',
+  'Transfer ke rekening tabungan', 'Catat gaji karyawan', 'Utang ke pemasok sayur', 'Target tabungan lebaran',
+  'Penjualan pulsa hari ini', 'Rekap kasbon pelanggan', 'Harga pokok minyak goreng', 'Setoran harian ke bank',
+]
+const AKHIRAN_DOMI = ['', ' untuk cabang Pasar Baru', ' bulan lalu']
+export const PERCAKAPAN_PANJANG = Array.from({ length: 48 }, (_, i) => ({
+  id: uuid(8100 + i),
+  // Satu judul kosong: console menulis "Percakapan tanpa judul".
+  judul: i === 0 ? PERCAKAPAN[0] : i === 7 ? '' : `${TOPIK_DOMI[i % 16]}${AKHIRAN_DOMI[Math.floor(i / 16)]}`,
+  jumlah_pesan: i === 0 ? 60 : 2 + ((i * 7) % 19),
+  dibuat: jam(i * 9 + 30), diperbarui: jam(i * 9 + 0.5),
+}))
+const TANYA_DOMI = [
+  'Berapa total penjualan kemarin?', 'Catat beli gas elpiji 3 tabung, bayar tunai', 'Kenapa saldo Bank Tabungan Usaha beda dengan mutasi?',
+  'Tolong rangkum pengeluaran minggu ini per kategori', 'Bandingkan omzet cabang Pasar Baru dengan cabang Terminal bulan ini', 'Catat setoran ke bank Rp 3.300.000',
+  'Berapa sisa anggaran belanja stok November?', 'Ubah catatan transaksi tadi jadi belanja telur, bukan beras', 'Siapa saja pelanggan yang masih kasbon lebih dari sebulan?',
+  'Buat pengingat bayar sewa kios tiap tanggal 5', 'Berapa untung kotor dari penjualan minyak goreng?', 'Oke',
+]
+/** Daftar panjang menurut mode: percakapan pertama naik ke 62 pesan saat ada pesan baru. */
+const daftarPanjang = mode => (mode.domiBaru
+  ? [{ ...PERCAKAPAN_PANJANG[0], jumlah_pesan: 62, diperbarui: jam(0.1) }, ...PERCAKAPAN_PANJANG.slice(1)]
+  : PERCAKAPAN_PANJANG)
+const pesanPanjang = (p, mode) => {
+  const n = Math.min(50, Math.max(1, p.p_limit ?? 30))
+  const jumlah = mode.domiBaru ? 62 : 60
+  const semua = Array.from({ length: jumlah }, (_, k) => {
+    const id = k + 1
+    const waktu = id > 60 ? jam(0.1 + (62 - id) * 0.05) : jam(0.5 + (60 - id) * 0.6)
+    const ke = Math.floor(k / 2)
+    if (k % 2 === 0) return { id, peran: 'user', isi: { teks: TANYA_DOMI[ke % TANYA_DOMI.length] }, dibuat: waktu, model: null, token_masuk: null, token_keluar: null, biaya: null }
+    const jenis = ke % 6
+    const blok = jenis === 0
+      ? [{ tipe: 'teks', teks: `Penjualan kemarin **Rp ${2_400_000 + ke * 37_500}** dari ${40 + ke} transaksi.\n- Paling laku: beras premium\n- Jam ramai: 07.00 sampai 09.00` }]
+      : jenis === 1
+        ? [{ tipe: 'teks', teks: 'Saya siapkan drafnya. Periksa dulu sebelum disimpan.' }, { tipe: 'transaksi', draf: { nominal: 66_000 + ke * 1_000, jenis: 'keluar', kategori: KATEGORI[(ke % 6) + 1], dompet: DOMPET[ke % 3], tanggal: tanggal(ke % 4), catatan: 'Gas elpiji 3 tabung' } }]
+        : jenis === 2
+          ? [{ tipe: 'teks', teks: 'Selisihnya karena satu transfer belum dicatat. Coba cek mutasi tanggal 12.' }, { tipe: 'angka', label: 'Selisih saldo', nilai: 1_250_000 + ke * 10_000, satuan: 'rupiah', utama: true }]
+          : jenis === 3
+            ? [{ tipe: 'teks', teks: 'Ini rangkumannya.' }, { tipe: 'tabel', kolom: ['Kategori', 'Minggu ini', 'Minggu lalu'], baris: [['Belanja stok', 'Rp 4.120.000', 'Rp 3.870.000'], ['Listrik dan air', 'Rp 310.000', 'Rp 296.000'], ['Transportasi', 'Rp 96.000', 'Rp 120.000']] }]
+            : jenis === 4
+              ? [{ tipe: 'teks', teks: 'Cabang Pasar Baru masih unggul, selisihnya mengecil dibanding bulan lalu.' }, { tipe: 'saran', pilihan: ['Lihat per minggu', 'Tampilkan grafiknya'] }]
+              : [{ tipe: 'teks', teks: 'Sudah saya catat.' }]
+    // Jawaban lama belum menyimpan kredit, jadi kredit_dipakai tidak ada.
+    const isi = ke < 4 ? { blok } : { blok, kredit_dipakai: 1 + (ke % 2) }
+    return { id, peran: 'asisten', isi, dibuat: waktu, model: ke % 3 ? 'model-sintetis-1' : 'model-sintetis-teliti-panjang-namanya', token_masuk: 3_800 + ke * 41, token_keluar: 420 + ke * 9, biaya: 0.009 + ke * 0.0004 }
+  })
+  const batas = p.p_sebelum == null ? semua.length : semua.findIndex(x => x.id === p.p_sebelum)
+  const pesan = semua.slice(Math.max(0, batas - n), batas)
+  const adaLagi = batas - n > 0
+  return { percakapan: daftarPanjang(mode)[0], pesan, kursor_sebelum: pesan.length ? pesan[0].id : null, ada_lagi: adaLagi, halaman_pertama: p.p_sebelum == null }
+}
 const aiPercakapanDaftar = (p, mode) => {
+  if (mode.domiPanjang && !mode.kosong) {
+    const semua = daftarPanjang(mode)
+    const n = Math.min(50, Math.max(1, p.p_limit ?? 20))
+    const mulai = p.p_kursor ? semua.findIndex(x => x.id === p.p_kursor.i) + 1 : 0
+    const baris = semua.slice(mulai, mulai + n)
+    const akhir = mulai + n >= semua.length
+    return { baris, kursor_berikut: akhir ? null : { d: baris.at(-1).diperbarui, i: baris.at(-1).id }, total: p.p_kursor ? null : semua.length, halaman_pertama: !p.p_kursor }
+  }
   const baris = mode.kosong ? [] : PERCAKAPAN.map(percakapanBaris)
   return { baris, kursor_berikut: null, total: baris.length, halaman_pertama: true }
 }
-const aiPesanDaftar = (p) => {
+const aiPesanDaftar = (p, mode = {}) => {
+  if (mode.domiPanjang && p.p_percakapan === PERCAKAPAN_PANJANG[0].id) return pesanPanjang(p, mode)
+  const panjang = mode.domiPanjang ? PERCAKAPAN_PANJANG.find(x => x.id === p.p_percakapan) : null
   const i = Math.max(0, PERCAKAPAN.findIndex((_, n) => uuid(8000 + n) === p.p_percakapan))
   const asisten = (id, j, blok) => ({ id, peran: 'asisten', isi: { blok, kredit_dipakai: 1 }, dibuat: jam(j), model: 'model-sintetis-1', token_masuk: 4_812, token_keluar: 612, biaya: 0.0123 })
   const pengguna = (id, j, teks) => ({ id, peran: 'user', isi: { teks }, dibuat: jam(j), model: null, token_masuk: null, token_keluar: null, biaya: null })
   return {
-    percakapan: percakapanBaris(PERCAKAPAN[i], i), kursor_sebelum: null, ada_lagi: false, halaman_pertama: true,
+    percakapan: panjang ?? percakapanBaris(PERCAKAPAN[i], i), kursor_sebelum: null, ada_lagi: false, halaman_pertama: true,
     pesan: [
       pengguna(1, 4.0, PERCAKAPAN[0]),
       asisten(2, 3.99, [

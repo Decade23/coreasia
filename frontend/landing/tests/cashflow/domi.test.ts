@@ -7,6 +7,7 @@ import { describe, expect, it } from 'vitest'
 import {
   alasanDomiOtomatis, barisTeks, kePesanDaftar, keDaftarPercakapan, kolomUang, petaPesanBerfoto,
   rancangDraf, rancangTransaksi, ringkasInfo, susunBlok, type AlatDraf, type SusunanDomi,
+  adaPesanBaru, gabungDaftarSegar, gabungPesanSegar, saringPercakapan, type Percakapan, type PesanDomi,
 } from '~/adapters/cashflowDomi'
 
 const UID = '11111111-1111-4111-8111-111111111111'
@@ -200,5 +201,89 @@ describe('petaPesanBerfoto', () => {
     const paket = petaPesanBerfoto(pesan)
     expect(paket.map(x => x.length)).toEqual([12, 12, 1])
     expect(paket.flat()).toEqual(Array.from({ length: 25 }, (_, i) => i + 1))
+  })
+})
+
+// ── Tampilan daftar dan Segarkan ─────────────────────────────────────────
+const cakap = (n: number, judul: string, jam: number, jumlah = 2): Percakapan => ({
+  id: `p${n}`, judul, jumlahPesan: jumlah, dibuatIso: '', diperbaruiIso: new Date(Date.UTC(2026, 10, 16, jam)).toISOString(),
+})
+const pesan = (id: number): PesanDomi => ({ peran: 'user', id, dibuatIso: '', teks: `m${id}`, gambar: false, jalur: [], jumlahGambar: null })
+
+describe('saringPercakapan', () => {
+  const baris = [cakap(1, 'Catat belanja Beras', 9), cakap(2, 'Pengeluaran listrik dan air', 8), cakap(3, '', 7), cakap(4, 'Résumé kas toko', 6)]
+  it('kosong = semua, urutan tetap', () => {
+    expect(saringPercakapan(baris, '  ').map(p => p.id)).toEqual(['p1', 'p2', 'p3', 'p4'])
+  })
+  it('setiap kata harus ada, tanpa peduli huruf besar dan aksen', () => {
+    expect(saringPercakapan(baris, 'BERAS catat').map(p => p.id)).toEqual(['p1'])
+    expect(saringPercakapan(baris, 'resume').map(p => p.id)).toEqual(['p4'])
+    expect(saringPercakapan(baris, 'listrik gas')).toEqual([])
+  })
+  it('judul kosong dicocokkan dengan label penggantinya', () => {
+    expect(saringPercakapan(baris, 'tanpa judul', 'Percakapan tanpa judul').map(p => p.id)).toEqual(['p3'])
+    expect(saringPercakapan(baris, 'tanpa judul')).toEqual([])
+  })
+})
+
+describe('gabungDaftarSegar', () => {
+  const kursorLama = { d: 'lama', i: 'p6' }
+  const lama = { baris: [cakap(1, 'a', 10), cakap(2, 'b', 9), cakap(3, 'c', 8), cakap(4, 'd', 7), cakap(5, 'e', 6), cakap(6, 'f', 5)], kursorBerikut: kursorLama }
+  it('halaman pertama tanpa kursor = seluruh daftar, baris lama dibuang', () => {
+    const baru = { baris: [cakap(2, 'b', 11)], kursorBerikut: null, total: 1, halamanPertama: true }
+    expect(gabungDaftarSegar(lama, baru)).toEqual({ baris: baru.baris, kursorBerikut: null })
+  })
+  it('yang diperbarui naik, ekor lama tetap dengan kursor lama, yang dihapus hilang', () => {
+    // p4 diperbarui (naik ke atas), p2 dihapus, halaman baru berisi tiga baris sampai p3.
+    const p4 = cakap(4, 'd', 12, 9)
+    const baru = { baris: [p4, cakap(1, 'a', 10), cakap(3, 'c', 8)], kursorBerikut: { d: cakap(3, 'c', 8).diperbaruiIso, i: 'p3' }, total: 5, halamanPertama: true }
+    const g = gabungDaftarSegar(lama, baru)
+    expect(g.baris.map(p => p.id)).toEqual(['p4', 'p1', 'p3', 'p5', 'p6'])
+    expect(g.baris[0]!.jumlahPesan).toBe(9)
+    expect(g.kursorBerikut).toBe(kursorLama)
+  })
+  it('baris lama yang terdorong keluar halaman pertama tetap ada; tanpa baris lama, kursor halaman baru', () => {
+    const satuHalaman = { baris: lama.baris.slice(0, 2), kursorBerikut: { d: 'x', i: 'p2' } }
+    const baru = { baris: [cakap(9, 'baru', 13), cakap(1, 'a', 10)], kursorBerikut: { d: cakap(1, 'a', 10).diperbaruiIso, i: 'p1' }, total: 7, halamanPertama: true }
+    const g = gabungDaftarSegar(satuHalaman, baru)
+    // p2 lebih tua dari batas halaman baru: tetap ada, kursor lama yang melanjutkan.
+    expect(g.baris.map(p => p.id)).toEqual(['p9', 'p1', 'p2'])
+    expect(g.kursorBerikut).toEqual({ d: 'x', i: 'p2' })
+    expect(gabungDaftarSegar({ baris: [], kursorBerikut: null }, baru)).toEqual({ baris: baru.baris, kursorBerikut: baru.kursorBerikut })
+  })
+})
+
+describe('gabungPesanSegar', () => {
+  const halaman = (ids: number[], kursorSebelum: number | null, adaLagi: boolean) => ({
+    percakapan: cakap(1, 'a', 1), pesan: ids.map(pesan), kursorSebelum, adaLagi, halamanPertama: true,
+  })
+  it('pesan lebih lama yang sudah termuat tetap, kursornya juga', () => {
+    const lama = { pesan: [1, 2, 3, 4, 5, 6].map(pesan), kursorSebelum: 1, adaLagi: false }
+    const g = gabungPesanSegar(lama, halaman([5, 6, 7, 8], 5, true))
+    expect(g.pesan.map(p => p.id)).toEqual([1, 2, 3, 4, 5, 6, 7, 8])
+    expect(g).toMatchObject({ kursorSebelum: 1, adaLagi: false })
+  })
+  it('belum ada yang lebih lama: halaman baru apa adanya', () => {
+    const lama = { pesan: [5, 6].map(pesan), kursorSebelum: 5, adaLagi: true }
+    const g = gabungPesanSegar(lama, halaman([5, 6, 7], 5, true))
+    expect(g.pesan.map(p => p.id)).toEqual([5, 6, 7])
+    expect(g).toMatchObject({ kursorSebelum: 5, adaLagi: true })
+  })
+  it('percakapan yang kini kosong tidak menahan pesan lama', () => {
+    expect(gabungPesanSegar({ pesan: [pesan(1)], kursorSebelum: 1, adaLagi: false }, halaman([], null, false)).pesan).toEqual([])
+  })
+})
+
+describe('adaPesanBaru', () => {
+  const dibuka = cakap(1, 'a', 9, 4)
+  it('jumlah atau waktu diperbarui yang lebih baru', () => {
+    expect(adaPesanBaru(cakap(1, 'a', 9, 6), dibuka)).toBe(true)
+    expect(adaPesanBaru(cakap(1, 'a', 10, 4), dibuka)).toBe(true)
+  })
+  it('sama, lebih lama, tak ada di daftar, atau waktu rusak: tidak', () => {
+    expect(adaPesanBaru(cakap(1, 'a', 9, 4), dibuka)).toBe(false)
+    expect(adaPesanBaru(cakap(1, 'a', 8, 3), dibuka)).toBe(false)
+    expect(adaPesanBaru(undefined, dibuka)).toBe(false)
+    expect(adaPesanBaru({ ...dibuka, diperbaruiIso: '' }, dibuka)).toBe(false)
   })
 })

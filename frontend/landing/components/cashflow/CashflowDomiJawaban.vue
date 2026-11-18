@@ -2,16 +2,17 @@
 /**
  * Satu jawaban Domi: avatar kecil, kolom isi, lalu jam dan pilihan saran.
  * Baris pemakaian paling bawah adalah info admin kecil, tidak ada di
- * aplikasi.
+ * aplikasi. Selalu satu baris (terpotong, lengkapnya di tooltip) dan bisa
+ * dilipat dari bilah tab lewat `info`.
  */
 import type { PesanAsisten } from '~/adapters/cashflowDomi'
 import { ringkasInfo } from '~/adapters/cashflowDomi'
 import type { FotoDomi } from '~/composables/cashflow/useCashflowDomi'
 
-const props = defineProps<{ pesan: PesanAsisten; foto: ReadonlyMap<string, FotoDomi> }>()
+const props = withDefaults(defineProps<{ pesan: PesanAsisten; foto: ReadonlyMap<string, FotoDomi>; info?: boolean }>(), { info: true })
 const emit = defineEmits<{ foto: [jalur: readonly string[], klik: string] }>()
 const { tcf, formatJam } = useCashflowI18n()
-const info = computed(() => ringkasInfo(props.pesan.info, {
+const ringkas = computed(() => ringkasInfo(props.pesan.info, {
   kredit: n => tcf('domi.kredit')(n),
   token: n => tcf('domi.token')(n),
 }))
@@ -27,9 +28,9 @@ const info = computed(() => ringkasInfo(props.pesan.info, {
       <div v-if="pesan.saran.length" class="flex flex-wrap gap-1.5 pt-0.5">
         <span v-for="x in pesan.saran" :key="x" class="domi-saran">{{ x }}</span>
       </div>
-      <div class="flex flex-wrap items-center gap-x-2 pl-1.5 text-xs font-semibold text-[var(--d-txt2)]">
-        <span class="tabular-nums">{{ formatJam(pesan.dibuatIso) }}</span>
-        <span v-if="info" class="domi-info" :title="tcf('domi.infoAdmin')">{{ info }}</span>
+      <div class="flex min-w-0 items-baseline gap-x-2 pl-1.5 text-xs font-semibold text-[var(--d-txt2)]">
+        <span class="shrink-0 tabular-nums">{{ formatJam(pesan.dibuatIso) }}</span>
+        <span v-if="info && ringkas" class="domi-info min-w-0 truncate" data-uji="domi-info" :title="`${tcf('domi.infoAdmin')}: ${ringkas}`">{{ ringkas }}</span>
       </div>
     </div>
   </div>
