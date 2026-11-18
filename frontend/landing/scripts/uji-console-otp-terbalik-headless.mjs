@@ -120,7 +120,7 @@ try {
     const name = new URL(req.url()).pathname.split('/').pop()
     const p = req.postDataJSON() || {}
     // Server tiruan ini belum memasang daftar v4: jawab seperti PostgREST, halaman jatuh ke v3.
-    if (name === 'admin_daftar_pengguna_v4') return r.fulfill({ status: 404, headers: cors, json: { code: 'PGRST202', message: `Could not find the function public.${name} in the schema cache` } })
+    if (name === 'admin_daftar_pengguna_v4' || ['admin_daftar_pengguna_v5', 'admin_daftar_ruang_v3', 'admin_pengguna_kepala_v2', 'admin_ruang_360_v2'].includes(name)) return r.fulfill({ status: 404, headers: cors, json: { code: 'PGRST202', message: `Could not find the function public.${name} in the schema cache` } })
     seen.push({ name, p })
     let data = {}
     if (name === 'admin_wa_status') data = baru ? waBaru() : waLama()

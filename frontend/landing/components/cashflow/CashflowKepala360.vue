@@ -7,6 +7,10 @@
  * (lihat_kepala), jadi "dilihat n× dalam 30 hari" jujur. Akun yang
  * ditangguhkan menulis sampai kapan, bila server mengirim tanggal yang wajar.
  *
+ * Kepala v2 yang dibuka dengan alasan (sesi ber-pii, 20261119101000) membawa
+ * email dan nama tampilan utuh, dan waktunya presisi: daftar, masuk, cara
+ * nomor dibuktikan, dan terakhir pakai Domi ditulis sampai detik (WIB).
+ *
  * Cara nomor dibuktikan dan pemakaian Domi dibaca dari kepala bila server
  * mengirimnya. Server lama tidak mengirim kuncinya: saat itu keduanya memakai
  * yang dibawa dari baris daftar, persis seperti sebelumnya (rinciKepala).
@@ -14,15 +18,18 @@
 import type { KepalaPengguna } from '~/adapters/cashflowBuku'
 import { angka, formatNomorWa, samarkanNomorWa } from '~/adapters/cashflow'
 import { rinciKepala, type BawaanRinci } from '~/adapters/cashflowPenggunaDaftar'
+import { waktuDetikWib } from '~/adapters/cashflowWaktu'
 
 /* `bawaan`: cara nomor dibuktikan dan terakhir pakai Domi, dibawa dari baris
    daftar pengguna (useCashflowBawaanRinci). null = halaman dibuka langsung.
    Dipakai hanya bila kepala tidak mengirimnya sendiri. */
 const props = defineProps<{ kepala: KepalaPengguna | null; memuat?: boolean; aksesKe: string; emailUtuh: string | null; izinPribadi: boolean; bawaan?: BawaanRinci | null }>()
-const { tcf, formatTanggal } = useCashflowI18n()
+const { tcf, formatTanggal, bahasa } = useCashflowI18n()
+/* Kepala terbuka: jam sampai detik. Selain itu tanggal saja (server membulatkan ke hari). */
+const waktuKepala = (iso: string | null | undefined): string => (props.kepala?.terbuka ? waktuDetikWib(iso, bahasa.value) : formatTanggal(iso ?? null))
 const nomorUtuh = computed(() => props.izinPribadi ? formatNomorWa(props.kepala?.nomorWa) : null)
 const nomorTampil = computed(() => nomorUtuh.value ?? samarkanNomorWa(props.kepala?.nomorWa))
-const rinci = computed(() => rinciKepala(props.kepala, props.bawaan, { izinPribadi: props.izinPribadi, tanggal: formatTanggal }))
+const rinci = computed(() => rinciKepala(props.kepala, props.bawaan, { izinPribadi: props.izinPribadi, tanggal: waktuKepala }))
 const domiTerakhir = computed(() => rinci.value.domiTerakhir ?? (rinci.value.domiBelumPernah ? tcf('pengguna.domiBelum') : null))
 const labelDitangguhkan = computed(() => {
   const sampai = props.kepala?.ditangguhkanSampaiIso
@@ -53,6 +60,7 @@ const hitungan = computed(() => props.kepala
       <div class="flex flex-wrap items-start justify-between gap-x-5 gap-y-3 p-4 sm:p-5">
         <div class="min-w-0 flex-1 basis-64">
           <h2 class="cf-kepala-nama" data-uji="rinci-nama">{{ emailPotong[0] }}<wbr>{{ emailPotong[1] }}</h2>
+          <p v-if="kepala.nama" class="mt-0.5 text-sm font-semibold text-[var(--ca-muted)]" data-uji="rinci-nama-tampilan">{{ kepala.nama }}</p>
           <div class="mt-2 flex flex-wrap items-center gap-2">
             <!-- Satu teks utuh: lencananya flex, jadi spasi di antara dua potongan teks akan hilang. -->
             <span v-if="kepala.ditangguhkan" class="cf-lencana cf-lencana-galat" data-uji="rinci-ditangguhkan">{{ labelDitangguhkan }}</span>
@@ -66,8 +74,8 @@ const hitungan = computed(() => props.kepala
         </div>
       </div>
       <dl class="cf-kepala-fakta">
-        <div><dt>{{ tcf('pengguna.daftar') }}</dt><dd>{{ formatTanggal(kepala.daftarIso) }}</dd></div>
-        <div><dt>{{ tcf('pengguna.masuk') }}</dt><dd>{{ formatTanggal(kepala.masukTerakhirIso) }}</dd></div>
+        <div><dt>{{ tcf('pengguna.daftar') }}</dt><dd data-uji="rinci-daftar">{{ waktuKepala(kepala.daftarIso) }}</dd></div>
+        <div><dt>{{ tcf('pengguna.masuk') }}</dt><dd data-uji="rinci-masuk">{{ waktuKepala(kepala.masukTerakhirIso) }}</dd></div>
         <!-- Nomor WhatsApp: utuh untuk sesi ber-pii, tersamar bila tidak (keKepala).
              Tanpa nomor barisnya tidak ada. -->
         <div v-if="nomorTampil">

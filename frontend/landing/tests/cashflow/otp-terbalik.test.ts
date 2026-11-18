@@ -460,9 +460,11 @@ describe('penjaga komponen cara terbalik', () => {
 describe('penjaga daftar pengguna: Status WhatsApp', () => {
   const hal = baca(HAL_PENGGUNA)
   it('status ada di tabel desktop dan kartu ponsel; kosong bila server belum mengirimnya', () => {
-    // Status WhatsApp kini baris kedua kolom WhatsApp (versi singkat). Kalimat panjangnya ada di rincian pengguna.
-    const selWa = hal.slice(hal.indexOf('<template #cell-wa='), hal.indexOf('<template #cell-versi='))
-    expect(selWa).toMatch(/<span v-if="teksWa\(row\.p\)" class="cf-dua"><span class="cf-titik" :class="titikWa\(row\.p\)" aria-hidden="true" \/>\{\{ teksWa\(row\.p\) \}\}<\/span>/)
+    // Status WhatsApp punya kolom sendiri sejak v5 (19 Nov 2026): cara singkat dengan titik warna, lalu kapan.
+    // Kalimat panjangnya tetap di rincian pengguna.
+    const selWa = hal.slice(hal.indexOf('<template #cell-status_wa='), hal.indexOf('<template #cell-versi='))
+    expect(selWa).toMatch(/<span class="cf-titik" :class="titikWa\(row\.p\)" aria-hidden="true" \/>\{\{ tcf\(`pengguna\.v5\.statusWaPendek\.\$\{row\.p\.statusWa\.status\}`\) \}\}/)
+    expect(selWa).toMatch(/\{\{ waktu\(row\.p, row\.p\.statusWa\.padaIso\) \}\}/)
     const kartu = hal.slice(hal.indexOf('<li v-for="row in barisHalaman"'))
     expect(kartu).toMatch(/\{\{ teksWa\(row\.p\) \}\}/)
     // Tanpa status dari server, barisnya tidak ditulis (barisWa memulangkan null).

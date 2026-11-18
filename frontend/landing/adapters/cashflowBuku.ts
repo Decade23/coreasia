@@ -63,10 +63,23 @@ export interface KepalaPenggunaDTO {
   domi_tanya?: number | string | null
   /** Terakhir memakai Domi, dibulatkan server ke awal hari WIB. null = belum pernah, atau tanpa pii. */
   domi_terakhir?: string | null
+  /**
+   * admin_pengguna_kepala_v2 (20261119101000). true = kepala dibuka dengan
+   * alasan: email, nama ruang, status_wa_pada, dan domi_terakhir utuh, plus
+   * display_name. false atau tidak ada = tersamar seperti v1.
+   */
+  terbuka?: boolean
+  display_name?: string | null
 }
 export interface KepalaPengguna {
   id: string
   emailTersamar: string
+  /** Hanya dari kepala v2 yang dibuka dengan alasan. null = tersamar atau server lama. */
+  emailUtuh: string | null
+  /** Nama tampilan (kepala v2 terbuka). null = tidak dikirim atau kosong. */
+  nama: string | null
+  /** Kepala v2 terbuka: waktu status WhatsApp dan Domi presisi. */
+  terbuka: boolean
   daftarIso: string
   masukTerakhirIso: string | null
   ditangguhkan: boolean
@@ -112,9 +125,13 @@ export function keKepala(d: KepalaPenggunaDTO, sekarang: number = Date.now()): K
   const ditangguhkan = Number.isFinite(sampai) && sampai > sekarang
   const wa = keStatusWaAkun({ status_wa: d.status_wa, status_wa_pada: d.status_wa_pada })
   const domi = keDomiAkun({ domi_tanya: d.domi_tanya, domi_terakhir: d.domi_terakhir })
+  const terbuka = d.terbuka === true
   return {
     id: d.user_id,
     emailTersamar: samarkanEmail(d.email),
+    emailUtuh: terbuka && typeof d.email === 'string' && d.email.includes('@') && !d.email.includes('***') ? d.email : null,
+    nama: terbuka ? (d.display_name?.trim() || null) : null,
+    terbuka,
     daftarIso: d.daftar,
     masukTerakhirIso: d.masuk_terakhir ?? null,
     ditangguhkan,

@@ -46,7 +46,13 @@ const KASUS_W = uuid(701)
 const KASUS_ANAK = uuid(710)
 const CATATAN_PANJANG = 'Tiket 4821, pelapor meminta pengecekan transaksi ganda di ruang usaha yang dipakai bersama tiga anggota lain sejak awal bulan'
 
-const barisPengguna = (a, i, { v4, alasan, pii }) => {
+/* Asal pengguna (v5): sumber dari tautan Play, jawaban pertanyaan sekali ketuk, atau keduanya. */
+const ASAL = [
+  { sumber: 'ig', medium: 'bio', kampanye: 'nov', jawaban: 'instagram' }, { sumber: null, jawaban: 'whatsapp_teman' }, null,
+  { sumber: 'tt', medium: 'video', jawaban: null }, { sumber: 'google-play', medium: 'organic', jawaban: 'play_store' }, { sumber: 'wa', jawaban: 'whatsapp_teman' },
+  { sumber: null, jawaban: 'lewati' }, null, { sumber: 'web', medium: 'landing', jawaban: 'google' }, { sumber: null, jawaban: 'lainnya' },
+]
+const barisPengguna = (a, i, { v4, v5, alasan, pii }) => {
   const dasar = {
     user_id: idAkun(i), email: alasan ? a.email : samar(a.email), display_name: alasan ? a.nama : '',
     created_at: jam(24 * (i + 3) * 9), last_sign_in: jam(5 * (i + 1)), aktivitas_terakhir: jam(4 * (i + 1)),
@@ -60,16 +66,25 @@ const barisPengguna = (a, i, { v4, alasan, pii }) => {
     nomor_ramai: !!a.ramai, kredit_ditahan: !!a.ditahan,
   }
   if (!v4) return dasar
-  return {
+  const baris4 = {
     ...dasar,
     domi_tanya: pii ? a.tanya : null, domi_tanya_30: pii ? a.tiga : null, domi_tanya_kira: pii ? !!a.kira : null,
     domi_terakhir: pii && a.tanya ? jam(7 * (i + 1)) : null,
     kredit_sisa: pii ? a.sisa : null, kredit_beli: pii ? a.beli : null, internal: !!a.tim,
   }
+  if (!v5) return baris4
+  // Tanpa alasan server membulatkan waktu ke awal hari WIB, dengan alasan presisi sampai detik.
+  const hari = iso => (iso ? new Date(Math.floor((Date.parse(iso) + 7 * 3_600_000) / 86_400_000) * 86_400_000 - 7 * 3_600_000).toISOString() : iso)
+  const dicatat = jam(24 * (i + 3) * 9 - 0.25)
+  return {
+    ...baris4,
+    ...(alasan ? {} : { last_sign_in: hari(baris4.last_sign_in), aktivitas_terakhir: hari(baris4.aktivitas_terakhir), status_wa_pada: hari(baris4.status_wa_pada), domi_terakhir: hari(baris4.domi_terakhir) }),
+    asal: pii && ASAL[i] ? { medium: null, kampanye: null, ...ASAL[i], dicatat: alasan ? dicatat : hari(dicatat) } : null,
+  }
 }
-const daftarPengguna = (p, mode, v4) => {
+const daftarPengguna = (p, mode, v4, v5 = false) => {
   const pii = mode.izin
-  let rows = mode.kosong ? [] : AKUN.map((a, i) => ({ a, d: barisPengguna(a, i, { v4, alasan: pii ? p.p_alasan : null, pii }) }))
+  let rows = mode.kosong ? [] : AKUN.map((a, i) => ({ a, d: barisPengguna(a, i, { v4, v5, alasan: pii ? p.p_alasan : null, pii }) }))
   if (p.p_cari) rows = rows.filter(x => x.a.email.includes(p.p_cari))
   return {
     total: rows.length, baris: rows.map(x => ({ ...x.d, total_semua: rows.length })),
@@ -86,6 +101,29 @@ const RUANG = [
   ['War*** *** ***', 'nin***@contoh.invalid', 'usaha', 3, 512, 0], ['Tab***', 'dew***@contoh.invalid', 'pribadi', 1, 0, 0],
   ['Kop*** *** *** ***', 'tok***@contoh.invalid', 'usaha', 126, 1_204_877, 14], ['Pan*** ***', 'lin***@contoh.invalid', 'pribadi', 6, 2_310, 2],
 ].map((r, i) => ({ workspace_id: uuid(100 + i), nama: r[0], pemilik_email: r[1], jenis: r[2], jumlah_anggota: r[3], jumlah_tx: r[4], undangan_aktif: r[5], created_at: jam(24 * (i + 1) * 17), total_semua: 8 }))
+/* v3 (20261119100000): dengan alasan nama, email, dan nama pemilik utuh. Karangan semua. */
+const RUANG_UTUH = [
+  ['Keluarga Wulandari', 0], ['Toko Berkah Jaya Abadi Sentosa Makmur Cabang Pasar Baru', 1], ['Pribadi Rahma', 1], ['Arisan Ibu RT 05', 6],
+  ['Warung Nina', 7], ['Tabungan Dewi', 3], ['Koperasi Toko Berkah', 5], ['Panitia Lomba 17an', 9],
+]
+const daftarRuangV3 = (p, m) => {
+  const buka = m.izin && !!p.p_alasan
+  let baris = m.kosong ? [] : RUANG.map((r, i) => {
+    const [nama, siapa] = RUANG_UTUH[i]
+    const { created_at, total_semua: _t, ...sisa } = r
+    return {
+      ...sisa, dibuat: created_at,
+      ...(buka ? { nama, pemilik_email: AKUN[siapa].email, pemilik_id: idAkun(siapa), pemilik_nama: AKUN[siapa].nama || null } : { pemilik_id: null, pemilik_nama: null }),
+      ...(m.izin ? {} : { jumlah_anggota: null, jumlah_tx: null, undangan_aktif: null }),
+    }
+  })
+  if (p.p_cari) baris = baris.filter(b => `${b.nama} ${b.pemilik_email} ${b.pemilik_nama ?? ''}`.toLowerCase().includes(String(p.p_cari).toLowerCase()))
+  const kunci = { nama: 'nama', pemilik: 'pemilik_email', jenis: 'jenis', anggota: 'jumlah_anggota', tx: 'jumlah_tx', undangan: 'undangan_aktif', dibuat: 'dibuat' }[p.p_urut ?? 'dibuat']
+  const arah = p.p_arah === 'asc' ? 1 : -1
+  baris.sort((a, b) => (typeof a[kunci] === 'number' ? arah * (a[kunci] - b[kunci]) : arah * String(a[kunci]).localeCompare(String(b[kunci]))))
+  const dari = p.p_offset ?? 0
+  return { total: baris.length, terbuka: buka, baris: baris.slice(dari, dari + (p.p_limit ?? 50)) }
+}
 const PEMBELIAN = [
   { status: 'lunas', jalur: 'play', paket: 'kredit_123', kredit: 123, nominal: 99_000, siapa: 1, play: true },
   { status: 'lunas', jalur: 'qris', paket: 'kredit_70', kredit: 70, nominal: 59_000, siapa: 0 },
@@ -244,6 +282,20 @@ const sampahRuang = (p, mode) => {
 const RUANG_SUBJEK = [
   [W, NAMA_RUANG, 'usaha', 'owner', true, 12, 31_204], [W_KELUARGA, 'Keluarga Besar Wiryaatmadja Sastrowardoyo', 'pribadi', 'admin', false, 4, 16_923], [W_PRIBADI, 'Pribadi', 'pribadi', 'owner', true, 1, 86],
 ]
+/* v2 (20261119101000): dengan alasan email, nama, nama ruang, dan waktu utuh. */
+const kepalaPenggunaV2 = (p, mode) => {
+  const buka = mode.izin && !!p.p_alasan
+  const k = kepalaPengguna(p, mode)
+  return {
+    ...k,
+    ...(buka ? {
+      email: EMAIL_PANJANG, display_name: AKUN[1].nama,
+      ruang: k.ruang.map((r, i) => ({ ...r, nama: [NAMA_RUANG, 'Keluarga Wulandari', 'Arisan Ibu RT 05', 'Pribadi Rahma'][i] ?? r.nama })),
+      status_wa: 'kirim', status_wa_pada: jam(24 * 3 + 2.0875),
+    } : { display_name: null }),
+    terbuka: buka,
+  }
+}
 const kepalaPengguna = (p, mode) => ({
   user_id: p.p_user, email: samar(EMAIL_PANJANG), daftar: jam(24 * 412), masuk_terakhir: jam(5), banned_until: p.p_user === U_TANGGUH ? jam(-24 * 21) : null,
   jumlah_ruang: mode.izin ? 4 : null, jumlah_transaksi: mode.izin ? 48_213 : null, akses_30hari: 14,
@@ -350,6 +402,11 @@ const kepalaRuang = (p, mode) => ({
   workspace_id: p.p_ws, nama: mode.izin ? NAMA_RUANG : 'Tok*** *** *** *** *** *** *** *** *** *** ***', jenis: 'usaha', pemilik_email: samar(EMAIL_PANJANG), dibuat: jam(24 * 400),
   jumlah_anggota: mode.izin ? 12 : null, jumlah_transaksi: mode.izin ? 1_204_877 : null, jumlah_dompet: mode.izin ? 6 : null, akses_30hari: 9,
 })
+/* v2 (20261119101000): email utuh. ruang360 di bawah sudah memakai email karangan utuh, v1 menyamarkannya. */
+const ruang360V2 = (p, mode) => {
+  const r = ruang360(p, mode)
+  return { ...r, ruang: { ...r.ruang, pemilik_email: EMAIL_PANJANG, pemilik_nama: AKUN[1].nama }, email_utuh: true }
+}
 const ruang360 = (p, mode) => ({
   kasus: p.p_kasus,
   ruang: {
@@ -666,7 +723,7 @@ const IZIN_KURANG = { status: 403, json: { code: '42501', message: 'izin-kurang'
 /** RPC yang ditolak server kalau sesi tidak memegang cashflow:pii. */
 const BUTUH_PII = new Set([
   'admin_kasus_aktif_ruang', 'admin_kasus_buka', 'admin_kasus_tambah', 'admin_kasus_investigasi', 'admin_kasus_buka_dari_peristiwa', 'admin_corong_buka_kasus',
-  'admin_pengguna_360', 'admin_ruang_360', 'admin_transaksi_cari', 'admin_transaksi_rinci', 'admin_jejak', 'admin_perjalanan_pengguna', 'admin_teks', 'admin_cari_v2',
+  'admin_pengguna_360', 'admin_ruang_360', 'admin_ruang_360_v2', 'admin_transaksi_cari', 'admin_transaksi_rinci', 'admin_jejak', 'admin_perjalanan_pengguna', 'admin_teks', 'admin_cari_v2',
   'admin_dompet_ruang', 'admin_mutasi_dompet', 'admin_periksa_ruang', 'admin_sampah_ruang', 'admin_katalog_ruang', 'admin_jadwal_ruang', 'admin_jadwal_rinci',
   'admin_usaha_ruang', 'admin_stok_ruang', 'admin_struk_ruang', 'admin_patungan_ruang', 'admin_patungan_riwayat', 'admin_perangkat_pengguna', 'admin_kabar_pengguna',
   'admin_ai_percakapan_daftar', 'admin_ai_pesan_daftar', 'admin_ai_pembelian_daftar', 'admin_config_buka',
@@ -683,9 +740,11 @@ const RPC = {
   admin_retensi: (p, m) => (m.kosong ? [] : Array.from({ length: 6 }, (_, i) => ({ kohort: `2026-${String(6 + i).padStart(2, '0')}-01`, mendaftar: 15_000 + i * 2_200, pernah_catat: 11_000 + i * 1_500, catat_30hari: 6_000 + i * 900, bulan_berjalan: i === 5 }))),
   // Daftar
   admin_daftar_pengguna_v4: (p, m) => daftarPengguna(p, m, true),
+  admin_daftar_pengguna_v5: (p, m) => daftarPengguna(p, m, true, true),
   admin_daftar_pengguna_v3: (p, m) => daftarPengguna(p, m, false),
   admin_daftar_pengguna_v2: () => [],
   admin_daftar_ruang_v2: (p, m) => (m.kosong ? [] : RUANG.map(r => (m.izin ? r : { ...r, jumlah_anggota: null, jumlah_tx: null, undangan_aktif: null }))),
+  admin_daftar_ruang_v3: daftarRuangV3,
   admin_aktivitas_terbaru_v2: (p, m) => (m.kosong ? [] : JENIS_AKTIVITAS.map((jenis, i) => ({ id: 880_000 - i, jenis, rentang_nominal: RENTANG[i % RENTANG.length], tanggal: jenis.startsWith('tx') ? tanggal(Math.floor(i / 3)) : null }))),
   admin_langkah_usaha: langkahUsaha,
   admin_corong_alur: corongAlur,
@@ -735,6 +794,7 @@ const RPC = {
   admin_teks: p => ({ jenis: p.p_jenis, baris: (p.p_ids ?? []).map(id => ({ id, note: 'Catatan karangan untuk uji tampilan, cukup panjang supaya terlihat cara teksnya dibungkus di layar sempit.' })) }),
   // Pengguna 360
   admin_pengguna_kepala: kepalaPengguna,
+  admin_pengguna_kepala_v2: kepalaPenggunaV2,
   admin_pengguna_360: pengguna360,
   admin_transaksi_cari: transaksiCari,
   admin_transaksi_rinci: p => ({ sumber: 'transaksi', transaksi: { ...transaksi(0, W), id: p.p_tx, jejak_jadwal: null }, pasangan: [], grup: null, jadwal: null, produk: null, lampiran: { ada_bukti: true, jumlah: 2 }, riwayat: [] }),
@@ -747,6 +807,7 @@ const RPC = {
   // Ruang 360
   admin_ruang_kepala: kepalaRuang,
   admin_ruang_360: ruang360,
+  admin_ruang_360_v2: ruang360V2,
   admin_dompet_ruang: dompetRuang,
   admin_mutasi_dompet: mutasiDompet,
   admin_periksa_ruang: (p, m) => ({ kasus: p.p_kasus, workspace_id: p.p_ws, cek: m.kosong ? [] : [{ cek: 'masa_depan', jumlah: 2 }, { cek: 'transfer_pincang', jumlah: 0 }, { cek: 'dompet_arsip', jumlah: 1 }, { cek: 'calon_ganda', jumlah: 3 }], jumlah_bermasalah: m.kosong ? 0 : 6, diperiksa_pada: new Date(SAAT).toISOString() }),

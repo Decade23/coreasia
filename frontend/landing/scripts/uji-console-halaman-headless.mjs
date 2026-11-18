@@ -72,7 +72,8 @@ const bukaDomi = async (page, { kosong }) => {
 const DAFTAR = [
   { nama: 'ringkasan', jalur: C, harus: 'Menyiapkan dompet/ruang' },
   { nama: 'pengguna', jalur: `${C}/pengguna`, harus: 'rahmawati.kusumaningsih@contoh.invalid' },
-  { nama: 'ruang', jalur: `${C}/ruang`, harus: 'sar***@contoh.invalid' },
+  // Daftar Ruang v3 (19 Nov 2026): sesi ber-pii melihat pemilik utuh.
+  { nama: 'ruang', jalur: `${C}/ruang`, harus: 'sari@contoh.invalid' },
   { nama: 'aktivitas', jalur: `${C}/aktivitas`, harus: 'rekonsiliasi.simpan', tanpaIzin: true },
   { nama: 'corong', jalur: `${C}/corong` },
   { nama: 'kesehatan', jalur: `${C}/kesehatan`, harus: 'activity_events' },
@@ -102,7 +103,8 @@ const TAB_PENGGUNA = [
 ]
 const TAB_RUANG = [
   { nama: 'ruang-rinci', jalur: R, harus: 'Bu Rahma Pemilik Toko', tanpaIzin: true },
-  { nama: 'ruang-rinci-anggota', jalur: `${R}/anggota`, harus: 'kas***@contoh.invalid' },
+  // Ruang 360 v2 (19 Nov 2026): email undangan utuh.
+  { nama: 'ruang-rinci-anggota', jalur: `${R}/anggota`, harus: 'kasir.cabang.1.pasar.baru@contoh.invalid' },
   { nama: 'ruang-rinci-dompet', jalur: `${R}/dompet`, harus: 'Piutang Pelanggan Tetap' },
   { nama: 'ruang-rinci-dompet-patungan', jalur: `${R}/dompet?lihat=patungan` },
   { nama: 'ruang-rinci-transaksi', jalur: `${R}/transaksi`, harus: 'Kas Toko Cabang Pasar Baru' },
@@ -283,6 +285,8 @@ try {
       const g = getComputedStyle(el).overflowX
       if (g !== 'auto' && g !== 'scroll') continue
       if (el.closest('.cf-nav, .cf-tab, .cf-seg-gulir')) continue
+      // Tabel Pengguna sengaja bergulir ke samping dengan kolom pertama lengket (keputusan Master 19 Nov 2026, K3).
+      if (el.closest('.ca-daftar-pengguna')) continue
       gulir.push({ kelas: kelas(el), teks: ringkas(el.innerText), lebih: el.scrollWidth - el.clientWidth })
     }
     const tombol = teks => !!utama && [...utama.querySelectorAll('button')].some(b => tampak(b) && b.innerText.trim() === teks)

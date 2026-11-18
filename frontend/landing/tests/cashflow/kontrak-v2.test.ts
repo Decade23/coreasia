@@ -72,7 +72,7 @@ describe('kontrak RuangDTO ↔ admin_daftar_ruang_v2', () => {
 })
 
 describe('keRuang', () => {
-  const ruang = () => (JSON.parse(RUANG) as RuangDTO[]).map(keRuang)
+  const ruang = () => (JSON.parse(RUANG) as RuangDTO[]).map(d => keRuang(d))
   it('penyamaran adapter idempoten atas bentuk server', () => {
     const [warung, bawaan, pendek] = ruang()
     expect(warung).toMatchObject({ nama: 'Wa······', pemilik: 'ded***@gmail.com', jenis: 'usaha', tx: 1200 })
@@ -81,6 +81,18 @@ describe('keRuang', () => {
   })
   it('jenis yang tidak dikenal → null, bukan dipaksa', () => {
     expect(ruang()[2]!.jenis).toBeNull()
+  })
+  it('v3 terbuka (20261119100000): nilai utuh dari server tidak disamarkan ulang, tanpa terbuka tetap sabuk kedua', () => {
+    const utuh: RuangDTO = {
+      workspace_id: 'w1', nama: 'Warung Sari Rahasia', pemilik_email: 'sari@contoh.invalid', jenis: 'usaha',
+      jumlah_anggota: 3, jumlah_tx: 12, undangan_aktif: 1, dibuat: '2026-11-01T03:00:00Z', pemilik_id: 'u1', pemilik_nama: 'Sari',
+    }
+    expect(keRuang(utuh, { terbuka: true })).toMatchObject({
+      nama: 'Warung Sari Rahasia', pemilik: 'sari@contoh.invalid', terbuka: true, pemilikNama: 'Sari', pemilikId: 'u1', dibuatIso: '2026-11-01T03:00:00Z',
+    })
+    // Tanpa tanda terbuka (atau dipanggil lewat .map dengan indeks) bentuk utuh tetap disamarkan.
+    expect(keRuang(utuh)).toMatchObject({ nama: 'Wa······', pemilik: 'sa***@contoh.invalid', terbuka: false, pemilikNama: null, pemilikId: null })
+    expect([utuh, utuh].map((d, i) => keRuang(d, i as unknown as { terbuka?: boolean }))[1]).toMatchObject({ terbuka: false, nama: 'Wa······' })
   })
 })
 

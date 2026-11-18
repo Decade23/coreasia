@@ -46,7 +46,7 @@ try {
     const req=r.request(); if(req.method()==='OPTIONS')return r.fulfill({status:204,headers:{'access-control-allow-origin':'*','access-control-allow-headers':'*','access-control-allow-methods':'GET,POST,OPTIONS'}});
     const name=new URL(req.url()).pathname.split('/').pop();const p=req.postDataJSON()||{};
     // Server tiruan ini belum memasang daftar v4: jawab seperti PostgREST, halaman jatuh ke v3.
-    if(name==='admin_daftar_pengguna_v4')return r.fulfill({status:404,json:{code:'PGRST202',message:`Could not find the function public.${name} in the schema cache`},headers:{'access-control-allow-origin':'*'}});
+    if(name==='admin_daftar_pengguna_v4'||['admin_daftar_pengguna_v5', 'admin_daftar_ruang_v3', 'admin_pengguna_kepala_v2', 'admin_ruang_360_v2'].includes(name))return r.fulfill({status:404,json:{code:'PGRST202',message:`Could not find the function public.${name} in the schema cache`},headers:{'access-control-allow-origin':'*'}});
     seen.push({name,p});
     let data={};
     if(name==='admin_daftar_pengguna_v3'){

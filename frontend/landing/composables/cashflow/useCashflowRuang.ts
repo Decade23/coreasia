@@ -11,6 +11,7 @@
  */
 import { keKepalaRuang, keRuang360, AKAR_RUANG, type KepalaRuang, type Ruang360DTO } from '~/adapters/cashflowRuang'
 import { samaSubjek } from '~/adapters/cashflowKasus'
+import { denganCadangan } from '~/adapters/cashflowSamaran'
 
 export const useCashflowRuang = () => {
   const route = useRoute()
@@ -28,11 +29,17 @@ export const useCashflowRuang = () => {
   const kunci360 = computed(() => (kasus.kunciKasus.value && kasus.punyaRanah('ruang') ? `${kasus.kunciKasus.value}|r360|${id.value}` : null))
   const mentah360 = computed(() => kasus.data<Ruang360DTO>(kunci360.value))
   const r360 = computed(() => (mentah360.value ? keRuang360(mentah360.value) : null))
+  /* admin_ruang_360_v2 (email utuh, kasus menuntut pii) dulu, v1 di server lama. Lengket selama sesi. */
+  const server360v2 = useState<boolean | null>('cf_server_360v2', () => null)
   const muat360 = async (): Promise<void> => {
     const k = kunci360.value
     if (!k) return
     const ws = id.value
-    await kasus.muatData(k, kk => api.ruang360(kk.id, ws))
+    await kasus.muatData(k, async (kk) => {
+      const j = await denganCadangan({ kenal: server360v2.value, baru: () => api.ruang360V2(kk.id, ws), lama: () => api.ruang360(kk.id, ws) })
+      server360v2.value = j.baru
+      return j.hasil
+    })
   }
 
   /**
@@ -49,13 +56,14 @@ export const useCashflowRuang = () => {
     void kasus.aturLingkup(ws, kep.pii ? [ws] : null)
   }
 
-  /** Label orang di baris transaksi/jejak/sampah: email tersamar anggota atau
-   *  bekas anggota dari 360, selain itu 8 aksara id. */
+  /** Label orang di baris transaksi/jejak/sampah: email anggota atau bekas
+   *  anggota dari 360 (utuh bila server v2 mengirimnya, selain itu tersamar),
+   *  selain itu 8 aksara id. */
   const labelOrang = (uid: string | null): string => {
     if (!uid) return '—'
     const r = r360.value
     const a = r?.anggota.find(x => x.id === uid) ?? r?.bekas.find(x => x.id === uid)
-    return a ? a.emailTersamar : uid.slice(0, 8)
+    return a ? (a.emailUtuh ?? a.emailTersamar) : uid.slice(0, 8)
   }
 
   /** Nama ruang untuk baris/laci: nama utuh dari 360 (di dalam kasus),

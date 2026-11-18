@@ -107,9 +107,12 @@ const asal = (): string | null => {
 const keDaftar = () => (asal() === kembali.value ? router.back() : navigateTo(kembali.value, { replace: true }))
 
 const izinPribadi = computed(() => sesi.boleh('cashflow:pii'))
+/* Email utuh: kepala v2 yang dibuka dengan alasan, lalu akun dari kasus (ranah akun). */
 const emailUtuh = computed(() => {
+  if (!izinPribadi.value) return null
+  if (kepala.value?.id === id.value && kepala.value.emailUtuh) return kepala.value.emailUtuh
   const akun = p360.value?.akun
-  return izinPribadi.value && akun?.id === id.value && akun.email !== '—' ? akun.email : null
+  return akun?.id === id.value && akun.email !== '—' ? akun.email : null
 })
 const labelSubjek = computed(() => emailUtuh.value ?? kepala.value?.emailTersamar ?? indeks.labelUntuk(id.value) ?? id.value.slice(0, 8))
 useConsoleRemah().pasang(() => [

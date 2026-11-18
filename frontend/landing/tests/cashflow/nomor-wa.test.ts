@@ -244,7 +244,9 @@ describe('kepala Pengguna 360: tampilan dan jejak nomor utuh', () => {
     const induk = baca('pages/console/cashflow/pengguna/[id].vue')
     expect(induk).not.toMatch(/indeks\.isi\(/)
     expect(induk).toMatch(/const akun = p360\.value\?\.akun/)
-    expect(induk).toMatch(/izinPribadi\.value && akun\?\.id === id\.value && akun\.email !== '—' \? akun\.email : null/)
+    // Kepala v2 terbuka (20261119101000) dulu, lalu akun dari kasus. Keduanya hanya untuk sesi ber-pii dan subjek ini.
+    expect(induk).toMatch(/if \(!izinPribadi\.value\) return null\s+if \(kepala\.value\?\.id === id\.value && kepala\.value\.emailUtuh\) return kepala\.value\.emailUtuh/)
+    expect(induk).toMatch(/return akun\?\.id === id\.value && akun\.email !== '—' \? akun\.email : null/)
     expect(induk).toMatch(/const labelSubjek = computed\(\(\) => emailUtuh\.value \?\? kepala\.value\?\.emailTersamar/)
     expect(induk).not.toMatch(/kepala\.value\?\.nomorWa/)
     expect(baca('composables/cashflow/useCashflowPengguna.ts')).not.toMatch(/indeks|nomorWa/)
@@ -304,7 +306,7 @@ describe('halaman daftar pengguna memakai satu jalur pembersih', () => {
     expect(SRC).toMatch(/samarkanBaris\(true\)[\s\S]*?hasil = await baca\(null\)/)
   })
   it('ponsel dan desktop memakai halaman yang sama dan hanya menyalin kontak utuh', () => {
-    expect(SRC).toMatch(/<div class="cf-tabel-wadah cf-tabel-tetap hidden lg:block">\s*<DataTable/)
+    expect(SRC).toMatch(/<div data-uji="tabel-pengguna" class="cf-tabel-wadah cf-tabel-lebar hidden lg:block">\s*<DataTable/)
     expect(SRC).toMatch(/<li v-for="row in barisHalaman"/)
     // Tombol salin hanya ada bila server mengirim kontak utuh: sekali di tabel, sekali di kartu.
     expect(SRC.match(/<span v-if="row\.p\.emailPenuh"[^>]*><CashflowSalinKontak jenis="email"/g)).toHaveLength(2)

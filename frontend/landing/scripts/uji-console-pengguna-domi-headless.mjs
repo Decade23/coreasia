@@ -122,6 +122,9 @@ try {
     const name = new URL(req.url()).pathname.split('/').pop()
     const p = req.postDataJSON() || {}
     seen.push({ name, p })
+    // RPC samaran 19 Nov 2026 (v5, ruang v3, kepala v2, 360 v2): server tiruan ini belum memasangnya,
+    // jadi halaman diuji lewat jalur v4 dan v3 yang memang jadi pokok skrip ini.
+    if (['admin_daftar_pengguna_v5', 'admin_daftar_ruang_v3', 'admin_pengguna_kepala_v2', 'admin_ruang_360_v2'].includes(name)) return r.fulfill({ status: 404, headers: cors, json: { code: 'PGRST202', details: null, hint: null, message: `Could not find the function public.${name} in the schema cache` } })
     if (name === 'admin_daftar_pengguna_v2') return r.fulfill({ json: [], headers: cors })
     if (name !== 'admin_daftar_pengguna_v3' && name !== 'admin_daftar_pengguna_v4') return r.fulfill({ json: {}, headers: cors })
     const baru = name === 'admin_daftar_pengguna_v4'

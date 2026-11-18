@@ -31,6 +31,7 @@ import { tanggalPendek, hariIniWib, geserHari, type BahasaWaktu } from './cashfl
 import { tombolPengumuman } from './cashflowPengumumanTautan'
 import { keStatusWaAkun, type StatusWaAkun, type StatusWaAkunDTO } from './cashflowWa'
 import { akunTim, keDomiAkun, type DomiAkun, type DomiAkunDTO, type KepalaDomiDTO } from './cashflowPenggunaDomi'
+import { keAsal, type Asal, type AsalDTO } from './cashflowPenggunaKolom'
 import type { PlayProsesKesehatanDTO } from './cashflowPembelian'
 
 export {
@@ -79,6 +80,8 @@ export interface PenggunaDTO extends StatusWaAkunDTO, DomiAkunDTO {
   total_semua: number
   /** null bila fitur permintaan hapus belum tersedia di server. */
   menunggu_hapus?: boolean | null
+  /** v5 (20261119102000): asal pengguna, lihat cashflowPenggunaKolom.ts. Tidak ada sebelum v5. */
+  asal?: AsalDTO | null
 }
 /** Jawaban admin_daftar_pengguna_v3 dan v4 (v4 menambah jumlah_pakai_domi). */
 export interface DaftarPenggunaDTO extends KepalaDomiDTO {
@@ -106,7 +109,7 @@ export interface AktivitasDTO {
   tanggal: string; pada: string | null; pada_perangkat?: string | null; ruang?: string | null
   rentang_nominal?: string; ruang_pendek?: string | null
 }
-/** Nilai CHECK workspaces_jenis (M/0019:48) = penjaga p_jenis admin_daftar_ruang_v2. */
+/** Nilai CHECK workspaces_jenis (M/0019:48) = penjaga p_jenis admin_daftar_ruang_v2 dan v3. */
 export const JENIS_RUANG = ['pribadi', 'usaha'] as const
 export type JenisRuang = typeof JENIS_RUANG[number]
 /** admin_daftar_ruang_v2 (M/0087 §5): nama dan pemilik SUDAH tersamar di server;
@@ -115,7 +118,10 @@ export interface RuangDTO {
   workspace_id: string; nama: string | null; pemilik_email: string | null; jenis: string
   /** Ketiga hitungan null untuk sesi tanpa cashflow:pii (M/0089 §15 (d)). */
   jumlah_anggota: number | null; jumlah_tx: number | null; undangan_aktif: number | null
-  created_at: string; total_semua: number
+  /** v2: created_at dan total_semua. v3 (20261119100000) memakai `dibuat`, totalnya di kepala jawaban. */
+  created_at?: string; total_semua?: number; dibuat?: string
+  /** v3 dengan alasan: id dan nama tampilan pemilik. null tanpa alasan. */
+  pemilik_id?: string | null; pemilik_nama?: string | null
 }
 /** admin_daftar_config_v2 (M/0087 §6). admin.pengecualian_email dikirim sebagai
  *  larik bentuk tersamar tanpa '@' ('ded*** · gmail.com'); nilai lain yang
@@ -163,6 +169,10 @@ export interface Pengguna {
   emailTersamar: string
   /** Hanya terisi bila server memulangkan email utuh (daftar dibuka dengan alasan). */
   emailPenuh: string | null
+  /** Server memulangkan baris ini utuh (daftar dibuka dengan alasan): waktunya presisi. */
+  terbuka: boolean
+  /** Asal pengguna (v5). null = tidak dikirim, tanpa izin, atau belum tercatat. */
+  asal: Asal | null
   /** Nomor WhatsApp, SELALU tersamar ('0812 •••• 7890'); null = tidak ada nomor
    *  (atau server belum mengirim kolomnya). */
   nomorTersamar: string | null
@@ -246,8 +256,13 @@ export interface Keberhasilan { jumlah: number; pembanding: number; pengecualian
 
 export interface Ruang {
   id: string
-  nama: string              // tersamar (server), '—' bila kosong
-  pemilik: string           // tersamar (server), '—' bila akunnya sudah tiada
+  nama: string              // tersamar (server) kecuali `terbuka`, '—' bila kosong
+  pemilik: string           // email pemilik, tersamar kecuali `terbuka`, '—' bila akunnya sudah tiada
+  /** v3 dibuka dengan alasan: nama dan email utuh dari server. */
+  terbuka: boolean
+  /** Hanya bila `terbuka`: nama tampilan dan id pemilik. */
+  pemilikNama: string | null
+  pemilikId: string | null
   jenis: JenisRuang | null  // null = nilai yang tidak dikenal
   /* null = server tidak mengirim hitungan (sesi tanpa pii) — bukan 0. */
   anggota: number | null
@@ -502,6 +517,8 @@ export function kePengguna(d: PenggunaDTO, bahasa: BahasaWaktu = 'id', menungguH
     nama: terbuka ? d.display_name?.trim() || null : null,
     emailTersamar: samarkanEmail(d.email),
     emailPenuh: terbuka ? d.email : null,
+    terbuka,
+    asal: keAsal(d.asal),
     // Satu sakelar membuka email dan nomor: tanpa `terbuka`, nomor yang
     // kebetulan utuh tetap disamarkan di sini (sabuk kedua, seperti email).
     nomorTersamar: samarkanNomorWa(d.nomor_wa),
@@ -654,17 +671,27 @@ export function keKeberhasilan(d: KeberhasilanDTO | null | undefined): Keberhasi
 }
 
 const JENIS_RUANG_SET: ReadonlySet<string> = new Set(JENIS_RUANG)
-export function keRuang(d: RuangDTO): Ruang {
+/**
+ * `terbuka`: jawaban v3 yang dibuka dengan alasan (kepala `terbuka` true).
+ * Nilai utuh dari server TIDAK disamarkan ulang. Tanpa itu nama dan pemilik
+ * tetap lewat sabuk kedua (idempoten atas bentuk tersamar server), seperti v2.
+ * Argumen kedua objek, supaya `.map(keRuang)` (indeks sebagai argumen kedua)
+ * tidak pernah membuka apa pun.
+ */
+export function keRuang(d: RuangDTO, o?: { terbuka?: boolean }): Ruang {
+  const terbuka = typeof o === 'object' && o !== null && o.terbuka === true
   return {
     id: d.workspace_id,
-    // Server sudah menyamarkan; keduanya idempoten atas bentuk server.
-    nama: samarkanNamaRuang(d.nama),
-    pemilik: samarkanEmail(d.pemilik_email),
+    nama: terbuka ? (d.nama?.trim() || '—') : samarkanNamaRuang(d.nama),
+    pemilik: terbuka ? (d.pemilik_email?.trim() || '—') : samarkanEmail(d.pemilik_email),
+    terbuka,
+    pemilikNama: terbuka ? (d.pemilik_nama?.trim() || null) : null,
+    pemilikId: terbuka ? (d.pemilik_id ?? null) : null,
     jenis: JENIS_RUANG_SET.has(d.jenis) ? (d.jenis as JenisRuang) : null,
     anggota: angkaAtauNull(d.jumlah_anggota),
     tx: angkaAtauNull(d.jumlah_tx),
     undangan: angkaAtauNull(d.undangan_aktif),
-    dibuatIso: d.created_at,
+    dibuatIso: d.created_at ?? d.dibuat ?? '',
   }
 }
 

@@ -994,7 +994,8 @@ dijelaskan di "Tabel dan daftar area CashFlow".
   sama sekali. Tautan yang membawa `?urut=domi` atau `?seg=pakai_domi` kembali ke bawaan tanpa galat,
   dan v3 tidak pernah menerima nilai itu. Selama tab yang sama, v4 hanya ditanyai sekali. Sesudah
   migrasinya terpasang, muat ulang halaman supaya kolomnya muncul.
-- Tabelnya tidak bergulir ke samping di jendela 1280 px ke atas. Di bawah 1024 px daftar berupa kartu.
+- Sejak daftar v5 (19 Nov 2026) tabel Pengguna boleh bergulir ke samping di dalam bingkainya dengan kolom
+  pertama lengket, lihat "Buka samaran dan tabel Pengguna lengkap". Di bawah 1024 px daftar berupa kartu.
 
 Pasang: SQL CashFlow dulu, baru landing. Landing boleh tayang lebih dulu karena jatuh ke v3. Mundur
 landing cukup.
@@ -1252,12 +1253,16 @@ Semua tabel dan daftar di halaman CashFlow memakai rupa dan komponen yang sama.
 - **Pil segmen.** Hanya `CashflowSegmen`. Hitungan di samping label ditulis bila angkanya memang sudah
   ada (`jumlah`). Di daftar pengguna itu berarti hanya segmen yang sedang tampil, tanpa kata cari dan
   saringan, karena server tidak mengirim hitungan per segmen.
-- **Daftar pengguna.** Tujuh kolom dan panah ke rincian: Pengguna, WhatsApp, Versi, Aktif terakhir,
-  Tanya Domi, Kredit, Ruang. Lebar kolomnya tetap dan kolom Pengguna mengambil sisanya, jadi email 38
-  huruf muat utuh di jendela 1440 px tanpa gulir samping.
-  - **Urut.** Satu pilihan di atas tabel memuat semua nilai `p_urut`, termasuk yang tidak punya kolom
-    (tanggal daftar, jumlah transaksi, total nominal, terakhir pakai Domi). Saat salah satunya dipakai,
-    nilainya ditulis kecil di baris kedua kolom terdekat. Kepala kolom tetap bisa diklik.
+- **Daftar pengguna.** Sejak v5 (keputusan Master 19 Nov 2026, K3) semua kunci baris jadi kolom:
+  Pengguna, Nama, WhatsApp, Status WhatsApp, Versi, Status, Daftar, Masuk terakhir, Aktif terakhir,
+  Ruang, Transaksi, Total nominal, Tanya Domi, Domi 30 hari, Terakhir pakai Domi, Sisa kredit, Kredit
+  dibeli, dan Sumber. Daftar kolomnya di `adapters/cashflowPenggunaKolom.ts` (`KOLOM_PENGGUNA`). Tabel
+  selebar isinya dan **boleh bergulir ke samping** di dalam bingkainya. Kolom Pengguna lengket di kiri,
+  jadi email 38 huruf tetap utuh dan baris tetap terbaca saat digulir. Halamannya sendiri tidak meluber.
+  Aturan "tanpa gulir samping di 1440 px" tetap berlaku untuk tabel lain.
+  - **Urut.** Setiap kepala kolom mengurutkan di server. Pilihan di atas tabel memuat semua nilai
+    `p_urut` yang sama, untuk layar sempit. Kepala yang urutannya belum dikenal server (server v3 atau
+    v4) atau butuh izin yang tidak dipegang sesi tidak bisa diklik.
   - **Saring.** Saringan kolom pindah ke satu panel. Kunci dan nilai `p_filter` tidak berubah.
   - Parameter URL tidak berubah (`?seg`, `?urut`, `?arah`, `?hal`), jadi tautan lama tetap bekerja.
     Pemetaannya ada di `adapters/cashflowPenggunaDaftar.ts`.
@@ -1290,11 +1295,48 @@ node scripts/uji-console-tabel-daftar-headless.mjs
 node scripts/uji-console-kepala-rinci-headless.mjs
 ```
 
-Skrip itu menuntut gulir samping tabel pengguna 0 di 1440 px, email 38 huruf utuh, dan tidak ada
-halaman yang meluber di 390 px. `tests/cashflow/pengguna-daftar.test.ts` membandingkan parameter yang
+Skrip itu menuntut semua kolom v5 di tabel pengguna, kolom pertama lengket, email 38 huruf utuh, dan
+tidak ada halaman yang meluber di 1440 maupun 390 px. Gulir samping di dalam bingkai tabel pengguna
+dicatat (`gulirTabel1440_*`) tetapi tidak lagi digagalkan. `tests/cashflow/pengguna-daftar.test.ts` membandingkan parameter yang
 dikirim pilihan Urut dan panel Saring dengan yang dikirim kepala kolom sebelumnya, untuk semua
 kombinasi. Uji komponen (`tabel-pil.test.ts`) merender berkas `.vue` lewat `sfcUntukUji` di
 `vitest.config.ts`, tanpa memuat Nuxt.
+
+### Buka samaran dan tabel Pengguna lengkap (19 Nov 2026)
+
+Keputusan Master 19 Nov 2026 (K1, K3, K7). Migrasi CashFlow
+`20261119100000` (daftar Ruang v3), `20261119101000` (Ruang 360 v2 dan kepala Pengguna v2), dan
+`20261119102000` (daftar Pengguna v5). Ketiganya add-only, fungsi lama tetap ada.
+
+- **Daftar Ruang** memanggil `admin_daftar_ruang_v3`: diurutkan per kolom dan berhalaman 50 di server.
+  Sesi ber-pii dengan sakelar **Kontak lengkap** menyala mengirim alasan tetap
+  (`ALASAN_DAFTAR_RUANG` di `adapters/cashflowSamaran.ts`). Nama ruang, email pemilik, dan nama pemilik
+  tampil utuh, pencarian ikut mencocokkan nilai aslinya, dan setiap halaman tercatat
+  `daftar_ruang_terbuka` (terdampak pemilik dan semua anggota ruang yang tampil). Sakelarnya sama
+  dengan daftar Pengguna (`cf_kontak_disamarkan_oleh`). Tanpa pii isinya tersamar persis seperti v2.
+  `keRuang` tidak menyamarkan ulang nilai yang dikirim utuh. Baris tabel dan kartu ponsel membuka
+  Ruang 360. Server tanpa v3 (`PGRST202`) jatuh ke v2 seperti sebelumnya.
+- **Ruang 360** memanggil `admin_ruang_360_v2`: email pemilik (di kepala), anggota, bekas anggota, dan
+  target undangan utuh. Kasus ranah ruang sudah menuntut pii dan alasannya alasan kasus. Audit
+  `baca_ruang` bertanda `email_utuh`. Ini membalik keputusan 0094 atas perintah Master.
+- **Kepala Pengguna 360** memanggil `admin_pengguna_kepala_v2` dengan alasan tetap
+  (`ALASAN_KEPALA_PENGGUNA`) untuk sesi ber-pii: email, nama tampilan, nama ruang, dan waktu sampai
+  detik. Sesi tanpa pii tetap memanggil kepala v1.
+- **Daftar Pengguna** memanggil `admin_daftar_pengguna_v5`, lalu v4, lalu v3 untuk server lama. v5
+  menambah tujuh nilai urut (`masuk`, `status`, `status_wa`, `kredit_beli`, `domi_30`, `nama`,
+  `sumber`) dan kunci `asal` per baris. `nama` hanya bila kontak dibuka, tiga yang berhitungan hanya
+  dengan pii. Waktu ditulis `19 Nov 2026 14.05.09` (WIB, `waktuDetikWib`) saat kontak dibuka, tanggal
+  saja bila tidak, karena server membulatkannya. Kolom **Sumber** membaca `asal` (tabel
+  `asal_pengguna` dibuat tiket T4, sebelum itu kolomnya garis).
+
+Pasang: SQL CashFlow dulu (urutan bebas di antara ketiganya), baru landing. Landing boleh tayang lebih
+dulu karena setiap halaman jatuh ke RPC lama.
+
+```bash
+npx vitest run tests/cashflow/pengguna-daftar.test.ts tests/cashflow/kontrak-v2.test.ts tests/cashflow/rpc-console.test.ts
+# Ruang v3, Ruang 360 v2, kepala v2, tabel Pengguna v5, server lama, terang dan gelap, 1440 dan 390:
+node scripts/uji-console-samaran-headless.mjs
+```
 
 ## Halaman rinci, Domi, dan kartu ponsel
 

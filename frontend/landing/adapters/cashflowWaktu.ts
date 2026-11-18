@@ -111,11 +111,16 @@ const jamDetikWib = new Intl.DateTimeFormat('en-GB', {
   timeZone: ZONA_WIB, hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23',
 })
 
-export function waktuDetikWib(nilai: string, bahasa: BahasaWaktu = 'id'): string {
+/**
+ * '19 Nov 2026 14.05.09 WIB' ('14:05:09' untuk 'en'). `zona: false` membuang
+ * akhiran WIB, untuk tabel yang menulis zonanya sekali di keterangan kolom.
+ * Kosong/rusak → '—'.
+ */
+export function waktuDetikWib(nilai: string | null | undefined, bahasa: BahasaWaktu = 'id', o: { zona?: boolean } = {}): string {
   const tanggal = keDate(nilai)
-  if (!tanggal) return '—'
+  if (!tanggal || !nilai) return '—'
   const jam = jamDetikWib.format(tanggal)
-  return `${tanggalPendek(nilai, bahasa)} ${bahasa === 'id' ? jam.replaceAll(':', '.') : jam} WIB`
+  return `${tanggalPendek(nilai, bahasa)} ${bahasa === 'id' ? jam.replaceAll(':', '.') : jam}${o.zona === false ? '' : ' WIB'}`
 }
 
 /** Nilai untuk <input type="datetime-local"> yang DIBACA sebagai WIB: 'YYYY-MM-DDTHH:mm'. */

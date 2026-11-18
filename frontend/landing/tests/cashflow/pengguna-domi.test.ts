@@ -317,30 +317,36 @@ describe('penjaga daftar pengguna: pemakai Domi', () => {
     expect(hal).toMatch(/const adaDomi = computed\(\(\) => serverDomi\.value === true\)/)
   })
   it('kolom, segmen, saringan tim, jumlah, dan keterangan hanya bila server memasang v4', () => {
-    expect(hal).toMatch(/\.\.\.\(adaDomi\.value \? \[\s+\{ key: 'domi',[^\n]+\n\s+\{ key: 'kredit',[^\n]+\n\s+\] : \[\]\),/)
+    // Sejak v5 kolom berasal dari KOLOM_PENGGUNA: Domi dan kredit bertanda server 4, jadi hanya tampil bila v4 (atau v5) terpasang.
+    expect(hal).toMatch(/const tingkatServer = computed<3 \| 4 \| 5>\(\(\) => \(adaV5\.value \? 5 : adaDomi\.value \? 4 : 3\)\)/)
+    expect(hal).toMatch(/return kolomUntuk\(tingkatServer\.value\)\.map\(k => \(\{/)
+    const kolom = baca('adapters/cashflowPenggunaKolom.ts')
+    for (const k of ['domi', 'domi_30', 'domi_terakhir', 'kredit', 'kredit_beli']) expect(kolom).toMatch(new RegExp(`\\{ key: '${k}', urut: '${k}', server: 4 \\}`))
     expect(hal).toMatch(/\.\.\.\(adaDomi\.value \? \[\s+\{ kunci: SEGMEN_PAKAI_DOMI,[^\n]+\n\s+\{ kunci: SEGMEN_BELI_KREDIT,/)
     // Saringan akun tim ada di panel Saring, satu untuk layar lebar dan ponsel.
     expect(hal.match(/<label v-if="adaDomi"/g)).toHaveLength(1)
     expect(hal).toMatch(/<p v-if="adaDomi && jumlahDomi !== null"/)
     // Keterangan kolom Domi pindah ke panel "Arti tiap kolom".
     expect(hal).toMatch(/\.\.\.\(adaDomi\.value \? \[\{ judul: [^\n]*isi: tcf\('pengguna\.domi\.ket'\) \}\] : \[\]\),/)
-    // Terakhir pakai Domi tidak lagi kolom: urutannya lewat pilihan Urut, tanggalnya di rincian.
-    expect(hal).not.toMatch(/key: 'domi_terakhir'/)
+    // Terakhir pakai Domi kembali jadi kolom sendiri (v5, semua kunci jadi kolom), tanggalnya juga di rincian.
+    expect(hal).toMatch(/<template #cell-domi_terakhir="\{ row \}">/)
   })
   it('ketiga urutan Domi bisa dipakai, kecuali tanpa izin, dan tidak punya saringan teks', () => {
     const daftar = baca('adapters/cashflowPenggunaDaftar.ts')
     // Kepala kolom Tanya Domi dan Kredit mengurutkan. Ketiganya ada di pilihan Urut.
-    for (const k of ['domi', 'kredit']) expect(hal).toMatch(new RegExp(`key: '${k}',[^\\n]*sortable: urut\\('${k}'\\), filterable: false`))
-    expect(hal).toMatch(/const urut = \(k: UrutPengguna\) => URUT_BERKOLOM\.includes\(k\) && \(!URUT_PRIBADI\.includes\(k\) \|\| !tanpaHitungan\.value\)/)
-    expect(daftar).toMatch(/export const URUT_PENGGUNA = \[[^\]]*'nominal', \.\.\.URUT_DOMI\] as const/)
+    // Setiap kepala kolom mengurutkan lewat urutBoleh: tanpa izin, server lama, dan urut nama tanpa kontak mati.
+    expect(hal).toMatch(/key: k\.key, label: tcf\(LABEL_KOLOM\[k\.key\]\), sortable: urut\(k\.urut\), filterable: false/)
+    expect(hal).toMatch(/const urut = \(k: string\) => URUT_BERKOLOM\.includes\(k as UrutPengguna\) && urutBoleh\(k as UrutPengguna, keadaanUrut\.value\)/)
+    expect(daftar).toMatch(/export const URUT_PENGGUNA = \[[^\]]*'nominal', \.\.\.URUT_DOMI, \.\.\.URUT_V5\] as const/)
     expect(daftar).toMatch(/if \(urutDomi\(k\) && !o\.adaDomi\) return false/)
     expect(daftar).toMatch(/return !\(o\.tanpaHitungan && URUT_PRIBADI\.includes\(k\)\)/)
   })
   it('izin kurang: urut dan segmen Domi diperlakukan sama dengan ruang, tx, nominal', () => {
     const daftar = baca('adapters/cashflowPenggunaDaftar.ts')
-    expect(daftar).toMatch(/export const URUT_PRIBADI: readonly UrutPengguna\[\] = \['ruang', 'tx', 'nominal', \.\.\.URUT_DOMI\]/)
+    expect(daftar).toMatch(/export const URUT_PRIBADI: readonly UrutPengguna\[\] = \['ruang', 'tx', 'nominal', \.\.\.URUT_DOMI, \.\.\.URUT_PRIBADI_V5\]/)
     expect(daftar).toMatch(/export const segmenButuhHitungan = \(k: string\): boolean => k === 'belum' \|\| k === 'catat7' \|\| segmenDomi\(k\)/)
-    expect(hal).toMatch(/tanpaKontakUtuh\(rows\)\s+\.map\(row => tanpaHitunganDomi\(\{ \.\.\.row, jumlah_ruang: null, jumlah_tx: null, jumlah_nominal: null \}\)\)/)
+    // Sejak v5 asal pengguna ikut dibuang bersama hitungan saat izin hilang (hanya bila server mengirim kuncinya).
+    expect(hal).toMatch(/tanpaKontakUtuh\(rows\)\s+\.map\(row => tanpaHitunganDomi\(\{ \.\.\.row, jumlah_ruang: null, jumlah_tx: null, jumlah_nominal: null, \.\.\.\(row\.asal !== undefined \? \{ asal: null \} : \{\}\) \}\)\)/)
     expect(hal).toMatch(/jumlahDomi\.value = tanpaHitungan\.value \? null : jumlahPakaiDomi\(hasil\)/)
     expect(hal).toMatch(/if \(tanpaDataPribadi\) \{ jumlahDomi\.value = null; bawaan\.kosongkan\(\) \}/)
   })
@@ -348,7 +354,7 @@ describe('penjaga daftar pengguna: pemakai Domi', () => {
     expect(hal).toMatch(/if \(!hasil\) \{ lepasDomi\(\); return \}/)
     expect(hal).toMatch(/e instanceof GalatAdmin && e\.hint === 'saringan' && butuhV4\(q\.value, filter\)/)
     expect(hal).toMatch(/segmenDomi\(q\.value\.seg\) \? \{ seg: 'semua' as const \} : \{\}/)
-    expect(hal).toMatch(/urutDomi\(q\.value\.urut\) \? \{ urut: 'daftar' as const, arah: 'desc' as const \} : \{\}/)
+    expect(hal).toMatch(/urutDomi\(q\.value\.urut\) \|\| \(urutV5\(q\.value\.urut\) && !adaV5\.value\) \? \{ urut: 'daftar' as const, arah: 'desc' as const \} : \{\}/)
   })
   it('saringan akun tim hanya mengirim ya atau tidak, terpisah dari saringan kolom dasar', () => {
     const daftar = baca('adapters/cashflowPenggunaDaftar.ts')
@@ -363,7 +369,9 @@ describe('penjaga daftar pengguna: pemakai Domi', () => {
     expect(hal.match(/<span v-if="row\.p\.tim" class="ca-pill-info/g)).toHaveLength(2)
     expect(hal).toMatch(/<template #cell-domi="\{ row \}">/)
     expect(hal).toMatch(/<template #cell-kredit="\{ row \}">/)
-    expect(hal.match(/row\.p\.domi\?\.kreditBeli \? tcf\('pengguna\.kreditBeli'\) : tcf\('pengguna\.kreditGratis'\)/g)).toHaveLength(2)
+    // Tabel punya kolom Kredit dibeli sendiri (v5), jadi baris kedua Pernah beli atau Gratis tinggal di kartu ponsel.
+    expect(hal.match(/row\.p\.domi\?\.kreditBeli \? tcf\('pengguna\.kreditBeli'\) : tcf\('pengguna\.kreditGratis'\)/g)).toHaveLength(1)
+    expect(hal).toMatch(/<template v-for="k in \(\['ruang', 'tx', 'kredit_beli', 'domi_30'\] as const\)"/)
   })
   it('batas bawah ditulis "42+" dengan keterangan saat disorot, di tabel dan di kartu', () => {
     expect(hal).toMatch(/:title="row\.p\.domi\?\.kira \? tcf\('pengguna\.domi\.kira'\) : undefined"/)
