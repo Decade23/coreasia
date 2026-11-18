@@ -194,22 +194,22 @@ const waktu = (iso: string | null) => (iso ? waktuDetikWib(iso, bahasa.value) : 
 const kolomRuang = computed(() => [
   { key: 'nama', label: tcf('laporan.saldo.kolom.ruang'), sortable: true, filterable: false },
   { key: 'pemilik', label: tcf('laporan.saldo.kolom.pemilik'), filterable: false },
-  { key: 'uang_nyata', label: tcf('laporan.saldo.kolom.uang'), sortable: true, filterable: false, width: '150px', class: 'cf-ka', headerClass: 'cf-ka' },
-  { key: 'piutang', label: tcf('laporan.saldo.kolom.piutang'), sortable: true, filterable: false, width: '120px', class: 'cf-ka', headerClass: 'cf-ka' },
-  { key: 'minus', label: tcf('laporan.saldo.kolom.minus'), sortable: true, filterable: false, width: '150px', class: 'cf-ka', headerClass: 'cf-ka' },
-  { key: 'dompet', label: tcf('laporan.saldo.kolom.dompet'), sortable: true, filterable: false, width: '84px', class: 'cf-ka', headerClass: 'cf-ka' },
-  { key: 'anggota', label: tcf('laporan.saldo.kolom.anggota'), sortable: true, filterable: false, width: '92px', class: 'cf-ka', headerClass: 'cf-ka' },
-  { key: 'terakhir', label: tcf('laporan.saldo.kolom.terakhir'), sortable: true, filterable: false, width: '170px' },
+  { key: 'uang_nyata', label: tcf('laporan.saldo.kolom.uang'), sortable: true, filterable: false, width: '148px', class: 'cf-ka', headerClass: 'cf-ka' },
+  { key: 'piutang', label: tcf('laporan.saldo.kolom.piutang'), sortable: true, filterable: false, width: '116px', class: 'cf-ka', headerClass: 'cf-ka' },
+  { key: 'minus', label: tcf('laporan.saldo.kolom.minus'), sortable: true, filterable: false, width: '132px', class: 'cf-ka', headerClass: 'cf-ka' },
+  { key: 'dompet', label: tcf('laporan.saldo.kolom.dompet'), sortable: true, filterable: false, width: '80px', class: 'cf-ka', headerClass: 'cf-ka' },
+  { key: 'anggota', label: tcf('laporan.saldo.kolom.anggota'), sortable: true, filterable: false, width: '88px', class: 'cf-ka', headerClass: 'cf-ka' },
+  { key: 'terakhir', label: tcf('laporan.saldo.kolom.terakhir'), sortable: true, filterable: false, width: '156px' },
 ])
 const kolomPengguna = computed(() => [
   { key: 'nama', label: tcf('laporan.saldo.kolom.pengguna'), sortable: true, filterable: false },
-  { key: 'pribadi', label: tcf('laporan.saldo.kolom.pribadi'), filterable: false, width: '140px', class: 'cf-ka', headerClass: 'cf-ka' },
-  { key: 'usaha', label: tcf('laporan.saldo.kolom.usaha'), filterable: false, width: '140px', class: 'cf-ka', headerClass: 'cf-ka' },
+  { key: 'pribadi', label: tcf('laporan.saldo.kolom.pribadi'), filterable: false, width: '136px', class: 'cf-ka', headerClass: 'cf-ka' },
+  { key: 'usaha', label: tcf('laporan.saldo.kolom.usaha'), filterable: false, width: '136px', class: 'cf-ka', headerClass: 'cf-ka' },
   { key: 'uang_nyata', label: tcf('laporan.saldo.kolom.total'), sortable: true, filterable: false, width: '150px', class: 'cf-ka', headerClass: 'cf-ka' },
-  { key: 'piutang', label: tcf('laporan.saldo.kolom.piutang'), sortable: true, filterable: false, width: '120px', class: 'cf-ka', headerClass: 'cf-ka' },
-  { key: 'minus', label: tcf('laporan.saldo.kolom.minus'), sortable: true, filterable: false, width: '140px', class: 'cf-ka', headerClass: 'cf-ka' },
+  { key: 'piutang', label: tcf('laporan.saldo.kolom.piutang'), sortable: true, filterable: false, width: '116px', class: 'cf-ka', headerClass: 'cf-ka' },
+  { key: 'minus', label: tcf('laporan.saldo.kolom.minus'), sortable: true, filterable: false, width: '128px', class: 'cf-ka', headerClass: 'cf-ka' },
   { key: 'ruang_lain', label: tcf('laporan.saldo.kolom.ruangLain'), sortable: true, filterable: false, width: '110px', class: 'cf-ka', headerClass: 'cf-ka' },
-  { key: 'terakhir', label: tcf('laporan.saldo.kolom.terakhir'), sortable: true, filterable: false, width: '170px' },
+  { key: 'terakhir', label: tcf('laporan.saldo.kolom.terakhir'), sortable: true, filterable: false, width: '156px' },
 ])
 interface BarisRuang { id: string; r: SaldoRuang }
 interface BarisPengguna { id: string; p: SaldoPengguna }
@@ -312,7 +312,7 @@ useConsoleRemah().pasang(() => [
       <section class="ca-console-dialog min-w-0 p-5">
         <h2 class="font-display text-base font-bold text-[var(--ca-text)]">{{ tcf('laporan.jam.perHari') }}</h2>
         <div class="mt-4">
-          <CashflowBarRows v-if="peta.total.transaksi" :baris="perHariPekan" />
+          <CashflowBarRows v-if="peta.total.transaksi" :baris="perHariPekan" :dasar="Math.max(...peta.perHari)" />
           <CashflowKeadaanKosong v-else :pesan="tcf('laporan.jam.kosong')" icon="lucide:calendar-clock" />
         </div>
       </section>
@@ -368,7 +368,7 @@ useConsoleRemah().pasang(() => [
         </section>
         <section class="ca-console-dialog min-w-0 p-5" data-uji="laporan-asal-jawaban">
           <h2 class="font-display text-base font-bold text-[var(--ca-text)]">{{ tcf('laporan.asal.jawabanJudul') }}</h2>
-          <div class="mt-4"><CashflowBarRows :baris="barisJawaban" /></div>
+          <div class="mt-4"><CashflowBarRows :baris="barisJawaban" :dasar="Math.max(0, ...barisJawaban.map(b => b.nilai))" /></div>
         </section>
       </div>
     </template>
@@ -405,18 +405,19 @@ useConsoleRemah().pasang(() => [
         </div>
       </div>
 
-      <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5" data-uji="saldo-ubin">
-        <CashflowStatTile icon="lucide:wallet" warna="emerald" :label="tcf('laporan.saldo.ubinUang')" :nilai="rp(saldo.ringkas.isi.uangNyata)" :keterangan="tcf('laporan.saldo.ubinUangKet')(angka(saldo.ringkas.jumlah))" />
-        <CashflowStatTile icon="lucide:user" warna="sky" :label="tcf('laporan.saldo.ubinPribadi')" :nilai="rp(saldo.ringkas.pribadi.uangNyata)" :keterangan="tcf('laporan.saldo.ubinRuangKet')(angka(saldo.ringkas.pribadi.ruang))" />
-        <CashflowStatTile icon="lucide:store" warna="amber" :label="tcf('laporan.saldo.ubinUsaha')" :nilai="rp(saldo.ringkas.usaha.uangNyata)" :keterangan="tcf('laporan.saldo.ubinRuangKet')(angka(saldo.ringkas.usaha.ruang))" />
-        <CashflowStatTile icon="lucide:notebook-pen" warna="netral" :label="tcf('laporan.saldo.ubinPiutang')" :nilai="rp(saldo.ringkas.isi.piutang)" :keterangan="tcf('laporan.saldo.ubinPiutangKet')" />
-        <CashflowStatTile icon="lucide:trending-down" warna="rose" :label="tcf('laporan.saldo.ubinMinus')" :nilai="rp(saldo.ringkas.isi.dompetMinusTotal)" :keterangan="tcf('laporan.saldo.ubinMinusKet')(angka(saldo.ringkas.isi.dompetMinus))" />
+      <!-- Angka ubin diringkas (Rp 1,2 M) supaya muat satu baris. Angka utuhnya di keterangan. -->
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-5" data-uji="saldo-ubin">
+        <CashflowStatTile icon="lucide:wallet" warna="emerald" :label="tcf('laporan.saldo.ubinUang')" :nilai="rpRingkas(saldo.ringkas.isi.uangNyata)" :keterangan="`${rp(saldo.ringkas.isi.uangNyata)}, ${tcf('laporan.saldo.ubinUangKet')(angka(saldo.ringkas.jumlah))}`" />
+        <CashflowStatTile icon="lucide:user" warna="sky" :label="tcf('laporan.saldo.ubinPribadi')" :nilai="rpRingkas(saldo.ringkas.pribadi.uangNyata)" :keterangan="`${rp(saldo.ringkas.pribadi.uangNyata)}, ${tcf('laporan.saldo.ubinRuangKet')(angka(saldo.ringkas.pribadi.ruang))}`" />
+        <CashflowStatTile icon="lucide:store" warna="amber" :label="tcf('laporan.saldo.ubinUsaha')" :nilai="rpRingkas(saldo.ringkas.usaha.uangNyata)" :keterangan="`${rp(saldo.ringkas.usaha.uangNyata)}, ${tcf('laporan.saldo.ubinRuangKet')(angka(saldo.ringkas.usaha.ruang))}`" />
+        <CashflowStatTile icon="lucide:notebook-pen" warna="netral" :label="tcf('laporan.saldo.ubinPiutang')" :nilai="rpRingkas(saldo.ringkas.isi.piutang)" :keterangan="`${rp(saldo.ringkas.isi.piutang)}. ${tcf('laporan.saldo.ubinPiutangKet')}`" />
+        <CashflowStatTile icon="lucide:trending-down" warna="rose" :label="tcf('laporan.saldo.ubinMinus')" :nilai="rpRingkas(saldo.ringkas.isi.dompetMinusTotal)" :keterangan="`${rp(saldo.ringkas.isi.dompetMinusTotal)}. ${tcf('laporan.saldo.ubinMinusKet')(angka(saldo.ringkas.isi.dompetMinus))}`" />
       </div>
 
       <CashflowKeadaan v-if="!saldo.total" jenis="kosong" icon="lucide:wallet" :judul="tcf('umum.kosongSaringJudul')" :pesan="tcf('laporan.saldo.kosong')" />
       <div v-else class="min-w-0 space-y-3" data-uji="saldo-daftar">
         <!-- Layar lebar: tabel berurut server. Layar sempit: satu kartu per baris. -->
-        <div class="cf-tabel-wadah hidden lg:block">
+        <div class="cf-tabel-wadah cf-tabel-tetap cf-laporan-saldo hidden lg:block">
           <DataTable
             v-if="q.mode === 'ruang'"
             :columns="kolomRuang" :data="barisRuang" :loading="memuat" :sort="{ key: q.urut, arah: q.arah }" :show-count="false"
@@ -435,10 +436,10 @@ useConsoleRemah().pasang(() => [
             </template>
             <template #cell-uang_nyata="{ row }"><span class="cf-kuat whitespace-nowrap" :class="row.r.isi.uangNyata < 0 ? 'ca-tone-danger' : ''">{{ rp(row.r.isi.uangNyata) }}</span></template>
             <template #cell-piutang="{ row }"><span class="whitespace-nowrap">{{ rp(row.r.isi.piutang) }}</span><span v-if="row.r.isi.arsip" class="cf-dua whitespace-nowrap">{{ tcf('laporan.saldo.kolom.arsip') }} {{ rpRingkas(row.r.isi.arsip) }}</span></template>
-            <template #cell-minus="{ row }"><span class="whitespace-nowrap" :class="row.r.isi.dompetMinus ? 'ca-tone-danger' : 'cf-redup'">{{ minusTeks(row.r.isi.dompetMinus, row.r.isi.dompetMinusTotal) }}</span></template>
+            <template #cell-minus="{ row }"><template v-if="row.r.isi.dompetMinus"><span class="ca-tone-danger whitespace-nowrap">{{ rp(row.r.isi.dompetMinusTotal) }}</span><span class="cf-dua whitespace-nowrap">{{ tcf('laporan.saldo.dompetN')(angka(row.r.isi.dompetMinus)) }}</span></template><span v-else class="cf-redup">—</span></template>
             <template #cell-dompet="{ row }">{{ angka(row.r.isi.dompet) }}</template>
             <template #cell-anggota="{ row }">{{ angka(row.r.anggota) }}</template>
-            <template #cell-terakhir="{ row }"><span class="whitespace-nowrap text-xs">{{ waktu(row.r.terakhir) }}</span></template>
+            <template #cell-terakhir="{ row }"><span class="text-xs tabular-nums">{{ waktu(row.r.terakhir) }}</span></template>
           </DataTable>
           <DataTable
             v-else
@@ -456,9 +457,9 @@ useConsoleRemah().pasang(() => [
             <template #cell-usaha="{ row }"><span class="whitespace-nowrap" :class="row.p.usaha.uangNyata < 0 ? 'ca-tone-danger' : ''">{{ rp(row.p.usaha.uangNyata) }}</span><span class="cf-dua whitespace-nowrap">{{ tcf('laporan.saldo.ruangMilik')(angka(row.p.usaha.ruang)) }}</span></template>
             <template #cell-uang_nyata="{ row }"><span class="cf-kuat whitespace-nowrap" :class="row.p.total.uangNyata < 0 ? 'ca-tone-danger' : ''">{{ rp(row.p.total.uangNyata) }}</span></template>
             <template #cell-piutang="{ row }"><span class="whitespace-nowrap">{{ rp(row.p.total.piutang) }}</span></template>
-            <template #cell-minus="{ row }"><span class="whitespace-nowrap" :class="row.p.total.dompetMinus ? 'ca-tone-danger' : 'cf-redup'">{{ minusTeks(row.p.total.dompetMinus, row.p.total.dompetMinusTotal) }}</span></template>
+            <template #cell-minus="{ row }"><template v-if="row.p.total.dompetMinus"><span class="ca-tone-danger whitespace-nowrap">{{ rp(row.p.total.dompetMinusTotal) }}</span><span class="cf-dua whitespace-nowrap">{{ tcf('laporan.saldo.dompetN')(angka(row.p.total.dompetMinus)) }}</span></template><span v-else class="cf-redup">—</span></template>
             <template #cell-ruang_lain="{ row }"><span :title="row.p.ruangLain ? tcf('laporan.saldo.ruangLain')(angka(row.p.ruangLain)) : tcf('laporan.saldo.tanpaRuangLain')">{{ angka(row.p.ruangLain) }}</span></template>
-            <template #cell-terakhir="{ row }"><span class="whitespace-nowrap text-xs">{{ waktu(row.p.terakhir) }}</span></template>
+            <template #cell-terakhir="{ row }"><span class="text-xs tabular-nums">{{ waktu(row.p.terakhir) }}</span></template>
           </DataTable>
         </div>
 
@@ -500,3 +501,15 @@ useConsoleRemah().pasang(() => [
     </template>
   </div>
 </template>
+
+<style scoped>
+/* Laporan saldo berhalaman 25 baris: tabelnya tampil utuh dan halaman yang
+   bergulir. Lebar kolom tetap (cf-tabel-tetap), dan di bawah 62rem tabel
+   bergulir ke samping di dalam bingkainya, tidak meremas kolom. */
+.cf-laporan-saldo :deep(.ca-console-table-wrap) {
+  max-height: none;
+}
+.cf-laporan-saldo :deep(.ca-console-table) {
+  min-width: 62rem;
+}
+</style>

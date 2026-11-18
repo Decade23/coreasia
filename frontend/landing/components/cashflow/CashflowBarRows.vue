@@ -6,15 +6,18 @@
  * persen dari baris sebelumnya — itu yang membuat corong terbaca sebagai
  * corong: "8 dari 16 (50%)", bukan sekadar dua angka bersebelahan.
  * Lebar batang relatif terhadap baris PERTAMA, bukan maksimum, supaya corong
- * yang menyusut terlihat menyusut.
+ * yang menyusut terlihat menyusut. Deret yang urutannya tetap (hari pekan,
+ * pilihan jawaban) mengisi `dasar` dengan nilai terbesarnya, supaya baris
+ * yang lebih besar dari baris pertama tidak terpotong di 100%.
  */
 import { angka } from '~/adapters/cashflow'
 
 const props = defineProps<{
   baris: Array<{ label: string; nilai: number; persen?: number | null; keterangan?: string }>
   warna?: string
+  dasar?: number
 }>()
-const dasar = computed(() => Math.max(1, props.baris[0]?.nilai ?? 1))
+const dasar = computed(() => Math.max(1, props.dasar ?? props.baris[0]?.nilai ?? 1))
 </script>
 
 <template>
