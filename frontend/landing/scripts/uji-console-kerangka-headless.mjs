@@ -95,7 +95,7 @@ const RPC = {
 /* Halaman yang dipotret: Ringkasan, Pengguna, Cadangan Domi, dan satu halaman
    dari tiap pintu. `pintu`/`halaman` = yang harus aktif di navigasi. */
 const HALAMAN = [
-  { nama: 'ringkasan', jalur: '/console/cashflow', pintu: 'ringkasan', halaman: null, baris: [] },
+  { nama: 'ringkasan', jalur: '/console/cashflow', pintu: 'ringkasan', halaman: 'ringkasan', baris: ['ringkasan', 'laporan'] },
   { nama: 'pengguna', jalur: '/console/cashflow/pengguna', pintu: 'orang', halaman: 'pengguna', baris: ['pengguna', 'ruang', 'aktivitas', 'corongWa'] },
   { nama: 'cadangan-domi', jalur: '/console/cashflow/domi', pintu: 'domi', halaman: 'domi', baris: ['domi', 'paket', 'pembelian'] },
   { nama: 'pengumuman', jalur: '/console/cashflow/pengumuman', pintu: 'kabar', halaman: 'pengumuman', baris: ['pengumuman', 'dukungan', 'kasus'] },
@@ -104,6 +104,7 @@ const HALAMAN = [
 /* Tidak dipotret, tetapi navigasinya diperiksa: sisa menu dan rute bersarang. */
 const ID = '00000000-0000-0000-0000-000000000001'
 const RUTE_LAIN = [
+  ['/console/cashflow/laporan', 'ringkasan', 'laporan', 'page'],
   ['/console/cashflow/ruang', 'orang', 'ruang', 'page'], ['/console/cashflow/aktivitas', 'orang', 'aktivitas', 'page'],
   ['/console/cashflow/corong', 'orang', 'corongWa', 'page'], ['/console/cashflow/paket', 'domi', 'paket', 'page'],
   ['/console/cashflow/pembelian', 'domi', 'pembelian', 'page'], ['/console/cashflow/dukungan', 'kabar', 'dukungan', 'page'],
@@ -353,7 +354,7 @@ try {
     const palet = page.getByRole('dialog')
     await palet.waitFor()
     const pilihan = await palet.getByRole('option').allInnerTexts()
-    if (pilihan.length !== 15) gagal(`Palet memuat ${pilihan.length} halaman, bukan 15`)
+    if (pilihan.length !== 16) gagal(`Palet memuat ${pilihan.length} halaman, bukan 16`)
     if (!pilihan.some(x => /Pembelian kredit\s+Domi dan kredit/.test(x))) gagal(`Palet tanpa nama pintu: ${JSON.stringify(pilihan)}`)
     await potret('palet-terang-1440', false)
     // Potret melepas fokus: kembalikan ke kolom palet sebelum mengetik.

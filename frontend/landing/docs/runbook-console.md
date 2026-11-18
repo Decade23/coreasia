@@ -1179,6 +1179,46 @@ tetap mengikuti peran dan kesegaran MFA. Bila kunci ikatan khusus
 peringatan sekali; nilainya tidak dicetak dan turunan kunci layanan tetap
 dipakai.
 
+## Laporan (`/console/cashflow/laporan`)
+
+Halaman kedua di pintu Ringkasan. Lima bagian, satu terbuka sekali waktu lewat `?bagian=`: Harian
+(bawaan), Jam ramai, Dukung CashFlow, Asal pengguna, dan Saldo. Rentang 7, 30, atau 90 hari ada di
+`?hari=`. Teks cari saldo tidak pernah masuk URL.
+
+- Harian, Jam ramai, dan Dukung membaca `admin_laporan_harian`, `admin_laporan_jam_ramai`, dan
+  `admin_laporan_dukung` (migrasi CashFlow 20261119110000). Izin view, tanpa audit. Angkanya berhenti
+  di kemarin menurut WIB, jadi hari ini tidak pernah ikut. Akun tim (akun internal, admin, daftar
+  pengecualian Sakelar, akun uji pembelian) tidak dihitung, begitu juga catatan di ruang milik akun tim.
+  Transfer dihitung satu catatan, penyesuaian Cocokkan saldo tidak ikut.
+- Jam ramai memakai jam HP saat catatan disimpan (`dicatat_pada`), cadangannya jam tiba di server. Peta
+  7 hari x 24 jam digambar `CashflowPetaJam` (SVG sendiri, token tema). Di bawah 768 px petanya
+  diputar: jam ke bawah, hari ke samping.
+- Dukung menghitung ketukan tombol Dukung CashFlow dari telemetri `dukung.ketuk`, yang baru dicatat
+  aplikasi 1.4.4. Ketukan di versi sebelumnya tidak pernah tercatat, dan halaman selalu menulis itu.
+  QR dibuat, lunas, dan rupiah memakai aturan halaman Dukungan, ditambah tanpa dukungan Play dari akun
+  tim.
+- Asal pengguna membaca `admin_laporan_asal` dari migrasi aplikasi 1.4.4 (tiket asal pengguna). Selama
+  RPC itu belum ada, bagian ini menulis "belum aktif" dan bagian lain tetap jalan. Namanya ada di
+  `MENDAHULUI_MIGRASI` sampai migrasinya tergabung di cabang rilis CashFlow.
+- Saldo membaca `admin_laporan_saldo` (migrasi 20261119111000): per ruang, atau per pengguna dari ruang
+  miliknya saja, dengan kolom terpisah "Ikut ruang lain". Uang nyata = saldo dompet yang tidak diarsip
+  dan bukan piutang, sama dengan angka total di aplikasi, dompet minus ikut mengurangi. Butuh izin pii.
+  Alasannya tetap dari halaman dan setiap muatan menulis satu baris audit `laporan_saldo`, jadi saldo
+  hanya dimuat saat bagiannya dibuka dan cari baru dikirim saat tombol Cari ditekan. Sesi tanpa pii
+  melihat ajakan verifikasi dan RPC saldo tidak dipanggil sama sekali.
+
+Pasang: SQL CashFlow dulu (20261119110000, lalu 20261119111000, masing-masing dengan gladi dari repo
+CashFlow), baru landing. Landing boleh tayang lebih dulu: bagian yang RPC-nya belum ada menulis "belum
+aktif". Mundur landing cukup.
+
+```bash
+CASHFLOW_MIGRASI=<repo cashflow>/supabase/migrations CASHFLOW_TOKO=<repo cashflow>/toko \
+  npx vitest run tests/cashflow/laporan.test.ts tests/cashflow/navigasi.test.ts tests/cashflow/rpc-console.test.ts
+node scripts/cek-komponen-cashflow.mjs
+# Tampilan dengan data sintetis (cara menjalankan ada di kepala skrip):
+node scripts/uji-console-laporan-headless.mjs
+```
+
 ## Perjalanan pengguna dan corong WhatsApp
 
 Terapkan kedua migrasi CashFlow sebelum merilis landing. Perjalanan memakai ranah

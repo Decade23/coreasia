@@ -741,6 +741,134 @@ const dukunganDaftar = (p, mode) => ({
     dibuat: jam(i * 6 + 0.4), dibayar_pada: status === 'lunas' ? jam(i * 6 + 0.3) : null, habis_pada: jam(i * 6 + 0.4 - 0.25),
   })),
 })
+// ── Laporan (20261119110000, 20261119111000, asal 20261119130000) ────────
+/* Grafik sampai kemarin: tanggal(1) .. tanggal(p_hari). Angka besar dan pola
+   jam yang wajar (pagi, siang, malam) supaya peta dan grafik terbaca. */
+const hariLaporan = p => Math.min(90, Math.max(7, Number(p.p_hari ?? 30)))
+const POLA_JAM = [1, 0, 0, 0, 1, 3, 9, 18, 22, 16, 12, 14, 20, 15, 11, 10, 12, 15, 21, 26, 24, 17, 9, 4]
+const POLA_HARI = [1.15, 1.05, 1, 1.02, 1.1, 0.8, 0.62]
+const laporanJamRamai = (p, mode) => {
+  const hari = hariLaporan(p)
+  const skala = (hari / 30) * (p.p_jenis === 'usaha' ? 0.4 : p.p_jenis === 'pribadi' ? 0.6 : 1) * 61
+  const sel = mode.kosong ? [] : POLA_HARI.flatMap((fh, d) => POLA_JAM.map((fj, jam) => {
+    const usahaSiang = p.p_jenis === 'usaha' && jam >= 10 && jam <= 15 ? 1.8 : 1
+    const transaksi = Math.round(fj * fh * skala * usahaSiang)
+    return { dow: d + 1, jam, transaksi, orang: Math.max(1, Math.round(transaksi * 0.31)) }
+  })).filter(x => x.transaksi > 0)
+  const total = sel.reduce((a, x) => a + x.transaksi, 0)
+  return { hari, dari: tanggal(hari), sampai: tanggal(1), jenis: p.p_jenis ?? null, zona: 'Asia/Jakarta', sel, total: { transaksi: total, orang: mode.kosong ? 0 : Math.round(total * 0.07) } }
+}
+const laporanHarian = (p, mode) => {
+  const hari = hariLaporan(p)
+  const baris = Array.from({ length: hari }, (_, i) => {
+    const lalu = hari - i
+    const g = 1 + 0.35 * Math.sin(i / 2.3) + (i % 7 === 5 ? -0.3 : 0)
+    const v = x => (mode.kosong ? 0 : Math.max(0, Math.round(x * g)))
+    return {
+      tanggal: tanggal(lalu), pendaftar: v(412), aktif: v(31_204), pencatat: v(21_877), transaksi: v(96_410),
+      tanya_domi: v(4_812), penanya_domi: v(1_204), beli_kredit: v(37), beli_rupiah: v(37) * 59_000,
+      dukung_lunas: lalu <= 4 ? v(12) : 0, dukung_rupiah: lalu <= 4 ? v(12) * 50_000 : 0,
+    }
+  })
+  const jumlah = k => baris.reduce((a, b) => a + b[k], 0)
+  return {
+    hari, dari: tanggal(hari), sampai: tanggal(1), baris,
+    ringkas: {
+      pendaftar: jumlah('pendaftar'), aktif: mode.kosong ? 0 : 61_877, pencatat: mode.kosong ? 0 : 41_204, transaksi: jumlah('transaksi'),
+      tanya_domi: jumlah('tanya_domi'), penanya_domi: mode.kosong ? 0 : 9_310, beli_kredit: jumlah('beli_kredit'), beli_rupiah: jumlah('beli_rupiah'),
+      dukung_lunas: jumlah('dukung_lunas'), dukung_rupiah: jumlah('dukung_rupiah'),
+    },
+  }
+}
+const laporanDukung = (p, mode) => {
+  const hari = hariLaporan(p)
+  /* Aplikasi 1.4.4 baru empat hari: ketukan hanya ada di empat hari terakhir. */
+  const harian = Array.from({ length: hari }, (_, i) => {
+    const lalu = hari - i
+    const ada = !mode.kosong && lalu <= 4
+    return { tanggal: tanggal(lalu), ketuk: ada ? 310 + lalu * 47 : 0, orang_ketuk: ada ? 204 + lalu * 31 : 0, qr: ada ? 96 + lalu : 0, lunas: ada ? 41 + lalu : 0, rupiah: ada ? (41 + lalu) * 50_000 : 0 }
+  })
+  const jumlah = k => harian.reduce((a, b) => a + b[k], 0)
+  return {
+    hari, dari: tanggal(hari), sampai: tanggal(1), ketuk_pertama: mode.kosong ? null : tanggal(4), harian,
+    asal: mode.kosong ? [] : [{ kunci: 'setelan', ketuk: 1_204, orang: 877 }, { kunci: 'pengumuman', ketuk: 312, orang: 290 }, { kunci: 'tanpa', ketuk: 4, orang: 3 }],
+    ringkas: { ketuk: jumlah('ketuk'), orang_ketuk: mode.kosong ? 0 : 1_077, qr: jumlah('qr'), lunas: jumlah('lunas'), rupiah: jumlah('rupiah') },
+  }
+}
+const laporanAsal = (p, mode) => ({
+  hari: Number(p.p_hari ?? 30),
+  sumber: mode.kosong ? [] : [['instagram', 1_204], ['whatsapp', 877], ['tiktok', 312], ['(tanpa_utm)', 96], ['web', 41], ['(lain)', 7]].map(([kunci, orang]) => ({ kunci, orang })),
+  jawaban: [['instagram', 2_310], ['tiktok', 1_077], ['whatsapp_teman', 3_104], ['google', 412], ['play_store', 1_877], ['lainnya', 96], ['lewati', 4_120]]
+    .map(([kunci, orang]) => ({ kunci, orang: mode.kosong ? 0 : orang })),
+  tanpa_data: mode.kosong ? 0 : 9_310,
+})
+/* Saldo: ruang bernama panjang, uang miliaran, minus dan internal ikut. */
+const RUANG_SALDO = [
+  [1, 'Toko Berkah Jaya Abadi Sentosa Makmur Cabang Pasar Baru Bandung Timur', 'usaha', 12, 4, 7_412_905_500, 412_000_000, 0, 1, -1_250_000],
+  [0, 'Keuangan Saya', 'pribadi', 1, 5, 184_250_000, 0, 2_500_000, 0, 0],
+  [2, 'Ruang uji internal tim', 'pribadi', 3, 9, 999_999_999_999, 0, 0, 0, 0],
+  [3, 'Tabungan Dewi', 'pribadi', 1, 2, 12_877_000, 0, 0, 0, 0],
+  [4, 'Dompet harian Raka', 'pribadi', 1, 3, -4_310_000, 0, 0, 2, -9_800_000],
+  [5, 'Warung Kopi Toko Berkah', 'usaha', 3, 3, 96_410_000, 18_204_000, 0, 0, 0],
+  [6, 'Keluarga Agus', 'pribadi', 4, 6, 27_600_000, 1_500_000, 310_000, 1, -2_104_000],
+  [7, 'Bisnis', 'usaha', 1, 1, 0, 0, 0, 0, 0],
+  [9, 'Catatan Lina', 'pribadi', 1, 2, 95_000, 0, 0, 0, 0],
+].map(([siapa, nama, jenis, anggota, dompet, uang, piutang, arsip, minus, minusTotal], i) => ({
+  workspace_id: uuid(100 + i), nama, jenis, pemilik_id: idAkun(siapa), pemilik_email: AKUN[siapa].email, pemilik_nama: AKUN[siapa].nama,
+  internal: !!AKUN[siapa].tim, jumlah_anggota: anggota, jumlah_dompet: dompet, uang_nyata: uang, piutang, arsip,
+  dompet_minus: minus, dompet_minus_total: minusTotal, terakhir_catat: jam(3 + i * 7.3),
+}))
+const ISI_KOSONG = { ruang: 0, dompet: 0, uang_nyata: 0, piutang: 0, arsip: 0, dompet_minus: 0, dompet_minus_total: 0 }
+const isiDari = rs => rs.reduce((a, r) => ({
+  ruang: a.ruang + 1, dompet: a.dompet + r.jumlah_dompet, uang_nyata: a.uang_nyata + r.uang_nyata, piutang: a.piutang + r.piutang,
+  arsip: a.arsip + r.arsip, dompet_minus: a.dompet_minus + r.dompet_minus, dompet_minus_total: a.dompet_minus_total + r.dompet_minus_total,
+}), { ...ISI_KOSONG })
+const urutSaldo = (rows, urut, arah, nilai) => {
+  const kali = arah === 'asc' ? 1 : -1
+  return [...rows].sort((a, b) => {
+    const x = nilai(a, urut)
+    const y = nilai(b, urut)
+    if (x === y) return 0
+    if (x === null) return 1
+    if (y === null) return -1
+    return (typeof x === 'string' ? x.localeCompare(y) : x - y) * kali
+  })
+}
+const laporanSaldo = (p, mode) => {
+  const cari = (p.p_cari ?? '').toLowerCase()
+  let ruang = mode.kosong ? [] : RUANG_SALDO
+  if (p.p_tanpa_internal) ruang = ruang.filter(r => !r.internal)
+  const limit = Math.min(100, Math.max(1, Number(p.p_limit ?? 25)))
+  const offset = Math.max(0, Number(p.p_offset ?? 0))
+  const ringkasDari = (jumlah, isi, rs) => ({
+    jumlah, ...isi, internal: rs.filter(r => r.internal).length,
+    pribadi: (x => ({ ruang: x.ruang, uang_nyata: x.uang_nyata, piutang: x.piutang }))(isiDari(rs.filter(r => r.jenis === 'pribadi'))),
+    usaha: (x => ({ ruang: x.ruang, uang_nyata: x.uang_nyata, piutang: x.piutang }))(isiDari(rs.filter(r => r.jenis === 'usaha'))),
+  })
+  const kepala = { mode: p.p_mode, jenis: p.p_jenis ?? null, limit, offset, dihitung_pada: new Date(SAAT).toISOString() }
+  if (p.p_mode === 'pengguna') {
+    let orang = AKUN.map((a, i) => {
+      const milik = ruang.filter(r => r.pemilik_id === idAkun(i))
+      const pr = isiDari(milik.filter(r => r.jenis === 'pribadi'))
+      const us = isiDari(milik.filter(r => r.jenis === 'usaha'))
+      return {
+        user_id: idAkun(i), email: a.email, nama: a.nama, internal: !!a.tim, pribadi: pr, usaha: us, total: isiDari(milik),
+        ruang_lain: [2, 0, 1, 0, 3, 0, 1, 0, 0, 1][i], terakhir_catat: milik.length ? milik[0].terakhir_catat : null, _milik: milik,
+      }
+    }).filter(o => (!p.p_tanpa_internal || !o.internal) && (!p.p_jenis || o[p.p_jenis].ruang > 0))
+    if (cari) orang = orang.filter(o => o.email.includes(cari) || o.nama.toLowerCase().includes(cari))
+    const pilih = o => (p.p_jenis ? o[p.p_jenis] : o.total)
+    const nilai = (o, u) => ({ uang_nyata: pilih(o).uang_nyata, piutang: pilih(o).piutang, arsip: pilih(o).arsip, dompet: pilih(o).dompet, minus: pilih(o).dompet_minus_total, nama: (o.nama || o.email).toLowerCase(), terakhir: o.terakhir_catat, ruang_lain: o.ruang_lain })[u] ?? null
+    const urut = urutSaldo(orang, p.p_urut ?? 'uang_nyata', p.p_arah ?? 'desc', nilai)
+    const rs = orang.flatMap(o => o._milik).filter(r => !p.p_jenis || r.jenis === p.p_jenis)
+    return { ...kepala, total: orang.length, baris: urut.slice(offset, offset + limit).map(({ _milik, ...o }) => o), ringkas: ringkasDari(orang.length, isiDari(rs), rs) }
+  }
+  if (p.p_jenis) ruang = ruang.filter(r => r.jenis === p.p_jenis)
+  if (cari) ruang = ruang.filter(r => r.nama.toLowerCase().includes(cari) || r.pemilik_email.includes(cari) || r.pemilik_nama.toLowerCase().includes(cari))
+  const nilai = (r, u) => ({ uang_nyata: r.uang_nyata, piutang: r.piutang, arsip: r.arsip, dompet: r.jumlah_dompet, minus: r.dompet_minus_total, nama: r.nama.toLowerCase(), terakhir: r.terakhir_catat, anggota: r.jumlah_anggota })[u] ?? null
+  const urut = urutSaldo(ruang, p.p_urut ?? 'uang_nyata', p.p_arah ?? 'desc', nilai)
+  return { ...kepala, total: ruang.length, baris: urut.slice(offset, offset + limit), ringkas: ringkasDari(ruang.length, isiDari(ruang), ruang) }
+}
 const hapusAkunDaftar = (p, mode) => {
   const status = p.p_status ?? 'menunggu'
   const baris = mode.kosong ? [] : Array.from({ length: status === 'menunggu' ? 7 : 5 }, (_, i) => ({
@@ -794,7 +922,7 @@ const IZIN_KURANG = { status: 403, json: { code: '42501', message: 'izin-kurang'
 const BUTUH_PII = new Set([
   'admin_kasus_aktif_ruang', 'admin_kasus_buka', 'admin_kasus_tambah', 'admin_kasus_investigasi', 'admin_kasus_buka_dari_peristiwa', 'admin_corong_buka_kasus',
   'admin_pengguna_360', 'admin_ruang_360', 'admin_ruang_360_v2', 'admin_transaksi_cari', 'admin_transaksi_rinci', 'admin_jejak', 'admin_perjalanan_pengguna', 'admin_teks', 'admin_cari_v2',
-  'admin_dompet_ruang', 'admin_mutasi_dompet', 'admin_periksa_ruang', 'admin_sampah_ruang', 'admin_katalog_ruang', 'admin_jadwal_ruang', 'admin_jadwal_rinci',
+  'admin_dompet_ruang', 'admin_laporan_saldo', 'admin_mutasi_dompet', 'admin_periksa_ruang', 'admin_sampah_ruang', 'admin_katalog_ruang', 'admin_jadwal_ruang', 'admin_jadwal_rinci',
   'admin_usaha_ruang', 'admin_stok_ruang', 'admin_struk_ruang', 'admin_patungan_ruang', 'admin_patungan_riwayat', 'admin_perangkat_pengguna', 'admin_kabar_pengguna',
   'admin_ai_percakapan_daftar', 'admin_ai_pesan_daftar', 'admin_ai_pembelian_daftar', 'admin_config_buka',
 ])
@@ -831,6 +959,11 @@ const RPC = {
   admin_daftar_config_v2: (p, m) => (m.kosong ? [] : CONFIG),
   admin_dukungan_ringkas: dukunganRingkas,
   admin_dukungan_daftar: dukunganDaftar,
+  admin_laporan_asal: laporanAsal,
+  admin_laporan_dukung: laporanDukung,
+  admin_laporan_harian: laporanHarian,
+  admin_laporan_jam_ramai: laporanJamRamai,
+  admin_laporan_saldo: laporanSaldo,
   admin_hapus_akun_daftar: hapusAkunDaftar,
   admin_daftar_pengumuman_v4: (p, m) => (m.kosong ? [] : PENGUMUMAN),
   admin_daftar_pengumuman_v3: (p, m) => (m.kosong ? [] : PENGUMUMAN.filter(x => x.audience_type !== 'aturan')),
