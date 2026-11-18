@@ -5,13 +5,13 @@ import { ARTICLE_ASSET_SLUGS, resolveArticleCover, safeArticleImage } from '~/ut
 import { existsSync, readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 
-beforeEach(() => { vi.useFakeTimers(); vi.setSystemTime(new Date('2026-10-28T00:00:00Z')) })
+beforeEach(() => { vi.useFakeTimers(); vi.setSystemTime(new Date('2026-11-19T00:00:00Z')) })
 afterEach(() => vi.useRealTimers())
 describe('published public article catalog', () => {
   it('keeps the authored articles available without a gateway and gives each an asset', () => {
     const result = mergePublicArticles(ARTICLES, [])
-    expect(result).toHaveLength(11)
-    expect(new Set(result.map(a => a.slug)).size).toBe(11)
+    expect(result).toHaveLength(13)
+    expect(new Set(result.map(a => a.slug)).size).toBe(13)
     for (const article of result) {
       expect(ARTICLE_ASSET_SLUGS).toContain(article.slug)
       const cover = resolveArticleCover(article)

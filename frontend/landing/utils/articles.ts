@@ -663,6 +663,123 @@ Untuk unduhan kecil dan sesekali, browser sudah cukup. Download manager baru ter
 Download gagal memang tidak bisa dihilangkan sepenuhnya — kondisi jaringan dan server di luar kendali Anda. Tapi dengan pencegahan yang tepat plus aplikasi yang mendukung resume, unduhan terputus tinggal dilanjutkan, bukan diulang dari nol. [Coba CoreAsia Download Manager gratis →](/products/downloader)
     `.trim(),
   },
+  {
+    slug: 'cara-memisahkan-uang-pribadi-dan-uang-usaha',
+    title: 'Cara Memisahkan Uang Pribadi dan Uang Usaha untuk Warung',
+    description: 'Uang warung sering tercampur dengan uang dapur. Ini cara sederhana memisahkannya, dari dompet terpisah sampai mencatat kasbon dan cicilan.',
+    category: 'edukasi',
+    readTime: 4,
+    publishedAt: '2026-11-18T00:00:00+07:00',
+    author: 'Tim CoreAsia',
+    tags: ['keuangan usaha', 'warung', 'UMKM', 'kasbon', 'catat keuangan'],
+    content: `
+Banyak warung terlihat ramai, tapi pemiliknya bingung saat mau kulakan karena modalnya kurang. Biasanya bukan karena rugi. Uang hasil jualan dipakai belanja dapur, bayar cicilan, atau dipinjamkan, lalu tidak tercatat. Di akhir bulan yang tersisa cuma pertanyaan: kok habis terus?
+
+Masalahnya jarang ada di jumlah uang. Masalahnya ada di catatan yang campur. Selama uang rumah dan uang warung ada di laci yang sama, kamu tidak akan tahu warung sebenarnya untung berapa.
+
+## Kenapa uang warung gampang tercampur
+
+- Uang tunai ada di satu tempat. Mengambil sedikit untuk keperluan rumah terasa tidak berarti.
+- Belanja kulakan dan belanja dapur sering dilakukan sekali jalan, di pasar yang sama.
+- Kasbon pelanggan cuma diingat, tidak ditulis.
+- Cicilan pribadi dibayar dari laci warung karena kebetulan uangnya ada.
+
+Satu per satu nilainya kecil. Kalau dijumlah sebulan, bisa sebesar modal kulakan seminggu.
+
+## 5 langkah memisahkannya
+
+### 1. Pakai dua dompet sejak hari pertama
+
+Satu untuk rumah, satu untuk usaha. Bentuknya bebas: dua amplop, dua rekening, atau dua dompet di aplikasi. Kalau usaha butuh uang dari rumah atau sebaliknya, catat sebagai pindah dompet, bukan pengeluaran. Dengan begitu untung warung tidak ikut berkurang karena belanja dapur.
+
+### 2. Gaji dirimu sendiri
+
+Tentukan jumlah tetap yang diambil dari usaha tiap minggu atau tiap bulan, lalu pindahkan ke dompet rumah. Di luar itu, uang usaha tidak dipakai untuk keperluan rumah. Mulai dari angka kecil yang masuk akal. Kalau warung ternyata kuat, naikkan pelan-pelan.
+
+### 3. Catat kasbon lengkap
+
+Tulis nama, tanggal, jumlah, dan janji bayarnya. Kasbon yang cuma diingat-ingat paling sering hilang diam-diam, karena yang lupa bukan cuma pembeli, tapi juga kamu. Saat tanggal janjinya lewat, tagih dengan sopan dan sebut jumlahnya dengan jelas supaya tidak ada salah paham.
+
+### 4. Pisahkan cicilan pribadi
+
+Cicilan motor atau HP masuk catatan rumah. Kalau ikut dibayar dari uang usaha, untung warung terlihat lebih kecil dari aslinya, dan kamu bisa salah mengira warung sedang sepi. Kalau terpaksa memakai uang warung, catat sebagai pindah dompet, bukan biaya usaha.
+
+### 5. Cek 5 menit tiap malam
+
+Hari ini masuk berapa, keluar berapa, dan sisa di dompet usaha berapa. Lima menit cukup. Yang penting rutin, karena selisih kecil lebih mudah dicari hari itu juga daripada di akhir bulan.
+
+## Tanda pemisahanmu sudah jalan
+
+Setelah dua sampai empat minggu, coba jawab tiga pertanyaan ini tanpa menebak:
+
+- Minggu ini warung untung berapa?
+- Berapa total kasbon yang belum dibayar, dan siapa saja?
+- Berapa modal yang siap untuk kulakan berikutnya?
+
+Kalau ketiganya bisa dijawab, catatanmu sudah bekerja.
+
+## Mencatat dari HP
+
+Buku tulis sudah cukup untuk mulai. Kalau mau lebih praktis, [CashFlow](https://play.google.com/store/apps/details?id=id.coreasia.cashflow) memisahkan uang rumah dan uang warung dalam satu aplikasi. Kasbon bisa ditagih lewat WhatsApp lengkap dengan jumlahnya, cicilan diberi pengingat jatuh tempo, dan Domi, asisten AI-nya, bisa ditanya "minggu ini warung untung berapa?". CashFlow bisa diunduh gratis di Play Store, tanpa iklan, dan tidak meminta akses ke rekening bank.
+    `.trim(),
+  },
+  {
+    slug: 'cara-follow-up-calon-pembeli-tanpa-lupa',
+    title: 'Cara Follow-up Calon Pembeli Tanpa Lupa',
+    description: 'Banyak penjualan hilang karena lupa follow-up. Ini cara sederhana mencatat prospek untuk tim sales kecil, dari Excel sampai CRM.',
+    category: 'bisnis',
+    readTime: 4,
+    publishedAt: '2026-11-18T00:00:00+07:00',
+    author: 'Tim CoreAsia',
+    tags: ['follow-up', 'tim sales', 'CRM', 'prospek', 'UMKM'],
+    content: `
+Penjualan paling sering hilang bukan karena pembeli menolak, tapi karena tidak ada yang menghubungi lagi. Calon pembeli bilang "nanti dikabari", lalu chatnya tenggelam di antara ratusan pesan lain. Seminggu kemudian dia sudah beli di tempat lain.
+
+Ini jarang soal sales yang malas. Kebanyakan tim kecil memang tidak punya tempat yang jelas untuk mencatat siapa harus dihubungi dan kapan.
+
+## Kenapa follow-up gampang terlewat
+
+- Prospek tersebar di WhatsApp pribadi, buku catatan, dan ingatan masing-masing sales.
+- Tidak ada tanggal yang disepakati untuk menghubungi lagi.
+- Penawaran harga dikirim terpisah, jadi tim lupa sudah mengirim harga berapa.
+- Kalau sales keluar, daftar prospeknya ikut pergi.
+
+## 5 kebiasaan supaya prospek tidak hilang
+
+### 1. Catat setiap prospek di satu tempat
+
+Cukup tiga kolom: siapa, terakhir bahas apa, kapan dihubungi lagi. Jangan tersebar di chat, buku, dan ingatan. Spreadsheet bersama sudah cukup untuk mulai.
+
+### 2. Selalu tentukan langkah berikutnya
+
+Setiap percakapan selesai dengan tanggal follow-up, walau cuma "cek lagi Kamis". Prospek tanpa tanggal hampir pasti terlupa.
+
+### 3. Bagi prospek per tahap
+
+Misalnya: baru kenal, minta penawaran, negosiasi, closing. Dari situ kelihatan di tahap mana prospek paling sering berhenti. Kalau banyak yang berhenti setelah minta penawaran, mungkin yang perlu dibenahi adalah harga atau cara penawaran dikirim, bukan jumlah prospeknya.
+
+### 4. Satukan penawaran dengan prospeknya
+
+Quotation yang terpisah dari catatan prospek bikin tim bingung harga mana yang sudah dikirim. Simpan nomor atau file penawaran di baris prospek yang sama.
+
+### 5. Pindah ke CRM saat tim lebih dari dua orang
+
+Pada titik itu Excel mulai bentrok. Dua orang mengedit baris yang sama, pengingat tidak muncul sendiri, dan manager mulai minta rekap manual tiap minggu.
+
+## Contoh pesan follow-up yang tidak memaksa
+
+- "Halo Pak Budi, minggu lalu Bapak sempat tanya harga untuk 50 unit. Penawarannya sudah saya kirim hari Senin. Ada yang perlu saya jelaskan lagi?"
+- "Bu Sari, kemarin Ibu bilang mau diskusi dulu dengan tim. Kira-kira kapan waktu yang pas untuk saya hubungi lagi?"
+
+Polanya sama: sebut apa yang terakhir dibahas, lalu tawarkan langkah berikutnya yang kecil.
+
+## Kalau sudah butuh CRM
+
+[LeadKu](/products/leadku) adalah CRM buatan CoreAsia untuk tim sales di Indonesia. Isinya daftar lead, pipeline per tahap, pengingat follow-up, quotation dan invoice dalam satu deal, plus aplikasi Android untuk sales lapangan yang mencatat kunjungan dengan foto. Ada masa coba gratis 7 hari di [leadku.coreasia.id](https://leadku.coreasia.id).
+
+Butuh sistem yang lebih khusus untuk alur penjualanmu? [Tim Build by CoreAsia](/products/build) bisa membuatkannya.
+    `.trim(),
+  },
 ]
 
 export const getArticleBySlug = (slug: string): Article | undefined => {

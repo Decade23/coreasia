@@ -40,6 +40,14 @@ const covers: Record<string, [string, string]> = {
         'brief-aplikasi',
         'Ilustrasi menyusun alur kerja dan kebutuhan aplikasi web',
     ],
+    'cara-memisahkan-uang-pribadi-dan-uang-usaha': [
+        'uang-usaha',
+        'Ilustrasi dompet rumah dan dompet warung yang dicatat terpisah',
+    ],
+    'cara-follow-up-calon-pembeli-tanpa-lupa': [
+        'follow-up-prospek',
+        'Ilustrasi tahapan prospek, jadwal follow-up dan pengingat penjualan',
+    ],
 }
 
 export const safeArticleImage = (value: unknown): string | undefined => {
