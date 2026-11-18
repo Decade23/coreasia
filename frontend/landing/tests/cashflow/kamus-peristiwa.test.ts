@@ -12,6 +12,16 @@ const BERKAS_TELEMETRI = process.env.CASHFLOW_TELEMETRI ?? resolve(DIR_MIGRASI, 
 const SUMBER_WAJIB = !!(process.env.CASHFLOW_MIGRASI || process.env.CASHFLOW_TELEMETRI)
 const ADA_SUMBER = existsSync(BERKAS_TELEMETRI)
 const BAHASA = ['id', 'en'] as const
+/**
+ * Langkah yang sudah dikirim aplikasi tetapi belum masuk daftar putih RPC
+ * Perjalanan (katalog perjalanan_klien_inti, 20261113194000). RPC
+ * memulangkannya sebagai belum_dikenal tanpa rincian. Kamus console sudah
+ * siap menerjemahkannya. Hapus dari daftar ini begitu katalog SQL memuatnya.
+ */
+const BELUM_DI_KATALOG_RPC = [
+  'domi.kenalan', 'dukung.ketuk', 'nomor_wa.terbalik.belum_sampai', 'nomor_wa.terbalik.ke_kirim',
+  'pengumuman.ketuk', 'pengumuman.tutup',
+]
 
 function bacaPeristiwa(sumber: string) {
   const pohon = ts.createSourceFile('telemetri.ts', sumber, ts.ScriptTarget.Latest, true)
@@ -54,7 +64,12 @@ describe('kamus Perjalanan', () => {
     const kamus: Record<string, (typeof KAMUS_LANGKAH_PERJALANAN)[keyof typeof KAMUS_LANGKAH_PERJALANAN]> = {
       ...KAMUS_JENIS_PERJALANAN, ...KAMUS_LANGKAH_PERJALANAN,
     }
-    expect(katalog).toHaveLength(Object.keys(kamus).length - 1) // onboarding.langkah membawa nama langkah terpisah.
+    for (const nama of BELUM_DI_KATALOG_RPC) {
+      expect(Object.hasOwn(kamus, nama), nama).toBe(true)
+      expect(katalog.map(m => m[1]), `${nama} sudah di katalog RPC: hapus dari BELUM_DI_KATALOG_RPC`).not.toContain(nama)
+    }
+    // onboarding.langkah membawa nama langkah terpisah.
+    expect(katalog).toHaveLength(Object.keys(kamus).length - 1 - BELUM_DI_KATALOG_RPC.length)
     for (const [, nama, kategori, rincian] of katalog) {
       const entri = kamus[nama!]!
       expect(entri.kategori, nama).toBe(kategori)
@@ -115,6 +130,18 @@ describe('kamus Perjalanan', () => {
     }
     for (const layar of Object.values(KAMUS_LAYAR_PERJALANAN)) {
       for (const bahasa of BAHASA) expect(layar[bahasa].trim()).not.toBe('')
+    }
+  })
+
+  it('menerjemahkan ketukan Dukung CashFlow dan pengumuman dari aplikasi 1.4.4', () => {
+    const dukung = terjemahPeristiwa({
+      jenis: 'onboarding.langkah', langkah: 'dukung.ketuk', layar: '/settings', rincian_aman: { asal: 'pengumuman' },
+    }, 'id')
+    expect(dukung.judul).toBe('Mengetuk Dukung CashFlow')
+    expect(dukung.rincian).toContainEqual({ kunci: 'asal', label: 'Asal', nilai: 'Tombol pengumuman', belumDikenal: false })
+    for (const langkah of ['pengumuman.ketuk', 'pengumuman.tutup']) {
+      const hasil = terjemahPeristiwa({ jenis: 'onboarding.langkah', langkah, layar: '/', rincian_aman: { gaya: 'kartu' } }, 'en')
+      expect(hasil.rincian[0], langkah).toMatchObject({ kunci: 'gaya', nilai: 'Home card', belumDikenal: false })
     }
   })
 

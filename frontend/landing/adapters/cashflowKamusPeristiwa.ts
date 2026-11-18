@@ -117,6 +117,9 @@ const PEMBARUAN_JALUR = pilihan(JALUR, {
   web: teks('Situs toko', 'Store website'),
   gagal: teks('Toko gagal dibuka', 'Could not open store'),
 })
+const GAYA_PENGUMUMAN = pilihan(teks('Gaya pengumuman', 'Announcement style'), {
+  modal: teks('Popup', 'Popup'), kartu: teks('Kartu di Beranda', 'Home card'),
+})
 const pembaruan = (judul: Dwibahasa, arti: Dwibahasa, bidang?: Peristiwa['bidang']) =>
   peristiwa('pembaruan', judul, arti, { ...BUILD_PEMBARUAN, ...bidang })
 
@@ -203,6 +206,48 @@ export const KAMUS_LANGKAH_PERJALANAN = {
     teks('Beranda menampilkan kartu CashFlow Plus pada peluncuran ini.', 'Home showed the CashFlow Plus card during this launch.')),
   'plus_minat.tutup': peristiwa('onboarding', teks('Menunda CashFlow Plus', 'Dismissed CashFlow Plus'),
     teks('Pengguna memilih Nanti saja di kartu CashFlow Plus.', 'The user selected Not now on the CashFlow Plus card.')),
+  'domi.kenalan': peristiwa('domi', teks('Perkenalan Domi di Beranda', 'Domi introduction on Home'),
+    teks('Aplikasi mencatat satu tahap perkenalan Domi di Beranda.', 'The app recorded one step of the Domi introduction on Home.'), {
+      tahap: pilihan(TAHAP, {
+        tampil: teks('Cerita tampil', 'Story shown'), adegan_2: teks('Adegan kedua', 'Second scene'),
+        adegan_3: teks('Adegan ketiga', 'Third scene'), pertanyaan: teks('Pilihan pertanyaan tampil', 'Question choices shown'),
+        ketuk: teks('Memilih pertanyaan', 'Picked a question'), tulis_sendiri: teks('Menulis pertanyaan sendiri', 'Wrote own question'),
+        lewati: teks('Melewati cerita', 'Skipped the story'), nanti: teks('Memilih nanti saja', 'Chose later'),
+        buka_domi: teks('Membuka Domi', 'Opened Domi'), terpotong: teks('Cerita terpotong', 'Story interrupted'),
+        kartu_tampil: teks('Kartu sapaan tampil', 'Greeting card shown'), kartu_ketuk: teks('Mengetuk kartu sapaan', 'Tapped the greeting card'),
+        kartu_tutup: teks('Menutup kartu sapaan', 'Dismissed the greeting card'),
+      }),
+      varian: pilihan(teks('Bentuk cerita', 'Story format'), {
+        tuntun: teks('Tuntunan di layar', 'On-screen guide'), lembar: teks('Lembar', 'Sheet'), kartu: teks('Kartu', 'Card'),
+      }),
+      keadaan: pilihan(teks('Keadaan catatan', 'Records state'), {
+        pribadi_isi: teks('Pribadi, ada catatan', 'Personal, has records'),
+        pribadi_tagihan: teks('Pribadi, ada tagihan', 'Personal, has bills'),
+        pribadi_isi_sepi: teks('Pribadi, catatan sedikit', 'Personal, few records'),
+        pribadi_tagihan_sepi: teks('Pribadi, tagihan dan catatan sedikit', 'Personal, bills and few records'),
+        pribadi_awal: teks('Pribadi, baru mulai', 'Personal, just started'),
+        pribadi_kosong: teks('Pribadi, belum ada catatan', 'Personal, no records yet'),
+        usaha_jual: teks('Usaha, ada penjualan', 'Business, has sales'),
+        usaha_kosong: teks('Usaha, belum ada catatan', 'Business, no records yet'),
+        kredit_habis: teks('Kredit Domi habis', 'Domi credits used up'),
+      }),
+      pilihan: pilihan(teks('Kode pertanyaan', 'Question code'), {
+        terbesar: teks('Pengeluaran terbesar', 'Largest spending'), ringkas: teks('Ringkasan', 'Summary'),
+        saldo: teks('Saldo', 'Balance'), tagihan: teks('Tagihan', 'Bills'), catat: teks('Mencatat', 'Recording'),
+        tabungan: teks('Tabungan', 'Savings'), omzet: teks('Omzet', 'Revenue'), stok: teks('Stok', 'Stock'),
+        kasbon: teks('Kasbon', 'Customer tabs'), modal: teks('Modal', 'Capital'),
+      }),
+      ke: angka(teks('Pengingat ke', 'Reminder number'), 2),
+      ms: angka(teks('Lama (ms)', 'Duration (ms)')),
+    }),
+  'dukung.ketuk': peristiwa('aplikasi', teks('Mengetuk Dukung CashFlow', 'Tapped Support CashFlow'),
+    teks('Pengguna membuka alur Dukung CashFlow. Tercatat sejak 1.4.4.', 'The user opened the Support CashFlow flow. Recorded since 1.4.4.'), {
+      asal: pilihan(ASAL, { setelan: teks('Setelan', 'Settings'), pengumuman: teks('Tombol pengumuman', 'Announcement button') }),
+    }),
+  'pengumuman.ketuk': peristiwa('aplikasi', teks('Mengetuk tombol pengumuman', 'Tapped an announcement button'),
+    teks('Pengguna mengetuk tombol di sebuah pengumuman.', 'The user tapped the button on an announcement.'), { gaya: GAYA_PENGUMUMAN }),
+  'pengumuman.tutup': peristiwa('aplikasi', teks('Menutup pengumuman', 'Dismissed an announcement'),
+    teks('Pengguna menutup sebuah pengumuman.', 'The user dismissed an announcement.'), { gaya: GAYA_PENGUMUMAN }),
   'pembaruan.ajakan_lihat': pembaruan(teks('Melihat ajakan pembaruan', 'Saw an update invitation'),
     teks('Beranda menampilkan ajakan memperbarui aplikasi.', 'Home displayed an invitation to update the app.')),
   'pembaruan.ajakan_ketuk': pembaruan(teks('Mengetuk Perbarui', 'Tapped Update'),
@@ -276,6 +321,22 @@ export const KAMUS_LANGKAH_PERJALANAN = {
   'nomor_wa.terbalik.lewat': whatsapp(teks('Melanjutkan dengan email dari cara kirim pesan', 'Continued with email from message verification'),
     teks('Pengguna memilih melanjutkan dengan email dari alur kirim pesan.', 'The user chose to continue with email from the message verification flow.'), {
       sebab: pilihan(SEBAB, { gangguan: GANGGUAN, tanpa_nomor: TANPA_NOMOR }),
+    }),
+  'nomor_wa.terbalik.belum_sampai': whatsapp(teks('Pesan WhatsApp belum sampai', 'WhatsApp message not received yet'),
+    teks('Pengguna kembali dari WhatsApp dan pesannya belum diterima server.', 'The user returned from WhatsApp and the server had not received the message.'), {
+      hasil: pilihan(HASIL, {
+        pertama: teks('Sesudah WhatsApp dibuka sekali', 'After opening WhatsApp once'),
+        ulang: teks('Sesudah WhatsApp dibuka dua kali atau lebih', 'After opening WhatsApp twice or more'),
+      }),
+    }),
+  'nomor_wa.terbalik.ke_kirim': whatsapp(teks('Beralih ke kode dikirim', 'Switched to receiving a code'),
+    teks('Pengguna mengetuk Minta kode dikirim dari cara kirim pesan.', 'The user tapped Request a code from the message verification flow.'), {
+      dari: pilihan(teks('Dari layar', 'From screen'), {
+        siap: teks('Kode tampil', 'Code shown'), menunggu: MENUNGGU,
+        belum_sampai: teks('Pesan belum sampai', 'Message not received'),
+        belum_sampai_lagi: teks('Pesan belum sampai dua kali', 'Message not received twice'),
+        sakit: teks('Cara kirim pesan terganggu', 'Message verification disrupted'),
+      }),
     }),
 } as const
 
