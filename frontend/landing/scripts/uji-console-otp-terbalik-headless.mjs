@@ -120,7 +120,7 @@ try {
     const name = new URL(req.url()).pathname.split('/').pop()
     const p = req.postDataJSON() || {}
     // Server tiruan ini belum memasang daftar v4: jawab seperti PostgREST, halaman jatuh ke v3.
-    if (name === 'admin_daftar_pengguna_v4') return r.fulfill({ status: 404, headers: cors, json: { code: 'PGRST202', message: `Could not find the function public.${name} in the schema cache` } })
+    if (name === 'admin_daftar_pengguna_v4' || ['admin_daftar_pengguna_v5', 'admin_daftar_ruang_v3', 'admin_pengguna_kepala_v2', 'admin_ruang_360_v2'].includes(name)) return r.fulfill({ status: 404, headers: cors, json: { code: 'PGRST202', message: `Could not find the function public.${name} in the schema cache` } })
     seen.push({ name, p })
     let data = {}
     if (name === 'admin_wa_status') data = baru ? waBaru() : waLama()
@@ -185,16 +185,18 @@ try {
     await lebar(1440)
     await page.goto(`${APP}/console/cashflow/pengguna`, { waitUntil: 'domcontentloaded' })
     await page.getByText('8 pengguna', { exact: true }).waitFor({ timeout: 60000 })
-    // Status WhatsApp kini baris kedua kolom WhatsApp, versi singkat. Kalimat panjangnya ada di rincian pengguna.
-    await page.locator('.ca-daftar-pengguna th', { hasText: 'WhatsApp' }).waitFor()
-    if (await page.locator('.ca-daftar-pengguna th', { hasText: 'Status WhatsApp' }).count()) gagal('Kolom Status WhatsApp masih ada')
-    for (const teks of [/^Terbukti \d/, 'Lolos saat gangguan', 'Lolos, nomornya tidak terbaca', 'Nomor dipakai banyak akun', 'Kredit gratis ditahan']) {
+    // Sejak v5 (19 Nov 2026, semua kunci jadi kolom) Status WhatsApp punya kolom sendiri: cara singkat
+    // lalu kapan. Kalimat panjangnya tetap di rincian pengguna, versi "Terbukti ..." di kartu ponsel.
+    await page.locator('.ca-daftar-pengguna th', { hasText: 'Status WhatsApp' }).first().waitFor()
+    for (const teks of ['Pesan masuk', 'Kode terkirim', 'Lewat', 'Belum', 'Lolos, nomornya tidak terbaca', 'Nomor dipakai banyak akun', 'Kredit gratis ditahan']) {
       if (!(await page.locator('.ca-daftar-pengguna table').getByText(teks, { exact: true }).first().isVisible())) gagal(`Daftar baru: "${teks}" tidak tampil`)
     }
+    if (!(await page.locator('.ca-daftar-pengguna ul').getByText(/Terbukti \d/).first().count())) gagal('Kartu ponsel: status Terbukti tidak ada')
     await potret(`pengguna-baru-${t}-1440`)
-    // Di 1440 tabel tidak boleh bergulir ke samping sama sekali.
-    const gulir = await page.locator('.ca-console-table-wrap').evaluate(w => w.scrollWidth - w.clientWidth)
-    if (gulir !== 0) gagal(`Tabel ${t} bergulir samping ${gulir}px di 1440`)
+    // Keputusan Master 19 Nov 2026 (K3): tabel pengguna boleh bergulir ke samping di dalam bingkainya,
+    // kolom pertama lengket, halaman tidak meluber.
+    if (await meluber()) gagal(`Daftar baru ${t} meluber di 1440`)
+    if (await page.locator('.ca-daftar-pengguna tbody td').first().evaluate(td => getComputedStyle(td).position) !== 'sticky') gagal(`Tabel ${t}: kolom pertama tidak lengket`)
     // Di 1280 tabel boleh bergulir di dalam bingkainya (sudah begitu sebelum
     // kolom ini), tapi kolom email tidak boleh lebih sempit dari sebelumnya (97 px).
     await lebar(1280)

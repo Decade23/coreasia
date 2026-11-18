@@ -65,6 +65,9 @@ const tab = computed(() => TAB_RUANG.map(t => ({
 
 // ── Remah ──────────────────────────────────────────────────────────────
 const namaLengkap = computed(() => r360.value?.ruang.id === id.value ? r360.value.ruang.nama : undefined)
+/* Pemilik utuh hanya dari 360 v2 ruang INI (kasus ber-pii). Server lama: null, kepala tetap tersamar. */
+const pemilikUtuh = computed(() => (r360.value?.ruang.id === id.value ? r360.value.ruang.pemilikEmail : null))
+const pemilikNama = computed(() => (r360.value?.ruang.id === id.value ? r360.value.ruang.pemilikNama : null))
 const labelSubjek = computed(() => namaLengkap.value ?? kepala.value?.namaTersamar ?? id.value.slice(0, 8))
 useConsoleRemah().pasang(() => [
   { label: tc('layout.cashflow'), to: '/console/cashflow' },
@@ -109,7 +112,10 @@ useCashflowPintasan([
     <p v-else-if="pesanGalat" class="text-sm text-[var(--ca-danger-text)]" role="alert">{{ pesanGalat }}</p>
 
     <template v-else>
-      <CashflowKepalaRuang :kepala="kepala" :nama-lengkap="namaLengkap" :izin-pribadi="sesi.boleh('cashflow:pii')" :akses-ke="keTab('akses')" />
+      <CashflowKepalaRuang
+        :kepala="kepala" :nama-lengkap="namaLengkap" :pemilik-utuh="pemilikUtuh" :pemilik-nama="pemilikNama"
+        :izin-pribadi="sesi.boleh('cashflow:pii')" :akses-ke="keTab('akses')"
+      />
 
       <CashflowKasusBilah />
 

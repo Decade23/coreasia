@@ -141,9 +141,11 @@ describe('penanda versi tertinggal: per platform, atas seluruh daftar', () => {
 describe('halaman daftar pengguna: kolom Versi', () => {
   const SRC = readFileSync(fileURLToPath(new URL('../../pages/console/cashflow/pengguna/index.vue', import.meta.url)), 'utf8')
   it('kolom sesudah WhatsApp, versi tampil di tabel desktop, urut atas kunci versi', () => {
-    expect(SRC.indexOf("key: 'versi'")).toBeGreaterThan(SRC.indexOf("key: 'wa'"))
-    expect(SRC.indexOf("key: 'versi'")).toBeLessThan(SRC.indexOf("key: 'aktif'"))
-    expect(SRC).toMatch(/<div class="cf-tabel-wadah cf-tabel-tetap hidden lg:block">\s*<DataTable/)
+    // Sejak v5 urutan kolom ada di adapters/cashflowPenggunaKolom.ts (KOLOM_PENGGUNA).
+    const kolom = readFileSync(fileURLToPath(new URL('../../adapters/cashflowPenggunaKolom.ts', import.meta.url)), 'utf8')
+    expect(kolom.indexOf("key: 'versi'")).toBeGreaterThan(kolom.indexOf("key: 'wa'"))
+    expect(kolom.indexOf("key: 'versi'")).toBeLessThan(kolom.indexOf("key: 'aktif'"))
+    expect(SRC).toMatch(/<div data-uji="tabel-pengguna" class="cf-tabel-wadah cf-tabel-lebar hidden lg:block">\s*<DataTable/)
     // Kartu ponsel memuat versi hanya di server lama. Dengan kolom Domi, versi ada di rincian tiap orang.
     expect(SRC).toMatch(/<dt[^>]*>\{\{ tcf\('pengguna\.versi'\) \}\}<\/dt>\s*<dd[^>]*>\{\{ row\.p\.versiAplikasi \?\? '—' \}\}/)
     expect(SRC).toMatch(/<p v-if="adaDomi"[^>]*>\{\{ tcf\('pengguna\.kartuKet'\) \}\}<\/p>/)
@@ -163,7 +165,7 @@ describe('halaman daftar pengguna: kolom Versi', () => {
   it('email desktop utuh satu baris dan hanya kolom yang didukung server bisa disaring', () => {
     // Kolom Pengguna mengambil sisa lebar tabel. Pemotongan hanya jaring pengaman, dengan teks lengkap di title.
     expect(SRC).toMatch(/class="cf-kuat block min-w-0 truncate[^"]*" :title="row\.email" data-uji="sel-email"/)
-    expect(SRC).toMatch(/key: 'ruang'[^\n]*filterable: false/)
+    expect(SRC).toMatch(/key: k\.key, label: tcf\(LABEL_KOLOM\[k\.key\]\), sortable: urut\(k\.urut\), filterable: false/)
     // Server hanya menerima saringan kolom yang memang disediakan.
     const daftar = readFileSync(fileURLToPath(new URL('../../adapters/cashflowPenggunaDaftar.ts', import.meta.url)), 'utf8')
     expect(daftar).toMatch(/export const FILTER_KOLOM = \['email', 'wa', 'versi', 'daftar', 'aktif', 'status'\] as const/)

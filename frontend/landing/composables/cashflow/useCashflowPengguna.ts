@@ -11,6 +11,7 @@
  */
 import { ke360, keKepala, type KepalaPengguna, type Pengguna360DTO } from '~/adapters/cashflowBuku'
 import { lingkupSemua, samaSubjek } from '~/adapters/cashflowKasus'
+import { ALASAN_KEPALA_PENGGUNA, denganCadangan } from '~/adapters/cashflowSamaran'
 
 export const AKAR_PENGGUNA = '/console/cashflow/pengguna'
 
@@ -50,9 +51,22 @@ export const useCashflowPengguna = () => {
    * bukan milik subjek halaman ini — atau kasus yang subjeknya sudah
    * berganti — diabaikan. aturLingkup sendiri juga menolak subjek lain.
    */
+  /* Kepala v2 utuh untuk sesi ber-pii (alasan tetap, audit lihat_kepala beralasan).
+     Server lama, atau pii hilang di tengah jalan: kepala v1 tersamar. */
+  const serverKepalaV2 = useState<boolean | null>('cf_server_kepala_v2', () => null)
+  const sesi = useCashflowSesi()
+  const bacaKepala = async (subjek: string) => {
+    if (!sesi.boleh('cashflow:pii')) return api.kepalaPengguna(subjek)
+    const j = await denganCadangan({
+      kenal: serverKepalaV2.value, jatuhJuga: ['izin'],
+      baru: () => api.kepalaPenggunaV2(subjek, ALASAN_KEPALA_PENGGUNA), lama: () => api.kepalaPengguna(subjek),
+    })
+    serverKepalaV2.value = j.baru
+    return j.hasil
+  }
   const muatKepala = async (terbaru: () => boolean): Promise<void> => {
     const subjek = id.value
-    const [k] = await Promise.all([api.kepalaPengguna(subjek), kasus.pulihkan(subjek)])
+    const [k] = await Promise.all([bacaKepala(subjek), kasus.pulihkan(subjek)])
     if (!terbaru() || !samaSubjek(k.user_id, subjek) || kasus.keadaan.value.subjek !== subjek) return
     const kep = keKepala(k)
     kepala.value = kep

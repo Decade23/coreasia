@@ -111,6 +111,10 @@ try {
     const name = new URL(req.url()).pathname.split('/').pop()
     seen.push(name)
     const pii = izin.includes('cashflow:pii')
+    // RPC samaran 19 Nov 2026: server tiruan ini belum memasangnya, kepala diuji lewat v1.
+    if (['admin_daftar_pengguna_v5', 'admin_daftar_ruang_v3', 'admin_pengguna_kepala_v2', 'admin_ruang_360_v2'].includes(name)) {
+      return r.fulfill({ status: 404, headers: cors, json: { code: 'PGRST202', details: null, hint: null, message: `Could not find the function public.${name} in the schema cache` } })
+    }
     if (name === 'admin_pengguna_kepala') {
       return r.fulfill({ headers: cors, json: { ...kepalaLama(pii), ...(server.tambahan ? TAMBAHAN[server.tambahan](pii) : {}) } })
     }

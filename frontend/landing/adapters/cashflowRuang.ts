@@ -192,6 +192,8 @@ export function keKepalaRuang(d: KepalaRuangDTO): KepalaRuang {
 export interface RuangInfoDTO {
   workspace_id: string; nama: string; jenis: string | null; owner_nick: string | null; aturan_hapus: string | null
   fitur_patungan: boolean | null; ada_cara_bayar: boolean; ada_qris: boolean; pemilik_id: string | null; dibuat: string
+  /** admin_ruang_360_v2 (20261119101000): email dan nama tampilan pemilik utuh. Tidak ada di v1. */
+  pemilik_email?: string | null; pemilik_nama?: string | null
 }
 export interface HitungRuangDTO {
   anggota: number; bekas_anggota: number; undangan_aktif: number; transaksi: number; dompet: number; jejak: number; sampah: number
@@ -225,17 +227,23 @@ export interface Ruang360DTO {
   anggota: AnggotaRuangDTO[]
   bekas: BekasRuangDTO[]
   undangan: UndanganRuangDTO[]
+  /** admin_ruang_360_v2: true = email di jawaban ini utuh (bukan bentuk tersamar). Tidak ada di v1. */
+  email_utuh?: boolean
 }
 
 export interface AnggotaRuang {
   id: string; emailTersamar: string; peran: string | null; gabungIso: string | null; pemilik: boolean
+  /** Email utuh dari admin_ruang_360_v2 (kasus ber-pii). null di server lama: tampilkan emailTersamar. */
+  emailUtuh: string | null
   tx: number; terakhirCatatIso: string | null
   /** Anggota bertanda Kasir (lihat tandaKasir). */
   kasir: boolean
 }
-export interface BekasRuang { id: string; emailTersamar: string; akunAda: boolean; tx: number }
+export interface BekasRuang { id: string; emailTersamar: string; emailUtuh: string | null; akunAda: boolean; tx: number }
 export interface UndanganRuang {
   id: string; peran: string | null; status: StatusUndangan | null; adaLabel: boolean; targetTersamar: string
+  /** Email target undangan utuh (v2). null di server lama. */
+  targetUtuh: string | null
   diundangOleh: string | null; diterimaOleh: string | null; dibuatIso: string; kedaluwarsaIso: string | null
   selesaiIso: string | null
   /** Undangan Kasir: penerimanya langsung jadi Kasir saat bergabung. */
@@ -246,7 +254,11 @@ export interface Ruang360 {
   ruang: {
     id: string; nama: string; jenis: string | null; ownerNick: string | null; aturanHapus: string | null
     patungan: boolean; adaCaraBayar: boolean; adaQris: boolean; pemilikId: string | null; dibuatIso: string
+    /** v2: email dan nama tampilan pemilik utuh. null di server lama. */
+    pemilikEmail: string | null; pemilikNama: string | null
   }
+  /** Jawaban membawa email utuh (admin_ruang_360_v2). */
+  emailUtuh: boolean
   hitung: HitungRuangDTO
   agregat: { transaksi: number; masukBersih: number; keluarBersih: number; terakhirCatatIso: string | null } | null
   anggota: AnggotaRuang[]
@@ -256,10 +268,16 @@ export interface Ruang360 {
 
 const STATUS_UNDANGAN_SET: ReadonlySet<string> = new Set(STATUS_UNDANGAN)
 
+/** Email utuh dari v2, null bila server lama (atau kosong). Bentuk tersamar tidak pernah lolos sebagai utuh. */
+const emailUtuhDari = (utuh: boolean, v: string | null | undefined): string | null =>
+  utuh && typeof v === 'string' && v.includes('@') && !v.includes('***') ? v : null
+
 export function keRuang360(d: Ruang360DTO): Ruang360 {
   const h = d.hitung
+  const utuh = d.email_utuh === true
   return {
     kasus: d.kasus,
+    emailUtuh: utuh,
     ruang: {
       id: d.ruang.workspace_id,
       nama: d.ruang.nama || '—',
@@ -271,6 +289,8 @@ export function keRuang360(d: Ruang360DTO): Ruang360 {
       adaQris: d.ruang.ada_qris === true,
       pemilikId: d.ruang.pemilik_id ?? null,
       dibuatIso: d.ruang.dibuat,
+      pemilikEmail: emailUtuhDari(utuh, d.ruang.pemilik_email),
+      pemilikNama: utuh ? (d.ruang.pemilik_nama?.trim() || null) : null,
     },
     hitung: {
       anggota: angka0(h?.anggota), bekas_anggota: angka0(h?.bekas_anggota), undangan_aktif: angka0(h?.undangan_aktif),
@@ -290,6 +310,7 @@ export function keRuang360(d: Ruang360DTO): Ruang360 {
     anggota: (d.anggota ?? []).map(a => ({
       id: a.user_id,
       emailTersamar: samarkanEmail(a.email),
+      emailUtuh: emailUtuhDari(utuh, a.email),
       peran: a.peran ?? null,
       gabungIso: a.joined_at ?? null,
       pemilik: a.pemilik === true,
@@ -300,6 +321,7 @@ export function keRuang360(d: Ruang360DTO): Ruang360 {
     bekas: (d.bekas ?? []).map(b => ({
       id: b.user_id,
       emailTersamar: samarkanEmail(b.email),
+      emailUtuh: emailUtuhDari(utuh, b.email),
       akunAda: !!b.email,
       tx: angka0(b.tx_oleh_dia),
     })),
@@ -309,6 +331,7 @@ export function keRuang360(d: Ruang360DTO): Ruang360 {
       status: STATUS_UNDANGAN_SET.has(u.status) ? (u.status as StatusUndangan) : null,
       adaLabel: u.ada_label === true,
       targetTersamar: u.target_email ? samarkanEmail(u.target_email) : '—',
+      targetUtuh: emailUtuhDari(utuh, u.target_email),
       diundangOleh: u.diundang_oleh ?? null,
       diterimaOleh: u.diterima_oleh ?? null,
       dibuatIso: u.dibuat,

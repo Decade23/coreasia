@@ -1,7 +1,9 @@
 /**
- * Daftar pengguna tujuh kolom: pilihan "Urut" dan panel "Saring" harus
- * mengirim parameter yang SAMA dengan kepala kolom dan saringan kolom tabel
- * sebelumnya, dan tautan lama (?urut, ?arah, ?seg, ?hal) tetap terbaca.
+ * Daftar pengguna: pilihan "Urut" dan panel "Saring" harus mengirim parameter
+ * yang SAMA dengan kepala kolom dan saringan kolom tabel sebelumnya, dan tautan
+ * lama (?urut, ?arah, ?seg, ?hal) tetap terbaca. Sejak v5 (19 Nov 2026, K3)
+ * semua kunci baris punya kolom dan tujuh nilai urut baru hanya ditawarkan bila
+ * server memasang v5, jadi keadaan lama (tanpa adaV5) tetap persis seperti dulu.
  *
  * Acuan "sebelumnya" ditulis ulang di sini apa adanya dari halaman lama, lalu
  * dibandingkan dengan adapter baru untuk semua kombinasi.
@@ -15,6 +17,7 @@ import {
   arahBawaan, barisWa, filterServer, gantiUrut, jumlahSaringan, keBawaanRinci, opsiUrut, rinciKepala, rupiahRingkas,
   segmenButuhHitungan, tambahanUrut, tanpaTahunIni, urutBoleh, type ArahUrut,
 } from '../../adapters/cashflowPenggunaDaftar'
+import { KOLOM_PENGGUNA, URUT_V5 } from '../../adapters/cashflowPenggunaKolom'
 import { kePengguna, tanggalPendek, type PenggunaDTO } from '../../adapters/cashflow'
 import { bacaQuery, tulisQuery, type SkemaQuery } from '../../adapters/cashflowQuery'
 import { KAMUS_CASHFLOW } from '../../composables/cashflow/useCashflowI18n'
@@ -59,10 +62,12 @@ const KEADAAN = [
 
 describe('nilai yang dikenal server dan tautan lama tidak berubah', () => {
   it('urut, segmen, dan kunci saringan sama persis, urutannya juga', () => {
-    expect([...URUT_PENGGUNA]).toEqual([...URUT_LAMA])
+    // Nilai lama tetap di tempatnya, tujuh nilai v5 menyusul di belakang.
+    expect([...URUT_PENGGUNA]).toEqual([...URUT_LAMA, ...URUT_V5])
+    expect([...URUT_V5]).toEqual(['masuk', 'status', 'status_wa', 'kredit_beli', 'domi_30', 'nama', 'sumber'])
     expect([...SEGMEN_PENGGUNA]).toEqual([...SEGMEN_LAMA])
     expect([...FILTER_KOLOM]).toEqual(['email', 'wa', 'versi', 'daftar', 'aktif', 'status'])
-    expect([...URUT_PRIBADI]).toEqual(PRIBADI_LAMA)
+    expect([...URUT_PRIBADI]).toEqual([...PRIBADI_LAMA, 'kredit_beli', 'domi_30', 'sumber'])
   })
   it('segmen berhitungan: belum, catat7, dan kedua segmen Domi. Belum WhatsApp tidak butuh izin', () => {
     expect(SEGMEN_PENGGUNA.filter(segmenButuhHitungan)).toEqual(['catat7', 'belum', 'pakai_domi', 'beli_kredit'])
@@ -105,7 +110,9 @@ describe('pilihan "Urut" memetakan ke parameter yang sama dengan kepala kolom la
     expect(dibandingkan).toBe(4 * 11 * 2 * 15)
   })
   it('arah bawaan: email dan WhatsApp naik, sisanya turun. Kunci yang sama membalik arah', () => {
-    expect(URUT_PENGGUNA.filter(k => arahBawaan(k) === 'asc')).toEqual(['email', 'wa'])
+    // Lama: email dan WhatsApp naik. v5: teks dan status juga naik (A dulu, Aktif dulu, Pesan masuk dulu).
+    expect(URUT_LAMA.filter(k => arahBawaan(k) === 'asc')).toEqual(['email', 'wa'])
+    expect(URUT_V5.filter(k => arahBawaan(k) === 'asc')).toEqual(['status', 'status_wa', 'nama', 'sumber'])
     const o = KEADAAN[0]!
     expect(gantiUrut({ urut: 'daftar', arah: 'desc' }, 'domi_terakhir', o)).toEqual({ urut: 'domi_terakhir', arah: 'desc', hal: 1 })
     expect(gantiUrut({ urut: 'domi_terakhir', arah: 'desc' }, 'domi_terakhir', o)).toEqual({ urut: 'domi_terakhir', arah: 'asc', hal: 1 })
@@ -123,12 +130,23 @@ describe('pilihan "Urut" memetakan ke parameter yang sama dengan kepala kolom la
     expect(urutBoleh('domi', KEADAAN[2]!)).toBe(false)
     expect(urutBoleh('daftar', KEADAAN[3]!)).toBe(true)
   })
-  it('yang kehilangan kolom tetap bisa diurutkan, dan nilainya ditulis di baris kedua', () => {
-    const tanpaKolom = URUT_PENGGUNA.filter(k => !URUT_BERKOLOM.includes(k))
-    expect(tanpaKolom).toEqual(['daftar', 'tx', 'nominal', 'domi_terakhir'])
-    // Tanggal daftar selalu ada di baris kedua Aktif terakhir. Tiga lainnya muncul saat dipakai mengurutkan.
-    expect(tanpaKolom.map(tambahanUrut)).toEqual([null, 'tx', 'nominal', 'domi_terakhir'])
-    for (const k of URUT_BERKOLOM) expect(tambahanUrut(k)).toBeNull()
+  it('v5: setiap nilai urut punya kolom, setiap kolom punya nilai urut (TP-02)', () => {
+    expect(URUT_PENGGUNA.filter(k => !URUT_BERKOLOM.includes(k))).toEqual([])
+    expect(KOLOM_PENGGUNA.map(k => k.urut).sort()).toEqual([...URUT_PENGGUNA].sort())
+    // Baris kedua kartu ponsel tetap memakai tambahanUrut untuk tiga urutan yang kolomnya tidak ada di kartu.
+    expect(['daftar', 'tx', 'nominal', 'domi_terakhir'].map(k => tambahanUrut(k))).toEqual([null, 'tx', 'nominal', 'domi_terakhir'])
+  })
+  it('v5: tujuh urutan baru hanya untuk server v5, berhitungan butuh izin, nama butuh kontak dibuka', () => {
+    const v5 = { adaDomi: true, tanpaHitungan: false, adaV5: true, terbuka: true }
+    expect(opsiUrut(v5).map(o => o.nilai)).toEqual([...URUT_PENGGUNA])
+    expect(opsiUrut(v5).filter(o => o.mati)).toEqual([])
+    expect(opsiUrut({ ...v5, terbuka: false }).filter(o => o.mati).map(o => o.nilai)).toEqual(['nama'])
+    expect(opsiUrut({ ...v5, tanpaHitungan: true, terbuka: false }).filter(o => o.mati).map(o => o.nilai))
+      .toEqual([...PRIBADI_LAMA, 'kredit_beli', 'domi_30', 'nama', 'sumber'])
+    for (const k of URUT_V5) expect(urutBoleh(k, KEADAAN[0]!), k).toBe(false)
+    expect(gantiUrut({ urut: 'daftar', arah: 'desc' }, 'status_wa', v5)).toEqual({ urut: 'status_wa', arah: 'asc', hal: 1 })
+    expect(gantiUrut({ urut: 'masuk', arah: 'desc' }, 'masuk', v5)).toEqual({ urut: 'masuk', arah: 'asc', hal: 1 })
+    expect(gantiUrut({ urut: 'daftar', arah: 'desc' }, 'nama', { ...v5, terbuka: false })).toBeNull()
   })
   it('halaman: kepala kolom dan pilihan Urut lewat satu fungsi, dan tautan tanpa izin kembali ke bawaan', () => {
     expect(HAL).toMatch(/const baru = gantiUrut\(q\.value, key, keadaanUrut\.value\)\s+if \(baru\) void setel\(baru\)/)
@@ -177,7 +195,8 @@ describe('panel "Saring" mengirim p_filter yang sama dengan saringan kolom lama'
     expect(HAL).toMatch(/\.\.\.\(serverStatusWa\.value \? \[\{ kunci: 'status_wa'/)
     expect(HAL).toMatch(/<label v-if="adaDomi"[^>]*>\s*\{\{ tcf\('pengguna\.domi\.saringTim'\) \}\}\s*<select v-model="saringTim"[^>]*data-uji="saring-tim">/)
     // Tabel tidak lagi punya tombol saring di kepala kolom: semuanya lewat panel.
-    expect(HAL.match(/filterable: false/g)!.length).toBeGreaterThanOrEqual(8)
+    // Sejak v5 kolom dibangun dari KOLOM_PENGGUNA: satu filterable: false berlaku untuk semuanya.
+    expect(HAL).toMatch(/return kolomUntuk\(tingkatServer\.value\)\.map\(k => \(\{\s+key: k\.key, label: tcf\(LABEL_KOLOM\[k\.key\]\), sortable: urut\(k\.urut\), filterable: false,/)
     expect(HAL).not.toMatch(/v-model:filters/)
   })
 })
@@ -294,30 +313,41 @@ describe('rincian di kepala: kepala didahulukan, daftar jadi cadangan server lam
   })
 })
 
-describe('halaman daftar: tujuh kolom, dan empat hal pindah ke rincian', () => {
-  it('kolom: Pengguna, WhatsApp, Versi, Aktif terakhir, Tanya Domi, Kredit, Ruang, lalu panah', () => {
-    const kunci = [...HAL.matchAll(/\{ key: '(\w+)', label:/g)].map(m => m[1])
-    expect(kunci).toEqual(['email', 'wa', 'versi', 'aktif', 'domi', 'kredit', 'ruang', 'buka'])
-    // Kolom Pengguna tanpa lebar tetap: ia mengambil sisa, supaya email panjang muat utuh.
-    expect(HAL).toMatch(/\{ key: 'email', label: tcf\('nav\.pengguna'\), sortable: urut\('email'\), filterable: false, class:/)
-    for (const k of kunci.slice(1)) expect(HAL).toMatch(new RegExp(`key: '${k}',[^\\n]*width: '\\d+px'`))
-    expect(HAL).toMatch(/<div class="cf-tabel-wadah cf-tabel-tetap hidden lg:block">/)
+describe('halaman daftar: semua kunci jadi kolom, kolom pertama lengket (v5, 19 Nov 2026)', () => {
+  it('kolom: semua kunci v5 berurutan, Domi dan kredit untuk v4, Sumber untuk v5 (TP-01, TP-05)', () => {
+    expect(KOLOM_PENGGUNA.map(k => k.key)).toEqual([
+      'email', 'nama', 'wa', 'status_wa', 'versi', 'status', 'daftar', 'masuk', 'aktif',
+      'ruang', 'tx', 'nominal', 'domi', 'domi_30', 'domi_terakhir', 'kredit', 'kredit_beli', 'sumber',
+    ])
+    expect(KOLOM_PENGGUNA.filter(k => k.server === 5).map(k => k.key)).toEqual(['sumber'])
+    // Setiap kolom punya sel sendiri di tabel desktop.
+    const sel = new Set([...HAL.matchAll(/#cell-([a-z_0-9]+)=/g)].map(m => m[1]))
+    for (const m of HAL.matchAll(/<template v-for="k in \(\[([^\]]*)\] as const\)" :key="k" #\[`cell-\$\{k\}`\]/g)) {
+      for (const x of m[1]!.matchAll(/'(\w+)'/g)) sel.add(x[1])
+    }
+    for (const k of KOLOM_PENGGUNA) expect(sel.has(k.key), k.key).toBe(true)
+    // Kolom Pengguna lengket, tabel selebar isinya dan bergulir di dalam bingkainya.
+    expect(HAL).toMatch(/<div data-uji="tabel-pengguna" class="cf-tabel-wadah cf-tabel-lebar hidden lg:block">/)
+    expect(HAL).toMatch(/\.ca-daftar-pengguna :deep\(\.ca-console-table :is\(th, td\):first-child\) \{\s+position: sticky;\s+left: 0;/)
+    expect(HAL).toMatch(/\.ca-daftar-pengguna :deep\(\.ca-console-table\) \{\s+width: max-content;/)
   })
-  it('daftar tidak lagi menulis ID, masuk terakhir, atau kalimat panjang status WhatsApp', () => {
+  it('waktu daftar, masuk, aktif, status WhatsApp, dan Domi lewat waktuSel: ber-detik hanya bila baris terbuka (TP-03)', () => {
     const tpl = HAL.slice(HAL.indexOf('<template>'))
-    expect(tpl).not.toMatch(/row\.id\.slice\(0, 8\)/)
-    expect(tpl).not.toMatch(/masukTerakhir/)
-    expect(tpl).not.toMatch(/<CashflowStatusWaAkun/)
-    expect(tpl).not.toMatch(/cell-domi_terakhir|cell-status_wa|cell-nominal|cell-tx/)
+    for (const iso of ['row.p.daftarIso', 'row.p.masukTerakhirIso', 'row.p.aktivitasTerakhirIso', 'row.p.statusWa.padaIso', 'row.p.domi.terakhirIso']) {
+      expect(tpl, iso).toContain(`waktu(row.p, ${iso})`)
+    }
+    expect(HAL).toMatch(/const waktu = \(p: Pengguna, iso: string \| null \| undefined\) => waktuSel\(iso, \{ terbuka: p\.terbuka, bahasa: bahasa\.value \}\)/)
   })
   it('rincian pengguna menampilkan keempatnya: cara nomor dibuktikan, terakhir pakai Domi, ID, dan masuk terakhir', () => {
     const kepala = baca('components/cashflow/CashflowKepala360.vue')
     expect(kepala).toMatch(/tcf\('pengguna\.rinci\.caraBukti'\)[\s\S]*?<CashflowStatusWaAkun v-if="rinci\.statusWa" :status="rinci\.statusWa" baris \/>/)
     expect(kepala).toMatch(/tcf\('pengguna\.rinci\.domiTerakhir'\)/)
     expect(kepala).toMatch(/data-uji="rinci-id">\{\{ kepala\.id \}\}/)
-    expect(kepala).toMatch(/tcf\('pengguna\.masuk'\)[\s\S]*?formatTanggal\(kepala\.masukTerakhirIso\)/)
+    // Kepala v2 terbuka menulis jam sampai detik, selain itu tanggal (waktuKepala).
+    expect(kepala).toMatch(/tcf\('pengguna\.masuk'\)[\s\S]*?waktuKepala\(kepala\.masukTerakhirIso\)/)
+    expect(kepala).toMatch(/const waktuKepala = \(iso: string \| null \| undefined\): string => \(props\.kepala\?\.terbuka \? waktuDetikWib\(iso, bahasa\.value\) : formatTanggal\(iso \?\? null\)\)/)
     // Terakhir pakai Domi hanya untuk sesi berizin data pribadi: aturannya di rinciKepala.
-    expect(kepala).toMatch(/rinciKepala\(props\.kepala, props\.bawaan, \{ izinPribadi: props\.izinPribadi, tanggal: formatTanggal \}\)/)
+    expect(kepala).toMatch(/rinciKepala\(props\.kepala, props\.bawaan, \{ izinPribadi: props\.izinPribadi, tanggal: waktuKepala \}\)/)
     // Baris jumlah pertanyaan hanya ditulis bila kepala sendiri yang mengirimnya.
     expect(kepala).toMatch(/<template v-if="rinci\.domiDariServer">[\s\S]*?data-uji="rinci-domi-tanya"/)
     expect(baca('pages/console/cashflow/pengguna/[id].vue')).toMatch(/:bawaan="bawaanRinci"/)

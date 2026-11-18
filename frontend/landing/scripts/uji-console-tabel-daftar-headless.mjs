@@ -1,12 +1,14 @@
 // Uji tampilan tabel dan daftar console CashFlow dengan data sintetis: tabel
 // bersama (kepala satu baris, baris dua tingkat, angka rata kanan), deret pil,
-// keadaan memuat, kosong, galat, dan akses terbatas, daftar Pengguna tujuh
-// kolom dengan pilihan Urut dan panel Saring, kartu ponsel, panel Arti tiap
-// kolom, rincian pengguna, dan Ringkasan. Terang dan gelap, lebar 1440 dan 390.
-// Chrome headless lewat CDP, tanpa jendela.
+// keadaan memuat, kosong, galat, dan akses terbatas, daftar Pengguna berkolom
+// lengkap (v5) dengan pilihan Urut dan panel Saring, kartu ponsel, panel Arti
+// tiap kolom, rincian pengguna, dan Ringkasan. Terang dan gelap, lebar 1440 dan
+// 390. Chrome headless lewat CDP, tanpa jendela.
 //
-// Yang dituntut: tabel Pengguna TIDAK bergulir ke samping di 1440 (gulir 0),
-// email 38 huruf tampil utuh, dan tidak ada halaman yang meluber di 390.
+// Yang dituntut: halaman tidak meluber di 1440 maupun 390, email 38 huruf tampil
+// utuh. Khusus tabel Pengguna (keputusan Master 19 Nov 2026, K3): semua kunci v5
+// jadi kolom, tabel BOLEH bergulir ke samping di dalam bingkainya, dan kolom
+// pertama lengket. Tabel lain tetap tanpa gulir samping di 1440.
 //
 // Jalankan server lokal TANPA .env (tidak ada kunci sungguhan):
 //   NUXT_PUBLIC_CASHFLOW_SUPABASE_URL=http://127.0.0.1:4398 \
@@ -61,6 +63,10 @@ const AKUN = [
 const EMAIL_PANJANG = AKUN[1].email
 if (EMAIL_PANJANG.length !== 38) throw new Error(`Email uji harus 38 huruf, ini ${EMAIL_PANJANG.length}`)
 const samar = e => `${e.slice(0, 3)}***@${e.split('@')[1]}`
+/* Kepala tabel Pengguna v5: semua kunci baris jadi kolom (TP-01). Server v4 tanpa Sumber, v3 tanpa Domi dan kredit. */
+const KOLOM_V3 = ['Pengguna', 'Nama', 'WhatsApp', 'Status WhatsApp', 'Versi', 'Status', 'Daftar', 'Masuk terakhir', 'Aktif terakhir', 'Ruang', 'Transaksi', 'Total nominal']
+const KOLOM_V5 = [...KOLOM_V3, 'Tanya Domi', 'Domi 30 hari', 'Terakhir pakai Domi', 'Sisa kredit', 'Kredit dibeli', 'Sumber']
+const ARAH_NAIK = ['email', 'wa', 'status', 'status_wa', 'nama', 'sumber']
 const barisPengguna = (a, i, { v4, alasan, pii }) => {
   const dasar = {
     user_id: uuid(i + 1), email: alasan ? a.email : samar(a.email), display_name: alasan ? a.nama : '',
@@ -204,13 +210,18 @@ try {
     const name = new URL(req.url()).pathname.split('/').pop()
     const p = req.postDataJSON() || {}
     seen.push({ name, p })
-    if (name !== 'admin_daftar_pengguna_v3' && name !== 'admin_daftar_pengguna_v4') {
+    // RPC baru T1 di luar daftar Pengguna: dijawab "belum ada" supaya halaman lain diuji lewat jalur lamanya.
+    if (['admin_daftar_ruang_v3', 'admin_pengguna_kepala_v2', 'admin_ruang_360_v2'].includes(name)) {
+      return r.fulfill({ status: 404, headers: cors, json: { code: 'PGRST202', details: null, hint: null, message: `Could not find the function public.${name} in the schema cache` } })
+    }
+    if (name !== 'admin_daftar_pengguna_v3' && name !== 'admin_daftar_pengguna_v4' && name !== 'admin_daftar_pengguna_v5') {
       // RPC yang tidak dikarang menjawab kosong: daftar kosong atau objek kosong.
       const kosong = /^admin_(daftar_|ocr_|foto_|telemetri_)/.test(name) ? [] : {}
       return r.fulfill({ json: RPC[name] ? RPC[name](p) : kosong, headers: cors })
     }
-    const baru = name === 'admin_daftar_pengguna_v4'
-    if (baru && !server.v4) return r.fulfill({ status: 404, headers: cors, json: { code: 'PGRST202', details: null, hint: null, message: `Could not find the function public.${name} in the schema cache` } })
+    const v5 = name === 'admin_daftar_pengguna_v5'
+    const baru = name === 'admin_daftar_pengguna_v4' || v5
+    if (baru && !server.v4) { seen.at(-1).status = 404; return r.fulfill({ status: 404, headers: cors, json: { code: 'PGRST202', details: null, hint: null, message: `Could not find the function public.${name} in the schema cache` } }) }
     if (server.tahan) await server.tahan
     if (server.galat) return r.fulfill({ status: 500, headers: cors, json: { code: 'XX000', message: 'galat sintetis' } })
     const pii = izin.includes('cashflow:pii')
@@ -220,7 +231,7 @@ try {
     if (!baru && asing) return r.fulfill({ status: 400, headers: cors, json: { code: '22023', message: 'Saringan tidak dikenal.', hint: 'saringan' } })
     const pribadi = ['ruang', 'tx', 'nominal', ...urutV4].includes(p.p_urut) || ['catat7', 'belum', ...segV4].includes(p.p_segmen) || !!p.p_alasan
     if (!pii && pribadi) return r.fulfill({ status: 403, headers: cors, json: { code: '42501', message: 'izin-kurang', hint: 'izin-kurang' } })
-    let rows = server.kosong ? [] : AKUN.map((a, i) => ({ a, i, d: barisPengguna(a, i, { v4: baru, alasan: p.p_alasan, pii }) }))
+    let rows = server.kosong ? [] : AKUN.map((a, i) => ({ a, i, d: { ...barisPengguna(a, i, { v4: baru, alasan: p.p_alasan, pii }), ...(v5 ? { asal: pii && i % 3 !== 2 ? { sumber: ['ig', null][i % 3], medium: null, kampanye: null, jawaban: 'whatsapp_teman', dicatat: jam(24 * i) } : null } : {}) } }))
     if (p.p_cari) rows = rows.filter(x => x.a.email.includes(p.p_cari))
     if (p.p_segmen === 'pakai_domi') rows = rows.filter(x => x.a.tanya > 0)
     if (p.p_segmen === 'beli_kredit') rows = rows.filter(x => x.a.beli > 0)
@@ -259,7 +270,7 @@ try {
     await page.waitForLoadState('networkidle').catch(() => {})
     await page.waitForTimeout(600)
   }
-  const daftar = () => seen.filter(x => x.name === 'admin_daftar_pengguna_v4' || x.name === 'admin_daftar_pengguna_v3')
+  const daftar = () => seen.filter(x => ['admin_daftar_pengguna_v5', 'admin_daftar_pengguna_v4', 'admin_daftar_pengguna_v3'].includes(x.name) && x.status !== 404)
   const terkirim = async (cocok) => {
     for (let i = 0; i < 60; i++) { const t = daftar().at(-1); if (t && cocok(t.p)) return true; await page.waitForTimeout(100) }
     return false
@@ -296,11 +307,13 @@ try {
       await periksaKepala(`${h.nama} ${t}`)
       if (h.nama === 'pengguna') {
         const kolom = await kepalaTabel()
-        if (kolom.join('|') !== 'Pengguna|WhatsApp|Versi|Aktif terakhir|Tanya Domi|Kredit|Ruang|Buka') gagal(`Kolom pengguna: ${kolom.join('|')}`)
-        // Keputusan pemilik: tabel pengguna tidak boleh bergulir ke samping di 1440.
+        if (kolom.join('|') !== KOLOM_V5.join('|')) gagal(`Kolom pengguna: ${kolom.join('|')}`)
+        // Keputusan Master 19 Nov 2026 (K3): tabel pengguna boleh bergulir ke samping di dalam bingkainya,
+        // kolom pertama lengket, dan halamannya sendiri tidak meluber (diperiksa di atas).
         const gulir = await page.locator('.ca-daftar-pengguna .ca-console-table-wrap').evaluate(w => w.scrollWidth - w.clientWidth)
         hasil[`gulirTabel1440_${t}`] = gulir
-        if (gulir !== 0) gagal(`Tabel pengguna ${t} bergulir ke samping ${gulir}px di 1440`)
+        const lengket = await page.locator('.ca-daftar-pengguna tbody tr').first().locator('td').first().evaluate(td => getComputedStyle(td).position)
+        if (lengket !== 'sticky') gagal(`Tabel pengguna ${t}: kolom pertama tidak lengket (${lengket})`)
         hasil[`lebarKolom1440_${t}`] = (await page.locator('.ca-daftar-pengguna thead th').evaluateAll(th => th.map(x => Math.round(x.getBoundingClientRect().width)))).join(' ')
       }
       if (h.nama === 'ringkasan') {
@@ -340,16 +353,18 @@ try {
     hasil[`email38_${t}`] = `${ukur.isi}/${ukur.tampak}`
     if (ukur.isi > ukur.tampak) gagal(`Email 38 huruf terpotong di 1440 ${t}: ${ukur.isi} > ${ukur.tampak}`)
     if (ukur.tinggi > 26) gagal(`Email 38 huruf pecah baris di 1440 ${t}`)
-    const gulir = await page.locator('.ca-daftar-pengguna .ca-console-table-wrap').evaluate(w => w.scrollWidth - w.clientWidth)
-    if (gulir !== 0) gagal(`Kontak lengkap ${t}: tabel bergulir ke samping ${gulir}px di 1440`)
-    for (const teks of ['96 dalam 30 hari', 'Belum pernah', 'Pernah beli', 'Gratis', 'Belum ada nomor', 'Lolos saat gangguan', 'Belum dibuktikan', 'Ditangguhkan', 'Menunggu dihapus', 'Nomor dipakai banyak akun', 'Kredit gratis ditahan']) {
-      if (!(await page.locator('.ca-daftar-pengguna table').getByText(teks, { exact: true }).first().isVisible())) gagal(`Tabel ${t}: "${teks}" tidak tampil`)
+    if (await meluber()) gagal(`Kontak lengkap ${t}: halaman meluber di 1440`)
+    for (const teks of ['Belum pernah', 'Belum ada nomor', 'Pesan masuk', 'Kode terkirim', 'Lewat', 'Lolos, nomornya tidak terbaca', 'Ditangguhkan', 'Menunggu dihapus', 'Nomor dipakai banyak akun', 'Kredit gratis ditahan', 'Instagram', 'WhatsApp atau teman']) {
+      if (!(await page.locator('.ca-daftar-pengguna table').getByText(teks, { exact: true }).first().count())) gagal(`Tabel ${t}: "${teks}" tidak ada`)
     }
     if (await page.locator('.ca-daftar-pengguna table').getByText('Tim', { exact: true }).count() !== 1) gagal('Lencana Tim tidak tepat satu')
-    const kira = await page.locator('.ca-daftar-pengguna tbody tr').filter({ hasText: 'rahmawati' }).locator('td').nth(4).innerText()
+    const kira = await page.locator('.ca-daftar-pengguna tbody tr').filter({ hasText: 'rahmawati' }).locator('td').nth(KOLOM_V5.indexOf('Tanya Domi')).innerText()
     if (!kira.trim().startsWith('42+')) gagal(`Tanda batas bawah hilang: ${kira}`)
-    const kreditKosong = await page.locator('.ca-daftar-pengguna tbody tr').filter({ hasText: 'nina@' }).locator('td').nth(5).innerText()
+    const kreditKosong = await page.locator('.ca-daftar-pengguna tbody tr').filter({ hasText: 'nina@' }).locator('td').nth(KOLOM_V5.indexOf('Sisa kredit')).innerText()
     if (kreditKosong.trim() !== '—') gagal(`Kredit kosong tampil sebagai "${kreditKosong}"`)
+    // TP-03: waktu ber-detik WIB saat kontak dibuka.
+    const masuk = await page.locator('[data-uji="sel-masuk"]').first().innerText()
+    if (!/^\d{1,2} [A-Z][a-z]{2} \d{4} \d{2}\.\d{2}\.\d{2}$/.test(masuk.trim())) gagal(`Masuk terakhir tanpa detik: ${masuk}`)
     await potret(`pengguna-kontak-lengkap-${t}-1440`)
     await lebar(390)
     if (await meluber()) gagal(`Kontak lengkap ${t} meluber di 390`)
@@ -371,21 +386,21 @@ try {
   await buka('/console/cashflow/pengguna')
   await page.getByText('10 pengguna', { exact: true }).waitFor({ timeout: 60000 })
   const pilihan = await page.locator('[data-uji="urut"] option').evaluateAll(o => o.map(x => x.value))
-  if (pilihan.join() !== 'email,wa,versi,daftar,aktif,ruang,tx,nominal,domi,domi_terakhir,kredit') gagal(`Pilihan Urut: ${pilihan}`)
+  if (pilihan.join() !== 'email,wa,versi,daftar,aktif,ruang,tx,nominal,domi,domi_terakhir,kredit,masuk,status,status_wa,kredit_beli,domi_30,nama,sumber') gagal(`Pilihan Urut: ${pilihan}`)
   for (const k of pilihan) {
     await page.locator('[data-uji="urut"]').selectOption(k)
     await page.waitForFunction(k => new URL(location.href).searchParams.get('urut') === k || (k === 'daftar' && !location.search.includes('urut=')), k)
-    const arah = k === 'email' || k === 'wa' ? 'asc' : 'desc'
+    const arah = ARAH_NAIK.includes(k) ? 'asc' : 'desc'
     if (!(await terkirim(p => p.p_urut === k && p.p_arah === arah))) gagal(`Urut ${k} mengirim ${JSON.stringify(daftar().at(-1).p)}`)
   }
-  // Yang tidak punya kolom tetap terbaca: nilainya di baris kedua.
+  // Setiap nilai urut punya kolom sendiri: nominal, transaksi, dan terakhir pakai Domi terbaca di kolomnya.
   await page.locator('[data-uji="urut"]').selectOption('nominal')
   await page.locator('.ca-daftar-pengguna table').getByText('Rp 2,4 M', { exact: true }).waitFor()
   await potret('pengguna-urut-nominal-terang-1440')
   await page.locator('[data-uji="urut"]').selectOption('tx')
-  await page.locator('.ca-daftar-pengguna table').getByText('4.310 tx', { exact: true }).waitFor()
+  await page.locator('.ca-daftar-pengguna table').getByText('4.310', { exact: true }).waitFor()
   await page.locator('[data-uji="urut"]').selectOption('domi_terakhir')
-  await page.locator('.ca-daftar-pengguna table').getByText(/^Terakhir \d/).first().waitFor()
+  await page.locator('.ca-daftar-pengguna tbody td').getByText(/^\d{1,2} [A-Z][a-z]{2} \d{4} \d{2}\.\d{2}\.\d{2}$/).first().waitFor()
   await potret('pengguna-urut-domi-terakhir-terang-1440')
   // Tombol arah membalik, kepala kolom memakai aturan yang sama.
   await page.locator('[data-uji="urut-arah"]').click()
@@ -524,12 +539,12 @@ try {
     await buka('/console/cashflow/pengguna')
     await page.getByText('10 pengguna', { exact: true }).waitFor({ timeout: 60000 })
     const kolom = await kepalaTabel()
-    if (kolom.join('|') !== 'Pengguna|WhatsApp|Versi|Aktif terakhir|Ruang|Buka') gagal(`Server lama, kolom: ${kolom.join('|')}`)
+    if (kolom.join('|') !== KOLOM_V3.join('|')) gagal(`Server lama, kolom: ${kolom.join('|')}`)
     const urut = await page.locator('[data-uji="urut"] option').evaluateAll(o => o.map(x => x.value))
     if (urut.join() !== 'email,wa,versi,daftar,aktif,ruang,tx,nominal') gagal(`Server lama, pilihan Urut: ${urut}`)
     for (const s of ['pakai_domi', 'beli_kredit']) if (await page.locator(`[data-seg="${s}"]`).count()) gagal(`Server lama: segmen ${s} tampil`)
     if (await page.locator('[data-uji="jumlah-pakai-domi"]').count()) gagal('Server lama: jumlah pakai Domi tampil')
-    if (await page.locator('.ca-daftar-pengguna .ca-console-table-wrap').evaluate(w => w.scrollWidth - w.clientWidth)) gagal(`Server lama ${t}: tabel bergulir ke samping di 1440`)
+    if (await meluber()) gagal(`Server lama ${t}: halaman meluber di 1440`)
     await page.locator('[data-uji="saring-buka"]').click()
     if (await page.locator('[data-uji="saring-tim"]').count()) gagal('Server lama: saringan akun tim tampil')
     await page.locator('[data-uji="saring-selesai"]').click()
@@ -556,11 +571,15 @@ try {
     if (daftar().at(-1).p.p_alasan) gagal('Tanpa izin: daftar diminta dengan alasan')
     if (await page.getByText('@contoh.invalid').evaluateAll(e => e.filter(x => !x.textContent.includes('***')).length)) gagal('Tanpa izin: ada email utuh')
     const mati = await page.locator('[data-uji="urut"] option').evaluateAll(o => o.filter(x => x.disabled).map(x => x.value))
-    if (mati.join() !== 'ruang,tx,nominal,domi,domi_terakhir,kredit') gagal(`Tanpa izin, urut yang mati: ${mati}`)
+    if (mati.join() !== 'ruang,tx,nominal,domi,domi_terakhir,kredit,kredit_beli,domi_30,nama,sumber') gagal(`Tanpa izin, urut yang mati: ${mati}`)
     for (const s of ['catat7', 'belum', 'pakai_domi', 'beli_kredit']) if (!(await page.locator(`[data-seg="${s}"]`).isDisabled())) gagal(`Tanpa izin: segmen ${s} masih hidup`)
     if (await page.locator('.ca-daftar-pengguna thead').getByRole('button', { name: 'Tanya Domi', exact: true }).count()) gagal('Tanpa izin: kepala Tanya Domi masih bisa diurutkan')
-    const sel = await page.locator('.ca-daftar-pengguna tbody tr').evaluateAll(tr => tr.map(r => [4, 5, 6].map(n => r.children[n].innerText.trim().split('\n')[0]).join('|')))
-    if (sel.some(x => x !== '—|—|—')) gagal(`Tanpa izin: hitungan tampil ${sel}`)
+    const kolomHitung = ['Ruang', 'Transaksi', 'Total nominal', 'Tanya Domi', 'Domi 30 hari', 'Sisa kredit', 'Kredit dibeli', 'Sumber'].map(k => KOLOM_V5.indexOf(k))
+    const sel = await page.locator('.ca-daftar-pengguna tbody tr').evaluateAll((tr, n) => tr.map(r => n.map(i => r.children[i].innerText.trim().split('\n')[0]).join('|')), kolomHitung)
+    if (sel.some(x => x !== kolomHitung.map(() => '—').join('|'))) gagal(`Tanpa izin: hitungan tampil ${sel}`)
+    // Tanpa kontak: waktu hanya tanggal (server membulatkan), tanpa jam.
+    const tanggalSaja = await page.locator('[data-uji="sel-daftar"]').first().innerText()
+    if (!/^\d{1,2} [A-Z][a-z]{2} \d{4}$/.test(tanggalSaja.trim())) gagal(`Tanpa izin: waktu daftar ${tanggalSaja}`)
     if (await page.locator('[data-uji="jumlah-pakai-domi"]').count()) gagal('Tanpa izin: jumlah pakai Domi tampil')
     await potret(`pengguna-tanpa-izin-${t}-1440`)
     await lebar(390)

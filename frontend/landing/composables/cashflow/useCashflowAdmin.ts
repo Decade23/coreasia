@@ -113,6 +113,7 @@ import type {
   AturanDTO, SaringDTO, PratinjauPenerimaDTO, SegmenDTO, AkunInternalDTO, JenisAkunInternal,
 } from '~/adapters/cashflowPengumumanAturan'
 import type { DaftarPaketDTO, MuatanPaket, MuatanSebagian } from '~/adapters/cashflowPaket'
+import type { DaftarRuangV3DTO } from '~/adapters/cashflowSamaran'
 import type { DaftarPembelianDTO, JalurPembelian, StatusPembelian, StatusProsesPembelian } from '~/adapters/cashflowPembelian'
 import { BATAS_DAFTAR_PEMBELIAN } from '~/adapters/cashflowPembelian'
 import type { AiCadanganDTO } from '~/adapters/cashflowAiCadangan'
@@ -121,6 +122,9 @@ import { tanpaKunci } from '~/adapters/cashflowAiCadangan'
 interface OpsiDaftarPengguna {
   limit: number; offset: number; cari: string; segmen: string; urut: string; arah: string
   filter: Record<string, string>; bahasa: string; alasan: string | null
+}
+interface OpsiDaftarRuang {
+  limit: number; offset: number; cari: string; jenis: JenisRuang | null; urut: string; arah: string; alasan: string | null
 }
 
 /* DTO sakelar pindah ke adapter (bertipe, tanpa any); diekspor ulang
@@ -399,10 +403,25 @@ export const useCashflowAdmin = () => {
         p_limit: p.limit, p_offset: p.offset, p_cari: p.cari || null, p_segmen: p.segmen,
         p_urut: p.urut, p_arah: p.arah, p_filter: p.filter, p_bahasa: p.bahasa, p_alasan: p.alasan,
       }),
+    /** v5 (20261119102000): argumen sama dengan v4, ditambah urutan setiap kolom dan kunci asal per
+     *  baris (adapters/cashflowPenggunaKolom). Server lama: PGRST202 jadi 'belum-aktif', halaman jatuh ke v4. */
+    daftarPenggunaHalamanV5: (p: OpsiDaftarPengguna) =>
+      rpc<DaftarPenggunaDTO>('admin_daftar_pengguna_v5', {
+        p_limit: p.limit, p_offset: p.offset, p_cari: p.cari || null, p_segmen: p.segmen,
+        p_urut: p.urut, p_arah: p.arah, p_filter: p.filter, p_bahasa: p.bahasa, p_alasan: p.alasan,
+      }),
     /** v2: nama & pemilik tersamar DI SERVER; `cari` hanya mencocokkan bentuk
      *  tersamar (atau id ruang persis), jadi aman dikirim tanpa alasan. */
     daftarRuang: (limit = 50, offset = 0, cari = '', jenis: JenisRuang | null = null) =>
       rpc<RuangDTO[]>('admin_daftar_ruang_v2', { p_limit: limit, p_offset: offset, p_cari: cari.trim() || null, p_jenis: jenis }),
+    /** v3 (20261119100000): berurut per kolom di server, berhalaman. `alasan` (pii) membuka nama
+     *  ruang dan pemilik utuh dan menulis satu audit daftar_ruang_terbuka per halaman. Server
+     *  lama: 'belum-aktif', halaman jatuh ke v2 (adapters/cashflowSamaran). */
+    daftarRuangV3: (p: OpsiDaftarRuang) =>
+      rpc<DaftarRuangV3DTO>('admin_daftar_ruang_v3', {
+        p_limit: p.limit, p_offset: p.offset, p_cari: p.cari.trim() || null, p_jenis: p.jenis,
+        p_urut: p.urut, p_arah: p.arah, p_alasan: p.alasan,
+      }),
 
     // ── kasus (0089): buka, pulihkan, tambah, perpanjang, tutup ─────────
     /** Kasus aktif milik pelaku atas subjek ini (+ anak investigasi aktif).
@@ -460,6 +479,10 @@ export const useCashflowAdmin = () => {
     // ── Pengguna 360 (0090): kepala T0, lalu data lewat kasus ───────────
     /** T0: email tersamar, hitungan; ruang[] hanya untuk pii. Audit lihat_kepala. */
     kepalaPengguna: (user: string) => rpc<KepalaPenggunaDTO>('admin_pengguna_kepala', { p_user: user }),
+    /** v2 (20261119101000): `alasan` (pii) membuka email, nama ruang, dan waktu utuh. Audit
+     *  lihat_kepala beralasan. Server lama: 'belum-aktif', jatuh ke kepalaPengguna. */
+    kepalaPenggunaV2: (user: string, alasan: string | null) =>
+      rpc<KepalaPenggunaDTO>('admin_pengguna_kepala_v2', { p_user: user, p_alasan: alasan }),
     /** Ranah akun: akun, hitung{}, total bersih, ruang[]. Audit baca_akun. */
     pengguna360: (kasus: string, user: string) => rpc<Pengguna360DTO>('admin_pengguna_360', { p_kasus: kasus, p_user: user }),
     /** Ranah transaksi, keyset, TANPA note. Audit baca_transaksi per halaman.
@@ -501,6 +524,9 @@ export const useCashflowAdmin = () => {
     kepalaRuang: (ws: string) => rpc<KepalaRuangDTO>('admin_ruang_kepala', { p_ws: ws }),
     /** Ranah ruang: pengaturan, anggota, bekas, undangan, hitung{}. Audit baca_ruang. */
     ruang360: (kasus: string, ws: string) => rpc<Ruang360DTO>('admin_ruang_360', { p_kasus: kasus, p_ws: ws }),
+    /** v2 (20261119101000): email pemilik, anggota, bekas, dan undangan utuh (kasus menuntut pii).
+     *  Audit baca_ruang. Server lama: 'belum-aktif', jatuh ke ruang360. */
+    ruang360V2: (kasus: string, ws: string) => rpc<Ruang360DTO>('admin_ruang_360_v2', { p_kasus: kasus, p_ws: ws }),
     /** Ranah dompet: dompet + saldo; `ws` null = semua ruang lingkup kasus. Audit baca_dompet. */
     dompetRuang: (kasus: string, ws: string | null) => rpc<DompetRuangDTO>('admin_dompet_ruang', { p_kasus: kasus, p_ws: ws }),
     /** Ranah dompet: mutasi satu dompet + saldo berjalan, keyset. Audit baca_dompet. */

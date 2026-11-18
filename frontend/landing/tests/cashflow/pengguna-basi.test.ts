@@ -64,6 +64,8 @@ const api = {
     kepalaTertunda.set(id, [...(kepalaTertunda.get(id) ?? []), t.selesai])
     return t.janji
   }),
+  /* Kepala v2 (20261119101000) untuk sesi ber-pii: jawabannya ditunda sama dengan v1. */
+  kepalaPenggunaV2: vi.fn((id: string, _alasan: string | null) => api.kepalaPengguna(id)),
   kasusAktif: vi.fn(async () => ({ kasus: null, investigasi: [] })),
   kasusBuka: vi.fn(async (subjek: string, _s: unknown, _p: unknown, _r: unknown, ruang: string[]) => kasusDto(subjek, ruang)),
   kasusTambah: vi.fn(),

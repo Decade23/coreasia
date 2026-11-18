@@ -1,14 +1,15 @@
 <script setup lang="ts">
 /**
  * Kepala Ruang 360 — T0 (admin_ruang_kepala): ruang mana ini tanpa membuka
- * isinya. Nama utuh berasal dari Ringkas yang sudah diaudit. Identitas
- * pemilik tetap berasal dari kepala tersamar.
+ * isinya. Nama utuh berasal dari Ringkas yang sudah diaudit. Email pemilik
+ * utuh berasal dari admin_ruang_360_v2 (kasus ber-pii, diaudit baca_ruang).
+ * Server lama tidak mengirimnya: yang tampil bentuk tersamar dari kepala.
  * Setiap kunjungan tercatat (lihat_kepala), jadi "dilihat n×" jujur.
  */
 import type { KepalaRuang } from '~/adapters/cashflowRuang'
 import { angka } from '~/adapters/cashflow'
 
-const props = defineProps<{ kepala: KepalaRuang | null; namaLengkap?: string; izinPribadi: boolean; aksesKe: string }>()
+const props = defineProps<{ kepala: KepalaRuang | null; namaLengkap?: string; pemilikUtuh?: string | null; pemilikNama?: string | null; izinPribadi: boolean; aksesKe: string }>()
 const { tcf, formatTanggal } = useCashflowI18n()
 const hitungan = computed(() => props.kepala
   ? [
@@ -40,7 +41,13 @@ const hitungan = computed(() => props.kepala
         </div>
       </div>
       <dl class="cf-kepala-fakta">
-        <div class="col-span-2 sm:col-span-1"><dt>{{ tcf('ruang.pemilik') }}</dt><dd class="break-all">{{ kepala.pemilikTersamar }}</dd></div>
+        <div class="col-span-2 sm:col-span-1">
+          <dt>{{ tcf('ruang.pemilik') }}</dt>
+          <dd class="break-words" data-uji="kepala-pemilik">
+            <span class="break-all">{{ pemilikUtuh ?? kepala.pemilikTersamar }}</span><CashflowSalinKontak v-if="pemilikUtuh" jenis="email" :nilai="pemilikUtuh" class="!size-6" />
+            <span v-if="pemilikNama" class="block text-xs font-medium text-[var(--ca-muted)]">{{ pemilikNama }}</span>
+          </dd>
+        </div>
         <div><dt>{{ tcf('ruang.dibuat') }}</dt><dd>{{ formatTanggal(kepala.dibuatIso) }}</dd></div>
         <div v-for="h in hitungan" :key="h.label">
           <dt>{{ h.label }}</dt>

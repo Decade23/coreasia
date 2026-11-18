@@ -1,9 +1,10 @@
 /**
  * Daftar pengguna console: pilihan urut, saringan, dan isi baris dua tingkat.
  *
- * Tabelnya tujuh kolom. Yang tidak lagi punya kolom sendiri (tanggal daftar,
- * transaksi, total nominal, terakhir pakai Domi) tetap bisa dipakai mengurutkan
- * lewat satu pilihan "Urut", dan saringan kolom pindah ke panel "Saring".
+ * Sejak v5 (spek console laporan 19 Nov 2026, K3) setiap kunci baris punya
+ * kolom dan setiap kepala kolom mengurutkan di server (adapters/
+ * cashflowPenggunaKolom.ts). Pilihan "Urut" tetap ada untuk layar sempit,
+ * dan saringan kolom tetap di panel "Saring".
  * Nilai yang dikirim ke server (p_urut, p_arah, p_segmen, p_filter) dan
  * parameter URL (?urut, ?arah, ?seg, ?hal) TIDAK berubah: berkas ini yang
  * menjaganya, dan tests/cashflow/pengguna-daftar.test.ts menguncinya.
@@ -12,36 +13,44 @@
  */
 import type { Pengguna, StatusPengguna } from './cashflow'
 import { FILTER_INTERNAL, SEGMEN_BELI_KREDIT, SEGMEN_PAKAI_DOMI, URUT_DOMI, nilaiInternal, segmenDomi, urutDomi } from './cashflowPenggunaDomi'
+import { URUT_BUTUH_KONTAK, URUT_PRIBADI_V5, URUT_V5, urutV5 } from './cashflowPenggunaKolom'
 import { SEGMEN_BELUM_WA, STATUS_WA_AKUN, type StatusWaAkun } from './cashflowWa'
 import type { KepalaPengguna } from './cashflowBuku'
 
 // ── Nilai yang dikenal server dan URL ────────────────────────────────────
 export const SEGMEN_PENGGUNA = ['semua', 'catat7', 'belum', 'ditangguhkan', SEGMEN_BELUM_WA, SEGMEN_PAKAI_DOMI, SEGMEN_BELI_KREDIT] as const
 export type SegmenPengguna = typeof SEGMEN_PENGGUNA[number]
-export const URUT_PENGGUNA = ['email', 'wa', 'versi', 'daftar', 'aktif', 'ruang', 'tx', 'nominal', ...URUT_DOMI] as const
+export const URUT_PENGGUNA = ['email', 'wa', 'versi', 'daftar', 'aktif', 'ruang', 'tx', 'nominal', ...URUT_DOMI, ...URUT_V5] as const
 export type UrutPengguna = typeof URUT_PENGGUNA[number]
 export type ArahUrut = 'asc' | 'desc'
 /** Urutan yang butuh izin data pribadi (server menolaknya tanpa cashflow:pii). */
-export const URUT_PRIBADI: readonly UrutPengguna[] = ['ruang', 'tx', 'nominal', ...URUT_DOMI]
+export const URUT_PRIBADI: readonly UrutPengguna[] = ['ruang', 'tx', 'nominal', ...URUT_DOMI, ...URUT_PRIBADI_V5]
 /** Kunci p_filter berisi teks bebas atau status akun. */
 export const FILTER_KOLOM = ['email', 'wa', 'versi', 'daftar', 'aktif', 'status'] as const
 export const STATUS_AKUN: readonly StatusPengguna[] = ['aktif', 'ditangguhkan', 'menunggu_hapus']
-/** Kolom tabel yang kepalanya bisa diklik untuk mengurutkan. Sisanya hanya lewat pilihan "Urut". */
-export const URUT_BERKOLOM: readonly UrutPengguna[] = ['email', 'wa', 'versi', 'aktif', 'domi', 'kredit', 'ruang']
+/** Kolom tabel yang kepalanya bisa diklik untuk mengurutkan: sejak v5 semuanya (TP-02). */
+export const URUT_BERKOLOM: readonly UrutPengguna[] = URUT_PENGGUNA
 
 export const segmenButuhHitungan = (k: string): boolean => k === 'belum' || k === 'catat7' || segmenDomi(k)
-export const arahBawaan = (k: UrutPengguna): ArahUrut => (k === 'email' || k === 'wa' ? 'asc' : 'desc')
+/** Teks dan status naik (A dulu, Aktif dulu, Terverifikasi dulu), angka dan waktu turun. */
+export const arahBawaan = (k: UrutPengguna): ArahUrut => (['email', 'wa', 'nama', 'sumber', 'status', 'status_wa'].includes(k) ? 'asc' : 'desc')
 
 export interface KeadaanDaftar {
   /** Server memasang daftar v4 (pemakaian Domi, kredit, akun tim). */
   adaDomi: boolean
   /** Sesi tanpa izin data pribadi: urutan dan segmen berhitungan mati. */
   tanpaHitungan: boolean
+  /** Server memasang daftar v5 (urutan setiap kolom, asal pengguna). */
+  adaV5?: boolean
+  /** Kontak dibuka: urut nama boleh. */
+  terbuka?: boolean
 }
 
 /** Urutan ini boleh dipakai sekarang? */
 export function urutBoleh(k: UrutPengguna, o: KeadaanDaftar): boolean {
   if (urutDomi(k) && !o.adaDomi) return false
+  if (urutV5(k) && !o.adaV5) return false
+  if (URUT_BUTUH_KONTAK.includes(k) && !o.terbuka) return false
   return !(o.tanpaHitungan && URUT_PRIBADI.includes(k))
 }
 
@@ -50,7 +59,7 @@ export function urutBoleh(k: UrutPengguna, o: KeadaanDaftar): boolean {
  * ditawarkan di server lama. Yang butuh izin tetap terlihat tetapi mati.
  */
 export function opsiUrut(o: KeadaanDaftar): Array<{ nilai: UrutPengguna; mati: boolean }> {
-  return URUT_PENGGUNA.filter(k => o.adaDomi || !urutDomi(k)).map(k => ({ nilai: k, mati: !urutBoleh(k, o) }))
+  return URUT_PENGGUNA.filter(k => (o.adaDomi || !urutDomi(k)) && (o.adaV5 || !urutV5(k))).map(k => ({ nilai: k, mati: !urutBoleh(k, o) }))
 }
 
 /**
