@@ -1,4 +1,5 @@
 import type { AturanDTO } from './cashflowPengumumanAturan'
+import type { GayaPengumuman } from './cashflowPengumumanForm'
 
 export interface SimpanPengumuman {
   id: string
@@ -16,6 +17,8 @@ export interface SimpanPengumuman {
   kelompok?: string[]
   /** Hanya untuk penerima `aturan` (admin_simpan_pengumuman_v4 p_aturan). */
   aturan?: AturanDTO | null
+  /** Hanya v5 (20261119122000). */
+  gaya?: GayaPengumuman
 }
 
 export function statusPengumuman(p: { mulai: string; sampai: string | null }, kini = Date.now()): 'terjadwal' | 'aktif' | 'berakhir' {
@@ -27,6 +30,16 @@ export function statusPengumuman(p: { mulai: string; sampai: string | null }, ki
 export type JenisPenerima = 'all' | 'single' | 'users' | 'groups' | 'aturan'
 export interface KelompokPengumuman { id: string; name: string; updated_at: string; members: number; user_ids?: string[] }
 export interface AkunPenerima { id: string; email: string }
+/** admin_pengumuman_pengguna_v2: email dan nama utuh bila dibuka (terbuka), selain itu email tersamar dan nama null. */
+export interface AkunPenerimaV2DTO { id: string; email: string | null; nama: string | null; versi: string | null; internal: boolean; jenis_internal: string | null }
+export interface AkunPenerimaV2 { id: string; email: string; nama: string | null; versi: string | null; internal: boolean; jenisInternal: string | null }
+export function keAkunPenerimaV2(d: AkunPenerimaV2DTO): AkunPenerimaV2 {
+  return {
+    id: d.id, email: typeof d.email === 'string' ? d.email : '', nama: typeof d.nama === 'string' && d.nama.trim() ? d.nama.trim() : null,
+    versi: typeof d.versi === 'string' && d.versi ? d.versi : null, internal: d.internal === true,
+    jenisInternal: typeof d.jenis_internal === 'string' && d.jenis_internal ? d.jenis_internal : null,
+  }
+}
 export interface HalamanPenerima<T> { total: number; baris: T[] }
 /** Label ID/EN-nya milik kamus (pengumuman.penerimaOpsi). `label` tinggal untuk pemakai lama. */
 export const PILIHAN_PENERIMA = [

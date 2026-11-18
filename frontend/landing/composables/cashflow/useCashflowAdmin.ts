@@ -1,4 +1,4 @@
-import type { AkunPenerima, HalamanPenerima, KelompokPengumuman } from '~/adapters/cashflowPengumuman'
+import type { AkunPenerima, AkunPenerimaV2DTO, HalamanPenerima, KelompokPengumuman } from '~/adapters/cashflowPengumuman'
 /**
  * Pembungkus RPC admin CashFlow — satu tempat untuk semua panggilan ke Supabase.
  *
@@ -113,6 +113,7 @@ import type {
   AturanDTO, SaringDTO, PratinjauPenerimaDTO, SegmenDTO, AkunInternalDTO, JenisAkunInternal,
 } from '~/adapters/cashflowPengumumanAturan'
 import type { DaftarPaketDTO, MuatanPaket, MuatanSebagian } from '~/adapters/cashflowPaket'
+import type { DaftarRutinDTO, MuatanRutin } from '~/adapters/cashflowPengumumanRutin'
 import type { DaftarPembelianDTO, JalurPembelian, StatusPembelian, StatusProsesPembelian } from '~/adapters/cashflowPembelian'
 import { BATAS_DAFTAR_PEMBELIAN } from '~/adapters/cashflowPembelian'
 import type { AiCadanganDTO } from '~/adapters/cashflowAiCadangan'
@@ -166,6 +167,9 @@ export const HINT_22023 = [
   'bulan', 'hari', 'saringan',
   // Sasaran pengumuman berbasis aturan (spek 13 Nov 2026).
   'saring', 'aturan', 'penerima', 'segmen', 'akun-internal', 'alasan-pendek',
+  // Form pengumuman dan pengumuman rutin (spek console 19 Nov 2026).
+  'gaya', 'gaya-belum-ada', 'rutin-topik', 'rutin-jeda', 'rutin-jam', 'rutin-bobot', 'rutin-aktif',
+  'pengumuman-judul', 'pengumuman-isi', 'pengumuman-level', 'pengumuman-waktu', 'pengumuman-tautan',
 ] as const
 
 /** 42883 menyebut RPC `nama` sendiri ("function public.<nama>(p_a => text) does not exist")? */
@@ -591,6 +595,10 @@ export const useCashflowAdmin = () => {
     }),
     jumlahPenerimaPengumuman: (jenis: string, pengguna: string[], kelompok: string[]) => rpc<number>('admin_jumlah_penerima_pengumuman', { p_penerima: jenis, p_pengguna: pengguna, p_kelompok: kelompok }),
     penggunaPengumuman: (cari = '', offset = 0, ids: string[] | null = null) => rpc<HalamanPenerima<AkunPenerima>>('admin_pengumuman_pengguna', { p_cari: cari, p_limit: ids ? 1000 : 25, p_offset: offset, p_ids: ids }),
+    /** v2 (20261119120000): alasan terisi = email dan nama utuh, cocok ke WA asli, beraudit
+     *  cari_penerima_terbuka (butuh cashflow:pii, 42501 izin-kurang). Server lama: PGRST202 → v1. */
+    penggunaPengumumanV2: (cari = '', offset = 0, ids: string[] | null = null, alasan: string | null = null) =>
+      rpc<HalamanPenerima<AkunPenerimaV2DTO> & { terbuka?: boolean }>('admin_pengumuman_pengguna_v2', { p_cari: cari, p_limit: ids ? 1000 : 25, p_offset: offset, p_ids: ids, p_alasan: alasan }),
     kelompokPengumuman: (cari = '', offset = 0) => rpc<HalamanPenerima<KelompokPengumuman>>('admin_daftar_kelompok_pengumuman', { p_cari: cari, p_limit: 25, p_offset: offset }),
     detailKelompokPengumuman: (id: string) => rpc<KelompokPengumuman>('admin_detail_kelompok_pengumuman', { p_id: id }),
     simpanKelompokPengumuman: (id: string, versi: string | null, nama: string, pengguna: string[], alasan: string) => rpc<string>('admin_simpan_kelompok_pengumuman', { p_id: id, p_versi: versi, p_nama: nama, p_pengguna: pengguna, p_alasan: alasan }),
@@ -606,6 +614,13 @@ export const useCashflowAdmin = () => {
       p_penerima: p.penerima ?? 'all', p_pengguna: p.pengguna ?? [], p_kelompok: p.kelompok ?? [],
       p_aturan: p.penerima === 'aturan' ? p.aturan ?? null : null,
     }),
+    /** v5 (20261119122000): v4 + gaya modal atau kartu. Kartu ditolak 22023 gaya-belum-ada sampai kolom gaya (T4) ada. */
+    simpanPengumumanV5: (p: SimpanPengumuman) => rpc<string>('admin_simpan_pengumuman_v5', {
+      p_id: p.id, p_versi: p.versi, p_judul: p.judul, p_isi: p.isi, p_level: p.level, p_mulai: p.mulai, p_sampai: p.sampai,
+      p_tombol: p.tombol, p_url: p.url, p_alasan: p.alasan,
+      p_penerima: p.penerima ?? 'all', p_pengguna: p.pengguna ?? [], p_kelompok: p.kelompok ?? [],
+      p_aturan: p.penerima === 'aturan' ? p.aturan ?? null : null, p_gaya: p.gaya ?? 'modal',
+    }),
     pratinjauPenerimaPengumuman: (jenis: string, pengguna: string[], kelompok: string[], aturan: AturanDTO | null) =>
       rpc<PratinjauPenerimaDTO>('admin_pratinjau_penerima_pengumuman', { p_penerima: jenis, p_pengguna: pengguna, p_kelompok: kelompok, p_aturan: aturan }),
     daftarSegmenPengumuman: () => rpc<SegmenDTO[]>('admin_daftar_segmen_pengumuman'),
@@ -617,6 +632,20 @@ export const useCashflowAdmin = () => {
     simpanAkunInternal: (user: string | null, email: string | null, jenis: JenisAkunInternal, catatan: string | null, alasan: string) =>
       rpc<string>('admin_simpan_akun_internal', { p_user: user, p_email: email, p_jenis: jenis, p_catatan: catatan, p_alasan: alasan }),
     hapusAkunInternal: (user: string, alasan: string) => rpc<void>('admin_hapus_akun_internal', { p_user: user, p_alasan: alasan }),
+
+    // ── pengumuman rutin (20261119123000, adapters/cashflowPengumumanRutin) ─
+    // Server lama tidak punya RPC ini (PGRST202 → 'belum-aktif'): bagian rutin,
+    // pilihan gaya, dan pengecualian di mode lama tidak ditawarkan.
+    /** Izin view, tanpa audit. */
+    daftarPengumumanRutin: () => rpc<DaftarRutinDTO>('admin_daftar_pengumuman_rutin'),
+    /** Izin pii (42501 izin-kurang). versi null = buat. Audit simpan_pengumuman_rutin. */
+    simpanPengumumanRutin: (id: string, versi: string | null, m: MuatanRutin) => rpc<string>('admin_simpan_pengumuman_rutin', {
+      p_id: id, p_versi: versi, p_topik: m.topik, p_judul: m.judul, p_isi: m.isi, p_tombol: m.tombol, p_url: m.url,
+      p_aturan: m.aturan, p_jeda_hari: m.jedaHari, p_jam_mulai: m.jamMulai, p_jam_akhir: m.jamAkhir, p_bobot: m.bobot,
+      p_aktif: m.aktif, p_alasan: m.alasan,
+    }),
+    /** Izin pii. Audit hapus_pengumuman_rutin. Pengumuman yang sudah terbit tidak ikut terhapus. */
+    hapusPengumumanRutin: (id: string, alasan: string) => rpc<void>('admin_hapus_pengumuman_rutin', { p_id: id, p_alasan: alasan }),
     setEntitlement: (user: string, tier: string, sampai: string | null, alasan: string) =>
       rpc<void>('admin_set_entitlement', { p_user: user, p_tier: tier, p_sampai: sampai, p_alasan: alasan }),
 
