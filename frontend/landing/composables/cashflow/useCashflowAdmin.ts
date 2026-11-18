@@ -108,6 +108,8 @@ import { LIMIT_DAFTAR_DOMI, LIMIT_PESAN_DOMI } from '~/adapters/cashflowDomi'
 import { urlBerkasSah } from '~/adapters/cashflowLampiran'
 import type { RingkasDukunganDTO, DaftarDukunganDTO, SumberDukungan, StatusDukungan } from '~/adapters/cashflowDukungan'
 import { BATAS_DAFTAR_DUKUNGAN } from '~/adapters/cashflowDukungan'
+import type { AsalDTO, DukungDTO, HarianDTO, JamRamaiDTO, ModeSaldo, SaldoDTO, UrutSaldo } from '~/adapters/cashflowLaporan'
+import { ALASAN_LAPORAN_SALDO, PER_SALDO } from '~/adapters/cashflowLaporan'
 import type { SimpanPengumuman } from '~/adapters/cashflowPengumuman'
 import type {
   AturanDTO, SaringDTO, PratinjauPenerimaDTO, SegmenDTO, AkunInternalDTO, JenisAkunInternal,
@@ -643,6 +645,27 @@ export const useCashflowAdmin = () => {
     dukunganDaftar: (sumber: SumberDukungan | null, status: StatusDukungan | null, dari: string, sampai: string, sebelum: string | null) =>
       rpc<DaftarDukunganDTO>('admin_dukungan_daftar', {
         p_sumber: sumber, p_status: status, p_dari: dari, p_sampai: sampai, p_batas: BATAS_DAFTAR_DUKUNGAN, p_sebelum: sebelum,
+      }),
+
+    // ── halaman Laporan (adapters/cashflowLaporan) ─────────────────────
+    // Server lama tidak punya RPC ini (PGRST202 → 'belum-aktif'): bagiannya
+    // menulis "belum aktif", bukan galat.
+    /** Peta hari x jam WIB sampai kemarin, tanpa akun dalam. Izin view, tanpa audit. */
+    laporanJamRamai: (hari: number, jenis: 'pribadi' | 'usaha' | null) =>
+      rpc<JamRamaiDTO>('admin_laporan_jam_ramai', { p_hari: hari, p_jenis: jenis }),
+    /** Angka per tanggal WIB sampai kemarin. Izin view, tanpa audit. */
+    laporanHarian: (hari: number) => rpc<HarianDTO>('admin_laporan_harian', { p_hari: hari }),
+    /** Ketukan Dukung CashFlow (aplikasi 1.4.4+) dan dukungan masuk. Izin view, tanpa audit. */
+    laporanDukung: (hari: number) => rpc<DukungDTO>('admin_laporan_dukung', { p_hari: hari }),
+    /** Asal pengguna (migrasi aplikasi 1.4.4, tiket lain). Izin view, tanpa audit. */
+    laporanAsal: (hari: number) => rpc<AsalDTO>('admin_laporan_asal', { p_hari: hari }),
+    /** Uang nyata per ruang atau per pengguna. Butuh cashflow:pii; alasan tetap
+     *  halaman ini, setiap panggilan satu baris audit laporan_saldo. */
+    laporanSaldo: (p: { mode: ModeSaldo; jenis: 'pribadi' | 'usaha' | null; cari: string; urut: UrutSaldo; arah: 'asc' | 'desc'; hal: number; tanpaInternal: boolean }) =>
+      rpc<SaldoDTO>('admin_laporan_saldo', {
+        p_mode: p.mode, p_jenis: p.jenis, p_cari: p.cari.trim() || null, p_urut: p.urut, p_arah: p.arah,
+        p_limit: PER_SALDO, p_offset: (Math.max(1, p.hal) - 1) * PER_SALDO, p_tanpa_internal: p.tanpaInternal,
+        p_alasan: ALASAN_LAPORAN_SALDO,
       }),
 
     // ── paket kredit Domi (adapters/cashflowPaket) ──────────────────────
