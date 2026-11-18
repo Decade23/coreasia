@@ -31,7 +31,7 @@ import { PILIHAN_PENERIMA, penerimaSah } from '../../adapters/cashflowPengumuman
 import { RILIS_PLAY, RILIS_PLAY_TERAKHIR } from '../../adapters/cashflowVersi'
 import { KAMUS_CASHFLOW } from '../../composables/cashflow/useCashflowI18n'
 import { HINT_22023, petakanGalat } from '../../composables/cashflow/useCashflowAdmin'
-import { adaMigrasi, fungsiTerakhir, kolomTabel, parameterFungsi } from './migrasi'
+import { adaMigrasi, adaMigrasiNomor, fungsiTerakhir, kolomTabel, parameterFungsi } from './migrasi'
 
 const AKAR = resolve(fileURLToPath(new URL('.', import.meta.url)), '../..')
 const baca = (rel: string) => readFileSync(join(AKAR, rel), 'utf8')
@@ -61,6 +61,7 @@ describe('adapter saring', () => {
     expect(saring).toEqual({
       versiMin: 26110702, versiDiBawah: 26111301, versiTakDiketahui: 'tidak', daftarSejak: '2026-11-01', daftarSampai: '2026-11-13',
       aktifHari: 30, ruang: 'usaha', domiPakai: true, domiBeli: false, kreditHabis: true, nomorWa: 'belum',
+      umurMinHari: null, pengguna: null, kelompok: null,
     })
     expect(saringKeDto(saring)).toEqual(SARING_LENGKAP)
   })
@@ -402,7 +403,9 @@ describe('kontrak RPC sasaran pengumuman ↔ migrasi bagian S', () => {
 
   it.skipIf(!adaFungsi('pengumuman_saring_sah_inti'))('kunci dan nilai saring yang dikenal console = yang diperiksa server', () => {
     const { badan } = fungsiTerakhir('pengumuman_saring_sah_inti')
-    for (const k of KUNCI_SARING) expect(badan, k).toContain(`'${k}'`)
+    // Kunci 20261119121000 (umur akun, pengguna, kelompok): console boleh tayang lebih dulu dari migrasinya.
+    const baru = ['daftar_lebih_dari_hari', 'pengguna', 'kelompok']
+    for (const k of KUNCI_SARING.filter(x => adaMigrasiNomor('20261119121000') || !baru.includes(x))) expect(badan, k).toContain(`'${k}'`)
     for (const v of [...RUANG_SARING, ...NOMOR_WA_SARING, ...VERSI_TAK_DIKETAHUI]) expect(badan, v).toContain(`'${v}'`)
     expect(badan).toMatch(new RegExp(`\\b${AKTIF_HARI_MAKS}\\b`))
   })
@@ -442,8 +445,11 @@ describe('halaman dan komponen', () => {
     expect(halaman).toMatch(/petakanGalat\(e, 'admin_daftar_pengumuman_v4'\)\.jenis !== 'belum-aktif'/)
     expect(halaman).toMatch(/return api\.daftarPengumuman\(\)/)
     expect(halaman).toMatch(/v-if="sasaranAktif"[^>]*@click="bukaSegmen = true"/)
-    expect(halaman).toMatch(/<CashflowPengumumanPratinjauPenerima v-if="sasaranAktif"/)
-    expect(halaman).toMatch(/:aturan-aktif="sasaranAktif === true"/)
+    // Sejak 19 Nov 2026 form ada di CashflowPengumumanForm; halaman memberinya sasaranAktif === true.
+    const form = baca('components/cashflow/CashflowPengumumanForm.vue')
+    expect(form).toMatch(/<CashflowPengumumanPratinjauPenerima v-if="sasaranAktif"/)
+    expect(form).toMatch(/:aturan-aktif="sasaranAktif"/)
+    expect(halaman).toMatch(/:sasaran-aktif="sasaranAktif === true"/)
     expect(baca('components/cashflow/CashflowPengumumanPenerima.vue')).toMatch(/p\.id !== 'aturan' \|\| props\.aturanAktif/)
   })
   it('server lama tetap menyimpan lewat v3, server baru lewat v4', () => {

@@ -1,21 +1,28 @@
 <script setup lang="ts">
+/**
+ * Pratinjau pengumuman seperti di aplikasi. `gaya` modal (bawaan) = popup di
+ * tengah layar yang menutupi isi (PopupPengumuman), `kartu` = kartu di
+ * Beranda yang bisa ditutup dan tidak menahan layar (aplikasi 1.4.4, T4).
+ */
 import { tombolPengumuman } from '~/adapters/cashflowPengumumanTautan'
-const props = defineProps<{ judul: string; isi: string; level: string; tombol: string; url: string }>()
+const props = withDefaults(defineProps<{ judul: string; isi: string; level: string; tombol: string; url: string; gaya?: 'modal' | 'kartu' }>(), { gaya: 'modal' })
 const { tcf } = useCashflowI18n()
 const tautan = computed(() => tombolPengumuman(props.tombol, props.url))
 </script>
 
 <template>
-  <div class="cf-pratinjau rounded-2xl border border-[color:var(--ca-border)] p-4">
-    <p class="cf-preview-label text-xs font-semibold text-[var(--ca-muted)]">{{ tcf('pengumuman.beranda') }}</p>
+  <div class="cf-pratinjau rounded-2xl border border-[color:var(--ca-border)] p-4" :class="{ 'cf-kartu': gaya === 'kartu' }" :data-uji="`pratinjau-${gaya}`">
+    <p class="cf-preview-label text-xs font-semibold text-[var(--ca-muted)]">{{ gaya === 'kartu' ? tcf('pengumuman.form.pratinjauKartu') : tcf('pengumuman.beranda') }}</p>
+    <div v-if="gaya === 'kartu'" class="cf-beranda-atas" aria-hidden="true"><span class="cf-garis w-24" /><span class="cf-garis-tebal w-36" /></div>
     <div class="cf-spanduk" :class="level">
-      <component :is="tautan ? 'a' : 'div'" :href="tautan?.url" :target="tautan ? '_blank' : undefined" :rel="tautan ? 'noopener noreferrer' : undefined" class="cf-cardlink">
+      <component :is="tautan && !tautan.dalam ? 'a' : 'div'" :href="tautan && !tautan.dalam ? tautan.url : undefined" :target="tautan && !tautan.dalam ? '_blank' : undefined" :rel="tautan && !tautan.dalam ? 'noopener noreferrer' : undefined" class="cf-cardlink">
         <div class="cf-heading"><Icon :name="level === 'info' ? 'lucide:info' : 'lucide:triangle-alert'" class="cf-ikon" /><h4>{{ judul || tcf('pengumuman.judulKolom') }}</h4></div>
         <p class="whitespace-pre-wrap break-words">{{ isi || tcf('pengumuman.isi') }}</p>
-        <div v-if="tautan" class="cf-footer"><span class="cf-tombol">{{ tautan.label }}<Icon name="lucide:arrow-up-right" class="h-4 w-4 shrink-0" /></span><span class="cf-domain">{{ tautan.host }}</span></div>
+        <div v-if="tautan" class="cf-footer"><span class="cf-tombol">{{ tautan.label }}<Icon :name="tautan.dalam ? 'lucide:arrow-right' : 'lucide:arrow-up-right'" class="h-4 w-4 shrink-0" /></span><span class="cf-domain">{{ tautan.dalam ? tcf('pengumuman.form.tujuanDalam')(tautan.host) : tautan.host }}</span></div>
       </component>
       <span class="cf-close" aria-hidden="true"><Icon name="lucide:x" class="h-4 w-4" /></span>
     </div>
+    <div v-if="gaya === 'kartu'" class="cf-beranda-bawah" aria-hidden="true"><span class="cf-baris" /><span class="cf-baris" /><span class="cf-baris w-2/3" /></div>
   </div>
 </template>
 
@@ -26,6 +33,14 @@ const tautan = computed(() => tombolPengumuman(props.tombol, props.url))
 .cf-pratinjau { position:relative;isolation:isolate;display:flex;align-items:center;justify-content:center;min-height:320px;padding:24px; }
 .cf-pratinjau::before { content:'';position:absolute;inset:0;border-radius:inherit;background:rgba(0,0,0,.35);z-index:-1; }
 .cf-preview-label { position:absolute;top:16px;left:16px;opacity:.5; }
+/* Kartu: Beranda tetap terlihat, tanpa latar gelap, kartu di antara isi. */
+.cf-kartu { flex-direction:column;align-items:stretch;justify-content:flex-start;gap:12px;padding-top:44px; }
+.cf-kartu::before { display:none; }
+.cf-beranda-atas, .cf-beranda-bawah { display:flex;flex-direction:column;gap:8px; }
+.cf-garis, .cf-garis-tebal, .cf-baris { display:block;border-radius:8px;background:var(--cf-line); }
+.cf-garis { height:10px; }
+.cf-garis-tebal { height:22px; }
+.cf-baris { height:44px;width:100%;border-radius:14px; }
 .cf-spanduk { width:100%;position:relative;overflow:hidden;border:1px solid var(--cf-line);border-radius:18px;background:var(--cf-bg);color:var(--cf-txt); }
 .cf-spanduk::before { content:'';position:absolute;inset:0 auto 0 0;width:3px;background:#FFBE3D;pointer-events:none; }
 .cf-cardlink { display:block;padding:16px;color:inherit;text-decoration:none; }

@@ -15,7 +15,7 @@
  * merujuk segmennya (hidup, bukan salinan).
  */
 import {
-  ISIAN_SARING_KOSONG, BATAS_KECUALI_PENGGUNA, NAMA_SEGMEN_MAKS,
+  ISIAN_SARING_KOSONG, NAMA_SEGMEN_MAKS,
   isianDariSaring, periksaIsianSaring, aturanKeDto, periksaAturan, keDaftarSegmen, kalimatSaring, periksaNamaSegmen, saringKeDto,
   type Aturan, type AturanDTO, type IsianSaring, type Segmen, type KamusRingkas,
 } from '~/adapters/cashflowPengumumanAturan'
@@ -42,8 +42,10 @@ const kecualiInternal = ref(props.awal?.kecualiInternal ?? true)
 const kecualiPengguna = ref<string[]>([...(props.awal?.kecualiPengguna ?? [])])
 const kecualiKelompok = ref<string[]>([...(props.awal?.kecualiKelompok ?? [])])
 const asing = computed(() => (props.awal?.asing ?? []).length > 0)
-const bukaPengguna = ref(kecualiPengguna.value.length > 0)
-const bukaKelompok = ref(kecualiKelompok.value.length > 0)
+/* Daftar pengguna atau kelompok (kunci saring 20261119121000) tidak punya
+   isian di panel saringan: dibawa apa adanya supaya menyimpan ulang tidak
+   membuangnya. */
+const daftarTetap = { pengguna: props.awal?.saring?.pengguna ?? null, kelompok: props.awal?.saring?.kelompok ?? null }
 
 const periksa = computed(() => periksaIsianSaring(isian.value))
 const segmenDipilih = computed(() => (dasar.value === 'semua' ? null : segmen.value.find(s => s.id === dasar.value) ?? null))
@@ -55,7 +57,7 @@ const dto = computed<AturanDTO | null>(() => {
   if (segmenHilang.value) return null
   const d = aturanKeDto({
     segmenId: dasar.value === 'semua' ? null : dasar.value,
-    saring: periksa.value.saring,
+    saring: periksa.value.saring ? { ...periksa.value.saring, ...daftarTetap } : null,
     kecualiInternal: kecualiInternal.value,
     kecualiPengguna: kecualiPengguna.value,
     kecualiKelompok: kecualiKelompok.value,
@@ -145,24 +147,9 @@ const simpanSegmen = async () => {
       <p v-else class="text-[var(--ca-muted)]">{{ tcf('pengumuman.aturan.segmenMemuat') }}</p>
     </div>
 
-    <fieldset class="min-w-0 space-y-3 rounded-xl border border-[color:var(--ca-border)] p-3">
-      <legend class="px-1 text-xs font-semibold text-[var(--ca-muted)]">{{ tcf('pengumuman.aturan.kecualiJudul') }}</legend>
-      <label class="flex items-start gap-2 text-xs text-[var(--ca-text)]">
-        <input v-model="kecualiInternal" type="checkbox" class="mt-0.5 accent-[var(--ca-accent)]" :disabled="disabled" data-uji="kecuali-internal">
-        <span>{{ tcf('pengumuman.aturan.kecualiInternal') }}<span class="block text-[var(--ca-muted)]">{{ tcf('pengumuman.aturan.kecualiInternalKet') }}</span></span>
-      </label>
-      <div class="space-y-2">
-        <button type="button" class="ca-btn-ghost !min-h-11 w-full justify-between !px-2 text-xs" :aria-expanded="bukaPengguna" @click="bukaPengguna = !bukaPengguna">
-          <span>{{ tcf('pengumuman.aturan.kecualiPengguna') }} · {{ kecualiPengguna.length }}</span><Icon :name="bukaPengguna ? 'lucide:chevron-up' : 'lucide:chevron-down'" class="h-4 w-4" />
-        </button>
-        <CashflowPengumumanPengguna v-if="bukaPengguna" v-model="kecualiPengguna" :batas="BATAS_KECUALI_PENGGUNA" :label-cari="tcf('pengumuman.aturan.kecualiPengguna')" :disabled="disabled" />
-      </div>
-      <div class="space-y-2">
-        <button type="button" class="ca-btn-ghost !min-h-11 w-full justify-between !px-2 text-xs" :aria-expanded="bukaKelompok" @click="bukaKelompok = !bukaKelompok">
-          <span>{{ tcf('pengumuman.aturan.kecualiKelompok') }} · {{ kecualiKelompok.length }}</span><Icon :name="bukaKelompok ? 'lucide:chevron-up' : 'lucide:chevron-down'" class="h-4 w-4" />
-        </button>
-        <CashflowPengumumanKelompok v-if="bukaKelompok" v-model="kecualiKelompok" :label-cari="tcf('pengumuman.aturan.kecualiKelompok')" :disabled="disabled" @sibuk="kelompokSibuk = $event" />
-      </div>
-    </fieldset>
+    <CashflowPengumumanKecuali
+      v-model:internal="kecualiInternal" v-model:pengguna="kecualiPengguna" v-model:kelompok="kecualiKelompok" :disabled="disabled"
+      @sibuk="kelompokSibuk = $event"
+    />
   </div>
 </template>

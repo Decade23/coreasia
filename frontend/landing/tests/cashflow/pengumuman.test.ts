@@ -15,6 +15,10 @@ import { adaMigrasi, fungsiTerakhir, kolomTabel } from './migrasi'
    Penandanya fungsi v4 di folder migrasi, bukan kolomnya sendiri, supaya uji
    kolom tetap membandingkan dua sumber yang berbeda. */
 const adaSasaran = adaMigrasi && (() => { try { fungsiTerakhir('admin_simpan_pengumuman_v4'); return true } catch { return false } })()
+/* Pengumuman rutin (20261119123000) menambah kolom rutin_id. Kolom gaya milik
+   T4: contoh membawanya hanya bila migrasinya sudah ada di folder. */
+const adaRutin = adaMigrasi && (() => { try { fungsiTerakhir('admin_daftar_pengumuman_rutin'); return true } catch { return false } })()
+const adaGaya = adaMigrasi && kolomTabel('announcements').kolom.includes('gaya')
 import { penerimaSah, statusPengumuman } from '../../adapters/cashflowPengumuman'
 import { tombolPengumuman } from '../../adapters/cashflowPengumumanTautan'
 
@@ -41,7 +45,8 @@ describe('kontrak PengumumanDTO ↔ public.announcements', () => {
   })
 
   it.skipIf(!adaMigrasi)('contoh memuat persis kolom tabel', () => {
-    const contohKunci = [...Object.keys(JSON.parse(BARIS)), ...(adaSasaran ? ['audience_rules'] : [])]
+    const contohKunci = [...Object.keys(JSON.parse(BARIS)), ...(adaSasaran ? ['audience_rules'] : []), ...(adaRutin ? ['rutin_id'] : []),
+      ...(adaGaya ? ['gaya'] : [])]
     expect(contohKunci.sort()).toEqual(kolomTabel('announcements').kolom)
   })
 
@@ -66,8 +71,13 @@ describe('kePengumuman', () => {
       diubah: '2026-09-18T08:12:45.654321+00:00',
       tombol: null,
       url: null, penerima: 'all', pengguna: [], kelompok: [], namaKelompok: [], jumlahPenerima: null,
-      aturan: null, namaSegmen: null,
+      aturan: null, namaSegmen: null, gaya: null, rutinId: null,
     })
+  })
+
+  it('gaya dan rutin_id dibaca hanya bila nilainya dikenal', () => {
+    expect(kePengumuman({ ...contoh(), gaya: 'kartu', rutin_id: '5d1f0a2b-3c4d-4e5f-8a9b-0c1d2e3f4a5c' })).toMatchObject({ gaya: 'kartu', rutinId: '5d1f0a2b-3c4d-4e5f-8a9b-0c1d2e3f4a5c' })
+    expect(kePengumuman({ ...contoh(), gaya: 'popup', rutin_id: '' })).toMatchObject({ gaya: null, rutinId: null })
   })
 
   it('ends_at null = tanpa akhir', () => {

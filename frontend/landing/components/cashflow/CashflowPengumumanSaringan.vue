@@ -99,6 +99,14 @@ const dariOpsi = (v: string) => (v === 'semua' ? '' : v)
       </div>
     </div>
 
+    <!-- Umur akun (20261119121000) -->
+    <div class="min-w-0 space-y-1 sm:max-w-[50%] sm:pr-1.5">
+      <label :for="`${id}-umur`" class="block text-xs text-[var(--ca-muted)]">{{ tcf('pengumuman.saring.umur') }}</label>
+      <input :id="`${id}-umur`" :value="modelValue.umurMinHari" type="number" min="1" :max="AKTIF_HARI_MAKS" step="1" inputmode="numeric" class="ca-input w-full tabular-nums" :aria-invalid="salah('umurMinHari') || undefined" :aria-describedby="`${id}-umur-ket`" @input="ubah('umurMinHari', nilai($event))">
+      <p :id="`${id}-umur-ket`" class="text-xs text-[var(--ca-subtle)]">{{ tcf('pengumuman.saring.umurKet') }}</p>
+      <p v-if="salah('umurMinHari')" class="text-xs ca-tone-danger" role="alert">{{ tcf('pengumuman.saring.galat.umurMinHari') }}</p>
+    </div>
+
     <!-- Domi dan nomor WhatsApp -->
     <div class="grid gap-3 sm:grid-cols-2">
       <div v-for="k in (['domiPakai', 'domiBeli', 'kreditHabis'] as const)" :key="k" class="min-w-0 space-y-1">
