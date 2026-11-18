@@ -12,10 +12,15 @@ const J = (n: number) => `${SUBJEK}/${P}/33333333-3333-4333-8333-33333333333${n}
 let nomorAnak = 1
 const pendengar = new Set<() => void>()
 let lepasDipanggil: string[] = []
+/** Anak Domi masih hidup menurut jam klien. */
+let anakHidup = true
 
 const kasus = {
   kasus: { value: { id: 'induk' } },
-  anakDomiOtomatis: async () => ({ id: `anak${nomorAnak}` }),
+  anakDomiOtomatis: vi.fn(async () => ({ id: `anak${nomorAnak}` })),
+  anakDomi: () => (anakHidup ? { id: `anak${nomorAnak}` } : null),
+  foto: { value: null as null | { anak: string } },
+  tutupFoto: vi.fn(),
   lepasAnak: (id: string) => { lepasDipanggil.push(id); nomorAnak++ },
   saatDibuang: (f: () => void) => { pendengar.add(f); return () => pendengar.delete(f) },
   tampilkanFoto: vi.fn(),
@@ -45,6 +50,10 @@ beforeEach(() => {
   api.aiGambar.mockReset()
   api.ambilBerkas.mockClear()
   kasus.tampilkanFoto.mockClear()
+  kasus.anakDomiOtomatis.mockClear()
+  kasus.tutupFoto.mockClear()
+  kasus.foto.value = null
+  anakHidup = true
   // Keadaan modul dibuang lewat pendengar yang didaftarkan modul.
   for (const f of pendengar) f()
 })
@@ -214,5 +223,116 @@ describe('useCashflowDomi', () => {
     const [berkas, mulai] = kasus.tampilkanFoto.mock.calls[0] as [unknown[], number]
     expect(berkas).toHaveLength(2)
     expect(mulai).toBe(1)
+  })
+})
+
+describe('Segarkan dan segar otomatis', () => {
+  const daftarDengan = (jumlah: number, diperbarui = '2026-11-16T05:00:00Z') => ({
+    baris: [{ id: P, judul: 'A', jumlah_pesan: jumlah, dibuat: '', diperbarui }, baris(P2, 'B')], kursor_berikut: null, total: 2, halaman_pertama: true,
+  })
+  const halamanPesan = (ids: number[], jumlah: number, diperbarui = '2026-11-16T05:00:00Z') => ({
+    percakapan: { id: P, judul: 'A', jumlah_pesan: jumlah, dibuat: '', diperbarui },
+    pesan: ids.map(id => ({ id, peran: 'user', isi: { teks: `m${id}` }, dibuat: '' })), kursor_sebelum: ids[0] ?? null, ada_lagi: false, halaman_pertama: true,
+  })
+  const siapkan = async () => {
+    const d = useCashflowDomi(); d.pasangSubjek(SUBJEK)
+    api.aiPercakapanDaftar.mockResolvedValueOnce(daftarDengan(2))
+    await d.buka(SUBJEK)
+    api.aiPesanDaftar.mockResolvedValueOnce(halamanPesan([1, 2], 2))
+    await d.bukaPercakapan(P)
+    return d
+  }
+
+  it('tombol: daftar lalu isi yang dibuka, digabung, tanpa kasus anak baru', async () => {
+    const d = await siapkan()
+    api.aiPercakapanDaftar.mockResolvedValueOnce(daftarDengan(4, '2026-11-16T06:00:00Z'))
+    api.aiPesanDaftar.mockResolvedValueOnce(halamanPesan([2, 3, 4], 4, '2026-11-16T06:00:00Z'))
+    expect(await d.segarkan(SUBJEK)).toBe('segar')
+    expect(api.aiPercakapanDaftar).toHaveBeenCalledTimes(2)
+    expect(api.aiPercakapanDaftar.mock.calls[1]).toEqual(['anak1', SUBJEK, null, 20])
+    expect(api.aiPesanDaftar).toHaveBeenCalledTimes(2)
+    expect(d.panel.value?.pesan.map(p => p.id)).toEqual([1, 2, 3, 4])
+    expect(d.daftar.value[0]).toMatchObject({ id: P, jumlahPesan: 4 })
+    expect(d.pesanBaru.value).toBe(false)
+    // Hanya buka dan bukaPercakapan yang meminta anak; Segarkan memakai anak yang hidup.
+    expect(kasus.anakDomiOtomatis).toHaveBeenCalledTimes(2)
+  })
+
+  it('otomatis: hanya daftar; isi tidak dimuat, pesan baru ditawarkan', async () => {
+    const d = await siapkan()
+    api.aiPercakapanDaftar.mockResolvedValueOnce(daftarDengan(5, '2026-11-16T07:00:00Z'))
+    expect(await d.segarkan(SUBJEK, { otomatis: true })).toBe('segar')
+    expect(api.aiPesanDaftar).toHaveBeenCalledTimes(1)
+    expect(d.panel.value?.pesan.map(p => p.id)).toEqual([1, 2])
+    expect(d.pesanBaru.value).toBe(true)
+    api.aiPesanDaftar.mockResolvedValueOnce(halamanPesan([1, 2, 3, 4, 5], 5, '2026-11-16T07:00:00Z'))
+    await d.segarkan(SUBJEK, { hanyaIsi: true })
+    expect(api.aiPercakapanDaftar).toHaveBeenCalledTimes(2)
+    expect(api.aiPesanDaftar).toHaveBeenCalledTimes(2)
+    expect(d.pesanBaru.value).toBe(false)
+  })
+
+  it('jeda otomatis 30 detik sejak daftar terakhir dimuat', async () => {
+    const jam = vi.spyOn(performance, 'now')
+    jam.mockReturnValue(1_000)
+    const d = await siapkan()
+    expect(d.segarOtomatisJatuhTempo()).toBe(false)
+    jam.mockReturnValue(1_000 + 29_999)
+    expect(d.segarOtomatisJatuhTempo()).toBe(false)
+    jam.mockReturnValue(1_000 + 30_000)
+    expect(d.segarOtomatisJatuhTempo()).toBe(true)
+    api.aiPercakapanDaftar.mockResolvedValueOnce(daftarDengan(2))
+    await d.segarkan(SUBJEK, { otomatis: true })
+    expect(d.segarOtomatisJatuhTempo()).toBe(false)
+    d.buangSekarang()
+    jam.mockReturnValue(1_000_000)
+    expect(d.segarOtomatisJatuhTempo()).toBe(false)
+    jam.mockRestore()
+  })
+
+  it('anak habis di server: isi dibuang dan ajakan tampil, tidak membuka anak baru', async () => {
+    const d = await siapkan()
+    kasus.foto.value = { anak: 'anak1' }
+    api.aiPercakapanDaftar.mockRejectedValueOnce(new GalatAdmin('kasus', 'habis', 'kasus-kedaluwarsa'))
+    expect(await d.segarkan(SUBJEK, { otomatis: true })).toBe('habis')
+    expect(lepasDipanggil).toEqual(['anak1'])
+    expect(kasus.tutupFoto).toHaveBeenCalledTimes(1)
+    expect(kasus.anakDomiOtomatis).toHaveBeenCalledTimes(2)
+    expect(api.aiPercakapanDaftar).toHaveBeenCalledTimes(2)
+    expect(d.dibuang.value).toBe(true)
+    expect(d.sudahDibuka.value).toBe(false)
+    expect(d.panel.value).toBeNull()
+  })
+
+  it('anak habis menurut jam klien: tanpa panggilan server', async () => {
+    const d = await siapkan()
+    anakHidup = false
+    expect(await d.segarkan(SUBJEK)).toBe('habis')
+    expect(api.aiPercakapanDaftar).toHaveBeenCalledTimes(1)
+    expect(d.dibuang.value).toBe(true)
+  })
+
+  it('galat lain: otomatis jadi tanda kecil dan isi tetap, tombol melempar', async () => {
+    const d = await siapkan()
+    api.aiPercakapanDaftar.mockRejectedValueOnce(new GalatAdmin('lain', 'putus'))
+    expect(await d.segarkan(SUBJEK, { otomatis: true })).toBe('lewat')
+    expect(d.galatSegar.value).toBe(true)
+    expect(d.sudahDibuka.value).toBe(true)
+    expect(d.panel.value).not.toBeNull()
+    api.aiPercakapanDaftar.mockRejectedValueOnce(new GalatAdmin('lain', 'putus'))
+    await expect(d.segarkan(SUBJEK)).rejects.toThrow()
+  })
+
+  it('klik percakapan lain selagi isi disegarkan: klik yang menang', async () => {
+    const d = await siapkan()
+    api.aiPercakapanDaftar.mockResolvedValueOnce(daftarDengan(3))
+    const isiLama = ditunda<unknown>()
+    api.aiPesanDaftar.mockReturnValueOnce(isiLama.janji).mockResolvedValueOnce(hal(P2, 'B'))
+    const segar = d.segarkan(SUBJEK)
+    await new Promise(r => setTimeout(r, 0))
+    await d.bukaPercakapan(P2)
+    isiLama.bereskan(halamanPesan([1, 2, 3], 3))
+    await segar
+    expect(d.panel.value?.percakapan.id).toBe(P2)
   })
 })
