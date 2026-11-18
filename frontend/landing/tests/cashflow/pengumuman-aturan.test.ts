@@ -51,7 +51,7 @@ const SARING_LENGKAP = {
 const ATURAN_SARING: AturanDTO = { v: 1, segmen_id: null, saring: { versi_di_bawah: 26111301 }, kecuali_internal: true, kecuali_pengguna: [], kecuali_kelompok: [] }
 const PRATINJAU = {
   jumlah: 120, tak_terjangkau_versi_lama: 7, versi_tak_diketahui: 3, dikecualikan_internal: 4, dikecualikan_lain: 2,
-  contoh: [{ email_tersamar: 'pe***@co***.invalid', versi: 26111301 }, { email_tersamar: 'ui***@co***.invalid', versi: null }],
+  contoh: [{ email_tersamar: 'pe***@co***.invalid', versi: RILIS_PLAY_TERAKHIR.kode }, { email_tersamar: 'ui***@co***.invalid', versi: null }],
 }
 
 describe('adapter saring', () => {

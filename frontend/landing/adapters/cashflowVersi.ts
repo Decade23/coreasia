@@ -33,7 +33,7 @@ export const CATATAN_MAKS = 120
  * lupa, kartu hanya menunjuk rilis lama dan peringatan lembut "di atas rilis"
  * muncul; tidak ada yang tertahan.
  */
-export const RILIS_PLAY_TERAKHIR = { kode: 26111301, versi: '1.4.1' } as const
+export const RILIS_PLAY_TERAKHIR = { kode: 26111812, versi: '1.4.2' } as const
 
 /** Rilis Play yang tayang (versionCode → nama), untuk memberi nama angka yang diketik. */
 export const RILIS_PLAY: Readonly<Record<number, string>> = {
@@ -47,6 +47,7 @@ export const RILIS_PLAY: Readonly<Record<number, string>> = {
   26110303: '1.3.6',
   26110702: '1.3.8',
   26111216: '1.4.0',
+  26111301: '1.4.1',
   [RILIS_PLAY_TERAKHIR.kode]: RILIS_PLAY_TERAKHIR.versi,
 }
 
