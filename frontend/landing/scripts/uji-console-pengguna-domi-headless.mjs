@@ -183,7 +183,9 @@ try {
     await page.locator('[data-uji="saring-selesai"]').click()
     await page.locator('[data-uji="saring-panel"]').waitFor({ state: 'detached' })
   }
-  const selDomi = () => page.locator('tbody tr').evaluateAll((tr, n) => tr.map(r => r.children[n].innerText.split('\n')[0].trim().split(/[+ ]/)[0]), 4)
+  /* Sejak v5 (19 Nov 2026) semua kunci baris jadi kolom: indeks kolom dibaca dari kepala tabel, bukan angka tetap. */
+  const ix = async (label) => (await page.locator('.ca-daftar-pengguna thead th').evaluateAll(th => th.map(x => x.innerText.trim()))).indexOf(label)
+  const selDomi = async () => page.locator('.ca-daftar-pengguna tbody tr').evaluateAll((tr, n) => tr.map(r => r.children[n].innerText.split('\n')[0].trim().split(/[+ ]/)[0]), await ix('Tanya Domi'))
 
   // 1. Server v4: kolom terisi beragam, terang dan gelap, 1440 dan 390.
   for (const t of ['terang', 'gelap']) {
@@ -192,30 +194,29 @@ try {
     await buka()
     await page.getByText('10 pengguna', { exact: true }).waitFor()
     for (const k of ['Tanya Domi', 'Kredit']) if (!(await kepala(k).first().isVisible())) gagal(`v4 ${t}: kolom ${k} tidak tampil`)
-    // Terakhir pakai Domi bukan kolom lagi: urutannya lewat pilihan Urut, tanggalnya di rincian pengguna.
-    if (await kepala('Terakhir pakai Domi').count()) gagal('Kolom Terakhir pakai Domi masih ada')
-    // Baris kedua: 30 hari terakhir, atau "Belum pernah" untuk yang nol.
-    for (const teks of ['96 dalam 30 hari', '9 dalam 30 hari', '0 dalam 30 hari', '3 dalam 30 hari', 'Belum pernah', '1.280', '9.999']) {
+    // Sejak v5 semua kunci jadi kolom: Domi 30 hari, Terakhir pakai Domi, dan Kredit dibeli punya kolom sendiri.
+    for (const k of ['Domi 30 hari', 'Terakhir pakai Domi', 'Kredit dibeli']) if (!(await kepala(k).first().isVisible())) gagal(`v4 ${t}: kolom ${k} tidak tampil`)
+    for (const teks of ['96', 'Belum pernah', '1.280', '9.999']) {
       if (!(await page.locator('table').getByText(teks, { exact: true }).first().isVisible())) gagal(`v4 ${t}: "${teks}" tidak tampil`)
     }
     if (await page.locator('table').getByText('Tim', { exact: true }).count() !== 2) gagal('Lencana Tim tidak tepat dua')
-    // Pernah beli ditulis di baris kedua Kredit, jumlah pembeliannya saat disorot.
-    if (await page.locator('table [title="Pernah beli kredit 3 kali"]').count() !== 1) gagal('Tanda pernah beli tidak tampil')
-    if (await page.locator('table').getByText('Pernah beli', { exact: true }).count() !== 3) gagal('Tanda pernah beli tidak tepat tiga')
+    // Pembelian kredit lunas di kolom Kredit dibeli: tiga akun pernah membeli.
+    const beli = await page.locator('.ca-daftar-pengguna tbody tr').evaluateAll((tr, n) => tr.map(r => r.children[n].innerText.trim()), await ix('Kredit dibeli'))
+    if (beli.filter(x => x !== '0' && x !== '—').length !== 3) gagal(`Kredit dibeli tidak tepat tiga: ${beli}`)
     if (!(await page.getByText(KALIMAT_JUMLAH, { exact: true }).isVisible())) gagal('Jumlah pakai Domi tidak tampil')
     // Batas bawah: "42+" dengan keterangan saat disorot. Yang lain tanpa tanda.
     const kira = page.locator(`tbody td span[title="${KET_KIRA}"]`)
     const teksKira = await kira.allInnerTexts()
     if (teksKira.length !== 1 || !teksKira[0].trim().startsWith('42+')) gagal(`Tanda batas bawah salah: ${JSON.stringify(teksKira)}`)
     // Akun tanpa catatan kredit: garis, bukan 0, dan tanpa "akses terbatas".
-    const kreditKosong = await page.locator('tbody tr').filter({ hasText: 'yoga@' }).locator('td').nth(5).innerText()
+    const kreditKosong = await page.locator('tbody tr').filter({ hasText: 'yoga@' }).locator('td').nth(await ix('Sisa kredit')).innerText()
     if (kreditKosong.trim() !== '—') gagal(`Kredit kosong tampil sebagai "${kreditKosong}"`)
     for (const s of ['Pakai Domi', 'Beli kredit']) if (!(await page.getByRole('button', { name: s, exact: true }).isVisible())) gagal(`Segmen ${s} tidak tampil`)
     if (terakhir().name !== 'admin_daftar_pengguna_v4') gagal('Daftar tidak dibaca lewat v4')
     if (await meluber()) gagal(`v4 ${t} meluber di 1440`)
-    // Keputusan pemilik: tabel pengguna tidak boleh bergulir ke samping di 1440.
-    hasil[`gulirTabel1440_${t}`] = await page.locator('.ca-console-table-wrap').evaluate(w => w.scrollWidth - w.clientWidth)
-    if (hasil[`gulirTabel1440_${t}`] !== 0) gagal(`v4 ${t}: tabel bergulir ke samping ${hasil[`gulirTabel1440_${t}`]}px di 1440`)
+    // Keputusan Master 19 Nov 2026 (K3): tabel pengguna boleh bergulir ke samping, kolom pertama lengket.
+    hasil[`gulirTabel1440_${t}`] = await page.locator('.ca-daftar-pengguna .ca-console-table-wrap').evaluate(w => w.scrollWidth - w.clientWidth)
+    if (await page.locator('.ca-daftar-pengguna tbody td').first().evaluate(td => getComputedStyle(td).position) !== 'sticky') gagal(`v4 ${t}: kolom pertama tidak lengket`)
     hasil[`lebarKolom1440_${t}`] = (await lebarKolom()).join(' ')
     await potret(`v4-${t}-1440`)
     await lebar(390)
@@ -233,7 +234,7 @@ try {
   await buka()
   await kepala('Tanya Domi').first().getByRole('button', { name: 'Tanya Domi', exact: true }).click()
   await page.waitForFunction(() => location.search.includes('urut=domi'))
-  await page.waitForFunction(() => document.querySelector('tbody tr td:nth-child(5)')?.textContent?.includes('1.280'))
+  await page.waitForFunction(n => document.querySelector(`.ca-daftar-pengguna tbody tr td:nth-child(${n + 1})`)?.textContent?.includes('1.280'), await ix('Tanya Domi'))
   if (terakhir().p.p_urut !== 'domi' || terakhir().p.p_arah !== 'desc') gagal(`Urut Domi mengirim ${JSON.stringify(terakhir().p)}`)
   const urut = await selDomi()
   if (urut.join() !== ['1.280', '412', '67', '42', '15', '9', '3', '1', '0', '0'].join()) gagal(`Urutan Domi salah: ${urut}`)
@@ -245,13 +246,14 @@ try {
   await page.waitForFunction(() => location.search.includes('urut=kredit'))
   if (!(await terkirim(p => p.p_urut === 'kredit'))) gagal('Urut Kredit tidak dikirim')
   // Kredit kosong selalu di akhir, untuk kedua arah.
-  const selKredit = () => page.locator('tbody tr').evaluateAll(tr => tr.map(r => r.children[5].innerText.trim().split('\n')[0]))
-  await page.waitForFunction(() => document.querySelector('tbody tr td:nth-child(6)')?.textContent?.includes('9.999'))
+  const nKredit = await ix('Sisa kredit')
+  const selKredit = () => page.locator('.ca-daftar-pengguna tbody tr').evaluateAll((tr, n) => tr.map(r => r.children[n].innerText.trim().split('\n')[0]), nKredit)
+  await page.waitForFunction(n => document.querySelector(`.ca-daftar-pengguna tbody tr td:nth-child(${n + 1})`)?.textContent?.includes('9.999'), nKredit)
   if ((await selKredit()).at(-1) !== '—') gagal('Urut kredit turun: yang kosong tidak di akhir')
   await potret('v4-urut-kredit-terang-1440')
   await kepala('Kredit').getByRole('button').first().click()
   if (!(await terkirim(p => p.p_urut === 'kredit' && p.p_arah === 'asc'))) gagal('Urut Kredit naik tidak dikirim')
-  await page.waitForFunction(() => document.querySelector('tbody tr td:nth-child(6)')?.textContent?.trim().startsWith('0'))
+  await page.waitForFunction(n => document.querySelector(`.ca-daftar-pengguna tbody tr td:nth-child(${n + 1})`)?.textContent?.trim().startsWith('0'), nKredit)
   if ((await selKredit()).at(-1) !== '—') gagal('Urut kredit naik: yang kosong tidak di akhir')
   hasil.urut = 'lulus'
 
@@ -296,7 +298,8 @@ try {
     await buka()
     await page.getByText('10 pengguna', { exact: true }).waitFor()
     const nama = seen.slice(sebelum).filter(x => x.name.startsWith('admin_daftar_pengguna_v') && x.name !== 'admin_daftar_pengguna_v2').map(x => x.name)
-    if (nama.join() !== 'admin_daftar_pengguna_v4,admin_daftar_pengguna_v3') gagal(`Server lama: urutan panggilan ${nama}`)
+    // v5 (19 Nov 2026) ditanyai dulu, lalu v4, lalu v3. Server tiruan ini menjawab "belum ada" untuk v5 dan v4.
+    if (nama.join() !== 'admin_daftar_pengguna_v5,admin_daftar_pengguna_v4,admin_daftar_pengguna_v3') gagal(`Server lama: urutan panggilan ${nama}`)
     for (const k of ['Tanya Domi', 'Kredit']) if (await kepala(k).count()) gagal(`Server lama: kolom ${k} tampil`)
     if (await page.locator('[data-uji="urut"] option').evaluateAll(o => o.some(x => ['domi', 'domi_terakhir', 'kredit'].includes(x.value)))) gagal('Server lama: urutan Domi ditawarkan')
     for (const s of ['Pakai Domi', 'Beli kredit']) if (await page.getByRole('button', { name: s, exact: true }).count()) gagal(`Server lama: segmen ${s} tampil`)
@@ -308,7 +311,7 @@ try {
     if (await page.locator('[data-uji="jumlah-pakai-domi"]').count()) gagal('Server lama: jumlah pakai Domi tampil')
     if (await page.getByText('Tim', { exact: true }).count()) gagal('Server lama: lencana Tim tampil')
     if (await page.getByRole('alert').count()) gagal('Server lama: ada galat merah')
-    if (await page.locator('.ca-console-table-wrap').evaluate(w => w.scrollWidth > w.clientWidth)) gagal(`Server lama ${t}: tabel bergulir samping di 1440`)
+    if (await meluber()) gagal(`Server lama ${t}: halaman meluber di 1440`)
     hasil[`lebarKolomLama1440_${t}`] = (await lebarKolom()).join(' ')
     await potret(`server-lama-${t}-1440`)
     await lebar(390)
@@ -322,7 +325,7 @@ try {
   await page.getByRole('button', { name: 'Ditangguhkan', exact: true }).click()
   await page.waitForFunction(() => location.search.includes('seg=ditangguhkan'))
   await page.waitForTimeout(800)
-  if (seen.slice(sebelum).some(x => x.name === 'admin_daftar_pengguna_v4')) gagal('Server lama: v4 ditanyai lagi di sesi yang sama')
+  if (seen.slice(sebelum).some(x => x.name === 'admin_daftar_pengguna_v4' || x.name === 'admin_daftar_pengguna_v5')) gagal('Server lama: v5 atau v4 ditanyai lagi di sesi yang sama')
   // Tautan lama membawa urut dan segmen Domi: dilepas tanpa galat, v3 tidak pernah menerimanya.
   sebelum = seen.length
   await buka('?seg=pakai_domi&urut=domi')
