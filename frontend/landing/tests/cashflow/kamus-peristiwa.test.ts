@@ -18,10 +18,7 @@ const BAHASA = ['id', 'en'] as const
  * memulangkannya sebagai belum_dikenal tanpa rincian. Kamus console sudah
  * siap menerjemahkannya. Hapus dari daftar ini begitu katalog SQL memuatnya.
  */
-const BELUM_DI_KATALOG_RPC = [
-  'domi.kenalan', 'dukung.ketuk', 'nomor_wa.terbalik.belum_sampai', 'nomor_wa.terbalik.ke_kirim',
-  'pengumuman.ketuk', 'pengumuman.tutup',
-]
+const BELUM_DI_KATALOG_RPC: string[] = []
 
 function bacaPeristiwa(sumber: string) {
   const pohon = ts.createSourceFile('telemetri.ts', sumber, ts.ScriptTarget.Latest, true)

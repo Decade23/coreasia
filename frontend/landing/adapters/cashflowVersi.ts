@@ -431,7 +431,7 @@ export const JENIS_ISI: Readonly<Record<string, JenisIsi>> = {
  *  AsalTonggakUsaha, KeadaanMeja, TahapMeja, PintasanMeja; nomor 3). 'lain'
  *  di asal tonggak = asal lain di aplikasi; 'lain' dari server = isi asing. */
 export const ISI_USAHA: Readonly<Record<JenisIsi, readonly string[]>> = {
-  asal: ['baris_baru', 'baris_usaha', 'ajakan_beranda', 'lain'],
+  asal: ['baris_baru', 'baris_usaha', 'ajakan_beranda', 'tanya_awal', 'lain'],
   keadaan: ['langkah', 'harian'],
   tahap: ['barang', 'jual', 'kasbon', 'qris'],
   ke: ['jual', 'beli', 'barang', 'stok', 'kasbon', 'laporan', 'usaha'],

@@ -71,6 +71,7 @@ const ASAL_RUANG = pilihan(ASAL, {
   baris_baru: teks('Tombol Ruang baru', 'New workspace button'),
   baris_usaha: teks('Tombol Ruang usaha', 'Business workspace button'),
   ajakan_beranda: teks('Ajakan di Beranda', 'Home invitation'),
+  tanya_awal: teks('Kartu tujuan akun baru', 'New account purpose card'),
   lain: teks('Pintu lain', 'Other entry point'),
 })
 const STATUS_OTP = pilihan(teks('Status kode', 'Code status'), {
@@ -132,11 +133,29 @@ export const KAMUS_JENIS_PERJALANAN = {
     teks('Aplikasi mencatat galat saat berjalan.', 'The app recorded a runtime error.'), {
       fatal: yaTidak(teks('Galat fatal', 'Fatal error')),
       sumber: pilihan(teks('Bagian aplikasi', 'App area'), { kedepan: teks('Analisa ke depan', 'Forecast') }),
-      sebab: pilihan(SEBAB, { 'fetch-lambat-beruntun': teks('Permintaan berulang kali melewati batas waktu', 'Repeated request timeouts') }),
+      sebab: pilihan(SEBAB, {
+        'fetch-lambat-beruntun': teks('Permintaan berulang kali melewati batas waktu', 'Repeated request timeouts'),
+        'antrean-macet': teks('Perubahan lama tertahan di antrean kirim', 'Changes stuck in the send queue'),
+      }),
       tahap: pilihan(TAHAP, { kepala: teks('Menunggu awal balasan', 'Waiting for response headers'), badan: teks('Membaca isi balasan', 'Reading response body') }),
       beruntun: angka(teks('Permintaan yang gagal beruntun', 'Consecutive failed requests')),
       batasMs: angka(teks('Batas waktu (ms)', 'Timeout (ms)')),
       umurProsesDetik: angka(teks('Detik sejak aplikasi berjalan', 'Seconds since app startup')),
+      menunggu: angka(teks('Perubahan yang belum terkirim', 'Unsent changes'), 10_000),
+      tertuaDetik: angka(teks('Umur perubahan tertua (detik)', 'Oldest change age (seconds)'), 31_536_000),
+      sebabTerakhir: pilihan(teks('Sebab gagal terakhir', 'Last failure reason'), {
+        luring: teks('Perangkat tidak terhubung', 'Device offline'),
+        lambat: teks('Sambungan terlalu lambat', 'Connection too slow'),
+        kedaluwarsa: teks('Sesi kedaluwarsa', 'Session expired'),
+        jam: teks('Jam perangkat tidak tepat', 'Device clock is off'),
+        sesi: teks('Sesi masuk bermasalah', 'Sign-in session problem'),
+        izin: teks('Ditolak karena izin', 'Rejected for permissions'),
+        sibuk: teks('Server sedang sibuk', 'Server busy'),
+        lain: teks('Kendala lain', 'Other issue'),
+      }),
+      tersangkut: angka(teks('Putaran antrean yang tersangkut', 'Stuck queue rounds'), 10_000),
+      luring: yaTidak(teks('Percobaan terakhir saat luring', 'Last attempt was offline')),
+      macet: yaTidak(teks('Terlalu sering gagal', 'Failed too often')),
     }),
   'tx.mulai': peristiwa('transaksi', teks('Membuka formulir transaksi', 'Opened transaction form'),
     teks('Pengguna membuka formulir untuk melihat atau mencatat transaksi.', 'The user opened the form to view or record a transaction.')),
@@ -176,7 +195,12 @@ export const KAMUS_LANGKAH_PERJALANAN = {
   'usaha.produk_pertama': usaha(teks('Mencatat barang pertama', 'Added the first item'),
     teks('Ruang usaha mencatat barang pertamanya.', 'The business workspace recorded its first item.'), { asal: ASAL_RUANG }),
   'usaha.jual_pertama': usaha(teks('Mencatat penjualan pertama', 'Recorded the first sale'),
-    teks('Ruang usaha mencatat penjualan pertamanya.', 'The business workspace recorded its first sale.'), { asal: ASAL_RUANG }),
+    teks('Ruang usaha mencatat penjualan pertamanya.', 'The business workspace recorded its first sale.'), {
+      asal: ASAL_RUANG,
+      jenis: pilihan(teks('Jenis penjualan', 'Sale type'), {
+        barang: teks('Barang dari katalog', 'Catalog item'), nominal: teks('Nominal tanpa barang', 'Amount without an item'),
+      }),
+    }),
   'usaha.beranda_lihat': usaha(teks('Melihat meja usaha', 'Saw the business dashboard'),
     teks('Beranda menampilkan meja usaha pada peluncuran ini.', 'Home displayed the business dashboard during this launch.'), {
       keadaan: pilihan(teks('Tampilan meja usaha', 'Dashboard view'), {
@@ -187,6 +211,7 @@ export const KAMUS_LANGKAH_PERJALANAN = {
     teks('Pengguna memilih salah satu langkah awal di meja usaha.', 'The user selected a setup step from the business dashboard.'), {
       tahap: pilihan(TAHAP, {
         barang: teks('Barang', 'Items'), jual: teks('Jual', 'Sell'), kasbon: teks('Kasbon', 'Customer tabs'), qris: teks('QRIS', 'QRIS'),
+        nominal: teks('Jual tanpa barang', 'Sell without an item'),
       }),
     }),
   'usaha.pintasan': usaha(teks('Membuka pintasan usaha', 'Opened a business shortcut'),
@@ -202,6 +227,14 @@ export const KAMUS_LANGKAH_PERJALANAN = {
     }),
   'usaha.pulang': usaha(teks('Kembali ke Beranda usaha', 'Returned to business Home'),
     teks('Pengguna memilih kembali ke tampilan Beranda usaha.', 'The user chose to return to business Home.')),
+  'tujuan.lihat': peristiwa('onboarding', teks('Melihat kartu tujuan', 'Saw the purpose card'),
+    teks('Beranda menanyakan CashFlow mau dipakai untuk apa.', 'Home asked what CashFlow will be used for.')),
+  'tujuan.jawab': peristiwa('onboarding', teks('Menjawab kartu tujuan', 'Answered the purpose card'),
+    teks('Pengguna memilih untuk apa CashFlow dipakai.', 'The user picked what CashFlow is for.'), {
+      pilihan: pilihan(teks('Pilihan', 'Choice'), {
+        pribadi: teks('Uang pribadi', 'Personal money'), usaha: teks('Jualan warung', 'Shop sales'), lewati: teks('Dilewati', 'Skipped'),
+      }),
+    }),
   'plus_minat.lihat': peristiwa('onboarding', teks('Melihat kartu CashFlow Plus', 'Saw the CashFlow Plus card'),
     teks('Beranda menampilkan kartu CashFlow Plus pada peluncuran ini.', 'Home showed the CashFlow Plus card during this launch.')),
   'plus_minat.tutup': peristiwa('onboarding', teks('Menunda CashFlow Plus', 'Dismissed CashFlow Plus'),

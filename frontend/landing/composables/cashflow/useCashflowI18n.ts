@@ -210,7 +210,7 @@ const KAMUS = {
           usaha_langkah_tutup: 'Tutup sisa langkah', usaha_pulang: 'Pindah ke catatan pribadi',
         },
         isi: {
-          asal: { baris_baru: 'dari Buat ruang baru', baris_usaha: 'dari Buat catatan usaha', ajakan_beranda: 'dari kartu Beranda', lain: 'dari jalan lain' },
+          asal: { baris_baru: 'dari Buat ruang baru', baris_usaha: 'dari Buat catatan usaha', ajakan_beranda: 'dari kartu Beranda', tanya_awal: 'dari kartu tujuan akun baru', lain: 'dari jalan lain' },
           keadaan: { langkah: 'bentuk langkah', harian: 'bentuk harian' },
           tahap: { barang: 'barang', jual: 'jualan', kasbon: 'kasbon', qris: 'QRIS' },
           ke: { jual: 'ke Jual', beli: 'ke Beli', barang: 'ke Barang', stok: 'ke Stok', kasbon: 'ke Kasbon', laporan: 'ke Laporan', usaha: 'ke Usaha' },
@@ -1729,7 +1729,7 @@ const KAMUS = {
           usaha_langkah_tutup: 'Dismiss the leftover step', usaha_pulang: 'Switch to personal records',
         },
         isi: {
-          asal: { baris_baru: 'from Create new workspace', baris_usaha: 'from Create business records', ajakan_beranda: 'from the Home card', lain: 'from another way' },
+          asal: { baris_baru: 'from Create new workspace', baris_usaha: 'from Create business records', ajakan_beranda: 'from the Home card', tanya_awal: 'from the new account purpose card', lain: 'from another way' },
           keadaan: { langkah: 'steps view', harian: 'daily view' },
           tahap: { barang: 'products', jual: 'sales', kasbon: 'tabs', qris: 'QRIS' },
           ke: { jual: 'to Sell', beli: 'to Buy', barang: 'to Products', stok: 'to Stock', kasbon: 'to Tabs', laporan: 'to Reports', usaha: 'to Business' },
