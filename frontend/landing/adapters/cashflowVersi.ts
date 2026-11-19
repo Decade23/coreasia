@@ -433,7 +433,7 @@ export const JENIS_ISI: Readonly<Record<string, JenisIsi>> = {
 export const ISI_USAHA: Readonly<Record<JenisIsi, readonly string[]>> = {
   asal: ['baris_baru', 'baris_usaha', 'ajakan_beranda', 'tanya_awal', 'lain'],
   keadaan: ['langkah', 'harian'],
-  tahap: ['barang', 'jual', 'kasbon', 'qris'],
+  tahap: ['barang', 'jual', 'kasbon', 'qris', 'nominal'],
   ke: ['jual', 'beli', 'barang', 'stok', 'kasbon', 'laporan', 'usaha'],
   nomor: ['3'],
 }

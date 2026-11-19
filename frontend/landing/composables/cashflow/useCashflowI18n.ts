@@ -212,7 +212,7 @@ const KAMUS = {
         isi: {
           asal: { baris_baru: 'dari Buat ruang baru', baris_usaha: 'dari Buat catatan usaha', ajakan_beranda: 'dari kartu Beranda', tanya_awal: 'dari kartu tujuan akun baru', lain: 'dari jalan lain' },
           keadaan: { langkah: 'bentuk langkah', harian: 'bentuk harian' },
-          tahap: { barang: 'barang', jual: 'jualan', kasbon: 'kasbon', qris: 'QRIS' },
+          tahap: { barang: 'barang', jual: 'jualan', kasbon: 'kasbon', qris: 'QRIS', nominal: 'jual tanpa barang' },
           ke: { jual: 'ke Jual', beli: 'ke Beli', barang: 'ke Barang', stok: 'ke Stok', kasbon: 'ke Kasbon', laporan: 'ke Laporan', usaha: 'ke Usaha' },
           nomor: { 3: 'langkah 3' },
         },
@@ -1731,7 +1731,7 @@ const KAMUS = {
         isi: {
           asal: { baris_baru: 'from Create new workspace', baris_usaha: 'from Create business records', ajakan_beranda: 'from the Home card', tanya_awal: 'from the new account purpose card', lain: 'from another way' },
           keadaan: { langkah: 'steps view', harian: 'daily view' },
-          tahap: { barang: 'products', jual: 'sales', kasbon: 'tabs', qris: 'QRIS' },
+          tahap: { barang: 'products', jual: 'sales', kasbon: 'tabs', qris: 'QRIS', nominal: 'sell without a product' },
           ke: { jual: 'to Sell', beli: 'to Buy', barang: 'to Products', stok: 'to Stock', kasbon: 'to Tabs', laporan: 'to Reports', usaha: 'to Business' },
           nomor: { 3: 'step 3' },
         },
