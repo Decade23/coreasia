@@ -120,12 +120,17 @@ try {
   const galat = (status, json) => ({ status, headers: cors, json })
   const BARU_SAJA = new Set(['admin_daftar_pengumuman_v4', 'admin_simpan_pengumuman_v4', 'admin_pratinjau_penerima_pengumuman', 'admin_daftar_segmen_pengumuman',
     'admin_simpan_segmen_pengumuman', 'admin_hapus_segmen_pengumuman', 'admin_daftar_akun_internal', 'admin_simpan_akun_internal', 'admin_hapus_akun_internal'])
+  const BELUM_T3 = new Set(['admin_daftar_pengumuman_rutin', 'admin_simpan_pengumuman_rutin', 'admin_hapus_pengumuman_rutin',
+    'admin_simpan_pengumuman_v5', 'admin_pengumuman_pengguna_v2'])
   await page.route(`${SUPA.origin}/**`, async (r) => {
     const req = r.request()
     if (req.method() === 'OPTIONS') return r.fulfill({ status: 204, headers: { ...cors, 'access-control-allow-headers': '*', 'access-control-allow-methods': 'GET,POST,OPTIONS' } })
     const name = new URL(req.url()).pathname.split('/').pop()
     const p = req.postDataJSON() || {}
     if (!baru && BARU_SAJA.has(name)) return r.fulfill(galat(404, { code: 'PGRST202', message: `Could not find the function public.${name}`, hint: null }))
+    // Server di uji ini = sasaran 20261113180000 TANPA pengumuman rutin (T3, 20261119120000..123000).
+    // Jalur T3 (form v5, rutin, cari penerima v2) diuji uji-console-pengumuman-rutin-headless.mjs.
+    if (BELUM_T3.has(name)) return r.fulfill(galat(404, { code: 'PGRST202', message: `Could not find the function public.${name}`, hint: null }))
     let data = null
     if (name === 'admin_daftar_pengumuman_v4') data = daftarBaru()
     else if (name === 'admin_daftar_pengumuman_v3') data = daftarLama()
