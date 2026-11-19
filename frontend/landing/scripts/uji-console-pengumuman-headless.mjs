@@ -57,8 +57,11 @@ try {
   check('pratinjau menampilkan judul isi dan tombol',await a.locator('.cf-spanduk').locator('a.cf-cardlink').isVisible());
   check('pratinjau menampilkan domain',await a.locator('.cf-domain').innerText()==='coreasia.id');
   check('tautan membuka tab terpisah tanpa opener',await a.locator('.cf-cardlink').getAttribute('target')==='_blank'&&(await a.locator('.cf-cardlink').getAttribute('rel')).includes('noopener'));
+  // Form pola PaketForm: galat URL tertulis di bawah isiannya (aria-invalid), bukan toast.
   await a.locator('#cf-p-url').fill('http://coreasia.id');await a.getByRole('button',{name:'Simpan',exact:true}).click();
-  check('URL HTTP ditolak sebelum diterbitkan',await a.locator('#cf-p-judul').isVisible()&&!(await rpc('admin_daftar_pengumuman')).some(x=>x.title===judulAwal));
+  await a.locator('#cf-p-url-galat').waitFor();
+  check('URL HTTP ditolak sebelum diterbitkan, galat di bawah isian',await a.locator('#cf-p-judul').isVisible()&&await a.locator('#cf-p-url').getAttribute('aria-invalid')==='true'
+    &&await a.locator('.ca-toast').count()===0&&!(await rpc('admin_daftar_pengumuman')).some(x=>x.title===judulAwal));
   await a.locator('#cf-p-url').fill('https://coreasia.id/panduan');await a.getByRole('button',{name:'Simpan',exact:true}).click();
   const row=p=>p.locator('tbody tr').filter({hasText:judulAwal});
   await row(a).waitFor();check('buat tersimpan melalui RPC nyata',true);
@@ -113,7 +116,9 @@ try {
     return (await rpc('admin_daftar_pengumuman_v3')).find(x=>x.title==='Target '+type+' '+id.slice(0,8));
   };
   await bukaTarget('single');
-  check('tunggal kosong tidak dapat disimpan',await a.getByRole('button',{name:'Simpan',exact:true}).isDisabled());
+  await a.getByRole('button',{name:'Simpan',exact:true}).click();await a.locator('#cf-p-penerima-galat').waitFor();
+  check('tunggal kosong tidak dapat disimpan, galat penerima di formnya',await a.locator('#cf-p-judul').isVisible()
+    &&!(await rpc('admin_daftar_pengumuman_v3')).some(x=>x.title==='Target single '+id.slice(0,8)));
   await pilihAkun(a,penerima[0]);let target=await simpanTarget('single');
   check('satu penerima tersimpan',target.audience_type==='single'&&target.user_ids.length===1&&target.user_ids[0]===penerima[0]);
   await a.locator('tbody tr').filter({hasText:target.title}).getByRole('button',{name:'Sunting',exact:true}).click();

@@ -1241,8 +1241,9 @@ Halaman kedua di pintu Ringkasan. Lima bagian, satu terbuka sekali waktu lewat `
   QR dibuat, lunas, dan rupiah memakai aturan halaman Dukungan, ditambah tanpa dukungan Play dari akun
   tim.
 - Asal pengguna membaca `admin_laporan_asal` dari migrasi aplikasi 1.4.4 (tiket asal pengguna). Selama
-  RPC itu belum ada, bagian ini menulis "belum aktif" dan bagian lain tetap jalan. Namanya ada di
-  `MENDAHULUI_MIGRASI` sampai migrasinya tergabung di cabang rilis CashFlow.
+  RPC itu belum ada di server, bagian ini menulis "belum aktif" dan bagian lain tetap jalan. Migrasinya
+  sudah tergabung di cabang rilis CashFlow, jadi namanya tidak lagi ada di `MENDAHULUI_MIGRASI` dan
+  `rpc-console.test.ts` memeriksanya penuh.
 - Saldo membaca `admin_laporan_saldo` (migrasi 20261119111000): per ruang, atau per pengguna dari ruang
   miliknya saja, dengan kolom terpisah "Ikut ruang lain". Uang nyata = saldo dompet yang tidak diarsip
   dan bukan piutang, sama dengan angka total di aplikasi, dompet minus ikut mengurangi. Butuh izin pii.

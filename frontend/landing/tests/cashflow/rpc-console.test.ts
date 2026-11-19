@@ -46,11 +46,10 @@ const UJI = adaUji ? readFileSync(BERKAS_UJI, 'utf8') : ''
  * argumen, blok ⟦rpc-console⟧, dan kepala uji SQL. Hapus namanya dari sini
  * sesudah migrasinya tergabung di cabang rilis CashFlow.
  */
-/* Penyedia cadangan Domi (20261116100000) dan pemakai Domi di daftar pengguna (20261116110000)
-   sudah ada di migrasi CashFlow. Isi hanya untuk RPC yang console panggil SEBELUM migrasinya tergabung.
-   admin_laporan_asal: bagian Asal pengguna di Laporan, migrasinya 20261119130000 (aplikasi 1.4.4, tiket
-   asal pengguna) belum tergabung di cabang laporan. Halamannya menulis "belum aktif" sampai RPC itu ada. */
-const MENDAHULUI_MIGRASI: readonly string[] = ['admin_laporan_asal']
+/* Penyedia cadangan Domi (20261116100000), pemakai Domi di daftar pengguna (20261116110000), dan
+   asal pengguna admin_laporan_asal (20261119130000) sudah ada di migrasi CashFlow. Isi hanya untuk RPC
+   yang console panggil SEBELUM migrasinya tergabung. */
+const MENDAHULUI_MIGRASI: readonly string[] = []
 const adaFungsi = (nama: string): boolean => { try { fungsiTerakhir(nama); return true } catch { return false } }
 /* Tanpa folder migrasi tidak ada yang bisa dipastikan: semuanya dianggap menunggu. */
 const menunggu: ReadonlySet<string> = new Set(adaMigrasi ? MENDAHULUI_MIGRASI.filter(n => !adaFungsi(n)) : MENDAHULUI_MIGRASI)
