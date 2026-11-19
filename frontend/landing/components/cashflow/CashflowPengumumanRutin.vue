@@ -5,9 +5,9 @@
  * pengumuman rutin terakhir, dan templat per topik (buat, sunting, hapus).
  *
  * Jadwal server berjalan setiap hari 05.00 WIB dan menerbitkan paling banyak
- * satu kartu. Sakelar `pengumuman_rutin` di Sakelar MATI bawaan. Bagian ini
- * hanya membaca keadaannya dan menautkan ke halaman Sakelar. Isi templat
- * ditunjukkan ke Master sebelum sakelar dinyalakan.
+ * satu kartu. Sakelar `pengumuman_rutin` MATI bawaan. Bagian ini menampilkan
+ * keadaannya dan menyalakan atau mematikannya (admin_set_config, beralasan
+ * dan beraudit, butuh cashflow:pii).
  *
  * IZIN. Membaca cukup cashflow:view. Menulis butuh cashflow:pii (server
  * menolak dengan 42501 izin-kurang). Semua tulisan beralasan dan beraudit.
@@ -15,7 +15,7 @@
  * muat ulang.
  */
 import {
-  isianDariTemplat, isianRutinBaru, galatServerRutin, jamTampil,
+  CATATAN_SAKELAR_RUTIN, KUNCI_SAKELAR_RUTIN, isianDariTemplat, isianRutinBaru, galatServerRutin, jamTampil, nilaiSakelarRutin,
   type DaftarRutin, type GalatRutin, type IsianRutin, type MuatanRutin, type TemplatRutin,
 } from '~/adapters/cashflowPengumumanRutin'
 import { kalimatAturan, labelVersi, type KamusRingkas } from '~/adapters/cashflowPengumumanAturan'
@@ -86,6 +86,27 @@ const simpan = async (m: MuatanRutin) => {
   } finally { menyimpan.value = false }
 }
 
+// ── Sakelar ─────────────────────────────────────────────────────────────
+const sakelarBuka = ref(false)
+const alasanSakelar = ref('')
+const menyakelar = ref(false)
+const mintaSakelar = () => {
+  if (!bolehUbah.value) return
+  alasanSakelar.value = tcf(props.daftar.sakelar ? 'pengumuman.rutin.alasanMati' : 'pengumuman.rutin.alasanNyala')
+  sakelarBuka.value = true
+}
+const simpanSakelar = async () => {
+  if (menyakelar.value || alasanSakelar.value.trim().length < 8) return
+  menyakelar.value = true
+  const tujuan = !props.daftar.sakelar
+  try {
+    const ok = await aksi(() => api.setConfig(KUNCI_SAKELAR_RUTIN, nilaiSakelarRutin(tujuan, props.daftar.versiMin), false, CATATAN_SAKELAR_RUTIN, alasanSakelar.value.trim()), {
+      sukses: tcf(tujuan ? 'pengumuman.rutin.dinyalakan' : 'pengumuman.rutin.dimatikan'), gagal: catatIzin,
+    })
+    if (ok) { sakelarBuka.value = false; emit('berubah') }
+  } finally { menyakelar.value = false }
+}
+
 // ── Hapus ───────────────────────────────────────────────────────────────
 const hapusId = ref<string | null>(null)
 const alasanHapus = ref('')
@@ -119,7 +140,16 @@ const hapus = async (t: TemplatRutin) => {
         <dd class="mt-1">
           <span class="text-xs" :class="daftar.sakelar ? 'ca-pill-emerald' : 'ca-pill-muted'">{{ daftar.sakelar ? tcf('pengumuman.rutin.nyala') : tcf('pengumuman.rutin.mati') }}</span>
           <span class="mt-1 block text-xs text-[var(--ca-muted)]">{{ daftar.sakelar ? tcf('pengumuman.rutin.nyalaKet') : tcf('pengumuman.rutin.matiKet') }}</span>
-          <NuxtLink to="/console/cashflow/sakelar" class="mt-1 inline-block text-xs font-semibold text-[var(--ca-accent)] underline-offset-2 hover:underline">{{ tcf('pengumuman.rutin.keSakelar') }}</NuxtLink>
+          <button v-if="!sakelarBuka" type="button" class="mt-2 block text-xs" :class="daftar.sakelar ? 'ca-btn-secondary' : 'ca-btn-primary'" :disabled="!bolehUbah" data-uji="rutin-sakelar-ubah" @click="mintaSakelar">{{ daftar.sakelar ? tcf('pengumuman.rutin.matikan') : tcf('pengumuman.rutin.nyalakan') }}</button>
+          <form v-else class="mt-2" data-uji="rutin-sakelar-form" @submit.prevent="simpanSakelar">
+            <p class="text-xs text-[var(--ca-text)]">{{ daftar.sakelar ? tcf('pengumuman.rutin.matikanKet') : tcf('pengumuman.rutin.nyalakanKet')(jumlahAktif) }}</p>
+            <label for="cf-rt-sakelar-alasan" class="mt-2 block text-xs font-semibold text-[var(--ca-subtle)]">{{ tcf('pengumuman.alasan') }}</label>
+            <input id="cf-rt-sakelar-alasan" v-model="alasanSakelar" class="ca-input mt-1 w-full" minlength="8" :disabled="menyakelar">
+            <div class="mt-2 flex flex-wrap gap-2">
+              <button type="submit" class="ca-btn-primary text-xs" :disabled="menyakelar || alasanSakelar.trim().length < 8" data-uji="rutin-sakelar-simpan">{{ daftar.sakelar ? tcf('pengumuman.rutin.matikan') : tcf('pengumuman.rutin.nyalakan') }}</button>
+              <button type="button" class="ca-btn-secondary text-xs" :disabled="menyakelar" @click="sakelarBuka = false">{{ tcf('umum.batal') }}</button>
+            </div>
+          </form>
         </dd>
       </div>
       <div class="min-w-0 rounded-xl border border-[color:var(--ca-border)] p-3" data-uji="rutin-rencana">

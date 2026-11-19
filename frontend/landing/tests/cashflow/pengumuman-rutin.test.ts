@@ -356,3 +356,25 @@ describe('kamus ID dan EN', () => {
     expect(teks.filter(t => /[—;]|\p{Extended_Pictographic}/u.test(t))).toEqual([])
   })
 })
+
+describe('sakelar pengumuman rutin dari console', () => {
+  it('nilai sakelar menjaga versi_min dan tidak pernah di bawah aplikasi pertama yang mengenal kartu', async () => {
+    const { CATATAN_SAKELAR_RUTIN, KUNCI_SAKELAR_RUTIN, VERSI_MIN_SAKELAR, nilaiSakelarRutin } = await import('../../adapters/cashflowPengumumanRutin')
+    expect(KUNCI_SAKELAR_RUTIN).toBe('pengumuman_rutin')
+    expect(nilaiSakelarRutin(true, VERSI_KARTU_BAWAAN)).toEqual({ nyala: true, versi_min: VERSI_MIN_SAKELAR })
+    expect(nilaiSakelarRutin(true, 26111908)).toEqual({ nyala: true, versi_min: 26111908 })
+    expect(nilaiSakelarRutin(false, 26111908)).toEqual({ nyala: false, versi_min: 26111908 })
+    expect(nilaiSakelarRutin(true, Number.NaN).versi_min).toBe(VERSI_MIN_SAKELAR)
+    expect(CATATAN_SAKELAR_RUTIN).not.toContain('@')
+  })
+  it('komponen menyimpan lewat setConfig dengan alasan, tidak publik, dan hanya untuk yang boleh mengubah', () => {
+    const badan = readFileSync(join(AKAR, 'components/cashflow/CashflowPengumumanRutin.vue'), 'utf8')
+    expect(badan).toMatch(/api\.setConfig\(KUNCI_SAKELAR_RUTIN, nilaiSakelarRutin\(tujuan, props\.daftar\.versiMin\), false, CATATAN_SAKELAR_RUTIN, alasanSakelar\.value\.trim\(\)\)/)
+    expect(badan).toMatch(/data-uji="rutin-sakelar-ubah"[^>]*|:disabled="!bolehUbah" data-uji="rutin-sakelar-ubah"/)
+    expect(badan).toContain('alasanSakelar.value.trim().length < 8')
+    for (const b of ['id', 'en'] as const) {
+      const r = KAMUS_CASHFLOW[b].pengumuman.rutin as Record<string, unknown>
+      for (const k of ['nyalakan', 'matikan', 'dinyalakan', 'dimatikan', 'nyalakanKet', 'matikanKet', 'alasanNyala', 'alasanMati']) expect(r[k], `${b}.${k}`).toBeTruthy()
+    }
+  })
+})

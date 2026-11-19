@@ -49,6 +49,20 @@ export const BOBOT_MIN = 1
 export const BOBOT_MAKS = 10
 /** Bawaan server bila tidak ada sakelar versi_min (build sesudah 1.4.3). */
 export const VERSI_KARTU_BAWAAN = 26111900
+/** Kunci sakelar di app_config dan versionCode Play paling rendah yang menerima kartu (aplikasi 1.4.4). */
+export const KUNCI_SAKELAR_RUTIN = 'pengumuman_rutin'
+export const VERSI_MIN_SAKELAR = 26111903
+/**
+ * Nilai app_config untuk menyalakan atau mematikan jadwal. versi_min yang
+ * sudah tersimpan dipertahankan selama tidak lebih rendah dari aplikasi
+ * pertama yang mengenal kartu, supaya aplikasi lama tidak pernah menerima.
+ * Mematikan tetap menyimpan barisnya (nyala false), jadi versi_min tidak hilang.
+ */
+export function nilaiSakelarRutin(nyala: boolean, versiMinKini: number): { nyala: boolean; versi_min: number } {
+  const v = Number.isInteger(versiMinKini) && versiMinKini >= VERSI_MIN_SAKELAR ? versiMinKini : VERSI_MIN_SAKELAR
+  return { nyala, versi_min: v }
+}
+export const CATATAN_SAKELAR_RUTIN = 'Pengumuman rutin harian. nyala true = jadwal boleh menerbitkan. versi_min = versionCode paling rendah yang menerima.'
 export const SEBAB_RENCANA = ['tanpa_templat', 'jeda', 'lewat_jam', 'ada_aktif'] as const
 export type SebabRencana = typeof SEBAB_RENCANA[number]
 

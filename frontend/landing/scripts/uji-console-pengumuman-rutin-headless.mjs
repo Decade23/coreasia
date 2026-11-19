@@ -138,6 +138,16 @@ try {
       await page.locator('[data-uji="bagian-rutin"]').waitFor()
       cek(`halaman ${t} ${w}: bagian rutin tampil`, await page.locator('[data-uji="bagian-rutin"]').isVisible())
       cek(`halaman ${t} ${w}: sakelar mati`, (await page.locator('[data-uji="rutin-sakelar"]').innerText()).includes('Mati'))
+      // Tombol sakelar: tampil, membuka form beralasan, Batal menutupnya tanpa menyimpan.
+      const ubah = page.locator('[data-uji="rutin-sakelar-ubah"]')
+      cek(`halaman ${t} ${w}: tombol Nyalakan ada`, (await ubah.innerText()).includes('Nyalakan'))
+      if (!(await ubah.isDisabled())) {
+        await ubah.click()
+        cek(`halaman ${t} ${w}: form sakelar beralasan`, (await page.locator('#cf-rt-sakelar-alasan').inputValue()).length >= 8)
+        await page.locator('[data-uji="rutin-sakelar-form"]').screenshot({ path: join(output, `sakelar-form-${t}-${w}.png`) }).catch(() => {})
+        await page.locator('[data-uji="rutin-sakelar-form"] button[type="button"]').click()
+        cek(`halaman ${t} ${w}: Batal menutup form`, await page.locator('[data-uji="rutin-sakelar-form"]').count() === 0)
+      }
       cek(`halaman ${t} ${w}: tanpa luber samping`, !(await meluber()))
       await bersih(`halaman ${t} ${w}`)
       await potret(`halaman-${t}-${w}`)
