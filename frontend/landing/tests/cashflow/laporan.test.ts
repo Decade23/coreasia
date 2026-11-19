@@ -87,9 +87,16 @@ const galatDi = (badan: string): string[] =>
   [...new Set([...badan.matchAll(/errcode\s*=\s*'(\w+)'(?:,\s*hint\s*=\s*'([\w-]+)')?/g)].map(m => `${m[1]}:${m[2] ?? ''}`))].sort()
 
 describe.skipIf(!adaMigrasi)('kontrak RPC Laporan = migrasi CashFlow', () => {
-  it('tiga RPC grafik di 20261119110000, saldo di 20261119111000, semuanya definer dengan search_path', () => {
-    for (const n of ['admin_laporan_jam_ramai', 'admin_laporan_harian', 'admin_laporan_dukung']) {
-      expect(fungsiTerakhir(n).berkas, n).toMatch(/^20261119110000_/)
+  it('tiga RPC grafik di 20261119110000 (harian diganti 20261119150000), saldo di 20261119111000, semuanya definer dengan search_path', () => {
+    /* admin_laporan_harian diganti 20261119150000 (hitungan Domi tanpa giliran
+       lokal). Bentuk jawabannya tetap, diperiksa uji di bawah. */
+    const berkas: Record<string, RegExp> = {
+      admin_laporan_jam_ramai: /^20261119110000_/,
+      admin_laporan_harian: /^20261119150000_/,
+      admin_laporan_dukung: /^20261119110000_/,
+    }
+    for (const [n, pola] of Object.entries(berkas)) {
+      expect(fungsiTerakhir(n).berkas, n).toMatch(pola)
       expect(fungsiTerakhir(n).kepala, n).toMatch(/returns jsonb\s+language plpgsql\s+stable\s+security definer\s+set search_path = public/i)
     }
     expect(fungsiTerakhir('admin_laporan_saldo').berkas).toMatch(/^20261119111000_/)
