@@ -149,8 +149,8 @@ describe('saring baru: umur akun, pengguna, kelompok', () => {
 
 describe('cari penerima v2', () => {
   it('nama dan versi dibaca bila ada, internal dan jenisnya', () => {
-    expect(keAkunPenerimaV2({ id: U1, email: 'a@contoh.invalid', nama: ' Dedi ', versi: '1.4.3', internal: true, jenis_internal: 'peninjau' }))
-      .toEqual({ id: U1, email: 'a@contoh.invalid', nama: 'Dedi', versi: '1.4.3', internal: true, jenisInternal: 'peninjau' })
+    expect(keAkunPenerimaV2({ id: U1, email: 'a@contoh.invalid', nama: ' Sari ', versi: '1.4.3', internal: true, jenis_internal: 'peninjau' }))
+      .toEqual({ id: U1, email: 'a@contoh.invalid', nama: 'Sari', versi: '1.4.3', internal: true, jenisInternal: 'peninjau' })
     expect(keAkunPenerimaV2({ id: U1, email: null, nama: null, versi: null, internal: false, jenis_internal: null }))
       .toEqual({ id: U1, email: '', nama: null, versi: null, internal: false, jenisInternal: null })
   })
