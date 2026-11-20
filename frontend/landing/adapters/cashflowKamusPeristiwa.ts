@@ -275,7 +275,7 @@ export const KAMUS_LANGKAH_PERJALANAN = {
     }),
   'dukung.ketuk': peristiwa('aplikasi', teks('Mengetuk Dukung CashFlow', 'Tapped Support CashFlow'),
     teks('Pengguna membuka alur Dukung CashFlow. Tercatat sejak 1.4.4.', 'The user opened the Support CashFlow flow. Recorded since 1.4.4.'), {
-      asal: pilihan(ASAL, { setelan: teks('Setelan', 'Settings'), pengumuman: teks('Tombol pengumuman', 'Announcement button') }),
+      asal: pilihan(ASAL, { setelan: teks('Setelan', 'Settings'), pengumuman: teks('Tombol pengumuman', 'Announcement button'), surel: teks('Tautan di email', 'Link in an email') }),
     }),
   'pengumuman.ketuk': peristiwa('aplikasi', teks('Mengetuk tombol pengumuman', 'Tapped an announcement button'),
     teks('Pengguna mengetuk tombol di sebuah pengumuman.', 'The user tapped the button on an announcement.'), { gaya: GAYA_PENGUMUMAN }),
