@@ -802,6 +802,47 @@ const laporanAsal = (p, mode) => ({
     .map(([kunci, orang]) => ({ kunci, orang: mode.kosong ? 0 : orang })),
   tanpa_data: mode.kosong ? 0 : 9_310,
 })
+/* Kebiasaan pengguna aktif: jumlah orang per butir dan daftar orangnya. Jumlah
+   di daftar sama dengan angka butirnya. Daftar butuh izin data pribadi. Dengan
+   alasan nama dan email utuh, tanpa alasan email tersamar dan nama kosong.
+   Kunci di luar daftar dijawab 22023 hint kunci. */
+const BUTIR_KEBIASAAN = [
+  ['satu_ruang', 201, 1], ['banyak_ruang', 111, 1], ['catat_banyak_ruang', 64, 1], ['berbagi_ruang', 47, 1], ['banyak_hp', 23, 1],
+  ['catat_usaha', 58, 1], ['pakai_domi', 96, 1], ['beli_kredit', 9, 0], ['aktif_7', 187, 0], ['baru', 132, 1], ['baru_bertahan', 41, 1],
+]
+const skalaKebiasaan = hari => (hari <= 7 ? 0.4 : hari >= 90 ? 1.7 : 1)
+const hitungKebiasaan = (p, mode) => {
+  const hari = hariLaporan(p)
+  const f = skalaKebiasaan(hari)
+  const butir = BUTIR_KEBIASAAN.map(([kunci, orang, ikutRentang]) => ({ kunci, orang: mode.kosong ? 0 : Math.round(orang * (ikutRentang ? f : 1)) }))
+  return { hari, akun: mode.kosong ? 0 : 1_204, aktif: mode.kosong ? 0 : Math.round(312 * f), butir }
+}
+const laporanKebiasaan = (p, mode) => ({ ...hitungKebiasaan(p, mode), ...(mode.butirAsing ? { butir: [...hitungKebiasaan(p, mode).butir, { kunci: 'butir_baru_server', orang: 5 }] } : {}) })
+const AKUN_LUAR = AKUN.map((a, i) => ({ a, i })).filter(x => !x.a.tim)
+const orangKebiasaan = (n, buka) => {
+  const kenal = AKUN_LUAR[n]
+  const id = kenal ? idAkun(kenal.i) : uuid(2000 + n)
+  const nama = kenal ? (kenal.a.nama || null) : (n % 6 === 0 ? null : `Orang Contoh ${n + 1}`)
+  const email = kenal ? kenal.a.email : `orang${n + 1}@contoh.invalid`
+  return {
+    user_id: id, nama: buka ? nama : null, email: buka ? email : samar(email),
+    daftar: jam(24 * (3 + n * 2.4)), terakhir_catat: n % 11 === 7 ? null : jam(1.5 + n * 3.1),
+    catatan: n % 11 === 7 ? 0 : 4_812 - Math.min(4_800, n * 37), ruang: 1 + (n % 4), ruang_bersama: n % 3 === 0 ? 1 + (n % 2) : 0,
+    hp: 1 + (n % 5 === 0 ? 1 : 0), pesan_domi: n % 2 ? 0 : 120 - Math.min(119, n), beli_kredit: n % 9 === 0 ? 1 + (n % 3) : 0,
+  }
+}
+const laporanKebiasaanDaftar = (p, mode) => {
+  const h = hitungKebiasaan(p, mode)
+  const total = p.p_kunci === 'aktif' ? h.aktif : h.butir.find(b => b.kunci === p.p_kunci)?.orang
+  const hal = Math.max(1, Number(p.p_hal ?? 1))
+  const perHal = 50
+  const awal = (hal - 1) * perHal
+  return {
+    kunci: p.p_kunci, hari: h.hari, total, hal, per_hal: perHal, terbuka: !!p.p_alasan,
+    baris: Array.from({ length: Math.max(0, Math.min(perHal, total - awal)) }, (_, i) => orangKebiasaan(awal + i, !!p.p_alasan)),
+  }
+}
+const KUNCI_KEBIASAAN_SAH = new Set(['aktif', ...BUTIR_KEBIASAAN.map(b => b[0])])
 /* Saldo: ruang bernama panjang, uang miliaran, minus dan internal ikut. */
 const RUANG_SALDO = [
   [1, 'Toko Berkah Jaya Abadi Sentosa Makmur Cabang Pasar Baru Bandung Timur', 'usaha', 12, 4, 7_412_905_500, 412_000_000, 0, 1, -1_250_000],
@@ -954,7 +995,7 @@ const IZIN_KURANG = { status: 403, json: { code: '42501', message: 'izin-kurang'
 const BUTUH_PII = new Set([
   'admin_kasus_aktif_ruang', 'admin_kasus_buka', 'admin_kasus_tambah', 'admin_kasus_investigasi', 'admin_kasus_buka_dari_peristiwa', 'admin_corong_buka_kasus',
   'admin_pengguna_360', 'admin_ruang_360', 'admin_ruang_360_v2', 'admin_transaksi_cari', 'admin_transaksi_rinci', 'admin_jejak', 'admin_perjalanan_pengguna', 'admin_teks', 'admin_cari_v2',
-  'admin_dompet_ruang', 'admin_laporan_saldo', 'admin_mutasi_dompet', 'admin_periksa_ruang', 'admin_sampah_ruang', 'admin_katalog_ruang', 'admin_jadwal_ruang', 'admin_jadwal_rinci',
+  'admin_dompet_ruang', 'admin_laporan_saldo', 'admin_laporan_kebiasaan_daftar', 'admin_mutasi_dompet', 'admin_periksa_ruang', 'admin_sampah_ruang', 'admin_katalog_ruang', 'admin_jadwal_ruang', 'admin_jadwal_rinci',
   'admin_usaha_ruang', 'admin_stok_ruang', 'admin_struk_ruang', 'admin_patungan_ruang', 'admin_patungan_riwayat', 'admin_perangkat_pengguna', 'admin_kabar_pengguna',
   'admin_ai_percakapan_daftar', 'admin_ai_pesan_daftar', 'admin_ai_pembelian_daftar', 'admin_config_buka',
   'admin_hapus_pengumuman_rutin', 'admin_simpan_pengumuman_rutin',
@@ -996,6 +1037,8 @@ const RPC = {
   admin_laporan_dukung: laporanDukung,
   admin_laporan_harian: laporanHarian,
   admin_laporan_jam_ramai: laporanJamRamai,
+  admin_laporan_kebiasaan: laporanKebiasaan,
+  admin_laporan_kebiasaan_daftar: laporanKebiasaanDaftar,
   admin_laporan_saldo: laporanSaldo,
   admin_hapus_akun_daftar: hapusAkunDaftar,
   admin_daftar_pengumuman_v4: (p, m) => (m.kosong ? [] : PENGUMUMAN),
@@ -1076,6 +1119,10 @@ export function buatServer() {
       return { status: 404, json: { code: 'PGRST202', details: null, hint: null, message: `Could not find the function public.${nama} in the schema cache` } }
     }
     if (!mode.izin && BUTUH_PII.has(nama)) { terpanggil.add(nama); return IZIN_KURANG }
+    if (nama === 'admin_laporan_kebiasaan_daftar' && !KUNCI_KEBIASAAN_SAH.has(p.p_kunci)) {
+      terpanggil.add(nama)
+      return { status: 400, json: { code: '22023', message: 'Butir tidak dikenal.', hint: 'kunci', details: null } }
+    }
     const f = RPC[nama]
     if (!f) {
       takDikenal.add(nama)
