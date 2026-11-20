@@ -292,7 +292,7 @@ describe('kamus dan halaman Laporan', () => {
   it('URL halaman tidak membawa teks cari, dan saldo memakai alasan tetap dari adapter', () => {
     const halaman = readFileSync(join(AKAR, 'pages/console/cashflow/laporan.vue'), 'utf8')
     const skema = /const SKEMA = \{([\s\S]*?)\} as const satisfies SkemaQuery/.exec(halaman)?.[1] ?? ''
-    expect([...skema.matchAll(/^\s*(\w+):/gm)].map(m => m[1])).toEqual(['bagian', 'hari', 'jenis', 'mode', 'urut', 'arah', 'hal'])
+    expect([...skema.matchAll(/^\s*(\w+):/gm)].map(m => m[1])).toEqual(['bagian', 'hari', 'jenis', 'mode', 'urut', 'arah', 'butir', 'hal'])
     const admin = readFileSync(join(AKAR, 'composables/cashflow/useCashflowAdmin.ts'), 'utf8')
     expect(admin).toMatch(/'admin_laporan_saldo', \{[\s\S]*?p_alasan: ALASAN_LAPORAN_SALDO,/)
   })

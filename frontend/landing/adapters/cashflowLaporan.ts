@@ -31,7 +31,7 @@ import type { OpsiSegmen } from '~/utils/cashflow/segmen'
 type Angka = number | string | null
 
 /** Bagian halaman, urutan tab. Saldo terakhir karena butuh izin lebih dan menulis audit. */
-export const BAGIAN_LAPORAN = ['harian', 'jam', 'dukung', 'asal', 'saldo'] as const
+export const BAGIAN_LAPORAN = ['harian', 'jam', 'dukung', 'asal', 'kebiasaan', 'saldo'] as const
 export type BagianLaporan = typeof BAGIAN_LAPORAN[number]
 /** Pilihan rentang (hari penuh sampai kemarin). Server menerima 7..90. */
 export const RENTANG_LAPORAN = ['7', '30', '90'] as const

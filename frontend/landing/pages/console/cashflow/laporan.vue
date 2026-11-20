@@ -1,11 +1,14 @@
 <script setup lang="ts">
 /**
  * Laporan — grafik dan tabel CashFlow (spek console laporan 19 Nov 2026,
- * K2, K4, K7, K9). Lima bagian, satu terbuka sekali waktu (?bagian=):
+ * K2, K4, K7, K9). Enam bagian, satu terbuka sekali waktu (?bagian=):
  *
  * - Harian (bawaan), Jam ramai, Dukung CashFlow, Asal pengguna: agregat
  *   berizin view, tanpa audit, sampai KEMARIN, tanpa akun tim. Rentang
  *   7/30/90 hari (?hari=). Jam ramai bisa disaring jenis ruang (?jenis=).
+ * - Kebiasaan: jumlah orang per kebiasaan dan daftar orangnya, dimuat
+ *   komponennya sendiri (CashflowLaporanKebiasaan). Butir yang terbuka ada di
+ *   ?butir=, halamannya di ?hal=.
  * - Saldo: uang nyata per ruang atau per pengguna (?mode=), izin pii, alasan
  *   tetap halaman ini, dan SETIAP muatan menulis satu baris audit
  *   laporan_saldo. Karena itu saldo hanya dimuat saat bagiannya dibuka, dan
@@ -27,6 +30,7 @@ import {
   type Asal, type BagianLaporan, type Dukung, type Harian, type MetrikHarian, type PetaJam, type Saldo,
   type SaldoPengguna, type SaldoRuang, type UrutSaldo,
 } from '~/adapters/cashflowLaporan'
+import { MAKS_KUNCI_KEBIASAAN, POLA_KUNCI_KEBIASAAN } from '~/adapters/cashflowLaporanKebiasaan'
 import type { SkemaQuery } from '~/adapters/cashflowQuery'
 
 const { tcf, bahasa } = useCashflowI18n()
@@ -42,6 +46,7 @@ const SKEMA = {
   mode: { jenis: 'pilihan', opsi: MODE_SALDO, bawaan: 'ruang' },
   urut: { jenis: 'pilihan', opsi: URUT_SALDO, bawaan: 'uang_nyata' },
   arah: { jenis: 'pilihan', opsi: ['asc', 'desc'], bawaan: 'desc' },
+  butir: { jenis: 'teks', pola: POLA_KUNCI_KEBIASAAN, maks: MAKS_KUNCI_KEBIASAAN, bawaan: '' },
   hal: { jenis: 'halaman', bawaan: 1 },
 } as const satisfies SkemaQuery
 const { nilai: q, setel } = useCashflowQuery(SKEMA)
@@ -62,6 +67,7 @@ const adaData = computed(() => {
     case 'jam': return !!peta.value
     case 'dukung': return !!dukung.value
     case 'asal': return !!asal.value
+    case 'kebiasaan': return true
     default: return !!saldo.value
   }
 })
@@ -86,7 +92,9 @@ const kunciMuat = computed(() => {
 const muatBagian = () => muat(async (terbaru) => {
   const v = q.value
   const kunci = kunciMuat.value
-  if (v.bagian === 'harian') {
+  if (v.bagian === 'kebiasaan') {
+    // Dimuat komponennya sendiri: di sini hanya membuang galat bagian sebelumnya.
+  } else if (v.bagian === 'harian') {
     const d = await api.laporanHarian(hari.value)
     if (!terbaru()) return
     harian.value = keHarian(d)
@@ -126,8 +134,8 @@ const opsiBagian = computed(() => opsiDari(BAGIAN_LAPORAN, b => tcf(`laporan.bag
 const opsiHari = computed(() => opsiDari(RENTANG_LAPORAN, h => tcf('laporan.hari')(Number(h)) as string))
 const opsiJenis = computed(() => opsiDari(JENIS_LAPORAN, j => tcf(`laporan.jam.jenis.${j}`) as string))
 const opsiMode = computed(() => opsiDari(MODE_SALDO, m => tcf(`laporan.saldo.mode.${m}`) as string))
-const pilihBagian = (b: BagianLaporan) => setel({ bagian: b, hal: 1 })
-const pilihHari = (h: typeof RENTANG_LAPORAN[number]) => setel({ hari: h })
+const pilihBagian = (b: BagianLaporan) => setel({ bagian: b, hal: 1, butir: '' })
+const pilihHari = (h: typeof RENTANG_LAPORAN[number]) => setel({ hari: h, hal: 1 })
 const pilihJenis = (j: typeof JENIS_LAPORAN[number]) => setel({ jenis: j, hal: 1 })
 const pilihMode = (m: typeof MODE_SALDO[number]) => setel({ mode: m, hal: 1, urut: urutSah(m, q.value.urut) ? q.value.urut : 'uang_nyata' })
 const tgl = (ymd: string) => tanggalPendek(ymd, bahasa.value)
@@ -167,6 +175,9 @@ const barisSumber = computed(() => (asal.value?.sumber ?? []).map(s => ({
   label: s.khusus ? tcf(`laporan.asal.sumberKhusus.${s.khusus}`) as string : s.kunci, nilai: s.orang,
 })))
 const barisJawaban = computed(() => (asal.value?.jawaban ?? []).map(j => ({ label: tcf(`laporan.asal.jawaban.${j.kunci}`) as string, nilai: j.orang })))
+
+// ── kebiasaan ────────────────────────────────────────────────────────────
+const pilihButir = (kunci: string) => { void setel({ butir: kunci, hal: 1 }) }
 
 // ── saldo ────────────────────────────────────────────────────────────────
 const jalankanCari = async () => {
@@ -236,8 +247,11 @@ useConsoleRemah().pasang(() => [
       <CashflowSegmen v-if="q.bagian !== 'saldo'" :opsi="opsiHari" :nilai="q.hari" :label="tcf('laporan.rentangLabel')" @pilih="pilihHari" />
     </div>
 
+    <!-- ── Kebiasaan pengguna aktif (memuat sendiri) ──────────────────── -->
+    <CashflowLaporanKebiasaan v-if="q.bagian === 'kebiasaan'" :hari="hari" :butir="q.butir" :hal="q.hal" @pilih="pilihButir" @halaman="gantiHalaman" />
+
     <!-- Bagian yang RPC-nya belum ada di server. -->
-    <div v-if="belumAktif" class="flex items-start gap-3 rounded-xl border border-dashed border-[color:var(--ca-border)] px-4 py-5 text-sm text-[var(--ca-muted)]" role="status" data-uji="laporan-belum-aktif">
+    <div v-else-if="belumAktif" class="flex items-start gap-3 rounded-xl border border-dashed border-[color:var(--ca-border)] px-4 py-5 text-sm text-[var(--ca-muted)]" role="status" data-uji="laporan-belum-aktif">
       <Icon name="lucide:hourglass" class="mt-0.5 h-5 w-5 shrink-0 text-[var(--ca-subtle)]" aria-hidden="true" />
       <span>{{ tcf('laporan.belumAktif') }}</span>
     </div>
