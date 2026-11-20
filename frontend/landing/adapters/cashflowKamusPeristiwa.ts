@@ -281,6 +281,11 @@ export const KAMUS_LANGKAH_PERJALANAN = {
     teks('Pengguna mengetuk tombol di sebuah pengumuman.', 'The user tapped the button on an announcement.'), { gaya: GAYA_PENGUMUMAN }),
   'pengumuman.tutup': peristiwa('aplikasi', teks('Menutup pengumuman', 'Dismissed an announcement'),
     teks('Pengguna menutup sebuah pengumuman.', 'The user dismissed an announcement.'), { gaya: GAYA_PENGUMUMAN }),
+  'lokasi.izin': peristiwa('aplikasi', teks('Menjawab izin lokasi', 'Answered the location permission'),
+    teks('Pengguna menjawab jendela izin lokasi. Tercatat sejak 1.5.0, tanpa koordinat dan tanpa nama tempat.', 'The user answered the location permission dialog. Recorded since 1.5.0, without coordinates or place names.'), {
+      hasil: pilihan(HASIL, { diberi: teks('Diberi, lokasi akurat', 'Granted, precise location'), perkiraan: teks('Diberi, lokasi perkiraan', 'Granted, approximate location'), ditolak: teks('Ditolak', 'Denied'), nanti: teks('Nanti saja', 'Not now') }),
+      asal: pilihan(ASAL, { priming: teks('Sesudah mencatat', 'After saving a note'), setelan: teks('Sakelar di Setelan', 'Switch in Settings') }),
+    }),
   'pembaruan.ajakan_lihat': pembaruan(teks('Melihat ajakan pembaruan', 'Saw an update invitation'),
     teks('Beranda menampilkan ajakan memperbarui aplikasi.', 'Home displayed an invitation to update the app.')),
   'pembaruan.ajakan_ketuk': pembaruan(teks('Mengetuk Perbarui', 'Tapped Update'),
