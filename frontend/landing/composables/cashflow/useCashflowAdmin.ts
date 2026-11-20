@@ -110,6 +110,8 @@ import type { RingkasDukunganDTO, DaftarDukunganDTO, SumberDukungan, StatusDukun
 import { BATAS_DAFTAR_DUKUNGAN } from '~/adapters/cashflowDukungan'
 import type { AsalDTO, DukungDTO, HarianDTO, JamRamaiDTO, ModeSaldo, SaldoDTO, UrutSaldo } from '~/adapters/cashflowLaporan'
 import { ALASAN_LAPORAN_SALDO, PER_SALDO } from '~/adapters/cashflowLaporan'
+import type { DaftarKebiasaanDTO, KebiasaanDTO } from '~/adapters/cashflowLaporanKebiasaan'
+import { ALASAN_LAPORAN_KEBIASAAN } from '~/adapters/cashflowLaporanKebiasaan'
 import type { SimpanPengumuman } from '~/adapters/cashflowPengumuman'
 import type {
   AturanDTO, SaringDTO, PratinjauPenerimaDTO, SegmenDTO, AkunInternalDTO, JenisAkunInternal,
@@ -176,6 +178,8 @@ export const HINT_22023 = [
   // Form pengumuman dan pengumuman rutin (spek console 19 Nov 2026).
   'gaya', 'gaya-belum-ada', 'rutin-topik', 'rutin-jeda', 'rutin-jam', 'rutin-bobot', 'rutin-aktif',
   'pengumuman-judul', 'pengumuman-isi', 'pengumuman-level', 'pengumuman-waktu', 'pengumuman-tautan',
+  // Laporan kebiasaan pengguna aktif: kunci butir di luar daftar server.
+  'kunci',
 ] as const
 
 /** 42883 menyebut RPC `nama` sendiri ("function public.<nama>(p_a => text) does not exist")? */
@@ -721,6 +725,15 @@ export const useCashflowAdmin = () => {
         p_mode: p.mode, p_jenis: p.jenis, p_cari: p.cari.trim() || null, p_urut: p.urut, p_arah: p.arah,
         p_limit: PER_SALDO, p_offset: (Math.max(1, p.hal) - 1) * PER_SALDO, p_tanpa_internal: p.tanpaInternal,
         p_alasan: ALASAN_LAPORAN_SALDO,
+      }),
+    /** Kebiasaan pengguna aktif: jumlah orang per butir. Izin view, tanpa audit. */
+    laporanKebiasaan: (hari: number) => rpc<KebiasaanDTO>('admin_laporan_kebiasaan', { p_hari: hari }),
+    /** Orang di balik satu butir kebiasaan (atau 'aktif'), 50 per halaman. Butuh
+     *  cashflow:pii; alasan tetap halaman ini, setiap panggilan satu baris audit
+     *  laporan_kebiasaan. */
+    laporanKebiasaanDaftar: (kunci: string, hari: number, hal: number) =>
+      rpc<DaftarKebiasaanDTO>('admin_laporan_kebiasaan_daftar', {
+        p_kunci: kunci, p_hari: hari, p_hal: Math.max(1, hal), p_alasan: ALASAN_LAPORAN_KEBIASAAN,
       }),
 
     // ── paket kredit Domi (adapters/cashflowPaket) ──────────────────────

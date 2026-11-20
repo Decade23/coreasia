@@ -49,7 +49,8 @@ const UJI = adaUji ? readFileSync(BERKAS_UJI, 'utf8') : ''
 /* Penyedia cadangan Domi (20261116100000), pemakai Domi di daftar pengguna (20261116110000), dan
    asal pengguna admin_laporan_asal (20261119130000) sudah ada di migrasi CashFlow. Isi hanya untuk RPC
    yang console panggil SEBELUM migrasinya tergabung. */
-const MENDAHULUI_MIGRASI: readonly string[] = []
+/* Kebiasaan pengguna aktif: console dibangun bersamaan dengan migrasinya. */
+const MENDAHULUI_MIGRASI: readonly string[] = ['admin_laporan_kebiasaan', 'admin_laporan_kebiasaan_daftar']
 const adaFungsi = (nama: string): boolean => { try { fungsiTerakhir(nama); return true } catch { return false } }
 /* Tanpa folder migrasi tidak ada yang bisa dipastikan: semuanya dianggap menunggu. */
 const menunggu: ReadonlySet<string> = new Set(adaMigrasi ? MENDAHULUI_MIGRASI.filter(n => !adaFungsi(n)) : MENDAHULUI_MIGRASI)
