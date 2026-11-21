@@ -485,6 +485,7 @@ export default defineNuxtConfig({
         '/faq': { ssr: true },
         '/portfolio': { ssr: true },
         '/privacy-policy': { ssr: true },
+        '/coreasia-pages/privacy': { ssr: true },
         '/terms': { ssr: true },
         '/layanan': { ssr: true },
         '/layanan/**': { ssr: true },
