@@ -26,6 +26,11 @@ export const adaMigrasi = existsSync(DIR_MIGRASI)
 export const adaMigrasiNomor = (nomor: string): boolean =>
   adaMigrasi && readdirSync(DIR_MIGRASI).some(n => n.startsWith(`${nomor}_`) && n.endsWith('.sql'))
 
+/** Migrasi bernama ini (bagian sesudah stempel waktu, mis. 'perjalanan_katalog_148')
+ *  sudah ada di folder? Untuk migrasi yang dibangun bersamaan dan stempelnya belum pasti. */
+export const adaMigrasiBernama = (nama: string): boolean =>
+  adaMigrasi && readdirSync(DIR_MIGRASI).some(n => /^\d{14}_/.test(n) && n.slice(15) === `${nama}.sql`)
+
 /**
  * Kunci jsonb 'nomor_wa' membawa nomor UTUH hanya di cabang ber-pii (0123):
  * keluarannya `case when v_pii then X else public.nomor_wa_samar(X) end`.

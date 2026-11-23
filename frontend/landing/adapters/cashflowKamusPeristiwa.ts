@@ -2,6 +2,8 @@
  * Kosakata Perjalanan untuk telemetri aplikasi dan tonggak server.
  * Rincian yang diterjemahkan mengikuti daftar putih RPC Perjalanan.
  */
+import { NAMA_SITUS_PASAR, NAMA_SUMBER_PASAR, POLA_ID_SUMBER } from './cashflowLaporanPasar'
+
 type Bahasa = 'id' | 'en'
 type Dwibahasa = Readonly<Record<Bahasa, string>>
 const teks = (id: string, en: string): Dwibahasa => ({ id, en })
@@ -28,8 +30,11 @@ export function namaKategoriPerjalanan(kategori: string, bahasa: Bahasa): string
 type Bidang = {
   label: Dwibahasa
   nilai?: Readonly<Record<string, Dwibahasa>>
-  bentuk?: 'versi' | 'paket' | 'angka' | 'kode_build'
+  /** kode: id katalog (huruf kecil, angka, garis bawah) yang boleh tampil apa adanya bila tidak punya label. */
+  bentuk?: 'versi' | 'paket' | 'angka' | 'kode_build' | 'kode'
   maks?: number
+  /** Nilainya larik anggota `nilai` (mis. topik domi.pasar). Satu anggota tunggal juga diterima. */
+  larik?: true
 }
 const pilihan = (label: Dwibahasa, nilai: NonNullable<Bidang['nilai']>): Bidang => ({ label, nilai })
 const yaTidak = (label: Dwibahasa): Bidang => pilihan(label, { true: teks('Ya', 'Yes'), false: teks('Tidak', 'No') })
@@ -123,6 +128,21 @@ const GAYA_PENGUMUMAN = pilihan(teks('Gaya pengumuman', 'Announcement style'), {
 })
 const pembaruan = (judul: Dwibahasa, arti: Dwibahasa, bidang?: Peristiwa['bidang']) =>
   peristiwa('pembaruan', judul, arti, { ...BUILD_PEMBARUAN, ...bidang })
+
+/* Kilas Pasar dan halaman resmi (spek analitik pasar dan promo 23 Nov 2026,
+   E1 sampai E10 dari aplikasi 1.6.0, S1 dari server). Nama merek sama di
+   kedua bahasa. */
+const merek = (nama: Readonly<Record<string, string>>): Record<string, Dwibahasa> =>
+  Object.fromEntries(Object.entries(nama).map(([k, n]) => [k, teks(n, n)]))
+const SUMBER = teks('Sumber', 'Source')
+const TAB_KARTU = pilihan(teks('Tab', 'Tab'), { pasar: teks('Pasar', 'Market'), promo: teks('Promo', 'Promos') })
+const ASAL_HALAMAN = pilihan(ASAL, {
+  kartu: teks('Kartu Kilas Pasar', 'Market card'), domi: teks('Jawaban Domi', 'Domi answer'), lain: teks('Pintu lain', 'Other entry point'),
+})
+const SITUS_HALAMAN = pilihan(teks('Situs', 'Site'), { ...merek(NAMA_SITUS_PASAR), lain: teks('Situs lain', 'Other site') })
+const pasar = (judul: Dwibahasa, arti: Dwibahasa, bidang?: Peristiwa['bidang']) => peristiwa('aplikasi', judul, arti, bidang)
+const halaman = (judul: Dwibahasa, arti: Dwibahasa, bidang?: Peristiwa['bidang']) =>
+  peristiwa('aplikasi', judul, arti, { asal: ASAL_HALAMAN, sumber: SITUS_HALAMAN, ...bidang })
 
 export const KAMUS_JENIS_PERJALANAN = {
   'layar.buka': peristiwa('aplikasi', teks('Membuka layar', 'Opened screen'),
@@ -285,6 +305,69 @@ export const KAMUS_LANGKAH_PERJALANAN = {
     teks('Pengguna menjawab jendela izin lokasi. Tercatat sejak 1.5.0, tanpa koordinat dan tanpa nama tempat.', 'The user answered the location permission dialog. Recorded since 1.5.0, without coordinates or place names.'), {
       hasil: pilihan(HASIL, { diberi: teks('Diberi, lokasi akurat', 'Granted, precise location'), perkiraan: teks('Diberi, lokasi perkiraan', 'Granted, approximate location'), ditolak: teks('Ditolak', 'Denied'), nanti: teks('Nanti saja', 'Not now') }),
       asal: pilihan(ASAL, { priming: teks('Sesudah mencatat', 'After saving a note'), setelan: teks('Sakelar di Setelan', 'Switch in Settings') }),
+    }),
+  'pasar.kartu_lihat': pasar(teks('Melihat kartu Kilas Pasar', 'Saw the Market card'),
+    teks('Beranda menampilkan kartu Kilas Pasar dan Promo pada peluncuran ini. Tercatat sejak 1.6.0.', 'Home showed the Market and Promos card during this launch. Recorded since 1.6.0.'), {
+      isi: pilihan(teks('Isi kartu', 'Card content'), {
+        lengkap: teks('Pasar dan Promo', 'Market and Promos'), pasar: teks('Pasar saja', 'Market only'), promo: teks('Promo saja', 'Promos only'),
+      }),
+    }),
+  'pasar.detail_buka': pasar(teks('Membuka Detail Kilas Pasar', 'Opened Market card details'),
+    teks('Pengguna membuka lembar Detail dari kartu Kilas Pasar.', 'The user opened the details sheet from the Market card.'), {
+      tab: TAB_KARTU,
+      dari: pilihan(teks('Dibuka dari', 'Opened from'), {
+        kepala: teks('Judul atau tombol Detail', 'Title or Details button'), ubin: teks('Ubin Emas, USD, atau SAR', 'Gold, USD, or SAR tile'),
+        promo: teks('Baris Promo resmi', 'Official promos row'),
+      }),
+    }),
+  'pasar.tab': pasar(teks('Mengganti tab Kilas Pasar', 'Switched the Market card tab'),
+    teks('Pengguna pindah tab di lembar Detail Kilas Pasar.', 'The user switched tabs in the Market card details sheet.'), { tab: TAB_KARTU }),
+  'pasar.promo_ketuk': pasar(teks('Mengetuk sumber promo', 'Tapped a promo source'),
+    teks('Pengguna mengetuk satu sumber promo resmi, sebelum halamannya dibuka.', 'The user tapped an official promo source, before its page opened.'), {
+      sumber: { label: SUMBER, nilai: { ...merek(NAMA_SUMBER_PASAR), lain: teks('Sumber lain', 'Other source') }, bentuk: 'kode' },
+      jenis: pilihan(teks('Jenis', 'Type'), {
+        dompet: teks('Dompet dan bank', 'Wallets and banks'), belanja: teks('Belanja dan BBM', 'Shopping and fuel'), emas: teks('Emas', 'Gold'),
+      }),
+      dari: pilihan(teks('Dari daftar', 'From list'), {
+        cocok: teks('Cocok dengan dompetnya', 'Matching the user wallets'), semua: teks('Lihat semua', 'See all'),
+      }),
+    }),
+  'pasar.lihat_semua': pasar(teks('Mengetuk Lihat semua promo', 'Tapped See all promos'),
+    teks('Pengguna membuka daftar lengkap promo dompet dan bank.', 'The user opened the full list of wallet and bank promos.')),
+  'pasar.tautan_ketuk': pasar(teks('Mengetuk tautan emas atau saham', 'Tapped a gold or stock link'),
+    teks('Pengguna mengetuk tautan harga resmi di tab Pasar.', 'The user tapped an official price link in the Market tab.'), {
+      sumber: pilihan(SUMBER, {
+        logammulia: teks(NAMA_SUMBER_PASAR.logammulia!, NAMA_SUMBER_PASAR.logammulia!),
+        pegadaian: teks(NAMA_SUMBER_PASAR.pegadaian!, NAMA_SUMBER_PASAR.pegadaian!),
+        idx: teks(NAMA_SUMBER_PASAR.idx!, NAMA_SUMBER_PASAR.idx!),
+        lain: teks('Sumber lain', 'Other source'),
+      }),
+    }),
+  'pasar.tanya_domi': pasar(teks('Mengetuk Tanya Domi di kartu Kilas Pasar', 'Tapped Ask Domi on the Market card'),
+    teks('Pengguna membuka Domi dengan pertanyaan siap pakai dari kartu.', 'The user opened Domi with a ready-made question from the card.'), {
+      topik: pilihan(teks('Topik', 'Topic'), { kurs: teks('Kurs', 'Exchange rates'), emas: teks('Emas', 'Gold'), promo: teks('Promo', 'Promos') }),
+    }),
+  'halaman.buka': halaman(teks('Membuka halaman resmi', 'Opened an official page'),
+    teks('Layar halaman resmi di dalam aplikasi terbuka dengan alamat yang sah. Alamat lengkapnya tidak dicatat.', 'The in-app official page screen opened with a valid address. The full address is not recorded.')),
+  'halaman.tutup': halaman(teks('Menutup halaman resmi', 'Closed an official page'),
+    teks('Pengguna menutup layar halaman resmi.', 'The user closed the official page screen.'), {
+      lama: pilihan(teks('Lama dibaca', 'Time spent'), {
+        kurang_10: teks('Kurang dari 10 detik', 'Under 10 seconds'), sampai_60: teks('10 sampai 60 detik', '10 to 60 seconds'),
+        sampai_180: teks('1 sampai 3 menit', '1 to 3 minutes'), lebih_180: teks('Lebih dari 3 menit', 'Over 3 minutes'),
+      }),
+      pindah: yaTidak(teks('Pindah ke situs lain', 'Moved to another site')),
+    }),
+  'halaman.browser': halaman(teks('Membuka halaman di browser', 'Opened the page in a browser'),
+    teks('Halaman resmi atau tautan di dalamnya diteruskan ke browser HP.', 'The official page or a link in it was handed over to the phone browser.')),
+  'domi.pasar': peristiwa('domi', teks('Bertanya ke Domi soal pasar', 'Asked Domi about the market'),
+    teks('Server mencatat pertanyaan Domi yang memakai data kurs, emas, saham, atau promo. Isi pertanyaannya tidak disimpan.', 'The server recorded a Domi question that used exchange rate, gold, stock, or promo data. The question text is not stored.'), {
+      topik: {
+        label: teks('Topik', 'Topics'), larik: true,
+        nilai: {
+          kurs: teks('Kurs dan valas', 'Exchange rates'), emas: teks('Emas', 'Gold'), saham: teks('Saham', 'Stocks'),
+          promo: teks('Promo', 'Promos'), umum: teks('Umum', 'General'),
+        },
+      },
     }),
   'pembaruan.ajakan_lihat': pembaruan(teks('Melihat ajakan pembaruan', 'Saw an update invitation'),
     teks('Beranda menampilkan ajakan memperbarui aplikasi.', 'Home displayed an invitation to update the app.')),
@@ -551,6 +634,17 @@ function terjemahBidang(kunci: string, bidang: Bidang, nilai: unknown, bahasa: B
   if (bidang.nilai && (typeof nilai === 'string' || typeof nilai === 'boolean' || typeof nilai === 'number')) {
     const terjemahan = ambil(bidang.nilai, String(nilai))
     if (terjemahan) return dikenal(terjemahan[bahasa])
+  }
+  // Larik: dikenal hanya bila SEMUA anggotanya dikenal. Larik kosong atau
+  // campuran tidak ditampilkan isinya.
+  if (bidang.larik && bidang.nilai && Array.isArray(nilai) && nilai.length > 0) {
+    const isi = nilai.map(x => (typeof x === 'string' ? ambil(bidang.nilai!, x) : undefined))
+    if (isi.every(Boolean)) return dikenal(isi.map(t => t![bahasa]).join(', '))
+  }
+  // Id katalog baru (mis. sumber promo yang ditambah sesudah console rilis).
+  if (bidang.bentuk === 'kode' && typeof nilai === 'string' && nilai !== 'belum_dikenal'
+    && POLA_ID_SUMBER.test(nilai) && !POLA_DERET_ANGKA.test(nilai)) {
+    return dikenal(nilai)
   }
   // Bentuk enum asing yang sudah lolos daftar putih server bisa membantu
   // penelusuran. Jangan ulangi nilai mentah lain, termasuk penanda SQL.

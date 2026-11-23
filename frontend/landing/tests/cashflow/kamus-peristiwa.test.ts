@@ -6,19 +6,38 @@ import {
   KAMUS_JENIS_PERJALANAN, KAMUS_LANGKAH_PERJALANAN, KAMUS_LAYAR_PERJALANAN,
   KAMUS_TONGGAK_PERJALANAN, KATEGORI_PERJALANAN, namaKategoriPerjalanan, terjemahPeristiwa,
 } from '../../adapters/cashflowKamusPeristiwa'
-import { DIR_MIGRASI, adaMigrasiNomor, fungsiTerakhir } from './migrasi'
+import { DIR_MIGRASI, adaMigrasiBernama, adaMigrasiNomor, fungsiTerakhir } from './migrasi'
 
 const BERKAS_TELEMETRI = process.env.CASHFLOW_TELEMETRI ?? resolve(DIR_MIGRASI, '../../src/lib/telemetri.ts')
 const SUMBER_WAJIB = !!(process.env.CASHFLOW_MIGRASI || process.env.CASHFLOW_TELEMETRI)
 const ADA_SUMBER = existsSync(BERKAS_TELEMETRI)
 const BAHASA = ['id', 'en'] as const
 /**
+ * Langkah yang dicatat SERVER, bukan aplikasi, jadi tidak pernah ada di
+ * telemetri.ts: S1 domi.pasar ditulis fungsi ai-chat (spek analitik pasar
+ * dan promo 23 Nov 2026).
+ */
+const LANGKAH_SERVER = ['domi.pasar']
+/**
+ * Langkah analitik Kilas Pasar dari aplikasi 1.6.0 (spek yang sama, E1 sampai
+ * E10). Kamus console dibangun bersamaan dengan cabang aplikasi dan katalog
+ * 148. Sumber telemetri yang belum memuat SATU pun dari langkah ini dianggap
+ * belum tergabung. Separuh berarti kontraknya bergeser, dan itu galat.
+ */
+const LANGKAH_PASAR_KLIEN = [
+  'pasar.kartu_lihat', 'pasar.detail_buka', 'pasar.tab', 'pasar.promo_ketuk', 'pasar.lihat_semua',
+  'pasar.tautan_ketuk', 'pasar.tanya_domi', 'halaman.buka', 'halaman.tutup', 'halaman.browser',
+]
+const ADA_KATALOG_148 = adaMigrasiBernama('perjalanan_katalog_148')
+/**
  * Langkah yang sudah dikirim aplikasi tetapi belum masuk daftar putih RPC
  * Perjalanan (katalog perjalanan_klien_inti, 20261113194000). RPC
  * memulangkannya sebagai belum_dikenal tanpa rincian. Kamus console sudah
  * siap menerjemahkannya. Hapus dari daftar ini begitu katalog SQL memuatnya.
+ * Langkah Kilas Pasar menunggu katalog 148 (perjalanan_katalog_148): begitu
+ * migrasinya ada di folder, semuanya wajib ada di katalog.
  */
-const BELUM_DI_KATALOG_RPC: string[] = []
+const BELUM_DI_KATALOG_RPC: string[] = ADA_KATALOG_148 ? [] : [...LANGKAH_PASAR_KLIEN, ...LANGKAH_SERVER]
 
 function bacaPeristiwa(sumber: string) {
   const pohon = ts.createSourceFile('telemetri.ts', sumber, ts.ScriptTarget.Latest, true)
@@ -52,7 +71,10 @@ describe('kamus Perjalanan', () => {
     expect(jenis.length).toBeGreaterThanOrEqual(5)
     expect(langkah.length).toBeGreaterThanOrEqual(40)
     expect(Object.keys(KAMUS_JENIS_PERJALANAN).sort()).toEqual(jenis)
-    expect(Object.keys(KAMUS_LANGKAH_PERJALANAN).sort()).toEqual(langkah)
+    const pasar = LANGKAH_PASAR_KLIEN.filter(l => langkah.includes(l))
+    expect([0, LANGKAH_PASAR_KLIEN.length], `langkah Kilas Pasar di telemetri: ${pasar.join(', ')}`).toContain(pasar.length)
+    const menunggu = pasar.length ? [] : LANGKAH_PASAR_KLIEN
+    expect(Object.keys(KAMUS_LANGKAH_PERJALANAN).sort()).toEqual([...new Set([...langkah, ...menunggu, ...LANGKAH_SERVER])].sort())
   })
 
   it.skipIf(!adaMigrasiNomor('20261113194000'))('menerjemahkan kategori, rincian, dan layar dalam daftar putih RPC', () => {
@@ -154,6 +176,94 @@ describe('kamus Perjalanan', () => {
     expect(terkirim.rincian).toContainEqual({ kunci: 'asal', label: 'Asal', nilai: 'Layar wajib', belumDikenal: false })
     expect(gagal.judul).toBe('That number is not on WhatsApp')
     expect(tersimpan.judul).toBe('Nomor WhatsApp tersimpan lewat cara kirim pesan')
+  })
+
+  it('menerjemahkan langkah Kilas Pasar dan halaman resmi dengan setiap nilai kontrak ke dua bahasa', () => {
+    const contoh: Record<string, Record<string, Array<string | boolean>>> = {
+      'pasar.kartu_lihat': { isi: ['lengkap', 'pasar', 'promo'] },
+      'pasar.detail_buka': { tab: ['pasar', 'promo'], dari: ['kepala', 'ubin', 'promo'] },
+      'pasar.tab': { tab: ['pasar', 'promo'] },
+      'pasar.promo_ketuk': { sumber: ['gopay', 'logammulia', 'lain'], jenis: ['dompet', 'belanja', 'emas'], dari: ['cocok', 'semua'] },
+      'pasar.lihat_semua': {},
+      'pasar.tautan_ketuk': { sumber: ['logammulia', 'pegadaian', 'idx', 'lain'] },
+      'pasar.tanya_domi': { topik: ['kurs', 'emas', 'promo'] },
+      'halaman.buka': { asal: ['kartu', 'domi', 'lain'], sumber: ['logammulia.com', 'bca.co.id', 'coreasia.id', 'lain'] },
+      'halaman.tutup': {
+        asal: ['kartu', 'domi', 'lain'], sumber: ['pegadaian.co.id', 'lain'],
+        lama: ['kurang_10', 'sampai_60', 'sampai_180', 'lebih_180'], pindah: [true, false],
+      },
+      'halaman.browser': { asal: ['kartu', 'domi', 'lain'], sumber: ['idx.co.id', 'lain'] },
+      'domi.pasar': { topik: ['kurs', 'emas', 'saham', 'promo', 'umum'] },
+    }
+    expect(Object.keys(contoh).sort()).toEqual([...LANGKAH_PASAR_KLIEN, ...LANGKAH_SERVER].sort())
+    for (const [langkah, bidang] of Object.entries(contoh)) {
+      const entri = KAMUS_LANGKAH_PERJALANAN[langkah as keyof typeof KAMUS_LANGKAH_PERJALANAN]
+      expect(entri, langkah).toBeDefined()
+      expect(Object.keys(entri.bidang).sort(), langkah).toEqual(Object.keys(bidang).sort())
+      expect(entri.kategori, langkah).toBe(langkah === 'domi.pasar' ? 'domi' : 'aplikasi')
+      for (const [kunci, nilai] of Object.entries(bidang)) {
+        for (const v of nilai) {
+          for (const bahasa of BAHASA) {
+            const hasil = terjemahPeristiwa({ jenis: 'onboarding.langkah', langkah, layar: null, rincian_aman: { [kunci]: v } }, bahasa)
+            expect(hasil.judul, langkah).not.toBe(bahasa === 'id' ? 'Peristiwa belum dikenal' : 'Unrecognized event')
+            expect(hasil.rincian[0], `${langkah}.${kunci}=${v} (${bahasa})`).toMatchObject({ kunci, belumDikenal: false })
+          }
+        }
+      }
+    }
+    const buka = terjemahPeristiwa({
+      jenis: 'onboarding.langkah', langkah: 'halaman.buka', layar: '/halaman', rincian_aman: { asal: 'domi', sumber: 'logammulia.com' },
+    }, 'id')
+    expect(buka.judul).toBe('Membuka halaman resmi')
+    expect(buka.rincian).toEqual([
+      { kunci: 'asal', label: 'Asal', nilai: 'Jawaban Domi', belumDikenal: false },
+      { kunci: 'sumber', label: 'Situs', nilai: 'Logam Mulia (Antam)', belumDikenal: false },
+    ])
+    const tutup = terjemahPeristiwa({
+      jenis: 'onboarding.langkah', langkah: 'halaman.tutup', layar: '/halaman', rincian_aman: { lama: 'sampai_180', pindah: true },
+    }, 'en')
+    expect(tutup.rincian).toEqual([
+      { kunci: 'lama', label: 'Time spent', nilai: '1 to 3 minutes', belumDikenal: false },
+      { kunci: 'pindah', label: 'Moved to another site', nilai: 'Yes', belumDikenal: false },
+    ])
+  })
+
+  it('topik domi.pasar berupa larik: semua anggota dikenal tampil berurutan, selain itu belum dikenal', () => {
+    const domi = (topik: unknown, bahasa: 'id' | 'en' = 'id') => terjemahPeristiwa({
+      jenis: 'onboarding.langkah', langkah: 'domi.pasar', layar: '/ai', rincian_aman: { topik },
+    }, bahasa)
+    expect(domi(['emas', 'kurs']).judul).toBe('Bertanya ke Domi soal pasar')
+    expect(domi(['emas', 'kurs']).layar).toBe('Domi')
+    expect(domi(['emas', 'kurs']).rincian).toEqual([{ kunci: 'topik', label: 'Topik', nilai: 'Emas, Kurs dan valas', belumDikenal: false }])
+    expect(domi(['saham', 'umum'], 'en').rincian[0]).toMatchObject({ label: 'Topics', nilai: 'Stocks, General', belumDikenal: false })
+    expect(domi('promo').rincian[0]).toMatchObject({ nilai: 'Promo', belumDikenal: false })
+    for (const buruk of [[], ['emas', 'kripto'], ['emas', 7], 'belum_dikenal', [['emas']], { emas: true }]) {
+      expect(domi(buruk).rincian[0], JSON.stringify(buruk)).toMatchObject({ kunci: 'topik', belumDikenal: true })
+    }
+    expect(domi(['emas', 'kripto']).rincian[0]?.nilai).toBe('Belum dikenal')
+  })
+
+  it('sumber promo: id katalog baru tampil apa adanya, domain dan teks lain tidak pernah tampil', () => {
+    const promo = (sumber: unknown, bahasa: 'id' | 'en' = 'id') => terjemahPeristiwa({
+      jenis: 'onboarding.langkah', langkah: 'pasar.promo_ketuk', layar: '/', rincian_aman: { sumber },
+    }, bahasa).rincian[0]
+    expect(promo('gopay')).toEqual({ kunci: 'sumber', label: 'Sumber', nilai: 'GoPay', belumDikenal: false })
+    expect(promo('lain', 'en')).toMatchObject({ nilai: 'Other source', belumDikenal: false })
+    expect(promo('dompet_baru')).toMatchObject({ nilai: 'dompet_baru', belumDikenal: false })
+    expect(promo('belum_dikenal')).toMatchObject({ nilai: 'Belum dikenal', belumDikenal: true })
+    for (const buruk of ['https://contoh.invalid/promo', 'GoPay Promo', 'a'.repeat(31), 'kode_123456', 12]) {
+      expect(promo(buruk), String(buruk)).toMatchObject({ belumDikenal: true })
+      expect(promo(buruk)?.nilai, String(buruk)).not.toContain('contoh')
+    }
+    const halaman = (sumber: unknown) => terjemahPeristiwa({
+      jenis: 'onboarding.langkah', langkah: 'halaman.browser', layar: '/halaman', rincian_aman: { sumber },
+    }, 'id').rincian[0]
+    expect(halaman('jago.com')).toMatchObject({ nilai: 'Bank Jago', belumDikenal: false })
+    expect(halaman('contoh.invalid')).toMatchObject({ nilai: 'Belum dikenal', belumDikenal: true })
+    const tautan = terjemahPeristiwa({
+      jenis: 'onboarding.langkah', langkah: 'pasar.tautan_ketuk', layar: '/', rincian_aman: { sumber: 'gopay' },
+    }, 'id').rincian[0]
+    expect(tautan).toMatchObject({ belumDikenal: true })
   })
 
   it('menandai enum asing dan merahasiakan nilai di luar bentuk yang boleh tampil', () => {
