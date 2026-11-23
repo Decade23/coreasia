@@ -320,8 +320,8 @@ export const KAMUS_LANGKAH_PERJALANAN = {
         promo: teks('Baris Promo resmi', 'Official promos row'),
       }),
     }),
-  'pasar.tab': pasar(teks('Mengganti tab Kilas Pasar', 'Switched the Market card tab'),
-    teks('Pengguna pindah tab di lembar Detail Kilas Pasar.', 'The user switched tabs in the Market card details sheet.'), { tab: TAB_KARTU }),
+  'pasar.tab': pasar(teks('Melihat bagian promo Kilas Pasar', 'Saw the Market card promos section'),
+    teks('Bagian promo mulai terlihat di lembar Detail sesudah dibuka di bagian pasar.', 'The promos section came into view in the details sheet after it opened on the market section.'), { tab: TAB_KARTU }),
   'pasar.promo_ketuk': pasar(teks('Mengetuk sumber promo', 'Tapped a promo source'),
     teks('Pengguna mengetuk satu sumber promo resmi, sebelum halamannya dibuka.', 'The user tapped an official promo source, before its page opened.'), {
       sumber: { label: SUMBER, nilai: { ...merek(NAMA_SUMBER_PASAR), lain: teks('Sumber lain', 'Other source') }, bentuk: 'kode' },
