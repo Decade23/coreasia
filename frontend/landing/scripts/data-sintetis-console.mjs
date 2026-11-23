@@ -802,6 +802,48 @@ const laporanAsal = (p, mode) => ({
     .map(([kunci, orang]) => ({ kunci, orang: mode.kosong ? 0 : orang })),
   tanpa_data: mode.kosong ? 0 : 9_310,
 })
+/* Minat Kilas Pasar (spek analitik pasar 23 Nov 2026). Kartunya baru ada di
+   aplikasi 1.6.0, jadi minat hanya ada di sepuluh hari terakhir dan hari
+   sebelumnya nol (server tetap mengirim setiap tanggal). `mode.pasarLain`
+   menambah baris sumber 'lain' dan sumber yang belum dikenal console. */
+const SUMBER_PASAR = [
+  ['gopay', 'dompet', 412, 310], ['bca', 'dompet', 296, 204], ['logammulia', 'emas_saham', 241, 188], ['pegadaian', 'emas', 177, 131],
+  ['dana', 'dompet', 142, 120], ['indomaret', 'belanja', 96, 77], ['idx', 'emas_saham', 88, 70], ['shopeepay', 'dompet', 61, 52],
+  ['mandiri', 'dompet', 47, 41], ['mypertamina', 'belanja', 33, 29], ['pegadaian', 'emas_saham', 21, 19], ['seabank', 'dompet', 9, 9],
+]
+const laporanPasar = (p, mode) => {
+  const hari = hariLaporan(p)
+  const f = hari / 30
+  const v = x => (mode.kosong ? 0 : Math.round(x * f))
+  const harian = Array.from({ length: hari }, (_, i) => {
+    const lalu = hari - i
+    const ada = !mode.kosong && lalu <= 10
+    const g = 1 + 0.3 * Math.sin(lalu / 1.7)
+    const x = n => (ada ? Math.max(0, Math.round(n * g)) : 0)
+    return { tanggal: tanggal(lalu), lihat: x(612), detail: x(204), ketuk: x(118), halaman: x(131), domi: x(41) }
+  })
+  const sumber = mode.kosong ? [] : [
+    ...SUMBER_PASAR.map(([s, jenis, ketuk, orang]) => ({ sumber: s, jenis, ketuk: v(ketuk), orang: v(orang) })),
+    ...(mode.pasarLain ? [{ sumber: 'lain', jenis: 'dompet', ketuk: 6, orang: 5 }, { sumber: 'dompet_baru', jenis: 'dompet', ketuk: 4, orang: 4 }] : []),
+  ].sort((a, b) => b.ketuk - a.ketuk || a.sumber.localeCompare(b.sumber)).slice(0, 20)
+  const topik = (tanya, orang) => ({ tanya: v(tanya), orang: v(orang) })
+  return {
+    hari, dari: tanggal(hari), sampai: tanggal(1),
+    ringkas: { lihat: v(3_104), detail: v(1_204), ketuk: v(712), halaman: v(796), domi: v(310) },
+    harian,
+    tab: { pasar: v(1_877), promo: v(1_310) },
+    detail_dari: { kepala: v(904), ubin: v(612), promo: v(288), lain: v(4) },
+    sumber,
+    dari_promo: { cocok: v(877), semua: v(412), lihat_semua: v(530) },
+    halaman: {
+      asal: { kartu: v(1_204), domi: v(310), lain: v(12) },
+      lama: { kurang_10: v(412), sampai_60: v(604), sampai_180: v(310), lebih_180: v(96) },
+      browser: v(77), pindah: v(41),
+    },
+    tanya_kartu: { kurs: v(204), emas: v(131), promo: v(96) },
+    domi: { kurs: topik(412, 204), emas: topik(310, 177), saham: topik(96, 61), promo: topik(131, 88), umum: topik(41, 33) },
+  }
+}
 /* Kebiasaan pengguna aktif: jumlah orang per butir dan daftar orangnya. Jumlah
    di daftar sama dengan angka butirnya. Daftar butuh izin data pribadi. Dengan
    alasan nama dan email utuh, tanpa alasan email tersamar dan nama kosong.
@@ -1039,6 +1081,7 @@ const RPC = {
   admin_laporan_jam_ramai: laporanJamRamai,
   admin_laporan_kebiasaan: laporanKebiasaan,
   admin_laporan_kebiasaan_daftar: laporanKebiasaanDaftar,
+  admin_laporan_pasar: laporanPasar,
   admin_laporan_saldo: laporanSaldo,
   admin_hapus_akun_daftar: hapusAkunDaftar,
   admin_daftar_pengumuman_v4: (p, m) => (m.kosong ? [] : PENGUMUMAN),
