@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
  * Laporan — grafik dan tabel CashFlow (spek console laporan 19 Nov 2026,
- * K2, K4, K7, K9). Enam bagian, satu terbuka sekali waktu (?bagian=):
+ * K2, K4, K7, K9). Tujuh bagian, satu terbuka sekali waktu (?bagian=):
  *
  * - Harian (bawaan), Jam ramai, Dukung CashFlow, Asal pengguna: agregat
  *   berizin view, tanpa audit, sampai KEMARIN, tanpa akun tim. Rentang
@@ -9,6 +9,10 @@
  * - Kebiasaan: jumlah orang per kebiasaan dan daftar orangnya, dimuat
  *   komponennya sendiri (CashflowLaporanKebiasaan). Butir yang terbuka ada di
  *   ?butir=, halamannya di ?hal=.
+ * - Minat Kilas Pasar: corong orang dari kartu Kilas Pasar sampai halaman
+ *   resmi dan pertanyaan Domi soal pasar (spek analitik pasar 23 Nov 2026),
+ *   dimuat komponennya sendiri (CashflowLaporanPasar) dengan rentang yang
+ *   sama. Galat dan "belum aktif"-nya hanya tampil di bagian itu.
  * - Saldo: uang nyata per ruang atau per pengguna (?mode=), izin pii, alasan
  *   tetap halaman ini, dan SETIAP muatan menulis satu baris audit
  *   laporan_saldo. Karena itu saldo hanya dimuat saat bagiannya dibuka, dan
@@ -68,6 +72,7 @@ const adaData = computed(() => {
     case 'dukung': return !!dukung.value
     case 'asal': return !!asal.value
     case 'kebiasaan': return true
+    case 'pasar': return true
     default: return !!saldo.value
   }
 })
@@ -92,7 +97,7 @@ const kunciMuat = computed(() => {
 const muatBagian = () => muat(async (terbaru) => {
   const v = q.value
   const kunci = kunciMuat.value
-  if (v.bagian === 'kebiasaan') {
+  if (v.bagian === 'kebiasaan' || v.bagian === 'pasar') {
     // Dimuat komponennya sendiri: di sini hanya membuang galat bagian sebelumnya.
   } else if (v.bagian === 'harian') {
     const d = await api.laporanHarian(hari.value)
@@ -249,6 +254,8 @@ useConsoleRemah().pasang(() => [
 
     <!-- ── Kebiasaan pengguna aktif (memuat sendiri) ──────────────────── -->
     <CashflowLaporanKebiasaan v-if="q.bagian === 'kebiasaan'" :hari="hari" :butir="q.butir" :hal="q.hal" @pilih="pilihButir" @halaman="gantiHalaman" />
+    <!-- ── Minat Kilas Pasar (memuat sendiri) ─────────────────────────── -->
+    <CashflowLaporanPasar v-else-if="q.bagian === 'pasar'" :hari="hari" />
 
     <!-- Bagian yang RPC-nya belum ada di server. -->
     <div v-else-if="belumAktif" class="flex items-start gap-3 rounded-xl border border-dashed border-[color:var(--ca-border)] px-4 py-5 text-sm text-[var(--ca-muted)]" role="status" data-uji="laporan-belum-aktif">

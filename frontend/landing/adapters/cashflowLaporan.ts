@@ -22,6 +22,8 @@
  *   "belum aktif" (PGRST202), bukan galat.
  * Ketiga laporan grafik berhenti di KEMARIN (WIB) dan tidak menghitung akun
  * internal, admin, daftar pengecualian, maupun akun uji pembelian.
+ * Bagian kebiasaan (adapters/cashflowLaporanKebiasaan) dan minat Kilas Pasar
+ * (adapters/cashflowLaporanPasar) punya adapter dan komponennya sendiri.
  *
  * Fungsi MURNI semua: tanpa jaringan, tanpa state.
  */
@@ -31,7 +33,7 @@ import type { OpsiSegmen } from '~/utils/cashflow/segmen'
 type Angka = number | string | null
 
 /** Bagian halaman, urutan tab. Saldo terakhir karena butuh izin lebih dan menulis audit. */
-export const BAGIAN_LAPORAN = ['harian', 'jam', 'dukung', 'asal', 'kebiasaan', 'saldo'] as const
+export const BAGIAN_LAPORAN = ['harian', 'jam', 'dukung', 'asal', 'kebiasaan', 'pasar', 'saldo'] as const
 export type BagianLaporan = typeof BAGIAN_LAPORAN[number]
 /** Pilihan rentang (hari penuh sampai kemarin). Server menerima 7..90. */
 export const RENTANG_LAPORAN = ['7', '30', '90'] as const
