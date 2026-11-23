@@ -112,6 +112,7 @@ import type { AsalDTO, DukungDTO, HarianDTO, JamRamaiDTO, ModeSaldo, SaldoDTO, U
 import { ALASAN_LAPORAN_SALDO, PER_SALDO } from '~/adapters/cashflowLaporan'
 import type { DaftarKebiasaanDTO, KebiasaanDTO } from '~/adapters/cashflowLaporanKebiasaan'
 import { ALASAN_LAPORAN_KEBIASAAN } from '~/adapters/cashflowLaporanKebiasaan'
+import type { MinatPasarDTO } from '~/adapters/cashflowLaporanPasar'
 import type { SimpanPengumuman } from '~/adapters/cashflowPengumuman'
 import type {
   AturanDTO, SaringDTO, PratinjauPenerimaDTO, SegmenDTO, AkunInternalDTO, JenisAkunInternal,
@@ -735,6 +736,11 @@ export const useCashflowAdmin = () => {
       rpc<DaftarKebiasaanDTO>('admin_laporan_kebiasaan_daftar', {
         p_kunci: kunci, p_hari: hari, p_hal: Math.max(1, hal), p_alasan: ALASAN_LAPORAN_KEBIASAAN,
       }),
+    /** Minat Kilas Pasar: corong orang, harian, sumber, halaman resmi, dan
+     *  pertanyaan Domi soal pasar. Izin view, tanpa audit. Migrasinya dibangun
+     *  bersamaan (spek analitik pasar 23 Nov 2026): server lama menjawab
+     *  PGRST202, bagiannya menulis "belum aktif". */
+    laporanPasar: (hari: number) => rpc<MinatPasarDTO>('admin_laporan_pasar', { p_hari: hari }),
 
     // ── paket kredit Domi (adapters/cashflowPaket) ──────────────────────
     /** Semua paket termasuk nonaktif dan khusus uji, plus jumlah terjual. Izin view, tanpa audit. */
