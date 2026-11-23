@@ -1224,8 +1224,8 @@ dipakai.
 
 ## Laporan (`/console/cashflow/laporan`)
 
-Halaman kedua di pintu Ringkasan. Lima bagian, satu terbuka sekali waktu lewat `?bagian=`: Harian
-(bawaan), Jam ramai, Dukung CashFlow, Asal pengguna, dan Saldo. Rentang 7, 30, atau 90 hari ada di
+Halaman kedua di pintu Ringkasan. Tujuh bagian, satu terbuka sekali waktu lewat `?bagian=`: Harian
+(bawaan), Jam ramai, Dukung CashFlow, Asal pengguna, Kebiasaan, Minat Kilas Pasar, dan Saldo. Rentang 7, 30, atau 90 hari ada di
 `?hari=`. Teks cari saldo tidak pernah masuk URL.
 
 - Harian, Jam ramai, dan Dukung membaca `admin_laporan_harian`, `admin_laporan_jam_ramai`, dan
@@ -1244,6 +1244,15 @@ Halaman kedua di pintu Ringkasan. Lima bagian, satu terbuka sekali waktu lewat `
   RPC itu belum ada di server, bagian ini menulis "belum aktif" dan bagian lain tetap jalan. Migrasinya
   sudah tergabung di cabang rilis CashFlow, jadi namanya tidak lagi ada di `MENDAHULUI_MIGRASI` dan
   `rpc-console.test.ts` memeriksanya penuh.
+- Minat Kilas Pasar membaca `admin_laporan_pasar` (migrasi CashFlow `console_laporan_pasar`, spek analitik
+  pasar dan promo 23 Nov 2026). Izin view, tanpa audit, sampai kemarin, tanpa akun tim, rentang sama dengan
+  bagian lain. Isinya corong orang (melihat kartu, membuka Detail, mengetuk sumber, membuka halaman resmi),
+  orang per hari, sumber yang paling sering diketuk (nama dari id katalog `promo_hemat`, tautan emas dan
+  saham tab Pasar sebagai jenis `emas_saham`), tab Pasar atau Promo, asal Detail, promo yang cocok dibanding
+  Lihat semua, halaman resmi (asal, lama dibaca, browser, pindah situs), tombol Tanya Domi di kartu, dan
+  pertanyaan Domi per topik. Datanya baru ada sejak aplikasi 1.6.0 (dan `domi.pasar` sejak `ai-chat`
+  berikutnya). Bagian ini memuat sendiri (`CashflowLaporanPasar`), jadi selama RPC-nya belum ada hanya
+  bagian ini yang menulis "belum aktif". Jawaban tanpa angka menulis "Belum ada data".
 - Saldo membaca `admin_laporan_saldo` (migrasi 20261119111000): per ruang, atau per pengguna dari ruang
   miliknya saja, dengan kolom terpisah "Ikut ruang lain". Uang nyata = saldo dompet yang tidak diarsip
   dan bukan piutang, sama dengan angka total di aplikasi, dompet minus ikut mengurangi. Butuh izin pii.
@@ -1261,7 +1270,13 @@ CASHFLOW_MIGRASI=<repo cashflow>/supabase/migrations CASHFLOW_TOKO=<repo cashflo
 node scripts/cek-komponen-cashflow.mjs
 # Tampilan dengan data sintetis (cara menjalankan ada di kepala skrip):
 node scripts/uji-console-laporan-headless.mjs
+node scripts/uji-console-laporan-pasar-headless.mjs   # bagian Minat Kilas Pasar, port 4428/4429
 ```
+
+Langkah Perjalanan 360 untuk Kilas Pasar (`pasar.*`, `halaman.*`, aplikasi 1.6.0) dan `domi.pasar` (server)
+dikenali kamus console sejak cabang ini. Rinciannya baru diteruskan RPC Perjalanan sesudah katalog
+`perjalanan_katalog_148` terpasang. `tests/cashflow/kamus-peristiwa.test.ts` memeriksanya penuh begitu
+migrasi itu ada di folder `CASHFLOW_MIGRASI`.
 
 ## Perjalanan pengguna dan corong WhatsApp
 

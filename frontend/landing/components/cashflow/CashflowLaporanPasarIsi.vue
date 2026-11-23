@@ -111,110 +111,110 @@ const adaDomi = computed(() => props.minat.domi.some(t => t.tanya > 0 || t.orang
         </section>
       </div>
 
-      <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <section class="ca-console-dialog min-w-0 p-5" data-uji="pasar-sumber">
-          <h3 class="font-display text-base font-bold text-[var(--ca-text)]">{{ tcf('laporan.pasar.sumberJudul') }}</h3>
-          <p class="mt-1 text-xs text-[var(--ca-subtle)]">{{ tcf('laporan.pasar.sumberKet') }}</p>
-          <div class="mt-4">
-            <CashflowBarRows v-if="sumber.length" :baris="sumber" />
-            <CashflowKeadaanKosong v-else :pesan="tcf('laporan.pasar.kosong')" icon="lucide:link" />
-          </div>
-        </section>
-
-        <section class="ca-console-dialog min-w-0 space-y-6 p-5">
-          <div data-uji="pasar-tab">
-            <h3 class="font-display text-base font-bold text-[var(--ca-text)]">{{ tcf('laporan.pasar.tabJudul') }}</h3>
-            <p class="mt-1 text-xs text-[var(--ca-subtle)]">{{ tcf('laporan.pasar.tabKet') }}</p>
+      <!-- Dua kolom yang tingginya berdiri sendiri: kiri ketukan di kartu, kanan tab, halaman resmi, dan Domi. -->
+      <div class="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
+        <div class="min-w-0 space-y-6">
+          <section class="ca-console-dialog min-w-0 p-5" data-uji="pasar-sumber">
+            <h3 class="font-display text-base font-bold text-[var(--ca-text)]">{{ tcf('laporan.pasar.sumberJudul') }}</h3>
+            <p class="mt-1 text-xs text-[var(--ca-subtle)]">{{ tcf('laporan.pasar.sumberKet') }}</p>
             <div class="mt-4">
-              <CashflowBarRows v-if="ada(tab)" :baris="tab" :dasar="dasar(tab)" />
-              <CashflowKeadaanKosong v-else :pesan="tcf('laporan.pasar.kosong')" icon="lucide:panels-top-left" />
+              <CashflowBarRows v-if="sumber.length" :baris="sumber" />
+              <CashflowKeadaanKosong v-else :pesan="tcf('laporan.pasar.kosong')" icon="lucide:link" />
             </div>
-          </div>
-          <div data-uji="pasar-detail-dari">
-            <h3 class="font-display text-base font-bold text-[var(--ca-text)]">{{ tcf('laporan.pasar.detailDariJudul') }}</h3>
+          </section>
+
+          <section class="ca-console-dialog min-w-0 p-5" data-uji="pasar-promo">
+            <h3 class="font-display text-base font-bold text-[var(--ca-text)]">{{ tcf('laporan.pasar.promoJudul') }}</h3>
+            <p class="mt-1 text-xs text-[var(--ca-subtle)]">{{ tcf('laporan.pasar.promoKet') }}</p>
             <div class="mt-4">
-              <CashflowBarRows v-if="ada(detailDari)" :baris="detailDari" :dasar="dasar(detailDari)" />
-              <CashflowKeadaanKosong v-else :pesan="tcf('laporan.pasar.kosong')" icon="lucide:mouse-pointer-click" />
+              <CashflowBarRows v-if="ada(dariPromo)" :baris="dariPromo" :dasar="dasar(dariPromo)" />
+              <CashflowKeadaanKosong v-else :pesan="tcf('laporan.pasar.kosong')" icon="lucide:ticket-percent" />
             </div>
-          </div>
-        </section>
-      </div>
+          </section>
 
-      <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <section class="ca-console-dialog min-w-0 p-5" data-uji="pasar-promo">
-          <h3 class="font-display text-base font-bold text-[var(--ca-text)]">{{ tcf('laporan.pasar.promoJudul') }}</h3>
-          <p class="mt-1 text-xs text-[var(--ca-subtle)]">{{ tcf('laporan.pasar.promoKet') }}</p>
-          <div class="mt-4">
-            <CashflowBarRows v-if="ada(dariPromo)" :baris="dariPromo" :dasar="dasar(dariPromo)" />
-            <CashflowKeadaanKosong v-else :pesan="tcf('laporan.pasar.kosong')" icon="lucide:ticket-percent" />
-          </div>
-        </section>
+          <section class="ca-console-dialog min-w-0 p-5" data-uji="pasar-tanya-kartu">
+            <h3 class="font-display text-base font-bold text-[var(--ca-text)]">{{ tcf('laporan.pasar.tanyaKartuJudul') }}</h3>
+            <div class="mt-4">
+              <CashflowBarRows v-if="ada(tanyaKartu)" :baris="tanyaKartu" :dasar="dasar(tanyaKartu)" />
+              <CashflowKeadaanKosong v-else :pesan="tcf('laporan.pasar.kosong')" icon="lucide:message-circle-question" />
+            </div>
+          </section>
+        </div>
+        <div class="min-w-0 space-y-6">
+          <section class="ca-console-dialog min-w-0 space-y-6 p-5">
+            <div data-uji="pasar-tab">
+              <h3 class="font-display text-base font-bold text-[var(--ca-text)]">{{ tcf('laporan.pasar.tabJudul') }}</h3>
+              <p class="mt-1 text-xs text-[var(--ca-subtle)]">{{ tcf('laporan.pasar.tabKet') }}</p>
+              <div class="mt-4">
+                <CashflowBarRows v-if="ada(tab)" :baris="tab" :dasar="dasar(tab)" />
+                <CashflowKeadaanKosong v-else :pesan="tcf('laporan.pasar.kosong')" icon="lucide:panels-top-left" />
+              </div>
+            </div>
+            <div data-uji="pasar-detail-dari">
+              <h3 class="font-display text-base font-bold text-[var(--ca-text)]">{{ tcf('laporan.pasar.detailDariJudul') }}</h3>
+              <div class="mt-4">
+                <CashflowBarRows v-if="ada(detailDari)" :baris="detailDari" :dasar="dasar(detailDari)" />
+                <CashflowKeadaanKosong v-else :pesan="tcf('laporan.pasar.kosong')" icon="lucide:mouse-pointer-click" />
+              </div>
+            </div>
+          </section>
 
-        <section class="ca-console-dialog min-w-0 space-y-6 p-5" data-uji="pasar-halaman">
-          <h3 class="font-display text-base font-bold text-[var(--ca-text)]">{{ tcf('laporan.pasar.halamanJudul') }}</h3>
-          <div data-uji="pasar-halaman-asal">
-            <h4 class="text-sm font-bold text-[var(--ca-subtle)]">{{ tcf('laporan.pasar.asalJudul') }}</h4>
-            <div class="mt-3">
-              <CashflowBarRows v-if="ada(asalHalaman)" :baris="asalHalaman" :dasar="dasar(asalHalaman)" />
-              <CashflowKeadaanKosong v-else :pesan="tcf('laporan.pasar.kosong')" icon="lucide:globe" />
+          <section class="ca-console-dialog min-w-0 space-y-6 p-5" data-uji="pasar-halaman">
+            <h3 class="font-display text-base font-bold text-[var(--ca-text)]">{{ tcf('laporan.pasar.halamanJudul') }}</h3>
+            <div data-uji="pasar-halaman-asal">
+              <h4 class="text-sm font-bold text-[var(--ca-subtle)]">{{ tcf('laporan.pasar.asalJudul') }}</h4>
+              <div class="mt-3">
+                <CashflowBarRows v-if="ada(asalHalaman)" :baris="asalHalaman" :dasar="dasar(asalHalaman)" />
+                <CashflowKeadaanKosong v-else :pesan="tcf('laporan.pasar.kosong')" icon="lucide:globe" />
+              </div>
             </div>
-          </div>
-          <div data-uji="pasar-halaman-lama">
-            <h4 class="text-sm font-bold text-[var(--ca-subtle)]">{{ tcf('laporan.pasar.lamaJudul') }}</h4>
-            <p v-if="minat.halaman.tutup" class="mt-1 text-xs text-[var(--ca-subtle)]">{{ tcf('laporan.pasar.lamaKet')(angka(minat.halaman.tutup)) }}</p>
-            <div class="mt-3">
-              <CashflowBarRows v-if="ada(lamaBaca)" :baris="lamaBaca" :dasar="dasar(lamaBaca)" />
-              <CashflowKeadaanKosong v-else :pesan="tcf('laporan.pasar.kosong')" icon="lucide:timer" />
+            <div data-uji="pasar-halaman-lama">
+              <h4 class="text-sm font-bold text-[var(--ca-subtle)]">{{ tcf('laporan.pasar.lamaJudul') }}</h4>
+              <p v-if="minat.halaman.tutup" class="mt-1 text-xs text-[var(--ca-subtle)]">{{ tcf('laporan.pasar.lamaKet')(angka(minat.halaman.tutup)) }}</p>
+              <div class="mt-3">
+                <CashflowBarRows v-if="ada(lamaBaca)" :baris="lamaBaca" :dasar="dasar(lamaBaca)" />
+                <CashflowKeadaanKosong v-else :pesan="tcf('laporan.pasar.kosong')" icon="lucide:timer" />
+              </div>
             </div>
-          </div>
-          <dl class="grid grid-cols-1 gap-3 border-t border-[color:var(--ca-border)] pt-4 sm:grid-cols-2" data-uji="pasar-halaman-lain">
+            <dl class="grid grid-cols-1 gap-3 border-t border-[color:var(--ca-border)] pt-4 sm:grid-cols-2" data-uji="pasar-halaman-lain">
+              <div class="min-w-0">
+                <dt class="text-sm font-semibold text-[var(--ca-text)]">{{ tcf('laporan.pasar.browser') }}</dt>
+                <dd class="mt-0.5 text-lg font-bold tabular-nums text-[var(--ca-text)]">{{ tcf('laporan.pasar.kali')(angka(minat.halaman.browser)) }}</dd>
+                <dd class="text-xs text-[var(--ca-subtle)]">{{ tcf('laporan.pasar.browserKet') }}</dd>
+              </div>
+              <div class="min-w-0">
+                <dt class="text-sm font-semibold text-[var(--ca-text)]">{{ tcf('laporan.pasar.pindah') }}</dt>
+                <dd class="mt-0.5 text-lg font-bold tabular-nums text-[var(--ca-text)]">{{ tcf('laporan.pasar.kali')(angka(minat.halaman.pindah)) }}</dd>
+                <dd class="text-xs text-[var(--ca-subtle)]">{{ tcf('laporan.pasar.pindahKet') }}</dd>
+              </div>
+            </dl>
+          </section>
+
+          <section class="min-w-0 space-y-3" data-uji="pasar-domi">
             <div class="min-w-0">
-              <dt class="text-sm font-semibold text-[var(--ca-text)]">{{ tcf('laporan.pasar.browser') }}</dt>
-              <dd class="mt-0.5 text-lg font-bold tabular-nums text-[var(--ca-text)]">{{ tcf('laporan.pasar.kali')(angka(minat.halaman.browser)) }}</dd>
-              <dd class="text-xs text-[var(--ca-subtle)]">{{ tcf('laporan.pasar.browserKet') }}</dd>
+              <h3 class="font-display text-base font-bold text-[var(--ca-text)]">{{ tcf('laporan.pasar.domiJudul') }}</h3>
+              <p class="mt-1 text-xs text-[var(--ca-subtle)]">{{ tcf('laporan.pasar.domiKet') }}</p>
             </div>
-            <div class="min-w-0">
-              <dt class="text-sm font-semibold text-[var(--ca-text)]">{{ tcf('laporan.pasar.pindah') }}</dt>
-              <dd class="mt-0.5 text-lg font-bold tabular-nums text-[var(--ca-text)]">{{ tcf('laporan.pasar.kali')(angka(minat.halaman.pindah)) }}</dd>
-              <dd class="text-xs text-[var(--ca-subtle)]">{{ tcf('laporan.pasar.pindahKet') }}</dd>
-            </div>
-          </dl>
-        </section>
-      </div>
-
-      <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <section class="ca-console-dialog min-w-0 p-5" data-uji="pasar-tanya-kartu">
-          <h3 class="font-display text-base font-bold text-[var(--ca-text)]">{{ tcf('laporan.pasar.tanyaKartuJudul') }}</h3>
-          <div class="mt-4">
-            <CashflowBarRows v-if="ada(tanyaKartu)" :baris="tanyaKartu" :dasar="dasar(tanyaKartu)" />
-            <CashflowKeadaanKosong v-else :pesan="tcf('laporan.pasar.kosong')" icon="lucide:message-circle-question" />
-          </div>
-        </section>
-
-        <section class="min-w-0 space-y-3" data-uji="pasar-domi">
-          <div class="min-w-0">
-            <h3 class="font-display text-base font-bold text-[var(--ca-text)]">{{ tcf('laporan.pasar.domiJudul') }}</h3>
-            <p class="mt-1 text-xs text-[var(--ca-subtle)]">{{ tcf('laporan.pasar.domiKet') }}</p>
-          </div>
-          <CashflowTabel v-if="adaDomi" data-uji="pasar-domi-tabel">
-            <caption class="sr-only">{{ tcf('laporan.pasar.domiTabel') }}</caption>
-            <thead>
-              <tr>
-                <th scope="col">{{ tcf('laporan.pasar.domiKolom.topik') }}</th>
-                <th scope="col" class="cf-ka">{{ tcf('laporan.pasar.domiKolom.tanya') }}</th>
-                <th scope="col" class="cf-ka">{{ tcf('laporan.pasar.domiKolom.orang') }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="t in minat.domi" :key="t.topik" :data-topik="t.topik">
-                <td class="break-words">{{ tcf(`laporan.pasar.topikDomi.${t.topik}`) }}</td>
-                <td class="cf-ka cf-kuat">{{ angka(t.tanya) }}</td>
-                <td class="cf-ka">{{ angka(t.orang) }}</td>
-              </tr>
-            </tbody>
-          </CashflowTabel>
-          <CashflowKeadaanKosong v-else :pesan="tcf('laporan.pasar.kosong')" icon="lucide:messages-square" />
-        </section>
+            <CashflowTabel v-if="adaDomi" data-uji="pasar-domi-tabel">
+              <caption class="sr-only">{{ tcf('laporan.pasar.domiTabel') }}</caption>
+              <thead>
+                <tr>
+                  <th scope="col">{{ tcf('laporan.pasar.domiKolom.topik') }}</th>
+                  <th scope="col" class="cf-ka">{{ tcf('laporan.pasar.domiKolom.tanya') }}</th>
+                  <th scope="col" class="cf-ka">{{ tcf('laporan.pasar.domiKolom.orang') }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="t in minat.domi" :key="t.topik" :data-topik="t.topik">
+                  <td class="break-words">{{ tcf(`laporan.pasar.topikDomi.${t.topik}`) }}</td>
+                  <td class="cf-ka cf-kuat">{{ angka(t.tanya) }}</td>
+                  <td class="cf-ka">{{ angka(t.orang) }}</td>
+                </tr>
+              </tbody>
+            </CashflowTabel>
+            <CashflowKeadaanKosong v-else :pesan="tcf('laporan.pasar.kosong')" icon="lucide:messages-square" />
+          </section>
+        </div>
       </div>
     </template>
   </div>
