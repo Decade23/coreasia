@@ -144,6 +144,61 @@ const pasar = (judul: Dwibahasa, arti: Dwibahasa, bidang?: Peristiwa['bidang']) 
 const halaman = (judul: Dwibahasa, arti: Dwibahasa, bidang?: Peristiwa['bidang']) =>
   peristiwa('aplikasi', judul, arti, { asal: ASAL_HALAMAN, sumber: SITUS_HALAMAN, ...bidang })
 
+/* Rilis 1.7.0 (katalog 20261124230000_perjalanan_katalog_170): catatan
+   pertama, form catat, pengingat harian, pilihan siap pakai jadwal, widget,
+   catat lewat WhatsApp, dan catat dari notifikasi. */
+const aplikasi = (judul: Dwibahasa, arti: Dwibahasa, bidang?: Peristiwa['bidang']) => peristiwa('aplikasi', judul, arti, bidang)
+const PINTU_LAIN = teks('Pintu lain', 'Other entry point')
+const SETELAN = teks('Setelan', 'Settings')
+const ASAL_CATAT = {
+  plus: teks('Tombol +', 'Plus button'),
+  kartu: teks('Kartu catatan pertama di Beranda', 'First record card on Home'),
+  otomatis: teks('Terbuka sendiri untuk akun baru', 'Opened automatically for a new account'),
+  widget: teks('Widget di layar utama HP', 'Home screen widget'),
+  pengingat: teks('Notifikasi pengingat harian', 'Daily reminder notification'),
+  lain: PINTU_LAIN,
+}
+const FORM_CATAT = {
+  form: pilihan(teks('Form', 'Form'), {
+    transaksi: teks('Form transaksi lengkap', 'Full transaction form'), cepat: teks('Catat cepat', 'Quick record'),
+  }),
+  mode: pilihan(teks('Mode', 'Mode'), {
+    baru: teks('Catatan baru', 'New record'), ubah: teks('Mengubah catatan', 'Editing a record'), salin: teks('Menyalin catatan', 'Copying a record'),
+  }),
+  asal: pilihan(ASAL, { ...ASAL_CATAT, cocokkan: teks('Cocokkan saldo', 'Reconcile balance') }),
+  pertama: yaTidak(teks('Akun belum pernah mencatat', 'Account had no records yet')),
+}
+const PILIHAN_CEPAT = teks('Pilihan cepat', 'Quick choice')
+const NILAI_PILIHAN_CEPAT = {
+  makan: teks('Makan', 'Food'), bensin: teks('Bensin', 'Fuel'), jajan: teks('Jajan', 'Snacks'),
+  belanja: teks('Belanja', 'Shopping'), pulsa: teks('Pulsa', 'Phone credit'), lainnya: teks('Lainnya', 'Other'),
+  gaji: teks('Gaji', 'Salary'), kiriman: teks('Kiriman', 'Money sent to me'), jualan: teks('Jualan', 'Sales'),
+}
+const JAM_PENGINGAT = angka(teks('Jam pengingat', 'Reminder hour'), 23)
+const PRESET_JADWAL = pilihan(teks('Pilihan siap pakai', 'Ready-made option'), {
+  paylater: teks('Paylater', 'Pay later'), autodebet: teks('Autodebet', 'Auto debit'), gajian: teks('Gajian', 'Payday'),
+})
+const ASAL_PRESET = {
+  kosong: teks('Layar Jadwal yang masih kosong', 'Empty schedules screen'),
+  pintu: teks('Lembar Jadwal baru', 'New schedule sheet'),
+}
+const KEADAAN_WIDGET = {
+  jatah: teks('Sisa jatah tampil', 'Remaining budget shown'),
+  lewat: teks('Jatah hari ini sudah terpakai', 'Today’s budget already used'),
+  habis: teks('Jatah harian nol', 'Daily budget is zero'),
+  tanpa_jatah: teks('Jatah belum bisa dihitung', 'Budget not available yet'),
+  tersembunyi: teks('Angka disembunyikan', 'Amount hidden'),
+  basi: teks('Isi widget dari hari sebelumnya', 'Widget content from an earlier day'),
+}
+const LABEL_KEADAAN_WIDGET = teks('Keadaan widget', 'Widget state')
+const JENIS_APLIKASI_NOTIF = pilihan(teks('Jenis aplikasi', 'App type'), {
+  dompet: teks('Dompet digital', 'E-wallet'), bank: teks('Bank', 'Bank'),
+})
+const MODE_NOTIF = pilihan(teks('Cara simpan', 'Saving mode'), {
+  tanya: teks('Tanya dulu', 'Ask first'), otomatis: teks('Simpan otomatis', 'Save automatically'),
+})
+const hitungNotif = (id: string, en: string) => angka(teks(id, en), 300)
+
 export const KAMUS_JENIS_PERJALANAN = {
   'layar.buka': peristiwa('aplikasi', teks('Membuka layar', 'Opened screen'),
     teks('Aplikasi berpindah ke layar lain.', 'The app navigated to another screen.')),
@@ -369,6 +424,259 @@ export const KAMUS_LANGKAH_PERJALANAN = {
         },
       },
     }),
+  'form_catat.buka': peristiwa('transaksi', teks('Membuka form catat', 'Opened a record form'),
+    teks('Pengguna membuka form transaksi atau catat cepat. Tercatat sejak 1.7.0.', 'The user opened the transaction form or quick record. Recorded since 1.7.0.'),
+    FORM_CATAT),
+  'form_catat.keluar': peristiwa('transaksi', teks('Keluar dari form catat', 'Left a record form'),
+    teks('Form catat tertutup. Aplikasi mencatat halaman dan isian terakhir, lama di form, dan jumlah catatan yang tersimpan, tanpa isinya.', 'A record form closed. The app logged the last page and field, time in the form, and number of saved records, without their content.'), {
+      ...FORM_CATAT,
+      cara: pilihan(teks('Cara keluar', 'How it closed'), {
+        simpan: teks('Sesudah menyimpan', 'After saving'), tutup: teks('Form ditutup', 'Form closed'),
+        alih: teks('Pindah ke jadwal atau kasbon', 'Moved to schedules or customer tabs'),
+        mati: teks('Aplikasi tertutup saat form terbuka', 'App closed while the form was open'), lain: teks('Cara lain', 'Other way'),
+      }),
+      halaman: pilihan(teks('Halaman terakhir', 'Last page'), {
+        berapa: teks('Berapa', 'Amount'), untuk_apa: teks('Untuk apa', 'What for'), periksa: teks('Periksa', 'Review'),
+        tersimpan: teks('Tersimpan', 'Saved'), rincian: teks('Rincian', 'Details'),
+        isi: teks('Isian catat cepat', 'Quick record entry'), tawar: teks('Tawaran pengingat', 'Reminder offer'),
+      }),
+      kolom: pilihan(teks('Isian terakhir disentuh', 'Last field touched'), {
+        tanpa: teks('Belum ada yang disentuh', 'Nothing touched'), nominal: teks('Nominal', 'Amount'),
+        jenis: teks('Uang masuk atau keluar', 'Money in or out'), kategori: teks('Kategori', 'Category'),
+        dompet: teks('Dompet', 'Wallet'), tanggal: teks('Tanggal', 'Date'), jam: teks('Jam', 'Time'),
+        catatan: teks('Catatan', 'Note'), foto: teks('Foto', 'Photo'), biaya: teks('Biaya admin', 'Admin fee'),
+        patungan: teks('Patungan', 'Shared expense'), pilihan: PILIHAN_CEPAT,
+      }),
+      isi: yaTidak(teks('Ada isian yang belum tersimpan', 'Had unsaved input')),
+      simpan: angka(teks('Catatan tersimpan', 'Records saved'), 50),
+      detik: angka(teks('Lama di form (detik)', 'Time in form (seconds)'), 3600),
+    }),
+  'form_catat.tahan': peristiwa('transaksi', teks('Catatan tertahan aturan lokasi', 'Record held by the location rule'),
+    teks('Aturan lokasi wajib menahan pengguna sebelum form terbuka atau sebelum catatan tersimpan.', 'The required location rule stopped the user before the form opened or before the record was saved.'), {
+      sebab: pilihan(SEBAB, { lokasi: teks('Lokasi', 'Location') }),
+      tahap: pilihan(TAHAP, { buka: teks('Saat membuka form', 'When opening the form'), simpan: teks('Saat menyimpan', 'When saving') }),
+    }),
+  'catat_pertama.lihat': peristiwa('onboarding', teks('Melihat layar catatan pertama', 'Saw the first record screen'),
+    teks('Layar catat cepat terbuka untuk akun yang belum pernah mencatat. Tercatat sejak 1.7.0.', 'Quick record opened for an account with no records yet. Recorded since 1.7.0.'), {
+      asal: pilihan(ASAL, ASAL_CATAT),
+    }),
+  'catat_pertama.simpan': peristiwa('onboarding', teks('Menyimpan catatan pertama', 'Saved the first record'),
+    teks('Akun mencatat untuk pertama kali.', 'The account saved its first record.'), {
+      jalur: pilihan(JALUR, {
+        cepat: teks('Catat cepat', 'Quick record'), transaksi: teks('Form transaksi lengkap', 'Full transaction form'), lain: teks('Jalan lain', 'Other path'),
+      }),
+      pilihan: pilihan(PILIHAN_CEPAT, { ...NILAI_PILIHAN_CEPAT, tanpa: teks('Tanpa pilihan cepat', 'No quick choice') }),
+    }),
+  'catat_pertama.kartu_lihat': peristiwa('onboarding', teks('Melihat kartu catatan pertama', 'Saw the first record card'),
+    teks('Beranda menampilkan kartu ajakan mencatat pengeluaran pertama pada peluncuran ini.', 'Home showed the card inviting a first spending record during this launch.')),
+  'catat_pertama.kartu_ketuk': peristiwa('onboarding', teks('Mengetuk pilihan di kartu catatan pertama', 'Tapped a choice on the first record card'),
+    teks('Pengguna memilih satu pilihan cepat di kartu Beranda.', 'The user picked a quick choice on the Home card.'), {
+      pilihan: pilihan(PILIHAN_CEPAT, NILAI_PILIHAN_CEPAT),
+    }),
+  'catat_pertama.ke_usaha': peristiwa('onboarding', teks('Memilih catat jualan warung', 'Chose to record shop sales'),
+    teks('Pengguna mengetuk ajakan jualan warung di layar catatan pertama.', 'The user tapped the shop sales link on the first record screen.')),
+  'catat_pertama.ke_lainnya': peristiwa('onboarding', teks('Memilih Catat yang lain', 'Chose Record something else'),
+    teks('Pengguna membuka pilihan catat lengkap dari layar catatan pertama.', 'The user opened the full record options from the first record screen.')),
+  'pengingat.tawar_lihat': aplikasi(teks('Melihat tawaran pengingat harian', 'Saw the daily reminder offer'),
+    teks('Tawaran pengingat tiap malam tampil sesudah catatan pertama tersimpan. Tercatat sejak 1.7.0.', 'The nightly reminder offer appeared after the first record was saved. Recorded since 1.7.0.'), {
+      asal: pilihan(ASAL, { catat_pertama: teks('Sesudah catatan pertama', 'After the first record') }),
+    }),
+  'pengingat.tawar_jawab': aplikasi(teks('Menjawab tawaran pengingat', 'Answered the reminder offer'),
+    teks('Pengguna menyalakan pengingat harian atau menundanya.', 'The user turned on the daily reminder or put it off.'), {
+      hasil: pilihan(HASIL, {
+        nyala: teks('Pengingat dinyalakan', 'Reminder turned on'), nanti: teks('Nanti saja', 'Not now'),
+        izin_ditolak: teks('Izin notifikasi ditolak', 'Notification permission denied'),
+      }),
+      jam: JAM_PENGINGAT,
+      ganti: yaTidak(teks('Jam diganti dari bawaan', 'Hour changed from default')),
+    }),
+  'pengingat.atur': aplikasi(teks('Mengatur pengingat harian', 'Set the daily reminder'),
+    teks('Pengguna menyalakan, mematikan, atau mengganti jam pengingat di Setelan.', 'The user turned the reminder on or off, or changed its hour, in Settings.'), {
+      asal: pilihan(ASAL, { setelan: SETELAN }),
+      nyala: yaTidak(teks('Pengingat menyala', 'Reminder on')),
+      jam: JAM_PENGINGAT,
+    }),
+  'pengingat.ketuk': aplikasi(teks('Mengetuk pengingat harian', 'Tapped the daily reminder'),
+    teks('Pengguna membuka aplikasi dari notifikasi pengingat harian.', 'The user opened the app from the daily reminder notification.'), {
+      isi: pilihan(teks('Isi pengingat', 'Reminder text'), {
+        jatah: teks('Menyebut jatah harian', 'Mentioned the daily budget'), umum: teks('Ajakan umum', 'General nudge'),
+        tanya: teks('Pertanyaan singkat', 'Short question'),
+      }),
+    }),
+  'preset_jadwal.lihat': aplikasi(teks('Melihat pilihan siap pakai jadwal', 'Saw ready-made schedule options'),
+    teks('Layar Jadwal menampilkan pilihan siap pakai pada peluncuran ini. Tercatat sejak 1.7.0.', 'The schedules screen showed ready-made options during this launch. Recorded since 1.7.0.'), {
+      asal: pilihan(ASAL, ASAL_PRESET),
+    }),
+  'preset_jadwal.pilih': aplikasi(teks('Memilih jadwal siap pakai', 'Picked a ready-made schedule'),
+    teks('Pengguna mengetuk salah satu pilihan siap pakai atau Tambah gajian.', 'The user tapped a ready-made option or Add payday.'), {
+      preset: PRESET_JADWAL,
+      asal: pilihan(ASAL, { ...ASAL_PRESET, analisa: teks('Tombol Tambah gajian di Analisa', 'Add payday button in Analysis') }),
+    }),
+  'preset_jadwal.batas': aplikasi(teks('Jadwal siap pakai tertahan batas gratis', 'Ready-made schedule hit the free limit'),
+    teks('Form dari pilihan siap pakai tertahan batas jadwal versi gratis.', 'The form from a ready-made option was stopped by the free schedule limit.'), {
+      preset: PRESET_JADWAL,
+    }),
+  'preset_jadwal.simpan': aplikasi(teks('Menyimpan jadwal siap pakai', 'Saved a ready-made schedule'),
+    teks('Jadwal dari pilihan siap pakai tersimpan. Nama, nominal, dan tanggalnya tidak dicatat.', 'A schedule from a ready-made option was saved. Its name, amount, and date are not logged.'), {
+      preset: PRESET_JADWAL,
+      bentuk: pilihan(teks('Bentuk jadwal', 'Schedule type'), {
+        tiap_bulan: teks('Tiap bulan', 'Every month'), dicicil: teks('Dicicil', 'Installments'), sekali: teks('Sekali saja', 'One time'),
+        tiap_hari: teks('Tiap hari', 'Every day'), hari_kerja: teks('Hari kerja saja', 'Weekdays only'), irama_lain: teks('Irama lain', 'Other frequency'),
+      }),
+      irama: pilihan(teks('Irama', 'Frequency'), {
+        day: teks('Harian', 'Daily'), week: teks('Mingguan', 'Weekly'), month: teks('Bulanan', 'Monthly'), year: teks('Tahunan', 'Yearly'),
+      }),
+      nama_diubah: yaTidak(teks('Nama diubah', 'Name changed')),
+    }),
+  'preset_jadwal.tutup': aplikasi(teks('Menutup jadwal siap pakai', 'Closed a ready-made schedule'),
+    teks('Pengguna menutup form dari pilihan siap pakai tanpa menyimpan.', 'The user closed the form from a ready-made option without saving.'), {
+      preset: PRESET_JADWAL,
+    }),
+  'widget.dipasang': aplikasi(teks('Memasang widget', 'Added the widget'),
+    teks('Widget catat cepat dipasang di layar utama HP. Terkirim saat aplikasi dibuka berikutnya. Tercatat sejak 1.7.0.', 'The quick record widget was added to the home screen. Sent the next time the app opened. Recorded since 1.7.0.'), {
+      ukuran: pilihan(teks('Ukuran', 'Size'), {
+        ringkas: teks('Ringkas, satu baris', 'Compact, one row'), kotak: teks('Kotak', 'Square'), penuh: teks('Penuh', 'Full'),
+      }),
+    }),
+  'widget.dihapus': aplikasi(teks('Menghapus widget', 'Removed the widget'),
+    teks('Widget catat cepat dilepas dari layar utama HP.', 'The quick record widget was removed from the home screen.')),
+  'widget.ketuk_catat': aplikasi(teks('Mengetuk tombol catat di widget', 'Tapped record on the widget'),
+    teks('Pengguna mengetuk tombol catat di widget. Nominal dan nama ruang tidak dicatat.', 'The user tapped a record button on the widget. Amounts and workspace names are not logged.'), {
+      jenis: pilihan(teks('Tombol', 'Button'), { keluar: teks('Catat keluar', 'Record money out'), masuk: teks('Catat masuk', 'Record money in') }),
+      keadaan: pilihan(LABEL_KEADAAN_WIDGET, KEADAAN_WIDGET),
+    }),
+  'widget.ketuk_buka': aplikasi(teks('Membuka aplikasi dari widget', 'Opened the app from the widget'),
+    teks('Pengguna mengetuk badan widget.', 'The user tapped the body of the widget.'), {
+      keadaan: pilihan(LABEL_KEADAAN_WIDGET, {
+        ...KEADAAN_WIDGET, kasir: teks('Akun kasir', 'Cashier account'), keluar: teks('Belum masuk akun', 'Signed out'),
+      }),
+    }),
+  'wa_catat.lihat': aplikasi(teks('Membuka Catat lewat WhatsApp', 'Opened Record via WhatsApp'),
+    teks('Layar setelan catat lewat WhatsApp tampil. Tercatat sejak 1.7.0.', 'The Record via WhatsApp settings screen appeared. Recorded since 1.7.0.'), {
+      dari: pilihan(teks('Dibuka dari', 'Opened from'), {
+        setelan: SETELAN, nomor_wa: teks('Layar Nomor WhatsApp', 'WhatsApp number screen'), lain: PINTU_LAIN,
+      }),
+    }),
+  'wa_catat.nyala': aplikasi(teks('Menyalakan catat lewat WhatsApp', 'Turned on Record via WhatsApp'),
+    teks('Pengguna menyalakan catat lewat WhatsApp untuk satu ruang.', 'The user turned on Record via WhatsApp for one workspace.'), {
+      ruang: pilihan(teks('Ruang tujuan', 'Target workspace'), { pribadi: teks('Pribadi', 'Personal'), usaha: teks('Usaha', 'Business') }),
+      dompet: pilihan(teks('Dompet', 'Wallet'), { bawaan: teks('Dompet bawaan', 'Default wallet'), pilih: teks('Dipilih sendiri', 'Picked by the user') }),
+    }),
+  'wa_catat.mati': aplikasi(teks('Mematikan catat lewat WhatsApp', 'Turned off Record via WhatsApp'),
+    teks('Pengguna mematikan catat lewat WhatsApp dari aplikasi.', 'The user turned off Record via WhatsApp in the app.')),
+  'wa_catat.ubah': aplikasi(teks('Mengubah setelan catat lewat WhatsApp', 'Changed Record via WhatsApp settings'),
+    teks('Pengguna mengganti ruang tujuan atau dompet untuk catatan dari WhatsApp.', 'The user changed the target workspace or wallet for WhatsApp records.'), {
+      apa: pilihan(teks('Yang diubah', 'Changed'), { ruang: teks('Ruang tujuan', 'Target workspace'), dompet: teks('Dompet', 'Wallet') }),
+    }),
+  'wa_catat.buka_wa': aplikasi(teks('Membuka WhatsApp CashFlow', 'Opened CashFlow on WhatsApp'),
+    teks('Pengguna mengetuk tombol untuk mengirim pesan ke WhatsApp CashFlow.', 'The user tapped the button to message CashFlow on WhatsApp.')),
+  'wa_catat.butuh_nomor': aplikasi(teks('Mengetuk verifikasi nomor WhatsApp', 'Tapped verify WhatsApp number'),
+    teks('Catat lewat WhatsApp butuh nomor terverifikasi, dan pengguna membuka layar Nomor WhatsApp dari sana.', 'Record via WhatsApp needs a verified number, and the user opened the WhatsApp number screen from there.')),
+  'wa_catat.galat': aplikasi(teks('Setelan catat lewat WhatsApp gagal disimpan', 'Record via WhatsApp settings failed'),
+    teks('Perubahan setelan ditolak server atau perangkat tidak terhubung.', 'The server rejected the settings change or the device was offline.'), {
+      hasil: pilihan(HASIL, {
+        tanpa_sesi: HUBUNGAN_WA.tanpa_sesi, fitur_mati: teks('Fitur sedang tidak aktif', 'Feature was disabled'),
+        butuh_nomor: teks('Nomor WhatsApp belum terverifikasi', 'WhatsApp number not verified'),
+        ruang_salah: teks('Ruang tidak bisa dipakai', 'Workspace could not be used'),
+        dompet_salah: teks('Dompet tidak bisa dipakai', 'Wallet could not be used'),
+        galat_server: teks('Server mengalami galat', 'Server error'), luring: HUBUNGAN_WA.luring,
+      }),
+    }),
+  'wa_catat.pesan': aplikasi(teks('Mengirim pesan ke WhatsApp CashFlow', 'Sent a message to CashFlow on WhatsApp'),
+    teks('Server mencatat satu pesan catat lewat WhatsApp beserta hasilnya. Isi pesan, nominal, dan nama dompet tidak disimpan.', 'The server logged one Record via WhatsApp message and its outcome. The message text, amounts, and wallet names are not stored.'), {
+      jenis: pilihan(teks('Jenis pesan', 'Message type'), {
+        catat: teks('Catatan uang', 'Money record'), batal: teks('Perintah batal', 'Cancel command'),
+        sisa: teks('Tanya sisa jatah', 'Asked what is left'), bantuan: teks('Bantuan atau salam', 'Help or greeting'),
+        stop: teks('Perintah stop', 'Stop command'), admin: teks('Minta admin', 'Asked for an admin'),
+        domi: teks('Pertanyaan untuk Domi', 'Question for Domi'), foto: teks('Foto', 'Photo'), lain: teks('Pesan lain', 'Other message'),
+      }),
+      hasil: pilihan(HASIL, {
+        dicatat: teks('Tercatat', 'Recorded'), kuota: teks('Batas catatan gratis habis', 'Free record limit reached'),
+        dompet: teks('Dompet yang disebut tidak ditemukan', 'Mentioned wallet not found'),
+        dompet_bawaan: teks('Dompet bawaan sudah tidak ada', 'Default wallet no longer exists'),
+        ruang: teks('Ruang tujuan tidak bisa ditulisi', 'Target workspace not writable'),
+        dibatalkan: teks('Catatan terakhir dibatalkan', 'Last record cancelled'),
+        tidak_ada: teks('Tidak ada catatan untuk dibatalkan', 'Nothing to cancel'),
+        aturan: teks('Batal ditolak aturan ruang', 'Cancel blocked by workspace rules'),
+        dijawab: teks('Dijawab', 'Answered'), dimatikan: teks('Catat lewat WhatsApp dimatikan', 'Record via WhatsApp turned off'),
+        inbox: teks('Diteruskan ke admin', 'Forwarded to an admin'), basa_basi: teks('Basa-basi, tidak dibalas', 'Small talk, no reply'),
+        diam: teks('Tidak dibalas', 'No reply sent'), gagal: teks('Gagal diproses', 'Could not be processed'),
+        domi_mati: teks('Domi sedang mati', 'Domi was turned off'), kredit_habis: teks('Kredit Domi habis', 'Domi credits used up'),
+        sibuk: teks('Domi sedang sibuk', 'Domi was busy'), foto_mati: teks('Baca foto sedang mati', 'Photo reading was turned off'),
+        foto_besar: teks('Foto terlalu besar', 'Photo too large'), foto_tak_terbaca: teks('Foto tidak bisa dibaca', 'Photo could not be read'),
+        kebanyakan: teks('Lebih dari 10 catatan dalam satu pesan', 'More than 10 items in one message'),
+        proses: teks('Pesan sebelumnya masih diproses', 'Previous message still processing'),
+        domi_batas: teks('Batas Domi per jam tercapai', 'Hourly Domi limit reached'),
+      }),
+      butir: pilihan(teks('Catatan dalam pesan', 'Items in the message'), {
+        '1': teks('1', '1'), '2_5': teks('2 sampai 5', '2 to 5'), '6_10': teks('6 sampai 10', '6 to 10'),
+      }),
+    }),
+  'notif_catat.lihat': aplikasi(teks('Membuka Catat dari notifikasi', 'Opened Record from notifications'),
+    teks('Layar catat dari notifikasi tampil. Tercatat sejak 1.7.0. Nama aplikasi, nominal, dan teks notifikasi tidak pernah dicatat.', 'The Record from notifications screen appeared. Recorded since 1.7.0. App names, amounts, and notification text are never logged.'), {
+      keadaan: pilihan(teks('Keadaan fitur', 'Feature state'), {
+        ajakan: teks('Ajakan CashFlow Pro', 'CashFlow Pro invitation'), mati: teks('Belum menyala', 'Not turned on'),
+        perlu_izin: teks('Perlu izin akses notifikasi', 'Needs notification access'), nyala: teks('Menyala', 'On'),
+        pro_habis: teks('Pro sudah berakhir', 'Pro has ended'),
+      }),
+      asal: pilihan(ASAL, { setelan: SETELAN, kabar: teks('Notifikasi CashFlow', 'CashFlow notification'), lain: PINTU_LAIN }),
+    }),
+  'notif_catat.ajakan_pro': aplikasi(teks('Mengetuk Lihat CashFlow Pro', 'Tapped See CashFlow Pro'),
+    teks('Pengguna gratis membuka penawaran Pro dari layar catat dari notifikasi.', 'A free user opened the Pro offer from the Record from notifications screen.')),
+  'notif_catat.izin': aplikasi(teks('Mengurus akses notifikasi', 'Handled notification access'),
+    teks('Aplikasi mencatat langkah pengguna memberi akses notifikasi lewat Setelan HP.', 'The app logged the user step of granting notification access in phone settings.'), {
+      hasil: pilihan(HASIL, {
+        buka_setelan: teks('Setelan HP dibuka', 'Phone settings opened'), diberi: teks('Akses diberikan', 'Access granted'),
+        belum: teks('Kembali tanpa akses', 'Came back without access'), gagal_buka: teks('Setelan HP gagal dibuka', 'Phone settings could not open'),
+      }),
+    }),
+  'notif_catat.nyala': aplikasi(teks('Menyalakan catat dari notifikasi', 'Turned on Record from notifications'),
+    teks('Pengguna menyalakan fitur dan memilih aplikasi pembayaran yang dibaca.', 'The user turned the feature on and picked the payment apps to read.'), {
+      mode: MODE_NOTIF,
+      aplikasi_n: angka(teks('Aplikasi yang dibaca', 'Apps read'), 20),
+    }),
+  'notif_catat.mati': aplikasi(teks('Catat dari notifikasi mati', 'Record from notifications turned off'),
+    teks('Fitur berhenti membaca notifikasi.', 'The feature stopped reading notifications.'), {
+      sebab: pilihan(SEBAB, {
+        pengguna: teks('Dimatikan pengguna', 'Turned off by the user'), pro_habis: teks('Pro berakhir', 'Pro ended'),
+        akses_dicabut: teks('Akses notifikasi dicabut', 'Notification access revoked'), keluar: teks('Keluar akun', 'Signed out'),
+        sakelar_server: teks('Dimatikan dari server', 'Turned off from the server'),
+      }),
+    }),
+  'notif_catat.mode': aplikasi(teks('Mengganti cara simpan', 'Changed the saving mode'),
+    teks('Pengguna memilih tanya dulu atau simpan otomatis.', 'The user chose ask first or save automatically.'), {
+      mode: MODE_NOTIF,
+      asal: pilihan(ASAL, { setelan: teks('Pengaturan di layar ini', 'Settings on this screen'), tawaran: teks('Tawaran simpan otomatis', 'Auto-save offer') }),
+    }),
+  'notif_catat.proses': aplikasi(teks('Memproses notifikasi yang tertangkap', 'Processed captured notifications'),
+    teks('Aplikasi mengolah notifikasi pembayaran yang menunggu. Hanya hitungan, satu baris per jenis aplikasi.', 'The app processed waiting payment notifications. Counts only, one row per app type.'), {
+      jenis: JENIS_APLIKASI_NOTIF,
+      temuan: hitungNotif('Temuan', 'Findings'),
+      otomatis: hitungNotif('Disimpan otomatis', 'Saved automatically'),
+      tanya: hitungNotif('Ditanyakan dulu', 'Asked first'),
+      dobel: hitungNotif('Mungkin sudah dicatat', 'Possible duplicates'),
+      pindah: hitungNotif('Pindah dompet', 'Wallet transfers'),
+      abaikan: hitungNotif('Dilewati karena tidak terbaca', 'Skipped, could not be read'),
+      dibuang: hitungNotif('Dibuang karena terlalu lama atau antrean penuh', 'Dropped for age or a full queue'),
+    }),
+  'notif_catat.urai_gagal': aplikasi(teks('Notifikasi tidak bisa dibaca', 'Notification could not be read'),
+    teks('Aplikasi gagal membaca notifikasi pembayaran yang tertangkap. Hanya hitungan per alasan.', 'The app could not read captured payment notifications. Counts per reason only.'), {
+      jenis: JENIS_APLIKASI_NOTIF,
+      sebab: pilihan(SEBAB, {
+        tanpa_nominal: teks('Tidak ada nominal', 'No amount'), arah_tak_jelas: teks('Masuk atau keluar tidak jelas', 'Unclear if money in or out'),
+        bukan_transaksi: teks('Bukan transaksi', 'Not a transaction'), terlalu_besar: teks('Nominal terlalu besar', 'Amount too large'),
+      }),
+      n: hitungNotif('Jumlah', 'Count'),
+    }),
+  'notif_catat.putus': aplikasi(teks('Memutuskan temuan dari notifikasi', 'Decided on a notification finding'),
+    teks('Pengguna memutuskan satu temuan atau membatalkan catatan yang tersimpan otomatis.', 'The user decided on one finding or cancelled an auto-saved record.'), {
+      jenis: JENIS_APLIKASI_NOTIF,
+      putusan: pilihan(teks('Putusan', 'Decision'), {
+        simpan: teks('Disimpan', 'Saved'), ubah_simpan: teks('Diubah lalu disimpan', 'Edited then saved'),
+        abaikan: teks('Diabaikan', 'Ignored'), batal: teks('Catatan yang tersimpan dibatalkan', 'Saved record cancelled'),
+        pindah: teks('Dialihkan ke Pindah antar dompet', 'Sent to wallet transfer'),
+      }),
+    }),
   'pembaruan.ajakan_lihat': pembaruan(teks('Melihat ajakan pembaruan', 'Saw an update invitation'),
     teks('Beranda menampilkan ajakan memperbarui aplikasi.', 'Home displayed an invitation to update the app.')),
   'pembaruan.ajakan_ketuk': pembaruan(teks('Mengetuk Perbarui', 'Tapped Update'),
@@ -523,6 +831,7 @@ export const KAMUS_LAYAR_PERJALANAN = {
   '/aktivitas': teks('Aktivitas', 'Activity'),
   '/budget': teks('Anggaran', 'Budget'),
   '/budget-target': teks('Target anggaran', 'Budget target'),
+  '/catat-cepat': teks('Catat cepat', 'Quick record'),
   '/categories': teks('Kategori', 'Categories'),
   '/category': teks('Formulir kategori', 'Category form'),
   '/g/:kode': teks('Tautan undangan', 'Invitation link'),
@@ -543,6 +852,7 @@ export const KAMUS_LAYAR_PERJALANAN = {
   '/laporan-usaha': teks('Laporan usaha', 'Business report'),
   '/lupa-sandi': teks('Lupa sandi', 'Forgot password'),
   '/nomor-wa': teks('Nomor WhatsApp', 'WhatsApp number'),
+  '/notif-catat': teks('Catat dari notifikasi', 'Record from notifications'),
   '/notifikasi': teks('Notifikasi', 'Notifications'),
   '/patungan': teks('Patungan', 'Shared expenses'),
   '/patungan-saldo': teks('Saldo patungan', 'Shared expense balances'),
@@ -586,6 +896,7 @@ export const KAMUS_LAYAR_PERJALANAN = {
   '/usaha': teks('Usaha', 'Business'),
   '/verifikasi': teks('Verifikasi email', 'Email verification'),
   '/wa': teks('Buka CashFlow dari WhatsApp', 'Open CashFlow from WhatsApp'),
+  '/wa-catat': teks('Catat lewat WhatsApp', 'Record via WhatsApp'),
   '/wallet': teks('Formulir dompet', 'Wallet form'),
   '/wallets': teks('Dompet', 'Wallets'),
   '/workspace': teks('Ruang', 'Workspaces'),
