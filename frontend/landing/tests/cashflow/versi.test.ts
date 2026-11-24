@@ -117,11 +117,28 @@ describe.skipIf(!adaApp)(`paritas dengan aplikasi (${PEMBARUAN})`, () => {
   })
 })
 
+/** Bagian `## [versi]` di CHANGELOG repo CashFlow (saudara folder toko/), kosong bila tidak ada. */
+function bagianChangelog(versi: string): string {
+  const berkas = resolve(DIR_TOKO, '../CHANGELOG.md')
+  if (!existsSync(berkas)) return ''
+  const isi = readFileSync(berkas, 'utf8')
+  const awal = isi.indexOf(`## [${versi}]`)
+  if (awal < 0) return ''
+  const akhir = isi.indexOf('\n## ', awal + 1)
+  return isi.slice(awal, akhir < 0 ? undefined : akhir)
+}
+
 describe.skipIf(!existsSync(resolve(DIR_TOKO, `catatan-rilis-${RILIS_PLAY_TERAKHIR.versi}.md`)))('RILIS_PLAY_TERAKHIR', () => {
-  it('versionCode-nya ada di catatan rilis versi itu', () => {
+  /* Catatan rilis 1.6.1 tidak menyebut kodenya, CHANGELOG versi itu yang menyebut. */
+  it('versionCode-nya ada di catatan rilis atau bagian CHANGELOG versi itu', () => {
+    const kode = String(RILIS_PLAY_TERAKHIR.kode)
     const catatan = readFileSync(resolve(DIR_TOKO, `catatan-rilis-${RILIS_PLAY_TERAKHIR.versi}.md`), 'utf8')
-    expect(catatan).toContain(String(RILIS_PLAY_TERAKHIR.kode))
+    expect(catatan.includes(kode) || bagianChangelog(RILIS_PLAY_TERAKHIR.versi).includes(kode),
+      `${kode} tidak ada di catatan rilis maupun CHANGELOG ${RILIS_PLAY_TERAKHIR.versi}`).toBe(true)
     expect(RILIS_PLAY[RILIS_PLAY_TERAKHIR.kode]).toBe(RILIS_PLAY_TERAKHIR.versi)
+  })
+  it('CHANGELOG versi lain tidak dihitung', () => {
+    expect(bagianChangelog(RILIS_PLAY_TERAKHIR.versi)).not.toMatch(/\n## \[/)
   })
 })
 
