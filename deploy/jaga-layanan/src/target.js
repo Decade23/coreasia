@@ -21,7 +21,9 @@ export const TARGET = [
   // Sapa di VPS primesotech. Status WhatsApp hanya ok bila semua nomor tertaut yang
   // diharapkan tersambung (logout, diganti perangkat lain, atau putus >10 menit = MATI).
   { id: 'sapa-web', nama: 'Sapa (sapa.coreasia.id)', url: 'https://sapa.coreasia.id/login', harap: 200, penyedia: 'idcloudhost' },
-  { id: 'sapa-whatsapp', nama: 'Sapa: koneksi WhatsApp 3395', url: 'https://sapa.coreasia.id/api/v1/health/whatsapp', harap: 200, jsonStatus: 'ok', rahasia: 'SAPA_MONITOR_TOKEN' },
+  { id: 'sapa-whatsapp', nama: 'Sapa: koneksi WhatsApp 3395', url: 'https://sapa.coreasia.id/api/v1/health/whatsapp', harap: 200, jsonCek: 'sapaWhatsapp', rahasia: 'SAPA_MONITOR_TOKEN' },
+  // Peringatan dini sebelum cadangan Sapa menolak jalan (butuh sisa 2 GiB).
+  { id: 'sapa-disk', nama: 'Sapa: sisa disk server', url: 'https://sapa.coreasia.id/api/v1/health/whatsapp', harap: 200, jsonCek: 'sapaDisk', rahasia: 'SAPA_MONITOR_TOKEN' },
 ]
 
 // Cadangan DB di bucket coreasia-backup. Dianggap basi bila objek terbaru

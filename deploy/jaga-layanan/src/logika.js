@@ -21,10 +21,50 @@ export const TRANSISI_GOYANG = 4
 // kirimnya tidak bergeser setelah laporan "Aktif" yang terkirim di jam sembarang.
 export const JENDELA_LAPORAN_JAM = 2
 
+const GiB = 1024 ** 3
+export const SAPA_DISK_MIN_GIB = 3
+
+// Pemeriksa badan JSON khusus per target (`jsonCek`). Semuanya gagal tertutup:
+// kunci yang hilang atau bentuk aneh dihitung tidak sehat.
+function waSapaSehat(v) {
+  const p = v.pipeline || {}
+  return Number(v.expected) > 0 && Number(v.connected) >= Number(v.expected) && Number(v.problem) === 0
+    && (v.masuk_cashflow === undefined || v.masuk_cashflow === 'ok')
+    && Number(p.oldest_pending_ms ?? 0) < 120000 && Number(p.media_archive_failed ?? 0) === 0
+    && Number(p.rejected_inbound ?? 0) === 0
+}
+export const CEK_JSON = {
+  // Status induk Sapa ikut "bermasalah" saat cadangan lokal gagal (25 Nov 2026: disk
+  // penuh, WhatsApp dan OTP tetap jalan, tapi email berjudul OTP tidak jalan). Alarm
+  // WhatsApp hanya mengabaikan kasus itu bila semua sinyal WhatsApp dan OTP sehat.
+  // Penyebab lain yang belum dikenal tetap dihitung mati. Cadangan Sapa dijaga seri R2
+  // `cadangan-sapa` dan sisa disknya oleh `sapa-disk`.
+  sapaWhatsapp: (v) => v.status === 'ok' || (v.backup?.status !== 'ok' && waSapaSehat(v)),
+  sapaDisk: (v) => Number(v.backup?.free_bytes) >= SAPA_DISK_MIN_GIB * GiB,
+}
+
+// Alasan yang bisa dibaca dari badan, bila targetnya punya.
+export function alasanJson(target, badan) {
+  let v
+  try { v = JSON.parse(badan) } catch { return '' }
+  if (target.jsonCek === 'sapaDisk') {
+    const bebas = Number(v.backup?.free_bytes)
+    return Number.isFinite(bebas) ? `sisa disk ${(bebas / GiB).toFixed(1)} GB (batas ${SAPA_DISK_MIN_GIB} GB), cadangan ${v.backup?.status || '?'}` : 'sisa disk tidak dilaporkan'
+  }
+  if (target.jsonCek === 'sapaWhatsapp') {
+    return `WhatsApp ${Number(v.connected) || 0}/${Number(v.expected) || 0} tersambung, OTP CashFlow ${v.masuk_cashflow ?? '?'}, status ${v.status ?? '?'}`
+  }
+  return ''
+}
+
 // Apakah satu respons memenuhi harapan target.
 export function cocok(target, status, badan) {
   const kodeOk = target.harap === 'bukan5xx' ? status > 0 && status < 500 : status === target.harap
   if (!kodeOk) return false
+  if (target.jsonCek) {
+    try { return Boolean(CEK_JSON[target.jsonCek]?.(JSON.parse(badan))) }
+    catch { return false }
+  }
   if (target.jsonStatus) {
     try { if (JSON.parse(badan).status !== target.jsonStatus) return false }
     catch { return false }
