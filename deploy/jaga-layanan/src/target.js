@@ -49,4 +49,9 @@ export const CADANGAN = [
   { id: 'cadangan-cashflow', nama: 'Cadangan DB CashFlow (Supabase)', prefix: 'cashflow/cashflow-supabase-', maksJam: 27, mulai: '2026-10-13T00:00:00Z' },
   // Sapa: cadangan tiap 10 menit; endpoint WhatsApp memeriksa umur setiap putaran.
   { id: 'cadangan-sapa', nama: 'Cadangan Sapa (DB + sesi WhatsApp)', prefix: 'sapa/primesotech/', tiapPutaran: true, maksJam: 0.25, mulai: '2026-10-30T00:00:00Z' },
+  // Seri harian yang ditambahkan 25 Nov 2026 supaya kegagalannya ikut terlihat.
+  { id: 'cadangan-kreatif', nama: 'Cadangan CoreAsia Kreatif', prefix: 'coreasia-kreatif/kreatif-', maksJam: 27, mulai: '2026-11-25T08:00:00Z' },
+  { id: 'cadangan-assets-staging', nama: 'Cadangan assets staging', prefix: 'coreasia-assets-staging/assets-staging-', maksJam: 27, mulai: '2026-11-25T08:00:00Z' },
+  { id: 'cadangan-feeds', nama: 'Cadangan DB Feeds', prefix: 'feeds/feeds-db-', maksJam: 27, mulai: '2026-11-25T08:00:00Z' },
+  { id: 'cadangan-primak3', nama: 'Cadangan primak3 (DB + berkas)', prefix: 'primak3/primak3-db-', maksJam: 27, mulai: '2026-11-25T08:00:00Z' },
 ]

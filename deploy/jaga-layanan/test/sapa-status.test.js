@@ -39,3 +39,20 @@ test('Sisa disk server Sapa di bawah 3 GB berbunyi lebih dulu',()=>{
  assert.equal(cocok(disk,200,'bukan json'),false)
  assert.match(alasanJson(disk,JSON.stringify(cadanganGagal)),/sisa disk 1\.9 GB \(batas 3 GB\), cadangan bermasalah/)
 })
+
+test('Cadangan Kreatif, assets staging, Feeds, dan primak3 ikut dipantau harian (25 Nov 2026)', () => {
+  const harap = {
+    'cadangan-kreatif': 'coreasia-kreatif/kreatif-',
+    'cadangan-assets-staging': 'coreasia-assets-staging/assets-staging-',
+    'cadangan-feeds': 'feeds/feeds-db-',
+    'cadangan-primak3': 'primak3/primak3-db-',
+  }
+  for (const [id, prefix] of Object.entries(harap)) {
+    const s = CADANGAN.find((x) => x.id === id)
+    assert.ok(s, `${id} terdaftar`)
+    assert.equal(s.prefix, prefix)
+    assert.equal(s.maksJam, 27)
+    assert.ok(!s.tiapPutaran, `${id} cukup diperiksa tiap jam`)
+  }
+  assert.equal(new Set(CADANGAN.map((x) => x.id)).size, CADANGAN.length, 'id seri unik')
+})
