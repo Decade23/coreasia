@@ -21,12 +21,25 @@ export const TARGET = [
   // Sapa di VPS primesotech. Status WhatsApp hanya ok bila semua nomor tertaut yang
   // diharapkan tersambung (logout, diganti perangkat lain, atau putus >10 menit = MATI).
   { id: 'sapa-web', nama: 'Sapa (sapa.coreasia.id)', url: 'https://sapa.coreasia.id/login', harap: 200, penyedia: 'idcloudhost' },
-  { id: 'sapa-whatsapp', nama: 'Sapa: koneksi WhatsApp 3395', url: 'https://sapa.coreasia.id/api/v1/health/whatsapp', harap: 200, jsonStatus: 'ok', rahasia: 'SAPA_MONITOR_TOKEN' },
+  { id: 'sapa-whatsapp', nama: 'Sapa: koneksi WhatsApp 3395', url: 'https://sapa.coreasia.id/api/v1/health/whatsapp', harap: 200, jsonCek: 'sapaWhatsapp', rahasia: 'SAPA_MONITOR_TOKEN' },
+  // Peringatan dini sebelum cadangan Sapa menolak jalan (butuh sisa 2 GiB).
+  { id: 'sapa-disk', nama: 'Sapa: sisa disk server', url: 'https://sapa.coreasia.id/api/v1/health/whatsapp', harap: 200, jsonCek: 'sapaDisk', rahasia: 'SAPA_MONITOR_TOKEN' },
 ]
 
 // Cadangan DB di bucket coreasia-backup. Dianggap basi bila objek terbaru
 // lebih tua dari `maksJam`. `mulai`: sebelum tanggal ini seri belum diperiksa
 // (dipakai saat seri baru dipasang supaya tidak langsung berbunyi).
+// Target yang putusnya langsung terasa pengguna. Judul emailnya memakai [PENTING],
+// isinya menyebut akibat dan langkah perbaikan, dan pengingatnya lebih sering.
+export const PENTING = {
+  'sapa-whatsapp': {
+    judul: 'OTP CashFlow tidak jalan, WhatsApp Sapa putus',
+    dampak: 'Selama putus, pengguna baru CashFlow mendaftar tanpa OTP WhatsApp, dan pesan ke nomor 3395 tidak masuk ke Sapa.',
+    langkah: 'Yang perlu dilakukan: buka https://sapa.coreasia.id, lalu tautkan ulang WhatsApp dari HP nomor 3395.',
+    ingatkanMs: 60 * 60 * 1000,
+  },
+}
+
 export const CADANGAN = [
   { id: 'cadangan-cad', nama: 'Cadangan DB lisensi CAD', prefix: 'coreasia-cad/coreasia-cad-db-', maksJam: 27 },
   { id: 'cadangan-pantau', nama: 'Cadangan DB Pantau', prefix: 'coreasia-cad/pantau-db-', maksJam: 27 },
@@ -36,4 +49,9 @@ export const CADANGAN = [
   { id: 'cadangan-cashflow', nama: 'Cadangan DB CashFlow (Supabase)', prefix: 'cashflow/cashflow-supabase-', maksJam: 27, mulai: '2026-10-13T00:00:00Z' },
   // Sapa: cadangan tiap 10 menit; endpoint WhatsApp memeriksa umur setiap putaran.
   { id: 'cadangan-sapa', nama: 'Cadangan Sapa (DB + sesi WhatsApp)', prefix: 'sapa/primesotech/', tiapPutaran: true, maksJam: 0.25, mulai: '2026-10-30T00:00:00Z' },
+  // Seri harian yang ditambahkan 25 Nov 2026 supaya kegagalannya ikut terlihat.
+  { id: 'cadangan-kreatif', nama: 'Cadangan CoreAsia Kreatif', prefix: 'coreasia-kreatif/kreatif-', maksJam: 27, mulai: '2026-11-25T08:00:00Z' },
+  { id: 'cadangan-assets-staging', nama: 'Cadangan assets staging', prefix: 'coreasia-assets-staging/assets-staging-', maksJam: 27, mulai: '2026-11-25T08:00:00Z' },
+  { id: 'cadangan-feeds', nama: 'Cadangan DB Feeds', prefix: 'feeds/feeds-db-', maksJam: 27, mulai: '2026-11-25T08:00:00Z' },
+  { id: 'cadangan-primak3', nama: 'Cadangan primak3 (DB + berkas)', prefix: 'primak3/primak3-db-', maksJam: 27, mulai: '2026-11-25T08:00:00Z' },
 ]
