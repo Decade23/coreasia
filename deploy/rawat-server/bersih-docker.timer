@@ -1,0 +1,10 @@
+[Unit]
+Description=Bersih image Docker harian, 03.40 WIB
+
+[Timer]
+OnCalendar=*-*-* 20:40:00 UTC
+Persistent=true
+RandomizedDelaySec=5min
+
+[Install]
+WantedBy=timers.target

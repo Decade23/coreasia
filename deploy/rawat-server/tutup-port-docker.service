@@ -1,0 +1,14 @@
+[Unit]
+Description=Tutup port container Docker dari internet (Docker melewati ufw)
+After=docker.service
+Requires=docker.service
+PartOf=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/sbin/tutup-port-docker.sh
+ExecStop=/bin/sh -c 'iptables -w -D DOCKER-USER -j COREASIA-TUTUP 2>/dev/null || true'
+
+[Install]
+WantedBy=docker.service

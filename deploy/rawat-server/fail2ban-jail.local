@@ -1,0 +1,7 @@
+# /etc/fail2ban/jail.local (Ubuntu 24.04: log SSH ada di journal, ufw memakai nftables)
+[DEFAULT]
+banaction = nftables
+banaction_allports = nftables[type=allports]
+backend = systemd
+[sshd]
+enabled = true
