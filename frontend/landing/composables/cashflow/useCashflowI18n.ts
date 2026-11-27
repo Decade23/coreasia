@@ -1671,15 +1671,20 @@ const KAMUS = {
       jenis: {
         catat: 'Catat', batal: 'Batal', sisa: 'Sisa kuota', bantuan: 'Bantuan', stop: 'Stop', admin: 'Ke tim CashFlow',
         domi: 'Tanya Domi', foto: 'Foto struk', lain: 'Lainnya', batas: 'Kena batas laju',
+        ubah: 'Ubah catatan terakhir', rekap: 'Ringkasan hari ini atau minggu ini',
       },
       hasil: {
         dicatat: 'Tercatat', kuota: 'Kuota Pro habis', dompet: 'Dompet tidak dikenal', dompet_bawaan: 'Belum ada dompet bawaan',
-        ruang: 'Ruang tidak bisa dipakai', dibatalkan: 'Dibatalkan', tidak_ada: 'Tidak ada yang bisa dibatalkan',
+        ruang: 'Ruang tidak bisa dipakai', dibatalkan: 'Dibatalkan', tidak_ada: 'Tidak ada yang bisa dibatalkan atau diubah',
         aturan: 'Ditolak aturan ruang', dijawab: 'Dijawab', dimatikan: 'Catat WA dimatikan', inbox: 'Diteruskan ke tim',
         basa_basi: 'Sapaan biasa', diam: 'Tidak dibalas', gagal: 'Gagal', domi_mati: 'Domi lewat WA belum menyala',
         kredit_habis: 'Kredit Domi habis', sibuk: 'Sedang sibuk', foto_mati: 'Foto lewat WA belum menyala',
         foto_besar: 'Foto terlalu besar', foto_tak_terbaca: 'Foto tidak terbaca', kebanyakan: 'Terlalu banyak butir',
         proses: 'Masih diproses', domi_batas: 'Domi kena batas per jam',
+        ruang_tidak_ada: 'Ruang yang disebut tidak bisa dipakai', diubah: 'Catatan terakhir diubah',
+        pilih_butir: 'Ditanya nomor catatan yang mau diubah', kategori: 'Kategori yang disebut tidak ditemukan',
+        aplikasi: 'Hanya bisa diubah dari aplikasi', ruang_ganda: 'Ruang disebut lebih dari sekali atau di tengah pesan',
+        minta_nilai: 'Nilai baru belum disebut atau kurang jelas',
       },
       kodeBaru: 'kode baru',
       kata: {
@@ -3379,15 +3384,20 @@ const KAMUS = {
       jenis: {
         catat: 'Log', batal: 'Undo', sisa: 'Remaining quota', bantuan: 'Help', stop: 'Stop', admin: 'To the CashFlow team',
         domi: 'Ask Domi', foto: 'Receipt photo', lain: 'Other', batas: 'Rate limited',
+        ubah: 'Edit the last record', rekap: 'Summary for today or this week',
       },
       hasil: {
         dicatat: 'Logged', kuota: 'Pro quota used up', dompet: 'Unknown wallet', dompet_bawaan: 'No default wallet yet',
-        ruang: 'Workspace not usable', dibatalkan: 'Undone', tidak_ada: 'Nothing to undo',
+        ruang: 'Workspace not usable', dibatalkan: 'Undone', tidak_ada: 'Nothing to undo or edit',
         aturan: 'Blocked by workspace rules', dijawab: 'Answered', dimatikan: 'WhatsApp logging turned off', inbox: 'Forwarded to the team',
         basa_basi: 'Small talk', diam: 'Not replied', gagal: 'Failed', domi_mati: 'Domi via WhatsApp not on yet',
         kredit_habis: 'Domi credits used up', sibuk: 'Busy', foto_mati: 'Photos via WhatsApp not on yet',
         foto_besar: 'Photo too large', foto_tak_terbaca: 'Photo unreadable', kebanyakan: 'Too many items',
         proses: 'Still processing', domi_batas: 'Domi hourly limit reached',
+        ruang_tidak_ada: 'Mentioned workspace cannot be used', diubah: 'Last record edited',
+        pilih_butir: 'Asked which item to edit', kategori: 'Mentioned category not found',
+        aplikasi: 'Can only be edited in the app', ruang_ganda: 'Workspace named more than once or mid-message',
+        minta_nilai: 'New value missing or unclear',
       },
       kodeBaru: 'new code',
       kata: {

@@ -20,13 +20,13 @@
  *
  * Semua data di sini karangan: email contoh.invalid, angka dibuat-buat.
  */
-import { readFileSync } from 'node:fs'
+import { readdirSync, readFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { computed, createSSRApp, h, onBeforeUnmount, onMounted, ref, shallowRef, watch, type Component } from 'vue'
 import { renderToString } from 'vue/server-renderer'
 import { describe, expect, it, vi } from 'vitest'
-import { DIR_MIGRASI, adaMigrasi, fungsiTerakhir, parameterFungsi, pohonContoh, urutPohon } from './migrasi'
+import { DIR_MIGRASI, adaMigrasi, batasanTerakhir, fungsiTerakhir, parameterFungsi, pohonContoh, urutPohon } from './migrasi'
 import {
   ALASAN_LAPORAN_WA, BERLAKU_LAPORAN_WA, HASIL_PESAN_WA, HINT_BELUM_BERLAKU_WA, laporanWaBelumBerlaku, JENIS_PESAN_WA, LANGKAH_CORONG_WA, MAKS_KATA_WA, PERIODE_WA, STATUS_CATAT_WA, TIM_WA,
   durasiWa, keadaanKuotaWa, keLaporanWa, langkahCorongWa, persenDari, tanggalWibDari, tautanPerjalananWa, type LaporanWaDTO,
@@ -60,7 +60,7 @@ const LAPORAN: LaporanWaDTO = {
   golongan: [
     { jenis: 'domi', hasil: 'dijawab', jumlah: 6, orang: 3 },
     { jenis: 'catat', hasil: 'dicatat', jumlah: 26, orang: 9 },
-    { jenis: 'kategori', hasil: 'diubah', jumlah: 2, orang: 1 },
+    { jenis: 'pindah', hasil: 'dipindah', jumlah: 2, orang: 1 },
   ],
   kata_tanpa_kategori: [
     { kata: 'galon', jumlah: 4, orang: 3 }, { kata: 'parkir', jumlah: 3, orang: 3 }, { kata: '20rb', jumlah: 3, orang: 3 },
@@ -108,13 +108,29 @@ describe.skipIf(!ADA_WA)(`kontrak admin_wa_catat_laporan (${DIR_MIGRASI})`, () =
     expect(audit).not.toMatch(/email|display_name|nama/)
   })
 
-  it('kode jenis pesan sama dengan batasan wa_catat_pesan, kode hasil sama dengan katalog wa_catat.pesan', () => {
-    const wa = readFileSync(join(DIR_MIGRASI, '20261124160000_wa_catat.sql'), 'utf8')
-    const jenis = /constraint wa_catat_pesan_jenis\s+check \(jenis in \(([^)]*)\)\)/.exec(wa)?.[1] ?? ''
-    expect([...jenis.matchAll(/'([a-z_]+)'/g)].map(m => m[1])).toEqual([...JENIS_PESAN_WA])
-    const katalog = readFileSync(join(DIR_MIGRASI, '20261124230000_perjalanan_katalog_170.sql'), 'utf8')
-    const baris = /\('wa_catat\.pesan', 'aplikasi', '(\{.*\})'\)/.exec(katalog)?.[1] ?? '{}'
-    expect(JSON.parse(baris).hasil).toEqual([...HASIL_PESAN_WA])
+  /* Definisi TERAKHIR di folder migrasi, bukan berkas bernama tetap: jenis atau
+     hasil baru di migrasi berikutnya langsung membuat uji ini merah. */
+  it('kode jenis pesan sama dengan CHECK wa_catat_pesan_jenis terakhir, kode hasil sama dengan katalog wa_catat.pesan terakhir', () => {
+    const cek = batasanTerakhir('wa_catat_pesan_jenis')
+    expect(cek, 'CHECK wa_catat_pesan_jenis tidak ditemukan').not.toBeNull()
+    const jenis = /^\s*jenis\s+in\s*\(([^)]*)\)\s*$/.exec(cek!.isi)?.[1]
+    expect(jenis, `${cek!.berkas}: bentuk CHECK`).toBeDefined()
+    expect([...jenis!.matchAll(/'([a-z_]+)'/g)].map(m => m[1]), cek!.berkas).toEqual([...JENIS_PESAN_WA])
+    const { berkas, badan } = fungsiTerakhir('perjalanan_klien_inti')
+    const baris = /\('wa_catat\.pesan', 'aplikasi', '(\{[^']*\})'\)/.exec(badan)?.[1]
+    expect(baris, `${berkas}: baris wa_catat.pesan`).toBeDefined()
+    const aturan = JSON.parse(baris!) as { jenis: string[]; hasil: string[] }
+    expect(aturan.hasil, berkas).toEqual([...HASIL_PESAN_WA])
+    /* Jenis yang boleh dicatat telemetri juga dikenal laporan. */
+    for (const j of aturan.jenis) expect(JENIS_PESAN_WA as readonly string[], `${berkas}: jenis ${j}`).toContain(j)
+  })
+
+  it('pembaca CHECK mengikuti add dan drop terakhir', () => {
+    const cek = batasanTerakhir('wa_catat_pesan_jenis')
+    const semua = readdirSync(DIR_MIGRASI).filter(n => n.endsWith('.sql')).sort()
+    const menulis = semua.filter(n => /constraint\s+wa_catat_pesan_jenis\s+check/i.test(readFileSync(join(DIR_MIGRASI, n), 'utf8').replace(/--[^\n]*/g, '')))
+    expect(cek?.berkas).toBe(menulis.at(-1))
+    expect(batasanTerakhir('tidak_ada_batasan_ini')).toBeNull()
   })
 })
 
@@ -201,7 +217,7 @@ describe('keLaporanWa', () => {
     expect(l.ringkas.simpanP90).toBeNull()
     expect(l.harian.map(h => h.tanggal)).toEqual(['2026-11-18', '2026-11-19', '2026-11-20'])
     expect(l.harian[0]!.catatan).toBeNull()
-    expect(l.golongan.map(g => `${g.jenis}:${g.hasil}`)).toEqual(['catat:dicatat', 'domi:dijawab', 'kategori:diubah'])
+    expect(l.golongan.map(g => `${g.jenis}:${g.hasil}`)).toEqual(['catat:dicatat', 'domi:dijawab', 'pindah:dipindah'])
     expect(l.golongan[2]).toMatchObject({ jenisDikenal: null, hasilDikenal: null })
     expect(l.kata.map(k => k.kata)).toEqual(['galon', 'parkir'])
     expect(l.pengguna).toHaveLength(2)
@@ -392,7 +408,7 @@ const render = (komponen: Component, props: Record<string, unknown>) => {
 }
 /* Tanda pisah sebagai isi sel atau angka kosong boleh, di dalam kalimat tidak. */
 const teksSaja = (html: string) => html.replace(/>—</g, '> <').replace(/<[^>]+>/g, ' ').replace(/&#39;/g, '\'').replace(/&amp;/g, '&').replace(/\s+/g, ' ').trim()
-const MENTAH = /waCatat\.\w|laporan\.\w|undefined|\bnull\b|NaN|\[object |pesan_pertama|catatan_pertama|tanpa_setelan|basa_basi|dompet_bawaan/
+const MENTAH = /waCatat\.\w|laporan\.\w|undefined|\bnull\b|NaN|\[object |pesan_pertama|catatan_pertama|tanpa_setelan|basa_basi|dompet_bawaan|ruang_tidak_ada|ruang_ganda|pilih_butir|minta_nilai/
 const TERLARANG = /[–;]|[^\s—]\s?—\s?[^\s—]|\p{Extended_Pictographic}/u
 
 describe('CashflowWaLaporanIsi', () => {
@@ -412,7 +428,7 @@ describe('CashflowWaLaporanIsi', () => {
     expect(teks).toContain('Waktu proses 2,4 dtk 9 dari 10 selesai dalam 4,7 dtk')
     expect(teks).toContain('Tanya Domi lewat WA 6 5 jawaban, biaya Rp')
     expect(teks).toMatch(/Catat Tercatat 26 9/)
-    expect(teks).toMatch(/kategori diubah kode baru 2 1/)
+    expect(teks).toMatch(/pindah dipindah kode baru 2 1/)
     expect(teks).toMatch(/galon 4 parkir 3/)
     expect(teks).toContain('1 pesan perlu dilihat.')
     expect(teks).toContain('sar***@contoh.invalid')
@@ -435,6 +451,34 @@ describe('CashflowWaLaporanIsi', () => {
     expect(teks).toContain('133 of 150')
     expect(teks).not.toMatch(MENTAH)
     expect(teks).not.toMatch(TERLARANG)
+    bahasa = 'id'
+  })
+
+  it('jenis ubah dan rekap serta hasil barunya berlabel di dua bahasa, tanpa pil kode baru', async () => {
+    const l = keLaporanWa({
+      ...LAPORAN,
+      golongan: [
+        { jenis: 'ubah', hasil: 'diubah', jumlah: 4, orang: 2 }, { jenis: 'rekap', hasil: 'dijawab', jumlah: 3, orang: 3 },
+        { jenis: 'ubah', hasil: 'pilih_butir', jumlah: 2, orang: 1 }, { jenis: 'rekap', hasil: 'ruang_tidak_ada', jumlah: 1, orang: 1 },
+      ],
+    })
+    expect(l.golongan.map(g => `${g.jenisDikenal}:${g.hasilDikenal}`)).toEqual(['ubah:diubah', 'rekap:dijawab', 'ubah:pilih_butir', 'rekap:ruang_tidak_ada'])
+    bahasa = 'id'
+    const id = teksSaja(await render(Isi, { laporan: l }))
+    expect(id).toMatch(/Ubah catatan terakhir Catatan terakhir diubah 4 2/)
+    expect(id).toMatch(/Ringkasan hari ini atau minggu ini Dijawab 3 3/)
+    expect(id).toMatch(/Ubah catatan terakhir Ditanya nomor catatan yang mau diubah 2 1/)
+    expect(id).toMatch(/Ringkasan hari ini atau minggu ini Ruang yang disebut tidak bisa dipakai 1 1/)
+    expect(id).not.toContain('kode baru')
+    bahasa = 'en'
+    const en = teksSaja(await render(Isi, { laporan: l }))
+    expect(en).toMatch(/Edit the last record Last record edited 4 2/)
+    expect(en).toMatch(/Summary for today or this week Mentioned workspace cannot be used 1 1/)
+    expect(en).not.toContain('new code')
+    for (const t of [id, en]) {
+      expect(t).not.toMatch(MENTAH)
+      expect(t).not.toMatch(TERLARANG)
+    }
     bahasa = 'id'
   })
 

@@ -841,7 +841,8 @@ const waCatatLaporan = (p, mode) => {
   const golongan = mode.kosong ? [] : [
     ['catat', 'dicatat', 31, 6], ['domi', 'dijawab', 9, 3], ['batal', 'dibatalkan', 4, 2], ['bantuan', 'dijawab', 3, 3],
     ['foto', 'dicatat', 3, 2], ['catat', 'kuota', 2, 1], ['lain', 'basa_basi', 2, 2], ['stop', 'dimatikan', 1, 1], ['catat', 'gagal', 1, 1],
-    ...(mode.waKodeBaru ? [['kategori', 'diubah', 2, 1]] : []),
+    ['ubah', 'diubah', 3, 2], ['rekap', 'dijawab', 2, 2], ['ubah', 'pilih_butir', 1, 1], ['rekap', 'ruang_tidak_ada', 1, 1],
+    ...(mode.waKodeBaru ? [['pindah', 'dipindah', 2, 1]] : []),
   ].map(([jenis, hasil, jumlah, o]) => ({ jenis, hasil, jumlah: jumlah * skala, orang: o }))
   return {
     hari, kecuali_internal: kecuali, terbuka: buka && !!mode.izin, sekarang: new Date(SAAT).toISOString(),

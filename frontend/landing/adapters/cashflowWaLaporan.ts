@@ -50,14 +50,15 @@ export const ALASAN_LAPORAN_WA = 'Kontak lengkap di laporan WhatsApp Console'
 export const MAKS_PENGGUNA_WA = 200
 /** Batas kata tanpa kategori dari server. */
 export const MAKS_KATA_WA = 20
-/** Jenis pesan (wa_catat_pesan.jenis, katalog wa_catat.pesan). */
-export const JENIS_PESAN_WA = ['catat', 'batal', 'sisa', 'bantuan', 'stop', 'admin', 'domi', 'foto', 'lain', 'batas'] as const
+/** Jenis pesan, urut CHECK wa_catat_pesan_jenis terakhir (uji kontrak). */
+export const JENIS_PESAN_WA = ['catat', 'batal', 'sisa', 'bantuan', 'stop', 'admin', 'domi', 'foto', 'lain', 'batas', 'ubah', 'rekap'] as const
 export type JenisPesanWa = typeof JENIS_PESAN_WA[number]
-/** Hasil pesan (katalog perjalanan wa_catat.pesan, 20261124230000). */
+/** Hasil pesan, urut katalog Perjalanan wa_catat.pesan terakhir (uji kontrak). */
 export const HASIL_PESAN_WA = [
   'dicatat', 'kuota', 'dompet', 'dompet_bawaan', 'ruang', 'dibatalkan', 'tidak_ada', 'aturan', 'dijawab', 'dimatikan',
   'inbox', 'basa_basi', 'diam', 'gagal', 'domi_mati', 'kredit_habis', 'sibuk', 'foto_mati', 'foto_besar',
-  'foto_tak_terbaca', 'kebanyakan', 'proses', 'domi_batas',
+  'foto_tak_terbaca', 'kebanyakan', 'proses', 'domi_batas', 'ruang_tidak_ada', 'diubah', 'pilih_butir', 'kategori',
+  'aplikasi', 'ruang_ganda', 'minta_nilai',
 ] as const
 export type HasilPesanWa = typeof HASIL_PESAN_WA[number]
 /** Status sakelar catat WA per orang. */

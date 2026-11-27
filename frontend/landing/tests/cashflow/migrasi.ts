@@ -179,6 +179,22 @@ export function fungsiTerakhir(nama: string): { berkas: string; kepala: string; 
   return temu
 }
 
+/** Isi CHECK bernama `nama` menurut migrasi TERAKHIR yang menulisnya, baik di
+ *  create table (`constraint X check (…)`) maupun `add constraint X check (…)`.
+ *  `drop constraint X` sesudahnya tanpa add baru memulangkan null. */
+export function batasanTerakhir(nama: string): { berkas: string; isi: string } | null {
+  const pola = new RegExp(`\\b(drop\\s+constraint\\s+(?:if\\s+exists\\s+)?${nama}\\b|constraint\\s+${nama}\\s+check\\s*\\()`, 'gi')
+  let temu: { berkas: string; isi: string } | null = null
+  for (const { nama: berkas, sql } of semuaMigrasi()) {
+    for (const m of sql.matchAll(pola)) {
+      if (/^drop/i.test(m[1]!)) { temu = null; continue }
+      const buka = m.index + m[0].length - 1
+      temu = { berkas, isi: sql.slice(buka + 1, tutupKurung(sql, buka)) }
+    }
+  }
+  return temu
+}
+
 /** Parameter definisi TERAKHIR sebuah fungsi, urut sesuai server. `bawaan` =
  *  punya default (boleh tidak dikirim). Parameter OUT tidak ikut: PostgREST
  *  mencocokkan panggilan hanya dengan parameter masukan. */

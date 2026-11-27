@@ -17,6 +17,8 @@
 //      laporan_wa_belum_berlaku): kalimat tenang dengan tanggal, tanpa galat merah,
 //      tanpa sakelar Kontak lengkap, satu panggilan per muatan. Muat ulang sesudah
 //      server membuka laporan menampilkan isinya. Sesi pii dan sesi lihat saja.
+//   8. Sesudah berlaku, golongan pesan memuat jenis ubah dan rekap dengan label
+//      awam, tanpa pil "kode baru" (terang dan gelap, 1440 dan 390).
 //
 // Jalankan server lokal TANPA .env (tidak ada kunci sungguhan):
 //   NUXT_PUBLIC_CASHFLOW_SUPABASE_URL=http://127.0.0.1:4428 \
@@ -59,7 +61,7 @@ anjing.unref()
 const dengan = (janji, ms, apa) => Promise.race([janji, new Promise((_, tolak) => setTimeout(() => tolak(new Error(`Batas ${ms} ms: ${apa}`)), ms))])
 
 /** Kode server dan jalur kamus yang tidak boleh terbaca di layar. */
-const MENTAH = /\bwaCatat\.[a-z]|\blaporan\.[a-z]|\bpengguna\.[a-z]|\badmin_wa|\bundefined\b|\bNaN\b|\[object |pesan_pertama|catatan_pertama|tanpa_setelan|basa_basi|dompet_bawaan|kata_tanpa/
+const MENTAH = /\bwaCatat\.[a-z]|\blaporan\.[a-z]|\bpengguna\.[a-z]|\badmin_wa|\bundefined\b|\bNaN\b|\[object |pesan_pertama|catatan_pertama|tanpa_setelan|basa_basi|dompet_bawaan|kata_tanpa|ruang_tidak_ada|ruang_ganda|pilih_butir|minta_nilai/
 
 let browser
 let page
@@ -273,6 +275,30 @@ try {
   if (!(await uji('sakelar-kontak').count())) gagal('Sesudah berlaku sakelar Kontak lengkap tidak kembali')
   if (rpc('admin_wa_catat_laporan').length !== 1) gagal(`Muat ulang memanggil RPC ${rpc('admin_wa_catat_laporan').length} kali`)
   await potret('wa-sesudah-berlaku-terang-1440')
+  // 8. Jenis ubah dan rekap di golongan pesan sesudah berlaku.
+  const LABEL_BARU = ['Ubah catatan terakhir', 'Ringkasan hari ini atau minggu ini', 'Catatan terakhir diubah',
+    'Ditanya nomor catatan yang mau diubah', 'Ruang yang disebut tidak bisa dipakai']
+  for (const t of ['terang', 'gelap']) {
+    await tema(t === 'terang' ? 'light' : 'dark')
+    for (const w of [1440, 390]) {
+      await lebar(w)
+      await buka()
+      const golongan = uji('wa-golongan-tabel')
+      const isi = await dengan(golongan.innerText(), 5000, 'baca golongan')
+      for (const label of LABEL_BARU) if (!isi.includes(label)) gagal(`Golongan ${t} ${w}: "${label}" tidak tampil`)
+      const baris = isi.split('\n').filter(b => /Ubah catatan terakhir|Ringkasan hari ini atau minggu ini/.test(b))
+      if (baris.some(b => b.includes('kode baru'))) gagal(`Golongan ${t} ${w}: jenis baru masih berpil kode baru`)
+      await bersih(`golongan ${t} ${w}`)
+      if (await meluber()) catat(`golongan ${t}: meluber di ${w}`)
+      /* Potret halaman penuh dipotong ke tabel: kepala yang menempel tidak menutupi baris atas. */
+      await page.evaluate(() => scrollTo(0, 0))
+      await page.waitForTimeout(300)
+      const kotak = await dengan(golongan.boundingBox(), 5000, 'kotak golongan')
+      if (!kotak) gagal(`Golongan ${t} ${w}: tabel tidak terlihat`)
+      await dengan(page.screenshot({ path: join(output, `wa-golongan-jenis-baru-${t}-${w}.png`), fullPage: true, clip: kotak }), 20000, `potret golongan ${t} ${w}`)
+    }
+  }
+  hasil.jenisBaru = 'ubah dan rekap berlabel di golongan, tanpa kode baru (terang, gelap, 1440, 390)'
   hasil.belumBerlaku = 'kalimat tenang tanpa galat dan tanpa sakelar (terang, gelap, 1440, 390), muat ulang sesudah berlaku menampilkan isi'
   hasil.belumAktifDanKosong = 'belum aktif tenang, kosong menulis kalimat kosong dan kesehatan tetap tampil'
 
