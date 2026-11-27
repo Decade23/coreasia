@@ -13,6 +13,10 @@
 //   5. Server lama (PGRST202): kalimat tenang "belum aktif". Data kosong: kalimat
 //      kosong, kesehatan tetap tampil.
 //   6. Sesi lihat saja (izin view): agregat tampil, daftar orang dan kata terkunci.
+//   7. Server menahan laporan sampai waktu berlakunya (P0001 hint
+//      laporan_wa_belum_berlaku): kalimat tenang dengan tanggal, tanpa galat merah,
+//      tanpa sakelar Kontak lengkap, satu panggilan per muatan. Muat ulang sesudah
+//      server membuka laporan menampilkan isinya. Sesi pii dan sesi lihat saja.
 //
 // Jalankan server lokal TANPA .env (tidak ada kunci sungguhan):
 //   NUXT_PUBLIC_CASHFLOW_SUPABASE_URL=http://127.0.0.1:4428 \
@@ -231,6 +235,45 @@ try {
     await potret(`wa-kosong-${t}-1440`)
   }
   mode.kosong = false
+
+  // 7a. Belum berlaku, sesi pii (terang dan gelap, 390 dan 1440).
+  const KALIMAT_BERLAKU = 'Laporan WhatsApp mulai bisa dibuka 30 November 2026.'
+  const belumBerlaku = async (di) => {
+    if (await page.getByRole('alert').count()) gagal(`${di}: ada galat merah`)
+    const kalimat = (await uji('wa-belum-berlaku').innerText()).trim()
+    if (kalimat !== KALIMAT_BERLAKU) gagal(`${di}: kalimat "${kalimat}"`)
+    if (await uji('wa-isi').count()) gagal(`${di}: isi laporan tetap digambar`)
+    if (await uji('wa-belum-aktif').count()) gagal(`${di}: tertulis belum aktif`)
+    if (await uji('sakelar-kontak').count()) gagal(`${di}: sakelar Kontak lengkap tampil`)
+    if (await uji('wa-laporan').getAttribute('data-kunci') !== '7|tanpa|belum-berlaku') gagal(`${di}: penanda ${await uji('wa-laporan').getAttribute('data-kunci')}`)
+    const r = rpc('admin_wa_catat_laporan')
+    if (r.length !== 1) gagal(`${di}: RPC dipanggil ${r.length} kali`)
+    await bersih(di)
+    if (await meluber()) catat(`${di}: meluber`)
+  }
+  mode.belumBerlaku = ['admin_wa_catat_laporan']
+  for (const t of ['terang', 'gelap']) {
+    await tema(t === 'terang' ? 'light' : 'dark')
+    for (const w of [1440, 390]) {
+      await lebar(w)
+      await buka('', 'wa-belum-berlaku')
+      await belumBerlaku(`belum berlaku ${t} ${w}`)
+      await potret(`wa-belum-berlaku-${t}-${w}`)
+    }
+  }
+  // 7b. Lewat 00.00 WIB server membuka laporan: Muat ulang menampilkan isinya, kalimatnya hilang.
+  await tema('light')
+  await lebar(1440)
+  await buka('', 'wa-belum-berlaku')
+  mode.belumBerlaku = []
+  panggilan.length = 0
+  await uji('wa-muat-ulang').click()
+  await uji('wa-isi').first().waitFor({ timeout: 30000 })
+  if (await uji('wa-belum-berlaku').count()) gagal('Sesudah berlaku kalimat belum berlaku masih tampil')
+  if (!(await uji('sakelar-kontak').count())) gagal('Sesudah berlaku sakelar Kontak lengkap tidak kembali')
+  if (rpc('admin_wa_catat_laporan').length !== 1) gagal(`Muat ulang memanggil RPC ${rpc('admin_wa_catat_laporan').length} kali`)
+  await potret('wa-sesudah-berlaku-terang-1440')
+  hasil.belumBerlaku = 'kalimat tenang tanpa galat dan tanpa sakelar (terang, gelap, 1440, 390), muat ulang sesudah berlaku menampilkan isi'
   hasil.belumAktifDanKosong = 'belum aktif tenang, kosong menulis kalimat kosong dan kesehatan tetap tampil'
 
   // 6. Sesi lihat saja: agregat tampil, daftar orang dan kata terkunci.
@@ -252,6 +295,16 @@ try {
     await potret(`wa-lihat-saja-${t}-390`)
   }
   hasil.lihatSaja = 'agregat tampil, daftar orang dan kata terkunci, tanpa alasan'
+  // 7c. Belum berlaku untuk sesi lihat saja: kalimat yang sama, tanpa alasan.
+  mode.belumBerlaku = ['admin_wa_catat_laporan']
+  await tema('light')
+  await lebar(390)
+  await buka('', 'wa-belum-berlaku')
+  await belumBerlaku('belum berlaku lihat saja 390')
+  if (rpc('admin_wa_catat_laporan')[0]?.p.p_alasan !== null) gagal('Belum berlaku lihat saja mengirim alasan')
+  await potret('wa-belum-berlaku-lihat-saja-terang-390')
+  mode.belumBerlaku = []
+  hasil.belumBerlakuLihatSaja = 'kalimat sama, tanpa alasan'
 
   if (errors.length) gagal(`Galat browser: ${errors.join('; ')}`)
   if (temuan.length) gagal(`Temuan tampilan:\n  ${temuan.join('\n  ')}`)

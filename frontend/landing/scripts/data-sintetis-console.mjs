@@ -7,6 +7,8 @@
 // membuat semua daftar menjawab kosong, `mode.izin = false` meniru sesi tanpa izin
 // data pribadi (hanya cashflow:view). `mode.domiPanjang` mengganti daftar percakapan Domi
 // dengan 48 percakapan berhalaman, satu di antaranya 60 pesan (uji tata letak tab Domi).
+// `mode.belumAda` (nama RPC) meniru server tanpa migrasinya (PGRST202), `mode.belumBerlaku`
+// (nama RPC) meniru server yang menahan laporan sampai waktu berlakunya (P0001 berhint).
 // RPC yang belum dikarang dicatat di `takDikenal`.
 
 export const SAAT = Date.parse('2026-11-16T05:00:00Z')
@@ -1229,6 +1231,11 @@ export function buatServer() {
     if (mode.belumAda?.includes(nama)) {
       terpanggil.add(nama)
       return { status: 404, json: { code: 'PGRST202', details: null, hint: null, message: `Could not find the function public.${nama} in the schema cache` } }
+    }
+    // Server menahan laporan sampai waktu berlakunya: PostgREST menjawab P0001 dengan HTTP 400.
+    if (mode.belumBerlaku?.includes(nama)) {
+      terpanggil.add(nama)
+      return { status: 400, json: { code: 'P0001', details: null, hint: 'laporan_wa_belum_berlaku', message: 'Laporan WhatsApp baru bisa dibuka mulai 30-11-2026 pukul 00.00 WIB.' } }
     }
     if (!mode.izin && BUTUH_PII.has(nama)) { terpanggil.add(nama); return IZIN_KURANG }
     if (nama === 'admin_laporan_kebiasaan_daftar' && !KUNCI_KEBIASAAN_SAH.has(p.p_kunci)) {

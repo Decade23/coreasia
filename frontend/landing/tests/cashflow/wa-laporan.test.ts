@@ -10,6 +10,9 @@
  *   angka dari string atau rusak, kode baru, kuota, durasi, tautan
  *   Perjalanan 360, corong.
  * - Galat fungsi tidak ada (PGRST202) menjadi "belum aktif".
+ * - Server yang menahan laporan sampai waktu berlakunya (P0001 hint
+ *   laporan_wa_belum_berlaku) adalah keadaan biasa, bukan galat. Tanggalnya
+ *   sama di adapter, kamus, dan migrasi.
  * - Tampilan dirender ke teks (vue/server-renderer), Indonesia dan Inggris,
  *   lengkap, kosong, tanpa pii, terbuka, tanpa kode mentah atau tanda baca
  *   terlarang.
@@ -25,7 +28,7 @@ import { renderToString } from 'vue/server-renderer'
 import { describe, expect, it, vi } from 'vitest'
 import { DIR_MIGRASI, adaMigrasi, fungsiTerakhir, parameterFungsi, pohonContoh, urutPohon } from './migrasi'
 import {
-  ALASAN_LAPORAN_WA, HASIL_PESAN_WA, JENIS_PESAN_WA, LANGKAH_CORONG_WA, MAKS_KATA_WA, PERIODE_WA, STATUS_CATAT_WA, TIM_WA,
+  ALASAN_LAPORAN_WA, BERLAKU_LAPORAN_WA, HASIL_PESAN_WA, HINT_BELUM_BERLAKU_WA, laporanWaBelumBerlaku, JENIS_PESAN_WA, LANGKAH_CORONG_WA, MAKS_KATA_WA, PERIODE_WA, STATUS_CATAT_WA, TIM_WA,
   durasiWa, keadaanKuotaWa, keLaporanWa, langkahCorongWa, persenDari, tanggalWibDari, tautanPerjalananWa, type LaporanWaDTO,
 } from '../../adapters/cashflowWaLaporan'
 import { GalatAdmin, petakanGalat } from '../../composables/cashflow/useCashflowAdmin'
@@ -37,6 +40,7 @@ const AKAR = resolve(fileURLToPath(new URL('.', import.meta.url)), '../..')
 const baca = (jalur: string): string => readFileSync(join(AKAR, jalur), 'utf8')
 const adaFungsi = (nama: string): boolean => { try { fungsiTerakhir(nama); return true } catch { return false } }
 const ADA_WA = adaMigrasi && adaFungsi('admin_wa_catat_laporan')
+const ADA_BERLAKU = adaMigrasi && adaFungsi('laporan_wa_berlaku_inti')
 
 // ── Contoh jawaban server (karangan) ─────────────────────────────────────
 const LAPORAN: LaporanWaDTO = {
@@ -111,6 +115,76 @@ describe.skipIf(!ADA_WA)(`kontrak admin_wa_catat_laporan (${DIR_MIGRASI})`, () =
     const katalog = readFileSync(join(DIR_MIGRASI, '20261124230000_perjalanan_katalog_170.sql'), 'utf8')
     const baris = /\('wa_catat\.pesan', 'aplikasi', '(\{.*\})'\)/.exec(katalog)?.[1] ?? '{}'
     expect(JSON.parse(baris).hasil).toEqual([...HASIL_PESAN_WA])
+  })
+})
+
+// ── Belum berlaku ────────────────────────────────────────────────────────
+describe.skipIf(!ADA_BERLAKU)(`kontrak laporan belum berlaku (${DIR_MIGRASI})`, () => {
+  it('server menolak P0001 dengan hint yang dibaca adapter, sesudah izin lihat dan sebelum bacaan data', () => {
+    const { badan } = fungsiTerakhir('admin_wa_catat_laporan')
+    expect(badan).toContain(`using errcode = 'P0001', hint = '${HINT_BELUM_BERLAKU_WA}'`)
+    const tolak = badan.indexOf('if v_kini < public.laporan_wa_berlaku_inti() then')
+    expect(tolak).toBeGreaterThan(badan.indexOf("konsol_boleh('cashflow:view')"))
+    expect(tolak).toBeLessThan(badan.indexOf("v_pii := public.konsol_boleh('cashflow:pii')"))
+  })
+
+  it('batas di server sama dengan BERLAKU_LAPORAN_WA', () => {
+    const { badan } = fungsiTerakhir('laporan_wa_berlaku_inti')
+    const m = /timestamptz '(\d{4}-\d{2}-\d{2}) (\d{2}:\d{2}:\d{2})\+(\d{2})'/.exec(badan)
+    expect(m, badan).not.toBeNull()
+    expect(Date.parse(`${m![1]}T${m![2]}+${m![3]}:00`)).toBe(Date.parse(BERLAKU_LAPORAN_WA))
+  })
+})
+
+describe('laporan belum berlaku', () => {
+  const galatServer = { code: 'P0001', hint: HINT_BELUM_BERLAKU_WA, message: 'Laporan WhatsApp baru bisa dibuka mulai 30-11-2026 pukul 00.00 WIB.', details: null }
+
+  it('P0001 berhint dikenali, baik mentah maupun sesudah petakanGalat', () => {
+    const g = petakanGalat(galatServer, 'admin_wa_catat_laporan')
+    expect(g).toBeInstanceOf(GalatAdmin)
+    expect(g.hint).toBe(HINT_BELUM_BERLAKU_WA)
+    expect(laporanWaBelumBerlaku(g)).toBe(true)
+    expect(laporanWaBelumBerlaku(galatServer)).toBe(true)
+  })
+
+  it('galat lain tidak dibaca sebagai belum berlaku', () => {
+    for (const e of [
+      petakanGalat({ code: 'PGRST202', message: 'Could not find the function', hint: null }, 'admin_wa_catat_laporan'),
+      petakanGalat({ code: '42501', message: 'Butuh izin cashflow:view.', hint: 'izin-kurang' }, 'admin_wa_catat_laporan'),
+      petakanGalat({ code: '22023', message: 'Rentang hari 1..90.', hint: 'hari' }, 'admin_wa_catat_laporan'),
+      new GalatAdmin('lain', 'Gagal memanggil server.'),
+      { hint: 'laporan-wa-belum-berlaku' }, { code: 'P0001' }, 'laporan_wa_belum_berlaku', null, undefined, 0,
+    ]) expect(laporanWaBelumBerlaku(e), JSON.stringify(e)).toBe(false)
+  })
+
+  it('kalimat tenang di kedua bahasa, tanggalnya sama dengan BERLAKU_LAPORAN_WA', () => {
+    const waktu = new Date(BERLAKU_LAPORAN_WA)
+    const id = cari('id', 'waCatat.belumBerlaku')
+    const en = cari('en', 'waCatat.belumBerlaku')
+    expect(id).toBe(`Laporan WhatsApp mulai bisa dibuka ${waktu.toLocaleDateString('id-ID', { timeZone: 'Asia/Jakarta', day: 'numeric', month: 'long', year: 'numeric' })}.`)
+    expect(en).toBe(`The WhatsApp report opens on ${waktu.toLocaleDateString('en-GB', { timeZone: 'Asia/Jakarta', day: 'numeric', month: 'long', year: 'numeric' })}.`)
+    for (const k of [id, en] as string[]) {
+      expect(k).not.toMatch(TERLARANG)
+      expect(k).not.toMatch(/galat|gagal|error|failed|P0001|laporan_wa/i)
+    }
+  })
+
+  it('halaman menulis keadaan belum berlaku tanpa galat merah dan tanpa sakelar Kontak lengkap', () => {
+    const halaman = baca('pages/console/cashflow/whatsapp.vue')
+    expect(halaman).toMatch(/if \(!laporanWaBelumBerlaku\(e\)\) throw e/)
+    expect(halaman).toMatch(/<div v-else-if="belumBerlaku"[^>]*role="status"[^>]*data-uji="wa-belum-berlaku">/)
+    expect(halaman).toContain("tcf('waCatat.belumBerlaku')")
+    expect(halaman).toContain('v-if="izinPribadi && !belumAktif && !belumBerlaku"')
+    // Galat sungguhan tetap menang atas keadaan belum berlaku yang tertinggal dari muatan sebelumnya.
+    expect(halaman.indexOf('v-else-if="pesanGalat"')).toBeLessThan(halaman.indexOf('v-else-if="belumBerlaku"'))
+    expect(halaman).toMatch(/belumBerlaku\.value = false\n {2}laporan\.value = keLaporanWa\(d\)/)
+  })
+
+  it('data sintetis menjawab seperti server yang menahan laporan', () => {
+    const j = buatServer().jawab('admin_wa_catat_laporan', { p_hari: 7 }, { izin: true, belumBerlaku: ['admin_wa_catat_laporan'] })
+    expect(j.status).toBe(400)
+    expect(j.json).toMatchObject({ code: 'P0001', hint: HINT_BELUM_BERLAKU_WA })
+    expect(laporanWaBelumBerlaku(petakanGalat(j.json, 'admin_wa_catat_laporan'))).toBe(true)
   })
 })
 

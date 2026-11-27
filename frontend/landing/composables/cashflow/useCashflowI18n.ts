@@ -1630,6 +1630,7 @@ const KAMUS = {
       tim: { tanpa: 'Tanpa akun tim', ikut: 'Akun tim ikut' },
       rentang: (a: string, b: string) => `${a} sampai ${b} (WIB)`,
       belumAktif: 'Laporan WhatsApp belum aktif di server. Halaman lain tetap jalan.',
+      belumBerlaku: 'Laporan WhatsApp mulai bisa dibuka 30 November 2026.',
       cakupan: (jam: number) => `Catatan, kata tanpa kategori, dan waktu proses hanya dari ${jam} jam terakhir. Server menghapus jejak pesan WA sesudah ${jam} jam.`,
       kosong: 'Belum ada pesan WhatsApp di periode ini.',
       ubin: {
@@ -3337,6 +3338,7 @@ const KAMUS = {
       tim: { tanpa: 'Without team accounts', ikut: 'Team accounts included' },
       rentang: (a: string, b: string) => `${a} to ${b} (WIB)`,
       belumAktif: 'The WhatsApp report is not active on the server yet. Other pages still work.',
+      belumBerlaku: 'The WhatsApp report opens on 30 November 2026.',
       cakupan: (jam: number) => `Entries, uncategorized words, and processing time cover only the last ${jam} hours. The server deletes WhatsApp message traces after ${jam} hours.`,
       kosong: 'No WhatsApp messages in this period yet.',
       ubin: {

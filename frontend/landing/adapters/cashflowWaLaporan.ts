@@ -13,6 +13,10 @@
  *   Agregat cukup izin view. per_pengguna dan kata_tanpa_kategori hanya untuk
  *   sesi ber-pii (null selain itu), email tersamar tanpa alasan, utuh dengan alasan, dan setiap
  *   panggilan ber-pii tercatat di audit server.
+ *   Sebelum waktu berlakunya (BERLAKU_LAPORAN_WA, sama dengan batas di server)
+ *   setiap panggilan yang lolos izin lihat ditolak P0001 dengan hint
+ *   HINT_BELUM_BERLAKU_WA. Itu keadaan biasa ("mulai bisa dibuka ..."), bukan
+ *   galat: halaman memeriksanya lewat laporanWaBelumBerlaku().
  *
  * DUA UMUR DATA. Hitungan pesan berasal dari telemetri server (tersimpan 120
  * hari). Rincian catatan, kata tanpa kategori, dan waktu proses berasal dari
@@ -62,6 +66,20 @@ export type StatusCatatWa = typeof STATUS_CATAT_WA[number] | 'lain'
 /** Langkah corong orang yang terukur, urut tampil. Tampil pengumuman tidak terukur. */
 export const LANGKAH_CORONG_WA = ['ketuk', 'pesan_pertama', 'catatan_pertama', 'kembali'] as const
 export type LangkahCorongWa = typeof LANGKAH_CORONG_WA[number]
+
+/** Hint tetap penolakan server sebelum laporan berlaku. */
+export const HINT_BELUM_BERLAKU_WA = 'laporan_wa_belum_berlaku'
+/** Waktu laporan mulai bisa dibuka, sama dengan batas di server (diuji terhadap migrasi). */
+export const BERLAKU_LAPORAN_WA = '2026-11-30T00:00:00+07:00'
+
+/**
+ * Galat dari rpc() (GalatAdmin) atau galat mentah PostgREST yang berarti
+ * laporan belum berlaku. Hanya hint yang dibaca: kodenya P0001 (jenis 'lain'
+ * di petakanGalat), jadi jenis tidak membedakannya dari galat lain.
+ */
+export function laporanWaBelumBerlaku(e: unknown): boolean {
+  return !!e && typeof e === 'object' && (e as { hint?: unknown }).hint === HINT_BELUM_BERLAKU_WA
+}
 
 // ── DTO: persis seperti yang dipulangkan RPC ─────────────────────────────
 export interface RingkasWaDTO {

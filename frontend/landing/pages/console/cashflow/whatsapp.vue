@@ -14,12 +14,16 @@
  * mencatat audit setiap muatan ber-pii.
  *
  * Server yang belum memasang migrasinya menjawab PGRST202: halaman menulis
- * "belum aktif", bukan galat merah. Sesi yang kehilangan pii di tengah jalan
- * dimuat ulang tersamar.
+ * "belum aktif", bukan galat merah. Server yang menahan laporan sampai waktu
+ * berlakunya menjawab hint laporan_wa_belum_berlaku: halaman menulis tanggal
+ * laporan mulai bisa dibuka, juga bukan galat. Sesi yang kehilangan pii di
+ * tengah jalan dimuat ulang tersamar.
  */
 definePageMeta({ layout: 'console', middleware: ['console', 'cashflow-admin'] })
 import { opsiDari } from '~/adapters/cashflowLaporan'
-import { ALASAN_LAPORAN_WA, PERIODE_WA, TIM_WA, keLaporanWa, type LaporanWa, type PeriodeWa, type TimWa } from '~/adapters/cashflowWaLaporan'
+import {
+  ALASAN_LAPORAN_WA, PERIODE_WA, TIM_WA, keLaporanWa, laporanWaBelumBerlaku, type LaporanWa, type PeriodeWa, type TimWa,
+} from '~/adapters/cashflowWaLaporan'
 import type { SkemaQuery } from '~/adapters/cashflowQuery'
 import { GalatAdmin } from '~/composables/cashflow/useCashflowAdmin'
 
@@ -44,6 +48,19 @@ const izinPribadi = computed(() => sesi.boleh('cashflow:pii'))
 const kontakDisamarkanOleh = useState<string | null>('cf_kontak_disamarkan_oleh', () => null)
 const samarkan = computed(() => !!user.value?.id && kontakDisamarkanOleh.value === user.value.id)
 const perluVerifikasi = ref(false)
+/** Server menahan laporan sampai waktu berlakunya (keadaan biasa, bukan galat). */
+const belumBerlaku = ref(false)
+
+const ambil = async (hari: number, kecuali: boolean, alasan: string | null) => {
+  try {
+    return await api.waCatatLaporan(hari, kecuali, alasan)
+  } catch (e) {
+    // Server menurunkan sesi selagi tab terbuka: muat ulang tersamar, bukan galat.
+    if (!(e instanceof GalatAdmin) || e.jenis !== 'izin' || !alasan) throw e
+    perluVerifikasi.value = true
+    return await api.waCatatLaporan(hari, kecuali, null)
+  }
+}
 
 const muatLaporan = () => muat(async (terbaru) => {
   const hari = Number(q.value.hari)
@@ -51,14 +68,17 @@ const muatLaporan = () => muat(async (terbaru) => {
   const alasan = izinPribadi.value && !samarkan.value ? ALASAN_LAPORAN_WA : null
   let d
   try {
-    d = await api.waCatatLaporan(hari, kecuali, alasan)
+    d = await ambil(hari, kecuali, alasan)
   } catch (e) {
-    // Server menurunkan sesi selagi tab terbuka: muat ulang tersamar, bukan galat.
-    if (!(e instanceof GalatAdmin) || e.jenis !== 'izin' || !alasan) throw e
-    perluVerifikasi.value = true
-    d = await api.waCatatLaporan(hari, kecuali, null)
+    if (!laporanWaBelumBerlaku(e)) throw e
+    if (!terbaru()) return
+    laporan.value = null
+    belumBerlaku.value = true
+    kunciTampil.value = `${hari}|${q.value.tim}|belum-berlaku`
+    return
   }
   if (!terbaru()) return
+  belumBerlaku.value = false
   laporan.value = keLaporanWa(d)
   kunciTampil.value = `${hari}|${q.value.tim}|${laporan.value.terbuka ? 'terbuka' : 'samar'}`
 })
@@ -103,7 +123,7 @@ useConsoleRemah().pasang(() => [
       <CashflowSegmen :opsi="opsiHari" :nilai="q.hari" :label="tcf('waCatat.periodeLabel')" @pilih="pilihHari" />
       <CashflowSegmen :opsi="opsiTim" :nilai="q.tim" :label="tcf('waCatat.timLabel')" gulir @pilih="pilihTim" />
       <CashflowSakelarKontak
-        v-if="izinPribadi && !belumAktif" class="sm:ml-auto" :terbuka="!!laporan?.terbuka" :mati="memuat && !laporan?.terbuka"
+        v-if="izinPribadi && !belumAktif && !belumBerlaku" class="sm:ml-auto" :terbuka="!!laporan?.terbuka" :mati="memuat && !laporan?.terbuka"
         :label="tcf('pengguna.kontakPenuh')" @ganti="gantiKontak"
       />
     </div>
@@ -117,6 +137,10 @@ useConsoleRemah().pasang(() => [
       v-else-if="pesanGalat" jenis="galat" :judul="tcf('umum.galatJudul')" :pesan="pesanGalat"
       :label-ulang="tcf('umum.cobaLagi')" :sibuk="memuat" @ulang="muatLaporan()"
     />
+    <div v-else-if="belumBerlaku" class="flex items-start gap-3 rounded-xl border border-dashed border-[color:var(--ca-border)] px-4 py-5 text-sm text-[var(--ca-muted)]" role="status" data-uji="wa-belum-berlaku">
+      <Icon name="lucide:calendar-clock" class="mt-0.5 h-5 w-5 shrink-0 text-[var(--ca-subtle)]" aria-hidden="true" />
+      <span>{{ tcf('waCatat.belumBerlaku') }}</span>
+    </div>
     <CashflowKeadaan v-else-if="!laporan" jenis="memuat" :pesan="tcf('umum.memuat')" :baris="6" :kolom="4" />
     <CashflowWaLaporanIsi v-else :laporan="laporan" :perlu-verifikasi="perluVerifikasi" />
   </div>
