@@ -813,7 +813,8 @@ const SUMBER_PASAR = [
 ]
 // Laporan catat lewat WhatsApp (admin_wa_catat_laporan). p_hari 1, 7, atau 30. Tanpa pii per_pengguna null.
 // mode.waKodeBaru menambah satu golongan berkode yang belum dikenal console.
-const KATA_WA = [['galon', 9, 5], ['parkir', 4, 3], ['laundry', 3, 2], ['sembako', 3, 2], ['fotokopi', 2, 1], ['jajan', 2, 2], ['sabun', 2, 2], ['tambalban', 2, 1], ['servis', 1, 1], ['ongkir', 1, 1], ['arisan', 1, 1], ['iuran', 1, 1]]
+// Server hanya mengirim kata huruf latin kecil 3..40 yang dipakai 3 orang atau lebih.
+const KATA_WA = [['galon', 14, 7], ['parkir', 9, 5], ['laundry', 7, 4], ['sembako', 6, 4], ['fotokopi', 5, 3], ['jajan', 5, 3], ['sabun', 4, 3], ['tambalban', 4, 3], ['servis', 3, 3], ['ongkir', 3, 3], ['arisan', 3, 3], ['iuran', 3, 3]]
 const waCatatLaporan = (p, mode) => {
   const hari = Number(p.p_hari) || 7
   const kecuali = p.p_kecuali_internal !== false

@@ -43,6 +43,8 @@ export const useCashflowMuat = (opsi: { awal?: boolean } = {}) => {
   const pesanUntuk = (g: GalatAdmin): string => {
     /* Hint server lebih tepat dari jenisnya: 22023 nilai-tersamar berarti
        "buka dulu nilai utuhnya", bukan sekadar "argumen ditolak" (M/0087 §7). */
+    // Batas waktu server (57014, petakanGalat): kalimat manusia, bukan "canceling statement ...".
+    if (g.hint === 'batas-waktu') return tcf('galat.batasWaktu')
     if (g.hint === 'nilai-tersamar') return tcf('galat.nilaiTersamar')
     if (g.hint === 'nilai-pribadi-publik') return tcf('galat.nilaiPribadiPublik')
     // Hint 22023 Fase 1 — kalimat server hanya berbahasa Indonesia.

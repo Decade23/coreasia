@@ -59,7 +59,7 @@ const LAPORAN: LaporanWaDTO = {
     { jenis: 'kategori', hasil: 'diubah', jumlah: 2, orang: 1 },
   ],
   kata_tanpa_kategori: [
-    { kata: 'galon', jumlah: 4, orang: 3 }, { kata: 'parkir', jumlah: 2, orang: 1 }, { kata: '20rb', jumlah: 1, orang: 1 },
+    { kata: 'galon', jumlah: 4, orang: 3 }, { kata: 'parkir', jumlah: 3, orang: 3 }, { kata: '20rb', jumlah: 3, orang: 3 },
   ],
   kesehatan: { pesan: 37, selesai: 35, gagal: 0, proses: 1, macet: 1, balas: 31, diam: 2, inbox: 0, terakhir_masuk: '2026-11-20T04:58:00Z', terakhir_simpan: '2026-11-20T04:58:02Z' },
   per_pengguna: [
@@ -165,6 +165,20 @@ describe('keLaporanWa', () => {
     expect(keLaporanWa({ ...LAPORAN, corong: { ...LAPORAN.corong, tampil: 40, tampil_terukur: true } }).corong.tampil).toBe(40)
   })
 
+  it('kata hanya huruf latin kecil 3..40 (tanpa angka lebar penuh atau Arab, tanpa bagian email), kode aneh dibaca lain', () => {
+    const l = keLaporanWa({
+      ...LAPORAN,
+      kata_tanpa_kategori: [
+        { kata: 'galon', jumlah: 4, orang: 3 }, { kata: '\uff10\uff18\uff11\uff12', jumlah: 3, orang: 3 }, { kata: '\u0660\u0668\u0661', jumlah: 3, orang: 3 },
+        { kata: 'ke', jumlah: 3, orang: 3 }, { kata: 'Ujinama', jumlah: 3, orang: 3 }, { kata: 'nama.uji@contoh.invalid', jumlah: 3, orang: 3 },
+        { kata: 'é', jumlah: 3, orang: 3 }, { kata: 'x'.repeat(41), jumlah: 3, orang: 3 },
+      ],
+      golongan: [{ jenis: '<img src=x onerror=alert(1)>', hasil: 'Dicatat!', jumlah: 5, orang: 1 }, { jenis: 'catat', hasil: 'dicatat', jumlah: 2, orang: 1 }],
+    })
+    expect(l.kata.map(k => k.kata)).toEqual(['galon'])
+    expect(l.golongan[0]).toMatchObject({ jenis: 'lain', hasil: 'lain', jenisDikenal: 'lain', hasilDikenal: null, jumlah: 5 })
+  })
+
   it('jumlah kata paling banyak 20', () => {
     const kata = Array.from({ length: 30 }, (_, i) => ({ kata: `kata${String.fromCharCode(97 + (i % 26))}x`, jumlah: 30 - i, orang: 1 }))
     expect(keLaporanWa({ ...LAPORAN, kata_tanpa_kategori: kata }).kata).toHaveLength(MAKS_KATA_WA)
@@ -220,6 +234,20 @@ describe('pembantu tampilan', () => {
 })
 
 describe('galat, menu, dan pemanggilan', () => {
+  it('batas waktu server (57014) tidak tampil mentah: kalimat manusia', () => {
+    const g = petakanGalat({ code: '57014', message: 'canceling statement due to statement timeout', details: null, hint: null }, 'admin_wa_catat_laporan')
+    expect(g.hint).toBe('batas-waktu')
+    const tanpaKode = petakanGalat({ message: 'canceling statement due to statement timeout' }, 'admin_wa_catat_laporan')
+    expect(tanpaKode.hint).toBe('batas-waktu')
+    const muat = baca('composables/cashflow/useCashflowMuat.ts')
+    expect(muat).toMatch(/g\.hint === 'batas-waktu'\) return tcf\('galat\.batasWaktu'\)/)
+    for (const b of ['id', 'en'] as const) {
+      const k = cari(b, 'galat.batasWaktu')
+      expect(typeof k, b).toBe('string')
+      expect(k as string).not.toMatch(/statement|timeout|canceling/i)
+    }
+  })
+
   it('fungsi belum ada di server (PGRST202) menjadi belum-aktif', () => {
     const g = petakanGalat({ code: 'PGRST202', message: 'Could not find the function public.admin_wa_catat_laporan', details: null, hint: null }, 'admin_wa_catat_laporan')
     expect(g).toBeInstanceOf(GalatAdmin)
@@ -311,7 +339,7 @@ describe('CashflowWaLaporanIsi', () => {
     expect(teks).toContain('Tanya Domi lewat WA 6 5 jawaban, biaya Rp')
     expect(teks).toMatch(/Catat Tercatat 26 9/)
     expect(teks).toMatch(/kategori diubah kode baru 2 1/)
-    expect(teks).toMatch(/galon 4 parkir 2/)
+    expect(teks).toMatch(/galon 4 parkir 3/)
     expect(teks).toContain('1 pesan perlu dilihat.')
     expect(teks).toContain('sar***@contoh.invalid')
     expect(teks).toContain('133 dari 150')

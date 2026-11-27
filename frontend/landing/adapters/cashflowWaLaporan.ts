@@ -20,7 +20,11 @@
  * bagian itu hanya mencakup 48 jam terakhir, dan halaman mengatakannya.
  *
  * Kunci yang tidak dikirim server dibaca kosong (nol, null, atau larik
- * kosong), bukan galat. Kode jenis dan hasil yang belum dikenal tetap tampil.
+ * kosong), bukan galat. Kode jenis dan hasil yang belum dikenal tetap tampil
+ * bila berbentuk kode (huruf kecil, angka, garis bawah), selain itu 'lain'.
+ * Kata tanpa kategori hanya huruf latin kecil 3..40 (server juga hanya
+ * mengirim kata dari 3 orang atau lebih). Catatan tidak menghitung pesan
+ * yang sudah dibatalkan.
  *
  * Fungsi MURNI semua: tanpa jaringan, tanpa state. adapters/ tidak
  * di-auto-import Nuxt, selalu impor eksplisit.
@@ -168,6 +172,11 @@ const nNull = (v: unknown): number | null => { const x = mentah(v); return x !==
 const teks = (v: unknown): string | null => (typeof v === 'string' && v.trim() !== '' ? v : null)
 const ymd = (v: unknown): string | null => (typeof v === 'string' && /^\d{4}-\d{2}-\d{2}/.test(v) ? v.slice(0, 10) : null)
 const dikenal = <T extends string>(daftar: readonly T[], v: string): T | null => (daftar as readonly string[]).includes(v) ? v as T : null
+/** Kode jenis dan hasil yang sah dari server. Di luar bentuk ini dibaca 'lain' (server juga begitu). */
+const POLA_KODE = /^[a-z0-9_]{1,32}$/
+const kode = (v: unknown): string => { const t = teks(v); return t && POLA_KODE.test(t) ? t : 'lain' }
+/** Kata yang boleh tampil: huruf latin kecil 3 sampai 40, sama dengan server. */
+export const POLA_KATA_WA = /^[a-z]{3,40}$/
 
 export function keLaporanWa(d: LaporanWaDTO | null | undefined): LaporanWa {
   const o = objek(d)
@@ -193,13 +202,13 @@ export function keLaporanWa(d: LaporanWaDTO | null | undefined): LaporanWa {
     .filter(h => h.tanggal)
     .sort((a, b) => a.tanggal.localeCompare(b.tanggal))
   const golongan: GolonganWa[] = larik(o.golongan).map(objek).map((g) => {
-    const jenis = teks(g.jenis) ?? 'lain'
-    const hasil = teks(g.hasil) ?? 'lain'
+    const jenis = kode(g.jenis)
+    const hasil = kode(g.hasil)
     return { jenis, hasil, jumlah: n(g.jumlah), orang: n(g.orang), jenisDikenal: dikenal(JENIS_PESAN_WA, jenis), hasilDikenal: dikenal(HASIL_PESAN_WA, hasil) }
   }).sort((a, b) => b.jumlah - a.jumlah || a.jenis.localeCompare(b.jenis) || a.hasil.localeCompare(b.hasil))
   const kata: KataWa[] = larik(o.kata_tanpa_kategori).map(objek)
     .map(x => ({ kata: teks(x.kata) ?? '', jumlah: n(x.jumlah), orang: n(x.orang) }))
-    .filter(x => x.kata && !/\d/.test(x.kata))
+    .filter(x => POLA_KATA_WA.test(x.kata))
     .slice(0, MAKS_KATA_WA)
   const kesehatan: KesehatanWa = {
     pesan: n(s.pesan), selesai: n(s.selesai), gagal: n(s.gagal), proses: n(s.proses), macet: n(s.macet),

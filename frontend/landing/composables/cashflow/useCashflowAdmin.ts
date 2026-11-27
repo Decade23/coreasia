@@ -199,6 +199,8 @@ export function petakanGalat(e: unknown, rpc?: string): GalatAdmin {
   if (kode === '42501') return new GalatAdmin(HINT_42501[hint] ?? 'bukan-admin', pesan, hint)
   if (kode === '22023') return new GalatAdmin('argumen', pesan, hint)
   if (kode === 'P0002') return new GalatAdmin('tidak-ada', pesan, hint)
+  // Batas waktu pernyataan (57014): kalimat Postgres mentah tidak pernah tampil, lihat useCashflowMuat.
+  if (kode === '57014' || /statement timeout|canceling statement/i.test(pesan)) return new GalatAdmin('lain', pesan, 'batas-waktu')
   // RPC belum ada: cache skema PostgREST (PGRST202), atau Postgres (42883) bila
   // RPC itu sendiri yang hilang. 42883 fungsi lain di dalamnya jatuh ke 'lain'.
   if (kode === 'PGRST202' || (kode === '42883' && !!rpc && rpcItuYangHilang(pesan, rpc))) {

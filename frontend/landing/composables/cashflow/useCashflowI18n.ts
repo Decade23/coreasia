@@ -659,6 +659,7 @@ const KAMUS = {
     },
     galat: {
       nilaiTersamar: 'Nilai yang dikirim masih tersamar, jadi tidak disimpan. Buka daftarnya (Buka untuk menyunting), lalu simpan lagi.',
+      batasWaktu: 'Server terlalu lama menyiapkan data ini. Coba lagi sebentar lagi, atau pilih periode yang lebih pendek.',
       segmenDipakai: 'Segmen ini masih dipakai pengumuman aktif atau terjadwal. Hentikan pengumumannya atau ganti penerimanya dulu.',
       saringDitolak: 'Saringan ditolak server. Periksa lagi isiannya.', aturanDitolak: 'Aturan penerima ditolak server. Periksa lagi pilihannya.',
       penerimaDitolak: 'Pilihan penerima ditolak server.', segmenDitolak: 'Segmen ditolak server. Periksa nama dan saringannya, atau pilih segmen lain.',
@@ -1634,7 +1635,7 @@ const KAMUS = {
       ubin: {
         pengirim: 'Pengirim', pengirimKet: (n: string) => `dari ${n} akun yang menyalakan catat WA`,
         pesan: 'Pesan masuk', pesanKet: (n: string) => `${n} pesan menghasilkan catatan`,
-        catatan: 'Catatan tersimpan', catatanKet: (n: string) => `${n} masih ada di buku`,
+        catatan: 'Catatan tersimpan', catatanKet: (n: string) => `${n} masih ada di buku, tanpa yang dibatalkan`,
         tanpaKategori: 'Tanpa kategori', tanpaKategoriKet: (n: string, total: string) => `${n} dari ${total} catatan`,
         belumAda: 'Belum ada catatan',
       },
@@ -1681,8 +1682,8 @@ const KAMUS = {
       },
       kodeBaru: 'kode baru',
       kata: {
-        judul: 'Kata tanpa kategori', ket: 'Kata dari keterangan catatan WA yang belum dapat kategori. Bahan untuk menambah kamus.',
-        kosong: 'Semua catatan WA di periode ini sudah dapat kategori.',
+        judul: 'Kata tanpa kategori', ket: 'Kata dari keterangan catatan WA yang belum dapat kategori, yang dipakai 3 orang atau lebih. Bahan untuk menambah kamus.',
+        kosong: 'Belum ada kata tanpa kategori yang dipakai 3 orang atau lebih.',
         butuhPii: 'Kata ini diambil dari keterangan catatan, jadi butuh verifikasi akses data pribadi.',
         jumlah: (n: string) => `${n} catatan`, orang: (n: string) => `${n} orang`,
       },
@@ -1708,7 +1709,7 @@ const KAMUS = {
         potong: (n: string, total: string) => `Menampilkan ${n} dari ${total} orang.`,
         tersamar: 'Email tersamar. Nyalakan kontak lengkap untuk melihat nama dan email.',
         terbuka: 'Kontak lengkap terbuka. Setiap muatan tercatat di audit.',
-        catatanKet: 'Catatan dihitung dari 48 jam terakhir.',
+        catatanKet: 'Catatan dihitung dari 48 jam terakhir, tanpa yang sudah dibatalkan.',
       },
     },
   },
@@ -2361,6 +2362,7 @@ const KAMUS = {
     },
     galat: {
       nilaiTersamar: 'The value sent is still masked, so it was not saved. Open the list (Open to edit), then save again.',
+      batasWaktu: 'The server took too long to prepare this data. Try again in a moment, or pick a shorter period.',
       segmenDipakai: 'This segment is still used by an active or scheduled announcement. Stop that announcement or change its recipients first.',
       saringDitolak: 'The server rejected the filters. Check them again.', aturanDitolak: 'The server rejected the recipient rules. Check them again.',
       penerimaDitolak: 'The server rejected the recipient choice.', segmenDitolak: 'The server rejected the segment. Check its name and filters, or pick another segment.',
@@ -3340,7 +3342,7 @@ const KAMUS = {
       ubin: {
         pengirim: 'Senders', pengirimKet: (n: string) => `out of ${n} accounts with WhatsApp logging on`,
         pesan: 'Messages received', pesanKet: (n: string) => `${n} messages became entries`,
-        catatan: 'Entries saved', catatanKet: (n: string) => `${n} still in the books`,
+        catatan: 'Entries saved', catatanKet: (n: string) => `${n} still in the books, undone ones left out`,
         tanpaKategori: 'Uncategorized', tanpaKategoriKet: (n: string, total: string) => `${n} of ${total} entries`,
         belumAda: 'No entries yet',
       },
@@ -3387,8 +3389,8 @@ const KAMUS = {
       },
       kodeBaru: 'new code',
       kata: {
-        judul: 'Uncategorized words', ket: 'Words from WhatsApp entry notes that did not get a category. Material for the dictionary.',
-        kosong: 'Every WhatsApp entry in this period has a category.',
+        judul: 'Uncategorized words', ket: 'Words from WhatsApp entry notes that did not get a category, used by 3 people or more. Material for the dictionary.',
+        kosong: 'No uncategorized word is used by 3 people or more yet.',
         butuhPii: 'These words come from entry notes, so they need verified access to personal data.',
         jumlah: (n: string) => `${n} entr${n === '1' ? 'y' : 'ies'}`, orang: (n: string) => `${n} ${n === '1' ? 'person' : 'people'}`,
       },
@@ -3414,7 +3416,7 @@ const KAMUS = {
         potong: (n: string, total: string) => `Showing ${n} of ${total} people.`,
         tersamar: 'Emails are masked. Turn on full contact to see names and emails.',
         terbuka: 'Full contact is open. Every load is recorded in the audit.',
-        catatanKet: 'Entries are counted from the last 48 hours.',
+        catatanKet: 'Entries are counted from the last 48 hours, without undone ones.',
       },
     },
   },
