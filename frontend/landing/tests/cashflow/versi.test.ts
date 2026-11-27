@@ -129,7 +129,7 @@ function bagianChangelog(versi: string): string {
 }
 
 describe.skipIf(!existsSync(resolve(DIR_TOKO, `catatan-rilis-${RILIS_PLAY_TERAKHIR.versi}.md`)))('RILIS_PLAY_TERAKHIR', () => {
-  /* Catatan rilis 1.6.1 tidak menyebut kodenya, CHANGELOG versi itu yang menyebut. */
+  /* Kode boleh disebut di catatan rilis atau di CHANGELOG versi itu. */
   it('versionCode-nya ada di catatan rilis atau bagian CHANGELOG versi itu', () => {
     const kode = String(RILIS_PLAY_TERAKHIR.kode)
     const catatan = readFileSync(resolve(DIR_TOKO, `catatan-rilis-${RILIS_PLAY_TERAKHIR.versi}.md`), 'utf8')
