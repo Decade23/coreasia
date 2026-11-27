@@ -1,0 +1,9 @@
+[Unit]
+Description=Sekali sesudah reboot: buat ulang container tanpa batas log (CoreAsia 25 Nov 2026)
+
+[Timer]
+OnBootSec=3min
+AccuracySec=10s
+
+[Install]
+WantedBy=timers.target

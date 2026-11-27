@@ -8,6 +8,7 @@
 // tetap di bawah batas tulis KV paket gratis (1.000/hari).
 import { CADANGAN, TARGET } from './target.js'
 import {
+  alasanJson,
   belumMulai,
   catatLaporan,
   cocok,
@@ -91,9 +92,9 @@ async function periksa(t, slot, batasWaktuMs, jedaMs, kepala = {}) {
     // Slot tidak dipegang selama jeda, supaya target lain tetap jalan.
     if (coba) await tidur(jedaMs)
     try {
-      const { status, badan } = await ambil(t.url, slot, batasWaktuMs, Boolean(t.isi || t.jsonStatus), kepala)
+      const { status, badan } = await ambil(t.url, slot, batasWaktuMs, Boolean(t.isi || t.jsonStatus || t.jsonCek), kepala)
       if (cocok(t, status, badan)) return { id: t.id, nama: t.nama, penyedia: t.penyedia, ok: true, alasan: '' }
-      alasan = t.jsonStatus && status === t.harap ? `HTTP ${status}, status layanan belum sehat` : t.isi && status === t.harap ? `HTTP ${status} tapi isi tidak memuat "${t.isi}"` : `HTTP ${status}`
+      alasan = t.jsonCek && status === t.harap ? (alasanJson(t, badan) || `HTTP ${status}, status layanan belum sehat`) : t.jsonStatus && status === t.harap ? `HTTP ${status}, status layanan belum sehat` : t.isi && status === t.harap ? `HTTP ${status} tapi isi tidak memuat "${t.isi}"` : `HTTP ${status}`
     } catch (e) {
       alasan = e?.name === 'TimeoutError' ? `tidak menjawab dalam ${batasWaktuMs / 1000} detik` : `galat jaringan: ${e?.message || e}`
     }

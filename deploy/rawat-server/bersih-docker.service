@@ -1,0 +1,10 @@
+[Unit]
+Description=Buang image Docker lama yang tidak relevan (tetap simpan titik mundur)
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 -I /usr/local/sbin/bersih-docker.py
+Nice=10
+IOSchedulingClass=idle

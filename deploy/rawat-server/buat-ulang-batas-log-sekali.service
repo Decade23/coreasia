@@ -1,0 +1,12 @@
+# Ganti PROYEK_COMPOSE dengan nama proyek compose di server itu (mis. "pantau coreasia-cad").
+[Unit]
+Description=Sekali sesudah reboot: buat ulang container tanpa batas log
+After=docker.service tutup-port-docker.service
+Requires=docker.service
+ConditionPathExists=/etc/docker/daemon.json
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/buat-ulang-batas-log.sh PROYEK_COMPOSE
+ExecStartPost=/bin/systemctl disable buat-ulang-batas-log-sekali.timer
+TimeoutStartSec=900
