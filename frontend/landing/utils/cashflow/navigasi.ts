@@ -33,6 +33,7 @@ export const PINTU_CASHFLOW: readonly PintuNav[] = [
   { kunci: 'ringkasan', halaman: [
     { kunci: 'ringkasan', jalur: '/console/cashflow', ikon: 'lucide:gauge' },
     { kunci: 'laporan', jalur: '/console/cashflow/laporan', ikon: 'lucide:chart-column' },
+    { kunci: 'whatsapp', jalur: '/console/cashflow/whatsapp', ikon: 'lucide:message-circle' },
   ] },
   { kunci: 'orang', halaman: [
     { kunci: 'pengguna', jalur: '/console/cashflow/pengguna', ikon: 'lucide:users' },

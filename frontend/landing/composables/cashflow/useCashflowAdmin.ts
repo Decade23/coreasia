@@ -113,6 +113,7 @@ import { ALASAN_LAPORAN_SALDO, PER_SALDO } from '~/adapters/cashflowLaporan'
 import type { DaftarKebiasaanDTO, KebiasaanDTO } from '~/adapters/cashflowLaporanKebiasaan'
 import { ALASAN_LAPORAN_KEBIASAAN } from '~/adapters/cashflowLaporanKebiasaan'
 import type { MinatPasarDTO } from '~/adapters/cashflowLaporanPasar'
+import type { LaporanWaDTO } from '~/adapters/cashflowWaLaporan'
 import type { SimpanPengumuman } from '~/adapters/cashflowPengumuman'
 import type {
   AturanDTO, SaringDTO, PratinjauPenerimaDTO, SegmenDTO, AkunInternalDTO, JenisAkunInternal,
@@ -741,6 +742,12 @@ export const useCashflowAdmin = () => {
      *  bersamaan (spek analitik pasar 23 Nov 2026): server lama menjawab
      *  PGRST202, bagiannya menulis "belum aktif". */
     laporanPasar: (hari: number) => rpc<MinatPasarDTO>('admin_laporan_pasar', { p_hari: hari }),
+    /** Laporan catat lewat WhatsApp (halaman WhatsApp). Agregat izin view. Sesi ber-pii
+     *  menerima per_pengguna dan setiap panggilannya tercatat di audit server
+     *  (laporan_wa_catat). `alasan` (ALASAN_LAPORAN_WA) membuka email dan nama, null =
+     *  tersamar. Server lama menjawab PGRST202: halaman menulis "belum aktif". */
+    waCatatLaporan: (hari: number, kecualiInternal: boolean, alasan: string | null) =>
+      rpc<LaporanWaDTO>('admin_wa_catat_laporan', { p_hari: hari, p_kecuali_internal: kecualiInternal, p_alasan: alasan }),
 
     // ── paket kredit Domi (adapters/cashflowPaket) ──────────────────────
     /** Semua paket termasuk nonaktif dan khusus uji, plus jumlah terjual. Izin view, tanpa audit. */

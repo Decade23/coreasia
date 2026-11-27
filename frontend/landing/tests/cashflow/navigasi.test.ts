@@ -45,7 +45,7 @@ const TINGKAT_ATAS = readdirSync(HALAMAN)
 describe('peta navigasi CashFlow', () => {
   it('lima pintu dengan urutan dan isi yang disepakati', () => {
     expect(PINTU_CASHFLOW.map(p => [p.kunci, p.halaman.map(h => h.kunci)])).toEqual([
-      ['ringkasan', ['ringkasan', 'laporan']],
+      ['ringkasan', ['ringkasan', 'laporan', 'whatsapp']],
       ['orang', ['pengguna', 'ruang', 'aktivitas', 'corongWa']],
       ['domi', ['domi', 'paket', 'pembelian']],
       ['kabar', ['pengumuman', 'dukungan', 'kasus']],
@@ -69,7 +69,7 @@ describe('peta navigasi CashFlow', () => {
 
   it('jalur menu tidak berubah dari sebelum pengelompokan', () => {
     expect(Object.fromEntries(HALAMAN_CASHFLOW.map(h => [h.kunci, h.jalur]))).toEqual({
-      ringkasan: '/console/cashflow', laporan: '/console/cashflow/laporan', pengguna: '/console/cashflow/pengguna', corongWa: '/console/cashflow/corong',
+      ringkasan: '/console/cashflow', laporan: '/console/cashflow/laporan', whatsapp: '/console/cashflow/whatsapp', pengguna: '/console/cashflow/pengguna', corongWa: '/console/cashflow/corong',
       aktivitas: '/console/cashflow/aktivitas', ruang: '/console/cashflow/ruang', kesehatan: '/console/cashflow/kesehatan',
       sakelar: '/console/cashflow/sakelar', pengumuman: '/console/cashflow/pengumuman', kasus: '/console/cashflow/kasus',
       hapusAkun: '/console/cashflow/hapus-akun', audit: '/console/cashflow/audit', dukungan: '/console/cashflow/dukungan',
@@ -94,6 +94,7 @@ describe('peta navigasi CashFlow', () => {
     const harap: Record<string, string> = {
       '/console/cashflow': 'ringkasan',
       '/console/cashflow/laporan': 'ringkasan',
+      '/console/cashflow/whatsapp': 'ringkasan',
       '/console/cashflow/pengguna': 'orang',
       '/console/cashflow/pengguna/contoh-id': 'orang',
       '/console/cashflow/pengguna/contoh-id/domi': 'orang',

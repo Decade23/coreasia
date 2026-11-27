@@ -811,6 +811,73 @@ const SUMBER_PASAR = [
   ['dana', 'dompet', 142, 120], ['indomaret', 'belanja', 96, 77], ['idx', 'emas_saham', 88, 70], ['shopeepay', 'dompet', 61, 52],
   ['mandiri', 'dompet', 47, 41], ['mypertamina', 'belanja', 33, 29], ['pegadaian', 'emas_saham', 21, 19], ['seabank', 'dompet', 9, 9],
 ]
+// Laporan catat lewat WhatsApp (admin_wa_catat_laporan). p_hari 1, 7, atau 30. Tanpa pii per_pengguna null.
+// mode.waKodeBaru menambah satu golongan berkode yang belum dikenal console.
+const KATA_WA = [['galon', 9, 5], ['parkir', 4, 3], ['laundry', 3, 2], ['sembako', 3, 2], ['fotokopi', 2, 1], ['jajan', 2, 2], ['sabun', 2, 2], ['tambalban', 2, 1], ['servis', 1, 1], ['ongkir', 1, 1], ['arisan', 1, 1], ['iuran', 1, 1]]
+const waCatatLaporan = (p, mode) => {
+  const hari = Number(p.p_hari) || 7
+  const kecuali = p.p_kecuali_internal !== false
+  const buka = !!p.p_alasan
+  const sejak = new Date(SAAT - hari * 86_400_000).toISOString()
+  const jejakUtuh = hari <= 2
+  const k = mode.kosong ? 0 : 1
+  const skala = hari === 1 ? 1 : hari === 7 ? 4 : 11
+  const nHari = Math.round((SAAT + 7 * 3_600_000) / 86_400_000) - Math.round((SAAT - hari * 86_400_000 + 7 * 3_600_000) / 86_400_000) + 1
+  const harian = Array.from({ length: nHari }, (_, i) => {
+    const mundur = nHari - 1 - i
+    const pesan = k * (mundur > 3 && hari === 30 && mundur > 20 ? 0 : [21, 19, 6, 14, 9, 12, 4, 7, 11, 3][mundur % 10])
+    return {
+      tanggal: tanggal(mundur), pesan, pengirim: Math.ceil(pesan / 3), dicatat: Math.round(pesan * 0.7),
+      catatan: jejakUtuh || mundur <= 1 ? Math.round(pesan * 0.8) : null,
+    }
+  })
+  const pesan = harian.reduce((a, h) => a + h.pesan, 0)
+  const orang = AKUN.filter(a => !(kecuali && a.tim)).slice(0, mode.kosong ? 0 : 8)
+  const samarE = e => `${e.slice(0, 3)}***@${e.split('@')[1]}`
+  const hariAwal = iso => new Date(Math.floor((Date.parse(iso) + 7 * 3_600_000) / 86_400_000) * 86_400_000 - 7 * 3_600_000).toISOString()
+  const golongan = mode.kosong ? [] : [
+    ['catat', 'dicatat', 31, 6], ['domi', 'dijawab', 9, 3], ['batal', 'dibatalkan', 4, 2], ['bantuan', 'dijawab', 3, 3],
+    ['foto', 'dicatat', 3, 2], ['catat', 'kuota', 2, 1], ['lain', 'basa_basi', 2, 2], ['stop', 'dimatikan', 1, 1], ['catat', 'gagal', 1, 1],
+    ...(mode.waKodeBaru ? [['kategori', 'diubah', 2, 1]] : []),
+  ].map(([jenis, hasil, jumlah, o]) => ({ jenis, hasil, jumlah: jumlah * skala, orang: o }))
+  return {
+    hari, kecuali_internal: kecuali, terbuka: buka && !!mode.izin, sekarang: new Date(SAAT).toISOString(),
+    cakupan: { sejak, jejak_sejak: new Date(Math.max(SAAT - hari * 86_400_000, SAAT - 48 * 3_600_000)).toISOString(), jejak_jam: 48, jejak_utuh: jejakUtuh, telemetri_hari: 120 },
+    ringkas: {
+      menyala: k * (kecuali ? 212 : 219), pengirim: k * Math.min(orang.length + 4 * (skala - 1), 40), pesan, pesan_dicatat: Math.round(pesan * 0.7),
+      catatan: k * 23, catatan_ada: k * 21, tanpa_kategori: k * 9, persen_tanpa_kategori: mode.kosong ? null : 43,
+      batal: k * 4 * skala, domi: k * 12 * skala, domi_jawaban: k * 11 * skala, domi_biaya: k * 2_418.75 * skala,
+      kuota: k * 2 * skala, stop: k * skala, gagal: k * skala,
+      proses_median_dtk: mode.kosong ? null : 2.37, proses_p90_dtk: mode.kosong ? null : 6.2,
+      simpan_median_dtk: mode.kosong ? null : 1.86, simpan_p90_dtk: mode.kosong ? null : 3.4,
+    },
+    corong: {
+      pengumuman: 1, tampil: null, tampil_terukur: false, ketuk: k * 6 * Math.min(skala, 3), tutup: k * 8 * Math.min(skala, 3),
+      pesan_pertama: k * 5 * Math.min(skala, 3), catatan_pertama: k * 4 * Math.min(skala, 3), kembali: k * 2 * Math.min(skala, 3),
+    },
+    harian,
+    golongan,
+    kata_tanpa_kategori: !mode.izin ? null : mode.kosong ? [] : KATA_WA.map(([kata, jumlah, o]) => ({ kata, jumlah, orang: o })),
+    kesehatan: {
+      pesan: k * 48, selesai: k * 46, gagal: k * 1, proses: k * 1, macet: k * 1, balas: k * 41, diam: k * 3, inbox: k * 2,
+      terakhir_masuk: mode.kosong ? null : jam(0.2), terakhir_simpan: mode.kosong ? null : jam(0.25),
+    },
+    per_pengguna: !mode.izin ? null : orang.map((a, i) => {
+      const terakhir = jam(0.3 + i * 5.5)
+      const idx = AKUN.indexOf(a)
+      return {
+        user_id: idAkun(idx), nama: buka ? (a.nama || null) : null, email: buka ? a.email : samarE(a.email), internal: !!a.tim,
+        pesan: [18, 11, 9, 7, 5, 3, 2, 1][i] ?? 1, dicatat: [14, 8, 6, 5, 3, 2, 1, 0][i] ?? 0, catatan: [9, 5, 4, 3, 2, 0, 0, 0][i] ?? 0,
+        terakhir: buka ? terakhir : hariAwal(terakhir),
+        status: i === 4 ? 'mati' : i === 6 ? 'tanpa_setelan' : 'menyala',
+        kuota: i === 1 ? { pro: true, sakelar: true, sisa: 0, batas: 0 } : i === 3 ? { pro: false, sakelar: true, sisa: 0, batas: 150 } : { pro: false, sakelar: true, sisa: 150 - 17 * i, batas: 150 },
+        versi: i === 5 ? null : { versi: i % 2 ? '1.6.1' : '1.7.0', kode: i % 2 ? '26112501' : '26112602', platform: a.ios ? 'ios' : 'android' },
+      }
+    }),
+    per_pengguna_total: !mode.izin ? null : orang.length,
+  }
+}
+
 const laporanPasar = (p, mode) => {
   const hari = hariLaporan(p)
   const f = hari / 30
@@ -1082,6 +1149,7 @@ const RPC = {
   admin_laporan_kebiasaan: laporanKebiasaan,
   admin_laporan_kebiasaan_daftar: laporanKebiasaanDaftar,
   admin_laporan_pasar: laporanPasar,
+  admin_wa_catat_laporan: waCatatLaporan,
   admin_laporan_saldo: laporanSaldo,
   admin_hapus_akun_daftar: hapusAkunDaftar,
   admin_daftar_pengumuman_v4: (p, m) => (m.kosong ? [] : PENGUMUMAN),
