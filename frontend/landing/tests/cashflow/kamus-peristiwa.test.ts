@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { dirname, resolve } from 'node:path'
 import ts from 'typescript'
 import { describe, expect, it } from 'vitest'
 import {
@@ -9,6 +9,8 @@ import {
 import { DIR_MIGRASI, adaMigrasiBernama, adaMigrasiNomor, fungsiTerakhir } from './migrasi'
 
 const BERKAS_TELEMETRI = process.env.CASHFLOW_TELEMETRI ?? resolve(DIR_MIGRASI, '../../src/lib/telemetri.ts')
+/** Langkah catat lewat WhatsApp (rilis 1.7.0) bertipe di berkas ini, bukan di telemetri.ts. */
+const BERKAS_WA_CATAT = resolve(dirname(BERKAS_TELEMETRI), 'waCatat.ts')
 const SUMBER_WAJIB = !!(process.env.CASHFLOW_MIGRASI || process.env.CASHFLOW_TELEMETRI)
 const ADA_SUMBER = existsSync(BERKAS_TELEMETRI)
 const BAHASA = ['id', 'en'] as const
@@ -30,14 +32,73 @@ const LANGKAH_PASAR_KLIEN = [
 ]
 const ADA_KATALOG_148 = adaMigrasiBernama('perjalanan_katalog_148')
 /**
+ * Rilis 1.7.0: tiga puluh sembilan baris katalog
+ * 20261124230000_perjalanan_katalog_170, persis bentuk barisnya (nama,
+ * kategori, aturan). Tiga puluh delapan dikirim aplikasi (src/lib/telemetri.ts
+ * dan src/lib/waCatat.ts), wa_catat.pesan ditulis server. Uji mandiri di
+ * bawah memakai tabel ini tanpa repo CashFlow. Bila migrasinya ada, setiap
+ * baris wajib sama persis dengan katalog.
+ */
+const KATALOG_170: ReadonlyArray<readonly [string, string, string]> = [
+  ['form_catat.buka', 'transaksi', '{"form":["transaksi","cepat"],"mode":["baru","ubah","salin"],"asal":["plus","kartu","otomatis","widget","pengingat","cocokkan","lain"],"pertama":true}'],
+  ['form_catat.keluar', 'transaksi', '{"form":["transaksi","cepat"],"mode":["baru","ubah","salin"],"asal":["plus","kartu","otomatis","widget","pengingat","cocokkan","lain"],"pertama":true,"cara":["simpan","tutup","alih","mati","lain"],"halaman":["berapa","untuk_apa","periksa","tersimpan","rincian","isi","tawar"],"kolom":["tanpa","nominal","jenis","kategori","dompet","tanggal","jam","catatan","foto","biaya","patungan","pilihan"],"isi":true,"simpan":50,"detik":3600}'],
+  ['form_catat.tahan', 'transaksi', '{"sebab":["lokasi"],"tahap":["buka","simpan"]}'],
+  ['catat_pertama.lihat', 'onboarding', '{"asal":["plus","kartu","otomatis","widget","pengingat","lain"]}'],
+  ['catat_pertama.simpan', 'onboarding', '{"jalur":["cepat","transaksi","lain"],"pilihan":["makan","bensin","jajan","belanja","pulsa","lainnya","gaji","kiriman","jualan","tanpa"]}'],
+  ['catat_pertama.kartu_lihat', 'onboarding', '{}'],
+  ['catat_pertama.kartu_ketuk', 'onboarding', '{"pilihan":["makan","bensin","jajan","belanja","pulsa","lainnya","gaji","kiriman","jualan"]}'],
+  ['catat_pertama.ke_usaha', 'onboarding', '{}'],
+  ['catat_pertama.ke_lainnya', 'onboarding', '{}'],
+  ['pengingat.tawar_lihat', 'aplikasi', '{"asal":["catat_pertama"]}'],
+  ['pengingat.tawar_jawab', 'aplikasi', '{"hasil":["nyala","nanti","izin_ditolak"],"jam":23,"ganti":true}'],
+  ['pengingat.atur', 'aplikasi', '{"asal":["setelan"],"nyala":true,"jam":23}'],
+  ['pengingat.ketuk', 'aplikasi', '{"isi":["jatah","umum","tanya"]}'],
+  ['preset_jadwal.lihat', 'aplikasi', '{"asal":["kosong","pintu"]}'],
+  ['preset_jadwal.pilih', 'aplikasi', '{"preset":["paylater","autodebet","gajian"],"asal":["kosong","pintu","analisa"]}'],
+  ['preset_jadwal.batas', 'aplikasi', '{"preset":["paylater","autodebet","gajian"]}'],
+  ['preset_jadwal.simpan', 'aplikasi', '{"preset":["paylater","autodebet","gajian"],"bentuk":["tiap_bulan","dicicil","sekali","tiap_hari","hari_kerja","irama_lain"],"irama":["day","week","month","year"],"nama_diubah":true}'],
+  ['preset_jadwal.tutup', 'aplikasi', '{"preset":["paylater","autodebet","gajian"]}'],
+  ['widget.dipasang', 'aplikasi', '{"ukuran":["ringkas","kotak","penuh"]}'],
+  ['widget.dihapus', 'aplikasi', '{}'],
+  ['widget.ketuk_catat', 'aplikasi', '{"jenis":["keluar","masuk"],"keadaan":["jatah","lewat","habis","tanpa_jatah","tersembunyi","basi"]}'],
+  ['widget.ketuk_buka', 'aplikasi', '{"keadaan":["jatah","lewat","habis","tanpa_jatah","tersembunyi","basi","kasir","keluar"]}'],
+  ['wa_catat.lihat', 'aplikasi', '{"dari":["setelan","nomor_wa","lain"]}'],
+  ['wa_catat.nyala', 'aplikasi', '{"ruang":["pribadi","usaha"],"dompet":["bawaan","pilih"]}'],
+  ['wa_catat.mati', 'aplikasi', '{}'],
+  ['wa_catat.ubah', 'aplikasi', '{"apa":["ruang","dompet"]}'],
+  ['wa_catat.buka_wa', 'aplikasi', '{}'],
+  ['wa_catat.butuh_nomor', 'aplikasi', '{}'],
+  ['wa_catat.galat', 'aplikasi', '{"hasil":["tanpa_sesi","fitur_mati","butuh_nomor","ruang_salah","dompet_salah","galat_server","luring"]}'],
+  ['wa_catat.pesan', 'aplikasi', '{"jenis":["catat","batal","sisa","bantuan","stop","admin","domi","foto","lain"],"hasil":["dicatat","kuota","dompet","dompet_bawaan","ruang","dibatalkan","tidak_ada","aturan","dijawab","dimatikan","inbox","basa_basi","diam","gagal","domi_mati","kredit_habis","sibuk","foto_mati","foto_besar","foto_tak_terbaca","kebanyakan","proses","domi_batas"],"butir":["1","2_5","6_10"]}'],
+  ['notif_catat.lihat', 'aplikasi', '{"keadaan":["ajakan","mati","perlu_izin","nyala","pro_habis"],"asal":["setelan","kabar","lain"]}'],
+  ['notif_catat.ajakan_pro', 'aplikasi', '{}'],
+  ['notif_catat.izin', 'aplikasi', '{"hasil":["buka_setelan","diberi","belum","gagal_buka"]}'],
+  ['notif_catat.nyala', 'aplikasi', '{"mode":["tanya","otomatis"],"aplikasi_n":20}'],
+  ['notif_catat.mati', 'aplikasi', '{"sebab":["pengguna","pro_habis","akses_dicabut","keluar","sakelar_server"]}'],
+  ['notif_catat.mode', 'aplikasi', '{"mode":["tanya","otomatis"],"asal":["setelan","tawaran"]}'],
+  ['notif_catat.proses', 'aplikasi', '{"jenis":["dompet","bank"],"temuan":300,"otomatis":300,"tanya":300,"dobel":300,"pindah":300,"abaikan":300,"dibuang":300}'],
+  ['notif_catat.urai_gagal', 'aplikasi', '{"jenis":["dompet","bank"],"sebab":["tanpa_nominal","arah_tak_jelas","bukan_transaksi","terlalu_besar"],"n":300}'],
+  ['notif_catat.putus', 'aplikasi', '{"jenis":["dompet","bank"],"putusan":["simpan","ubah_simpan","abaikan","batal","pindah"]}'],
+]
+const LANGKAH_SERVER_170 = ['wa_catat.pesan']
+const LANGKAH_170_KLIEN = KATALOG_170.map(([nama]) => nama).filter(nama => !LANGKAH_SERVER_170.includes(nama))
+/** Layar baru rilis 1.7.0 (20261124231000_perjalanan_layar_170). */
+const LAYAR_170 = ['/catat-cepat', '/notif-catat', '/wa-catat']
+const ADA_KATALOG_170 = adaMigrasiBernama('perjalanan_katalog_170')
+const ADA_LAYAR_170 = adaMigrasiBernama('perjalanan_layar_170')
+/**
  * Langkah yang sudah dikirim aplikasi tetapi belum masuk daftar putih RPC
  * Perjalanan (katalog perjalanan_klien_inti, 20261113194000). RPC
  * memulangkannya sebagai belum_dikenal tanpa rincian. Kamus console sudah
  * siap menerjemahkannya. Hapus dari daftar ini begitu katalog SQL memuatnya.
- * Langkah Kilas Pasar menunggu katalog 148 (perjalanan_katalog_148): begitu
- * migrasinya ada di folder, semuanya wajib ada di katalog.
+ * Langkah Kilas Pasar menunggu katalog 148 (perjalanan_katalog_148), langkah
+ * 1.7.0 menunggu katalog 170 (perjalanan_katalog_170): begitu migrasinya ada
+ * di folder, semuanya wajib ada di katalog.
  */
-const BELUM_DI_KATALOG_RPC: string[] = ADA_KATALOG_148 ? [] : [...LANGKAH_PASAR_KLIEN, ...LANGKAH_SERVER]
+const BELUM_DI_KATALOG_RPC: string[] = [
+  ...(ADA_KATALOG_148 ? [] : [...LANGKAH_PASAR_KLIEN, ...LANGKAH_SERVER]),
+  ...(ADA_KATALOG_170 ? [] : KATALOG_170.map(([nama]) => nama)),
+]
 
 function bacaPeristiwa(sumber: string) {
   const pohon = ts.createSourceFile('telemetri.ts', sumber, ts.ScriptTarget.Latest, true)
@@ -67,14 +128,21 @@ function bacaPeristiwa(sumber: string) {
 describe('kamus Perjalanan', () => {
   it.skipIf(!ADA_SUMBER && !SUMBER_WAJIB)('mencakup semua jenis dan langkah sumber telemetri CashFlow', () => {
     expect(ADA_SUMBER, 'Sumber telemetri CashFlow wajib ada bila jalurnya disetel.').toBe(true)
-    const { jenis, langkah } = bacaPeristiwa(readFileSync(BERKAS_TELEMETRI, 'utf8'))
+    const telemetri = bacaPeristiwa(readFileSync(BERKAS_TELEMETRI, 'utf8'))
+    const jenis = telemetri.jenis
+    const langkahWa = existsSync(BERKAS_WA_CATAT) ? bacaPeristiwa(readFileSync(BERKAS_WA_CATAT, 'utf8')).langkah : []
+    const langkah = [...new Set([...telemetri.langkah, ...langkahWa])].sort()
     expect(jenis.length).toBeGreaterThanOrEqual(5)
     expect(langkah.length).toBeGreaterThanOrEqual(40)
     expect(Object.keys(KAMUS_JENIS_PERJALANAN).sort()).toEqual(jenis)
     const pasar = LANGKAH_PASAR_KLIEN.filter(l => langkah.includes(l))
     expect([0, LANGKAH_PASAR_KLIEN.length], `langkah Kilas Pasar di telemetri: ${pasar.join(', ')}`).toContain(pasar.length)
-    const menunggu = pasar.length ? [] : LANGKAH_PASAR_KLIEN
-    expect(Object.keys(KAMUS_LANGKAH_PERJALANAN).sort()).toEqual([...new Set([...langkah, ...menunggu, ...LANGKAH_SERVER])].sort())
+    // Sumber sebelum 1.7.0 belum memuat satu pun. Separuh berarti kontraknya bergeser.
+    const rilis170 = LANGKAH_170_KLIEN.filter(l => langkah.includes(l))
+    expect([0, LANGKAH_170_KLIEN.length], `langkah 1.7.0 di sumber telemetri: ${rilis170.join(', ')}`).toContain(rilis170.length)
+    const menunggu = [...(pasar.length ? [] : LANGKAH_PASAR_KLIEN), ...(rilis170.length ? [] : LANGKAH_170_KLIEN)]
+    expect(Object.keys(KAMUS_LANGKAH_PERJALANAN).sort())
+      .toEqual([...new Set([...langkah, ...menunggu, ...LANGKAH_SERVER, ...LANGKAH_SERVER_170])].sort())
   })
 
   it.skipIf(!adaMigrasiNomor('20261113194000'))('menerjemahkan kategori, rincian, dan layar dalam daftar putih RPC', () => {
@@ -116,7 +184,20 @@ describe('kamus Perjalanan', () => {
     const dinamis = /when p_layar like '[^']+' then '([^']+)'/.exec(layarSql)?.[1]
     const layar = [...rute.matchAll(/'([^']+)'/g)].map(m => m[1]!)
     if (dinamis) layar.push(dinamis)
+    // Layar 1.7.0 menunggu migrasi perjalanan_layar_170, kamus console sudah siap.
+    if (!ADA_LAYAR_170) {
+      for (const l of LAYAR_170) expect(layar, `${l} sudah di daftar layar RPC`).not.toContain(l)
+      layar.push(...LAYAR_170)
+    }
     expect(Object.keys(KAMUS_LAYAR_PERJALANAN).sort()).toEqual(layar.sort())
+  })
+
+  it.skipIf(!ADA_KATALOG_170)('tabel kontrak 1.7.0 sama persis dengan katalog migrasi', () => {
+    const { badan } = fungsiTerakhir('perjalanan_klien_inti')
+    const katalog = new Map([...badan.matchAll(/\('([a-z._]+)', '([a-z_]+)', '(\{[^']*\})'\)/g)].map(m => [m[1]!, [m[2]!, m[3]!]]))
+    for (const [nama, kategori, rincian] of KATALOG_170) {
+      expect(katalog.get(nama), nama).toEqual([kategori, rincian])
+    }
   })
 
   it('pemindai menemukan peristiwa baru di union dan langkah literal', () => {
@@ -294,5 +375,78 @@ describe('kamus Perjalanan', () => {
       jenis: 'domi.pembelian', langkah: null, layar: null, rincian_aman: { paket: 'belum_dikenal' },
     }, 'id')
     expect(pembelian.rincian[0]).toMatchObject({ nilai: 'Belum dikenal', belumDikenal: true })
+  })
+
+  it('mengenali setiap langkah, nilai, dan layar baru rilis 1.7.0 di dua bahasa', () => {
+    expect(KATALOG_170).toHaveLength(39)
+    expect(new Set(KATALOG_170.map(([nama]) => nama)).size).toBe(39)
+    for (const [nama, kategori, rincian] of KATALOG_170) {
+      const entri = KAMUS_LANGKAH_PERJALANAN[nama as keyof typeof KAMUS_LANGKAH_PERJALANAN]
+      expect(entri, nama).toBeDefined()
+      expect(entri.kategori, nama).toBe(kategori)
+      const aturan = JSON.parse(rincian) as Record<string, true | number | string[]>
+      expect(Object.keys(entri.bidang).sort(), nama).toEqual(Object.keys(aturan).sort())
+      for (const bahasa of BAHASA) {
+        const polos = terjemahPeristiwa({ jenis: 'onboarding.langkah', langkah: nama, layar: null, rincian_aman: {} }, bahasa)
+        expect(polos.judul, nama).not.toBe(bahasa === 'id' ? 'Peristiwa belum dikenal' : 'Unrecognized event')
+        expect(polos.arti, nama).not.toBe('')
+      }
+      for (const [kunci, aturanNilai] of Object.entries(aturan)) {
+        const contoh = Array.isArray(aturanNilai) ? aturanNilai
+          : aturanNilai === true ? [true, false] : [0, aturanNilai]
+        const tampil = (nilai: unknown, bahasa: 'id' | 'en') => terjemahPeristiwa({
+          jenis: 'onboarding.langkah', langkah: nama, layar: null, rincian_aman: { [kunci]: nilai },
+        }, bahasa).rincian[0]
+        for (const nilai of contoh) {
+          for (const bahasa of BAHASA) {
+            expect(tampil(nilai, bahasa), `${nama}.${kunci}=${nilai} (${bahasa})`).toMatchObject({ kunci, belumDikenal: false })
+          }
+        }
+        if (typeof aturanNilai === 'number') {
+          expect(tampil(aturanNilai + 1, 'id'), `${nama}.${kunci} di atas batas`).toMatchObject({ belumDikenal: true })
+        }
+      }
+    }
+    for (const layar of LAYAR_170) {
+      for (const bahasa of BAHASA) {
+        const buka = terjemahPeristiwa({ jenis: 'layar.buka', langkah: null, layar, rincian_aman: {} }, bahasa)
+        expect(buka.layar, layar).not.toBe(bahasa === 'id' ? 'Layar belum dikenal' : 'Unrecognized screen')
+      }
+    }
+  })
+
+  it('menampilkan contoh baris 1.7.0 dengan label awam', () => {
+    const layar = terjemahPeristiwa({ jenis: 'layar.buka', langkah: null, layar: '/catat-cepat', rincian_aman: {} }, 'id')
+    expect(layar.judul).toBe('Membuka Catat cepat')
+    const keluar = terjemahPeristiwa({
+      jenis: 'onboarding.langkah', langkah: 'form_catat.keluar', layar: '/catat-cepat',
+      rincian_aman: { form: 'cepat', cara: 'mati', simpan: 0, detik: 3601 },
+    }, 'id')
+    expect(keluar.judul).toBe('Keluar dari form catat')
+    expect(keluar.layar).toBe('Catat cepat')
+    expect(keluar.rincian).toEqual([
+      { kunci: 'form', label: 'Form', nilai: 'Catat cepat', belumDikenal: false },
+      { kunci: 'cara', label: 'Cara keluar', nilai: 'Aplikasi tertutup saat form terbuka', belumDikenal: false },
+      { kunci: 'simpan', label: 'Catatan tersimpan', nilai: '0', belumDikenal: false },
+      { kunci: 'detik', label: 'Lama di form (detik)', nilai: 'Belum dikenal', belumDikenal: true },
+    ])
+    const pesan = terjemahPeristiwa({
+      jenis: 'onboarding.langkah', langkah: 'wa_catat.pesan', layar: '/wa',
+      rincian_aman: { jenis: 'catat', hasil: 'dicatat', butir: '2_5' },
+    }, 'en')
+    expect(pesan.judul).toBe('Sent a message to CashFlow on WhatsApp')
+    expect(pesan.rincian).toEqual([
+      { kunci: 'jenis', label: 'Message type', nilai: 'Money record', belumDikenal: false },
+      { kunci: 'hasil', label: 'Result', nilai: 'Recorded', belumDikenal: false },
+      { kunci: 'butir', label: 'Items in the message', nilai: '2 to 5', belumDikenal: false },
+    ])
+    const proses = terjemahPeristiwa({
+      jenis: 'onboarding.langkah', langkah: 'notif_catat.proses', layar: '/notif-catat',
+      rincian_aman: { jenis: 'bank', temuan: 4, otomatis: 3 },
+    }, 'id')
+    expect(proses.layar).toBe('Catat dari notifikasi')
+    expect(proses.rincian.map(r => `${r.label}: ${r.nilai}`)).toEqual([
+      'Jenis aplikasi: Bank', 'Temuan: 4', 'Disimpan otomatis: 3',
+    ])
   })
 })
