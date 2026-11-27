@@ -87,6 +87,21 @@ const LAYAR_170 = ['/catat-cepat', '/notif-catat', '/wa-catat']
 const ADA_KATALOG_170 = adaMigrasiBernama('perjalanan_katalog_170')
 const ADA_LAYAR_170 = adaMigrasiBernama('perjalanan_layar_170')
 /**
+ * Catat WA lanjutan (perjalanan_katalog_wa_lanjut): baris wa_catat.pesan
+ * mendapat dua jenis dan tujuh hasil baru di UJUNG daftarnya, urutan lama
+ * tetap. Baris lain katalog 1.7.0 tidak berubah. Sebelum migrasinya ada,
+ * baris 1.7.0 apa adanya yang diuji.
+ */
+const ADA_KATALOG_WA_LANJUT = adaMigrasiBernama('perjalanan_katalog_wa_lanjut')
+const WA_LANJUT = {
+  jenis: ['ubah', 'rekap'],
+  hasil: ['ruang_tidak_ada', 'diubah', 'pilih_butir', 'kategori', 'aplikasi', 'ruang_ganda', 'minta_nilai'],
+} as const
+function barisPesanWaLanjut(rincian: string): string {
+  const aturan = JSON.parse(rincian) as Record<string, string[]>
+  return JSON.stringify({ ...aturan, jenis: [...aturan.jenis!, ...WA_LANJUT.jenis], hasil: [...aturan.hasil!, ...WA_LANJUT.hasil] })
+}
+/**
  * Langkah yang sudah dikirim aplikasi tetapi belum masuk daftar putih RPC
  * Perjalanan (katalog perjalanan_klien_inti, 20261113194000). RPC
  * memulangkannya sebagai belum_dikenal tanpa rincian. Kamus console sudah
@@ -196,7 +211,8 @@ describe('kamus Perjalanan', () => {
     const { badan } = fungsiTerakhir('perjalanan_klien_inti')
     const katalog = new Map([...badan.matchAll(/\('([a-z._]+)', '([a-z_]+)', '(\{[^']*\})'\)/g)].map(m => [m[1]!, [m[2]!, m[3]!]]))
     for (const [nama, kategori, rincian] of KATALOG_170) {
-      expect(katalog.get(nama), nama).toEqual([kategori, rincian])
+      const harap = ADA_KATALOG_WA_LANJUT && nama === 'wa_catat.pesan' ? barisPesanWaLanjut(rincian) : rincian
+      expect(katalog.get(nama), nama).toEqual([kategori, harap])
     }
   })
 
@@ -413,6 +429,41 @@ describe('kamus Perjalanan', () => {
         expect(buka.layar, layar).not.toBe(bahasa === 'id' ? 'Layar belum dikenal' : 'Unrecognized screen')
       }
     }
+  })
+
+  it('mengenali jenis dan hasil baru catat WA lanjutan di dua bahasa', () => {
+    const baris170 = KATALOG_170.find(([nama]) => nama === 'wa_catat.pesan')![2]
+    const lama = JSON.parse(baris170) as Record<string, string[]>
+    const baru = JSON.parse(barisPesanWaLanjut(baris170)) as Record<string, string[]>
+    expect(Object.keys(baru)).toEqual(Object.keys(lama))
+    expect(baru.jenis!.slice(0, lama.jenis!.length)).toEqual(lama.jenis)
+    expect(baru.hasil!.slice(0, lama.hasil!.length)).toEqual(lama.hasil)
+    for (const [kunci, daftar] of Object.entries(WA_LANJUT)) {
+      for (const nilai of daftar) {
+        expect(lama[kunci], `${kunci}=${nilai} sudah ada di baris 1.7.0`).not.toContain(nilai)
+        for (const bahasa of BAHASA) {
+          const baris = terjemahPeristiwa({
+            jenis: 'onboarding.langkah', langkah: 'wa_catat.pesan', layar: null, rincian_aman: { [kunci]: nilai },
+          }, bahasa).rincian[0]
+          expect(baris, `${kunci}=${nilai} (${bahasa})`).toMatchObject({ kunci, belumDikenal: false })
+          expect(baris?.nilai, `${kunci}=${nilai} (${bahasa})`).not.toBe(nilai)
+        }
+      }
+    }
+    const ubah = terjemahPeristiwa({
+      jenis: 'onboarding.langkah', langkah: 'wa_catat.pesan', layar: null,
+      rincian_aman: { jenis: 'ubah', hasil: 'diubah' },
+    }, 'id')
+    expect(ubah.rincian.map(r => `${r.label}: ${r.nilai}`)).toEqual([
+      'Jenis pesan: Ubah catatan terakhir', 'Hasil: Catatan terakhir diubah',
+    ])
+    const rekap = terjemahPeristiwa({
+      jenis: 'onboarding.langkah', langkah: 'wa_catat.pesan', layar: null,
+      rincian_aman: { jenis: 'rekap', hasil: 'ruang_tidak_ada' },
+    }, 'en')
+    expect(rekap.rincian.map(r => `${r.label}: ${r.nilai}`)).toEqual([
+      'Message type: Summary for today or this week', 'Result: Mentioned workspace cannot be used',
+    ])
   })
 
   it('menampilkan contoh baris 1.7.0 dengan label awam', () => {
